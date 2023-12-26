@@ -3,14 +3,11 @@ import React from 'react';
 
 import { TextArea } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import mdx from './TextArea.mdx';
 
 const meta: Meta = {
   title: 'Forms/TextArea',
   component: TextArea,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['cols'],

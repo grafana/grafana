@@ -1,9 +1,12 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { isValidPrometheusDuration, parsePrometheusDuration } from './time';
 
-export function getAllDataSources(): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
+export function getAllDataSources(): Array<
+  DataSourceInstanceSettings<DataSourceJsonData | AlertManagerDataSourceJsonData>
+> {
   return Object.values(config.datasources);
 }
 

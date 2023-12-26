@@ -3,7 +3,9 @@ package provisioning
 import (
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func EmbeddedContactPointToGrafanaIntegrationConfig(e definitions.EmbeddedContactPoint) (alertingNotify.GrafanaIntegrationConfig, error) {
@@ -19,4 +21,27 @@ func EmbeddedContactPointToGrafanaIntegrationConfig(e definitions.EmbeddedContac
 		Settings:              data,
 		SecureSettings:        nil,
 	}, nil
+}
+
+func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.PostableGrafanaReceiver, provenance models.Provenance, decryptValue func(string) string) (definitions.EmbeddedContactPoint, error) {
+	simpleJson, err := simplejson.NewJson(contactPoint.Settings)
+	if err != nil {
+		return definitions.EmbeddedContactPoint{}, err
+	}
+	embeddedContactPoint := definitions.EmbeddedContactPoint{
+		UID:                   contactPoint.UID,
+		Type:                  contactPoint.Type,
+		Name:                  contactPoint.Name,
+		DisableResolveMessage: contactPoint.DisableResolveMessage,
+		Settings:              simpleJson,
+		Provenance:            string(provenance),
+	}
+	for k, v := range contactPoint.SecureSettings {
+		decryptedValue := decryptValue(v)
+		if decryptedValue == "" {
+			continue
+		}
+		embeddedContactPoint.Settings.Set(k, decryptedValue)
+	}
+	return embeddedContactPoint, nil
 }

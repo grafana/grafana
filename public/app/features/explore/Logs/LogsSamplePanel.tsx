@@ -82,7 +82,7 @@ export function LogsSamplePanel(props: Props) {
     );
   } else if (queryResponse.state === LoadingState.Loading) {
     LogsSamplePanelContent = <span>Logs sample is loading...</span>;
-  } else if (queryResponse.data.length === 0 || queryResponse.data[0].length === 0) {
+  } else if (queryResponse.data.length === 0 || queryResponse.data.every((frame) => frame.length === 0)) {
     LogsSamplePanelContent = <span>No logs sample data.</span>;
   } else {
     const logs = dataFrameToLogsModel(queryResponse.data);

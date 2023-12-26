@@ -4,7 +4,7 @@ aliases:
   - ../../message-templating/
   - ../../unified-alerting/message-templating/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/message-templating/
-description: Notification templating
+description: Learn about notification templating
 keywords:
   - grafana
   - alerting
@@ -59,11 +59,11 @@ Alert summary:
 
 You can use any of the following built-in template options to embed custom templates.
 
-| Name                    | Notes                                                         |
-| ----------------------- | ------------------------------------------------------------- |
-| `default.title`         | Displays high-level status information.                       |
-| `default.message`       | Provides a formatted summary of firing and resolved alerts.   |
-| `teams.default.message` | Similar to `default.messsage`, formatted for Microsoft Teams. |
+| Name                    | Notes                                                        |
+| ----------------------- | ------------------------------------------------------------ |
+| `default.title`         | Displays high-level status information.                      |
+| `default.message`       | Provides a formatted summary of firing and resolved alerts.  |
+| `teams.default.message` | Similar to `default.message`, formatted for Microsoft Teams. |
 
 ### HTML in notification templates
 

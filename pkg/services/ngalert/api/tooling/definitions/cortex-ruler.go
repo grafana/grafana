@@ -17,7 +17,21 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //
+
+// swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
+//
+// List rules in provisioning format
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
+//       403: ForbiddenError
+//       404: description: Not found.
 
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
@@ -28,6 +42,7 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
@@ -39,8 +54,22 @@ import (
 //     - application/yaml
 //
 //     Responses:
-//       202: Ack
+//       202: UpdateRuleGroupResponse
+//       403: ForbiddenError
 //
+
+// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
+//
+// Converts submitted rule group to provisioning format
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
+//       403: ForbiddenError
+//       404: description: Not found.
 
 // swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
@@ -52,6 +81,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
@@ -62,6 +92,7 @@ import (
 //     - application/json
 //
 //     Responses:
+//       403: ForbiddenError
 //       202: NamespaceConfigResponse
 
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
@@ -73,6 +104,7 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
@@ -81,6 +113,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 
 // swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
 //
@@ -88,6 +121,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
@@ -99,6 +133,7 @@ import (
 //
 //     Responses:
 //       202: RuleGroupConfigResponse
+//       403: ForbiddenError
 
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
@@ -109,6 +144,7 @@ import (
 //
 //     Responses:
 //       202: RuleGroupConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
@@ -117,6 +153,7 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 
 // swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
 //
@@ -124,9 +161,10 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
-// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
+// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
 type NamespaceConfig struct {
 	// in:path
 	Namespace string
@@ -258,12 +296,13 @@ func (c *GettableRuleGroupConfig) validate() error {
 }
 
 type ApiRuleNode struct {
-	Record      string            `yaml:"record,omitempty" json:"record,omitempty"`
-	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
-	Expr        string            `yaml:"expr" json:"expr"`
-	For         *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
-	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
-	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Record        string            `yaml:"record,omitempty" json:"record,omitempty"`
+	Alert         string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr          string            `yaml:"expr" json:"expr"`
+	For           *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
+	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty" json:"keep_firing_for,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
 
 type RuleType int
@@ -387,7 +426,6 @@ type GettableGrafanaRule struct {
 	Version         int64               `json:"version" yaml:"version"`
 	UID             string              `json:"uid" yaml:"uid"`
 	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
-	NamespaceID     int64               `json:"namespace_id" yaml:"namespace_id"`
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
@@ -431,7 +469,7 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
@@ -444,12 +482,12 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
-func (d Duration) MarshalYAML() (interface{}, error) {
+func (d Duration) MarshalYAML() (any, error) {
 	return time.Duration(d).Seconds(), nil
 }
 
-func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var v interface{}
+func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
+	var v any
 	if err := unmarshal(&v); err != nil {
 		return err
 	}
@@ -460,4 +498,12 @@ func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	default:
 		return fmt.Errorf("invalid duration %v", v)
 	}
+}
+
+// swagger:model
+type UpdateRuleGroupResponse struct {
+	Message string   `json:"message"`
+	Created []string `json:"created,omitempty"`
+	Updated []string `json:"updated,omitempty"`
+	Deleted []string `json:"deleted,omitempty"`
 }

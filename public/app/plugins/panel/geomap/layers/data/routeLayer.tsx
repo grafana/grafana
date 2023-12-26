@@ -19,7 +19,7 @@ import {
   DataHoverEvent,
   DataHoverClearEvent,
   DataFrame,
-  TIME_SERIES_TIME_FIELD_NAME,
+  FieldType,
 } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
@@ -60,6 +60,15 @@ export const defaultRouteConfig: MapLayerOptions<RouteConfig> = {
   tooltip: false,
 };
 
+enum mapIndex {
+  x1 = 0,
+  y1 = 1,
+  x2 = 2,
+  y2 = 3,
+}
+
+const crosshairColor = '#607D8B';
+
 /**
  * Map layer configuration for circle overlay
  */
@@ -98,7 +107,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       vectorLayer.setStyle(styleBase);
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
-        const idx = feature.get('rowIndex') as number;
+        const idx: number = feature.get('rowIndex');
         const dims = style.dims;
         if (!dims || !isNumber(idx)) {
           return routeStyle(style.base);
@@ -190,15 +199,26 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
     // Crosshair layer
     const crosshairFeature = new Feature({});
-    const crosshairRadius = (style.base.lineWidth || 6) + 2;
+    const hLineFeature = new Feature({});
+    const vLineFeature = new Feature({});
+    const lineFeatures = [hLineFeature, vLineFeature];
+    const crosshairRadius = (style.base.lineWidth || 6) + 3;
     const crosshairStyle = new Style({
       image: new Circle({
         radius: crosshairRadius,
         stroke: new Stroke({
-          color: alpha(style.base.color, 0.4),
-          width: crosshairRadius + 2,
+          color: alpha(crosshairColor, 1),
+          width: 1,
         }),
-        fill: new Fill({ color: style.base.color }),
+        fill: new Fill({ color: alpha(crosshairColor, 0.4) }),
+      }),
+    });
+    const lineStyle = new Style({
+      stroke: new Stroke({
+        color: crosshairColor,
+        width: 1,
+        lineDash: [3, 3],
+        lineCap: 'square',
       }),
     });
 
@@ -209,8 +229,15 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       style: crosshairStyle,
     });
 
+    const linesLayer = new VectorLayer({
+      source: new VectorSource({
+        features: lineFeatures,
+      }),
+      style: lineStyle,
+    });
+
     const layer = new LayerGroup({
-      layers: [vectorLayer, crosshairLayer],
+      layers: [vectorLayer, crosshairLayer, linesLayer],
     });
 
     // Crosshair sharing subscriptions
@@ -222,19 +249,35 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         .pipe(throttleTime(8))
         .subscribe({
           next: (event) => {
+            const mapExtents = map.getView().calculateExtent(map.getSize());
             const feature = source.getFeatures()[0];
-            const frame = feature?.get('frame') as DataFrame;
-            const time = event.payload?.point?.time as number;
+            const frame: DataFrame = feature?.get('frame');
+            const time = event.payload?.point?.time;
             if (frame && time) {
-              const timeField = frame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+              const timeField = frame.fields.find((f) => f.type === FieldType.time);
               if (timeField) {
                 const timestamps: number[] = timeField.values;
                 const pointIdx = findNearestTimeIndex(timestamps, time);
                 if (pointIdx !== null) {
                   const out = getGeometryField(frame, location);
                   if (out.field) {
-                    crosshairFeature.setGeometry(out.field.values[pointIdx]);
+                    const crosshairPoint: Point = out.field.values[pointIdx] as Point;
+                    const crosshairPointCoords = crosshairPoint.getCoordinates();
+                    crosshairFeature.setGeometry(crosshairPoint);
                     crosshairFeature.setStyle(crosshairStyle);
+                    hLineFeature.setGeometry(
+                      new LineString([
+                        [mapExtents[mapIndex.x1], crosshairPointCoords[mapIndex.y1]],
+                        [mapExtents[mapIndex.x2], crosshairPointCoords[mapIndex.y1]],
+                      ])
+                    );
+                    vLineFeature.setGeometry(
+                      new LineString([
+                        [crosshairPointCoords[mapIndex.x1], mapExtents[mapIndex.y1]],
+                        [crosshairPointCoords[mapIndex.x1], mapExtents[mapIndex.y2]],
+                      ])
+                    );
+                    lineFeatures.forEach((feature) => feature.setStyle(lineStyle));
                   }
                 }
               }
@@ -246,6 +289,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     subscriptions.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
         crosshairFeature.setStyle(new Style({}));
+        lineFeatures.forEach((feature) => feature.setStyle(new Style({})));
       })
     );
 
@@ -317,14 +361,14 @@ function findNearestTimeIndex(timestamps: number[], time: number): number | null
   if (time < timestamps[probableIdx]) {
     for (let i = probableIdx; i > 0; i--) {
       if (time > timestamps[i]) {
-        return i;
+        return i < lastIdx ? i + 1 : lastIdx;
       }
     }
     return 0;
   } else {
     for (let i = probableIdx; i < lastIdx; i++) {
       if (time < timestamps[i]) {
-        return i;
+        return i > 0 ? i - 1 : 0;
       }
     }
     return lastIdx;

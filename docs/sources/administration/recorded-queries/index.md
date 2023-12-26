@@ -31,11 +31,12 @@ Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterpr
 An administrator must configure a Prometheus data source and associate it with a [Remote write target](#remote-write-target) before recorded queries can be used.
 {{% /admonition %}}
 
-Recorded queries only work with backend data source plugins. Refer to [Backend data source plugin](/tutorials/build-a-data-source-backend-plugin/) for more information about backend data source plugins. You can recorded three types of queries:
+Recorded queries only work with backend data source plugins. Refer to [Backend data source plugin](/tutorials/build-a-data-source-backend-plugin/) for more information about backend data source plugins. You can recorded four types of queries:
 
 - single row and column - A query that returns a single row and column.
 - row count - A query that returns meaningful rows to be counted.
 - expression - Any expression. To learn more about creating and using expressions, see [Write expression queries]({{< relref "../../panels-visualizations/query-transform-data/expression-queries" >}}).
+- dataplane numeric - A query that returns [dataplane numeric kind](/developers/dataplane/numeric) data.
 
 After a recorded query is created or enabled, it immediately creates a snapshot and continues to create snapshots at the set interval. The recorded query stops taking snapshots when it is disabled, deleted, or when Grafana is not running. Data points are gathered in the backend by running the recorded query and forwarding each result to a remote-write enabled Prometheus instance.
 

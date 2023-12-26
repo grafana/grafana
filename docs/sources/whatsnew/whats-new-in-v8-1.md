@@ -3,7 +3,7 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v8-1/
-description: Feature and improvement highlights for Grafana v8.1
+description: Learn about new and updated features in Grafana v8.1
 keywords:
   - grafana
   - new
@@ -60,7 +60,7 @@ You can also create annotations in the new Time series panel bringing it closer 
 
 ### Transformations improvements
 
-Grafana 8.1 includes some significant enhancements to transformations, including two new transformations designed around providing dynamic configuration to your panels and visulizations.
+Grafana 8.1 includes some significant enhancements to transformations, including two new transformations designed around providing dynamic configuration to your panels and visualizations.
 
 #### Config from query (Beta)
 

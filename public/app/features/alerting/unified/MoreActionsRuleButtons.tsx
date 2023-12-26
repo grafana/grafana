@@ -1,40 +1,48 @@
+import { isEmpty } from 'lodash';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useToggle } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Button, Dropdown, Icon, LinkButton, Menu, MenuItem } from '@grafana/ui';
 
 import { logInfo, LogMessages } from './Analytics';
-import { useRulesAccess } from './utils/accessControlHooks';
-import { createUrl } from './utils/url';
+import { GrafanaRulesExporter } from './components/export/GrafanaRulesExporter';
+import { AlertingAction, useAlertingAbility } from './hooks/useAbilities';
 
 interface Props {}
 
 export function MoreActionsRuleButtons({}: Props) {
-  const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
+  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+
   const location = useLocation();
-  const newMenu = (
-    <Menu>
-      {(canCreateGrafanaRules || canCreateCloudRules) && (
-        <MenuItem
-          url={urlUtil.renderUrl(`alerting/new/recording`, {
-            returnTo: location.pathname + location.search,
-          })}
-          label="New recording rule"
-        />
-      )}
-      {canReadProvisioning && (
-        <MenuItem
-          url={createUrl('/api/v1/provisioning/alert-rules/export', {
-            download: 'true',
-            format: 'yaml',
-          })}
-          label="Export all"
-          target="_blank"
-        />
-      )}
-    </Menu>
-  );
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
+
+  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+  const canExportRules = exportRulesSupported && exportRulesAllowed;
+
+  const menuItems: JSX.Element[] = [];
+
+  if (canCreateGrafanaRules || canCreateCloudRules) {
+    menuItems.push(
+      <MenuItem
+        label="New recording rule"
+        key="new-recording-rule"
+        url={urlUtil.renderUrl(`alerting/new/recording`, {
+          returnTo: location.pathname + location.search,
+        })}
+      />
+    );
+  }
+
+  if (canExportRules) {
+    menuItems.push(
+      <MenuItem label="Export all Grafana-managed rules" key="export-all-rules" onClick={toggleShowExportDrawer} />
+    );
+  }
 
   return (
     <>
@@ -48,12 +56,15 @@ export function MoreActionsRuleButtons({}: Props) {
         </LinkButton>
       )}
 
-      <Dropdown overlay={newMenu}>
-        <Button variant="secondary">
-          More
-          <Icon name="angle-down" />
-        </Button>
-      </Dropdown>
+      {!isEmpty(menuItems) && (
+        <Dropdown overlay={<Menu>{menuItems}</Menu>}>
+          <Button variant="secondary">
+            More
+            <Icon name="angle-down" />
+          </Button>
+        </Dropdown>
+      )}
+      {canExportRules && showExportDrawer && <GrafanaRulesExporter onClose={toggleShowExportDrawer} />}
     </>
   );
 }

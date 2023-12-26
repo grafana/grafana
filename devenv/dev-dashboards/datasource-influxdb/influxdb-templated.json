@@ -157,7 +157,6 @@
   ],
   "refresh": false,
   "schemaVersion": 18,
-  "style": "dark",
   "tags": ["gdev", "datasource-test", "influxdb"],
   "templating": {
     "list": [

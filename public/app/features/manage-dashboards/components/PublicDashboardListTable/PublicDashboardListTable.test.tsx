@@ -22,6 +22,7 @@ const publicDashboardListResponse: PublicDashboardListResponse[] = [
     title: 'New dashboardasdf',
     dashboardUid: 'iF36Qb6nz',
     isEnabled: false,
+    slug: 'new-dashboardasdf',
   },
   {
     uid: 'EuiEbd3nz',
@@ -29,6 +30,7 @@ const publicDashboardListResponse: PublicDashboardListResponse[] = [
     title: 'New dashboard',
     dashboardUid: 'kFlxbd37k',
     isEnabled: true,
+    slug: 'new-dashboard',
   },
 ];
 
@@ -39,6 +41,7 @@ const orphanedDashboardListResponse: PublicDashboardListResponse[] = [
     title: '',
     dashboardUid: '',
     isEnabled: false,
+    slug: '',
   },
   {
     uid: 'EuiEbd3nz2',
@@ -46,6 +49,7 @@ const orphanedDashboardListResponse: PublicDashboardListResponse[] = [
     title: '',
     dashboardUid: '',
     isEnabled: true,
+    slug: '',
   },
 ];
 
@@ -128,7 +132,7 @@ describe('Show table', () => {
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
   });
   it('renders public dashboards in a good way without trashcan', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     await renderPublicDashboardTable(true);
     publicDashboardListResponse.forEach((pd, idx) => {
@@ -136,7 +140,7 @@ describe('Show table', () => {
     });
   });
   it('renders public dashboards in a good way with trashcan', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     await renderPublicDashboardTable(true);
     publicDashboardListResponse.forEach((pd, idx) => {
@@ -147,13 +151,13 @@ describe('Show table', () => {
 
 describe('Delete public dashboard', () => {
   it('when user does not have public dashboard write permissions, then dashboards are listed without delete button', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     await renderPublicDashboardTable(true);
 
     expect(screen.queryAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(0);
   });
   it('when user has public dashboard write permissions, then dashboards are listed with delete button', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     await renderPublicDashboardTable(true);
 
     expect(screen.getAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(publicDashboardListResponse.length);
@@ -171,7 +175,7 @@ describe('Orphaned public dashboard', () => {
         return res(ctx.status(200), ctx.json(response));
       })
     );
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     await renderPublicDashboardTable(true);
     response.publicDashboards.forEach((pd, idx) => {

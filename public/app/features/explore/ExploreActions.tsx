@@ -1,9 +1,12 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
-import { useDispatch, useSelector } from 'app/types';
+import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 
-import { splitOpen, splitClose } from './state/main';
+import { splitOpen, splitClose, changeCorrelationEditorDetails } from './state/main';
 import { runQueries } from './state/query';
 import { isSplit, selectPanes } from './state/selectors';
 
@@ -14,6 +17,8 @@ export const ExploreActions = () => {
   const dispatch = useDispatch();
   const panes = useSelector(selectPanes);
   const splitted = useSelector(isSplit);
+
+  const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   useEffect(() => {
     const keys = Object.keys(panes);
@@ -65,6 +70,23 @@ export const ExploreActions = () => {
         });
       }
     } else {
+      // command palette doesn't know what pane we're in, only show option if not split and no datasource is mixed
+      const hasMixed = Object.values(panes).some((pane) => {
+        return pane?.datasourceInstance?.uid === MIXED_DATASOURCE_NAME;
+      });
+
+      if (config.featureToggles.correlations && canWriteCorrelations && !hasMixed) {
+        actionsArr.push({
+          id: 'explore/correlations-editor',
+          name: 'Correlations editor',
+          perform: () => {
+            dispatch(changeCorrelationEditorDetails({ editorMode: true }));
+            dispatch(runQueries({ exploreId: keys[0] }));
+          },
+          section: exploreSection,
+        });
+      }
+
       actionsArr.push({
         id: 'explore/run-query',
         name: 'Run query',
@@ -85,7 +107,7 @@ export const ExploreActions = () => {
       });
     }
     setActions(actionsArr);
-  }, [panes, splitted, query, dispatch]);
+  }, [panes, splitted, query, dispatch, canWriteCorrelations]);
 
   useRegisterActions(!query ? [] : actions, [actions, query]);
 

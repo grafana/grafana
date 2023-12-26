@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editorBox: css`
     label: editorBox;
     border: 1px solid ${theme.colors.border.medium};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     margin: ${theme.spacing(0.5)} 0;
     width: 100%;
   `,

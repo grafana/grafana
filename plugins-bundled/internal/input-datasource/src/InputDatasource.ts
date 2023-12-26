@@ -97,8 +97,8 @@ function getLength(data?: DataFrameDTO | DataFrame) {
   if (!data || !data.fields || !data.fields.length) {
     return 0;
   }
-  if (data.hasOwnProperty('length')) {
-    return (data as DataFrame).length;
+  if ('length' in data) {
+    return data.length;
   }
   return data.fields[0].values!.length;
 }

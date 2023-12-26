@@ -82,7 +82,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <IntervalInput
           label={getTimeShiftLabel('start')}
-          tooltip={getTimeShiftTooltip('start')}
+          tooltip={getTimeShiftTooltip('start', '-2m')}
           value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
           onChange={(val) => {
             updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
@@ -90,6 +90,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               spanStartTimeShift: val,
             });
           }}
+          placeholder={'-2m'}
           isInvalidError={invalidTimeShiftError}
         />
       </InlineFieldRow>
@@ -97,7 +98,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <IntervalInput
           label={getTimeShiftLabel('end')}
-          tooltip={getTimeShiftTooltip('end')}
+          tooltip={getTimeShiftTooltip('end', '2m')}
           value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
           onChange={(val) => {
             updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
@@ -105,6 +106,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               spanEndTimeShift: val,
             });
           }}
+          placeholder={'2m'}
           isInvalidError={invalidTimeShiftError}
         />
       </InlineFieldRow>
@@ -133,8 +135,11 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               value={query.name}
               width={40}
               onChange={(e) => {
-                let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
-                newQueries[i].name = e.currentTarget.value;
+                const newQueries = (options.jsonData.tracesToMetrics?.queries ?? []).map(
+                  (traceToMetricQuery, index) => {
+                    return index === i ? { ...traceToMetricQuery, name: e.currentTarget.value } : traceToMetricQuery;
+                  }
+                );
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                   ...options.jsonData.tracesToMetrics,
                   queries: newQueries,
@@ -154,11 +159,14 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               allowFullScreen
               value={query.query}
               onChange={(e) => {
-                let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
-                newQueries[i].query = e.currentTarget.value;
+                const updatedQueries = (options.jsonData.tracesToMetrics?.queries ?? []).map(
+                  (traceToMetricQuery, index) => {
+                    return index === i ? { ...traceToMetricQuery, query: e.currentTarget.value } : traceToMetricQuery;
+                  }
+                );
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                   ...options.jsonData.tracesToMetrics,
-                  queries: newQueries,
+                  queries: updatedQueries,
                 });
               }}
             />
@@ -170,8 +178,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
             icon="times"
             type="button"
             onClick={() => {
-              let newQueries = options.jsonData.tracesToMetrics?.queries.slice();
-              newQueries?.splice(i, 1);
+              const newQueries = options.jsonData.tracesToMetrics?.queries.filter((_, index) => index !== i);
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
                 queries: newQueries,
@@ -200,13 +207,16 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 }
 
 export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  let suffix = options.type;
+  suffix += options.type === 'tempo' ? '/configure-tempo-data-source/#trace-to-metrics' : '/#trace-to-metrics';
+
   return (
     <ConfigSection
       title="Trace to metrics"
       description={
         <ConfigDescriptionLink
           description="Navigate from a trace span to the selected data source's metrics."
-          suffix={`${options.type}/#trace-to-metrics`}
+          suffix={suffix}
           feature="trace to metrics"
         />
       }

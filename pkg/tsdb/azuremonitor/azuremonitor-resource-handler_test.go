@@ -66,7 +66,10 @@ func Test_proxyRequest(t *testing.T) {
 			}
 			rw := httptest.NewRecorder()
 			proxy := httpServiceProxy{}
-			res := proxy.Do(rw, req, srv.Client())
+			res, err := proxy.Do(rw, req, srv.Client())
+			if err != nil {
+				t.Error(err)
+			}
 			if res.Header().Get("foo") != "bar" {
 				t.Errorf("Unexpected headers: %v", res.Header())
 			}
@@ -90,9 +93,9 @@ type fakeProxy struct {
 	requestedURL string
 }
 
-func (s *fakeProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter {
+func (s *fakeProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	s.requestedURL = req.URL.String()
-	return nil
+	return nil, nil
 }
 
 func Test_handleResourceReq(t *testing.T) {

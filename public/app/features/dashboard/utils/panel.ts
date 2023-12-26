@@ -1,6 +1,6 @@
 import { isString as _isString } from 'lodash';
 
-import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel, dateTimeAsMoment } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
@@ -126,11 +126,13 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
     }
 
     if (_isString(timeRange.raw.from)) {
-      const timeFromDate = dateMath.parse(timeFromInfo.from)!;
+      const fromTimezone = dateTimeAsMoment(timeRange.from).tz();
+      const toTimezone = dateTimeAsMoment(timeRange.to).tz();
+      const timeFromDate = dateMath.parse(timeFromInfo.from, undefined, fromTimezone)!;
       newTimeData.timeInfo = timeFromInfo.display;
       newTimeData.timeRange = {
         from: timeFromDate,
-        to: dateMath.parse(timeFromInfo.to)!,
+        to: dateMath.parse(timeFromInfo.to, undefined, toTimezone)!,
         raw: {
           from: timeFromInfo.from,
           to: timeFromInfo.to,

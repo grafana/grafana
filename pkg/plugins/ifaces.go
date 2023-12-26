@@ -10,14 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// Store is the publicly accessible storage for plugins.
-type Store interface {
-	// Plugin finds a plugin by its ID.
-	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
-	// Plugins returns plugins by their requested type.
-	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
-}
-
 type Installer interface {
 	// Add adds a new plugin.
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
@@ -107,22 +99,17 @@ type BackendFactoryProvider interface {
 	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
 }
 
-type RendererManager interface {
-	// Renderer returns a renderer plugin.
-	Renderer(ctx context.Context) *Plugin
-}
-
 type SecretsPluginManager interface {
 	// SecretsManager returns a secretsmanager plugin
 	SecretsManager(ctx context.Context) *Plugin
 }
 
 type StaticRouteResolver interface {
-	Routes() []*StaticRoute
+	Routes(ctx context.Context) []*StaticRoute
 }
 
 type ErrorResolver interface {
-	PluginErrors() []*Error
+	PluginErrors(ctx context.Context) []*Error
 }
 
 type PluginLoaderAuthorizer interface {
@@ -163,7 +150,8 @@ func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 }
 
 type FeatureToggles interface {
-	IsEnabled(flag string) bool
+	IsEnabledGlobally(flag string) bool
+	GetEnabled(ctx context.Context) map[string]bool
 }
 
 type SignatureCalculator interface {
@@ -172,10 +160,10 @@ type SignatureCalculator interface {
 
 type KeyStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
-	Set(ctx context.Context, key string, value string) error
-	Del(ctx context.Context, key string) error
+	Set(ctx context.Context, key string, value any) error
+	Delete(ctx context.Context, key string) error
 	ListKeys(ctx context.Context) ([]string, error)
-	GetLastUpdated(ctx context.Context) (*time.Time, error)
+	GetLastUpdated(ctx context.Context) (time.Time, error)
 	SetLastUpdated(ctx context.Context) error
 }
 

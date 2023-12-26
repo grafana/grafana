@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path"
 	"testing"
 	"time"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -27,11 +30,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -75,7 +78,7 @@ func TestProvisioningApi(t *testing.T) {
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
 				require.Equal(t, 400, response.Status())
-				expBody := `{"error":"invalid object specification: invalid policy tree","message":"invalid object specification: invalid policy tree"}`
+				expBody := `{"message":"invalid object specification: invalid policy tree"}`
 				require.Equal(t, expBody, string(response.Body()))
 			})
 		})
@@ -282,7 +285,7 @@ func TestProvisioningApi(t *testing.T) {
 
 			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
-				uid := t.Name()
+				uid := util.GenerateShortUID()
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
 				insertRuleInOrg(t, sut, rule, 3)
@@ -564,6 +567,102 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
+
+			t.Run("hcl body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rule1 := createTestAlertRule("rule1", 1)
+				rule1.Labels = map[string]string{
+					"test": "label",
+				}
+				rule1.Annotations = map[string]string{
+					"test": "annotation",
+				}
+				rule1.NoDataState = definitions.Alerting
+				rule1.ExecErrState = definitions.ErrorErrState
+				insertRule(t, sut, rule1)
+				insertRule(t, sut, createTestAlertRule("rule2", 1))
+
+				expectedResponse := `resource "grafana_rule_group" "rule_group_0000" {
+  org_id           = 1
+  name             = "my-cool-group"
+  folder_uid       = "folder-uid"
+  interval_seconds = 60
+
+  rule {
+    name      = "rule1"
+    condition = "A"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = ""
+      model          = "{\"conditions\":[{\"evaluator\":{\"params\":[3],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"A\"]},\"reducer\":{\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"1==0\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}"
+    }
+
+    no_data_state  = "Alerting"
+    exec_err_state = "Error"
+    for            = "0s"
+    annotations = {
+      test = "annotation"
+    }
+    labels = {
+      test = "label"
+    }
+    is_paused = false
+  }
+  rule {
+    name      = "rule2"
+    condition = "A"
+
+    data {
+      ref_id = "A"
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = ""
+      model          = "{\"conditions\":[{\"evaluator\":{\"params\":[3],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"A\"]},\"reducer\":{\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"1==0\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}"
+    }
+
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+    for            = "0s"
+    is_paused      = false
+  }
+}
+`
+				rc := createTestRequestCtx()
+				rc.Context.Req.Form.Set("format", "hcl")
+				rc.Context.Req.Form.Set("download", "false")
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+				require.Equal(t, "text/hcl", rc.Resp.Header().Get("Content-Type"))
+
+				t.Run("and add specific headers if download=true", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Form.Set("format", "hcl")
+					rc.Context.Req.Form.Set("download", "true")
+
+					response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+					response.WriteTo(&rc)
+
+					require.Equal(t, 200, response.Status())
+					require.Equal(t, expectedResponse, string(response.Body()))
+					require.Equal(t, "application/terraform+hcl", rc.Resp.Header().Get("Content-Type"))
+					require.Equal(t, `attachment;filename=export.tf`, rc.Resp.Header().Get("Content-Disposition"))
+				})
+			})
 		})
 
 		t.Run("alert rule", func(t *testing.T) {
@@ -812,6 +911,120 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
+
+			t.Run("accept query parameter folder_uid", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("folderUid", "folder-uid")
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("accept multiple query parameters folder_uid", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("folder_uid", "folder-uid")
+				rc.Context.Req.Form.Add("folder_uid", "folder-uid2")
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title2","interval":"1m","rules":[{"uid":"rule3","title":"rule3","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("accepts parameter group", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc := createTestRequestCtx()
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("folderUid", "folder-uid")
+				rc.Context.Req.Form.Set("group", "groupa")
+
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+
+				t.Run("and fails if folderUID is empty", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("group", "groupa")
+					rc.Context.Req.Form.Set("folderUid", "")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
+
+				t.Run("and fails if multiple folder UIDs are specified", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("group", "groupa")
+					rc.Context.Req.Form.Set("folderUid", "folder-uid")
+					rc.Context.Req.Form.Add("folderUid", "folder-uid2")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
+			})
+
+			t.Run("accepts parameter ruleUid", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc := createTestRequestCtx()
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("ruleUid", "rule1")
+
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+
+				t.Run("and fails if folderUID and group are specified", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("group", "groupa")
+					rc.Context.Req.Form.Set("folderUid", "folder-uid")
+					rc.Context.Req.Form.Set("ruleUid", "rule1")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
+
+				t.Run("and fails if only folderUID is specified", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("folderUid", "folder-uid")
+					rc.Context.Req.Form.Set("ruleUid", "rule2")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
+			})
 		})
 
 		t.Run("notification policies", func(t *testing.T) {
@@ -901,7 +1114,7 @@ func TestProvisioningApi(t *testing.T) {
 				rc := createTestRequestCtx()
 
 				rc.Context.Req.Header.Add("Accept", "application/json")
-				expectedResponse := `{"apiVersion":1,"policies":[{"orgId":1,"Policy":{"receiver":"default-receiver","group_by":["g1","g2"],"routes":[{"receiver":"nested-receiver","group_by":["g3","g4"],"matchers":["a=\"b\""],"object_matchers":[["foo","=","bar"]],"mute_time_intervals":["interval"],"continue":true,"group_wait":"5m","group_interval":"5m","repeat_interval":"5m"}],"group_wait":"30s","group_interval":"5m","repeat_interval":"1h"}}]}`
+				expectedResponse := `{"apiVersion":1,"policies":[{"orgId":1,"receiver":"default-receiver","group_by":["g1","g2"],"routes":[{"receiver":"nested-receiver","group_by":["g3","g4"],"matchers":["a=\"b\""],"object_matchers":[["foo","=","bar"]],"mute_time_intervals":["interval"],"continue":true,"group_wait":"5m","group_interval":"5m","repeat_interval":"5m"}],"group_wait":"30s","group_interval":"5m","repeat_interval":"1h"}]}`
 
 				response := sut.RouteGetPolicyTreeExport(&rc)
 
@@ -921,6 +1134,147 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("hcl body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Add("format", "hcl")
+				expectedResponse := "resource \"grafana_notification_policy\" \"notification_policy_1\" {\n  contact_point = \"default-receiver\"\n  group_by      = [\"g1\", \"g2\"]\n\n  policy {\n    contact_point = \"nested-receiver\"\n    group_by      = [\"g3\", \"g4\"]\n\n    matcher {\n      label = \"foo\"\n      match = \"=\"\n      value = \"bar\"\n    }\n\n    mute_timings    = [\"interval\"]\n    continue        = true\n    group_wait      = \"5m\"\n    group_interval  = \"5m\"\n    repeat_interval = \"5m\"\n  }\n\n  group_wait      = \"30s\"\n  group_interval  = \"5m\"\n  repeat_interval = \"1h\"\n}\n"
+
+				response := sut.RouteGetPolicyTreeExport(&rc)
+
+				t.Log(string(response.Body()))
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+		})
+
+		t.Run("mute timings", func(t *testing.T) {
+			t.Run("are present, GET returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetMuteTimingsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+			})
+
+			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("accept header contains json, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Set("download", "true")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
+			})
+
+			t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Set("download", "false")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
+
+			t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
+
+			t.Run("json body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testData.ReadFile(path.Join("test-data", "alertmanager_default_mutetimings-export.json"))
+				require.NoError(t, err)
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				response := sut.RouteGetMuteTimingsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.JSONEq(t, string(expectedResponse), string(response.Body()))
+			})
+
+			t.Run("yaml body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testData.ReadFile(path.Join("test-data", "alertmanager_default_mutetimings-export.yaml"))
+				require.NoError(t, err)
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+
+				response := sut.RouteGetMuteTimingsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, string(expectedResponse), string(response.Body()))
+			})
+
+			t.Run("hcl body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testData.ReadFile(path.Join("test-data", "alertmanager_default_mutetimings-export.hcl"))
+				require.NoError(t, err)
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Add("format", "hcl")
+
+				response := sut.RouteGetMuteTimingsExport(&rc)
+				t.Log(string(response.Body()))
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, string(expectedResponse), string(response.Body()))
 			})
 		})
 	})
@@ -1008,8 +1362,15 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
 		})
 
-		t.Run("decrypt true without admin returns 403", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+		t.Run("decrypt true without alert.provisioning.secrets:read permissions returns 403", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.ac = &recordingAccessControlFake{
+				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return false, nil
+				},
+			}
+
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Form.Set("decrypt", "true")
@@ -1017,19 +1378,30 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			response := sut.RouteGetContactPointsExport(&rc)
 
 			require.Equal(t, 403, response.Status())
+			require.Len(t, env.ac.EvaluateRecordings, 1)
+			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("decrypt true with admin returns 200", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			env.ac = &recordingAccessControlFake{
+				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, evaluator.String())
+					return true, nil
+				},
+			}
+
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.SignedInUser.OrgRole = org.RoleAdmin
 			rc.Context.Req.Form.Set("decrypt", "true")
 
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
 			require.Equal(t, 200, response.Status())
+			require.Len(t, env.ac.EvaluateRecordings, 1)
+			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
@@ -1061,10 +1433,12 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			})
 			t.Run("decrypt true", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
+				env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return true, nil
+				}
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.SignedInUser.OrgRole = org.RoleAdmin
 				rc.Context.Req.Header.Add("Accept", "application/json")
 				rc.Context.Req.Form.Set("decrypt", "true")
 
@@ -1119,10 +1493,12 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			})
 			t.Run("decrypt true", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
+				env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return true, nil
+				}
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.SignedInUser.OrgRole = org.RoleAdmin
 				rc.Context.Req.Header.Add("Accept", "application/yaml")
 				rc.Context.Req.Form.Set("decrypt", "true")
 
@@ -1160,6 +1536,7 @@ type testEnvironment struct {
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
+	ac               *recordingAccessControlFake
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1212,6 +1589,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			Title: "Folder Title2",
 		}}, nil).Maybe()
 
+	ac := &recordingAccessControlFake{}
+
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
@@ -1221,6 +1600,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		xact:             xact,
 		prov:             prov,
 		quotas:           quotas,
+		ac:               ac,
 	}
 }
 
@@ -1237,7 +1617,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log),
+		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log, env.ac),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.dashboardService, env.quotas, env.xact, 60, 10, env.log),
@@ -1256,6 +1636,7 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
 		},
+		Logger: &logtest.Fake{},
 	}
 }
 
@@ -1511,7 +1892,38 @@ var testConfig = `
 		"mute_time_intervals": [{
 			"name": "interval",
 			"time_intervals": []
-		}]
+		}, {
+                "name": "full-interval",
+                "time_intervals": [
+                    {
+                        "times": [
+                            {
+                                "start_time": "10:00",
+                                "end_time": "12:00"
+                            }
+                        ],
+                        "weekdays": [
+                            "monday",
+                            "wednesday",
+                            "friday"
+                        ],
+                        "days_of_month": [
+                            "1",
+                            "14:16",
+                            "20"
+                        ],
+                        "months": [
+                            "1:3",
+                            "7",
+                            "12"
+                        ],
+                        "years": [
+                            "2023:2025"
+                        ],
+                        "location": "America/New_York"
+                    }
+                ]
+            }]
 	}
 }
 `

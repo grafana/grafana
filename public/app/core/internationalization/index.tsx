@@ -35,8 +35,6 @@ export function initializeI18n(language: string) {
 
     // If translations are empty strings (no translation), fall back to the default value in source code
     returnEmptyString: false,
-
-    pluralSeparator: '__',
   };
   let init = i18n;
   if (language === 'detect') {

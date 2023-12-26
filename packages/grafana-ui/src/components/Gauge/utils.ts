@@ -12,6 +12,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
+import { VizOrientation } from '@grafana/schema';
 
 interface GaugeAutoProps {
   titleFontSize: number;
@@ -27,9 +28,15 @@ export const DEFAULT_THRESHOLDS: ThresholdsConfig = {
   ],
 };
 
-export function calculateGaugeAutoProps(width: number, height: number, title: string | undefined): GaugeAutoProps {
+export function calculateGaugeAutoProps(
+  width: number,
+  height: number,
+  title: string | undefined,
+  orientation?: VizOrientation
+): GaugeAutoProps {
   const showLabel = title !== null && title !== undefined;
-  const titleFontSize = Math.min((width * 0.15) / 1.5, 20); // 20% of height * line-height, max 40px
+  const titleFontSizeDimension = orientation === VizOrientation.Vertical ? height : width;
+  const titleFontSize = Math.min((titleFontSizeDimension * 0.15) / 1.5, 20); // 20% of height * line-height, max 40px
   const titleHeight = titleFontSize * 1.5;
   const availableHeight = showLabel ? height - titleHeight : height;
   const gaugeHeight = Math.min(availableHeight, width);

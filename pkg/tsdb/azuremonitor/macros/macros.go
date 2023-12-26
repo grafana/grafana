@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -34,17 +33,17 @@ type kqlMacroEngine struct {
 //   - $__escapeMulti('\\vm\eth0\Total','\\vm\eth2\Total') -> @'\\vm\eth0\Total',@'\\vm\eth2\Total'
 
 // KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
-func KqlInterpolate(logger log.Logger, query backend.DataQuery, dsInfo types.DatasourceInfo, kql string, defaultTimeField ...string) (string, error) {
+func KqlInterpolate(query backend.DataQuery, dsInfo types.DatasourceInfo, kql string, defaultTimeField ...string) (string, error) {
 	engine := kqlMacroEngine{}
 
 	defaultTimeFieldForAllDatasources := "timestamp"
 	if len(defaultTimeField) > 0 && query.QueryType != string(dataquery.AzureQueryTypeAzureTraces) {
 		defaultTimeFieldForAllDatasources = defaultTimeField[0]
 	}
-	return engine.Interpolate(logger, query, dsInfo, kql, defaultTimeFieldForAllDatasources)
+	return engine.Interpolate(query, dsInfo, kql, defaultTimeFieldForAllDatasources)
 }
 
-func (m *kqlMacroEngine) Interpolate(logger log.Logger, query backend.DataQuery, dsInfo types.DatasourceInfo, kql string, defaultTimeField string) (string, error) {
+func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, dsInfo types.DatasourceInfo, kql string, defaultTimeField string) (string, error) {
 	m.timeRange = query.TimeRange
 	m.query = query
 	rExp, _ := regexp.Compile(sExpr)
@@ -74,7 +73,7 @@ func (m *kqlMacroEngine) Interpolate(logger log.Logger, query backend.DataQuery,
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(logger, groups[1], defaultTimeField, args, dsInfo)
+		res, err := m.evaluateMacro(groups[1], defaultTimeField, args, dsInfo)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -94,7 +93,7 @@ type interval struct {
 	Interval   string
 }
 
-func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTimeField string, args []string, dsInfo types.DatasourceInfo) (string, error) {
+func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string, dsInfo types.DatasourceInfo) (string, error) {
 	switch name {
 	case "timeFilter":
 		timeColumn := defaultTimeField
@@ -118,7 +117,6 @@ func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTi
 			var queryInterval interval
 			err := json.Unmarshal(m.query.JSON, &queryInterval)
 			if err != nil {
-				logger.Warn("Unable to parse model from query", "JSON", m.query.JSON)
 				it = defaultInterval
 			} else {
 				var (
@@ -130,7 +128,6 @@ func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTi
 				}
 				it, err = intervalv2.GetIntervalFrom(dsInterval, queryInterval.Interval, queryInterval.IntervalMs, defaultInterval)
 				if err != nil {
-					logger.Warn("Unable to get interval from query", "model", queryInterval)
 					it = defaultInterval
 				}
 			}

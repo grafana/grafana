@@ -39,7 +39,7 @@ func UnmarshalCommand(query []byte, appURL string) (Command, error) {
 	var expr CommandConfiguration
 	err := json.Unmarshal(query, &expr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshall Machine learning command: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal Machine learning command: %w", err)
 	}
 	if len(expr.Type) == 0 {
 		return nil, fmt.Errorf("required field 'type' is not specified or empty.  Should be one of [%s]", Outlier)

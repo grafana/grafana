@@ -3,7 +3,6 @@ import React, { useState, useCallback } from 'react';
 
 import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
 
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Field } from '../Forms/Field';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 
@@ -12,7 +11,6 @@ import mdx from './Switch.mdx';
 const meta: Meta<typeof Switch> = {
   title: 'Forms/Switch',
   component: Switch,
-  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {
     docs: {
       page: mdx,

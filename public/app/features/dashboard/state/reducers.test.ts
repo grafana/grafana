@@ -1,32 +1,15 @@
-import { DashboardInitPhase, DashboardState, OrgRole, PermissionLevel } from 'app/types';
+import { DashboardInitPhase, DashboardState } from 'app/types';
 
-import { createDashboardModelFixture, createPanelJSONFixture } from './__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture, createPanelSaveModel } from './__fixtures__/dashboardFixtures';
 import {
   dashboardInitCompleted,
   dashboardInitFailed,
   dashboardInitFetching,
-  loadDashboardPermissions,
   dashboardReducer,
   initialState,
 } from './reducers';
 
 describe('dashboard reducer', () => {
-  describe('loadDashboardPermissions', () => {
-    let state: DashboardState;
-
-    beforeEach(() => {
-      const action = loadDashboardPermissions([
-        { id: 2, dashboardId: 1, role: OrgRole.Viewer, permission: PermissionLevel.View },
-        { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },
-      ]);
-      state = dashboardReducer(initialState, action);
-    });
-
-    it('should add permissions to state', async () => {
-      expect(state.permissions?.length).toBe(2);
-    });
-  });
-
   describe('dashboardInitCompleted', () => {
     let state: DashboardState;
 
@@ -37,7 +20,7 @@ describe('dashboard reducer', () => {
         dashboardInitCompleted(
           createDashboardModelFixture({
             title: 'My dashboard',
-            panels: [createPanelJSONFixture({ id: 1 }), createPanelJSONFixture({ id: 2 })],
+            panels: [createPanelSaveModel({ id: 1 }), createPanelSaveModel({ id: 2 })],
           })
         )
       );

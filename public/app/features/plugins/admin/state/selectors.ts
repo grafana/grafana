@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { PluginError, PluginErrorCode, PluginType, unEscapeStringFromRegex } from '@grafana/data';
+import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
@@ -21,9 +21,6 @@ export type PluginFilters = {
 
   // (Optional, only applied if set)
   type?: PluginType;
-
-  // (Optional, only applied if set)
-  isCore?: boolean;
 
   // (Optional, only applied if set)
   isInstalled?: boolean;
@@ -51,10 +48,6 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
-      if (filters.isCore !== undefined && plugin.isCore !== filters.isCore) {
-        return false;
-      }
-
       if (filters.isEnterprise !== undefined && plugin.isEnterprise !== filters.isEnterprise) {
         return false;
       }
@@ -63,18 +56,20 @@ export const selectPlugins = (filters: PluginFilters) =>
     });
   });
 
-export const selectPluginErrors = createSelector(selectAll, (plugins) =>
-  plugins
-    ? plugins
-        .filter((p) => Boolean(p.error))
-        .map(
-          (p): PluginError => ({
-            pluginId: p.id,
-            errorCode: p!.error as PluginErrorCode,
-          })
-        )
-    : []
-);
+export const selectPluginErrors = (filterByPluginType?: PluginType) =>
+  createSelector(selectAll, (plugins) => {
+    const pluginErrors: PluginError[] = [];
+    for (const plugin of plugins) {
+      if (plugin.error && (!filterByPluginType || plugin.type === filterByPluginType)) {
+        pluginErrors.push({
+          pluginId: plugin.id,
+          errorCode: plugin.error,
+          pluginType: plugin.type,
+        });
+      }
+    }
+    return pluginErrors;
+  });
 
 // The following selectors are used to get information about the outstanding or completed plugins-related network requests.
 export const selectRequest = (actionType: string) =>

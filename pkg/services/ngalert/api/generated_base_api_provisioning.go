@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -23,6 +24,8 @@ type ProvisioningApi interface {
 	RouteDeleteContactpoints(*contextmodel.ReqContext) response.Response
 	RouteDeleteMuteTiming(*contextmodel.ReqContext) response.Response
 	RouteDeleteTemplate(*contextmodel.ReqContext) response.Response
+	RouteExportMuteTiming(*contextmodel.ReqContext) response.Response
+	RouteExportMuteTimings(*contextmodel.ReqContext) response.Response
 	RouteGetAlertRule(*contextmodel.ReqContext) response.Response
 	RouteGetAlertRuleExport(*contextmodel.ReqContext) response.Response
 	RouteGetAlertRuleGroup(*contextmodel.ReqContext) response.Response
@@ -68,6 +71,14 @@ func (f *ProvisioningApiHandler) RouteDeleteTemplate(ctx *contextmodel.ReqContex
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	return f.handleRouteDeleteTemplate(ctx, nameParam)
+}
+func (f *ProvisioningApiHandler) RouteExportMuteTiming(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.handleRouteExportMuteTiming(ctx, nameParam)
+}
+func (f *ProvisioningApiHandler) RouteExportMuteTimings(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteExportMuteTimings(ctx)
 }
 func (f *ProvisioningApiHandler) RouteGetAlertRule(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -216,6 +227,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -226,6 +239,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/v1/provisioning/contact-points/{UID}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -236,6 +251,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/v1/provisioning/mute-timings/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -246,6 +263,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/v1/provisioning/templates/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -255,7 +274,33 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			),
 		)
 		group.Get(
+			toMacaronPath("/api/v1/provisioning/mute-timings/{name}/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/{name}/export"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/mute-timings/{name}/export",
+				api.Hooks.Wrap(srv.RouteExportMuteTiming),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/mute-timings/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/export"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/mute-timings/export",
+				api.Hooks.Wrap(srv.RouteExportMuteTimings),
+				m,
+			),
+		)
+		group.Get(
 			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -266,6 +311,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules/{UID}/export"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -276,6 +323,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -286,6 +335,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -296,6 +347,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/alert-rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -306,6 +359,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/alert-rules/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules/export"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -316,6 +371,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/contact-points"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -326,6 +383,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/contact-points/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points/export"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -336,6 +395,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/mute-timings/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -346,6 +407,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/mute-timings"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -356,6 +419,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/policies"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -366,6 +431,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/policies/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/policies/export"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -376,6 +443,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/templates/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -386,6 +455,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/v1/provisioning/templates"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/templates"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -396,6 +467,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/v1/provisioning/alert-rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/provisioning/alert-rules"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -406,6 +479,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/v1/provisioning/contact-points"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -416,6 +491,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/v1/provisioning/mute-timings"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/provisioning/mute-timings"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -426,6 +503,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Put(
 			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
@@ -436,6 +515,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Put(
 			toMacaronPath("/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
 			metrics.Instrument(
 				http.MethodPut,
@@ -446,6 +527,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Put(
 			toMacaronPath("/api/v1/provisioning/contact-points/{UID}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
@@ -456,6 +539,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Put(
 			toMacaronPath("/api/v1/provisioning/mute-timings/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodPut,
@@ -466,6 +551,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Put(
 			toMacaronPath("/api/v1/provisioning/policies"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodPut,
@@ -476,6 +563,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Put(
 			toMacaronPath("/api/v1/provisioning/templates/{name}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodPut,
@@ -486,6 +575,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/v1/provisioning/policies"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodDelete,

@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Stack } from '@grafana/ui';
 
 interface Props {
   children: React.ReactNode;
@@ -24,7 +23,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     root: css({
       padding: theme.spacing(1, 1, 0, 1),
       backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
     }),
   };
 };

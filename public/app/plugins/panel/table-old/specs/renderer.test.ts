@@ -9,12 +9,12 @@ import { ColumnRender } from '../types';
 
 const utc: TimeZone = 'utc';
 
-const sanitize = (value: any): string => {
+const sanitize = (): string => {
   return 'sanitized';
 };
 
 const templateSrv = {
-  replace: (value: any, scopedVars: ScopedVars) => {
+  replace: (value: string, scopedVars: ScopedVars) => {
     if (scopedVars) {
       // For testing variables replacement in link
       each(scopedVars, (val, key) => {

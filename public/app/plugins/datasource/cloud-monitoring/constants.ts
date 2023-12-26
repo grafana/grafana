@@ -313,4 +313,5 @@ export const QUERY_TYPES = [
   { label: 'Builder', value: QueryType.TIME_SERIES_LIST },
   { label: 'MQL', value: QueryType.TIME_SERIES_QUERY },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
+  { label: 'PromQL', value: QueryType.PROMQL },
 ];

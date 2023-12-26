@@ -25,7 +25,7 @@ export const UpgradeBox = ({
   size = 'md',
   ...htmlProps
 }: Props) => {
-  const styles = useStyles2((theme) => getUpgradeBoxStyles(theme, size));
+  const styles = useStyles2(getUpgradeBoxStyles, size);
 
   useEffect(() => {
     reportExperimentView(`feature-highlights-${featureId}`, 'test', eventVariant);

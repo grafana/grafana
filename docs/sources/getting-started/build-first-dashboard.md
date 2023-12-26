@@ -32,10 +32,10 @@ To sign in to Grafana for the first time:
 
    The default HTTP port that Grafana listens to is `3000` unless you have configured a different port.
 
-1. On the sign-in page, enter `admin` for the username and password.
+1. On the sign-in page, enter `admin` for both the username and password.
 1. Click **Sign in**.
 
-   If successful, you will see a prompt to change the password.
+   If successful, you'll see a prompt to change the password.
 
 1. Click **OK** on the prompt and change your password.
 
@@ -50,14 +50,14 @@ If you've already set up a data source that you know how to query, refer to [Cre
 To create your first dashboard using the built-in `-- Grafana --` data source:
 
 1. Click **Dashboards** in the left-side menu.
-1. On the Dashboards page, click **New** and select **New Dashboard** from the dropdown menu.
+1. On the Dashboards page, click **New** and select **New Dashboard** from the drop-down menu.
 1. On the dashboard, click **+ Add visualization**.
 
-   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-9.5.png)
+   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-1. In the modal that opens, click `-- Grafana --`:
+1. In the dialog box that opens, click `-- Grafana --`:
 
-   {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
+   {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source dialog box" >}}
 
    This configures your [query]({{< relref "../panels-visualizations/query-transform-data#add-a-query" >}}) and generates the Random Walk dashboard.
 
@@ -69,9 +69,11 @@ To create your first dashboard using the built-in `-- Grafana --` data source:
 
    Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
 
-1. Add a descriptive name for the dashboard, and then click **Save**.
+1. Add a descriptive title for the dashboard, and then click **Save**.
 
-Congratulations, you have created your first dashboard and it is displaying results.
+   Alternatively, Grafana can generate a dashboard title and summary for you using the OpenAI integration. Learn more in the [Set up generative AI features for dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards).
+
+Congratulations, you have created your first dashboard and it's displaying results.
 
 #### Next steps
 

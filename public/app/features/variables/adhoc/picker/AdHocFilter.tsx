@@ -12,12 +12,10 @@ import { ConditionSegment } from './ConditionSegment';
 interface Props {
   datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
+  baseFilters?: AdHocVariableFilter[];
   addFilter: (filter: AdHocVariableFilter) => void;
   removeFilter: (index: number) => void;
   changeFilter: (index: number, newFilter: AdHocVariableFilter) => void;
-  // Passes options to the datasources getTagKeys(options?: any) method
-  // which is called to fetch the available filter key options in AdHocFilterKey.tsx
-  getTagKeysOptions?: any;
   disabled?: boolean;
 }
 
@@ -60,11 +58,19 @@ export class AdHocFilter extends PureComponent<Props> {
             datasource={this.props.datasource!}
             appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
             onCompleted={this.appendFilterToVariable}
-            getTagKeysOptions={this.props.getTagKeysOptions}
+            allFilters={this.getAllFilters()}
           />
         )}
       </div>
     );
+  }
+
+  getAllFilters() {
+    if (this.props.baseFilters) {
+      return this.props.baseFilters.concat(this.props.filters);
+    }
+
+    return this.props.filters;
   }
 
   renderFilters(filters: AdHocVariableFilter[], disabled?: boolean) {
@@ -91,7 +97,7 @@ export class AdHocFilter extends PureComponent<Props> {
           onKeyChange={this.onChange(index, 'key')}
           onOperatorChange={this.onChange(index, 'operator')}
           onValueChange={this.onChange(index, 'value')}
-          getTagKeysOptions={this.props.getTagKeysOptions}
+          allFilters={this.getAllFilters()}
         />
       </React.Fragment>
     );

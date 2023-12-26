@@ -100,4 +100,22 @@ describe('FieldCache', () => {
       expect(field!.index).toEqual(2);
     });
   });
+
+  describe('getFirstFieldOfType', () => {
+    let fieldCache: FieldCache;
+    beforeEach(() => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+        ],
+      });
+      fieldCache = new FieldCache(frame);
+    });
+
+    it('should return undefined if type is not present', () => {
+      const field = fieldCache.getFirstFieldOfType(FieldType.string);
+      expect(field).toBeUndefined();
+    });
+  });
 });

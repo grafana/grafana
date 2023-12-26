@@ -7,11 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -19,12 +19,12 @@ import (
 type ImportDashboardAPI struct {
 	dashboardImportService dashboardimport.Service
 	quotaService           QuotaService
-	pluginStore            plugins.Store
+	pluginStore            pluginstore.Store
 	ac                     accesscontrol.AccessControl
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	pluginStore plugins.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
+	pluginStore pluginstore.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,

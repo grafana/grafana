@@ -13,7 +13,6 @@ packages/grafana-data/
 packages/grafana-e2e/
 packages/grafana-e2e-selectors/
 packages/grafana-runtime/
-packages/grafana-toolkit/
 packages/grafana-ui/
 packaging/
 kinds/

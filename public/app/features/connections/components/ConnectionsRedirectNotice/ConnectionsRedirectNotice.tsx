@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
@@ -22,12 +22,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export function ConnectionsRedirectNotice() {
   const styles = useStyles2(getStyles);
+  const [showNotice, setShowNotice] = useState(true);
 
-  return (
-    <Alert severity="warning" title="">
+  return showNotice ? (
+    <Alert severity="info" title="" onRemove={() => setShowNotice(false)}>
       <div className={styles.alertContent}>
         <p className={styles.alertParagraph}>
-          Data sources have a new home! You can discover new data sources or manage existing ones in the new Connections
+          Data sources have a new home! You can discover new data sources or manage existing ones in the Connections
           page, accessible from the main menu.
         </p>
         <LinkButton aria-label="Link to Connections" icon="arrow-right" href={ROUTES.DataSources} fill="text">
@@ -35,5 +36,7 @@ export function ConnectionsRedirectNotice() {
         </LinkButton>
       </div>
     </Alert>
+  ) : (
+    <></>
   );
 }

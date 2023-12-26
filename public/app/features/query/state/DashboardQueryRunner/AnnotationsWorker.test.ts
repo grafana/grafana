@@ -2,7 +2,7 @@ import { Subject, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import { AnnotationQuery } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
@@ -14,6 +14,7 @@ import {
   DashboardQueryRunnerFactoryArgs,
   setDashboardQueryRunnerFactory,
 } from './DashboardQueryRunner';
+import { PublicAnnotationsDataSource } from './PublicAnnotationsDataSource';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult } from './utils';
@@ -80,21 +81,14 @@ function expectOnResults(args: {
   });
 }
 
+jest.mock('./PublicAnnotationsDataSource');
+
 describe('AnnotationsWorker', () => {
   const worker = new AnnotationsWorker();
 
   describe('when canWork is called with correct props', () => {
     it('then it should return true', () => {
       const options = getDefaultOptions();
-
-      expect(worker.canWork(options)).toBe(true);
-    });
-  });
-
-  describe('when canWork is called with correct props for a public dashboard with public view', () => {
-    it('then it should return true', () => {
-      const options = getDefaultOptions();
-      options.dashboard.meta.publicDashboardAccessToken = 'accessTokenString';
 
       expect(worker.canWork(options)).toBe(true);
     });
@@ -302,6 +296,25 @@ describe('AnnotationsWorker', () => {
         const result = received[0];
         expect(result).toEqual({ alertStates: [], annotations: [] });
         expect(executeAnnotationQueryMock).not.toHaveBeenCalled();
+        expect(annotationQueryMock).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('public dashboard scope', () => {
+    test('does not call PublicAnnotationsDataSource when it is not a public dashboard', async () => {
+      const { options, annotationQueryMock } = getTestContext();
+      await expect(worker.work(options)).toEmitValuesWith(() => {
+        expect(PublicAnnotationsDataSource).not.toHaveBeenCalled();
+        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    test('calls PublicAnnotationsDataSource when it is a public dashboard', async () => {
+      config.publicDashboardAccessToken = 'abc123';
+      const { options, annotationQueryMock } = getTestContext(true);
+      await expect(worker.work(options)).toEmitValuesWith(() => {
+        expect(PublicAnnotationsDataSource).toHaveBeenCalledTimes(1);
         expect(annotationQueryMock).not.toHaveBeenCalled();
       });
     });

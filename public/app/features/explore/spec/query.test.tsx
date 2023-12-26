@@ -1,15 +1,16 @@
 import { screen } from '@testing-library/react';
 
-import { serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
-jest.mock('../../correlations/utils', () => {
-  return {
-    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
-  };
-});
+const testEventBus = new EventBusSrv();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => testEventBus,
+}));
 
 describe('Explore: handle running/not running query', () => {
   afterEach(() => {

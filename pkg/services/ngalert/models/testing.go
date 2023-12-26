@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"slices"
+	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -92,6 +96,7 @@ func WithNotEmptyLabels(count int, prefix string) AlertRuleMutator {
 		rule.Labels = GenerateAlertLabels(count, prefix)
 	}
 }
+
 func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
@@ -155,6 +160,18 @@ func WithUniqueOrgID() AlertRuleMutator {
 	}
 }
 
+// WithNamespaceUIDNotIn generates a random namespace UID if it is among excluded
+func WithNamespaceUIDNotIn(exclude ...string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		for {
+			if !slices.Contains(exclude, rule.NamespaceUID) {
+				return
+			}
+			rule.NamespaceUID = uuid.NewString()
+		}
+	}
+}
+
 func WithNamespace(namespace *folder.Folder) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.NamespaceUID = namespace.UID
@@ -176,6 +193,85 @@ func WithTitle(title string) AlertRuleMutator {
 func WithFor(duration time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.For = duration
+	}
+}
+
+func WithForNTimes(timesOfInterval int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.For = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
+	}
+}
+
+func WithNoDataExecAs(nodata NoDataState) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NoDataState = nodata
+	}
+}
+
+func WithErrorExecAs(err ExecutionErrorState) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.ExecErrState = err
+	}
+}
+
+func WithAnnotations(a data.Labels) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Annotations = a
+	}
+}
+
+func WithAnnotation(key, value string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Annotations == nil {
+			rule.Annotations = data.Labels{}
+		}
+		rule.Annotations[key] = value
+	}
+}
+
+func WithLabels(a data.Labels) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Labels = a
+	}
+}
+
+func WithLabel(key, value string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Labels == nil {
+			rule.Labels = data.Labels{}
+		}
+		rule.Labels[key] = value
+	}
+}
+
+func WithUniqueUID(knownUids *sync.Map) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		uid := rule.UID
+		for {
+			_, ok := knownUids.LoadOrStore(uid, struct{}{})
+			if !ok {
+				rule.UID = uid
+				return
+			}
+			uid = uuid.NewString()
+		}
+	}
+}
+
+func WithQuery(query ...AlertQuery) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Data = query
+		if len(query) > 1 {
+			rule.Condition = query[0].RefID
+		}
+	}
+}
+
+func WithGroupKey(groupKey AlertRuleGroupKey) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.RuleGroup = groupKey.RuleGroup
+		rule.OrgID = groupKey.OrgID
+		rule.NamespaceUID = groupKey.NamespaceUID
 	}
 }
 
@@ -350,6 +446,68 @@ func CreateClassicConditionExpression(refID string, inputRefID string, reducer s
                 }
             ]
 		}`, refID, inputRefID, operation, threshold, reducer, expr.DatasourceUID, expr.DatasourceType)),
+	}
+}
+
+func CreateReduceExpression(refID string, inputRefID string, reducer string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.DatasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "hide": false,
+            "type": "reduce",
+			"expression": "%[2]s",
+			"reducer": "%[3]s",
+            "datasource": {
+                "uid": "%[4]s",
+                "type": "%[5]s"
+            }
+		}`, refID, inputRefID, reducer, expr.DatasourceUID, expr.DatasourceType)),
+	}
+}
+
+func CreatePrometheusQuery(refID string, expr string, intervalMs int64, maxDataPoints int64, isInstant bool, datasourceUID string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     "",
+		DatasourceUID: datasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+			"expr": "%[2]s",
+            "intervalMs": %[3]d,
+            "maxDataPoints": %[4]d,
+			"exemplar": false,
+			"instant": %[5]t,
+			"range": %[6]t,
+            "datasource": {
+                "uid": "%[7]s",
+                "type": "%[8]s"
+            }
+		}`, refID, expr, intervalMs, maxDataPoints, isInstant, !isInstant, datasourceUID, datasources.DS_PROMETHEUS)),
+	}
+}
+
+func CreateLokiQuery(refID string, expr string, intervalMs int64, maxDataPoints int64, queryType string, datasourceUID string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     queryType,
+		DatasourceUID: datasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+			"expr": "%[2]s",
+            "intervalMs": %[3]d,
+            "maxDataPoints": %[4]d,
+			"queryType": "%[5]s",
+            "datasource": {
+                "uid": "%[6]s",
+                "type": "%[7]s"
+            }
+		}`, refID, expr, intervalMs, maxDataPoints, queryType, datasourceUID, datasources.DS_LOKI)),
 	}
 }
 

@@ -159,7 +159,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       box-shadow: ${theme.shadows.z3};
       z-index: ${theme.zIndex.dropdown};
       border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       width: 460px;
     `,
     editorForm: css`

@@ -76,7 +76,6 @@
     }
   ],
   "schemaVersion": 26,
-  "style": "dark",
   "tags": ["gdev", "templating"],
   "templating": {
     "list": [

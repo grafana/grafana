@@ -103,7 +103,7 @@ type InternalStreamMessage<T = InternalStreamMessageType> = T extends InternalSt
 const reduceNewValuesSameSchemaMessages = (
   packets: Array<InternalStreamMessage<InternalStreamMessageType.NewValuesSameSchema>>
 ) => ({
-  values: packets.reduce((acc, { values }) => {
+  values: packets.reduce<unknown[][]>((acc, { values }) => {
     for (let i = 0; i < values.length; i++) {
       if (!acc[i]) {
         acc[i] = [];
@@ -113,7 +113,7 @@ const reduceNewValuesSameSchemaMessages = (
       }
     }
     return acc;
-  }, [] as unknown[][]),
+  }, []),
   type: InternalStreamMessageType.NewValuesSameSchema,
 });
 
@@ -149,7 +149,7 @@ export class LiveDataStream<T = unknown> {
     }
   };
 
-  private onError = (err: any) => {
+  private onError = (err: unknown) => {
     console.log('LiveQuery [error]', { err }, this.deps.channelId);
     this.stream.next({
       type: InternalStreamMessageType.Error,
@@ -171,14 +171,14 @@ export class LiveDataStream<T = unknown> {
 
     const liveChannelStatusEvent = isLiveChannelStatusEvent(evt);
     if (liveChannelStatusEvent && evt.error) {
+      const err = toDataQueryError(evt.error);
       this.stream.next({
         type: InternalStreamMessageType.Error,
         error: {
-          ...toDataQueryError(evt.error),
-          message: `Streaming channel error: ${evt.error.message}`,
+          ...err,
+          message: `Streaming channel error: ${err.message}`,
         },
       });
-      return;
     }
 
     if (
@@ -315,9 +315,7 @@ export class LiveDataStream<T = unknown> {
           ? lastMessage.values
           : reduceNewValuesSameSchemaMessages(messages).values;
 
-      const filteredValues = matchingFieldIndexes
-        ? values.filter((v, i) => (matchingFieldIndexes as number[]).includes(i))
-        : values;
+      const filteredValues = matchingFieldIndexes ? values.filter((v, i) => matchingFieldIndexes?.includes(i)) : values;
 
       return {
         key: subKey,

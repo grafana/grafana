@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type CtxVector []interface{}
+type CtxVector []any
 
 type FrontendGrafanaJavascriptAgentEvent struct {
 	Exceptions   []Exception   `json:"exceptions,omitempty"`
@@ -15,14 +15,14 @@ type FrontendGrafanaJavascriptAgentEvent struct {
 }
 
 // KeyValToInterfaceMap converts KeyVal to map[string]interface
-func KeyValToInterfaceMap(kv *KeyVal) map[string]interface{} {
-	retv := make(map[string]interface{})
+func KeyValToInterfaceMap(kv *KeyVal) map[string]any {
+	retv := make(map[string]any)
 	for el := kv.Oldest(); el != nil; el = el.Next() {
 		retv[fmt.Sprint(el.Key)] = el.Value
 	}
 	return retv
 }
-func (event *FrontendGrafanaJavascriptAgentEvent) AddMetaToContext(ctx CtxVector) []interface{} {
+func (event *FrontendGrafanaJavascriptAgentEvent) AddMetaToContext(ctx CtxVector) []any {
 	for k, v := range KeyValToInterfaceMap(event.Meta.KeyVal()) {
 		ctx = append(ctx, k, v)
 	}

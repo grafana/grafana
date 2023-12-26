@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
-import { Button, Field, Form, Modal, Input } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, Field, Form, Modal, Input, Alert } from '@grafana/ui';
 
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
@@ -11,9 +12,10 @@ export interface Props {
   repeat?: string | null;
   onUpdate: OnRowOptionsUpdate;
   onCancel: () => void;
+  warning?: React.ReactNode;
 }
 
-export const RowOptionsForm = ({ repeat, title, onUpdate, onCancel }: Props) => {
+export const RowOptionsForm = ({ repeat, title, warning, onUpdate, onCancel }: Props) => {
   const [newRepeat, setNewRepeat] = useState<string | null | undefined>(repeat);
   const onChangeRepeat = useCallback((name?: string | null) => setNewRepeat(name), [setNewRepeat]);
 
@@ -29,11 +31,20 @@ export const RowOptionsForm = ({ repeat, title, onUpdate, onCancel }: Props) => 
           <Field label="Title">
             <Input {...register('title')} type="text" />
           </Field>
-
           <Field label="Repeat for">
             <RepeatRowSelect repeat={newRepeat} onChange={onChangeRepeat} />
           </Field>
-
+          {warning && (
+            <Alert
+              data-testid={selectors.pages.Dashboard.Rows.Repeated.ConfigSection.warningMessage}
+              severity="warning"
+              title=""
+              topSpacing={3}
+              bottomSpacing={0}
+            >
+              {warning}
+            </Alert>
+          )}
           <Modal.ButtonRow>
             <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
               Cancel

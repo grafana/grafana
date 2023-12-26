@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -152,7 +151,7 @@ func (c *fakePluginClientMetrics) CollectMetrics(ctx context.Context, req *backe
 	metrics, exists := c.store[req.PluginContext.PluginID]
 
 	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	return &backend.CollectMetricsResult{

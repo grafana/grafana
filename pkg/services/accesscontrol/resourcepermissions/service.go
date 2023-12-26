@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -115,17 +116,17 @@ type Service struct {
 	userService user.Service
 }
 
-func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	var inheritedScopes []string
 	if s.options.InheritedScopesSolver != nil {
 		var err error
-		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgID, resourceID)
+		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.GetOrgID(), resourceID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return s.store.GetResourcePermissions(ctx, user.OrgID, GetResourcePermissionsQuery{
+	return s.store.GetResourcePermissions(ctx, user.GetOrgID(), GetResourcePermissionsQuery{
 		User:                 user,
 		Actions:              s.actions,
 		Resource:             s.options.Resource,

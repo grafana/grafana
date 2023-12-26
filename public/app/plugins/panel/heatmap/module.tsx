@@ -30,8 +30,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         path: 'scaleDistribution',
         name: 'Y axis scale',
         category: ['Heatmap'],
-        editor: ScaleDistributionEditor as any,
-        override: ScaleDistributionEditor as any,
+        editor: ScaleDistributionEditor,
+        override: ScaleDistributionEditor,
         defaultValue: { type: ScaleDistribution.Linear },
         shouldApply: (f) => f.type === FieldType.number,
         process: identityOverrideProcessor,
@@ -52,7 +52,15 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         // NOTE: this feels like overkill/expensive just to assert if we have an ordinal y
         // can probably simplify without doing full dataprep
         const palette = quantizeScheme(opts.color, config.theme2);
-        const v = prepareHeatmapData(context.data, undefined, opts, palette, config.theme2);
+        const v = prepareHeatmapData(
+          context.data,
+          undefined,
+          opts,
+          palette,
+          config.theme2,
+          undefined,
+          context.replaceVariables
+        );
         isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
       } catch {}
     }
@@ -398,6 +406,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       showIf: (opts) => opts.tooltip.show,
     });
 
+    builder.addBooleanSwitch({
+      path: 'tooltip.showColorScale',
+      name: 'Show color scale',
+      defaultValue: defaultOptions.tooltip.showColorScale,
+      category,
+      showIf: (opts) => opts.tooltip.show && config.featureToggles.newVizTooltips,
+    });
+
     category = ['Legend'];
     builder.addBooleanSwitch({
       path: 'legend.show',
@@ -414,4 +430,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       category,
     });
   })
-  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());
+  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier())
+  .setDataSupport({ annotations: true });

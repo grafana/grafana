@@ -2,6 +2,7 @@ package dashverimpl
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	dashVerStore := fn(ss)
 
 	t.Run("Get a Dashboard ID and version ID", func(t *testing.T) {
-		savedDash := insertTestDashboard(t, ss, "test dash 26", 1, 0, false, "diff")
+		savedDash := insertTestDashboard(t, ss, "test dash 26", 1, 0, "", false, "diff")
 
 		query := dashver.GetDashboardVersionQuery{
 			DashboardID: savedDash.ID,
@@ -66,9 +67,9 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	t.Run("Clean up old dashboard versions", func(t *testing.T) {
 		versionsToWrite := 10
 		for i := 0; i < versionsToWrite-1; i++ {
-			insertTestDashboard(t, ss, "test dash 53", 1, int64(i), false, "diff-all")
+			insertTestDashboard(t, ss, "test dash 53", 1, int64(i), strconv.Itoa(i), false, "diff-all")
 		}
-		versionIDsToDelete := []interface{}{1, 2, 3, 4}
+		versionIDsToDelete := []any{1, 2, 3, 4}
 		res, err := dashVerStore.DeleteBatch(
 			context.Background(),
 			&dashver.DeleteExpiredVersionsCommand{DeletedRows: 4},
@@ -78,7 +79,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 		assert.EqualValues(t, 4, res)
 	})
 
-	savedDash := insertTestDashboard(t, ss, "test dash 43", 1, 0, false, "diff-all")
+	savedDash := insertTestDashboard(t, ss, "test dash 43", 1, 0, "", false, "diff-all")
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{
 			DashboardID: savedDash.ID,
@@ -101,7 +102,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	})
 
 	t.Run("Get all versions for an updated dashboard", func(t *testing.T) {
-		updateTestDashboard(t, ss, savedDash, map[string]interface{}{
+		updateTestDashboard(t, ss, savedDash, map[string]any{
 			"tags": "different-tag",
 		})
 		query := dashver.ListDashboardVersionsQuery{DashboardID: savedDash.ID, OrgID: 1, Limit: 1000}
@@ -134,13 +135,14 @@ var (
 )
 
 func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
+	folderId int64, folderUID string, isFolder bool, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:    orgId,
-		FolderID: folderId,
-		IsFolder: isFolder,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		OrgID:     orgId,
+		FolderID:  folderId, // nolint:staticcheck
+		FolderUID: folderUID,
+		IsFolder:  isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
@@ -189,7 +191,7 @@ func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64
 	return dash
 }
 
-func updateTestDashboard(t *testing.T, sqlStore db.DB, dashboard *dashboards.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(t *testing.T, sqlStore db.DB, dashboard *dashboards.Dashboard, data map[string]any) {
 	t.Helper()
 
 	data["id"] = dashboard.ID

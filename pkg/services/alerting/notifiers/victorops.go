@@ -113,7 +113,7 @@ func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		messageType = alertStateRecovery
 	}
 
-	fields := make(map[string]interface{})
+	fields := make(map[string]any)
 	fieldLimitCount := 4
 	for index, evt := range evalContext.EvalMatches {
 		fields[evt.Metric] = evt.Value

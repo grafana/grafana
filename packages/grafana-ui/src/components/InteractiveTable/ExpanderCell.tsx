@@ -22,6 +22,7 @@ export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, vo
         aria-expanded={row.isExpanded}
         // @ts-expect-error same as the line above
         {...row.getToggleRowExpandedProps()}
+        size="lg"
       />
     </div>
   );

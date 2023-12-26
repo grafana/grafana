@@ -79,7 +79,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		defer v.lock.Unlock()
 		ti, err := v.kv.GetLastUpdated(context.Background())
 		require.NoError(t, err)
-		require.Less(t, time.Time{}, *ti)
+		require.Less(t, time.Time{}, ti)
 	})
 
 	t.Run("it should remove old keys", func(t *testing.T) {

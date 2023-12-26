@@ -75,15 +75,15 @@ func (_m *MockCommandLine) FlagNames() []string {
 }
 
 // Generic provides a mock function with given fields: name
-func (_m *MockCommandLine) Generic(name string) interface{} {
+func (_m *MockCommandLine) Generic(name string) any {
 	ret := _m.Called(name)
 
-	var r0 interface{}
-	if rf, ok := ret.Get(0).(func(string) interface{}); ok {
+	var r0 any
+	if rf, ok := ret.Get(0).(func(string) any); ok {
 		r0 = rf(name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(interface{})
+			r0 = ret.Get(0).(any)
 		}
 	}
 

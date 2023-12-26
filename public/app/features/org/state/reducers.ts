@@ -4,7 +4,7 @@ import { Organization, OrganizationState, UserOrg } from 'app/types';
 
 export const initialState: OrganizationState = {
   organization: {} as Organization,
-  userOrgs: [] as UserOrg[],
+  userOrgs: [],
 };
 
 const organizationSlice = createSlice({

@@ -9,8 +9,6 @@ import (
 )
 
 var (
-	DefaultFrom    = "now-1h"
-	DefaultTo      = "now"
 	DefaultHeight  = 500
 	DefaultWidth   = 1000
 	DefaultTheme   = models.ThemeDark
@@ -19,25 +17,24 @@ var (
 
 // ScreenshotOptions are the options for taking a screenshot.
 type ScreenshotOptions struct {
+	// OrgID, DashboardUID and PanelID are required.
 	OrgID        int64
 	DashboardUID string
 	PanelID      int64
-	From         string
-	To           string
-	Width        int
-	Height       int
-	Theme        models.Theme
-	Timeout      time.Duration
+
+	// These are optional. From and To must both be set to take effect.
+	// Width, Height, Theme and Timeout inherit their defaults from
+	// DefaultWidth, DefaultHeight, DefaultTheme and DefaultTimeout.
+	From    string
+	To      string
+	Width   int
+	Height  int
+	Theme   models.Theme
+	Timeout time.Duration
 }
 
 // SetDefaults sets default values for missing or invalid options.
 func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
-	if s.From == "" {
-		s.From = DefaultFrom
-	}
-	if s.To == "" {
-		s.To = DefaultTo
-	}
 	if s.Width <= 0 {
 		s.Width = DefaultWidth
 	}

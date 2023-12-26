@@ -4,6 +4,7 @@ import { ModalsContext } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ShareModal } from '../ShareModal';
 
@@ -28,10 +29,11 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
 
   return (
     <DashNavButton
-      tooltip={t('dashboard.toolbar.share', 'Share dashboard or panel')}
+      tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
       icon="share-alt"
       iconSize="lg"
       onClick={() => {
+        DashboardInteractions.toolbarShareClick();
         showModal(ShareModal, {
           dashboard,
           onDismiss: hideModal,

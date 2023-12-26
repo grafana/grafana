@@ -41,6 +41,8 @@ export interface Correlation {
   targetUID: string;
   label?: string;
   description?: string;
+  provisioned: boolean;
+  orgId?: number;
   config: CorrelationConfig;
 }
 
@@ -49,5 +51,5 @@ export type GetCorrelationsParams = {
 };
 
 export type RemoveCorrelationParams = Pick<Correlation, 'sourceUID' | 'uid'>;
-export type CreateCorrelationParams = Omit<Correlation, 'uid'>;
-export type UpdateCorrelationParams = Omit<Correlation, 'targetUID'>;
+export type CreateCorrelationParams = Omit<Correlation, 'uid' | 'provisioned'>;
+export type UpdateCorrelationParams = Omit<Correlation, 'targetUID' | 'provisioned'>;

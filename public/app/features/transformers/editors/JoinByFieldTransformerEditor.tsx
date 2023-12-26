@@ -9,9 +9,11 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
-import { useAllFieldNamesFromDataFrames } from '../utils';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 const modes = [
   {
@@ -24,13 +26,20 @@ const modes = [
     value: JoinMode.outerTabular,
     label: 'OUTER (TABULAR)',
     description:
-      'Join on a field value with dupicated values. Non performant outer join best used for tabular(SQL like) data.',
+      'Join on a field value with duplicated values. Non performant outer join best used for tabular(SQL like) data.',
   },
   { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables.' },
 ];
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
-  const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
+  const names = useFieldDisplayNames(input);
+  const fieldNames = useSelectOptions(names);
+
+  const variables = getTemplateSrv()
+    .getVariables()
+    .map((v) => {
+      return { value: '$' + v.name, label: '$' + v.name };
+    });
 
   const onSelectField = useCallback(
     (value: SelectableValue<string>) => {
@@ -62,7 +71,7 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
       <InlineFieldRow>
         <InlineField label="Field" labelWidth={8} grow>
           <Select
-            options={fieldNames}
+            options={[...fieldNames, ...variables]}
             value={options.byField}
             onChange={onSelectField}
             placeholder="time"
@@ -82,4 +91,5 @@ export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByF
   name: standardTransformers.joinByFieldTransformer.name,
   description: standardTransformers.joinByFieldTransformer.description,
   categories: new Set([TransformerCategory.Combine]),
+  help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
 };

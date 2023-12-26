@@ -19,30 +19,30 @@ weight: 300
 
 # Loki query editor
 
-The Loki data source's query editor helps you create [log]({{< relref "#create-a-log-query" >}}) and [metric]({{< relref "#create-a-metric-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create [log](#create-a-log-query) and [metric](#create-a-metric-query) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data][query-transform-data].
 
 ## Choose a query editing mode
 
 The Loki query editor has two modes:
 
-- [Builder mode]({{< relref "#builder-mode" >}}), which provides a visual query designer.
-- [Code mode]({{< relref "#code-mode" >}}), which provides a feature-rich editor for writing queries.
+- [Builder mode](#builder-mode), which provides a visual query designer.
+- [Code mode](#code-mode), which provides a feature-rich editor for writing queries.
 
 To switch between the editor modes, select the corresponding **Builder** and **Code** tabs.
 
 To run a query, select **Run queries** located at the top of the editor.
 
 {{% admonition type="note" %}}
-To run Loki queries in [Explore]({{< relref "../../../explore/" >}}), select **Run query**.
+To run Loki queries in [Explore][explore], select **Run query**.
 {{% /admonition %}}
 
 Each mode is synchronized, so you can switch between them without losing your work, although there are some limitations. Builder mode doesn't support some complex queries.
 When you switch from Code mode to Builder mode with such a query, the editor displays a warning message that explains how you might lose parts of the query if you continue.
 You can then decide whether you still want to switch to Builder mode.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ## Toolbar elements
 
@@ -129,7 +129,7 @@ In same cases the query editor can detect which operations would be most appropr
 ## Code mode
 
 In **Code mode**, you can write complex queries using a text editor with autocompletion feature, syntax highlighting, and query validation.
-It also contains a [label browser]({{< relref "#label-browser" >}}) to further help you write queries.
+It also contains a [label browser](#label-browser) to further help you write queries.
 
 For more information about Loki's query language, refer to the [Loki documentation](/docs/loki/latest/logql/).
 
@@ -157,7 +157,7 @@ The following options are the same for both **Builder** and **Code** mode:
 ## Create a log query
 
 Loki log queries return the contents of the log lines.
-You can query and display log data from Loki via [Explore]({{< relref "../../../explore" >}}), and with the [Logs panel]({{< relref "../../../panels-visualizations/visualizations/logs" >}}) in dashboards.
+You can query and display log data from Loki via [Explore][explore], and with the [Logs panel][logs] in dashboards.
 
 To display the results of a log query, select the Loki data source, then enter a LogQL query.
 
@@ -175,7 +175,7 @@ To reset filters and use the initial log context query, click the `Revert to ini
 
 ### Tail live logs
 
-Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore" >}}).
+Loki supports live tailing of logs in real-time in [Explore][explore].
 
 Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
 
@@ -241,9 +241,23 @@ For more information about metric queries, refer to the [Loki metric queries doc
 
 ## Apply annotations
 
-[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 You can use any non-metric Loki query as a source for annotations.
 Grafana automatically uses log content as annotation text and your log stream labels as tags.
 You don't need to create any additional mapping.
+
+{{% docs/reference %}}
+[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[logs]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
+[logs]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

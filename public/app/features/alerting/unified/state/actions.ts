@@ -33,7 +33,13 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, withPerformanceLogging } from '../Analytics';
+import {
+  logInfo,
+  LogMessages,
+  withPerformanceLogging,
+  withPromRulesMetadataLogging,
+  withRulerRulesMetadataLogging,
+} from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -115,10 +121,11 @@ export const fetchPromRulesAction = createAsyncThunk(
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-    const fetchRulesWithLogging = withPerformanceLogging(fetchRules, `[${rulesSourceName}] Prometheus rules loaded`, {
-      dataSourceName: rulesSourceName,
-      thunk: 'unifiedalerting/fetchPromRules',
-    });
+    const fetchRulesWithLogging = withPromRulesMetadataLogging(
+      fetchRules,
+      `[${rulesSourceName}] Prometheus rules loaded`,
+      { dataSourceName: rulesSourceName, thunk: 'unifiedalerting/fetchPromRules' }
+    );
 
     return await withSerializedError(
       fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
@@ -155,7 +162,7 @@ export const fetchRulerRulesAction = createAsyncThunk(
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
 
-    const fetchRulerRulesWithLogging = withPerformanceLogging(
+    const fetchRulerRulesWithLogging = withRulerRulesMetadataLogging(
       fetchRulerRules,
       `[${rulesSourceName}] Ruler rules loaded`,
       {
@@ -382,6 +389,8 @@ export function deleteRuleAction(
    * reload ruler rules
    */
   return async (dispatch, getState) => {
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: ruleIdentifier.ruleSourceName }));
+
     withAppEvents(
       (async () => {
         const rulerConfig = getDataSourceRulerConfig(getState, ruleIdentifier.ruleSourceName);
@@ -498,13 +507,12 @@ interface UpdateAlertManagerConfigActionOptions {
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
   redirectSearch?: string; // additional redirect query params
-  refetch?: boolean; // refetch config on success
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
   (
-    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch, refetch },
+    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch },
     thunkAPI
   ): Promise<void> =>
     withAppEvents(
@@ -523,9 +531,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             );
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
-          if (refetch) {
-            thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
-          }
+          thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
           if (redirectPath) {
             const options = new URLSearchParams(redirectSearch ?? '');
             locationService.push(makeAMLink(redirectPath, alertManagerSourceName, options));
@@ -604,7 +610,6 @@ export const deleteReceiverAction = (receiverName: string, alertManagerSourceNam
         oldConfig: config,
         alertManagerSourceName,
         successMessage: 'Contact point deleted.',
-        refetch: true,
       })
     );
   };
@@ -638,7 +643,6 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
         oldConfig: config,
         alertManagerSourceName,
         successMessage: 'Template deleted.',
-        refetch: true,
       })
     );
   };
@@ -707,7 +711,6 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
                 mute_time_intervals: muteIntervals,
               },
             },
-            refetch: true,
           })
         ),
         {

@@ -1,8 +1,7 @@
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { Alert } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Alert, Text } from '@grafana/ui';
 
 import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';

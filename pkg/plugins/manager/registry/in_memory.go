@@ -48,8 +48,8 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 
 	i.mu.Lock()
 	i.store[p.ID] = p
-	if p.Alias != "" {
-		i.alias[p.Alias] = p
+	for _, a := range p.AliasIDs {
+		i.alias[a] = p
 	}
 	i.mu.Unlock()
 
@@ -64,8 +64,10 @@ func (i *InMemory) Remove(_ context.Context, pluginID string) error {
 
 	i.mu.Lock()
 	delete(i.store, pluginID)
-	if p != nil && p.Alias != "" {
-		delete(i.alias, p.Alias)
+	if p != nil {
+		for _, a := range p.AliasIDs {
+			delete(i.alias, a)
+		}
 	}
 	i.mu.Unlock()
 

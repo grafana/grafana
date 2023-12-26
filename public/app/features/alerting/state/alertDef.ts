@@ -63,7 +63,7 @@ const reducerTypes = [
   { text: 'percent_diff()', value: 'percent_diff' },
   { text: 'percent_diff_abs()', value: 'percent_diff_abs' },
   { text: 'count_non_null()', value: 'count_non_null' },
-];
+] as const;
 
 const noDataModes = [
   { text: 'Alerting', value: 'alerting' },

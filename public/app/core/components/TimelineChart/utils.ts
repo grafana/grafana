@@ -23,6 +23,8 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import {
   VizLegendOptions,
   AxisPlacement,
@@ -40,8 +42,6 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
@@ -182,7 +182,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
-  builder.addHook('setCursor', coreConfig.setCursor);
 
   // in TooltipPlugin, this gets invoked and the result is bound to a setCursor hook
   // which fires after the above setCursor hook, so can take advantage of hoveringOver
@@ -525,9 +524,10 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   }
 
   const steps = thresholds.steps;
-  const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+  const getDisplay = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
 
-  const fmt = (v: number) => formattedValueToString(disp(v));
+  // `undefined` value for decimals will use `auto`
+  const format = (value: number) => formattedValueToString(getDisplay(value, fieldConfig.decimals ?? undefined));
 
   for (let i = 0; i < steps.length; i++) {
     let step = steps[i];
@@ -543,7 +543,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
     }
 
     items.push({
-      label: `${pre}${fmt(value)}${suf}`,
+      label: `${pre}${format(value)}${suf}`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });

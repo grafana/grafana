@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -21,24 +22,16 @@ func newServiceListener(logger log.Logger, s *service) *serviceListener {
 }
 
 func (l *serviceListener) Healthy() {
-	l.log.Info("All modules healthy", "modules", l.moduleNames())
+	l.log.Info("All modules healthy")
 }
 
 func (l *serviceListener) Stopped() {
-	l.log.Info("All modules stopped", "modules", l.moduleNames())
-}
-
-func (l *serviceListener) moduleNames() []string {
-	var ms []string
-	for m := range l.service.serviceMap {
-		ms = append(ms, m)
-	}
-	return ms
+	l.log.Info("All modules stopped")
 }
 
 func (l *serviceListener) Failure(service services.Service) {
 	// if any service fails, stop all services
-	if err := l.service.Shutdown(context.Background()); err != nil {
+	if err := l.service.Shutdown(context.Background(), service.FailureCase().Error()); err != nil {
 		l.log.Error("Failed to stop all modules", "err", err)
 	}
 

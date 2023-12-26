@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: theme.shadows.z3,
       maxWidth: '600px',
       padding: theme.spacing(1),
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       zIndex: theme.zIndex.tooltip,
     }),
     docBoxHeader: css({

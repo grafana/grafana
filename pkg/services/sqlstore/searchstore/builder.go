@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -13,16 +15,17 @@ import (
 type Builder struct {
 	// List of FilterWhere/FilterGroupBy/FilterOrderBy/FilterLeftJoin
 	// to modify the query.
-	Filters []interface{}
-	Dialect migrator.Dialect
+	Filters  []any
+	Dialect  migrator.Dialect
+	Features featuremgmt.FeatureToggles
 
-	params []interface{}
+	params []any
 	sql    bytes.Buffer
 }
 
 // ToSQL builds the SQL query and returns it as a string, together with the SQL parameters.
-func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
-	b.params = make([]interface{}, 0)
+func (b *Builder) ToSQL(limit, page int64) (string, []any) {
+	b.params = make([]any, 0)
 	b.sql = bytes.Buffer{}
 
 	b.buildSelect()
@@ -34,9 +37,15 @@ func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
 		INNER JOIN dashboard ON ids.id = dashboard.id`)
 	b.sql.WriteString("\n")
 
-	b.sql.WriteString(
-		`LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
-		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
+	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
+		b.sql.WriteString(
+			`LEFT OUTER JOIN folder ON folder.uid = dashboard.folder_uid AND folder.org_id = dashboard.org_id`)
+	} else {
+		b.sql.WriteString(`
+		LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id`)
+	}
+	b.sql.WriteString(`
+	LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
 	b.sql.WriteString("\n")
 	b.sql.WriteString(orderQuery)
 
@@ -45,7 +54,7 @@ func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
 
 func (b *Builder) buildSelect() {
 	var recQuery string
-	var recQueryParams []interface{}
+	var recQueryParams []any
 
 	b.sql.WriteString(
 		`SELECT
@@ -57,15 +66,23 @@ func (b *Builder) buildSelect() {
 			dashboard.is_folder,
 			dashboard.folder_id,
 			folder.uid AS folder_uid,
-			folder.slug AS folder_slug,
+		`)
+	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
+		b.sql.WriteString(`
+			folder.title AS folder_slug,`)
+	} else {
+		b.sql.WriteString(`
+			folder.slug AS folder_slug,`)
+	}
+	b.sql.WriteString(`
 			folder.title AS folder_title `)
 
 	for _, f := range b.Filters {
-		if f, ok := f.(FilterSelect); ok {
+		if f, ok := f.(model.FilterSelect); ok {
 			b.sql.WriteString(fmt.Sprintf(", %s", f.Select()))
 		}
 
-		if f, ok := f.(FilterWith); ok {
+		if f, ok := f.(model.FilterWith); ok {
 			recQuery, recQueryParams = f.With()
 		}
 	}
@@ -90,19 +107,22 @@ func (b *Builder) applyFilters() (ordering string) {
 	orderJoins := []string{}
 
 	wheres := []string{}
-	whereParams := []interface{}{}
+	whereParams := []any{}
 
 	groups := []string{}
-	groupParams := []interface{}{}
+	groupParams := []any{}
 
 	orders := []string{}
 
 	for _, f := range b.Filters {
-		if f, ok := f.(FilterLeftJoin); ok {
-			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
+		if f, ok := f.(model.FilterLeftJoin); ok {
+			s := f.LeftJoin()
+			if s != "" {
+				joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", s))
+			}
 		}
 
-		if f, ok := f.(FilterWhere); ok {
+		if f, ok := f.(model.FilterWhere); ok {
 			sql, params := f.Where()
 			if sql != "" {
 				wheres = append(wheres, sql)
@@ -110,7 +130,7 @@ func (b *Builder) applyFilters() (ordering string) {
 			}
 		}
 
-		if f, ok := f.(FilterGroupBy); ok {
+		if f, ok := f.(model.FilterGroupBy); ok {
 			sql, params := f.GroupBy()
 			if sql != "" {
 				groups = append(groups, sql)
@@ -118,8 +138,8 @@ func (b *Builder) applyFilters() (ordering string) {
 			}
 		}
 
-		if f, ok := f.(FilterOrderBy); ok {
-			if f, ok := f.(FilterLeftJoin); ok {
+		if f, ok := f.(model.FilterOrderBy); ok {
+			if f, ok := f.(model.FilterLeftJoin); ok {
 				orderJoins = append(orderJoins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
 			}
 			orders = append(orders, f.OrderBy())

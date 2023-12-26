@@ -132,6 +132,7 @@ describe('processNodes', () => {
         { name: 'SUBTITLE', type: FieldType.string, values: ['subTitle'] },
         { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
         { name: 'seconDarysTat', type: FieldType.string, values: ['secondaryStat'] },
+        { name: 'nodeRadius', type: FieldType.number, values: [20] },
       ],
     });
 
@@ -293,6 +294,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
     ],
     color: colorField,
     dataFrameRowIndex: 0,
+    highlighted: false,
     id: '0',
     incoming: 0,
     mainStat: {
@@ -312,6 +314,13 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
     subTitle: 'service',
     title: 'service:0',
     icon: 'database',
+    nodeRadius: {
+      config: {},
+      index: 9,
+      name: 'noderadius',
+      type: 'number',
+      values: [40, 40, 40],
+    },
     ...options,
   };
 }
@@ -324,6 +333,10 @@ function makeEdgeDatum(id: string, index: number, mainStat = '', secondaryStat =
     secondaryStat,
     source: id.split('--')[0],
     target: id.split('--')[1],
+    sourceNodeRadius: 40,
+    targetNodeRadius: 40,
+    highlighted: false,
+    thickness: 1,
   };
 }
 
@@ -336,5 +349,6 @@ function makeNodeFromEdgeDatum(options: Partial<NodeDatum> = {}): NodeDatum {
     subTitle: '',
     title: 'service:0',
     ...options,
+    highlighted: false,
   };
 }

@@ -7,8 +7,48 @@
     { "type": "dashboard", "name": "Azure / Alert Consumption", "path": "dashboards/v1Alerts.json" },
     {
       "type": "dashboard",
+      "name": "Azure / Infrastructure / Infrastructure Monitoring",
+      "path": "dashboards/infrastructureMonitoring.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Azure PostgreSQL / Flexible Server Monitoring",
+      "path": "dashboards/postgresFlexibleServer.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure Monitor / Container Insights / Syslog",
+      "path": "dashboards/containerInsightsSyslog.json"
+    },
+    {
+      "type": "dashboard",
       "name": "Azure / Insights / Applications",
       "path": "dashboards/appInsights.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Performance / Operations",
+      "path": "dashboards/appInsightsPerfOperations.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Performance / Dependencies",
+      "path": "dashboards/appInsightsPerfDependencies.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Failures / Operations",
+      "path": "dashboards/appInsightsFailureOperations.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Failures / Dependencies",
+      "path": "dashboards/appInsightsFailureDependencies.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Failures / Exceptions",
+      "path": "dashboards/appInsightsFailureExceptions.json"
     },
     {
       "type": "dashboard",
@@ -69,5 +109,6 @@
   "metrics": true,
   "annotations": true,
   "alerting": true,
-  "backend": true
+  "backend": true,
+  "logs": true
 }

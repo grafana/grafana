@@ -7,11 +7,11 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type ChannelLocalPublisher struct {
@@ -72,9 +72,9 @@ func NewContextGetter(pluginContextProvider *plugincontext.Provider, dataSourceC
 	}
 }
 
-func (g *ContextGetter) GetPluginContext(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error) {
+func (g *ContextGetter) GetPluginContext(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error) {
 	if datasourceUID == "" {
-		return g.pluginContextProvider.Get(ctx, pluginID, user, user.OrgID)
+		return g.pluginContextProvider.Get(ctx, pluginID, user, user.GetOrgID())
 	}
 
 	ds, err := g.dataSourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)

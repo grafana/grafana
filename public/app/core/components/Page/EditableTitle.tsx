@@ -3,8 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { Field, IconButton, Input, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
 
 export interface Props {
   value: string;

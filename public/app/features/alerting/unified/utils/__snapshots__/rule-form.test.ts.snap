@@ -59,3 +59,73 @@ exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range 
   },
 }
 `;
+
+exports[`formValuesToRulerGrafanaRuleDTO should not set keep_firing_for if values are undefined 1`] = `
+{
+  "alert": "",
+  "annotations": {
+    "description": "",
+    "runbook_url": "",
+    "summary": "",
+  },
+  "expr": "",
+  "for": "1m",
+  "keep_firing_for": undefined,
+  "labels": {
+    "": "",
+  },
+}
+`;
+
+exports[`formValuesToRulerGrafanaRuleDTO should parse keep_firing_for 1`] = `
+{
+  "annotations": [],
+  "expression": "B",
+  "forTime": 1,
+  "forTimeUnit": "m",
+  "keepFiringForTime": 1,
+  "keepFiringForTimeUnit": "m",
+  "labels": [
+    {
+      "key": "",
+      "value": "",
+    },
+  ],
+  "name": "A",
+}
+`;
+
+exports[`formValuesToRulerGrafanaRuleDTO should set keep_firing_for if values are populated 1`] = `
+{
+  "alert": "",
+  "annotations": {
+    "description": "",
+    "runbook_url": "",
+    "summary": "",
+  },
+  "expr": "",
+  "for": "1m",
+  "keep_firing_for": "1m",
+  "labels": {
+    "": "",
+  },
+}
+`;
+
+exports[`formValuesToRulerGrafanaRuleDTO should set keepFiringForTime and keepFiringForTimeUnit to undefined if keep_firing_for not set 1`] = `
+{
+  "annotations": [],
+  "expression": "B",
+  "forTime": 1,
+  "forTimeUnit": "m",
+  "keepFiringForTime": undefined,
+  "keepFiringForTimeUnit": undefined,
+  "labels": [
+    {
+      "key": "",
+      "value": "",
+    },
+  ],
+  "name": "A",
+}
+`;

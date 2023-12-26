@@ -29,7 +29,7 @@ type notificationFromConfig struct {
 	DisableResolveMessage bool
 	Frequency             string
 	IsDefault             bool
-	Settings              map[string]interface{}
+	Settings              map[string]any
 	SecureSettings        map[string]string
 }
 

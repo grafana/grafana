@@ -12,13 +12,13 @@ import (
 )
 
 func (sloQ *cloudMonitoringSLO) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
 	return runTimeSeriesRequest(ctx, sloQ.logger, req, s, dsInfo, tracer, sloQ.parameters.ProjectName, sloQ.params, nil)
 }
 
 func (sloQ *cloudMonitoringSLO) parseResponse(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, executedQueryString string) error {
-	return parseTimeSeriesResponse(queryRes, response, executedQueryString, sloQ, sloQ.params, []string{})
+	response any, executedQueryString string) error {
+	return parseTimeSeriesResponse(queryRes, response.(cloudMonitoringResponse), executedQueryString, sloQ, sloQ.params, []string{})
 }
 
 func (sloQ *cloudMonitoringSLO) buildDeepLink() string {
@@ -52,7 +52,7 @@ func (sloQ *cloudMonitoringSLO) getFilter() string {
 	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", sloQ.parameters.ProjectName, sloQ.parameters.ServiceId, sloQ.parameters.SloId)
 
 	if sloQ.parameters.SelectorName == "select_slo_burn_rate" {
-		return fmt.Sprintf(`%s("%s", "%s")`, sloQ.parameters.SelectorName, sloName, sloQ.parameters.LookbackPeriod)
+		return fmt.Sprintf(`%s("%s", "%s")`, sloQ.parameters.SelectorName, sloName, *sloQ.parameters.LookbackPeriod)
 	} else {
 		return fmt.Sprintf(`%s("%s")`, sloQ.parameters.SelectorName, sloName)
 	}
@@ -65,7 +65,7 @@ func (sloQ *cloudMonitoringSLO) setParams(startTime time.Time, endTime time.Time
 	params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 
 	params.Add("filter", sloQ.getFilter())
-	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(sloQ.parameters.AlignmentPeriod, intervalMs, durationSeconds))
+	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(*sloQ.parameters.AlignmentPeriod, intervalMs, durationSeconds))
 	if sloQ.parameters.SelectorName == "select_slo_health" {
 		params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
 	} else {

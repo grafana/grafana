@@ -32,7 +32,7 @@ class PanelPluginError extends PureComponent<Props> {
   }
 }
 
-export function getPanelPluginLoadError(meta: PanelPluginMeta, err: any): PanelPlugin {
+export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): PanelPlugin {
   const LoadError = class LoadError extends PureComponent<PanelProps> {
     render() {
       const text = (

@@ -1,7 +1,7 @@
 import { uniq } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';
 import { Field } from '@grafana/ui';
 
@@ -11,7 +11,7 @@ import { makeRenderItem } from './Filter';
 import { tablesSchema } from './consts';
 import { setFilters } from './setQueryValue';
 
-const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: AzureQueryEditorFieldProps) => {
+const Filters = ({ query, datasource, onQueryChange, variableOptionGroup, range }: AzureQueryEditorFieldProps) => {
   const { azureTraces } = query;
   const queryTraceTypes = azureTraces?.traceTypes ? azureTraces.traceTypes : Object.keys(tablesSchema);
 
@@ -34,23 +34,9 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: Azur
   const queryFilters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
   const [filters, updateFilters] = useState(queryFilters);
 
-  const timeSrv = datasource.azureLogAnalyticsDatasource.timeSrv;
-  const [timeRange, setTimeRange] = useState(timeSrv.timeRange());
-
-  const useTime = (time: TimeRange) => {
-    if (
-      timeRange !== null &&
-      (timeRange.raw.from.toString() !== time.raw.from.toString() ||
-        timeRange.raw.to.toString() !== time.raw.to.toString())
-    ) {
-      setTimeRange({ ...time });
-    }
-  };
-  useTime(timeSrv.timeRange());
-
   useEffect(() => {
     setPropertyMap(new Map<string, Array<SelectableValue<string>>>());
-  }, [timeRange, query.azureTraces?.resources, query.azureTraces?.traceTypes, query.azureTraces?.operationId]);
+  }, [query.azureTraces?.resources, query.azureTraces?.traceTypes, query.azureTraces?.operationId]);
 
   const changedFunc = (changed: Array<Partial<AzureTracesFilter>>) => {
     let updateQuery = false;
@@ -82,10 +68,10 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: Azur
           datasource,
           propertyMap,
           setPropertyMap,
-          timeRange,
           queryTraceTypes,
           properties,
           variableOptionGroup,
+          range,
         })}
       />
     </Field>

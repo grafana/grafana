@@ -225,11 +225,11 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
 
       for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
         const frame = frames[frameIndex];
-        const xIndex = findFieldIndex(frame, series.x);
+        const xIndex = findFieldIndex(series.x, frame, frames);
 
         if (xIndex != null) {
           // TODO: this should find multiple y fields
-          const yIndex = findFieldIndex(frame, series.y);
+          const yIndex = findFieldIndex(series.y, frame, frames);
 
           if (yIndex == null) {
             throw 'Y must be in the same frame as X';
@@ -237,9 +237,9 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
 
           const dims: Dims = {
             pointColorFixed: series.pointColor?.fixed,
-            pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
+            pointColorIndex: findFieldIndex(series.pointColor?.field, frame, frames),
             pointSizeConfig: series.pointSize,
-            pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
+            pointSizeIndex: findFieldIndex(series.pointSize?.field, frame, frames),
           };
           scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
         }
@@ -255,7 +255,7 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
   const frame = frames[frameIndex];
   const numericIndices: number[] = [];
 
-  let xIndex = findFieldIndex(frame, dims.x);
+  let xIndex = findFieldIndex(dims.x, frame, frames);
   for (let i = 0; i < frame.fields.length; i++) {
     if (isGraphable(frame.fields[i])) {
       if (xIndex == null || i === xIndex) {
@@ -393,6 +393,9 @@ const prepConfig = (
               }
 
               if (showPoints) {
+                // if pointHints.fixed? don't recalc size
+                // if pointColor has 0 opacity, draw as single path (assuming all strokes are alpha 1)
+
                 u.ctx.moveTo(cx + size / 2, cy);
                 u.ctx.beginPath();
                 u.ctx.arc(cx, cy, size / 2, 0, deg360);
@@ -622,6 +625,8 @@ const prepConfig = (
     scaleKey: 'x',
     placement: customConfig?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
     show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
+    grid: { show: customConfig?.axisGridShow },
+    border: { show: customConfig?.axisBorderShow },
     theme,
     label:
       xAxisLabel == null || xAxisLabel === ''
@@ -659,21 +664,23 @@ const prepConfig = (
       decimals: config.decimals,
     });
 
-    if (customConfig?.axisPlacement !== AxisPlacement.Hidden) {
-      // why does this fall back to '' instead of null or undef?
-      let yAxisLabel = customConfig?.axisLabel;
+    // why does this fall back to '' instead of null or undef?
+    let yAxisLabel = customConfig?.axisLabel;
 
-      builder.addAxis({
-        scaleKey,
-        theme,
-        placement: customConfig?.axisPlacement,
-        label:
-          yAxisLabel == null || yAxisLabel === ''
-            ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
-            : yAxisLabel,
-        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
-      });
-    }
+    builder.addAxis({
+      scaleKey,
+      theme,
+      placement: customConfig?.axisPlacement === AxisPlacement.Auto ? AxisPlacement.Left : customConfig?.axisPlacement,
+      show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
+      grid: { show: customConfig?.axisGridShow },
+      border: { show: customConfig?.axisBorderShow },
+      size: customConfig?.axisWidth,
+      label:
+        yAxisLabel == null || yAxisLabel === ''
+          ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
+          : yAxisLabel,
+      formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
+    });
 
     builder.addSeries({
       facets: [
@@ -689,7 +696,7 @@ const prepConfig = (
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
       scaleKey: '', // facets' scales used (above)
-      lineColor: lineColor as string,
+      lineColor: alpha('' + lineColor, 1),
       fillColor: alpha(pointColor, 0.5),
       show: !customConfig.hideFrom?.viz,
     });

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 type fakePluginInstaller struct {
@@ -34,12 +35,12 @@ func (pm *fakePluginInstaller) Remove(_ context.Context, pluginID string) error 
 	return nil
 }
 
-type fakeRendererManager struct {
-	plugins.RendererManager
+type fakeRendererPluginManager struct {
+	rendering.PluginManager
 }
 
-func (ps *fakeRendererManager) Renderer(_ context.Context) *plugins.Plugin {
-	return nil
+func (ps *fakeRendererPluginManager) Renderer(_ context.Context) (rendering.Plugin, bool) {
+	return nil, false
 }
 
 type fakePluginStaticRouteResolver struct {
@@ -48,6 +49,6 @@ type fakePluginStaticRouteResolver struct {
 	routes []*plugins.StaticRoute
 }
 
-func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.StaticRoute {
+func (psrr *fakePluginStaticRouteResolver) Routes(_ context.Context) []*plugins.StaticRoute {
 	return psrr.routes
 }

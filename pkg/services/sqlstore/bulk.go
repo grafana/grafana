@@ -27,9 +27,9 @@ func normalizeBulkSettings(s BulkOpSettings) BulkOpSettings {
 	return s
 }
 
-func (sess *DBSession) BulkInsert(table interface{}, recordsSlice interface{}, opts BulkOpSettings) (int64, error) {
+func (sess *DBSession) BulkInsert(table any, recordsSlice any, opts BulkOpSettings) (int64, error) {
 	var inserted int64
-	err := InBatches(recordsSlice, opts, func(batch interface{}) error {
+	err := InBatches(recordsSlice, opts, func(batch any) error {
 		a, err := sess.Table(table).InsertMulti(batch)
 		inserted += a
 		return err
@@ -37,7 +37,7 @@ func (sess *DBSession) BulkInsert(table interface{}, recordsSlice interface{}, o
 	return inserted, err
 }
 
-func InBatches(items interface{}, opts BulkOpSettings, fn func(batch interface{}) error) error {
+func InBatches(items any, opts BulkOpSettings, fn func(batch any) error) error {
 	opts = normalizeBulkSettings(opts)
 	slice := reflect.Indirect(reflect.ValueOf(items))
 	if slice.Kind() != reflect.Slice {

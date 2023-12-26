@@ -53,7 +53,7 @@ export const ItemValues = ({
   values: RawListValue[];
   hideFieldsWithoutValues: boolean;
 }) => {
-  const styles = useStyles2((theme) => getStyles(theme, totalNumberOfValues));
+  const styles = useStyles2(getStyles, totalNumberOfValues);
   return (
     <div role={'cell'} className={styles.rowValuesWrap}>
       {values?.map((value) => {

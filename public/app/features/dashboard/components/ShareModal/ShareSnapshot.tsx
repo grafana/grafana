@@ -1,13 +1,15 @@
 import React, { PureComponent } from 'react';
 
 import { isEmptyObject, SelectableValue } from '@grafana/data';
-import { getBackendSrv, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { VariableRefresh } from '../../../variables/types';
+import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
 
@@ -68,15 +70,14 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    reportInteraction('grafana_dashboards_snapshot_share_viewed');
     this.getSnaphotShareOptions();
   }
 
   async getSnaphotShareOptions() {
-    const shareOptions = await getBackendSrv().get('/api/snapshot/shared-options');
+    const shareOptions = await getDashboardSnapshotSrv().getSharingOptions();
     this.setState({
-      sharingButtonText: shareOptions['externalSnapshotName'],
-      externalEnabled: shareOptions['externalEnabled'],
+      sharingButtonText: shareOptions.externalSnapshotName,
+      externalEnabled: shareOptions.externalEnabled,
     });
   }
 
@@ -95,8 +96,9 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   };
 
   saveSnapshot = async (dashboard: DashboardModel, external?: boolean) => {
-    const { snapshotExpires } = this.state;
-    const dash = this.dashboard.getSaveModelClone();
+    const { snapshotExpires, timeoutSeconds } = this.state;
+    const dash = this.dashboard.getSaveModelCloneOld();
+
     this.scrubDashboard(dash);
 
     const cmdData = {
@@ -114,9 +116,17 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         step: 2,
       });
     } finally {
-      reportInteraction('grafana_dashboards_snapshot_created', {
-        location: external ? 'raintank' : 'local',
-      });
+      if (external) {
+        DashboardInteractions.publishSnapshotClicked({
+          expires: snapshotExpires,
+          timeout: timeoutSeconds,
+        });
+      } else {
+        DashboardInteractions.publishSnapshotLocalClicked({
+          expires: snapshotExpires,
+          timeout: timeoutSeconds,
+        });
+      }
       this.setState({ isLoading: false });
     }
   };
@@ -142,6 +152,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
     // remove annotation queries
     const annotations = dash.annotations.list.filter((annotation) => annotation.enable);
+
     dash.annotations.list = annotations.map((annotation) => {
       return {
         name: annotation.name,

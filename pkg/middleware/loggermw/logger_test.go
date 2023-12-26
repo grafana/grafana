@@ -59,7 +59,7 @@ func Test_prepareLog(t *testing.T) {
 		RouterLogging bool
 	}
 
-	grafanaFlavoredErr := errutil.NewBase(errutil.StatusNotFound, "test.notFound").Errorf("got error")
+	grafanaFlavoredErr := errutil.NotFound("test.notFound").Errorf("got error")
 
 	tests := []struct {
 		name     string

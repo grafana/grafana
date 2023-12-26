@@ -12,8 +12,6 @@ func TestScreenshotOptions(t *testing.T) {
 
 	o = o.SetDefaults()
 	assert.Equal(t, ScreenshotOptions{
-		From:    DefaultFrom,
-		To:      DefaultTo,
 		Width:   DefaultWidth,
 		Height:  DefaultHeight,
 		Theme:   DefaultTheme,
@@ -24,7 +22,6 @@ func TestScreenshotOptions(t *testing.T) {
 	o = o.SetDefaults()
 	assert.Equal(t, ScreenshotOptions{
 		From:    "now-6h",
-		To:      DefaultTo,
 		Width:   DefaultWidth,
 		Height:  DefaultHeight,
 		Theme:   DefaultTheme,
@@ -91,13 +88,13 @@ func TestScreenshotOptions_Hash(t *testing.T) {
 	assert.Equal(t, []byte{0xd7, 0xf3, 0x56, 0x7f, 0xec, 0x7b, 0xdf, 0x95}, o.Hash())
 
 	o = o.SetDefaults()
-	assert.Equal(t, []byte{0x13, 0x59, 0xa3, 0x88, 0x6a, 0xdd, 0x26, 0x3}, o.Hash())
+	assert.Equal(t, []byte{0x71, 0x54, 0xe8, 0xea, 0x2, 0xf4, 0xd6, 0xd3}, o.Hash())
 
 	o.OrgID = 1
-	assert.Equal(t, []byte{0xd8, 0xfb, 0xf2, 0x7, 0x87, 0x92, 0x57, 0x28}, o.Hash())
+	assert.Equal(t, []byte{0x8, 0x75, 0x48, 0x46, 0x88, 0xa9, 0xf3, 0xe6}, o.Hash())
 
 	o.From = "now-6h"
-	assert.Equal(t, []byte{0x52, 0x3f, 0x86, 0xe3, 0x59, 0x1a, 0x7f, 0xfd}, o.Hash())
+	assert.Equal(t, []byte{0xfc, 0xd9, 0xe5, 0xa4, 0x32, 0xde, 0x33, 0x8b}, o.Hash())
 
 	o.To = "now-2h"
 	assert.Equal(t, []byte{0x8b, 0x78, 0xf4, 0xe7, 0xaa, 0x6, 0xba, 0xde}, o.Hash())

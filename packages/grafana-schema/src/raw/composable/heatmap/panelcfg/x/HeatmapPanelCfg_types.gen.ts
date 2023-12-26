@@ -11,7 +11,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "10.2.0-pre";
+export const pluginVersion = "10.3.0-pre";
 
 /**
  * Controls the color mode of the heatmap
@@ -133,6 +133,10 @@ export interface HeatmapTooltip {
    * Controls if the tooltip is shown
    */
   show: boolean;
+  /**
+   * Controls if the tooltip shows a color scale in header
+   */
+  showColorScale?: boolean;
   /**
    * Controls if the tooltip shows a histogram of the y-axis values
    */
@@ -264,6 +268,7 @@ export const defaultOptions: Partial<Options> = {
   tooltip: {
     show: true,
     yHistogram: false,
+    showColorScale: false,
   },
 };
 

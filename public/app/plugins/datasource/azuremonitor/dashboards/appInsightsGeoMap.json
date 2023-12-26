@@ -731,7 +731,6 @@
     }
   ],
   "schemaVersion": 36,
-  "style": "dark",
   "tags": [],
   "templating": {
     "list": [
@@ -792,14 +791,12 @@
         "name": "rg",
         "options": [],
         "query": {
-          "grafanaTemplateVariableFn": {
-            "kind": "ResourceGroupsQuery",
-            "rawQuery": "ResourceGroups($sub)",
-            "subscription": "$sub"
+          "azureResourceGraph": {
+            "query": "resources\r\n|  where [\"type\"] =~ \"Microsoft.Insights/components\"\r\n| distinct resourceGroup"
           },
-          "queryType": "Grafana Template Variable Function",
+          "queryType": "Azure Resource Graph",
           "refId": "A",
-          "subscription": ""
+          "subscriptions": ["$sub"]
         },
         "refresh": 1,
         "regex": "",
@@ -821,18 +818,15 @@
         "name": "ns",
         "options": [],
         "query": {
-          "grafanaTemplateVariableFn": {
-            "kind": "MetricNamespaceQuery",
-            "rawQuery": "Namespaces($sub, $rg)",
-            "resourceGroup": "$rg",
-            "subscription": "$sub"
+          "azureResourceGraph": {
+            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.Insights/components\" and resourceGroup =~ \"$rg\"\r\n| distinct [\"type\"]"
           },
-          "queryType": "Grafana Template Variable Function",
+          "queryType": "Azure Resource Graph",
           "refId": "A",
-          "subscription": ""
+          "subscriptions": ["$sub"]
         },
         "refresh": 1,
-        "regex": "([mM](icrosoft)\\.[iI](nsights)/(components))",
+        "regex": "",
         "skipUrlSync": false,
         "sort": 5,
         "type": "query"
@@ -851,16 +845,11 @@
         "name": "res",
         "options": [],
         "query": {
-          "grafanaTemplateVariableFn": {
-            "kind": "ResourceNamesQuery",
-            "metricDefinition": "$ns",
-            "rawQuery": "ResourceNames($sub, $rg, $ns)",
-            "resourceGroup": "$rg",
-            "subscription": "$sub"
-          },
-          "queryType": "Grafana Template Variable Function",
+          "namespace": "$ns",
+          "queryType": "Azure Resource Names",
           "refId": "A",
-          "subscription": ""
+          "resourceGroup": "$rg",
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",

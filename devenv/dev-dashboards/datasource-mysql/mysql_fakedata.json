@@ -391,7 +391,6 @@
   ],
   "refresh": false,
   "schemaVersion": 21,
-  "style": "dark",
   "tags": ["gdev", "mysql", "datasource-tags"],
   "templating": {
     "list": [

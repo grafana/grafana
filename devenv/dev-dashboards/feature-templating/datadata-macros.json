@@ -820,8 +820,7 @@
     ],
     "refresh": "",
     "schemaVersion": 38,
-    "style": "dark",
-    "tags": ["gdev", "templating"],
+      "tags": ["gdev", "templating"],
     "templating": {
       "list": [
         {

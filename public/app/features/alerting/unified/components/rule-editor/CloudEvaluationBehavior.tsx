@@ -24,13 +24,8 @@ export const CloudEvaluationBehavior = () => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  // cloud recording rules do not have alert conditions
-  if (type === RuleFormType.cloudRecording) {
-    return null;
-  }
-
   return (
-    <RuleEditorSection stepNo={3} title="Set alert evaluation behavior">
+    <RuleEditorSection stepNo={3} title="Set evaluation behavior">
       <Field
         label="Pending period"
         description="Period in which an alert rule can be in breach of the condition until the alert rule fires."

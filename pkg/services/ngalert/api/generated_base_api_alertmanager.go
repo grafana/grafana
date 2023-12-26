@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -195,6 +196,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silences"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/alertmanager/grafana/api/v2/silences"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -205,6 +208,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/api/v2/silences"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/alertmanager/{DatasourceUID}/api/v2/silences"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -215,6 +220,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/config/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -225,6 +232,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/alertmanager/grafana/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -235,6 +244,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -245,6 +256,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -255,6 +268,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/api/v2/alerts/groups"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/{DatasourceUID}/api/v2/alerts/groups"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -265,6 +280,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/api/v2/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/{DatasourceUID}/api/v2/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -275,6 +292,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/api/v2/status"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/{DatasourceUID}/api/v2/status"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -285,6 +304,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/config/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -295,6 +316,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/alerts/groups"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/alerts/groups"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -305,6 +328,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -315,6 +340,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/status"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/status"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -325,6 +352,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -335,6 +364,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/config/history"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/history"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -345,6 +376,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/receivers"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/api/v1/receivers"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -355,6 +388,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -365,6 +400,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silences"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/silences"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -375,6 +412,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -385,6 +424,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/api/v2/silences"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/alertmanager/{DatasourceUID}/api/v2/silences"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -395,6 +436,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/api/v2/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/alertmanager/{DatasourceUID}/api/v2/alerts"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -405,6 +448,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{DatasourceUID}/config/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -415,6 +460,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -425,6 +472,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/config/history/{id}/_activate"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/history/{id}/_activate"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -435,6 +484,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/receivers/test"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/api/v1/receivers/test"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -445,6 +496,8 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/templates/test"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/api/v1/templates/test"),
 			metrics.Instrument(
 				http.MethodPost,

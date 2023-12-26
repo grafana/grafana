@@ -154,7 +154,7 @@ func TestIntegrationCreateDatabaseEntityId(t *testing.T) {
 		name       string
 		entityType EntityType
 		orgId      int64
-		internalId interface{}
+		internalId any
 		expected   string
 	}{
 		{

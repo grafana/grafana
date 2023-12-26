@@ -9,6 +9,7 @@ import { concatenateTransformRegistryItem } from './editors/ConcatenateTransform
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefIdTransformerEditor';
+import { formatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
 import { formatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
@@ -27,6 +28,7 @@ import { joinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTr
 import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupTransformerEditor';
 import { partitionByValuesTransformRegistryItem } from './partitionByValues/PartitionByValuesEditor';
 import { prepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/PrepareTimeSeriesEditor';
+import { regressionTransformerRegistryItem } from './regression/regressionEditor';
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { timeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
@@ -60,7 +62,9 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     limitTransformRegistryItem,
     joinByLabelsTransformRegistryItem,
     partitionByValuesTransformRegistryItem,
+    ...(config.featureToggles.formatString ? [formatStringTransformerRegistryItem] : []),
+    ...(config.featureToggles.regressionTransformation ? [regressionTransformerRegistryItem] : []),
     formatTimeTransformerRegistryItem,
-    ...(config.featureToggles.timeSeriesTable ? [timeSeriesTableTransformRegistryItem] : []),
+    timeSeriesTableTransformRegistryItem,
   ];
 };

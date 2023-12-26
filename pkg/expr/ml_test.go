@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/ml"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -139,7 +139,7 @@ func TestMLNodeExecute(t *testing.T) {
 			cfg:         nil,
 			dataService: nil,
 			pCtxProvider: &fakePluginContextProvider{
-				errorResult: plugincontext.ErrPluginNotFound,
+				errorResult: plugins.ErrPluginNotRegistered,
 			},
 			features:      nil,
 			pluginsClient: nil,

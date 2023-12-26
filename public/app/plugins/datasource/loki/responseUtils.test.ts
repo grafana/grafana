@@ -13,6 +13,7 @@ import {
   cloneQueryResponse,
   combineResponses,
 } from './responseUtils';
+import { LabelType } from './types';
 
 const frame: DataFrame = {
   length: 1,
@@ -34,6 +35,36 @@ const frame: DataFrame = {
       config: {},
       type: FieldType.string,
       values: ['line1'],
+    },
+  ],
+};
+
+const frameWithTypes: DataFrame = {
+  length: 1,
+  fields: [
+    {
+      name: 'Time',
+      config: {},
+      type: FieldType.time,
+      values: [1],
+    },
+    {
+      name: 'labels',
+      config: {},
+      type: FieldType.other,
+      values: [{ level: 'info', structured: 'foo' }],
+    },
+    {
+      name: 'Line',
+      config: {},
+      type: FieldType.string,
+      values: ['line1'],
+    },
+    {
+      name: 'labelTypes',
+      config: {},
+      type: FieldType.other,
+      values: [{ level: 'I', structured: 'S' }],
     },
   ],
 };
@@ -104,9 +135,25 @@ describe('extractLabelKeysFromDataFrame', () => {
     input.fields[1].values = [];
     expect(extractLabelKeysFromDataFrame(input)).toEqual([]);
   });
+
   it('extracts label keys', () => {
     const input = cloneDeep(frame);
     expect(extractLabelKeysFromDataFrame(input)).toEqual(['level']);
+  });
+
+  it('extracts indexed label keys', () => {
+    const input = cloneDeep(frameWithTypes);
+    expect(extractLabelKeysFromDataFrame(input)).toEqual(['level']);
+  });
+
+  it('extracts structured metadata label keys', () => {
+    const input = cloneDeep(frameWithTypes);
+    expect(extractLabelKeysFromDataFrame(input, LabelType.StructuredMetadata)).toEqual(['structured']);
+  });
+
+  it('does not extract structured metadata label keys from non-typed frame', () => {
+    const input = cloneDeep(frame);
+    expect(extractLabelKeysFromDataFrame(input, LabelType.StructuredMetadata)).toEqual([]);
   });
 });
 
@@ -401,6 +448,81 @@ describe('combineResponses', () => {
     expect(combined.errors).toHaveLength(2);
     expect(combined.errors?.[0]?.message).toBe('errorA');
     expect(combined.errors?.[1]?.message).toBe('errorB');
+  });
+
+  it('combines frames with nanoseconds', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    logFrameA.fields[0].nanos = [333333, 444444];
+    logFrameB.fields[0].nanos = [111111, 222222];
+    const responseA: DataQueryResponse = {
+      data: [logFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [logFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: [1, 2, 3, 4],
+              nanos: [111111, 222222, 333333, 444444],
+            },
+            {
+              config: {},
+              name: 'Line',
+              type: 'string',
+              values: ['line3', 'line4', 'line1', 'line2'],
+            },
+            {
+              config: {},
+              name: 'labels',
+              type: 'other',
+              values: [
+                {
+                  otherLabel: 'other value',
+                },
+                {
+                  label: 'value',
+                },
+                {
+                  otherLabel: 'other value',
+                },
+              ],
+            },
+            {
+              config: {},
+              name: 'tsNs',
+              type: 'string',
+              values: ['1000000', '2000000', '3000000', '4000000'],
+            },
+            {
+              config: {},
+              name: 'id',
+              type: 'string',
+              values: ['id3', 'id4', 'id1', 'id2'],
+            },
+          ],
+          length: 4,
+          meta: {
+            custom: {
+              frameType: 'LabeledTimeValues',
+            },
+            stats: [
+              {
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
   });
 
   describe('combine stats', () => {

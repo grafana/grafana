@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -101,7 +102,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message":"Unauthorized"}`,
+				expBody:   `"message":"Unauthorized"`,
 			},
 			{
 				desc:      "viewer request should fail",
@@ -171,7 +172,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message": "Unauthorized"}`,
+				expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
 			},
 			{
 				desc:      "viewer request should succeed",
@@ -235,7 +236,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/config/api/v2/silences",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message":"Unauthorized"}`,
+				expBody:   `"message":"Unauthorized"`,
 			},
 			{
 				desc:      "viewer request should fail",
@@ -286,7 +287,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message": "Unauthorized"}`,
+				expBody:   `"message": "Unauthorized"`,
 			},
 			{
 				desc:      "viewer request should succeed",
@@ -341,7 +342,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message":"Unauthorized"}`,
+				expBody:   `"message":"Unauthorized"`,
 			},
 			{
 				desc:      "viewer request should fail",
@@ -423,7 +424,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-		require.JSONEq(t, `{"message": "Unauthorized"}`, string(b))
+		require.Contains(t, string(b), `"message":"Unauthorized"`)
 	}
 
 	// Create a user to make authenticated requests
@@ -447,11 +448,11 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		})
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
-		require.Equal(t, "invalid username or password", res["message"])
+		assert.Equal(t, "Invalid username or password", res["message"])
 	}
 
 	// When there are no alerts available, it returns an empty list.
@@ -524,7 +525,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 			},
 		}
 
-		status, _ := apiClient.PostRulesGroup(t, "default", &rules)
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
 	}
 
@@ -664,7 +665,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 					},
 				},
 			}
-			status, body := tc.client.PostRulesGroup(t, "default", &rules)
+			_, status, body := tc.client.PostRulesGroupWithStatus(t, "default", &rules)
 			assert.Equal(t, tc.expStatus, status)
 			res := &Response{}
 			err = json.Unmarshal([]byte(body), &res)
@@ -771,7 +772,6 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"version": 1,
 								"uid": "",
 								"namespace_uid": %q,
-								"namespace_id": 1,
 								"rule_group": "arulegroup",
 								"no_data_state": "NoData",
 								"exec_err_state": "Alerting"
@@ -799,7 +799,10 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.JSONEq(t, `{"message":"folder cannot be deleted: folder contains alert rules"}`, string(b))
+		var errutilErr errutil.PublicError
+		err = json.Unmarshal(b, &errutilErr)
+		require.NoError(t, err)
+		assert.Equal(t, "Folder cannot be deleted: folder is not empty", errutilErr.Message)
 	}
 
 	// Next, the editor can delete the folder if forceDeleteRules is true.
@@ -1045,13 +1048,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 				expectedCode: func() int {
 					if setting.IsEnterprise {
-						return http.StatusUnauthorized
+						return http.StatusForbidden
 					}
 					return http.StatusBadRequest
 				}(),
 				expectedMessage: func() string {
 					if setting.IsEnterprise {
-						return "user is not authorized to create a new alert rule 'AlwaysFiring' because the user does not have read permissions for one or many datasources the rule uses"
+						return "user is not authorized to create a new alert rule 'AlwaysFiring'"
 					}
 					return "failed to update rule group: invalid alert rule 'AlwaysFiring': failed to build query 'A': data source not found"
 				}(),
@@ -1097,7 +1100,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						tc.rule,
 					},
 				}
-				status, body := apiClient.PostRulesGroup(t, "default", &rules)
+				_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 				res := &Response{}
 				err = json.Unmarshal([]byte(body), &res)
 				require.NoError(t, err)
@@ -1170,9 +1173,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 			},
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Equal(t, "rule group updated successfully", resp.Message)
+		assert.Len(t, resp.Created, 2)
+		assert.Empty(t, resp.Updated)
+		assert.Empty(t, resp.Deleted)
 	}
 
 	// With the rules created, let's make sure that rule definition is stored correctly.
@@ -1243,7 +1249,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
-						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting"
@@ -1280,7 +1285,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
-						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
 						  "exec_err_state":"Alerting"
@@ -1339,9 +1343,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Interval: interval,
 		}
 
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusNotFound, status)
-		var res map[string]interface{}
+		var res map[string]any
 		assert.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "failed to update rule group: failed to update rule with UID unknown because could not find alert rule", res["message"])
 
@@ -1445,9 +1449,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusBadRequest, status)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, fmt.Sprintf("rule [1] has UID %s that is already assigned to another rule at index 0", ruleUID), res["message"])
 
@@ -1519,9 +1523,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Equal(t, respModel.Updated, []string{ruleUID})
+		require.Len(t, respModel.Deleted, 1)
 
 		// let's make sure that rule definitions are updated correctly.
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1588,7 +1593,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "version":2,
 		                  "uid":"uid",
 		                  "namespace_uid":"nsuid",
-		                  "namespace_id":1,
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
 		                  "exec_err_state":"Alerting"
@@ -1637,9 +1641,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Equal(t, respModel.Updated, []string{ruleUID})
 
 		// let's make sure that rule definitions are updated correctly.
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1698,7 +1702,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "version":3,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
-					  "namespace_id":1,
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
 					  "exec_err_state":"Alerting"
@@ -1723,9 +1726,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"no changes detected in the rule group"}`, body)
+		require.Equal(t, "no changes detected in the rule group", respModel.Message)
+		assert.Empty(t, respModel.Created)
+		assert.Empty(t, respModel.Updated)
+		assert.Empty(t, respModel.Deleted)
 
 		// let's make sure that rule definitions are updated correctly.
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1784,7 +1790,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "version":3,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
-					  "namespace_id":1,
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
 					  "exec_err_state":"Alerting"
@@ -1813,7 +1818,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			var res map[string]interface{}
+			var res map[string]any
 			require.NoError(t, json.Unmarshal(b, &res))
 			require.Equal(t, "rules deleted", res["message"])
 		})
@@ -1993,9 +1998,9 @@ func TestIntegrationQuota(t *testing.T) {
 				},
 			},
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusForbidden, status)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "quota has been exceeded", res["message"])
 	})
@@ -2030,9 +2035,9 @@ func TestIntegrationQuota(t *testing.T) {
 			},
 		}
 
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Len(t, respModel.Updated, 1)
 
 		// let's make sure that rule definitions are updated correctly.
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -2091,7 +2096,6 @@ func TestIntegrationQuota(t *testing.T) {
 						  "version":2,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
-						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting"
@@ -2153,6 +2157,7 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
@@ -2210,6 +2215,7 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
@@ -2265,21 +2271,79 @@ func TestIntegrationEval(t *testing.T) {
 							}
 						}
 					],
+				"condition": "A",
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
 			expectedResponse: func() string { return "" },
 			expectedStatusCode: func() int {
 				if setting.IsEnterprise {
-					return http.StatusUnauthorized
+					return http.StatusForbidden
 				}
 				return http.StatusBadRequest
 			},
 			expectedMessage: func() string {
 				if setting.IsEnterprise {
-					return "user is not authorized to query one or many data sources used by the rule"
+					return "user is not authorized to access one or many data sources"
 				}
 				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
+			},
+		},
+		{
+			desc: "condition is empty",
+			payload: `
+			{
+				"data": [
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"datasourceUid": "__expr__",
+							"model": {
+								"type":"math",
+								"expression":"1 > 2"
+							}
+						}
+					],
+				"now": "2021-04-11T14:38:14Z"
+			}
+			`,
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedMessage:    func() string { return "" },
+			expectedResponse: func() string {
+				return `{
+				"results": {
+				  "A": {
+					"status": 200,
+					"frames": [
+					  {
+						"schema": {
+						  "refId": "A",
+						  "fields": [
+							{
+							  "name": "A",
+							  "type": "number",
+							  "typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							  }
+							}
+						  ]
+						},
+						"data": {
+						  "values": [
+							[
+							  0
+							]
+						  ]
+						}
+					  }
+					]
+				  }
+				}
+			}`
 			},
 		},
 	}

@@ -5,6 +5,15 @@ import { DataFrame } from '@grafana/data';
 import { workSheetToFrame } from './sheet';
 
 describe('sheets', () => {
+  it('should handle an empty sheet', () => {
+    const emptySheet = utils.aoa_to_sheet([]);
+    const frame = workSheetToFrame(emptySheet);
+
+    expect(frame.name).toBeUndefined();
+    expect(frame.fields).toHaveLength(0);
+    expect(frame.length).toBe(0);
+  });
+
   it('will use first row as names', () => {
     const sheet = utils.aoa_to_sheet([
       ['Number', 'String', 'Bool', 'Date', 'Object'],

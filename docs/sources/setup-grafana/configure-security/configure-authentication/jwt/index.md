@@ -64,7 +64,7 @@ If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth
 
 ## Iframe Embedding
 
-If you want to embed Grafana in an iframe while maintaning user identity and role checks,
+If you want to embed Grafana in an iframe while maintaining user identity and role checks,
 you can use JWT authentication to authenticate the iframe.
 
 {{% admonition type="note" %}}
@@ -146,6 +146,12 @@ PEM-encoded key file in PKIX, PKCS #1, PKCS #8 or SEC 1 format.
 
 ```ini
 key_file = /path/to/key.pem
+```
+
+If the JWT token's header specifies a `kid` (Key ID), then the Key ID must be set using the `key_id` configuration option.
+
+```ini
+key_id = my-key-id
 ```
 
 ## Validate claims

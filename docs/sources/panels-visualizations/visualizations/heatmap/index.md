@@ -2,7 +2,7 @@
 aliases:
   - ../../features/panels/heatmap/
   - ../../visualizations/heatmap/
-description: Heatmap visualization documentation
+description: Configure options for Grafana's heatmap visualization
 keywords:
   - grafana
   - heatmap
@@ -14,14 +14,14 @@ labels:
     - enterprise
     - oss
 title: Heatmap
-weight: 600
+weight: 100
 ---
 
 # Heatmap
 
-The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../../fundamentals/intro-histograms/" >}}).
+Heatmaps allow you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps][].
 
-![](/static/img/docs/v43/heatmap_panel_cover.jpg)
+![A heatmap visualization](/static/img/docs/v43/heatmap_panel_cover.jpg)
 
 ## Calculate from data
 
@@ -79,6 +79,8 @@ This setting configures the axis value.
 
 When selected, the axis appears in reverse order.
 
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+
 ## Colors
 
 The color spectrum controls the mapping between value count (in each bucket) and the color assigned to each bucket. The leftmost color on the spectrum represents the minimum count and the color on the right most side represents the maximum count. Some color schemes are automatically inverted when using the light theme.
@@ -112,6 +114,7 @@ Use these settings to refine your visualization.
 
 - **Show tooltip -** Show heatmap tooltip.
 - **Show Histogram -** Show a Y-axis histogram on the tooltip. A histogram represents the distribution of the bucket values for a specific timestamp.
+- **Show color scale -** Show a color scale on the tooltip. The color scale represents the mapping between bucket value and color. This option is configurable when you enable the `newVizTooltips` feature flag.
 
 ### Legend
 
@@ -120,3 +123,8 @@ Choose whether you want to display the heatmap legend on the visualization.
 ### Exemplars
 
 Set the color used to show exemplar data.
+
+{{% docs/reference %}}
+[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+{{% /docs/reference %}}

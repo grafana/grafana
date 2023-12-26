@@ -14,7 +14,7 @@ type Props = {
 export const NoSilencesSplash = ({ alertManagerSourceName }: Props) => {
   const permissions = getInstancesPermissions(alertManagerSourceName);
 
-  if (contextSrv.hasAccess(permissions.create, contextSrv.isEditor)) {
+  if (contextSrv.hasPermission(permissions.create)) {
     return (
       <EmptyListCTA
         title="You haven't created any silences yet"

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -31,7 +32,17 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
-	return hs.getUserAuthTokensInternal(c, c.UserID)
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace != identity.NamespaceUser {
+		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
+	}
+
+	userID, err := identity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to parse user id", err)
+	}
+
+	return hs.getUserAuthTokensInternal(c, userID)
 }
 
 // swagger:route POST /user/revoke-auth-token signed_in_user revokeUserAuthToken
@@ -51,13 +62,25 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.revokeUserAuthTokenInternal(c, c.UserID, cmd)
+
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace != identity.NamespaceUser {
+		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
+	}
+
+	userID, err := identity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to parse user id", err)
+	}
+
+	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
 }
 
 func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
 	if err := hs.rotateToken(c); err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
 		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			hs.log.FromContext(c.Req.Context()).Debug("Deleting session cookie")
 			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 		}
 		return response.Redirect(hs.Cfg.AppSubURL + "/login")
@@ -81,6 +104,7 @@ func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.R
 	if err := hs.rotateToken(c); err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
 		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			hs.log.FromContext(c.Req.Context()).Debug("Deleting session cookie")
 			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
 		}

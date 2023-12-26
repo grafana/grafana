@@ -23,7 +23,7 @@ export function SettingsSummary({
 
   return isDataLoading ? (
     <div className={cx(styles.summaryWrapper, className)}>
-      <Spinner className={styles.summary} inline={true} size={14} />
+      <Spinner className={styles.summary} inline={true} size="sm" />
     </div>
   ) : (
     <div className={cx(styles.summaryWrapper, className)}>

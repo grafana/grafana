@@ -80,6 +80,27 @@ it('assigns correct field type even if values are numbers', async () => {
   ]);
 });
 
+it('do not fail on response with empty list', async () => {
+  const range = {
+    from: dateTime('2000-01-01T00:00:00'),
+    to: dateTime('2000-01-01T00:01:00'),
+  };
+  const { nodes } = mapPromMetricsToServiceMap([], {
+    ...range,
+    raw: range,
+  });
+
+  expect(nodes.fields).toMatchObject([
+    { name: 'id', values: [], type: FieldType.string },
+    { name: 'title', values: [], type: FieldType.string },
+    { name: 'subtitle', type: FieldType.string, values: [] },
+    { name: 'mainstat', values: [], type: FieldType.number },
+    { name: 'secondarystat', values: [], type: FieldType.number },
+    { name: 'arc__success', values: [], type: FieldType.number },
+    { name: 'arc__failed', values: [], type: FieldType.number },
+  ]);
+});
+
 describe('mapPromMetricsToServiceMap', () => {
   it('transforms prom metrics to service graph', async () => {
     const range = {
@@ -106,13 +127,17 @@ describe('mapPromMetricsToServiceMap', () => {
     expect(edges.fields).toMatchObject([
       { name: 'id', values: ['app_db', 'lb_app'] },
       { name: 'source', values: ['app', 'lb'] },
+      { name: 'sourceName', values: ['app', 'lb'] },
+      { name: 'sourceNamespace', values: [undefined, undefined] },
       { name: 'target', values: ['db', 'app'] },
+      { name: 'targetName', values: ['db', 'app'] },
+      { name: 'targetNamespace', values: [undefined, undefined] },
       { name: 'mainstat', values: [1000, 2000] },
       { name: 'secondarystat', values: [10, 20] },
     ]);
   });
 
-  it('transforms prom metrics to service graph inlucding namespace', async () => {
+  it('transforms prom metrics to service graph including namespace', async () => {
     const range = {
       from: dateTime('2000-01-01T00:00:00'),
       to: dateTime('2000-01-01T00:01:00'),
@@ -137,7 +162,11 @@ describe('mapPromMetricsToServiceMap', () => {
     expect(edges.fields).toMatchObject([
       { name: 'id', values: ['ns1/app_ns3/db', 'ns2/lb_ns1/app'] },
       { name: 'source', values: ['ns1/app', 'ns2/lb'] },
+      { name: 'sourceName', values: ['app', 'lb'] },
+      { name: 'sourceNamespace', values: ['ns1', 'ns2'] },
       { name: 'target', values: ['ns3/db', 'ns1/app'] },
+      { name: 'targetName', values: ['db', 'app'] },
+      { name: 'targetNamespace', values: ['ns3', 'ns1'] },
       { name: 'mainstat', values: [1000, 2000] },
       { name: 'secondarystat', values: [10, 20] },
     ]);

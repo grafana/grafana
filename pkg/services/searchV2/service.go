@@ -116,10 +116,7 @@ func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEv
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
-	if s.cfg == nil {
-		return true
-	}
-	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagPanelTitleSearch)
+	return !s.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
@@ -185,10 +182,6 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		}
 	}
 
-	if s.ac.IsDisabled() {
-		return usr, nil
-	}
-
 	if usr.Permissions == nil {
 		usr.Permissions = make(map[int64]map[string][]string)
 	}
@@ -202,7 +195,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 	permissions, err := s.ac.GetUserPermissions(ctx, usr,
 		accesscontrol.Options{ReloadCache: false})
 	if err != nil {
-		s.logger.Error("failed to retrieve user permissions", "error", err, "email", backendUser.Email)
+		s.logger.Error("Failed to retrieve user permissions", "error", err, "email", backendUser.Email)
 		return nil, errors.New("auth error")
 	}
 
@@ -272,7 +265,7 @@ func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUs
 
 	if q.WithAllowedActions {
 		if err := s.addAllowedActionsField(ctx, orgID, signedInUser, response); err != nil {
-			s.logger.Error("error when adding the allowedActions field", "err", err)
+			s.logger.Error("Error when adding the allowedActions field", "err", err)
 		}
 	}
 

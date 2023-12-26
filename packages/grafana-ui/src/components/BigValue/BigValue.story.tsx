@@ -4,7 +4,6 @@ import React from 'react';
 import { FieldSparkline, FieldType } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import {
   BigValue,
@@ -19,7 +18,6 @@ import mdx from './BigValue.mdx';
 const meta: Meta = {
   title: 'Visualizations/BigValue',
   component: BigValue,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

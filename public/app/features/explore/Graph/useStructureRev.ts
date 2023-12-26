@@ -4,7 +4,7 @@ import { useCounter, usePrevious } from 'react-use';
 import { DataFrame, compareArrayValues, compareDataFrameStructures } from '@grafana/data';
 
 export function useStructureRev(frames: DataFrame[]) {
-  const [structureRev, { inc }] = useCounter(0);
+  const [structureRev, { inc }] = useCounter(1);
   const previousFrames = usePrevious(frames);
 
   // We need to increment structureRev when the number of series changes.

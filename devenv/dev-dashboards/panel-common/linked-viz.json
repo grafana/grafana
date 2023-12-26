@@ -1177,7 +1177,6 @@
     }
   ],
   "schemaVersion": 27,
-  "style": "dark",
   "tags": ["gdev"],
   "templating": {
     "list": []

@@ -20,7 +20,9 @@ The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_dep
 
 This page is to help users of Grafana understand how they might be impacted by the removal of Angular support, and whether a migration option exists.
 
-It lists the latest versions of plugins currently available in the [Plugins Catalog](https://grafana.com/plugins) which depend on Angular, and will stop working when Angular support is removed from Grafana. The list will be updated as more plugins migrate to React or offer migration advice.
+It lists the latest versions of plugins _currently available_ in the Grafana [plugin catalog](https://grafana.com/plugins) which depend on Angular, and will stop working when Angular support is removed from Grafana. The list will be updated as more plugins migrate to React or offer migration advice.
+
+Plugins which have been [deprecated](/legal/plugin-deprecation/) will _not_ be listed. Generally, we advise users to migrate away from deprecated plugins as they will not be updated and may not function in current or future versions of Grafana.
 
 {{% admonition type="note" %}}
 We advise you to ensure you are running the latest version of plugins, as previous releases of plugins not listed here may still require AngularJS.
@@ -42,31 +44,17 @@ Plugins were updated to include signatures in 2021, so whilst a plugin may show 
 
 We are greatly appreciative of the developers who have contributed plugins to the Grafana ecosystem, your work has helped support millions of users to gain insights into their data. A plugin being listed below is no reflection on its quality, and is purely to help users understand the impact of the removal of Angular support in Grafana.
 
-Guidance on migrating a plugin to React can be found in our [migration guide]({{< relref "../plugins/migration-guide/angular-react/" >}}). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
+Guidance on migrating a plugin to React can be found in our [migration guide](/developers/plugin-tools/migration-guides/migrate-angularjs-to-react). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
 
 # Current AngularJS based plugins
 
 ## Apps
-
-### [BelugaCDN](https://grafana.com/grafana/plugins/belugacdn-app)
-
-Latest Version: 1.2.1 | Signature: Commercial | Last Updated: 2023
-
-> [Migration issue](https://github.com/belugacdn/grafana-belugacdn-app/issues/7) has been raised.
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/belugacdn/grafana-belugacdn-app) in the past 7 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
 
 ### [Bosun](https://grafana.com/grafana/plugins/bosun-app)
 
 Latest Version: 0.0.29 | Signature: Community | Last Updated: 2023
 
 > [Migration issue](https://github.com/bosun-monitor/bosun-grafana-app/issues/63) has been raised.
-
-### [Cloudflare Grafana App](https://grafana.com/grafana/plugins/cloudflare-app/)
-
-Latest Version: 0.2.4 | Signature: Commercial | Last Updated: 2022
 
 ### [GLPI](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
 
@@ -92,24 +80,6 @@ Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
 Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
 {{% /admonition %}}
 
-### [Moogsoft AIOps](https://grafana.com/grafana/plugins/moogsoft-aiops-app)
-
-Latest Version: 8.0.2 | Signature: Commercial | Last Updated: 2022
-
-### [OpenNMS Helm](https://grafana.com/grafana/plugins/opennms-helm-app)
-
-Latest Version: 8.0.4 | Signature: Community | Last Updated: 2023
-
-> **Migration available - plugin superseded:** The plugin has effectively been replaced with a [new plugin](https://grafana.com/grafana/plugins/opennms-opennms-app/) based on React.
-
-### [Percona](https://grafana.com/grafana/plugins/percona-percona-app/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/percona/grafana-app) was archived on June 12, 2020.
-{{% /admonition %}}
-
 ### [Stagemonitor Elasticsearch](https://grafana.com/grafana/plugins/stagemonitor-elasticsearch-app)
 
 Latest Version: 0.83.3 | Signature: Community | Last Updated: 2021
@@ -130,16 +100,6 @@ Lack of recent activity in the [project repository](https://github.com/raintank/
 
 ## Datasources
 
-### [Druid](https://grafana.com/grafana/plugins/abhisant-druid-datasource/)
-
-Latest Version: v0.0.6 | Signature: Community | Last Updated: 2021
-
-> **Migration available - plugin superseded:** The original plugin only claims support for Grafana v4.x.x, it was replaced with a [new plugin](https://grafana.com/grafana/plugins/grafadruid-druid-datasource/) based on React.
-
-### [Cognite Data Fusion](https://grafana.com/grafana/plugins/cognitedata-datasource/)
-
-Latest Version: 3.1.0 | Signature: Commercial | Last Updated: 2023
-
 ### [Akumuli](https://grafana.com/grafana/plugins/akumuli-datasource/)
 
 Latest Version: 1.3.12 | Signature: Community | Last Updated: 2021
@@ -150,18 +110,6 @@ Latest Version: 1.3.12 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/akumuli/Akumuli/) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [DarkSky](https://grafana.com/grafana/plugins/andig-darksky-datasource/)
-
-Latest Version: 1.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/andig/grafana-darksky) was archived on September 27, 2022.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Apple removed support for the DarkSky API on March 31, 2023 - [source](https://support.apple.com/en-us/HT213526).
 {{% /admonition %}}
 
 ### [Finance](https://grafana.com/grafana/plugins/ayoungprogrammer-finance-datasource/)
@@ -175,16 +123,6 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/ayoungprogrammer/grafana-finance) in the past 6 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
-
-### [Prometheus AlertManager](https://grafana.com/grafana/plugins/camptocamp-prometheus-alertmanager-datasource/)
-
-Latest Version: 1.2.1 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/camptocamp/grafana-prometheus-alertmanager-datasource) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Grafana includes an AlertManager data source as a Core plugin.
 
 ### [Chaos Mesh](https://grafana.com/grafana/plugins/chaosmeshorg-datasource/)
 
@@ -298,14 +236,6 @@ Latest Version: 1.4.2 | Signature: Grafana | Last Updated: 2021
 If you're looking for an example of a data source plugin to start from, refer to [grafana-starter-datasource-backend](https://github.com/grafana/grafana-starter-datasource-backend).
 {{% /admonition %}}
 
-### [Strava](https://grafana.com/grafana/plugins/grafana-strava-datasource/)
-
-Latest Version: 1.5.1 | Signature: Grafana | Last Updated: 2022
-
-{{% admonition type="note" %}}
-Removal of any angular dependency is on the near term roadmap.
-{{% /admonition %}}
-
 ### [openHistorian](https://grafana.com/grafana/plugins/gridprotectionalliance-openhistorian-datasource/)
 
 Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
@@ -322,18 +252,6 @@ Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/hawkular/hawkular-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Humio](https://grafana.com/grafana/plugins/humio-datasource/)
-
-Latest Version: 3.3.1 | Signature: Commercial | Last Updated: 2022
-
-### [IBM APM](https://grafana.com/grafana/plugins/ibm-apm-datasource/)
-
-Latest Version: 0.9.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/rafal-szypulka/grafana-ibm-apm) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
 ### [PRTG](https://grafana.com/grafana/plugins/jasonlashua-prtg-datasource/)
 
 Latest Version: 4.0.4 | Signature: Community | Last Updated: 2021
@@ -344,22 +262,6 @@ Lack of recent activity in the [project repository](https://github.com/neuralfra
 
 {{% admonition type="warning" %}}
 Unmaintained since 2017 - [source](https://github.com/neuralfraud/grafana-prtg/wiki).
-{{% /admonition %}}
-
-### [LinkSmart HDS Datasource](https://grafana.com/grafana/plugins/linksmart-hds-datasource/)
-
-Latest Version: 1.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/linksmart/grafana-hds-datasource) was archived on April 4th, 2022, and is no longer maintained.
-{{% /admonition %}}
-
-### [LinkSmart SensorThings](https://grafana.com/grafana/plugins/linksmart-sensorthings-datasource/)
-
-Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/linksmart/grafana-sensorthings-datasource) was archived on April 4th, 2022, and is no longer maintained.
 {{% /admonition %}}
 
 ### [Monasca](https://grafana.com/grafana/plugins/monasca-datasource/)
@@ -396,28 +298,6 @@ Latest Version: 0.0.3 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/NatelEnergy/natel-usgs-datasource) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [ntopng](https://grafana.com/grafana/plugins/ntop-ntopng-datasource/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-> **Migration available - plugin superseded:** this plugin was [discontinued in favour of the InfluxDB data source](https://github.com/ntop/ntopng-grafana-datasource) - a Core plugin included in Grafana, additional guidance is available [here](https://www.ntop.org/guides/ntopng/basic_concepts/timeseries.html#influxdb-driver).
-
-### [Oracle Cloud Infrastructure Logs](https://grafana.com/grafana/plugins/oci-logs-datasource/)
-
-Latest Version: 3.0.0 | Signature: Commercial | Last Updated: 2023
-
-### [Oracle Cloud Infrastructure Metrics](https://grafana.com/grafana/plugins/oci-metrics-datasource/)
-
-Latest Version: 4.0.1 | Signature: Commercial | Last Updated: 2023
-
-### [Warp 10](https://grafana.com/grafana/plugins/ovh-warp10-datasource/)
-
-Latest Version: 2.2.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/ovh/ovh-warp10-datasource) was archived on March 22nd, 2023 and is no longer maintained.
 {{% /admonition %}}
 
 ### [KapacitorSimpleJson](https://grafana.com/grafana/plugins/paytm-kapacitor-datasource/)
@@ -466,10 +346,6 @@ Latest Version: 1.2.3 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/netxms/grafana) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Shoreline Data Source](https://grafana.com/grafana/plugins/shorelinesoftware-shoreline-datasource/)
-
-Latest Version: 1.1.0 | Signature: Commercial | Last Updated: 6 months ago
-
 ### [Sidewinder](https://grafana.com/grafana/plugins/sidewinder-datasource/)
 
 Latest Version: 0.2.1 | Signature: Community | Last Updated: 2021
@@ -490,22 +366,6 @@ Lack of recent activity in the [project repository](https://github.com/skydive-p
 Issues suggest the entire project, not just the plugin, may be abandoned - [source](https://github.com/skydive-project/skydive/issues/2417).
 {{% /admonition %}}
 
-### [Heroic](https://grafana.com/grafana/plugins/spotify-heroic-datasource/)
-
-Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Plugin](https://github.com/spotify/spotify-heroic-datasource) and [Heroic](https://github.com/spotify/heroic) were both archived on April 17th, 2021 and March 27th, 2021 respectively.
-{{% /admonition %}}
-
-### [Heroic](https://grafana.com/grafana/plugins/udoprog-heroic-datasource/)
-
-Latest Version: 0.1.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Plugin](https://github.com/udoprog/udoprog-heroic-datasource) and [Heroic](https://github.com/spotify/heroic) were both archived on October 16th, 2022 and March 27th, 2021 respectively.
-{{% /admonition %}}
-
 ### [Altinity plugin for ClickHouse](https://grafana.com/grafana/plugins/vertamedia-clickhouse-datasource/)
 
 Latest Version: 2.5.3 | Signature: Community | Last Updated: 2022
@@ -519,7 +379,7 @@ The [migration issue](https://github.com/Altinity/clickhouse-grafana/issues/475)
 Latest Version: 0.2.2 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/skydive-project/skydive-grafana-datasource) in the past year suggests project _may_ not be actively maintained.
+Lack of recent activity in the [project repository](https://github.com/xginn8/grafana-pagerduty) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
 {{% admonition type="warning" %}}
@@ -554,7 +414,7 @@ Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/aidanmountford/aidanmountford-html-panel) in the past 4 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content.
+> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content. Other plugins also exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/) and [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/).
 
 ### [Track Map](https://grafana.com/grafana/plugins/alexandra-trackmap-panel/)
 
@@ -602,14 +462,6 @@ Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 Migration to React is planned - [issue](https://github.com/briangann/grafana-datatable-panel/issues/174).
 {{% /admonition %}}
 
-### [D3 Gauge](https://grafana.com/grafana/plugins/briangann-gauge-panel/)
-
-Latest Version: 0.0.9 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="note" %}}
-Migration to React is a planned [update](https://github.com/briangann/grafana-gauge-panel/issues/740).
-{{% /admonition %}}
-
 ### [GeoLoop](https://grafana.com/grafana/plugins/citilogics-geoloop-panel/)
 
 Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
@@ -648,7 +500,7 @@ Latest Version: 0.7.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/fatcloud/windrose-panel) in the past 4 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operato Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
+> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operator Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
 
 ### [Statusmap](https://grafana.com/grafana/plugins/flant-statusmap-panel/)
 
@@ -686,7 +538,9 @@ Latest Version: 0.3.4 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/MarcusCalidus/marcuscalidus-svg-panel) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [aceiot-svg-panel](https://grafana.com/grafana/plugins/aceiot-svg-panel/)
+> **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
+
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/), [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) and [ACE.SVG](https://grafana.com/grafana/plugins/aceiot-svg-panel/). Note that the ACE.SVG panel has compatibility issues with Grafana versions 10.0.0-10.1.0.
 
 ### [Annunciator](https://grafana.com/grafana/plugins/michaeldmoore-annunciator-panel/)
 
@@ -758,7 +612,7 @@ Latest Version: 0.0.7 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-plotly-panel) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [nline-plotlyjs-panel/](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/).
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [nline-plotlyjs-panel](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/) and [ae3e-plotly-panel](https://grafana.com/grafana/plugins/ae3e-plotly-panel/).
 
 ### [Cal-HeatMap](https://grafana.com/grafana/plugins/neocat-cal-heatmap-panel/)
 
@@ -802,12 +656,6 @@ Latest Version: 0.1.0 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/ryantxu/ajax-panel) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Annotation List](https://grafana.com/grafana/plugins/ryantxu-annolist-panel/)
-
-Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
-
-> **Migration available - plugin superseded:** [Project repository](https://github.com/ryantxu/annotations-panel) for the plugin was archived on July 13th, 2019 in favour of native [annotations]({{< relref "../../panels-visualizations/visualizations/annotations/" >}}).
-
 ### [3D Globe Panel](https://grafana.com/grafana/plugins/satellogic-3d-globe-panel/)
 
 Latest Version: 0.1.1 | Signature: Community | Last Updated: 2021
@@ -825,14 +673,6 @@ Lack of recent activity in the [project repository](https://github.com/savantly-
 {{% /admonition %}}
 
 > **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
-
-### [SCADAvis Synoptic Panel](https://grafana.com/grafana/plugins/scadavis-synoptic-panel/)
-
-Latest Version: 1.0.5 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/riclolsen/scadavis-synoptic-panel) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
 
 ### [TrafficLight](https://grafana.com/grafana/plugins/smartmakers-trafficlight-panel/)
 

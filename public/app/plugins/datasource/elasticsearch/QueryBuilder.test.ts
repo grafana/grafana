@@ -899,6 +899,25 @@ describe('ElasticQueryBuilder', () => {
           expect(query.aggs['2'].date_histogram.interval).toBeUndefined();
           expect(query.aggs['2'].date_histogram.fixed_interval).toBe('1d');
         });
+
+        it('should use calendar_interval', () => {
+          const query = builder.build({
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            timeField: '@timestamp',
+            bucketAggs: [
+              {
+                type: 'date_histogram',
+                id: '2',
+                field: '@time',
+                settings: { min_doc_count: '1', interval: '1w' },
+              },
+            ],
+          });
+
+          expect(query.aggs['2'].date_histogram.interval).toBeUndefined();
+          expect(query.aggs['2'].date_histogram.calendar_interval).toBe('1w');
+        });
       });
     });
   });

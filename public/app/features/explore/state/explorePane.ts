@@ -8,6 +8,8 @@ import {
   ExplorePanelsState,
   PreferredVisualisationType,
   RawTimeRange,
+  ExploreCorrelationHelperData,
+  EventBusExtended,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
@@ -52,7 +54,7 @@ interface ChangePanelsState {
   exploreId: string;
   panelsState: ExplorePanelsState;
 }
-const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
+export const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
 export function changePanelState(
   exploreId: string,
   panel: PreferredVisualisationType,
@@ -77,6 +79,17 @@ export function changePanelState(
 }
 
 /**
+ * Tracks the state of correlation helper data in the panel
+ */
+interface ChangeCorrelationHelperData {
+  exploreId: string;
+  correlationEditorHelperData?: ExploreCorrelationHelperData;
+}
+export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
+  'explore/changeCorrelationHelperData'
+);
+
+/**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
@@ -86,6 +99,7 @@ interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
+  eventBridge: EventBusExtended;
 }
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
@@ -114,7 +128,9 @@ export interface InitializeExploreOptions {
   queries: DataQuery[];
   range: RawTimeRange;
   panelsState?: ExplorePanelsState;
+  correlationHelperData?: ExploreCorrelationHelperData;
   position?: number;
+  eventBridge: EventBusExtended;
 }
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -127,7 +143,15 @@ export interface InitializeExploreOptions {
 export const initializeExplore = createAsyncThunk(
   'explore/initializeExplore',
   async (
-    { exploreId, datasource, queries, range, panelsState }: InitializeExploreOptions,
+    {
+      exploreId,
+      datasource,
+      queries,
+      range,
+      panelsState,
+      correlationHelperData,
+      eventBridge,
+    }: InitializeExploreOptions,
     { dispatch, getState, fulfillWithValue }
   ) => {
     let instance = undefined;
@@ -147,11 +171,13 @@ export const initializeExplore = createAsyncThunk(
         range: getRange(range, getTimeZone(getState().user)),
         datasourceInstance: instance,
         history,
+        eventBridge,
       })
     );
     if (panelsState !== undefined) {
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
     }
+
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
@@ -160,6 +186,16 @@ export const initializeExplore = createAsyncThunk(
       dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
       dispatch(runQueries({ exploreId }));
+    }
+
+    // initialize new pane with helper data
+    if (correlationHelperData !== undefined && getState().explore.correlationEditorDetails?.editorMode) {
+      dispatch(
+        changeCorrelationHelperData({
+          exploreId,
+          correlationEditorHelperData: correlationHelperData,
+        })
+      );
     }
 
     return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
@@ -207,6 +243,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, panelsState };
   }
 
+  if (changeCorrelationHelperData.match(action)) {
+    const { correlationEditorHelperData } = action.payload;
+    return { ...state, correlationEditorHelperData };
+  }
+
   if (saveCorrelationsAction.match(action)) {
     return {
       ...state,
@@ -215,13 +256,14 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { queries, range, datasourceInstance, history } = action.payload;
+    const { queries, range, datasourceInstance, history, eventBridge } = action.payload;
 
     return {
       ...state,
       range,
       queries,
       initialized: true,
+      eventBridge,
       queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,

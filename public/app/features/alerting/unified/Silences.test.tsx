@@ -14,7 +14,7 @@ import { SilenceState } from '../../../plugins/datasource/alertmanager/types';
 
 import Silences from './Silences';
 import { createOrUpdateSilence, fetchAlerts, fetchSilences } from './api/alertmanager';
-import { mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv, mockSilence } from './mocks';
+import { grantUserPermissions, mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv, mockSilence } from './mocks';
 import { parseMatchers } from './utils/alertmanager';
 import { DataSourceType } from './utils/datasource';
 
@@ -98,19 +98,13 @@ const resetMocks = () => {
 
   mocks.api.createOrUpdateSilence.mockResolvedValue(mockSilence());
 
-  mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
-  mocks.contextSrv.hasPermission.mockImplementation((action) => {
-    const permissions = [
-      AccessControlAction.AlertingInstanceRead,
-      AccessControlAction.AlertingInstanceCreate,
-      AccessControlAction.AlertingInstanceUpdate,
-      AccessControlAction.AlertingInstancesExternalRead,
-      AccessControlAction.AlertingInstancesExternalWrite,
-    ];
-    return permissions.includes(action as AccessControlAction);
-  });
-
-  mocks.contextSrv.hasAccess.mockImplementation(() => true);
+  grantUserPermissions([
+    AccessControlAction.AlertingInstanceRead,
+    AccessControlAction.AlertingInstanceCreate,
+    AccessControlAction.AlertingInstanceUpdate,
+    AccessControlAction.AlertingInstancesExternalRead,
+    AccessControlAction.AlertingInstancesExternalWrite,
+  ]);
 };
 
 const setUserLogged = (isLogged: boolean) => {
@@ -207,10 +201,7 @@ describe('Silences', () => {
   });
 
   it('hides actions for creating a silence for users without access', async () => {
-    mocks.contextSrv.hasAccess.mockImplementation((action) => {
-      const permissions = [AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead];
-      return permissions.includes(action as AccessControlAction);
-    });
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead]);
 
     renderSilences();
     await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());

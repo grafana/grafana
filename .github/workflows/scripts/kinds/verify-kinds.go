@@ -206,7 +206,7 @@ func loadComposableKind(name string, kind string) (kindsys.Kind, error) {
 
 	fs := fstest.MapFS{
 		fmt.Sprintf("%s.cue", name): &fstest.MapFile{
-			Data: []byte("package grafanaplugin\n" + kind),
+			Data: []byte(kind),
 		},
 	}
 
@@ -290,7 +290,7 @@ func (j *ckrJenny) Generate(k kindsys.Composable) (*codejen.File, error) {
 		return nil, err
 	}
 
-	newKindBytes = []byte(fmt.Sprintf("package kind\n\n%s", newKindBytes))
+	newKindBytes = []byte(fmt.Sprintf("package grafanaplugin\n\n%s", newKindBytes))
 
 	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
 }
@@ -399,10 +399,17 @@ func (registry *kindRegistry) getPublishedKind(name string, category string, lat
 		return "", nil
 	}
 
-	kindPath := filepath.Join(
-		registry.zipDir,
-		fmt.Sprintf("grafana/%s/%s/%s.cue", latestRegistryDir, category, name),
-	)
+	var cueFilePath string
+	switch category {
+		case "core":
+			cueFilePath = fmt.Sprintf("%s/%s.cue", name, name)
+		case "composable":
+			cueFilePath = fmt.Sprintf("%s.cue", name)
+		default:
+		return "", fmt.Errorf("kind can only be core or composable")
+	}
+
+	kindPath := filepath.Join(latestRegistryDir, category, cueFilePath)
 	file, err := registry.zipFile.Open(kindPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %w", err)

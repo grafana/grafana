@@ -1,14 +1,14 @@
+import { EngineSchema, Schema } from '@kusto/monaco-kusto';
 import { Uri } from 'monaco-editor';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
-import { Deferred } from 'app/core/utils/deferred';
 
 import { AzureQueryEditorFieldProps } from '../../types';
 
 import { setKustoQuery } from './setQueryValue';
 
-interface MonacoPromise {
+interface MonacoEditorValues {
   editor: MonacoEditor;
   monaco: Monaco;
 }
@@ -17,50 +17,39 @@ interface MonacoLanguages {
   kusto: {
     getKustoWorker: () => Promise<
       (url: Uri) => Promise<{
-        setSchema: (schema: any, clusterUrl: string, name: string) => void;
+        setSchema: (schema: Schema) => void;
       }>
     >;
   };
 }
 
-const QueryField = ({ query, datasource, onQueryChange }: AzureQueryEditorFieldProps) => {
-  const monacoPromiseRef = useRef<Deferred<MonacoPromise>>();
-  function getPromise() {
-    if (!monacoPromiseRef.current) {
-      monacoPromiseRef.current = new Deferred<MonacoPromise>();
-    }
-
-    return monacoPromiseRef.current.promise;
-  }
+const QueryField = ({ query, onQueryChange, schema }: AzureQueryEditorFieldProps) => {
+  const [monaco, setMonaco] = useState<MonacoEditorValues | undefined>();
 
   useEffect(() => {
-    if (!query.azureLogAnalytics?.resources || !query.azureLogAnalytics.resources.length) {
+    if (!schema || !monaco) {
       return;
     }
 
-    const promises = [
-      datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resources[0]),
-      getPromise(),
-    ] as const;
+    const setupEditor = async ({ monaco, editor }: MonacoEditorValues, schema: EngineSchema) => {
+      try {
+        const languages = monaco.languages as unknown as MonacoLanguages;
+        const model = editor.getModel();
+        if (model) {
+          const kustoWorker = await languages.kusto.getKustoWorker();
+          const kustoMode = await kustoWorker(model?.uri);
+          await kustoMode.setSchema(schema);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-    // the kusto schema call might fail, but it's okay for that to happen silently
-    Promise.all(promises).then(([schema, { monaco, editor }]) => {
-      const languages = monaco.languages as unknown as MonacoLanguages;
-
-      languages.kusto
-        .getKustoWorker()
-        .then((kusto) => {
-          const model = editor.getModel();
-          return model && kusto(model.uri);
-        })
-        .then((worker) => {
-          worker?.setSchema(schema, 'https://help.kusto.windows.net', 'Samples');
-        });
-    });
-  }, [datasource.azureLogAnalyticsDatasource, query.azureLogAnalytics?.resources]);
+    setupEditor(monaco, schema).catch((err) => console.error(err));
+  }, [schema, monaco]);
 
   const handleEditorMount = useCallback((editor: MonacoEditor, monaco: Monaco) => {
-    monacoPromiseRef.current?.resolve?.({ editor, monaco });
+    setMonaco({ monaco, editor });
   }, []);
 
   const onChange = useCallback(

@@ -13,6 +13,9 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+
+import { shareDashboardType } from '../utils';
 
 import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
 import {
@@ -28,6 +31,13 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   reportInteraction: jest.fn(),
+}));
+
+jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
+  DashboardInteractions: {
+    ...jest.requireActual('app/features/dashboard-scene/utils/interactions').DashboardInteractions,
+    sharingTabChanged: jest.fn(),
+  },
 }));
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -60,8 +70,8 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
+  config.publicDashboardsEnabled = true;
 
-  jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });
@@ -95,7 +105,7 @@ const getErrorPublicDashboardResponse = () =>
 
 const alertTests = () => {
   it('when user has no write permissions, warning is shown', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     await renderSharePublicDashboard();
     expect(screen.queryByTestId(selectors.NoUpsertPermissionsWarningAlert)).toBeInTheDocument();
@@ -128,7 +138,14 @@ describe('SharePublic', () => {
   beforeEach(() => {
     server.use(getExistentPublicDashboardResponse());
   });
-  it('does not render share panel when public dashboards feature is disabled', async () => {
+  it('does not render share panel when public dashboards feature is disabled using config setting', async () => {
+    config.publicDashboardsEnabled = false;
+    await renderSharePublicDashboard(undefined, false);
+
+    expect(screen.getByRole('tablist')).toHaveTextContent('Link');
+    expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
+  });
+  it('does not render share panel when public dashboards feature is disabled using feature toggle', async () => {
     config.featureToggles.publicDashboards = false;
     await renderSharePublicDashboard(undefined, false);
 
@@ -188,7 +205,7 @@ describe('SharePublic - New config setup', () => {
   it('renders when public dashboards feature is enabled', async () => {
     await renderSharePublicDashboard();
 
-    await screen.findByText('Welcome to public dashboards public preview!');
+    await screen.findByText('Welcome to public dashboards!');
     expect(screen.getByText('Generate public URL')).toBeInTheDocument();
 
     expect(screen.queryByTestId(selectors.WillBePublicCheckbox)).toBeInTheDocument();
@@ -243,7 +260,7 @@ describe('SharePublic - Already persisted', () => {
     expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
   });
   it('inputs and delete button are disabled because of lack of permissions', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
 
@@ -334,6 +351,15 @@ describe('SharePublic - Report interactions', () => {
     );
   });
 
+  it('reports interaction when public dashboard tab is clicked', async () => {
+    await renderSharePublicDashboard();
+
+    await waitFor(() => {
+      expect(DashboardInteractions.sharingTabChanged).toHaveBeenCalledTimes(1);
+      expect(DashboardInteractions.sharingTabChanged).lastCalledWith({ item: shareDashboardType.publicDashboard });
+    });
+  });
+
   it('reports interaction when time range is clicked', async () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
@@ -344,11 +370,13 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_time_selection_clicked', {
-        action: pubdashResponse.timeSelectionEnabled ? 'disable' : 'enable',
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_time_picker_clicked', {
+        enabled: !pubdashResponse.timeSelectionEnabled,
       });
     });
   });
+
   it('reports interaction when show annotations is clicked', async () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
@@ -359,8 +387,9 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_annotations_clicked', {
-        action: pubdashResponse.annotationsEnabled ? 'disable' : 'enable',
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_annotations_clicked', {
+        enabled: !pubdashResponse.annotationsEnabled,
       });
     });
   });
@@ -372,8 +401,9 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_enable_clicked', {
-        action: pubdashResponse.isEnabled ? 'disable' : 'enable',
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_pause_clicked', {
+        paused: pubdashResponse.isEnabled,
       });
     });
   });

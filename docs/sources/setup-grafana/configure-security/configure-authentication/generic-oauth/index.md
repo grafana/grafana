@@ -19,7 +19,7 @@ weight: 700
 
 # Configure generic OAuth2 authentication
 
-{{< docs/shared "auth/intro.md" >}}
+{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 Grafana provides OAuth2 integrations for the following auth providers:
 
@@ -28,6 +28,7 @@ Grafana provides OAuth2 integrations for the following auth providers:
 - [GitLab OAuth]({{< relref "../gitlab" >}})
 - [Google OAuth]({{< relref "../google" >}})
 - [Grafana Com OAuth]({{< relref "../grafana-com" >}})
+- [Keycloak OAuth]({{< relref "../keycloak" >}})
 - [Okta OAuth]({{< relref "../okta" >}})
 
 If your OAuth2 provider is not listed, you can use generic OAuth2 authentication.
@@ -66,13 +67,11 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
 1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
 
-   a. Enable `accessTokenExpirationCheck` feature toggle.
+   a. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
 
-   b. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
+   b. Set `use_refresh_token` to `true` in `[auth.generic_oauth]` section in Grafana configuration file.
 
-   c. Set `use_refresh_token` to `true` in `[auth.generic_oauth]` section in Grafana configuration file.
-
-   d. Enable the refresh token on the provider if required.
+   c. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
 1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
@@ -120,7 +119,7 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `tls_client_key`             | No       | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                 |
 | `tls_client_ca`              | No       | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                 |
 | `use_pkce`                   | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
-| `use_refresh_token`          | No       | Set to `true` to use refresh token and check access token expiration. The `accessTokenExpirationCheck` feature toggle should also be enabled to use refresh token.                                                                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
+| `use_refresh_token`          | No       | Set to `true` to use refresh token and check access token expiration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `false`         |
 
 ### Configure login
 
@@ -182,7 +181,7 @@ To configure generic OAuth2 to use a refresh token, set `use_refresh_token` conf
 1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with additional scopes.
 1. Enable the refresh token on the provider.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ## Configure role mapping
 
@@ -204,7 +203,7 @@ This section includes examples of JMESPath expressions used for role mapping.
 
 #### Map user organization role
 
-In this example, the user has been granted the role of an `Editor`. The role assigned is based on the value of the property `role`, which must be a valid Grafana role such as `Viewer`, `Editor` or `Admin`.
+In this example, the user has been granted the role of an `Editor`. The role assigned is based on the value of the property `role`, which must be a valid Grafana role such as `Admin`, `Editor`, `Viewer` or `None`.
 
 Payload:
 
@@ -273,6 +272,17 @@ Config:
 ```ini
 role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
+```
+
+#### Map one role to all users
+
+In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
+
+Config:
+
+```ini
+role_attribute_path = "'Viewer'"
+skip_org_role_sync = false
 ```
 
 ## Configure team synchronization

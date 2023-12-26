@@ -125,7 +125,7 @@ function getStyles(theme: GrafanaTheme2) {
         top: 0,
         background: theme.colors.gradients.brandVertical,
         width: theme.spacing(0.5),
-        borderRadius: theme.shape.borderRadius(1),
+        borderRadius: theme.shape.radius.default,
       },
     }),
     noNotifsWrapper: css({

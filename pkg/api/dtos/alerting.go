@@ -106,8 +106,8 @@ type AlertTestResult struct {
 }
 
 type AlertTestResultLog struct {
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
 }
 
 type EvalMatch struct {

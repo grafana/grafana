@@ -40,11 +40,13 @@ export function applyGraphStyle(config: FieldConfig, style: ExploreGraphStyle, m
         custom.drawStyle = GraphDrawStyle.Line;
         custom.stacking.mode = StackingMode.Normal;
         custom.fillOpacity = 100;
+        custom.axisSoftMin = 0;
         break;
       case 'stacked_bars':
         custom.drawStyle = GraphDrawStyle.Bars;
         custom.stacking.mode = StackingMode.Normal;
         custom.fillOpacity = 100;
+        custom.axisSoftMin = 0;
         break;
       default: {
         // should never happen

@@ -1,7 +1,7 @@
 import { GrafanaTheme2, createTheme } from '@grafana/data';
 //@ts-ignore
 import { create } from '@storybook/theming';
-import '../src/components/Icon/iconBundle';
+import '../../../public/app/core/icons/iconBundle';
 
 const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({
@@ -13,7 +13,7 @@ const createStorybookTheme = (theme: GrafanaTheme2) => {
     appBg: theme.colors.background.canvas,
     appContentBg: theme.colors.background.primary,
     appBorderColor: theme.colors.border.medium,
-    appBorderRadius: parseInt(theme.shape.borderRadius(1), 10),
+    appBorderRadius: 0,
 
     // Typography
     fontBase: theme.typography.fontFamily,

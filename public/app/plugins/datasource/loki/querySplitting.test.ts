@@ -1,8 +1,7 @@
 import { of } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
-import { dateTime } from '@grafana/data';
-import { LoadingState } from '@grafana/schema';
+import { dateTime, LoadingState } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplitting';
@@ -13,6 +12,9 @@ import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryType } from './types';
 
 jest.mock('./tracking');
+jest.mock('uuid', () => ({
+  v4: jest.fn().mockReturnValue('uuid'),
+}));
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
@@ -37,6 +39,36 @@ describe('runSplitQuery()', () => {
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Metric queries with maxLines of 0 will execute', async () => {
+    const request = getQueryOptions<LokiQuery>({
+      targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', maxLines: 0 }],
+      range,
+    });
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 3 days, 3 chunks, 3 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Log queries with maxLines of 0 will NOT execute', async () => {
+    const request = getQueryOptions<LokiQuery>({
+      targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 0 }],
+      range,
+    });
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // Will not request a log query with maxLines of 0
+      expect(datasource.runQuery).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  test('Returns a DataQueryResponse with the expected attributes', async () => {
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].data).toBeDefined();
+      expect(response[0].state).toBe(LoadingState.Done);
+      expect(response[0].key).toBeDefined();
     });
   });
 
@@ -202,6 +234,7 @@ describe('runSplitQuery()', () => {
           {
             data: [],
             state: LoadingState.Done,
+            key: 'uuid',
           },
           [
             {
@@ -234,6 +267,7 @@ describe('runSplitQuery()', () => {
           {
             data: [],
             state: LoadingState.Done,
+            key: 'uuid',
           },
           [
             {
@@ -340,19 +374,6 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
     });
-    test('Groups queries using distinct', async () => {
-      const request = getQueryOptions<LokiQuery>({
-        targets: [
-          { expr: '{a="b"} | distinct field', refId: 'A' },
-          { expr: 'count_over_time({c="d"} | distinct something [1m])', refId: 'B' },
-        ],
-        range,
-      });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // Queries using distinct are omitted from splitting
-        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
-      });
-    });
     test('Respects maxLines of logs queries', async () => {
       const { logFrameA } = getMockFrames();
       const request = getQueryOptions<LokiQuery>({
@@ -370,18 +391,17 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(4);
       });
     });
-    test('Groups multiple queries into logs, queries, instant, and distinct', async () => {
+    test('Groups multiple queries into logs, queries, instant', async () => {
       const request = getQueryOptions<LokiQuery>({
         targets: [
           { expr: 'count_over_time({a="b"}[1m])', refId: 'A', queryType: LokiQueryType.Instant },
           { expr: '{c="d"}', refId: 'B' },
           { expr: 'count_over_time({c="d"}[1m])', refId: 'C' },
-          { expr: 'count_over_time({c="d"} | distinct id [1m])', refId: 'D' },
         ],
         range,
       });
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // 3 days, 3 chunks, 3x Logs + 3x Metric + (1x Instant | Distinct), 7 requests.
+        // 3 days, 3 chunks, 3x Logs + 3x Metric + (1x Instant), 7 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(7);
       });
     });

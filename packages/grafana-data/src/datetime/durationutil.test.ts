@@ -5,6 +5,7 @@ import {
   isValidDuration,
   isValidGoDuration,
   durationToMilliseconds,
+  isValidGrafanaDuration,
 } from './durationutil';
 
 describe('Duration util', () => {
@@ -65,6 +66,28 @@ describe('Duration util', () => {
     it('invalid float number duration string returns false', () => {
       const durationString = '3.h -4.0m 0.s 2.ms -0.us 5.ns';
       expect(isValidGoDuration(durationString)).toEqual(false);
+    });
+  });
+
+  describe('isValidGrafanaDuration', () => {
+    it('valid duration string returns true', () => {
+      const durationString = '7y 6M 5w 4d 3h 4m 1s 2ms 3us 5ns';
+      expect(isValidGrafanaDuration(durationString)).toEqual(true);
+    });
+
+    it('valid float number duration string returns true', () => {
+      const durationString = '7.1y 6.1M 5.1w 4.1d 3.1h 4.0m 0.1s 2.11ms 0.03us 5.3333ns';
+      expect(isValidGrafanaDuration(durationString)).toEqual(true);
+    });
+
+    it('invalid duration string returns false', () => {
+      const durationString = '3M 6v 5b 4m';
+      expect(isValidGrafanaDuration(durationString)).toEqual(false);
+    });
+
+    it('invalid float number duration string returns false', () => {
+      const durationString = '3.h -4.0m 0.s 2.ms -0.us 5.ns';
+      expect(isValidGrafanaDuration(durationString)).toEqual(false);
     });
   });
 

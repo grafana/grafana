@@ -13,8 +13,14 @@ Grafana uses [Docker](https://docker.com) to make the task of setting up databas
 
 ## Developer dashboards and data sources
 
+To setup developer dashboards and data sources
 ```bash
 ./setup.sh
+```
+
+To remove the setup developer dashboards and data sources
+```bash
+./setup.sh undev
 ```
 
 After restarting the Grafana server, there should be a number of data sources named `gdev-<type>` provisioned as well as

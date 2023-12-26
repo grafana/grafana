@@ -13,6 +13,7 @@ export interface OptionsPaneCategoryDescriptorProps {
   isNested?: boolean;
   itemsCount?: number;
   customRender?: () => React.ReactNode;
+  sandboxId?: string;
 }
 /**
  * This is not a real React component but an intermediary to enable deep option search without traversing a React node tree.

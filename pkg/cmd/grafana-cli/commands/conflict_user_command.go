@@ -86,7 +86,7 @@ func getSqlStore(cfg *setting.Cfg) (*sqlstore.SQLStore, error) {
 		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 	}
 	bus := bus.ProvideBus(tracer)
-	return sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+	return sqlstore.ProvideService(cfg, &migrations.OSSMigrations{}, bus, tracer)
 }
 
 func runListConflictUsers() func(context *cli.Context) error {
@@ -465,7 +465,7 @@ func (r *ConflictResolver) showChanges() {
 
 // Formatter make it possible for us to write to terminal and to a file
 // with different formats depending on the usecase
-type Formatter func(format string, a ...interface{}) string
+type Formatter func(format string, a ...any) string
 
 func shouldDiscardBlock(seenUsersInBlock map[string]string, block string, user ConflictingUser) bool {
 	// loop through users to see if we should skip this block

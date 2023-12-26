@@ -38,6 +38,10 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_log_analytics_queries_hidden: number;
   /** number of Azure Log Analytics queries using multiple resources */
   azure_log_multiple_resource: number;
+  /** number of Azure Log Analytics queries using time-range defined explicitly in query */
+  azure_log_analytics_queries_query_time: number;
+  /** number of Azure Log Analytics queries using Grafana time-range */
+  azure_log_analytics_queries_grafana_time: number;
   /** number of Azure Log Analytics queries */
   azure_log_query: number;
 

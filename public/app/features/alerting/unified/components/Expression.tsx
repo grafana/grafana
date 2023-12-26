@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { LanguageMap, languages as prismLanguages } from 'prismjs';
+import { languages as prismLanguages } from 'prismjs';
 import React, { FC, useMemo } from 'react';
 import { Editor } from 'slate-react';
 
@@ -23,10 +23,10 @@ export const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }
     () => [
       SlatePrism(
         {
-          onlyIn: (node: any) => node.type === 'code_block',
+          onlyIn: (node) => 'type' in node && node.type === 'code_block',
           getSyntax: () => language,
         },
-        { ...(prismLanguages as LanguageMap), [language]: language === 'logql' ? LogqlSyntax : PromqlSyntax }
+        { ...prismLanguages, [language]: language === 'logql' ? LogqlSyntax : PromqlSyntax }
       ),
     ],
     [language]

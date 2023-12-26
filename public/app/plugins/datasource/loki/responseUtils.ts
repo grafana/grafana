@@ -13,6 +13,7 @@ import {
 
 import { isBytesString } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
+import { LabelType } from './types';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values ?? [];
@@ -54,15 +55,29 @@ export function extractLogParserFromDataFrame(frame: DataFrame): {
   return { hasLogfmt, hasJSON, hasPack };
 }
 
-export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
+export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType = LabelType.Indexed): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
     frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
+  const labelTypeArray: Array<{ [key: string]: string }> | undefined =
+    frame?.fields?.find((field) => field.name === 'labelTypes')?.values ?? [];
 
   if (!labelsArray?.length) {
     return [];
   }
 
-  return Object.keys(labelsArray[0]);
+  // if there are no label types, only return indexed labels if requested
+  if (!labelTypeArray?.length) {
+    if (type === LabelType.Indexed) {
+      return Object.keys(labelsArray[0]);
+    }
+    return [];
+  }
+
+  const labelTypes = labelTypeArray[0];
+
+  const allLabelKeys = Object.keys(labelsArray[0]).filter((k) => labelTypes[k] === type);
+
+  return allLabelKeys;
 }
 
 export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] {
@@ -203,6 +218,10 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
     dest.fields[i].values = [].concat.apply(source.fields[i].values, dest.fields[i].values);
+    if (source.fields[i].nanos) {
+      const nanos: number[] = dest.fields[i].nanos?.slice() || [];
+      dest.fields[i].nanos = source.fields[i].nanos?.concat(nanos);
+    }
   }
   dest.length += source.length;
   dest.meta = {

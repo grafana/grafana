@@ -9,7 +9,11 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 export interface Options {
+  /**
+   * folderId is deprecated, and migrated to folderUid on panel init
+   */
   folderId?: number;
+  folderUID?: string;
   includeVars: boolean;
   keepTime: boolean;
   maxItems: number;

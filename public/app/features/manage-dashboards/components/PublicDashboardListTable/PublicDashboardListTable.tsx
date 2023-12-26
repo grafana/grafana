@@ -27,7 +27,6 @@ import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
 
 import { PublicDashboardListResponse } from '../../types';
@@ -42,7 +41,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
 
   const selectors = e2eSelectors.pages.PublicDashboards;
-  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const isOrphaned = !pd.dashboardUid;
 
   const onTogglePause = (pd: PublicDashboardListResponse, isPaused: boolean) => {
@@ -107,7 +106,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
           icon="cog"
           variant="secondary"
           color={theme.colors.warning.text}
-          href={generatePublicDashboardConfigUrl(pd.dashboardUid)}
+          href={generatePublicDashboardConfigUrl(pd.dashboardUid, pd.slug)}
           key="public-dashboard-config-url"
           tooltip="Configure public dashboard"
           data-testid={selectors.ListItem.configButton}

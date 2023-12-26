@@ -1,11 +1,13 @@
 import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
+import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
-import { PanelPlugin } from '@grafana/data';
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { PanelPlugin, PluginError } from '@grafana/data';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import configCore from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
-import { invalidatePluginInCache } from '../../systemjsPlugins/pluginCacheBuster';
+import { invalidatePluginInCache } from '../../loader/cache';
 import {
   getRemotePlugins,
   getPluginErrors,
@@ -13,21 +15,100 @@ import {
   getPluginDetails,
   installPlugin,
   uninstallPlugin,
+  getInstancePlugins,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
-import { CatalogPlugin, RemotePlugin, LocalPlugin } from '../types';
+import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin } from '../types';
 
+// Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
-    const { dispatch } = thunkApi;
-    const [localPlugins, pluginErrors, { payload: remotePlugins }] = await Promise.all([
-      getLocalPlugins(),
-      getPluginErrors(),
-      dispatch(fetchRemotePlugins()),
-    ]);
+    thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/pending` });
+    thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/pending` });
 
-    return mergeLocalsAndRemotes(localPlugins, remotePlugins, pluginErrors);
+    const instance$ =
+      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+        ? from(getInstancePlugins())
+        : of(undefined);
+    const TIMEOUT = 500;
+    const pluginErrors$ = from(getPluginErrors());
+    const local$ = from(getLocalPlugins());
+    // Unknown error while fetching remote plugins from GCOM.
+    // (In this case we still operate, but only with locally available plugins.)
+    const remote$ = from(getRemotePlugins()).pipe(
+      catchError((err) => {
+        thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/rejected` });
+        console.error(err);
+        return of([]);
+      })
+    );
+
+    forkJoin({
+      local: local$,
+      remote: remote$,
+      instance: instance$,
+      pluginErrors: pluginErrors$,
+    })
+      .pipe(
+        // Fetching the list of plugins from GCOM is slow / times out
+        // (We are waiting for TIMEOUT, and if there is still no response from GCOM we continue with locally
+        // installed plugins only by returning a new observable. We also still wait for the remote request to finish or
+        // time out, but we don't block the main execution flow.)
+        timeout({
+          each: TIMEOUT,
+          with: () => {
+            remote$
+              // Remote plugins loaded after a timeout, updating the store
+              .subscribe(async (remote: RemotePlugin[]) => {
+                thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/fulfilled` });
+
+                if (remote.length > 0) {
+                  const local = await lastValueFrom(local$);
+                  const instance = await lastValueFrom(instance$);
+                  const pluginErrors = await lastValueFrom(pluginErrors$);
+
+                  thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({ local, remote, instance, pluginErrors })));
+                }
+              });
+
+            return forkJoin({ local: local$, instance: instance$, pluginErrors: pluginErrors$ });
+          },
+        })
+      )
+      .subscribe(
+        ({
+          local,
+          remote,
+          instance,
+          pluginErrors,
+        }: {
+          local: LocalPlugin[];
+          remote?: RemotePlugin[];
+          instance?: InstancePlugin[];
+          pluginErrors: PluginError[];
+        }) => {
+          // Both local and remote plugins are loaded
+          if (local && remote) {
+            thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/fulfilled` });
+            thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/fulfilled` });
+            thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({ local, remote, instance, pluginErrors })));
+
+            // Only remote plugins are loaded (remote timed out)
+          } else if (local) {
+            thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/fulfilled` });
+            thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({ local, pluginErrors })));
+          }
+        },
+        (error) => {
+          console.log(error);
+          thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/rejected` });
+          thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/rejected` });
+          return thunkApi.rejectWithValue('Unknown error.');
+        }
+      );
+
+    return null;
   } catch (e) {
     return thunkApi.rejectWithValue('Unknown error.');
   }
@@ -56,65 +137,93 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
   }
 );
 
-export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, async (id: string, thunkApi) => {
-  try {
-    const details = await getPluginDetails(id);
-
-    return {
-      id,
-      changes: { details },
-    } as Update<CatalogPlugin>;
-  } catch (e) {
-    return thunkApi.rejectWithValue('Unknown error.');
-  }
-});
-
-// We are also using the install API endpoint to update the plugin
-export const install = createAsyncThunk(
-  `${STATE_PREFIX}/install`,
-  async ({ id, version, isUpdating = false }: { id: string; version?: string; isUpdating?: boolean }, thunkApi) => {
-    const changes = isUpdating
-      ? { isInstalled: true, installedVersion: version, hasUpdate: false }
-      : { isInstalled: true, installedVersion: version };
+export const fetchDetails = createAsyncThunk<Update<CatalogPlugin>, string>(
+  `${STATE_PREFIX}/fetchDetails`,
+  async (id: string, thunkApi) => {
     try {
-      await installPlugin(id);
-      await updatePanels();
+      const details = await getPluginDetails(id);
 
-      if (isUpdating) {
-        invalidatePluginInCache(id);
-      }
-
-      return { id, changes } as Update<CatalogPlugin>;
+      return {
+        id,
+        changes: { details },
+      };
     } catch (e) {
-      console.error(e);
-      if (isFetchError(e)) {
-        return thunkApi.rejectWithValue(e.data);
-      }
-
       return thunkApi.rejectWithValue('Unknown error.');
     }
   }
 );
 
-export const unsetInstall = createAsyncThunk(`${STATE_PREFIX}/install`, async () => ({}));
+export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
 
-export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id: string, thunkApi) => {
+// 1. gets remote equivalents from the store (if there are any)
+// 2. merges the remote equivalents with the local plugins
+// 3. updates the the store with the updated CatalogPlugin objects
+export const addLocalPlugins = createAction<LocalPlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
+
+// 1. gets local equivalents from the store (if there are any)
+// 2. merges the local equivalents with the remote plugins
+// 3. updates the the store with the updated CatalogPlugin objects
+export const addRemotePlugins = createAction<RemotePlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
+
+// 1. merges the local and remote plugins
+// 2. updates the store with the CatalogPlugin objects
+export const addLocalAndRemotePlugins = createAction<{ local: LocalPlugin[]; remote: RemotePlugin[] }>(
+  `${STATE_PREFIX}/addLocalPlugins`
+);
+
+// We are also using the install API endpoint to update the plugin
+export const install = createAsyncThunk<
+  Update<CatalogPlugin>,
+  {
+    id: string;
+    version?: string;
+    isUpdating?: boolean;
+  }
+>(`${STATE_PREFIX}/install`, async ({ id, version, isUpdating = false }, thunkApi) => {
+  const changes = isUpdating
+    ? { isInstalled: true, installedVersion: version, hasUpdate: false }
+    : { isInstalled: true, installedVersion: version };
   try {
-    await uninstallPlugin(id);
+    await installPlugin(id);
     await updatePanels();
 
-    invalidatePluginInCache(id);
+    if (isUpdating) {
+      invalidatePluginInCache(id);
+    }
 
-    return {
-      id,
-      changes: { isInstalled: false, installedVersion: undefined },
-    } as Update<CatalogPlugin>;
+    return { id, changes };
   } catch (e) {
     console.error(e);
+    if (isFetchError(e)) {
+      return thunkApi.rejectWithValue(e.data);
+    }
 
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });
+
+export const unsetInstall = createAsyncThunk(`${STATE_PREFIX}/install`, async () => ({}));
+
+export const uninstall = createAsyncThunk<Update<CatalogPlugin>, string>(
+  `${STATE_PREFIX}/uninstall`,
+  async (id, thunkApi) => {
+    try {
+      await uninstallPlugin(id);
+      await updatePanels();
+
+      invalidatePluginInCache(id);
+
+      return {
+        id,
+        changes: { isInstalled: false, installedVersion: undefined },
+      };
+    } catch (e) {
+      console.error(e);
+
+      return thunkApi.rejectWithValue('Unknown error.');
+    }
+  }
+);
 
 // We need this to be backwards-compatible with other parts of Grafana.
 // (Originally in "public/app/features/plugins/state/actions.ts")

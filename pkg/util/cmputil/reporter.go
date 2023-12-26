@@ -105,7 +105,7 @@ func (d *Diff) String() string {
 	return fmt.Sprintf("%v:\n\t-: %+v\n\t+: %+v\n", d.Path, describeReflectValue(d.Left), describeReflectValue(d.Right))
 }
 
-func describeReflectValue(v reflect.Value) interface{} {
+func describeReflectValue(v reflect.Value) any {
 	// invalid reflect.Value is produced when two collections (slices\maps) are compared and one misses value.
 	// This way go-cmp indicates that an element was added\removed from a list.
 	if !v.IsValid() {

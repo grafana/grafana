@@ -56,7 +56,7 @@ type ConditionEvaluatorMock_Evaluate_Call struct {
 // Evaluate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - now time.Time
-func (_e *ConditionEvaluatorMock_Expecter) Evaluate(ctx interface{}, now interface{}) *ConditionEvaluatorMock_Evaluate_Call {
+func (_e *ConditionEvaluatorMock_Expecter) Evaluate(ctx any, now any) *ConditionEvaluatorMock_Evaluate_Call {
 	return &ConditionEvaluatorMock_Evaluate_Call{Call: _e.mock.On("Evaluate", ctx, now)}
 }
 
@@ -103,7 +103,7 @@ type ConditionEvaluatorMock_EvaluateRaw_Call struct {
 // EvaluateRaw is a helper method to define mock.On call
 //   - ctx context.Context
 //   - now time.Time
-func (_e *ConditionEvaluatorMock_Expecter) EvaluateRaw(ctx interface{}, now interface{}) *ConditionEvaluatorMock_EvaluateRaw_Call {
+func (_e *ConditionEvaluatorMock_Expecter) EvaluateRaw(ctx any, now any) *ConditionEvaluatorMock_EvaluateRaw_Call {
 	return &ConditionEvaluatorMock_EvaluateRaw_Call{Call: _e.mock.On("EvaluateRaw", ctx, now)}
 }
 

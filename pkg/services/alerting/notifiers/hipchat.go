@@ -91,15 +91,15 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	attributes := make([]map[string]interface{}, 0)
+	attributes := make([]map[string]any, 0)
 	for index, evt := range evalContext.EvalMatches {
 		metricName := evt.Metric
 		if len(metricName) > 50 {
 			metricName = metricName[:50]
 		}
-		attributes = append(attributes, map[string]interface{}{
+		attributes = append(attributes, map[string]any{
 			"label": metricName,
-			"value": map[string]interface{}{
+			"value": map[string]any{
 				"label": strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64),
 			},
 		})
@@ -109,9 +109,9 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	if evalContext.Error != nil {
-		attributes = append(attributes, map[string]interface{}{
+		attributes = append(attributes, map[string]any{
 			"label": "Error message",
-			"value": map[string]interface{}{
+			"value": map[string]any{
 				"label": evalContext.Error.Error(),
 			},
 		})
@@ -140,20 +140,20 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	// Add a card with link to the dashboard
-	card := map[string]interface{}{
+	card := map[string]any{
 		"style":       "application",
 		"url":         ruleURL,
 		"id":          "1",
 		"title":       evalContext.GetNotificationTitle(),
 		"description": message,
-		"icon": map[string]interface{}{
+		"icon": map[string]any{
 			"url": "https://grafana.com/static/assets/img/fav32.png",
 		},
 		"date":       evalContext.EndTime.Unix(),
 		"attributes": attributes,
 	}
 	if hc.NeedsImage() && evalContext.ImagePublicURL != "" {
-		card["thumbnail"] = map[string]interface{}{
+		card["thumbnail"] = map[string]any{
 			"url":    evalContext.ImagePublicURL,
 			"url@2x": evalContext.ImagePublicURL,
 			"width":  1193,
@@ -161,7 +161,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 
-	body := map[string]interface{}{
+	body := map[string]any{
 		"message":        message,
 		"notify":         "true",
 		"message_format": "html",

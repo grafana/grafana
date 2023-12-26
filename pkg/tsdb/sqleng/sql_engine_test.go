@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng/util"
 )
 
 func TestSQLEngine(t *testing.T) {
@@ -397,14 +397,14 @@ func TestSQLEngine(t *testing.T) {
 			expectedErr                           error
 			expectQueryResultTransformerWasCalled bool
 		}{
-			{err: &net.OpError{Op: "Dial"}, expectedErr: ErrConnectionFailed, expectQueryResultTransformerWasCalled: false},
+			{err: &net.OpError{Op: "Dial", Err: fmt.Errorf("inner-error")}, expectedErr: ErrConnectionFailed, expectQueryResultTransformerWasCalled: false},
 			{err: randomErr, expectedErr: randomErr, expectQueryResultTransformerWasCalled: true},
 		}
 
 		for _, tc := range tests {
 			transformer := &testQueryResultTransformer{}
 			dp := DataSourceHandler{
-				log:                    log.New("test"),
+				log:                    backend.NewLoggerWith("logger", "test"),
 				queryResultTransformer: transformer,
 			}
 			resultErr := dp.TransformQueryError(dp.log, tc.err)

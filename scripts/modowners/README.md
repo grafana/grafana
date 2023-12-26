@@ -47,7 +47,7 @@ Example output:
 @grafana/dataviz-squad 1
 @grafana/backend-platform 75
 @grafana/grafana-as-code 11
-@grafana/grafana-authnz-team 6
+@grafana/identity-access-team 6
 @grafana/partner-datasources 4
 ```
 
@@ -67,7 +67,7 @@ List all dependencies of given owner(s).
 
 Example CLI command to list all direct dependencies owned by Delivery and Authnz:
 
-`go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/grafana-authnz-team go.mod`
+`go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/identity-access-team go.mod`
 
 Example output:
 
@@ -84,3 +84,10 @@ gopkg.in/square/go-jose.v2@v2.6.0
 filippo.io/age@v1.1.1
 github.com/docker/docker@v23.0.4+incompatible
 ```
+
+## Action items
+
+For existing dependencies, please review and update ownership of your team’s dependencies in `go.mod`.
+
+- If any assignments are incorrect, you can replace your team name with the correct team in `go.mod`.
+- If you don’t know who the correct team is, you can reassign the dependency back to backend platform. Afterwards, open a PR and assign backend platform as reviewers.

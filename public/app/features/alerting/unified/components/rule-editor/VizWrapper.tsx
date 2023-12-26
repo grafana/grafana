@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   instantVectorResultWrapper: css`
     border: solid 1px ${theme.colors.border.medium};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     padding: 0;
 
     display: flex;

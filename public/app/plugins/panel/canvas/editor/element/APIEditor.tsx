@@ -1,48 +1,56 @@
 import React, { useCallback } from 'react';
 
-import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, JSONFormatter } from '@grafana/ui';
+import {
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+  StringFieldConfigSettings,
+  SelectableValue,
+} from '@grafana/data';
+import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
-import { appEvents } from 'app/core/core';
+import { defaultApiConfig } from 'app/features/canvas/elements/button';
+
+import { HttpRequestMethod } from '../../panelcfg.gen';
+
+import { ParamsEditor } from './ParamsEditor';
+import { callApi, interpolateVariables } from './utils';
 
 export interface APIEditorConfig {
+  method: string;
   endpoint: string;
   data?: string;
+  contentType?: string;
+  queryParams?: Array<[string, string]>;
+  headerParams?: Array<[string, string]>;
 }
 
 const dummyStringSettings = {
   settings: {},
 } as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
-export const callApi = (api: APIEditorConfig, isTest = false) => {
-  if (api) {
-    getBackendSrv()
-      .fetch({
-        url: api.endpoint!,
-        method: 'POST',
-        data: api.data ?? {},
-      })
-      .subscribe({
-        error: (error) => {
-          if (isTest) {
-            appEvents.emit(AppEvents.alertError, ['Error has occurred: ', JSON.stringify(error)]);
-            console.error(error);
-          }
-        },
-        complete: () => {
-          if (isTest) {
-            appEvents.emit(AppEvents.alertSuccess, ['Test successful']);
-          }
-        },
-      });
-  }
-};
-
 type Props = StandardEditorProps<APIEditorConfig>;
 
+const httpMethodOptions = [
+  { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
+  { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
+  { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
+];
+
+const contentTypeOptions: SelectableValue[] = [
+  { label: 'JSON', value: 'application/json' },
+  { label: 'Text', value: 'text/plain' },
+  { label: 'JavaScript', value: 'application/javascript' },
+  { label: 'HTML', value: 'text/html' },
+  { label: 'XML', value: 'application/XML' },
+  { label: 'x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
+];
+
 export function APIEditor({ value, context, onChange }: Props) {
-  const labelWidth = 9;
+  const LABEL_WIDTH = 13;
+
+  if (!value) {
+    value = defaultApiConfig;
+  }
 
   const onEndpointChange = useCallback(
     (endpoint = '') => {
@@ -64,9 +72,53 @@ export function APIEditor({ value, context, onChange }: Props) {
     [onChange, value]
   );
 
+  const onMethodChange = useCallback(
+    (method: string) => {
+      onChange({
+        ...value,
+        method,
+      });
+    },
+    [onChange, value]
+  );
+
+  const onContentTypeChange = useCallback(
+    (contentType: SelectableValue<string>) => {
+      onChange({
+        ...value,
+        contentType: contentType?.value,
+      });
+    },
+    [onChange, value]
+  );
+
+  const formatCreateLabel = (input: string) => {
+    return input;
+  };
+
+  const onQueryParamsChange = useCallback(
+    (queryParams: Array<[string, string]>) => {
+      onChange({
+        ...value,
+        queryParams,
+      });
+    },
+    [onChange, value]
+  );
+
+  const onHeaderParamsChange = useCallback(
+    (headerParams: Array<[string, string]>) => {
+      onChange({
+        ...value,
+        headerParams,
+      });
+    },
+    [onChange, value]
+  );
+
   const renderJSON = (data: string) => {
     try {
-      const json = JSON.parse(data);
+      const json = JSON.parse(interpolateVariables(data));
       return <JSONFormatter json={json} />;
     } catch (error) {
       if (error instanceof Error) {
@@ -80,7 +132,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   const renderTestAPIButton = (api: APIEditorConfig) => {
     if (api && api.endpoint) {
       return (
-        <Button onClick={() => callApi(api, true)} title={'Test API'}>
+        <Button onClick={() => callApi(api)} title="Test API">
           Test API
         </Button>
       );
@@ -89,10 +141,10 @@ export function APIEditor({ value, context, onChange }: Props) {
     return;
   };
 
-  return config.disableSanitizeHtml ? (
+  return (
     <>
       <InlineFieldRow>
-        <InlineField label={'Endpoint'} labelWidth={labelWidth} grow={true}>
+        <InlineField label="Endpoint" labelWidth={LABEL_WIDTH} grow={true}>
           <StringValueEditor
             context={context}
             value={value?.endpoint}
@@ -102,20 +154,46 @@ export function APIEditor({ value, context, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Data'} labelWidth={labelWidth} grow={true}>
+        <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
+          <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
+        </InlineField>
+      </InlineFieldRow>
+      {value?.method !== HttpRequestMethod.GET && (
+        <InlineFieldRow>
+          <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
+            <Select
+              options={contentTypeOptions}
+              allowCustomValue={true}
+              formatCreateLabel={formatCreateLabel}
+              value={value?.contentType}
+              onChange={onContentTypeChange}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+
+      <br />
+      <Field label="Query parameters">
+        <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
+      </Field>
+      <Field label="Header parameters">
+        <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
+      </Field>
+      {value?.method !== HttpRequestMethod.GET && value?.contentType && (
+        <Field label="Payload">
           <StringValueEditor
             context={context}
             value={value?.data ?? '{}'}
             onChange={onDataChange}
-            item={dummyStringSettings}
+            item={{ ...dummyStringSettings, settings: { useTextarea: true } }}
           />
-        </InlineField>
-      </InlineFieldRow>
+        </Field>
+      )}
       {renderTestAPIButton(value)}
       <br />
-      {renderJSON(value?.data ?? '{}')}
+      {value?.method !== HttpRequestMethod.GET &&
+        value?.contentType === defaultApiConfig.contentType &&
+        renderJSON(value?.data ?? '{}')}
     </>
-  ) : (
-    <>Must enable disableSanitizeHtml feature flag to access</>
   );
 }

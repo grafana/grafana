@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // DashboardSnapshot model
@@ -29,11 +29,11 @@ type DashboardSnapshot struct {
 
 // DashboardSnapshotDTO without dashboard map
 type DashboardSnapshotDTO struct {
-	ID          int64  `json:"id" xorm:"id"`
+	ID          int64  `json:"-" xorm:"id"`
 	Name        string `json:"name"`
 	Key         string `json:"key"`
-	OrgID       int64  `json:"orgId" xorm:"org_id"`
-	UserID      int64  `json:"userId" xorm:"user_id"`
+	OrgID       int64  `json:"-" xorm:"org_id"`
+	UserID      int64  `json:"-" xorm:"user_id"`
 	External    bool   `json:"external"`
 	ExternalURL string `json:"externalUrl" xorm:"external_url"`
 
@@ -98,5 +98,5 @@ type GetDashboardSnapshotsQuery struct {
 	Name         string
 	Limit        int
 	OrgID        int64
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }

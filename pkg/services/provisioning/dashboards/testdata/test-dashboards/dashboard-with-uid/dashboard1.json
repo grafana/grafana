@@ -1,8 +1,7 @@
 {
     "title": "Grafana",
     "tags": [],
-    "style": "dark",
-    "timezone": "browser",
+      "timezone": "browser",
     "editable": true,
     "rows": [
       {

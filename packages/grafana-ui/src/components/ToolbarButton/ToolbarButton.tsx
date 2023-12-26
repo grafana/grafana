@@ -147,7 +147,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       height: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
       border: `1px solid ${theme.colors.secondary.border}`,

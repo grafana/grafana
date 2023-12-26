@@ -27,7 +27,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				}`),
 		}
 
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
 		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
 		require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 			JSONData: []byte(`{ "httpMethod": "POST" }`),
 		}
 
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
 		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
 		require.NoError(t, err)
@@ -57,7 +57,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				}`),
 		}
 
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
 		assert.Error(t, err)
 	})
@@ -72,7 +72,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 					"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5"
 				}`),
 		}
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
 		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
 		require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 					"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5"
 				}`),
 		}
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
 		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
 		require.NoError(t, err)
@@ -109,7 +109,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				}`),
 		}
 
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
 		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
 		assert.Error(t, err)

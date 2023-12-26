@@ -93,7 +93,7 @@ export default function StoragePage(props: Props) {
     if (listing.value) {
       const length = listing.value.length;
       if (length === 1) {
-        const first = listing.value.fields[0].values[0] as string;
+        const first: string = listing.value.fields[0].values[0];
         isFolder = !path.endsWith(first);
       } else {
         // TODO: handle files/folders which do not exist

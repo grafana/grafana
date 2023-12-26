@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 )
 
 type DashAlertExtractor interface {
@@ -20,18 +20,18 @@ type DashAlertExtractor interface {
 
 // DashAlertExtractorService extracts alerts from the dashboard json.
 type DashAlertExtractorService struct {
-	datasourcePermissionsService permissions.DatasourcePermissionsService
-	datasourceService            datasources.DataSourceService
-	alertStore                   AlertStore
-	log                          log.Logger
+	dsGuardian        guardian.DatasourceGuardianProvider
+	datasourceService datasources.DataSourceService
+	alertStore        AlertStore
+	log               log.Logger
 }
 
-func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService, store AlertStore) *DashAlertExtractorService {
+func ProvideDashAlertExtractorService(dsGuardian guardian.DatasourceGuardianProvider, datasourceService datasources.DataSourceService, store AlertStore) *DashAlertExtractorService {
 	return &DashAlertExtractorService{
-		datasourcePermissionsService: datasourcePermissionsService,
-		datasourceService:            datasourceService,
-		alertStore:                   store,
-		log:                          log.New("alerting.extractor"),
+		dsGuardian:        dsGuardian,
+		datasourceService: datasourceService,
+		alertStore:        store,
+		log:               log.New("alerting.extractor"),
 	}
 }
 
@@ -210,17 +210,10 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 				return nil, err
 			}
 
-			dsFilterQuery := datasources.DatasourcesPermissionFilterQuery{
-				User:        dashAlertInfo.User,
-				Datasources: []*datasources.DataSource{datasource},
-			}
-
-			dataSources, err := e.datasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &dsFilterQuery)
+			canQuery, err := e.dsGuardian.New(dashAlertInfo.OrgID, dashAlertInfo.User, *datasource).CanQuery(datasource.ID)
 			if err != nil {
-				if !errors.Is(err, permissions.ErrNotImplemented) {
-					return nil, err
-				}
-			} else if len(dataSources) == 0 {
+				return nil, err
+			} else if !canQuery {
 				return nil, datasources.ErrDataSourceAccessDenied
 			}
 

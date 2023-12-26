@@ -22,25 +22,29 @@ weight: 300
 
 Alerting infrastructure is often complex, with many pieces of the pipeline that often live in different places. Scaling this across multiple teams and organizations is an especially challenging task. Grafana Alerting provisioning makes this process easier by enabling you to create, manage, and maintain your alerting data in a way that best suits your organization.
 
-There are three options to choose from:
+Provisioning for Grafana Alerting supports alert rules, contact points, notification policies, mute timings, and templates.
+
+You cannot edit provisioned alerting resources in the Grafana UI in the same way as unprovisioned alerting resources. You can only edit provisioned contact points, notification policies, templates, and mute timings in the source where they were created. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
+
+To modify provisioned alert rules, you can use the **Modify export** feature to edit and then export.
+
+Choose from the options below to provision your Grafana Alerting resources.
 
 1. Use file provisioning to provision your Grafana Alerting resources, such as alert rules and contact points, through files on disk.
 
-1. Provision your alerting resources using the Alerting Provisioning HTTP API.
+   {{% admonition type="note" %}}
+   File provisioning is not available in Grafana Cloud instances.
+   {{% /admonition %}}
 
-   For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning API]({{< relref "../../../developers/http_api/alerting_provisioning" >}}).
+2. Use the Alerting Provisioning HTTP API.
 
-1. Provision your alerting resources using [Terraform](https://www.terraform.io/).
+   For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
 
-**Note:**
-
-Currently, provisioning for Grafana Alerting supports alert rules, contact points, notification policies, mute timings, and templates. Provisioned alerting resources using file provisioning or Terraform can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
+3. Use [Terraform](https://www.terraform.io/).
 
 **Useful Links:**
 
 [Grafana provisioning][provisioning]
-
-[Terraform provisioning](/docs/grafana-cloud/infrastructure-as-code/terraform/)
 
 [Grafana Alerting provisioning API][alerting_provisioning]
 

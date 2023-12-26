@@ -5,7 +5,7 @@ import { DataFrame } from '@grafana/data';
 
 import { GrafanaTableState } from './types';
 
-/** 
+/**
   To have the custom vertical scrollbar always visible (https://github.com/grafana/grafana/issues/52136),
   we need to bring the element from the VariableSizeList scope to the outer Table container scope,
   because the VariableSizeList scope has overflow. By moving scrollbar to container scope we will have
@@ -17,19 +17,20 @@ export function useFixScrollbarContainer(
   tableDivRef: React.RefObject<HTMLDivElement>
 ) {
   useEffect(() => {
-    const listVerticalScrollbarHTML = (variableSizeListScrollbarRef.current as HTMLDivElement)?.querySelector(
-      '.track-vertical'
-    );
+    if (variableSizeListScrollbarRef.current && tableDivRef.current) {
+      const listVerticalScrollbarHTML = variableSizeListScrollbarRef.current.querySelector('.track-vertical');
 
-    // Select Table custom scrollbars
-    const tableScrollbarView = (tableDivRef.current as HTMLDivElement)?.firstChild;
+      // Select Table custom scrollbars
+      const tableScrollbarView = tableDivRef.current.firstChild;
 
-    //If they exists, move the scrollbar element to the Table container scope
-    if (tableScrollbarView && listVerticalScrollbarHTML) {
-      listVerticalScrollbarHTML?.remove();
-      (tableScrollbarView as HTMLDivElement).querySelector(':scope > .track-vertical')?.remove();
-
-      (tableScrollbarView as HTMLDivElement).append(listVerticalScrollbarHTML as Node);
+      //If they exists, move the scrollbar element to the Table container scope
+      if (tableScrollbarView && listVerticalScrollbarHTML) {
+        listVerticalScrollbarHTML.remove();
+        if (tableScrollbarView instanceof HTMLElement) {
+          tableScrollbarView.querySelector(':scope > .track-vertical')?.remove();
+          tableScrollbarView.append(listVerticalScrollbarHTML);
+        }
+      }
     }
   });
 }
@@ -46,8 +47,30 @@ export function useResetVariableListSizeCache(
 ) {
   useEffect(() => {
     if (extendedState.lastExpandedIndex !== undefined) {
-      listRef.current?.resetAfterIndex(Math.max(extendedState.lastExpandedIndex - 1, 0));
+      // Gets the expanded row with the lowest index. Needed to reset all expanded row heights from that index on
+      let resetIndex = extendedState.lastExpandedIndex;
+      const expandedIndexes = Object.keys(extendedState.expanded);
+      if (expandedIndexes.length > 0) {
+        const lowestExpandedIndex = parseInt(expandedIndexes[0], 10);
+        if (!isNaN(lowestExpandedIndex)) {
+          resetIndex = Math.min(resetIndex, lowestExpandedIndex);
+        }
+      }
+
+      const index =
+        extendedState.pageIndex === 0
+          ? resetIndex - 1
+          : resetIndex - extendedState.pageIndex - extendedState.pageIndex * extendedState.pageSize;
+      listRef.current?.resetAfterIndex(Math.max(index, 0));
       return;
     }
-  }, [extendedState.lastExpandedIndex, extendedState.toggleRowExpandedCounter, listRef, data]);
+  }, [
+    extendedState.lastExpandedIndex,
+    extendedState.toggleRowExpandedCounter,
+    extendedState.pageIndex,
+    extendedState.pageSize,
+    listRef,
+    data,
+    extendedState.expanded,
+  ]);
 }

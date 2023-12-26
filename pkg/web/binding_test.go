@@ -22,7 +22,7 @@ type StructWithPrivateFields struct {
 }
 
 type StructWithInterface struct {
-	A interface{} `binding:"Required"`
+	A any `binding:"Required"`
 }
 type StructWithSliceInts struct {
 	A []int `binding:"Required"`
@@ -31,7 +31,7 @@ type StructWithSliceStructs struct {
 	A []StructWithInt `binding:"Required"`
 }
 type StructWithSliceInterfaces struct {
-	A []interface{} `binding:"Required"`
+	A []any `binding:"Required"`
 }
 type StructWithStruct struct {
 	A StructWithInt `binding:"Required"`
@@ -64,7 +64,7 @@ func (sv *StructWithPointerValidation) Validate() error {
 func TestValidationSuccess(t *testing.T) {
 	var nilInterface *StructWithPointerValidation
 
-	for _, x := range []interface{}{
+	for _, x := range []any{
 		nil,
 		42,
 		"foo",
@@ -74,7 +74,7 @@ func TestValidationSuccess(t *testing.T) {
 		StructWithPrivateFields{12, 0},
 		StructWithInterface{"foo"},
 		StructWithSliceInts{[]int{1, 2, 3}},
-		StructWithSliceInterfaces{[]interface{}{1, 2, 3}},
+		StructWithSliceInterfaces{[]any{1, 2, 3}},
 		StructWithSliceStructs{[]StructWithInt{{1}, {2}}},
 		StructWithStruct{StructWithInt{3}},
 		StructWithStructPointer{&StructWithInt{3}},
@@ -88,7 +88,7 @@ func TestValidationSuccess(t *testing.T) {
 	}
 }
 func TestValidationFailure(t *testing.T) {
-	for i, x := range []interface{}{
+	for i, x := range []any{
 		StructWithInt{0},
 		StructWithPrimitives{0, "foo", true, 12.34},
 		StructWithPrimitives{42, "", true, 12.34},
@@ -102,7 +102,7 @@ func TestValidationFailure(t *testing.T) {
 		StructWithSliceStructs{[]StructWithInt{}},
 		StructWithSliceStructs{[]StructWithInt{{0}, {2}}},
 		StructWithSliceStructs{[]StructWithInt{{2}, {0}}},
-		StructWithSliceInterfaces{[]interface{}{}},
+		StructWithSliceInterfaces{[]any{}},
 		StructWithSliceInterfaces{nil},
 		StructWithStruct{StructWithInt{}},
 		StructWithStruct{StructWithInt{0}},

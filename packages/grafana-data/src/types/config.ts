@@ -147,7 +147,8 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
-  isPublicDashboardView: boolean;
+  publicDashboardAccessToken?: string;
+  publicDashboardsEnabled: boolean;
   snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
@@ -181,6 +182,7 @@ export interface GrafanaConfig {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
+  /** @deprecated always set to true. */
   rbacEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
@@ -196,6 +198,7 @@ export interface GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   anonymousEnabled: boolean;
+  anonymousDeviceLimit: number | undefined;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
@@ -218,7 +221,12 @@ export interface GrafanaConfig {
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
+  rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
+  sharedWithMeFolderUID?: string;
+
+  // The namespace to use for kubernetes apiserver requests
+  namespace: string;
 }
 
 export interface SqlConnectionLimits {
@@ -228,16 +236,27 @@ export interface SqlConnectionLimits {
 }
 
 export interface AuthSettings {
+  AuthProxyEnableLoginToken?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   OAuthSkipOrgRoleUpdateSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   SAMLSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   LDAPSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   JWTAuthSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   GrafanaComSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   GithubSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   GitLabSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   OktaSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   AzureADSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   GoogleSkipOrgRoleSync?: boolean;
+  // @deprecated -- this is no longer used and will be removed in Grafana 11
   GenericOAuthSkipOrgRoleSync?: boolean;
-  DisableSyncLock?: boolean;
 }

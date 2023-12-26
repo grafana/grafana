@@ -2,9 +2,9 @@ package maputil
 
 import "fmt"
 
-func GetMap(obj map[string]interface{}, key string) (map[string]interface{}, error) {
+func GetMap(obj map[string]any, key string) (map[string]any, error) {
 	if untypedValue, ok := obj[key]; ok {
-		if value, ok := untypedValue.(map[string]interface{}); ok {
+		if value, ok := untypedValue.(map[string]any); ok {
 			return value, nil
 		} else {
 			err := fmt.Errorf("the field '%s' should be an object", key)
@@ -16,7 +16,7 @@ func GetMap(obj map[string]interface{}, key string) (map[string]interface{}, err
 	}
 }
 
-func GetBool(obj map[string]interface{}, key string) (bool, error) {
+func GetBool(obj map[string]any, key string) (bool, error) {
 	if untypedValue, ok := obj[key]; ok {
 		if value, ok := untypedValue.(bool); ok {
 			return value, nil
@@ -30,7 +30,7 @@ func GetBool(obj map[string]interface{}, key string) (bool, error) {
 	}
 }
 
-func GetBoolOptional(obj map[string]interface{}, key string) (bool, error) {
+func GetBoolOptional(obj map[string]any, key string) (bool, error) {
 	if untypedValue, ok := obj[key]; ok {
 		if value, ok := untypedValue.(bool); ok {
 			return value, nil
@@ -44,7 +44,7 @@ func GetBoolOptional(obj map[string]interface{}, key string) (bool, error) {
 	}
 }
 
-func GetString(obj map[string]interface{}, key string) (string, error) {
+func GetString(obj map[string]any, key string) (string, error) {
 	if untypedValue, ok := obj[key]; ok {
 		if value, ok := untypedValue.(string); ok {
 			return value, nil
@@ -58,7 +58,7 @@ func GetString(obj map[string]interface{}, key string) (string, error) {
 	}
 }
 
-func GetStringOptional(obj map[string]interface{}, key string) (string, error) {
+func GetStringOptional(obj map[string]any, key string) (string, error) {
 	if untypedValue, ok := obj[key]; ok {
 		if value, ok := untypedValue.(string); ok {
 			return value, nil

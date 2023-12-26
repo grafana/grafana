@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -10,12 +9,13 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/alerting/models"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -33,12 +34,13 @@ type TestingApiSrv struct {
 	*AlertingProxy
 	DatasourceCache datasources.CacheService
 	log             log.Logger
-	accessControl   accesscontrol.AccessControl
+	authz           RuleAccessControlService
 	evaluator       eval.EvaluatorFactory
 	cfg             *setting.UnifiedAlertingSettings
 	backtesting     *backtesting.Engine
 	featureManager  featuremgmt.FeatureToggles
 	appUrl          *url.URL
+	tracer          tracing.Tracer
 }
 
 // RouteTestGrafanaRuleConfig returns a list of potential alerts for a given rule configuration. This is intended to be
@@ -49,9 +51,9 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		&body.Rule,
 		body.RuleGroup,
 		srv.cfg.BaseInterval,
-		c.OrgID,
+		c.SignedInUser.GetOrgID(),
 		&folder.Folder{
-			OrgID: c.OrgID,
+			OrgID: c.SignedInUser.GetOrgID(),
 			UID:   body.NamespaceUID,
 			Title: body.NamespaceTitle,
 		},
@@ -61,10 +63,12 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if !authorizeDatasourceAccessForRule(rule, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
-	}) {
-		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
+	if err := srv.authz.AuthorizeAccessToRuleGroup(c.Req.Context(), c.SignedInUser, ngmodels.RulesGroup{rule}); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to authorize access to rule group", err)
+	}
+
+	if _, err := store.OptimizeAlertQueries(rule.Data); err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "Failed to optimize query")
 	}
 
 	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), rule.GetEvalCondition())
@@ -86,6 +90,8 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		Clock:                   clock.New(),
 		Historian:               nil,
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  srv.tracer,
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	manager := state.NewManager(cfg)
 	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
@@ -145,19 +151,23 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body ap
 
 func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
 	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
-	}) {
-		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
+	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, &ngmodels.AlertRule{Data: queries}); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to authorize access to data sources", err)
 	}
 
 	cond := ngmodels.Condition{
-		Condition: "",
+		Condition: cmd.Condition,
 		Data:      queries,
 	}
-	if len(cmd.Data) > 0 {
-		cond.Condition = cmd.Data[0].RefID
+	if cond.Condition == "" && len(cond.Data) > 0 {
+		cond.Condition = cond.Data[len(cond.Data)-1].RefID
 	}
+
+	_, err := store.OptimizeAlertQueries(cond.Data)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "Failed to optimize query")
+	}
+
 	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), cond)
 
 	if err != nil {
@@ -179,7 +189,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 }
 
 func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimodels.BacktestConfig) response.Response {
-	if !srv.featureManager.IsEnabled(featuremgmt.FlagAlertingBacktesting) {
+	if !srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingBacktesting) {
 		return ErrResp(http.StatusNotFound, nil, "Backgtesting API is not enabled")
 	}
 
@@ -203,10 +213,8 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 	}
 
 	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
-	}) {
-		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
+	if err := srv.authz.AuthorizeAccessToRuleGroup(c.Req.Context(), c.SignedInUser, ngmodels.RulesGroup{&ngmodels.AlertRule{Data: queries}}); err != nil {
+		return errorToResponse(err)
 	}
 
 	rule := &ngmodels.AlertRule{
@@ -222,7 +230,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		Title: cmd.Title,
 		// prefix backtesting- is to distinguish between executions of regular rule and backtesting in logs (like expression engine, evaluator, state manager etc)
 		UID:             "backtesting-" + util.GenerateShortUID(),
-		OrgID:           c.OrgID,
+		OrgID:           c.SignedInUser.GetOrgID(),
 		Condition:       cmd.Condition,
 		Data:            queries,
 		IntervalSeconds: intervalSeconds,

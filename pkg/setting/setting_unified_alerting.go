@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	alertingCluster "github.com/grafana/alerting/cluster"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -17,9 +17,10 @@ import (
 const (
 	alertmanagerDefaultClusterAddr        = "0.0.0.0:9094"
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
-	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
-	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
+	alertmanagerDefaultGossipInterval     = alertingCluster.DefaultGossipInterval
+	alertmanagerDefaultPushPullInterval   = alertingCluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
+	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
@@ -46,7 +47,7 @@ const (
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulereDefaultExecuteAlerts          = true
-	schedulerDefaultMaxAttempts             = 3
+	schedulerDefaultMaxAttempts             = 1
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
 	screenshotsDefaultCaptureTimeout        = 10 * time.Second
@@ -78,6 +79,7 @@ type UnifiedAlertingSettings struct {
 	HARedisUsername                string
 	HARedisPassword                string
 	HARedisDB                      int
+	HARedisMaxConns                int
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -93,8 +95,20 @@ type UnifiedAlertingSettings struct {
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	RemoteAlertmanager            RemoteAlertmanagerSettings
+	Upgrade                       UnifiedAlertingUpgradeSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
+}
+
+// RemoteAlertmanagerSettings contains the configuration needed
+// to disable the internal Alertmanager and use an external one instead.
+type RemoteAlertmanagerSettings struct {
+	Enable       bool
+	URL          string
+	TenantID     string
+	Password     string
+	SyncInterval time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -122,6 +136,11 @@ type UnifiedAlertingStateHistorySettings struct {
 	MultiPrimary          string
 	MultiSecondaries      []string
 	ExternalLabels        map[string]string
+}
+
+type UnifiedAlertingUpgradeSettings struct {
+	// CleanUpgrade controls whether the upgrade process should clean up UA data when upgrading from legacy alerting.
+	CleanUpgrade bool
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -240,6 +259,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HARedisUsername = ua.Key("ha_redis_username").MustString("")
 	uaCfg.HARedisPassword = ua.Key("ha_redis_password").MustString("")
 	uaCfg.HARedisDB = ua.Key("ha_redis_db").MustInt(0)
+	uaCfg.HARedisMaxConns = ua.Key("ha_redis_max_conns").MustInt(alertmanagerRedisDefaultMaxConns)
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {
@@ -275,15 +295,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.EvaluationTimeout = uaEvaluationTimeout
 
-	uaMaxAttempts := ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
-	if uaMaxAttempts == schedulerDefaultMaxAttempts { // unified option or equals the default
-		legacyMaxAttempts := alerting.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
-		if legacyMaxAttempts != schedulerDefaultMaxAttempts {
-			cfg.Logger.Warn("falling back to legacy setting of 'max_attempts'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
-		}
-		uaMaxAttempts = legacyMaxAttempts
-	}
-	uaCfg.MaxAttempts = uaMaxAttempts
+	uaCfg.MaxAttempts = ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
 
@@ -334,6 +346,20 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
 
+	remoteAlertmanager := iniFile.Section("remote.alertmanager")
+	uaCfgRemoteAM := RemoteAlertmanagerSettings{
+		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
+		URL:      remoteAlertmanager.Key("url").MustString(""),
+		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
+		Password: remoteAlertmanager.Key("password").MustString(""),
+	}
+	uaCfgRemoteAM.SyncInterval, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "sync_interval", (schedulerDefaultAdminConfigPollInterval).String()))
+	if err != nil {
+		return err
+	}
+
+	uaCfg.RemoteAlertmanager = uaCfgRemoteAM
+
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots
 
@@ -376,6 +402,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.StateHistory = uaCfgStateHistory
 
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
+
+	upgrade := iniFile.Section("unified_alerting.upgrade")
+	uaCfgUpgrade := UnifiedAlertingUpgradeSettings{
+		CleanUpgrade: upgrade.Key("clean_upgrade").MustBool(false),
+	}
+	uaCfg.Upgrade = uaCfgUpgrade
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

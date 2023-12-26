@@ -797,7 +797,7 @@ alertmanager_config: |
 				return
 			}
 			require.Nil(t, err)
-			// Override the map[string]interface{} field for test simplicity.
+			// Override the map[string]any field for test simplicity.
 			// It's tested in Test_GettableUserConfigRoundtrip.
 			out.amSimple = nil
 			require.Equal(t, tc.output, out)

@@ -13,6 +13,6 @@ export class BinaryOperationVector extends Array<number> {
     for (let i = 0; i < arr.length; i++) {
       arr[i] = operation(left[i], right[i]);
     }
-    return arr as BinaryOperationVector;
+    return arr;
   }
 }

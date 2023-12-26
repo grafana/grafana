@@ -33,6 +33,10 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
 
+{{% admonition type="note" %}}
+If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to enable the `viewers_can_edit` option
+{{% /admonition %}}
+
 To access Explore:
 
 1. Click on the Explore icon on the menu bar.
@@ -41,9 +45,12 @@ To access Explore:
 
    Alternately to start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
-   {{< figure src="/static/img/docs/explore/panel_dropdown-7-4.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore option in the panel menu" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-panel-menu-10.1.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the panel menu including the Explore option" >}}
 
-1. Choose your data source from the dropdown in the top left.
+1. Choose your data source from the drop-down in the top left.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+
 1. Write the query using a query editor provided by the selected data source. Please check [data sources documentation]({{< relref "../datasources" >}}) to see how to use various query editors.
 1. For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../panels-visualizations/query-transform-data" >}}).
 1. Run the query using the button in the top right corner.
@@ -58,15 +65,31 @@ To open the split view:
 
 It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
-{{< figure src="/static/img/docs/explore/explore_split-7-4.png" max-width= "950px" caption="Screenshot of Explore option in the panel menu" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-explore-split-10.1.png" max-width= "950px" caption="Screenshot of Explore screen split" >}}
 
 In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync. It ensures that you’re looking at the same time interval in both split panels.
 
 To close the newly created query, click on the Close Split button.
 
+## Content outline
+
+The content outline is a side navigation bar that keeps track of the queries and visualization panels you created in Explore. It allows you to navigate between them quickly.
+
+The content outline also works in a split view. When you are in split view, the content outline is generated for each pane.
+
+To open the content outline:
+
+1. Click the Outline button in the top left corner of the Explore screen.
+
+You can then click on any panel icon in the content outline to navigate to that panel.
+
 ## Share Explore URLs
 
 When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
+
+{{% admonition type="note" %}}
+Explore may generate relatively long URLs, some tools, like messaging or videoconferencing apps, may truncate messages to a fixed length. In such cases Explore will display a warning message and load a default state. If you encounter issues when sharing Explore links in such apps, you can generate shortened links. See [Share shortened link](#share-shortened-link) for more information.
+{{% /admonition %}}
 
 ### Generating Explore URLs from external tools
 
@@ -94,8 +117,8 @@ where:
     // ... any other datasource-specific query parameters
   }[]; // array of queries for this pane
   range: {
-    from: string | number; // the start time, in milliseconds since epoch
-    to: string | number; // the end time, in milliseconds since epoch
+    from: string; // the start time, in milliseconds since epoch
+    to: string; // the end time, in milliseconds since epoch
   }
 }
 ```
@@ -110,4 +133,14 @@ The `from` and `to` also accept relative ranges defined in [Time units and relat
 Available in Grafana 7.3 and later versions.
 {{% /admonition %}}
 
-The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar. A shortened link that is never used will automatically get deleted after seven (7) days.
+The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar.
+
+A shortened link will automatically get deleted after seven (7) days from its creation if it's never used. If a link is used at least once, it won't ever get deleted.
+
+### Sharing shortened links with absolute time
+
+{{% admonition type="note" %}}
+Available in Grafana 10.3 and later versions.
+{{% /admonition %}}
+
+Short links have two options - keeping relative time (for example, from two hours ago to now) or absolute time (for example, from 8am to 10am). Sharing a shortened link by default will copy the time range selected, relative or absolute. Clicking the dropdown button next to the share shortened link button and selecting one of the options under "Time-Sync URL Links" will allow you to create a short link with the absolute time - meaning anyone receiving the link will see the same data you are seeing, even if they open the link at another time. This will not affect your selected time range.

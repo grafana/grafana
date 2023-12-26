@@ -61,7 +61,7 @@ export function getPanelPlugin(
       },
       screenshots: [],
       updated: '',
-      version: '',
+      version: '1',
     },
     hideFromList: options.hideFromList === true,
     module: options.module ?? '',

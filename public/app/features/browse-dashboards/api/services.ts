@@ -1,8 +1,11 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
+
+import { contextSrv } from '../../../core/core';
+import { AccessControlAction } from '../../../types';
 
 export const PAGE_SIZE = 50;
 
@@ -12,13 +15,20 @@ export async function listFolders(
   page = 1,
   pageSize = PAGE_SIZE
 ): Promise<DashboardViewItem[]> {
+  if (parentUID && !config.featureToggles.nestedFolders) {
+    return [];
+  }
+
   const backendSrv = getBackendSrv();
 
-  const folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
-    parentUid: parentUID,
-    page,
-    limit: pageSize,
-  });
+  let folders: NestedFolderDTO[] = [];
+  if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
+    folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
+      parentUid: parentUID,
+      page,
+      limit: pageSize,
+    });
+  }
 
   return folders.map((item) => ({
     kind: 'folder',

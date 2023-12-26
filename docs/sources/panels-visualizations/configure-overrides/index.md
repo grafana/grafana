@@ -15,7 +15,8 @@ labels:
     - oss
 menuTitle: Configure field overrides
 title: Configure field overrides
-weight: 400
+description: Configure field overrides to customize visualization settings
+weight: 110
 ---
 
 # Configure field overrides
@@ -85,7 +86,7 @@ A field override rule can customize the visualization settings for a specific fi
 
 1. Select which fields an override rule will be applied to:
    - **Fields with name:** Select a field from the list of all available fields. Properties you add to a rule with this selector are only applied to this single field.
-   - **Fields with name matching regex:** Specify fields to override with a regular expression. Properties you add to a rule with this selector are applied to all fields where the field name match the regex.
+   - **Fields with name matching regex:** Specify fields to override with a regular expression. Properties you add to a rule with this selector are applied to all fields where the field name match the regex. This override doesn't rename the field; to do this, use the [Rename by regex transformation]({{< relref "../query-transform-data/transform-data/#rename-by-regex" >}}).
    - **Fields with type:** Select fields by type, such as string, numeric, and so on. Properties you add to a rule with this selector are applied to all fields that match the selected type.
    - **Fields returned by query:** Select all fields returned by a specific query, such as A, B, or C. Properties you add to a rule with this selector are applied to all fields returned by the selected query.
 1. Click **Add override property**.

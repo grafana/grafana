@@ -149,7 +149,7 @@ type signedURLOptsMatcher struct {
 	opts *storage.SignedURLOptions
 }
 
-func (m signedURLOptsMatcher) Matches(x interface{}) bool {
+func (m signedURLOptsMatcher) Matches(x any) bool {
 	suOpts, ok := x.(*storage.SignedURLOptions)
 	if !ok {
 		return false

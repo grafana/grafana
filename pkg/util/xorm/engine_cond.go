@@ -15,7 +15,7 @@ import (
 	"xorm.io/core"
 )
 
-func (engine *Engine) buildConds(table *core.Table, bean interface{},
+func (engine *Engine) buildConds(table *core.Table, bean any,
 	includeVersion bool, includeUpdated bool, includeNil bool,
 	includeAutoIncr bool, allUseBool bool, useAllCols bool, unscoped bool,
 	mustColumnMap map[string]bool, tableName, aliasName string, addedTableName bool) (builder.Cond, error) {
@@ -90,7 +90,7 @@ func (engine *Engine) buildConds(table *core.Table, bean interface{},
 			}
 		}
 
-		var val interface{}
+		var val any
 		switch fieldType.Kind() {
 		case reflect.Bool:
 			if allUseBool || requiredField {

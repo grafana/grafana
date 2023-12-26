@@ -1,12 +1,16 @@
+import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { QueryEditorProps, toOption } from '@grafana/data';
+import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
+import { ConfirmModal } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery, QueryType, SLOQuery } from '../types/query';
+import { CloudMonitoringQuery, PromQLQuery, QueryType, SLOQuery } from '../types/query';
 import { CloudMonitoringOptions } from '../types/types';
 
+import { defaultTimeSeriesList, defaultTimeSeriesQuery } from './MetricQueryEditor';
+import { PromQLQueryEditor } from './PromQLEditor';
 import { QueryHeader } from './QueryHeader';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
 
@@ -15,7 +19,8 @@ import { MetricQueryEditor, SLOQueryEditor } from './';
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
 export const QueryEditor = (props: Props) => {
-  const { datasource, query: oldQ, onRunQuery, onChange } = props;
+  const { datasource, query: oldQ, onRunQuery, onChange, range } = props;
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   // Migrate query if needed
   const [migrated, setMigrated] = useState(false);
   const query = useMemo(() => {
@@ -28,11 +33,31 @@ export const QueryEditor = (props: Props) => {
     }
     return oldQ;
   }, [oldQ, datasource, onChange, migrated]);
+  const [currentQuery, setCurrentQuery] = useState<CloudMonitoringQuery>(query);
+  const [queryHasBeenEdited, setQueryHasBeenEdited] = useState<boolean>(false);
 
   const sloQuery = { ...defaultSLOQuery(datasource), ...query.sloQuery };
   const onSLOQueryChange = (q: SLOQuery) => {
     onChange({ ...query, sloQuery: q });
     onRunQuery();
+  };
+
+  const promQLQuery = {
+    ...{ projectName: datasource.getDefaultProject(), expr: '', step: '10s' },
+    ...query.promQLQuery,
+  };
+  const onPromQLQueryChange = (q: PromQLQuery) => {
+    onChange({ ...query, promQLQuery: q });
+  };
+
+  const onMetricQueryChange = (q: CloudMonitoringQuery) => {
+    if (
+      (q.queryType === QueryType.TIME_SERIES_LIST && !isEqual(q.timeSeriesList, defaultTimeSeriesList(datasource))) ||
+      (q.queryType === QueryType.TIME_SERIES_QUERY && !isEqual(q.timeSeriesQuery, defaultTimeSeriesQuery(datasource)))
+    ) {
+      setQueryHasBeenEdited(true);
+    }
+    onChange(q);
   };
 
   const meta = props.data?.series.length ? props.data?.series[0].meta : {};
@@ -51,18 +76,61 @@ export const QueryEditor = (props: Props) => {
   });
   const queryType = query.queryType;
 
+  const checkForModalDisplay = (q: CloudMonitoringQuery) => {
+    if (
+      queryHasBeenEdited &&
+      (currentQuery.queryType === QueryType.TIME_SERIES_LIST || currentQuery.queryType === QueryType.TIME_SERIES_QUERY)
+    ) {
+      if (currentQuery.queryType !== q.queryType) {
+        setModalIsOpen(true);
+      }
+    } else {
+      onChange(q);
+    }
+    setCurrentQuery(q);
+  };
+
   return (
     <EditorRows>
-      <QueryHeader query={query} onChange={onChange} onRunQuery={onRunQuery} />
+      <ConfirmModal
+        data-testid="switch-query-type-modal"
+        title="Warning"
+        body="By switching your query type, your current query will be lost."
+        isOpen={modalIsOpen}
+        onConfirm={() => {
+          setModalIsOpen(false);
+          onChange(currentQuery);
+          setQueryHasBeenEdited(false);
+        }}
+        confirmText="Confirm"
+        onDismiss={() => {
+          setModalIsOpen(false);
+          setCurrentQuery(query);
+        }}
+      />
+      <QueryHeader query={query} onChange={checkForModalDisplay} onRunQuery={onRunQuery} />
+
+      {queryType === QueryType.PROMQL && (
+        <PromQLQueryEditor
+          refId={query.refId}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onPromQLQueryChange}
+          onRunQuery={onRunQuery}
+          datasource={datasource}
+          query={promQLQuery}
+        />
+      )}
+
       {queryType !== QueryType.SLO && (
         <MetricQueryEditor
           refId={query.refId}
           variableOptionGroup={variableOptionGroup}
           customMetaData={customMetaData}
-          onChange={onChange}
+          onChange={onMetricQueryChange}
           onRunQuery={onRunQuery}
           datasource={datasource}
           query={query}
+          range={range || getDefaultTimeRange()}
         />
       )}
 

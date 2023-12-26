@@ -50,7 +50,7 @@ func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.
 	for _, a := range rules {
 		dss, err := e.parseAlertRuleModel(a.Settings)
 		if err != nil {
-			e.log.Debug("could not parse settings for alert rule", "id", a.ID)
+			e.log.Debug("Could not parse settings for alert rule", "id", a.ID)
 			continue
 		}
 

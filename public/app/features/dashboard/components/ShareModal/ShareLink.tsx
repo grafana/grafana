@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime/src';
-import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
+import { Alert, ClipboardButton, Field, FieldSet, Input, Switch, TextLink } from '@grafana/ui';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
@@ -30,10 +30,10 @@ export class ShareLink extends PureComponent<Props, State> {
       shareUrl: '',
       imageUrl: '',
     };
+    this.onCopy = this.onCopy.bind(this);
   }
 
   componentDidMount() {
-    reportInteraction('grafana_dashboards_link_share_viewed');
     this.buildUrl();
   }
 
@@ -73,6 +73,14 @@ export class ShareLink extends PureComponent<Props, State> {
   getShareUrl = () => {
     return this.state.shareUrl;
   };
+
+  onCopy() {
+    DashboardInteractions.shareLinkCopied({
+      currentTimeRange: this.state.useCurrentTimeRange,
+      theme: this.state.selectedTheme,
+      shortenURL: this.state.useShortUrl,
+    });
+  }
 
   render() {
     const { panel, dashboard } = this.props;
@@ -118,7 +126,7 @@ export class ShareLink extends PureComponent<Props, State> {
               value={shareUrl}
               readOnly
               addonAfter={
-                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl}>
+                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onCopy}>
                   <Trans i18nKey="share-modal.link.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }
@@ -129,13 +137,9 @@ export class ShareLink extends PureComponent<Props, State> {
         {panel && config.rendererAvailable && (
           <>
             {isDashboardSaved && (
-              <div className="gf-form">
-                <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-                  <Icon name="camera" />
-                  &nbsp;
-                  <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>
-                </a>
-              </div>
+              <TextLink href={imageUrl} external icon={'camera'} aria-label={selectors.linkToRenderedImage}>
+                {t('share-modal.link.rendered-image', 'Direct link rendered image')}
+              </TextLink>
             )}
 
             {!isDashboardSaved && (
@@ -159,15 +163,10 @@ export class ShareLink extends PureComponent<Props, State> {
             bottomSpacing={0}
           >
             <Trans i18nKey="share-modal.link.render-instructions">
-              To render a panel image, you must install the&nbsp;
-              <a
-                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="external-link"
-              >
+              To render a panel image, you must install the
+              <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
                 Grafana image renderer plugin
-              </a>
+              </TextLink>
               . Please contact your Grafana administrator to install the plugin.
             </Trans>
           </Alert>

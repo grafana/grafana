@@ -63,7 +63,7 @@ func (wClient *webHookClient) Notify(ctx context.Context,
 	}
 
 	// create request body
-	values := map[string]interface{}{
+	values := map[string]any{
 		"alert_uid":                uuid.NewString(),
 		"title":                    "SecretScan Alert: Grafana Token leaked",
 		"state":                    "alerting",

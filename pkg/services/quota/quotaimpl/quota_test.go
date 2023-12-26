@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -27,10 +27,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -98,6 +100,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 
 	u, err := userService.Create(context.Background(), &user.CreateUserCommand{
 		Name:         "TestUser",
+		Login:        "TestUser",
 		SkipOrgSetup: true,
 	})
 	require.NoError(t, err)
@@ -471,20 +474,21 @@ func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, b bus.Bus, quotaService
 	require.NoError(t, err)
 	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, sqlStore.Cfg)
 	require.NoError(t, err)
-	_, err = dashboardStore.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+	_, err = dashboardStore.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New().WithDisabled(), acmock.NewMockedPermissionsService(), quotaService)
+	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
-	ruleStore, err := ngstore.ProvideDBStore(sqlStore.Cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{},
-		&acmock.Mock{}, &dashboards.FakeDashboardService{})
+
+	ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
+	ruleStore, err := ngstore.ProvideDBStore(sqlStore.Cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
 	require.NoError(t, err)
 	_, err = ngalert.ProvideService(
 		sqlStore.Cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
-		annotationstest.NewFakeAnnotationsRepo(), &pluginFakes.FakePluginStore{}, tracer, ruleStore,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, migration.NewFakeMigrationService(t), nil,
 	)
 	require.NoError(t, err)
 	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), sqlStore.Cfg, quotaService, storesrv.ProvideSystemUsersService())

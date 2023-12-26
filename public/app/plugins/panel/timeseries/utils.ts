@@ -1,27 +1,27 @@
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
   getDisplayProcessor,
   getLinksSupplier,
   GrafanaTheme2,
+  DataLinkPostProcessor,
   InterpolateFunction,
   isBooleanUnit,
   SortedVector,
   TimeRange,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
-import { buildScaleKey } from '@grafana/ui/src/components/GraphNG/utils';
+import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
 
 type ScaleKey = string;
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
 // e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
-function reEnumFields(frames: DataFrame[]) {
+function reEnumFields(frames: DataFrame[]): DataFrame[] {
   let allTextsByKey: Map<ScaleKey, string[]> = new Map();
 
   let frames2: DataFrame[] = frames.map((frame) => {
@@ -54,7 +54,7 @@ function reEnumFields(frames: DataFrame[]) {
 
           return {
             ...field,
-            values: new ArrayVector(idxs),
+            values: idxs,
           };
 
           // TODO: update displayProcessor?
@@ -268,7 +268,8 @@ export function regenerateLinksSupplier(
   alignedDataFrame: DataFrame,
   frames: DataFrame[],
   replaceVariables: InterpolateFunction,
-  timeZone: string
+  timeZone: string,
+  dataLinkPostProcessor?: DataLinkPostProcessor
 ): DataFrame {
   alignedDataFrame.fields.forEach((field) => {
     if (field.state?.origin?.frameIndex === undefined || frames[field.state?.origin?.frameIndex] === undefined) {
@@ -297,7 +298,14 @@ export function regenerateLinksSupplier(
       length: alignedDataFrame.fields.length + tempFields.length,
     };
 
-    field.getLinks = getLinksSupplier(tempFrame, field, field.state!.scopedVars!, replaceVariables, timeZone);
+    field.getLinks = getLinksSupplier(
+      tempFrame,
+      field,
+      field.state!.scopedVars!,
+      replaceVariables,
+      timeZone,
+      dataLinkPostProcessor
+    );
   });
 
   return alignedDataFrame;

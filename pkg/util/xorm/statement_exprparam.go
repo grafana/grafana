@@ -21,19 +21,19 @@ func (err ErrUnsupportedExprType) Error() string {
 
 type exprParam struct {
 	colName string
-	arg     interface{}
+	arg     any
 }
 
 type exprParams struct {
 	colNames []string
-	args     []interface{}
+	args     []any
 }
 
 func (exprs *exprParams) Len() int {
 	return len(exprs.colNames)
 }
 
-func (exprs *exprParams) addParam(colName string, arg interface{}) {
+func (exprs *exprParams) addParam(colName string, arg any) {
 	exprs.colNames = append(exprs.colNames, colName)
 	exprs.args = append(exprs.args, arg)
 }

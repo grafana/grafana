@@ -2,9 +2,10 @@ import React, { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
+import { Button, Field, FieldSet, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { Trans, t } from 'app/core/internationalization';
 
 import { getGrafanaSearcher } from '../search/service';
 
@@ -24,11 +25,11 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
-  const { items, addById, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
+  const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
 
   const doSubmit = (list: Playlist) => {
     setSaving(true);
-    onSubmit({ ...list, items });
+    onSubmit({ ...list, items, uid: playlist.uid });
   };
 
   return (
@@ -38,20 +39,30 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
           const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
           return (
             <>
-              <Field label="Name" invalid={!!errors.name} error={errors?.name?.message}>
+              <Field
+                label={t('playlist-edit.form.name-label', 'Name')}
+                invalid={!!errors.name}
+                error={errors?.name?.message}
+              >
                 <Input
                   type="text"
-                  {...register('name', { required: 'Name is required' })}
-                  placeholder="Name"
+                  {...register('name', { required: t('playlist-edit.form.name-required', 'Name is required') })}
+                  placeholder={t('playlist-edit.form.name-placeholder', 'Name')}
                   defaultValue={name}
                   aria-label={selectors.pages.PlaylistForm.name}
                 />
               </Field>
-              <Field label="Interval" invalid={!!errors.interval} error={errors?.interval?.message}>
+              <Field
+                label={t('playlist-edit.form.interval-label', 'Interval')}
+                invalid={!!errors.interval}
+                error={errors?.interval?.message}
+              >
                 <Input
                   type="text"
-                  {...register('interval', { required: 'Interval is required' })}
-                  placeholder="5m"
+                  {...register('interval', {
+                    required: t('playlist-edit.form.interval-required', 'Interval is required'),
+                  })}
+                  placeholder={t('playlist-edit.form.interval-placeholder', '5m')}
                   defaultValue={interval ?? '5m'}
                   aria-label={selectors.pages.PlaylistForm.interval}
                 />
@@ -59,36 +70,29 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
               <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
 
-              <div className="gf-form-group">
-                <h3 className="page-headering">Add dashboards</h3>
-
-                <Field label="Add by title">
-                  <DashboardPicker id="dashboard-picker" onChange={addById} key={items.length} />
+              <FieldSet label={t('playlist-edit.form.heading', 'Add dashboards')}>
+                <Field label={t('playlist-edit.form.add-title-label', 'Add by title')}>
+                  <DashboardPicker id="dashboard-picker" onChange={addByUID} key={items.length} />
                 </Field>
 
-                <Field label="Add by tag">
+                <Field label={t('playlist-edit.form.add-tag-label', 'Add by tag')}>
                   <TagFilter
                     isClearable
                     tags={[]}
                     hideValues
                     tagOptions={tagOptions}
                     onChange={addByTag}
-                    placeholder="Select a tag"
+                    placeholder={t('playlist-edit.form.add-tag-placeholder', 'Select a tag')}
                   />
                 </Field>
-              </div>
+              </FieldSet>
 
               <HorizontalGroup>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={isDisabled}
-                  icon={saving ? 'fa fa-spinner' : undefined}
-                >
-                  Save
+                <Button type="submit" variant="primary" disabled={isDisabled} icon={saving ? 'spinner' : undefined}>
+                  <Trans i18nKey="playlist-edit.form.save">Save</Trans>
                 </Button>
                 <LinkButton variant="secondary" href={`${config.appSubUrl}/playlists`}>
-                  Cancel
+                  <Trans i18nKey="playlist-edit.form.cancel">Cancel</Trans>
                 </LinkButton>
               </HorizontalGroup>
             </>

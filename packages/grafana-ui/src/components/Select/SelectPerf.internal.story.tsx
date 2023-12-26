@@ -4,14 +4,12 @@ import ReactSelect, { createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
 
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Label } from '../Forms/Label';
 
 import { Select, VirtualizedSelect } from './Select';
 
 const meta: Meta = {
   title: 'Forms/Select (Perf)',
-  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   argTypes: {
     numberOfOptions: {
       defaultValue: 10_000,

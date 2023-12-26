@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { ConfirmModal, FileUpload, useStyles2 } from '@grafana/ui';
 
 import { filenameAlreadyExists, getGrafanaStorage } from './storage';
-import { StorageView, UploadReponse } from './types';
+import { StorageView, UploadResponse } from './types';
 
 interface Props {
   setErrorMessages: (errors: string[]) => void;
@@ -28,7 +28,7 @@ export function UploadButton({ setErrorMessages, setPath, path, fileNames }: Pro
     setFileUploadKey((prev) => prev + 1);
   }, [file]);
 
-  const onUpload = (rsp: UploadReponse) => {
+  const onUpload = (rsp: UploadResponse) => {
     console.log('Uploaded: ' + path);
     if (rsp.path) {
       setPath(rsp.path);

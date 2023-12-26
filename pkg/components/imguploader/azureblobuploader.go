@@ -188,7 +188,7 @@ func NewStorageClient(account, accessKey string) *StorageClient {
 	}
 }
 
-func (c *StorageClient) absUrl(format string, a ...interface{}) string {
+func (c *StorageClient) absUrl(format string, a ...any) string {
 	part := fmt.Sprintf(format, a...)
 	return fmt.Sprintf("https://%s.blob.core.windows.net/%s", c.Auth.Account, part)
 }

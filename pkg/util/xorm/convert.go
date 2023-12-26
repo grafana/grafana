@@ -32,7 +32,7 @@ func cloneBytes(b []byte) []byte {
 	}
 }
 
-func asString(src interface{}) string {
+func asString(src any) string {
 	switch v := src.(type) {
 	case string:
 		return v
@@ -77,7 +77,7 @@ func asBytes(buf []byte, rv reflect.Value) (b []byte, ok bool) {
 // convertAssign copies to dest the value in src, converting it if possible.
 // An error is returned if the copy would result in loss of information.
 // dest should be a pointer type.
-func convertAssign(dest, src interface{}) error {
+func convertAssign(dest, src any) error {
 	// Common cases, without reflect.
 	switch s := src.(type) {
 	case string:
@@ -103,7 +103,7 @@ func convertAssign(dest, src interface{}) error {
 			}
 			*d = string(s)
 			return nil
-		case *interface{}:
+		case *any:
 			if d == nil {
 				return errNilPtr
 			}
@@ -131,7 +131,7 @@ func convertAssign(dest, src interface{}) error {
 		}
 	case nil:
 		switch d := dest.(type) {
-		case *interface{}:
+		case *any:
 			if d == nil {
 				return errNilPtr
 			}
@@ -171,7 +171,7 @@ func convertAssign(dest, src interface{}) error {
 			*d = bv.(bool)
 		}
 		return err
-	case *interface{}:
+	case *any:
 		*d = src
 		return nil
 	}
@@ -248,7 +248,7 @@ func convertAssign(dest, src interface{}) error {
 	return fmt.Errorf("unsupported Scan, storing driver.Value type %T into type %T", src, dest)
 }
 
-func asKind(vv reflect.Value, tp reflect.Type) (interface{}, error) {
+func asKind(vv reflect.Value, tp reflect.Type) (any, error) {
 	switch tp.Kind() {
 	case reflect.Int64:
 		return vv.Int(), nil
@@ -285,7 +285,7 @@ func asKind(vv reflect.Value, tp reflect.Type) (interface{}, error) {
 	return nil, fmt.Errorf("unsupported primary key type: %v, %v", tp, vv)
 }
 
-func convertFloat(v interface{}) (float64, error) {
+func convertFloat(v any) (float64, error) {
 	switch v.(type) {
 	case float32:
 		return float64(v.(float32)), nil
@@ -307,7 +307,7 @@ func convertFloat(v interface{}) (float64, error) {
 	return 0, fmt.Errorf("unsupported type: %v", v)
 }
 
-func convertInt(v interface{}) (int64, error) {
+func convertInt(v any) (int64, error) {
 	switch v.(type) {
 	case int:
 		return int64(v.(int)), nil

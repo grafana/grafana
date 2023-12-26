@@ -4,7 +4,7 @@ import { ValueMatcherID } from '../ids';
 
 import { BasicValueMatcherOptions } from './types';
 
-const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = {
+const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.greater,
   name: 'Is greater',
   description: 'Match when field value is greater than option.',
@@ -24,7 +24,7 @@ const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> 
   getDefaultOptions: () => ({ value: 0 }),
 };
 
-const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = {
+const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.greaterOrEqual,
   name: 'Is greater or equal',
   description: 'Match when field value is greater than or equal to option.',
@@ -44,7 +44,7 @@ const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<nu
   getDefaultOptions: () => ({ value: 0 }),
 };
 
-const isLowerValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = {
+const isLowerValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.lower,
   name: 'Is lower',
   description: 'Match when field value is lower than option.',
@@ -64,7 +64,7 @@ const isLowerValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = 
   getDefaultOptions: () => ({ value: 0 }),
 };
 
-const isLowerOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = {
+const isLowerOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.lowerOrEqual,
   name: 'Is lower or equal',
   description: 'Match when field value is lower or equal than option.',

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceJsonData, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface DataSourceLogoProps {
   dataSource: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
@@ -10,7 +10,8 @@ export interface DataSourceLogoProps {
 
 export function DataSourceLogo(props: DataSourceLogoProps) {
   const { dataSource } = props;
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const styles = getStyles(theme, dataSource?.meta.builtIn);
 
   if (!dataSource) {
     return DataSourceLogoPlaceHolder();
@@ -30,11 +31,12 @@ export function DataSourceLogoPlaceHolder() {
   return <div className={styles.pickerDSLogo}></div>;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, builtIn = false) {
   return {
     pickerDSLogo: css`
       height: 20px;
       width: 20px;
+      filter: invert(${builtIn && theme.isLight ? 1 : 0});
     `,
   };
 }

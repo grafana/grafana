@@ -212,14 +212,20 @@ type HistogramAgg struct {
 
 // DateHistogramAgg represents a date histogram aggregation
 type DateHistogramAgg struct {
-	Field          string          `json:"field"`
-	FixedInterval  string          `json:"fixed_interval,omitempty"`
-	MinDocCount    int             `json:"min_doc_count"`
-	Missing        *string         `json:"missing,omitempty"`
-	ExtendedBounds *ExtendedBounds `json:"extended_bounds"`
-	Format         string          `json:"format"`
-	Offset         string          `json:"offset,omitempty"`
-	TimeZone       string          `json:"time_zone,omitempty"`
+	Field            string          `json:"field"`
+	FixedInterval    string          `json:"fixed_interval,omitempty"`
+	CalendarInterval string          `json:"calendar_interval,omitempty"`
+	MinDocCount      int             `json:"min_doc_count"`
+	Missing          *string         `json:"missing,omitempty"`
+	ExtendedBounds   *ExtendedBounds `json:"extended_bounds"`
+	Format           string          `json:"format"`
+	Offset           string          `json:"offset,omitempty"`
+	TimeZone         string          `json:"time_zone,omitempty"`
+}
+
+// GetCalendarIntervals provides the list of intervals used for building calendar bucketAgg
+func GetCalendarIntervals() []string {
+	return []string{"1w", "1M", "1q", "1y"}
 }
 
 // FiltersAggregation represents a filters aggregation

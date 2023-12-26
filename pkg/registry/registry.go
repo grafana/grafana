@@ -38,7 +38,7 @@ type UsageStatsProvidersRegistry interface {
 type ProvidesUsageStats interface {
 	// GetUsageStats is called on a schedule by the UsageStatsService
 	// Any errors occurring during usage stats collection should be collected and logged within the provider.
-	GetUsageStats(ctx context.Context) map[string]interface{}
+	GetUsageStats(ctx context.Context) map[string]any
 }
 
 // DatabaseMigrator allows the caller to add migrations to

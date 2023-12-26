@@ -31,13 +31,15 @@ composableKinds: DataQuery: {
 
 				// Specifies the query label selectors.
 				labelSelector: string | *"{}"
+				// Specifies the query span selectors.
+				spanSelector?: [...string]
 				// Specifies the type of profile to query.
 				profileTypeId: string
 				// Allows to group the results.
 				groupBy: [...string]
 				// Sets the maximum number of nodes in the flamegraph.
-				maxNodes?:        int64
-				#PhlareQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
+				maxNodes?:           int64
+				#PyroscopeQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
 			}
 		}]
 		lenses: []

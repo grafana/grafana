@@ -30,7 +30,7 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
           continue;
         }
 
-        const valueAsNumber = parseFloat(value as string);
+        const valueAsNumber = parseFloat(value);
         if (isNaN(valueAsNumber)) {
           continue;
         }
@@ -76,13 +76,13 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
             break;
           }
           case SpecialValueMatch.NaN: {
-            if (isNaN(value as any)) {
+            if (typeof value === 'number' && isNaN(value)) {
               return vm.options.result;
             }
             break;
           }
           case SpecialValueMatch.NullAndNaN: {
-            if (isNaN(value as any) || value == null) {
+            if ((typeof value === 'number' && isNaN(value)) || value == null) {
               return vm.options.result;
             }
             break;
@@ -113,7 +113,7 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
 }
 
 // Ref https://stackoverflow.com/a/58550111
-export function isNumeric(num: any) {
+export function isNumeric(num: unknown) {
   return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num as number);
 }
 

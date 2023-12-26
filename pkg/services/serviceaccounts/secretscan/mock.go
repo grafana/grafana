@@ -12,8 +12,8 @@ type MockTokenRetriever struct {
 	errList   error
 	errRevoke error
 
-	listCalls   []interface{}
-	revokeCalls [][]interface{}
+	listCalls   []any
+	revokeCalls [][]any
 }
 
 func (m *MockTokenRetriever) ListTokens(
@@ -27,7 +27,7 @@ func (m *MockTokenRetriever) ListTokens(
 func (m *MockTokenRetriever) RevokeServiceAccountToken(
 	ctx context.Context, orgID, serviceAccountID, tokenID int64,
 ) error {
-	m.revokeCalls = append(m.revokeCalls, []interface{}{orgID, serviceAccountID, tokenID})
+	m.revokeCalls = append(m.revokeCalls, []any{orgID, serviceAccountID, tokenID})
 
 	return m.errRevoke
 }
@@ -42,7 +42,7 @@ type MockSecretScanClient struct {
 	tokens []Token
 	err    error
 
-	checkCalls []interface{}
+	checkCalls []any
 }
 
 func (m *MockSecretScanClient) CheckTokens(ctx context.Context, keyHashes []string) ([]Token, error) {
@@ -54,13 +54,13 @@ func (m *MockSecretScanClient) CheckTokens(ctx context.Context, keyHashes []stri
 type MockSecretScanNotifier struct {
 	err error
 
-	notifyCalls [][]interface{}
+	notifyCalls [][]any
 }
 
 func (m *MockSecretScanNotifier) Notify(ctx context.Context,
 	token *Token, tokenName string, revoked bool,
 ) error {
-	m.notifyCalls = append(m.notifyCalls, []interface{}{token, tokenName, revoked})
+	m.notifyCalls = append(m.notifyCalls, []any{token, tokenName, revoked})
 
 	return m.err
 }

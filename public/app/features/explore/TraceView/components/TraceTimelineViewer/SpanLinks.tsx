@@ -9,6 +9,7 @@ import { SpanLinkDef } from '../types/links';
 interface SpanLinksProps {
   links: SpanLinkDef[];
   datasourceType: string;
+  color: string;
 }
 
 const renderMenuItems = (
@@ -46,15 +47,15 @@ const renderMenuItems = (
   ));
 };
 
-export const SpanLinksMenu = ({ links, datasourceType }: SpanLinksProps) => {
-  const styles = useStyles2(getStyles);
+export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) => {
+  const styles = useStyles2(() => getStyles(color));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <div data-testid="SpanLinksMenu">
+    <div data-testid="SpanLinksMenu" className={styles.wrapper}>
       <button
         onClick={(e) => {
           setIsMenuOpen(true);
@@ -65,7 +66,7 @@ export const SpanLinksMenu = ({ links, datasourceType }: SpanLinksProps) => {
         }}
         className={styles.button}
       >
-        <Icon name="link" className={styles.button} />
+        <Icon name="link" className={styles.icon} />
       </button>
 
       {isMenuOpen ? (
@@ -81,13 +82,23 @@ export const SpanLinksMenu = ({ links, datasourceType }: SpanLinksProps) => {
   );
 };
 
-const getStyles = () => {
+const getStyles = (color: string) => {
   return {
+    wrapper: css`
+      border: none;
+      background: ${color}10;
+      border-bottom: 1px solid ${color}CF;
+      padding-right: 4px;
+    `,
     button: css`
       background: transparent;
       border: none;
       padding: 0;
-      margin: 0 3px 0 0;
+    `,
+    icon: css`
+      background: transparent;
+      border: none;
+      padding: 0;
     `,
     menuItem: css`
       max-width: 60ch;

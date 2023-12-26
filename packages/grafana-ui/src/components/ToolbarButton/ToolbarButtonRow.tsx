@@ -116,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment:
   overflowItems: css({
     alignItems: 'center',
     backgroundColor: theme.colors.background.primary,
-    borderRadius: theme.shape.borderRadius(),
+    borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
     display: 'flex',
     flexWrap: 'wrap',

@@ -111,20 +111,20 @@ func TestOpsGenieNotifier(t *testing.T) {
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
-			details := make(map[string]interface{})
+			details := make(map[string]any)
 
 			alertErr := opsgenieNotifier.createAlert(evalContext)
 
 			bodyJSON, err := simplejson.NewJson([]byte(notificationService.Webhook.Body))
 			if err == nil {
 				tags = bodyJSON.Get("tags").MustStringArray([]string{})
-				details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
+				details = bodyJSON.Get("details").MustMap(map[string]any{})
 			}
 
 			require.Nil(t, notifierErr)
 			require.Nil(t, alertErr)
 			require.Equal(t, tags, []string{"keyOnly", "aKey:aValue"})
-			require.Equal(t, details, map[string]interface{}{"url": ""})
+			require.Equal(t, details, map[string]any{"url": ""})
 		})
 
 		t.Run("alert payload should include tag pairs only as a map in the details key when sendAsTags=details", func(t *testing.T) {
@@ -160,20 +160,20 @@ func TestOpsGenieNotifier(t *testing.T) {
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
-			details := make(map[string]interface{})
+			details := make(map[string]any)
 
 			alertErr := opsgenieNotifier.createAlert(evalContext)
 
 			bodyJSON, err := simplejson.NewJson([]byte(notificationService.Webhook.Body))
 			if err == nil {
 				tags = bodyJSON.Get("tags").MustStringArray([]string{})
-				details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
+				details = bodyJSON.Get("details").MustMap(map[string]any{})
 			}
 
 			require.Nil(t, notifierErr)
 			require.Nil(t, alertErr)
 			require.Equal(t, tags, []string{})
-			require.Equal(t, details, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
+			require.Equal(t, details, map[string]any{"keyOnly": "", "aKey": "aValue", "url": ""})
 		})
 
 		t.Run("alert payload should include tag pairs as both a map in the details key and an array in the tags key when sendAsTags=both", func(t *testing.T) {
@@ -209,20 +209,20 @@ func TestOpsGenieNotifier(t *testing.T) {
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
-			details := make(map[string]interface{})
+			details := make(map[string]any)
 
 			alertErr := opsgenieNotifier.createAlert(evalContext)
 
 			bodyJSON, err := simplejson.NewJson([]byte(notificationService.Webhook.Body))
 			if err == nil {
 				tags = bodyJSON.Get("tags").MustStringArray([]string{})
-				details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
+				details = bodyJSON.Get("details").MustMap(map[string]any{})
 			}
 
 			require.Nil(t, notifierErr)
 			require.Nil(t, alertErr)
 			require.Equal(t, tags, []string{"keyOnly", "aKey:aValue"})
-			require.Equal(t, details, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
+			require.Equal(t, details, map[string]any{"keyOnly": "", "aKey": "aValue", "url": ""})
 		})
 	})
 }

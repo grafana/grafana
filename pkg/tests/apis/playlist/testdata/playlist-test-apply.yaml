@@ -1,0 +1,6 @@
+apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+metadata:
+  name: test
+spec:
+  title: Test playlist (apply from k8s; ??m; ?? items; PATCH)

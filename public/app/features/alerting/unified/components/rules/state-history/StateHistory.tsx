@@ -3,8 +3,7 @@ import { groupBy } from 'lodash';
 import React, { FormEvent, useCallback, useState } from 'react';
 
 import { AlertState, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -70,7 +69,7 @@ const StateHistory = ({ alertId }: Props) => {
           <header className={styles.tableGroupKey}>
             <code>{groupKey}</code>
           </header>
-          <DynamicTable cols={columns} items={tableItems} />
+          <DynamicTable cols={columns} items={tableItems} pagination={{ itemsPerPage: 25 }} />
         </div>
       );
     });

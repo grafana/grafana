@@ -129,7 +129,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
-		gcn.log.Error("evalContext returned an invalid rule URL")
+		gcn.log.Error("EvalContext returned an invalid rule URL")
 	}
 
 	widgets := []widget{}

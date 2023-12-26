@@ -51,7 +51,7 @@ export function TextPanel(props: Props) {
   }
 
   return (
-    <CustomScrollbar autoHeightMin="100%">
+    <CustomScrollbar autoHeightMin="100%" className={styles.containStrict}>
       <DangerouslySetHtmlContent
         html={processed.content}
         className={styles.markdown}
@@ -103,4 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: 100%;
     `
   ),
+  containStrict: css({
+    contain: 'strict',
+  }),
 });

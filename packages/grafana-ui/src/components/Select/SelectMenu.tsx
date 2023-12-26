@@ -95,7 +95,7 @@ export const SelectMenuOptions = ({
   isFocused,
   isSelected,
   renderOptionLabel,
-}: React.PropsWithChildren<SelectMenuOptionProps<any>>) => {
+}: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const icon = data.icon ? toIconName(data.icon) : undefined;
@@ -118,7 +118,7 @@ export const SelectMenuOptions = ({
       title={data.title}
     >
       {icon && <Icon name={icon} className={styles.optionIcon} />}
-      {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || data.value} />}
+      {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || String(data.value)} />}
       <div className={styles.optionBody}>
         <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>
         {data.description && <div className={styles.optionDescription}>{data.description}</div>}

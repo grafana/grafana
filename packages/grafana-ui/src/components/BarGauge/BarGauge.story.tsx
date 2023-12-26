@@ -5,7 +5,6 @@ import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor }
 import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
 
 import { useTheme2 } from '../../themes';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { Props } from './BarGauge';
 import mdx from './BarGauge.mdx';
@@ -13,7 +12,6 @@ import mdx from './BarGauge.mdx';
 const meta: Meta = {
   title: 'Visualizations/BarGauge',
   component: BarGauge,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

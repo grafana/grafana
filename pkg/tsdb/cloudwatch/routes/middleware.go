@@ -20,7 +20,7 @@ func ResourceRequestMiddleware(handleFunc models.RouteHandlerFunc, logger log.Lo
 		pluginContext := httpadapter.PluginConfigFromContext(ctx)
 		json, httpError := handleFunc(ctx, pluginContext, reqCtxFactory, req.URL.Query())
 		if httpError != nil {
-			logger.Error("error handling resource request", "error", httpError.Message)
+			logger.Error("Error handling resource request", "error", httpError.Message)
 			respondWithError(rw, httpError)
 			return
 		}
@@ -28,7 +28,7 @@ func ResourceRequestMiddleware(handleFunc models.RouteHandlerFunc, logger log.Lo
 		rw.Header().Set("Content-Type", "application/json")
 		_, err := rw.Write(json)
 		if err != nil {
-			logger.Error("error handling resource request", "error", err)
+			logger.Error("Error handling resource request", "error", err)
 			respondWithError(rw, models.NewHttpError("error writing response in resource request middleware", http.StatusInternalServerError, err))
 		}
 	}

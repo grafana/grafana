@@ -73,7 +73,7 @@ describe('AddToDashboardButton', () => {
 
     beforeEach(() => {
       jest.spyOn(api, 'setDashboardInLocalStorage').mockReturnValue(addToDashboardResponse);
-      mocks.contextSrv.hasAccess.mockImplementation(() => true);
+      mocks.contextSrv.hasPermission.mockImplementation(() => true);
     });
 
     afterEach(() => {
@@ -283,7 +283,7 @@ describe('AddToDashboardButton', () => {
     });
 
     it('Should only show existing dashboard option with no access to create', async () => {
-      mocks.contextSrv.hasAccess.mockImplementation((action) => {
+      mocks.contextSrv.hasPermission.mockImplementation((action) => {
         if (action === 'dashboards:create') {
           return false;
         } else {
@@ -296,7 +296,7 @@ describe('AddToDashboardButton', () => {
     });
 
     it('Should only show new dashboard option with no access to write', async () => {
-      mocks.contextSrv.hasAccess.mockImplementation((action) => {
+      mocks.contextSrv.hasPermission.mockImplementation((action) => {
         if (action === 'dashboards:write') {
           return false;
         } else {
@@ -311,7 +311,7 @@ describe('AddToDashboardButton', () => {
 
   describe('Error handling', () => {
     beforeEach(() => {
-      mocks.contextSrv.hasAccess.mockImplementation(() => true);
+      mocks.contextSrv.hasPermission.mockImplementation(() => true);
     });
 
     afterEach(() => {

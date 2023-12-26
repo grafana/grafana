@@ -13,12 +13,21 @@ import { VariableOption, VariableRefresh } from '../../../variables/types';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GridPos } from '../../state/PanelModel';
 
-interface Input {
+export interface InputUsage {
+  libraryPanels?: LibraryPanel[];
+}
+
+export interface LibraryPanel {
+  name: string;
+  uid: string;
+}
+export interface Input {
   name: string;
   type: string;
   label: string;
   value: any;
   description: string;
+  usage?: InputUsage;
 }
 
 interface Requires {
@@ -30,24 +39,23 @@ interface Requires {
   };
 }
 
-interface ExternalDashboard {
-  __inputs: Input[];
-  __elements: Record<string, LibraryElementExport>;
-  __requires: Array<Requires[string]>;
+export interface ExternalDashboard {
+  __inputs?: Input[];
+  __elements?: Record<string, LibraryElementExport>;
+  __requires?: Array<Requires[string]>;
   panels: Array<PanelModel | PanelWithExportableLibraryPanel>;
 }
 
 interface PanelWithExportableLibraryPanel {
   gridPos: GridPos;
   id: number;
-  libraryPanel: {
-    name: string;
-    uid: string;
-  };
+  libraryPanel: LibraryPanel;
 }
 
-function isExportableLibraryPanel(p: any): p is PanelWithExportableLibraryPanel {
-  return p.libraryPanel && typeof p.libraryPanel.name === 'string' && typeof p.libraryPanel.uid === 'string';
+function isExportableLibraryPanel(
+  p: PanelModel | PanelWithExportableLibraryPanel
+): p is PanelWithExportableLibraryPanel {
+  return Boolean(p.libraryPanel?.name && p.libraryPanel?.uid);
 }
 
 interface DataSources {
@@ -58,6 +66,7 @@ interface DataSources {
     type: string;
     pluginId: string;
     pluginName: string;
+    usage?: InputUsage;
   };
 }
 
@@ -76,7 +85,7 @@ export class DashboardExporter {
     // this is pretty hacky and needs to be changed
     dashboard.cleanUpRepeats();
 
-    const saveModel = dashboard.getSaveModelClone();
+    const saveModel = dashboard.getSaveModelCloneOld();
     saveModel.id = null;
 
     // undo repeat cleanup
@@ -98,10 +107,10 @@ export class DashboardExporter {
         return;
       }
 
-      let datasource: string = obj.datasource;
+      let datasource = obj.datasource;
       let datasourceVariable: any = null;
 
-      const datasourceUid: string = (datasource as any)?.uid;
+      const datasourceUid: string = datasource?.uid;
       // ignore data source properties that contain a variable
       if (datasourceUid) {
         if (datasourceUid.indexOf('$') === 0) {
@@ -132,7 +141,10 @@ export class DashboardExporter {
             return;
           }
 
-          const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+          const libraryPanel = obj.libraryPanel;
+          const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
+          let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+
           datasources[refName] = {
             name: refName,
             label: ds.name,
@@ -140,7 +152,17 @@ export class DashboardExporter {
             type: 'datasource',
             pluginId: ds.meta?.id,
             pluginName: ds.meta?.name,
+            usage: datasources[refName]?.usage,
           };
+
+          if (!!libraryPanel) {
+            const libPanels = datasources[refName]?.usage?.libraryPanels || [];
+            libPanels.push({ name: libraryPanel.name, uid: libraryPanel.uid });
+
+            datasources[refName].usage = {
+              libraryPanels: libPanels,
+            };
+          }
 
           obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
         });

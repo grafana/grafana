@@ -96,7 +96,7 @@ func (ss *xormStore) GetTempUsersQuery(ctx context.Context, query *tempuser.GetT
 	                FROM ` + ss.db.GetDialect().Quote("temp_user") + ` as tu
 									LEFT OUTER JOIN ` + ss.db.GetDialect().Quote("user") + ` as u on u.id = tu.invited_by_user_id
 									WHERE tu.status=?`
-		params := []interface{}{string(query.Status)}
+		params := []any{string(query.Status)}
 
 		if query.OrgID > 0 {
 			rawSQL += ` AND tu.org_id=?`

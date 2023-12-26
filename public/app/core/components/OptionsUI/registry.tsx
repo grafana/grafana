@@ -1,3 +1,4 @@
+import { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
 import React from 'react';
 
 import {
@@ -27,6 +28,7 @@ import {
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
 } from '@grafana/data';
+import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
@@ -53,28 +55,28 @@ export const getAllOptionEditors = () => {
     id: 'number',
     name: 'Number',
     description: 'Allows numeric values input',
-    editor: NumberValueEditor as any,
+    editor: NumberValueEditor,
   };
 
   const slider: StandardEditorsRegistryItem<number> = {
     id: 'slider',
     name: 'Slider',
     description: 'Allows numeric values input',
-    editor: SliderValueEditor as any,
+    editor: SliderValueEditor,
   };
 
   const text: StandardEditorsRegistryItem<string> = {
     id: 'text',
     name: 'Text',
     description: 'Allows string values input',
-    editor: StringValueEditor as any,
+    editor: StringValueEditor,
   };
 
   const strings: StandardEditorsRegistryItem<string[]> = {
     id: 'strings',
     name: 'String array',
     description: 'An array of strings',
-    editor: StringArrayEditor as any,
+    editor: StringArrayEditor,
   };
 
   const boolean: StandardEditorsRegistryItem<boolean> = {
@@ -91,14 +93,14 @@ export const getAllOptionEditors = () => {
     id: 'select',
     name: 'Select',
     description: 'Allows option selection',
-    editor: SelectValueEditor as any,
+    editor: SelectValueEditor,
   };
 
   const multiSelect: StandardEditorsRegistryItem = {
     id: 'multi-select',
     name: 'Multi select',
     description: 'Allows for multiple option selection',
-    editor: MultiSelectValueEditor as any,
+    editor: MultiSelectValueEditor,
   };
 
   const radio: StandardEditorsRegistryItem = {
@@ -114,7 +116,7 @@ export const getAllOptionEditors = () => {
     id: 'unit',
     name: 'Unit',
     description: 'Allows unit input',
-    editor: UnitValueEditor as any,
+    editor: UnitValueEditor,
   };
 
   const color: StandardEditorsRegistryItem<string, ColorValueEditorSettings> = {
@@ -128,24 +130,24 @@ export const getAllOptionEditors = () => {
     },
   };
 
-  const fieldColor: StandardEditorsRegistryItem<FieldColor> = {
+  const fieldColor: StandardEditorsRegistryItem<FieldColor | undefined> = {
     id: 'fieldColor',
     name: 'Field Color',
     description: 'Field color selection',
-    editor: FieldColorEditor as any,
+    editor: FieldColorEditor,
   };
 
   const links: StandardEditorsRegistryItem<DataLink[]> = {
     id: 'links',
     name: 'Links',
     description: 'Allows defining data links',
-    editor: DataLinksValueEditor as any,
+    editor: DataLinksValueEditor,
   };
 
   const statsPicker: StandardEditorsRegistryItem<string[], StatsPickerConfigSettings> = {
     id: 'stats-picker',
     name: 'Stats Picker',
-    editor: StatsPickerEditor as any,
+    editor: StatsPickerEditor,
     description: '',
   };
 
@@ -153,35 +155,35 @@ export const getAllOptionEditors = () => {
     id: 'timezone',
     name: 'Time zone',
     description: 'Time zone selection',
-    editor: TimeZonePicker as any,
+    editor: TimeZonePicker,
   };
 
   const fieldName: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
     id: 'field-name',
     name: 'Field name',
     description: 'Allows selecting a field name from a data frame',
-    editor: FieldNamePicker as any,
+    editor: FieldNamePicker,
   };
 
   const dashboardPicker: StandardEditorsRegistryItem<string, DashboardPickerOptions> = {
     id: 'dashboard-uid',
     name: 'Dashboard',
     description: 'Select dashboard',
-    editor: DashboardPicker as any,
+    editor: DashboardPicker,
   };
 
   const mappings: StandardEditorsRegistryItem<ValueMapping[]> = {
     id: 'mappings',
     name: 'Mappings',
     description: 'Allows defining value mappings',
-    editor: ValueMappingsEditor as any,
+    editor: ValueMappingsEditor,
   };
 
   const thresholds: StandardEditorsRegistryItem<ThresholdsConfig> = {
     id: 'thresholds',
     name: 'Thresholds',
     description: 'Allows defining thresholds',
-    editor: ThresholdsValueEditor as any,
+    editor: ThresholdsValueEditor,
   };
 
   return [
@@ -216,8 +218,8 @@ export const getAllStandardFieldConfigs = () => {
     path: 'displayName',
     name: 'Display name',
     description: 'Change the field or series name',
-    editor: standardEditorsRegistry.get('text').editor as any,
-    override: standardEditorsRegistry.get('text').editor as any,
+    editor: standardEditorsRegistry.get('text').editor,
+    override: standardEditorsRegistry.get('text').editor,
     process: displayNameOverrideProcessor,
     settings: {
       placeholder: 'none',
@@ -233,8 +235,8 @@ export const getAllStandardFieldConfigs = () => {
     name: 'Unit',
     description: '',
 
-    editor: standardEditorsRegistry.get('unit').editor as any,
-    override: standardEditorsRegistry.get('unit').editor as any,
+    editor: standardEditorsRegistry.get('unit').editor,
+    override: standardEditorsRegistry.get('unit').editor,
     process: stringOverrideProcessor,
 
     settings: {
@@ -245,14 +247,31 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
+  const fieldMinMax: FieldConfigPropertyItem<any, boolean, BooleanFieldSettings> = {
+    id: 'fieldMinMax',
+    path: 'fieldMinMax',
+    name: 'Field min/max',
+    description: 'Calculate min max per field',
+
+    editor: standardEditorsRegistry.get('boolean').editor,
+    override: standardEditorsRegistry.get('boolean').editor,
+    process: booleanOverrideProcessor,
+
+    shouldApply: (field) => field.type === FieldType.number,
+    showIf: (options: FieldConfig) => {
+      return options.min === undefined || options.max === undefined;
+    },
+    category,
+  };
+
   const min: FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> = {
     id: 'min',
     path: 'min',
     name: 'Min',
     description: 'Leave empty to calculate based on all values',
 
-    editor: standardEditorsRegistry.get('number').editor as any,
-    override: standardEditorsRegistry.get('number').editor as any,
+    editor: standardEditorsRegistry.get('number').editor,
+    override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
 
     settings: {
@@ -268,8 +287,8 @@ export const getAllStandardFieldConfigs = () => {
     name: 'Max',
     description: 'Leave empty to calculate based on all values',
 
-    editor: standardEditorsRegistry.get('number').editor as any,
-    override: standardEditorsRegistry.get('number').editor as any,
+    editor: standardEditorsRegistry.get('number').editor,
+    override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
 
     settings: {
@@ -285,8 +304,8 @@ export const getAllStandardFieldConfigs = () => {
     path: 'decimals',
     name: 'Decimals',
 
-    editor: standardEditorsRegistry.get('number').editor as any,
-    override: standardEditorsRegistry.get('number').editor as any,
+    editor: standardEditorsRegistry.get('number').editor,
+    override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
 
     settings: {
@@ -306,8 +325,8 @@ export const getAllStandardFieldConfigs = () => {
     name: 'No value',
     description: 'What to show when there is no value',
 
-    editor: standardEditorsRegistry.get('text').editor as any,
-    override: standardEditorsRegistry.get('text').editor as any,
+    editor: standardEditorsRegistry.get('text').editor,
+    override: standardEditorsRegistry.get('text').editor,
     process: stringOverrideProcessor,
 
     settings: {
@@ -322,8 +341,8 @@ export const getAllStandardFieldConfigs = () => {
     id: 'links',
     path: 'links',
     name: 'Data links',
-    editor: standardEditorsRegistry.get('links').editor as any,
-    override: standardEditorsRegistry.get('links').editor as any,
+    editor: standardEditorsRegistry.get('links').editor,
+    override: standardEditorsRegistry.get('links').editor,
     process: dataLinksOverrideProcessor,
     settings: {
       placeholder: '-',
@@ -337,8 +356,8 @@ export const getAllStandardFieldConfigs = () => {
     id: 'color',
     path: 'color',
     name: 'Color scheme',
-    editor: standardEditorsRegistry.get('fieldColor').editor as any,
-    override: standardEditorsRegistry.get('fieldColor').editor as any,
+    editor: standardEditorsRegistry.get('fieldColor').editor,
+    override: standardEditorsRegistry.get('fieldColor').editor,
     process: identityOverrideProcessor,
     shouldApply: () => true,
     settings: {
@@ -354,8 +373,8 @@ export const getAllStandardFieldConfigs = () => {
     name: 'Value mappings',
     description: 'Modify the display text based on input value',
 
-    editor: standardEditorsRegistry.get('mappings').editor as any,
-    override: standardEditorsRegistry.get('mappings').editor as any,
+    editor: standardEditorsRegistry.get('mappings').editor,
+    override: standardEditorsRegistry.get('mappings').editor,
     process: valueMappingsOverrideProcessor,
     settings: {},
     defaultValue: [],
@@ -368,8 +387,8 @@ export const getAllStandardFieldConfigs = () => {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
-    editor: standardEditorsRegistry.get('thresholds').editor as any,
-    override: standardEditorsRegistry.get('thresholds').editor as any,
+    editor: standardEditorsRegistry.get('thresholds').editor,
+    override: standardEditorsRegistry.get('thresholds').editor,
     process: thresholdsOverrideProcessor,
     settings: {},
     defaultValue: {
@@ -389,13 +408,13 @@ export const getAllStandardFieldConfigs = () => {
     path: 'filterable',
     name: 'Ad-hoc filterable',
     hideFromDefaults: true,
-    editor: standardEditorsRegistry.get('boolean').editor as any,
-    override: standardEditorsRegistry.get('boolean').editor as any,
+    editor: standardEditorsRegistry.get('boolean').editor,
+    override: standardEditorsRegistry.get('boolean').editor,
     process: booleanOverrideProcessor,
     shouldApply: () => true,
     settings: {},
     category,
   };
 
-  return [unit, min, max, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
+  return [unit, min, max, fieldMinMax, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
 };

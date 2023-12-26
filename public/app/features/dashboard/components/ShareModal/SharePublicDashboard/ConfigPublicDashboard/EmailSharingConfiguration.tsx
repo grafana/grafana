@@ -5,7 +5,7 @@ import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime/src';
+import { FieldSet } from '@grafana/ui';
 import {
   Button,
   ButtonGroup,
@@ -16,6 +16,7 @@ import {
   Spinner,
   useStyles2,
 } from '@grafana/ui/src';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   useAddRecipientMutation,
   useDeleteRecipientMutation,
@@ -23,7 +24,8 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { useSelector } from 'app/types';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { AccessControlAction, useSelector } from 'app/types';
 
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
@@ -54,13 +56,13 @@ const EmailList = ({
 
   const isLoading = isDeleteLoading || isReshareLoading;
 
-  const onDeleteEmail = (recipientUid: string) => {
-    reportInteraction('grafana_dashboards_public_delete_sharing_email_clicked');
-    deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
+  const onDeleteEmail = (recipientUid: string, recipientEmail: string) => {
+    DashboardInteractions.revokePublicDashboardEmailClicked();
+    deleteEmail({ recipientUid, recipientEmail, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
 
   const onReshare = (recipientUid: string) => {
-    reportInteraction('grafana_dashboards_public_reshare_email_clicked');
+    DashboardInteractions.resendPublicDashboardEmailClicked();
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
@@ -80,7 +82,7 @@ const EmailList = ({
                   title="Revoke"
                   size="sm"
                   disabled={isLoading}
-                  onClick={() => onDeleteEmail(recipient.uid)}
+                  onClick={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                   data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
                   Revoke
@@ -117,6 +119,8 @@ export const EmailSharingConfiguration = () => {
   const [updateShareType] = useUpdatePublicDashboardMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
 
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+
   const {
     register,
     setValue,
@@ -133,7 +137,7 @@ export const EmailSharingConfiguration = () => {
     mode: 'onSubmit',
   });
 
-  const onShareTypeChange = (shareType: PublicDashboardShareType) => {
+  const onUpdateShareType = (shareType: PublicDashboardShareType) => {
     const req = {
       dashboard,
       payload: {
@@ -146,76 +150,77 @@ export const EmailSharingConfiguration = () => {
   };
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
-    //TODO: add if it's domain or not when developed.
-    reportInteraction('grafana_dashboards_public_add_share_email_clicked');
+    DashboardInteractions.publicDashboardEmailInviteClicked();
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
 
   return (
-    <form data-testid={selectors.Container} className={styles.container} onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Can view dashboard" className={styles.field}>
-        <InputControl
-          name="shareType"
-          control={control}
-          render={({ field }) => {
-            const { ref, ...rest } = field;
-            return (
-              <RadioButtonGroup
-                {...rest}
-                size={width < 480 ? 'sm' : 'md'}
-                options={options}
-                onChange={(shareType: PublicDashboardShareType) => {
-                  reportInteraction('grafana_dashboards_public_share_type_clicked', {
-                    type: shareType,
-                  });
-                  setValue('shareType', shareType);
-                  onShareTypeChange(shareType);
-                }}
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <FieldSet disabled={!hasWritePermissions} data-testid={selectors.Container} className={styles.container}>
+        <Field label="Can view dashboard" className={styles.field}>
+          <InputControl
+            name="shareType"
+            control={control}
+            render={({ field }) => {
+              const { ref, ...rest } = field;
+              return (
+                <RadioButtonGroup
+                  {...rest}
+                  size={width < 480 ? 'sm' : 'md'}
+                  options={options}
+                  onChange={(shareType: PublicDashboardShareType) => {
+                    DashboardInteractions.publicDashboardShareTypeChange({
+                      shareType: shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public',
+                    });
+                    setValue('shareType', shareType);
+                    onUpdateShareType(shareType);
+                  }}
+                />
+              );
+            }}
+          />
+        </Field>
+        {watch('shareType') === PublicDashboardShareType.EMAIL && (
+          <>
+            <Field
+              label="Invite"
+              description="Invite people by email"
+              error={errors.email?.message}
+              invalid={!!errors.email?.message || undefined}
+              className={styles.field}
+            >
+              <div className={styles.emailContainer}>
+                <Input
+                  className={styles.emailInput}
+                  placeholder="email"
+                  autoCapitalize="none"
+                  {...register('email', {
+                    required: 'Email is required',
+                    pattern: { value: validEmailRegex, message: 'Invalid email' },
+                  })}
+                  data-testid={selectors.EmailSharingInput}
+                />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={isAddEmailLoading}
+                  data-testid={selectors.EmailSharingInviteButton}
+                >
+                  Invite {isAddEmailLoading && <Spinner />}
+                </Button>
+              </div>
+            </Field>
+            {!!publicDashboard?.recipients?.length && (
+              <EmailList
+                recipients={publicDashboard.recipients}
+                dashboardUid={dashboard.uid}
+                publicDashboardUid={publicDashboard.uid}
               />
-            );
-          }}
-        />
-      </Field>
-      {watch('shareType') === PublicDashboardShareType.EMAIL && (
-        <>
-          <Field
-            label="Invite"
-            description="Invite people by email"
-            error={errors.email?.message}
-            invalid={!!errors.email?.message || undefined}
-            className={styles.field}
-          >
-            <div className={styles.emailContainer}>
-              <Input
-                className={styles.emailInput}
-                placeholder="email"
-                autoCapitalize="none"
-                {...register('email', {
-                  required: 'Email is required',
-                  pattern: { value: validEmailRegex, message: 'Invalid email' },
-                })}
-                data-testid={selectors.EmailSharingInput}
-              />
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={isAddEmailLoading}
-                data-testid={selectors.EmailSharingInviteButton}
-              >
-                Invite {isAddEmailLoading && <Spinner />}
-              </Button>
-            </div>
-          </Field>
-          {!!publicDashboard?.recipients?.length && (
-            <EmailList
-              recipients={publicDashboard.recipients}
-              dashboardUid={dashboard.uid}
-              publicDashboardUid={publicDashboard.uid}
-            />
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
+      </FieldSet>
     </form>
   );
 };

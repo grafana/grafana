@@ -3,6 +3,7 @@ import { ArrayVector } from './ArrayVector';
 
 describe('Check Appending Vector', () => {
   it('should transparently join them', () => {
+    jest.spyOn(console, 'warn').mockImplementation();
     const appended = new AppendedVectors();
     appended.append(new ArrayVector([1, 2, 3]));
     appended.append(new ArrayVector([4, 5, 6]));

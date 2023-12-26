@@ -3,14 +3,12 @@ import { zip, fromPairs } from 'lodash';
 import React, { useState } from 'react';
 
 import { EventsWithValidation } from '../../../../utils';
-import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
 
 import { Input } from './Input';
 
 const meta: Meta = {
   title: 'Forms/Legacy/Input',
   component: Input,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['inputRef', 'onBlur', 'onFocus', 'onChange'],

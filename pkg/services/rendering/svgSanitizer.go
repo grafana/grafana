@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	domPurifySvgConfig = map[string]interface{}{
+	domPurifySvgConfig = map[string]any{
 		// domPurifyConfig is passed directly to DOMPurify https://github.com/cure53/DOMPurify#can-i-configure-dompurify
-		"domPurifyConfig": map[string]interface{}{
+		"domPurifyConfig": map[string]any{
 			"USE_PROFILES": map[string]bool{"svg": true, "svgFilters": true},
 			"ADD_TAGS":     []string{"use"},
 		},
@@ -72,7 +72,7 @@ func (rs *RenderingService) sanitizeViaHTTP(ctx context.Context, req *SanitizeSV
 		return nil, err
 	}
 
-	configJson, err := json.Marshal(map[string]interface{}{
+	configJson, err := json.Marshal(map[string]any{
 		"config":     domPurifySvgConfig,
 		"configType": domPurifyConfigType,
 	})
@@ -160,7 +160,11 @@ func (rs *RenderingService) sanitizeSVGViaPlugin(ctx context.Context, req *Sanit
 	}
 	rs.log.Debug("Sanitizer - plugin: calling", "filename", req.Filename, "contentLength", len(req.Content))
 
-	rsp, err := rs.pluginInfo.Renderer.Sanitize(ctx, grpcReq)
+	rc, err := rs.plugin.Client()
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := rc.Sanitize(ctx, grpcReq)
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			rs.log.Info("Sanitizer - plugin: time out")

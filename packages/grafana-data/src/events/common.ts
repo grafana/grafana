@@ -17,8 +17,8 @@ export interface DataHoverPayload {
   dataId?: string; // identifying string to correlate data between publishers and subscribers
 
   // When dragging, this will capture the point when the mouse was down
-  point: Record<string, any>; // { time: 5678, lengthft: 456 }  // each axis|scale gets a value
-  down?: Record<string, any>;
+  point: Record<string, number | null>; // { time: 5678, lengthft: 456 }  // each axis|scale gets a value
+  down?: Record<string, number | null>;
 }
 
 /** @alpha */
@@ -54,7 +54,13 @@ export type DashboardLoadedEventPayload<T> = {
 export class DashboardLoadedEvent<T> extends BusEventWithPayload<DashboardLoadedEventPayload<T>> {
   static type = 'dashboard-loaded';
 }
-
 export class DataSourceUpdatedSuccessfully extends BusEventBase {
   static type = 'datasource-updated-successfully';
+}
+export class DataSourceTestSucceeded extends BusEventBase {
+  static type = 'datasource-test-succeeded';
+}
+
+export class DataSourceTestFailed extends BusEventBase {
+  static type = 'datasource-test-failed';
 }

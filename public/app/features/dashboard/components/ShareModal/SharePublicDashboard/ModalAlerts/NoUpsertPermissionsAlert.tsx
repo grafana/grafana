@@ -12,6 +12,6 @@ export const NoUpsertPermissionsAlert = ({ mode }: { mode: 'create' | 'edit' }) 
     data-testid={selectors.NoUpsertPermissionsWarningAlert}
     bottomSpacing={0}
   >
-    Contact your admin to get permission to {mode} create public dashboards
+    Contact your admin to get permission to {mode} public dashboards
   </Alert>
 );

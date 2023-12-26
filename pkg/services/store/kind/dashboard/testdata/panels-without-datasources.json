@@ -313,7 +313,6 @@
     }
   ],
   "schemaVersion": 19,
-  "style": "dark",
   "tags": [
     "gdev",
     "datasource-test"

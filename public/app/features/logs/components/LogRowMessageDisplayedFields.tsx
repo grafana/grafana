@@ -13,13 +13,14 @@ export interface Props {
   wrapLogMessage: boolean;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   styles: LogRowStyles;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   mouseIsOver: boolean;
+  onBlur: () => void;
 }
 
 export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
@@ -65,8 +66,8 @@ export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
             row={row}
             styles={styles}
             pinned={pinned}
-            {...rest}
             mouseIsOver={mouseIsOver}
+            {...rest}
           />
         )}
       </td>

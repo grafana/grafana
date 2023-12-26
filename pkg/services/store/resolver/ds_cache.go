@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
@@ -23,7 +23,7 @@ type dsVal struct {
 
 type dsCache struct {
 	ds          datasources.DataSourceService
-	pluginStore plugins.Store
+	pluginStore pluginstore.Store
 	cache       map[int64]map[string]*dsVal
 	timestamp   time.Time // across all orgIDs
 	mu          sync.Mutex

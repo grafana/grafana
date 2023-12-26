@@ -147,36 +147,36 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
 };
 
 export const getServerStyles = (data: ServerData | undefined) => (theme: GrafanaTheme2) => ({
-  bulb: css`
-    @keyframes blink {
-      0% {
-        fill-opacity: 0;
-      }
-      50% {
-        fill-opacity: 1;
-      }
-      100% {
-        fill-opacity: 0;
-      }
-    }
-  `,
-  server: css`
-    fill: ${data?.statusColor ?? 'transparent'};
-  `,
-  circle: css`
-    animation: blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end;
-    fill: ${data?.bulbColor};
-    stroke: none;
-  `,
-  circleBack: css`
-    fill: ${outlineColor};
-    stroke: none;
-    opacity: 1;
-  `,
-  outline: css`
-    stroke: ${outlineColor};
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 4px;
-  `,
+  bulb: css({
+    '@keyframes blink': {
+      '0%': {
+        fillOpacity: 0,
+      },
+      '50%': {
+        fillOpacity: 1,
+      },
+      '100%': {
+        fillOpacity: 0,
+      },
+    },
+  }),
+  server: css({
+    fill: data?.statusColor ?? 'transparent',
+  }),
+  circle: css({
+    animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    fill: data?.bulbColor,
+    stroke: 'none',
+  }),
+  circleBack: css({
+    fill: outlineColor,
+    stroke: 'none',
+    opacity: 1,
+  }),
+  outline: css({
+    stroke: outlineColor,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    strokeWidth: '4px',
+  }),
 });

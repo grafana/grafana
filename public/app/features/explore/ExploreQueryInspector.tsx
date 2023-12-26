@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { CoreApp, TimeZone } from '@grafana/data';
+import { CoreApp, LoadingState, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
+import { defaultTimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -12,7 +13,7 @@ import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { StoreState, ExploreItemState } from 'app/types';
 
-import { runQueries, selectIsWaitingForData } from './state/query';
+import { runQueries } from './state/query';
 
 interface DispatchProps {
   width: number;
@@ -24,7 +25,7 @@ interface DispatchProps {
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { loading, width, onClose, queryResponse, timeZone } = props;
+  const { width, onClose, queryResponse, timeZone } = props;
   const dataFrames = queryResponse?.series || [];
   let errors = queryResponse?.errors;
   if (!errors?.length && queryResponse?.error) {
@@ -39,7 +40,7 @@ export function ExploreQueryInspector(props: Props) {
     label: 'Stats',
     value: 'stats',
     icon: 'chart-line',
-    content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone as TimeZone} />,
+    content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone ?? defaultTimeZone} />,
   };
 
   const jsonTab: TabConfig = {
@@ -56,7 +57,8 @@ export function ExploreQueryInspector(props: Props) {
     content: (
       <InspectDataTab
         data={dataFrames}
-        isLoading={loading}
+        dataName={'Explore'}
+        isLoading={queryResponse.state === LoadingState.Loading}
         options={{ withTransforms: false, withFieldConfig: false }}
         timeZone={timeZone}
         app={CoreApp.Explore}
@@ -69,7 +71,7 @@ export function ExploreQueryInspector(props: Props) {
     value: 'query',
     icon: 'info-circle',
     content: (
-      <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries({ exploreId: props.exploreId })} />
+      <QueryInspector data={queryResponse} onRefreshQuery={() => props.runQueries({ exploreId: props.exploreId })} />
     ),
   };
 
@@ -96,7 +98,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const { queryResponse } = item;
 
   return {
-    loading: selectIsWaitingForData(exploreId)(state),
     queryResponse,
   };
 }

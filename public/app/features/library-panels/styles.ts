@@ -9,7 +9,7 @@ export function getModalStyles(theme: GrafanaTheme2) {
       overflow-y: auto;
       margin-top: 11px;
       margin-bottom: 28px;
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       border: 1px solid ${theme.colors.action.hover};
       background: ${theme.colors.background.primary};
       color: ${theme.colors.text.secondary};

@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Modal, Button, Label, useStyles2, RadioButtonGroup } from '@grafana/ui';
+import { Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { Annotations, Labels } from 'app/types/unified-alerting-dto';
 
 import { defaultAnnotations } from '../../../utils/constants';
-import AnnotationsField from '../../rule-editor/AnnotationsField';
+import AnnotationsStep from '../../rule-editor/AnnotationsStep';
 import LabelsField from '../../rule-editor/LabelsField';
 
 interface Props {
@@ -49,14 +49,14 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
       const alert = {
         annotations: data.annotations
           .filter(({ key, value }) => !!key && !!value)
-          .reduce((acc, { key, value }) => {
+          .reduce<Annotations>((acc, { key, value }) => {
             return { ...acc, [key]: value };
-          }, {} as Annotations),
+          }, {}),
         labels: data.labels
           .filter(({ key, value }) => !!key && !!value)
-          .reduce((acc, { key, value }) => {
+          .reduce<Labels>((acc, { key, value }) => {
             return { ...acc, [key]: value };
-          }, {} as Labels),
+          }, {}),
       };
       onTest(alert);
     } else {
@@ -90,7 +90,7 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
                 use custom templates and messages.
               </div>
               <div className={styles.section}>
-                <AnnotationsField />
+                <AnnotationsStep />
               </div>
               <div className={styles.section}>
                 <LabelsField />

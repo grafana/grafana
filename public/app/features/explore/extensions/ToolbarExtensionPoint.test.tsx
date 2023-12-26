@@ -147,7 +147,23 @@ describe('ToolbarExtensionPoint', () => {
         }),
         timeZone: 'browser',
         timeRange: { from: 'now-1h', to: 'now' },
+        shouldShowAddCorrelation: false,
       });
+    });
+
+    it('should pass a context with correct timeZone when fetching extensions', async () => {
+      const targets = [{ refId: 'A' }];
+      const data = createEmptyQueryResponse();
+
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="" splitted={false} />, {
+        targets,
+        data,
+      });
+
+      const [options] = getPluginLinkExtensionsMock.mock.calls[0];
+      const { context } = options;
+
+      expect(context).toHaveProperty('timeZone', 'browser');
     });
 
     it('should correct extension point id when fetching extensions', async () => {
@@ -215,7 +231,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('without extension points', () => {
     beforeAll(() => {
-      contextSrvMock.hasAccess.mockReturnValue(true);
+      contextSrvMock.hasPermission.mockReturnValue(true);
       getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
     });
 
@@ -233,7 +249,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('with insufficient permissions', () => {
     beforeAll(() => {
-      contextSrvMock.hasAccess.mockReturnValue(false);
+      contextSrvMock.hasPermission.mockReturnValue(false);
       getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
     });
 

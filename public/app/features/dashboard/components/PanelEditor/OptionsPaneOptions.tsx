@@ -102,13 +102,14 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        {panel.isAngularPlugin() && (
+        {panel.isAngularPlugin() && !plugin.meta.angular?.hideDeprecation && (
           <AngularDeprecationPluginNotice
             className={styles.angularDeprecationWrapper}
             showPluginDetailsLink={true}
             pluginId={plugin.meta.id}
             pluginType={plugin.meta.type}
             angularSupportEnabled={config?.angularSupportEnabled}
+            interactionElementId="panel-options"
           />
         )}
         <div className={styles.formRow}>

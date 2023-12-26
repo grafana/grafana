@@ -37,6 +37,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     display: 'flex',
     height: `${theme.components.menuTabs.height}px`,
+    alignItems: 'center',
   }),
 });
 

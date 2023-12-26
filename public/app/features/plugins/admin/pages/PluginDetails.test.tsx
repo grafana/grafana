@@ -52,8 +52,8 @@ jest.mock('../helpers.ts', () => ({
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
-    hasAccess: (action: string, fallBack: boolean) => true,
-    hasAccessInMetadata: (action: string, object: WithAccessControlMetadata, fallBack: boolean) => true,
+    hasPermission: (action: string) => true,
+    hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,
   },
 }));
 
@@ -324,12 +324,13 @@ describe('Plugin details page', () => {
       expect(await queryByRole('button', { name: /install/i })).toBeInTheDocument();
     });
 
-    it('should not display install button for enterprise plugins if license is invalid', async () => {
+    it('should not display install button for enterprise plugins if license is invalid (but allow uninstall)', async () => {
       config.licenseInfo.enabledFeatures = {};
 
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 
-      expect(await queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /Install/ })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /Uninstall/ })).toBeInTheDocument();
       expect(queryByText(/no valid Grafana Enterprise license detected/i)).toBeInTheDocument();
       expect(queryByRole('link', { name: /learn more/i })).toBeInTheDocument();
     });
@@ -381,14 +382,14 @@ describe('Plugin details page', () => {
     });
 
     it('should display alert with information about why the plugin is disabled', async () => {
-      const { queryByLabelText } = renderPluginDetails({
+      const { queryByTestId } = renderPluginDetails({
         id,
         isInstalled: true,
         isDisabled: true,
         error: PluginErrorCode.modifiedSignature,
       });
 
-      expect(await queryByLabelText(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument();
+      expect(queryByTestId(selectors.pages.PluginPage.disabledInfo)).toBeInTheDocument();
     });
 
     it('should display grafana dependencies for a plugin if they are available', async () => {
@@ -724,6 +725,78 @@ describe('Plugin details page', () => {
       expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
+    });
+
+    it('shows a "angular warning" if the plugin uses Angular', async () => {
+      const { queryByText } = renderPluginDetails({
+        angularDetected: true,
+      });
+
+      await waitFor(() => expect(queryByText(/angular plugin/i)).toBeInTheDocument);
+    });
+
+    it('does not show an "angular warning" if the plugin is not using Angular', async () => {
+      const { queryByText } = renderPluginDetails({
+        angularDetected: false,
+      });
+
+      await waitFor(() => expect(queryByText(/angular plugin/i)).not.toBeInTheDocument);
+    });
+
+    it('should display a deprecation warning if the plugin is deprecated', async () => {
+      const { findByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+      });
+
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+    });
+
+    it('should not display a deprecation warning in the plugin is not deprecated', async () => {
+      const { queryByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: false,
+      });
+
+      await waitFor(() => expect(queryByRole('link', { name: 'deprecated' })).not.toBeInTheDocument());
+    });
+
+    it('should display a custom deprecation message if the plugin has it set', async () => {
+      const statusContext = 'A detailed explanation of why this plugin is deprecated.';
+      const { findByText, findByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+      expect(await findByText(statusContext)).toBeInTheDocument();
+    });
+
+    it('should be possible to render markdown inside a custom deprecation message', async () => {
+      const statusContext =
+        '**This is a custom deprecation message.** [Link 1](https://grafana.com) <a href="https://grafana.com" target="_blank">Link 2</a>';
+      const { findByText, findByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+      expect(await findByText('This is a custom deprecation message.')).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 1' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toHaveAttribute('href', 'https://grafana.com');
     });
   });
 

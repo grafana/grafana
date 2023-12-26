@@ -14,26 +14,29 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore plugins.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	// nolint:staticcheck
+	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	{
 		oldVersion := setting.BuildVersion
@@ -48,7 +51,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 
 	var pluginStore = pstore
 	if pluginStore == nil {
-		pluginStore = &fakes.FakePluginStore{}
+		pluginStore = &pluginstore.FakePluginStore{}
 	}
 
 	var pluginsSettings = psettings
@@ -62,19 +65,20 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		License:  &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
 			Cfg:                   cfg,
-			RendererPluginManager: &fakeRendererManager{},
+			RendererPluginManager: &fakeRendererPluginManager{},
 		},
 		SQLStore:             db.InitTestDB(t),
 		SettingsProvider:     setting.ProvideProvider(cfg),
 		pluginStore:          pluginStore,
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
-		AccessControl:        accesscontrolmock.New().WithDisabled(),
+		AccessControl:        accesscontrolmock.New(),
 		PluginSettings:       pluginsSettings,
 		pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),
-		SocialService: social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage()),
+		namespacer:    request.GetNamespaceMapper(cfg),
+		SocialService: socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), &ssosettingstests.MockService{}),
 	}
 
 	m := web.New()
@@ -212,15 +216,15 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 
 	tests := []struct {
 		desc           string
-		pluginStore    func() plugins.Store
+		pluginStore    func() pluginstore.Store
 		pluginSettings func() pluginsettings.Service
 		expected       settings
 	}{
 		{
 			desc: "disabled app with preload",
-			pluginStore: func() plugins.Store {
-				return &fakes.FakePluginStore{
-					PluginList: []plugins.PluginDTO{
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
@@ -251,9 +255,9 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		},
 		{
 			desc: "enabled app with preload",
-			pluginStore: func() plugins.Store {
-				return &fakes.FakePluginStore{
-					PluginList: []plugins.PluginDTO{
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
@@ -284,9 +288,9 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		},
 		{
 			desc: "angular app plugin",
-			pluginStore: func() plugins.Store {
-				return &fakes.FakePluginStore{
-					PluginList: []plugins.PluginDTO{
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
@@ -295,7 +299,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							AngularDetected: true,
+							Angular: plugins.AngularMeta{Detected: true},
 						},
 					},
 				}
@@ -308,11 +312,11 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:              "test-app",
-						Preload:         true,
-						Path:            "/test-app/module.js",
-						Version:         "0.5.0",
-						AngularDetected: true,
+						ID:      "test-app",
+						Preload: true,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
+						Angular: plugins.AngularMeta{Detected: true},
 					},
 				},
 			},

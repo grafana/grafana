@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { ErrorIndicator } from './ErrorIndicator';
 import { LoadingIndicator } from './LoadingIndicator';
 import { PanelChrome as PanelChromeComponent, PanelChromeProps } from './PanelChrome';
 import { TitleItem } from './TitleItem';
@@ -15,7 +14,6 @@ export type { PanelChromeProps, PanelPadding } from './PanelChrome';
  */
 export interface PanelChromeType extends React.FC<PanelChromeProps> {
   LoadingIndicator: typeof LoadingIndicator;
-  ErrorIndicator: typeof ErrorIndicator;
   TitleItem: typeof TitleItem;
 }
 
@@ -24,7 +22,6 @@ export interface PanelChromeType extends React.FC<PanelChromeProps> {
  */
 export const PanelChrome = PanelChromeComponent as PanelChromeType;
 PanelChrome.LoadingIndicator = LoadingIndicator;
-PanelChrome.ErrorIndicator = ErrorIndicator;
 PanelChrome.TitleItem = TitleItem;
 
 /**
@@ -35,11 +32,6 @@ export {
   LoadingIndicator as PanelChromeLoadingIndicator,
   type LoadingIndicatorProps as PanelChromeLoadingIndicatorProps,
 } from './LoadingIndicator';
-
-export {
-  ErrorIndicator as PanelChromeErrorIndicator,
-  type ErrorIndicatorProps as PanelChromeErrorIndicatorProps,
-} from './ErrorIndicator';
 
 export { PanelDescription } from './PanelDescription';
 

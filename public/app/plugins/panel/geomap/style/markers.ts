@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 
 import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
+import { getDisplacement } from './utils';
 
 interface SymbolMaker extends RegistryItem {
   aliasIds: string[];
@@ -80,11 +81,13 @@ export const textMarker = (cfg: StyleConfigValues) => {
 
 export const circleMarker = (cfg: StyleConfigValues) => {
   const stroke = new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });
+  const radius = cfg.size ?? DEFAULT_SIZE;
   return new Style({
     image: new Circle({
       stroke,
       fill: getFillColor(cfg),
-      radius: cfg.size ?? DEFAULT_SIZE,
+      radius,
+      displacement: getDisplacement(cfg.symbolAlign ?? defaultStyleConfig.symbolAlign, radius),
     }),
     text: textLabel(cfg),
     stroke, // in case lines are sent to the markers layer
@@ -153,7 +156,9 @@ const makers: SymbolMaker[] = [
           fill: getFillColor(cfg),
           points: 4,
           radius,
-          rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
+          angle: Math.PI / 4,
+          rotation: (rotation * Math.PI) / 180,
+          displacement: getDisplacement(cfg.symbolAlign ?? defaultStyleConfig.symbolAlign, radius),
         }),
         text: textLabel(cfg),
       });
@@ -174,6 +179,7 @@ const makers: SymbolMaker[] = [
           radius,
           rotation: (rotation * Math.PI) / 180,
           angle: 0,
+          displacement: getDisplacement(cfg.symbolAlign ?? defaultStyleConfig.symbolAlign, radius),
         }),
         text: textLabel(cfg),
       });
@@ -195,6 +201,7 @@ const makers: SymbolMaker[] = [
           radius2: radius * 0.4,
           angle: 0,
           rotation: (rotation * Math.PI) / 180,
+          displacement: getDisplacement(cfg.symbolAlign ?? defaultStyleConfig.symbolAlign, radius),
         }),
         text: textLabel(cfg),
       });
@@ -215,6 +222,7 @@ const makers: SymbolMaker[] = [
           radius2: 0,
           angle: 0,
           rotation: (rotation * Math.PI) / 180,
+          displacement: getDisplacement(cfg.symbolAlign ?? defaultStyleConfig.symbolAlign, radius),
         }),
         text: textLabel(cfg),
       });
@@ -233,7 +241,9 @@ const makers: SymbolMaker[] = [
           points: 4,
           radius,
           radius2: 0,
-          rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
+          angle: Math.PI / 4,
+          rotation: (rotation * Math.PI) / 180,
+          displacement: getDisplacement(cfg.symbolAlign ?? defaultStyleConfig.symbolAlign, radius),
         }),
         text: textLabel(cfg),
       });
@@ -315,6 +325,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
                   rotation: (rotation * Math.PI) / 180,
+                  displacement: getDisplacement(cfg.symbolAlign ?? defaultStyleConfig.symbolAlign, radius / 2),
                 }),
                 text: !cfg?.text ? undefined : textLabel(cfg),
               }),

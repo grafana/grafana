@@ -1,0 +1,75 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "Group1",
+      "folder": "<dynamic>",
+      "interval": "1m",
+      "rules": [
+        {
+          "uid": "<dynamic>",
+          "title": "Rule1",
+          "condition": "A",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "expression": "0 \u003e 0",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "type": "math"
+              }
+            }
+          ],
+          "noDataState": "NoData",
+          "execErrState": "Alerting",
+          "for": "5m",
+          "annotations": {
+            "annotation": "test-annotation"
+          },
+          "labels": {
+            "label1": "test-label"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "<dynamic>",
+          "title": "Rule2",
+          "condition": "A",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "expression": "0 == 0",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "type": "math"
+              }
+            }
+          ],
+          "noDataState": "NoData",
+          "execErrState": "Alerting",
+          "for": "5m",
+          "annotations": {
+            "annotation": "test-annotation"
+          },
+          "labels": {
+            "label1": "test-label"
+          },
+          "isPaused": false
+        }
+      ]
+    }
+  ]
+}

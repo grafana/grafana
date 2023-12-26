@@ -97,7 +97,7 @@ func (s *AuthService) initKeySet() error {
 			return ErrFailedToParsePemFile
 		}
 
-		var key interface{}
+		var key any
 		switch block.Type {
 		case "PUBLIC KEY":
 			if key, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
@@ -125,7 +125,7 @@ func (s *AuthService) initKeySet() error {
 
 		s.keySet = &keySetJWKS{
 			jose.JSONWebKeySet{
-				Keys: []jose.JSONWebKey{{Key: key}},
+				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.Cfg.JWTAuthKeyID}},
 			},
 		}
 	} else if keyFilePath := s.Cfg.JWTAuthJWKSetFile; keyFilePath != "" {

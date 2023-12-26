@@ -3,7 +3,7 @@ aliases:
   - ../../features/panels/bar_gauge/
   - ../../panels/visualizations/bar-gauge-panel/
   - ../../visualizations/bar-gauge-panel/
-description: Bar gauge panel options
+description: Configure options for Grafana's bar gauge visualization
 keywords:
   - grafana
   - bar
@@ -14,12 +14,12 @@ labels:
     - enterprise
     - oss
 title: Bar gauge
-weight: 200
+weight: 100
 ---
 
 # Bar gauge
 
-The bar gauge simplifies your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
+Bar gauges simplify your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
 
 This panel can show one or more bar gauges depending on how many series, rows, or columns your query returns.
 
@@ -37,7 +37,7 @@ Choose how Grafana displays your data.
 
 Show a calculated value based on all rows.
 
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types]({{< relref "../../calculation-types/" >}}).
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types][].
 - **Fields -** Select the fields display in the panel.
 
 #### All values
@@ -55,7 +55,7 @@ Adjust how the bar gauge is displayed.
 
 Choose a stacking direction.
 
-- **Auto -** Grafana selects what it thinks is the best orientation.
+- **Auto -** Grafana determines the best orientation.
 - **Horizontal -** Bars stretch horizontally, left to right.
 - **Vertical -** Bars stretch vertically, bottom to top.
 
@@ -67,18 +67,68 @@ Choose a display mode.
 - **Retro LCD -** The gauge is split into small cells that are lit or unlit.
 - **Basic -** Single color based on the matching threshold.
 
+### Value display
+
+Choose a value display mode.
+
+- **Value color -** Value color is determined by value.
+- **Text color -** Value color is default text color.
+- **Hidden -** Values are hidden.
+
+### Name placement
+
+Choose a name placement mode.
+
+{{% admonition type="note" %}}
+This option only applies when the orientation of the bar gauge is horizontal. When the bar gauge is in the vertical orientation, names are always placed at the bottom of each bar gauge.
+{{% /admonition %}}
+
+- **Auto -** Grafana determines the best placement.
+- **Top -** Names are placed on top of each bar gauge.
+- **Left -** Names are placed to the left of each bar gauge.
+
 ### Show unfilled area
 
 Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
 
+### Bar size
+
+Choose a bar size mode.
+
+- **Auto -** Grafana determines the best bar gauge size.
+- **Manual -** Manually configure the bar gauge size.
+
 ### Min width
 
-Limit the minimum width of the bar column in the vertical direction.
+Limit the minimum width of the bar column when the gauge is oriented vertically.
 
-Automatically show x-axis scrollbar when there is a large amount of data.
+Automatically show x-axis scrollbar when there's a large amount of data.
+
+{{% admonition type="note" %}}
+This option only applies when bar size is set to manual.
+{{% /admonition %}}
 
 ### Min height
 
-Limit the minimum height of the bar row in the horizontal direction.
+Limit the minimum height of the bar row when the gauge is oriented horizontally.
 
-Automatically show y-axis scrollbar when there is a large amount of data.
+Automatically show y-axis scrollbar when there's a large amount of data.
+
+{{% admonition type="note" %}}
+This option only applies when bar size is set to manual.
+{{% /admonition %}}
+
+### Max height
+
+Limit the maximum height of the bar row when the gauge is oriented horizontally.
+
+Automatically show y-axis scrollbar when there's a large amount of data.
+
+{{% admonition type="note" %}}
+This option only applies when bar size is set to manual.
+{{% /admonition %}}
+
+{{% docs/reference %}}
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
+{{% /docs/reference %}}

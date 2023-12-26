@@ -39,8 +39,14 @@ export interface CodeEditorProps {
    */
   onEditorDidMount?: (editor: MonacoEditor, monaco: Monaco) => void;
 
+  /** Callback before the edior has unmounted */
+  onEditorWillUnmount?: () => void;
+
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
+
+  /** Handler to be performed when editor is focused */
+  onFocus?: CodeEditorChangeHandler;
 
   /** Handler to be performed whenever the text inside the editor changes */
   onChange?: CodeEditorChangeHandler;
@@ -147,4 +153,11 @@ export interface MonacoOptionsWithGrafanaDefaults extends monacoType.editor.ISta
    * Defaults to true.
    */
   automaticLayout?: boolean;
+
+  /**
+   * Always consume mouse wheel events (always call preventDefault() and stopPropagation() on the browser events).
+   * Always consuming mouse wheel events will prevent the page from scrolling if the cursor is over the editor.
+   * Defaults to `false`.
+   */
+  alwaysConsumeMouseWheel?: boolean;
 }

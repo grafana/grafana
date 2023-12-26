@@ -54,7 +54,7 @@ func (out *ChangeLogFrameOutput) OutputFrame(_ context.Context, vars Vars, frame
 		}
 	}
 
-	var previousValue interface{}
+	var previousValue any
 	if previousFrameFieldIndex >= 0 {
 		// Take last value for the field.
 		previousValue = previousFrame.Fields[previousFrameFieldIndex].At(previousFrame.Fields[previousFrameFieldIndex].Len() - 1)

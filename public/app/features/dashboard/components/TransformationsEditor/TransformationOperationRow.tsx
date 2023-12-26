@@ -3,20 +3,17 @@ import { useToggle } from 'react-use';
 
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, HorizontalGroup } from '@grafana/ui';
-import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+import { ConfirmModal } from '@grafana/ui';
 import {
   QueryOperationAction,
   QueryOperationToggleAction,
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import {
-  QueryOperationRow,
-  QueryOperationRowRenderProps,
-} from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
+import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
 import { TransformationFilter } from './TransformationFilter';
 import { TransformationsEditorTransformation } from './types';
 
@@ -40,8 +37,8 @@ export const TransformationOperationRow = ({
   onChange,
 }: TransformationOperationRowProps) => {
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
-  const [showDebug, toggleDebug] = useToggle(false);
-  const [showHelp, toggleHelp] = useToggle(false);
+  const [showDebug, toggleShowDebug] = useToggle(false);
+  const [showHelp, toggleShowHelp] = useToggle(false);
   const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
   const showFilter = filter || data.length > 1;
@@ -91,14 +88,15 @@ export const TransformationOperationRow = ({
     [configs, index]
   );
 
-  const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
+  const renderActions = () => {
     return (
-      <HorizontalGroup align="center" width="auto">
+      <>
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
         <QueryOperationToggleAction
           title="Show transform help"
           icon="info-circle"
-          onClick={instrumentToggleCallback(toggleHelp, 'help', showHelp)}
+          // `instrumentToggleCallback` expects a function that takes a MouseEvent, is unused in the state setter. Instead, we simply toggle the state.
+          onClick={instrumentToggleCallback(toggleShowHelp, 'help', showHelp)}
           active={showHelp}
         />
         {showFilter && (
@@ -111,9 +109,8 @@ export const TransformationOperationRow = ({
         )}
         <QueryOperationToggleAction
           title="Debug"
-          disabled={!isOpen}
           icon="bug"
-          onClick={instrumentToggleCallback(toggleDebug, 'debug', showDebug)}
+          onClick={instrumentToggleCallback(toggleShowDebug, 'debug', showDebug)}
           active={showDebug}
         />
         <QueryOperationToggleAction
@@ -141,43 +138,38 @@ export const TransformationOperationRow = ({
             onDismiss={() => setShowDeleteModal(false)}
           />
         )}
-      </HorizontalGroup>
+      </>
     );
   };
 
   return (
-    <QueryOperationRow
-      id={id}
-      index={index}
-      title={uiConfig.name}
-      draggable
-      actions={renderActions}
-      disabled={disabled}
-    >
-      {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
-      {filter && (
-        <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
-      )}
-      <TransformationEditor
-        debugMode={showDebug}
+    <>
+      <QueryOperationRow
+        id={id}
         index={index}
-        data={data}
-        configs={configs}
-        uiConfig={uiConfig}
-        onChange={onChange}
-      />
-    </QueryOperationRow>
+        title={`${index + 1} - ${uiConfig.name}`}
+        draggable
+        actions={renderActions}
+        disabled={disabled}
+        expanderMessages={{
+          close: 'Collapse transformation row',
+          open: 'Expand transformation row',
+        }}
+      >
+        {filter && (
+          <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
+        )}
+        <TransformationEditor
+          debugMode={showDebug}
+          index={index}
+          data={data}
+          configs={configs}
+          uiConfig={uiConfig}
+          onChange={onChange}
+          toggleShowDebug={toggleShowDebug}
+        />
+      </QueryOperationRow>
+      <TransformationEditorHelperModal transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
+    </>
   );
 };
-
-function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
-  let helpMarkdown = uiConfig.help ?? uiConfig.description;
-
-  return `
-${helpMarkdown}
-
-Go the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-transformation documentation
-</a> for more.
-`;
-}

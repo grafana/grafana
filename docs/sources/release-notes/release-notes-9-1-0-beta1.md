@@ -202,7 +202,7 @@ The following metrics have been converted to histograms:
 - grafana_plugin_request_duration_milliseconds
 - grafana_alerting_rule_evaluation_duration_seconds Issue [#50420](https://github.com/grafana/grafana/issues/50420)
 
-In Elasticsearch versions 7.x, to specify the interval-value we used the `interval` property. In Grafana 9.1.0 we switched to use the `fixed_interval` property. This makes it to be the same as in Elasticsearch versions 8.x, also this provides a more consistent experience, `fixed_interval` is a better match to Grafana's time invervals. For most situations this will not cause any visible change to query results. Issue [#50297](https://github.com/grafana/grafana/issues/50297)
+In Elasticsearch versions 7.x, to specify the interval-value we used the `interval` property. In Grafana 9.1.0 we switched to use the `fixed_interval` property. This makes it to be the same as in Elasticsearch versions 8.x, also this provides a more consistent experience, `fixed_interval` is a better match to Grafana's time intervals. For most situations this will not cause any visible change to query results. Issue [#50297](https://github.com/grafana/grafana/issues/50297)
 
 ### Grafana now reserves alert labels prefixed with `grafana_`
 

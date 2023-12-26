@@ -21,9 +21,9 @@ weight: 1200
 
 Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
 ## PostgreSQL settings
 
@@ -58,7 +58,7 @@ To configure basic settings for the data source, complete the following steps:
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../../dashboards/variables/add-template-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../../dashboards/variables/add-template-variables/#__interval_ms" >}}) variables.
+A lower limit for the [`$__interval`][add-template-variables-interval] and [`$__interval_ms`][add-template-variables-interval-ms] variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -114,10 +114,17 @@ Add further value columns by clicking the plus button and another column dropdow
 
 ### Filter data (WHERE)
 
-To add a filter, flip the switch at the top of the editor.
-Using the first dropdown, select if all the filters need to match (AND) or if only one of the filters needs to match (OR).
+To add a filter, toggle the **Filter** switch at the top of the editor.
+This reveals a **Filter by column value** section with two dropdown selectors.
 
-To add more columns to filter on use the plus button.
+Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
+Use the second dropdown to choose a filter.
+
+To filter on more columns, click the plus (`+`) button to the right of the condition dropdown.
+
+To remove a filter, click the `x` button next to that filter's dropdown.
+
+After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column.
 
 ### Group By
 
@@ -129,7 +136,7 @@ By flipping the preview switch at the top of the editor, you can get a preview o
 
 ### Provision the data source
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning#datasources" >}}).
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page][provisioning-data-sources].
 
 #### Provisioning example
 
@@ -232,11 +239,11 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/introduction/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../../panels-visualizations/configure-standard-options#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions][configure-standard-options-display-name].
 
 **Example with `metric` column:**
 
@@ -278,7 +285,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../../panels-visualizations/configure-standard-options#display-name" >}}) display value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions][configure-standard-options-display-name] display value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -323,7 +330,7 @@ Data frame result:
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Refer to [Templates and variables]({{< relref "../../dashboards/variables" >}}) for an introduction to the templating feature and the different types of template variables.
+Refer to [Templates and variables][variables] for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -416,11 +423,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../../dashboards/variables/variable-syntax#advanced-variable-format-options" >}}) documentation.
+Read more about variable formatting options in the [Variables][variable-syntax-advanced-variable-format-options] documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations][annotate-visualizations] allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 
@@ -475,3 +482,32 @@ WHERE
 
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
 conditions.
+
+{{% docs/reference %}}
+
+<!-- prettier-ignore-start -->
+[add-template-variables-interval-ms]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval_ms"
+[add-template-variables-interval-ms]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval_ms"
+
+[add-template-variables-interval]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval"
+[add-template-variables-interval]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval"
+<!-- prettier-ignore-end -->
+
+[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+
+[configure-standard-options-display-name]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
+[configure-standard-options-display-name]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
+
+[variable-syntax-advanced-variable-format-options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#advanced-variable-format-options"
+[variable-syntax-advanced-variable-format-options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#advanced-variable-format-options"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

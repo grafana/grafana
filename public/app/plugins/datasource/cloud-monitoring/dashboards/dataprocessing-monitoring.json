@@ -507,7 +507,6 @@
     }
   ],
   "schemaVersion": 26,
-  "style": "dark",
   "tags": ["Bigdata", "Cloud Monitoring", "GCP"],
   "templating": {
     "list": [

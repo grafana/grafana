@@ -9,11 +9,11 @@ export class AngularLoader implements AngularLoaderInterface {
   static $inject = ['$compile', '$rootScope'];
 
   constructor(
-    private $compile: any,
+    private $compile: angular.ICompileService,
     private $rootScope: GrafanaRootScope
   ) {}
 
-  load(elem: any, scopeProps: any, template: string): AngularComponent {
+  load(elem: HTMLElement, scopeProps: any, template: string): AngularComponent {
     const scope = this.$rootScope.$new();
 
     assign(scope, scopeProps);

@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
 import { ClassicCondition, ReducerType } from '../types';
@@ -16,7 +15,10 @@ interface Props {
   refIds: Array<SelectableValue<string>>;
 }
 
-const reducerFunctions = alertDef.reducerTypes.map((rt) => ({ label: rt.text, value: rt.value }));
+const reducerFunctions = alertDef.reducerTypes.map<{
+  label: string;
+  value: ReducerType;
+}>((rt) => ({ label: rt.text, value: rt.value }));
 const evalOperators = alertDef.evalOperators.map((eo) => ({ label: eo.text, value: eo.value }));
 const evalFunctions = alertDef.evalFunctions.map((ef) => ({ label: ef.text, value: ef.value }));
 
@@ -30,10 +32,10 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
     });
   };
 
-  const onReducerFunctionChange = (conditionFunction: SelectableValue<string>) => {
+  const onReducerFunctionChange = (conditionFunction: SelectableValue<ReducerType>) => {
     onChange({
       ...condition,
-      reducer: { type: conditionFunction.value! as ReducerType, params: [] },
+      reducer: { type: conditionFunction.value!, params: [] },
     });
   };
 
@@ -70,7 +72,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
 
   return (
-    <Stack direction="row">
+    <Stack>
       <div style={{ flex: 1 }}>
         <InlineFieldRow>
           {index === 0 ? (
@@ -83,7 +85,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
               value={evalOperators.find((ea) => ea.value === condition.operator!.type)}
             />
           )}
-          <Select
+          <Select<ReducerType>
             options={reducerFunctions}
             onChange={onReducerFunctionChange}
             width={20}
@@ -148,7 +150,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       css`
         display: flex;
         align-items: center;
-        border-radius: ${theme.shape.borderRadius(1)};
+        border-radius: ${theme.shape.radius.default};
         font-weight: ${theme.typography.fontWeightMedium};
         border: 1px solid ${theme.colors.border.weak};
         white-space: nowrap;
