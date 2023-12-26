@@ -10,10 +10,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(sqlStore db.DB, tracer tracing.Tracer) *ServerLockService {
+func ProvideService(sqlStore db.DB, tracer tracing.Tracer, cfg *setting.Cfg, remoteCache *remotecache.RemoteCache) *ServerLockService {
 	return &ServerLockService{
 		SQLStore: sqlStore,
 		tracer:   tracer,

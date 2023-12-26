@@ -59,7 +59,6 @@ func ProvideSecretsService(
 	enc encryption.Internal,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	usageStats usagestats.Service,
 ) (*SecretsService, error) {
 	ttl := cfg.SectionWithEnvOverrides("security.encryption").Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 
@@ -71,7 +70,6 @@ func ProvideSecretsService(
 		store:               store,
 		enc:                 enc,
 		cfg:                 cfg,
-		usageStats:          usageStats,
 		kmsProvidersService: kmsProvidersService,
 		dataKeyCache:        newDataKeyCache(ttl),
 		currentProviderID:   currentProviderID,
@@ -98,8 +96,6 @@ func ProvideSecretsService(
 
 	s.log.Info("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
-	s.registerUsageMetrics()
-
 	return s, nil
 }
 
@@ -111,40 +107,38 @@ func (s *SecretsService) InitProviders() (err error) {
 	return
 }
 
-func (s *SecretsService) registerUsageMetrics() {
-	s.usageStats.RegisterMetricsFunc(func(ctx context.Context) (map[string]any, error) {
-		usageMetrics := make(map[string]any)
+func (s *SecretsService) GetUsageStats(ctx context.Context) map[string]any {
+	usageMetrics := make(map[string]any)
 
-		// Enabled / disabled
-		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
-			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
-		}
+	// Enabled / disabled
+	usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
+		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
+	}
 
-		// Current provider
-		kind, err := s.currentProviderID.Kind()
+	// Current provider
+	kind, err := s.currentProviderID.Kind()
+	if err != nil {
+		return nil
+	}
+	usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
+
+	// Count by kind
+	countByKind := make(map[string]int)
+	for id := range s.providers {
+		kind, err := id.Kind()
 		if err != nil {
-			return nil, err
-		}
-		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
-
-		// Count by kind
-		countByKind := make(map[string]int)
-		for id := range s.providers {
-			kind, err := id.Kind()
-			if err != nil {
-				return nil, err
-			}
-
-			countByKind[kind]++
+			return nil
 		}
 
-		for kind, count := range countByKind {
-			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
-		}
+		countByKind[kind]++
+	}
 
-		return usageMetrics, nil
-	})
+	for kind, count := range countByKind {
+		usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
+	}
+
+	return usageMetrics
 }
 
 func (s *SecretsService) providersInitialized() bool {

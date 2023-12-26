@@ -11,7 +11,6 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -185,9 +184,8 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		cfg := &setting.Cfg{Raw: raw}
 
 		encProvider := encryptionprovider.Provider{}
-		usageStats := &usagestats.UsageStatsMock{}
 
-		encryptionService, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, cfg)
+		encryptionService, err := encryptionservice.ProvideEncryptionService(encProvider, cfg)
 		require.NoError(t, err)
 
 		features := featuremgmt.WithFeatures()
@@ -201,7 +199,6 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			encryptionService,
 			cfg,
 			features,
-			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 
@@ -219,7 +216,6 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			encryptionService,
 			cfg,
 			features,
-			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 

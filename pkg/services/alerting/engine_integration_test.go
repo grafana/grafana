@@ -31,7 +31,7 @@ func TestIntegrationEngineTimeouts(t *testing.T) {
 	usValidatorMock := &validator.FakeUsageStatsValidator{}
 
 	encProvider := encryptionprovider.ProvideEncryptionProvider()
-	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, setting.NewCfg())
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, setting.NewCfg())
 	require.NoError(t, err)
 
 	tracer := tracing.InitializeTracerForTest()

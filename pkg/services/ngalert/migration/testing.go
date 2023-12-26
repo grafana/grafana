@@ -19,7 +19,7 @@ func NewTestMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *set
 		cfg = setting.NewCfg()
 	}
 	return &migrationService{
-		lock:              serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		lock:              serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest(), nil, nil),
 		log:               &logtest.Fake{},
 		cfg:               cfg,
 		store:             sqlStore,

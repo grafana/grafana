@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -30,10 +29,8 @@ func TestService(t *testing.T) {
 	nType := "test"
 	registerTestNotifier(nType)
 
-	usMock := &usagestats.UsageStatsMock{T: t}
-
 	encProvider := encryptionprovider.ProvideEncryptionProvider()
-	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, setting.NewCfg())
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, setting.NewCfg())
 	require.NoError(t, err)
 
 	s := ProvideService(sqlStore.db, encService, nil)

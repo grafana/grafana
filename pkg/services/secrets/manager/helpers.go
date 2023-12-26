@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,9 +40,8 @@ func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.
 	cfg := &setting.Cfg{Raw: raw}
 
 	encProvider := encryptionprovider.Provider{}
-	usageStats := &usagestats.UsageStatsMock{}
 
-	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, cfg)
+	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, cfg)
 	require.NoError(tb, err)
 
 	secretsService, err := ProvideSecretsService(
@@ -52,7 +50,6 @@ func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.
 		encryption,
 		cfg,
 		features,
-		&usagestats.UsageStatsMock{T: tb},
 	)
 	require.NoError(tb, err)
 

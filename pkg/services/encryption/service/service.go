@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -26,8 +25,7 @@ const (
 type Service struct {
 	log log.Logger
 
-	cfg          *setting.Cfg
-	usageMetrics usagestats.Service
+	cfg *setting.Cfg
 
 	ciphers   map[string]encryption.Cipher
 	deciphers map[string]encryption.Decipher
@@ -35,7 +33,6 @@ type Service struct {
 
 func ProvideEncryptionService(
 	provider encryption.Provider,
-	usageMetrics usagestats.Service,
 	cfg *setting.Cfg,
 ) (*Service, error) {
 	s := &Service{
@@ -44,8 +41,7 @@ func ProvideEncryptionService(
 		ciphers:   provider.ProvideCiphers(),
 		deciphers: provider.ProvideDeciphers(),
 
-		usageMetrics: usageMetrics,
-		cfg:          cfg,
+		cfg: cfg,
 	}
 
 	algorithm := s.cfg.SectionWithEnvOverrides(securitySection).Key(encryptionAlgorithmKey).
@@ -54,8 +50,6 @@ func ProvideEncryptionService(
 	if err := s.checkEncryptionAlgorithm(algorithm); err != nil {
 		return nil, err
 	}
-
-	s.registerUsageMetrics()
 
 	return s, nil
 }
@@ -81,15 +75,13 @@ func (s *Service) checkEncryptionAlgorithm(algorithm string) error {
 	return nil
 }
 
-func (s *Service) registerUsageMetrics() {
-	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
-		algorithm := s.cfg.SectionWithEnvOverrides(securitySection).Key(encryptionAlgorithmKey).
-			MustString(defaultEncryptionAlgorithm)
+func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
+	algorithm := s.cfg.SectionWithEnvOverrides(securitySection).Key(encryptionAlgorithmKey).
+		MustString(defaultEncryptionAlgorithm)
 
-		return map[string]any{
-			fmt.Sprintf("stats.encryption.%s.count", algorithm): 1,
-		}, nil
-	})
+	return map[string]any{
+		fmt.Sprintf("stats.encryption.%s.count", algorithm): 1,
+	}
 }
 
 func (s *Service) Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error) {

@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,7 +20,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore d
 	cfg := &setting.Cfg{
 		RemoteCacheOptions: opts,
 	}
-	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService())
+	dc, err := ProvideService(cfg, sqlstore, fakes.NewFakeSecretsService())
 	require.Nil(t, err, "Failed to init client for test")
 
 	return dc
@@ -126,8 +125,7 @@ func TestCollectUsageStats(t *testing.T) {
 		Cfg: cfg,
 	}
 
-	stats, err := remoteCache.getUsageStats(context.Background())
-	require.NoError(t, err)
+	stats := remoteCache.GetUsageStats(context.Background())
 
 	assert.EqualValues(t, wantMap, stats)
 }
