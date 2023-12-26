@@ -242,7 +242,7 @@ type AlertRuleExport struct {
 	PanelID      *int64              `json:"panelId,omitempty" yaml:"panelId,omitempty"`
 	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState" hcl:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState" hcl:"exec_err_state"`
-	For          model.Duration      `json:"for" yaml:"for"`
+	For          string              `json:"for" yaml:"for"`
 	// ForString is used to:
 	// - Only export the for field for HCL if it is non-zero.
 	// - Format the Prometheus model.Duration type properly for HCL.
