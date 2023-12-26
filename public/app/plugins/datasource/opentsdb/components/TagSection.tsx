@@ -106,7 +106,7 @@ export function TagSection({
   const tagValueSearch = debounce((query: string) => suggestTagValues(query), 350);
 
   return (
-    <Stack gap={0} alignItems="flex-start" data-testid={testIds.section}>
+    <Stack gap={0} data-testid={testIds.section}>
       <InlineFormLabel
         className="query-keyword"
         width={8}
