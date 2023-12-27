@@ -28,6 +28,7 @@ func (sl *serverLockRemoteCache) AcquireLock(ctx context.Context, serverLock *se
 
 	lockKey := prefixedLockKey(serverLock.OperationUID)
 
+	serverLock.LastExecution = time.Now().Unix()
 	// Convert serverLock to byte array
 	serverLockBytes, err := json.Marshal(serverLock)
 	if err != nil {

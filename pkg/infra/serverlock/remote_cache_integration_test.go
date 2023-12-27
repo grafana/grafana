@@ -84,7 +84,7 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, operationUID, got.OperationUID)
-		require.True(t, got.LastExecution > pastLastExec)
+		require.True(t, got.LastExecution > pastLastExec, "%v should be greater than %v", got, pastLastExec)
 
 		err3 := sl.ReleaseLock(context.Background(), operationUID)
 		require.NoError(t, err3)
