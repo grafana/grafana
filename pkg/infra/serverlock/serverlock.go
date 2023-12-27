@@ -3,6 +3,7 @@ package serverlock
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 func ProvideService(sqlStore db.DB, tracer tracing.Tracer) *ServerLockService {
@@ -81,9 +83,10 @@ func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *server
 			version = ?,
 			last_execution = ?
 		WHERE
-			id = ? AND version = ?`
+			operation_uid = ? AND version = ?`
 
-		res, err := dbSession.Exec(sql, newVersion, time.Now().Unix(), serverLock.Id, serverLock.Version)
+		res, err := dbSession.Exec(sql, newVersion, time.Now().Unix(),
+			serverLock.OperationUID, serverLock.Version)
 		if err != nil {
 			return err
 		}
@@ -102,16 +105,16 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 	defer span.End()
 
 	var result *serverLock
-
 	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
-		lockRows := []*serverLock{}
-		err := dbSession.Where("operation_uid = ?", actionName).Find(&lockRows)
+		sqlRes := &serverLock{}
+		has, err := dbSession.SQL("SELECT * FROM server_lock WHERE operation_uid = ?",
+			actionName).Get(sqlRes)
 		if err != nil {
 			return err
 		}
 
-		if len(lockRows) > 0 {
-			result = lockRows[0]
+		if has {
+			result = sqlRes
 			return nil
 		}
 
@@ -120,9 +123,42 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 			LastExecution: 0,
 		}
 
-		_, err = dbSession.Insert(lockRow)
-		if err != nil {
-			return err
+		affected := int64(1)
+		rawSQL := `INSERT INTO server_lock (operation_uid, last_execution, version) VALUES (?, ?, ?)`
+		if sl.SQLStore.GetDBType() == migrator.Postgres {
+			rawSQL += ` RETURNING id`
+			var id int64
+			_, err := dbSession.SQL(rawSQL, lockRow.OperationUID, lockRow.LastExecution, 0).Get(&id)
+			if err != nil {
+				return err
+			}
+			lockRow.Id = id
+		} else {
+			res, err := dbSession.Exec(
+				rawSQL,
+				lockRow.OperationUID, lockRow.LastExecution, 0)
+			if err != nil {
+				return err
+			}
+			lastID, err := res.LastInsertId()
+			if err != nil {
+				fmt.Println("Error getting last insert id", err)
+				sl.log.FromContext(ctx).Error("Error getting last insert id", "actionName", actionName, "error", err)
+			}
+			lockRow.Id = lastID
+
+			affected, err = res.RowsAffected()
+			if err != nil {
+				sl.log.FromContext(ctx).Error("Error getting rows affected", "actionName", actionName, "error", err)
+			}
+		}
+
+		if affected != 1 || lockRow.Id == 0 {
+			// this means that there was no error but there is something not working correctly
+			sl.log.FromContext(ctx).Error("Expected rows affected to be 1 if there was no error",
+				"actionName", actionName,
+				"rowsAffected", affected,
+				"lockRow ID", lockRow.Id)
 		}
 
 		result = lockRow
@@ -243,50 +279,74 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 	// getting the lock - as the action name has a Unique constraint, this will fail if the lock is already on the database
 	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 		// we need to find if the lock is in the database
-		lockRows := []*serverLock{}
-		err := dbSession.Where("operation_uid = ?", actionName).Find(&lockRows)
+		result := &serverLock{}
+		sqlRaw := `SELECT * FROM server_lock WHERE operation_uid = ?`
+		if sl.SQLStore.GetDBType() == migrator.MySQL || sl.SQLStore.GetDBType() == migrator.Postgres {
+			sqlRaw += ` FOR UPDATE`
+		}
+
+		has, err := dbSession.SQL(
+			sqlRaw,
+			actionName).Get(result)
 		if err != nil {
 			return err
 		}
 
 		ctxLogger := sl.log.FromContext(ctx)
 
-		if len(lockRows) > 0 {
-			result := lockRows[0]
+		if has {
 			if sl.isLockWithinInterval(result, maxInterval) {
 				return &ServerLockExistsError{actionName: actionName}
 			} else {
-				// lock has timeouted, so we update the timestamp
+				// lock has timed out, so we update the timestamp
 				result.LastExecution = time.Now().Unix()
-				cond := &serverLock{OperationUID: actionName}
-				affected, err := dbSession.Update(result, cond)
+				res, err := dbSession.Exec("UPDATE server_lock SET last_execution = ? WHERE operation_uid = ?",
+					result.LastExecution, actionName)
 				if err != nil {
 					return err
 				}
+
+				affected, err := res.RowsAffected()
+				if err != nil {
+					ctxLogger.Error("Error getting rows affected", "actionName", actionName, "error", err)
+				}
+
 				if affected != 1 {
 					ctxLogger.Error("Expected rows affected to be 1 if there was no error", "actionName", actionName, "rowsAffected", affected)
 				}
+
 				return nil
 			}
 		} else {
 			// lock not found, creating it
-			lockRow := &serverLock{
-				OperationUID:  actionName,
-				LastExecution: time.Now().Unix(),
-			}
-
-			affected, err := dbSession.Insert(lockRow)
+			res, err := dbSession.Exec(
+				"INSERT INTO server_lock (operation_uid, last_execution, version) VALUES (?, ?, ?)",
+				actionName, time.Now().Unix(), 0)
 			if err != nil {
 				return err
 			}
 
-			if affected != 1 {
+			affected, err := res.RowsAffected()
+			if err != nil {
+				ctxLogger.Error("Error getting rows affected", "actionName", actionName, "error", err)
+			}
+
+			lastID, err := res.LastInsertId()
+			if err != nil {
+				ctxLogger.Error("Error getting last insert id", "actionName", actionName, "error", err)
+			}
+
+			if affected != 1 || lastID == 0 {
 				// this means that there was no error but there is something not working correctly
-				ctxLogger.Error("Expected rows affected to be 1 if there was no error", "actionName", actionName, "rowsAffected", affected)
+				ctxLogger.Error("Expected rows affected to be 1 if there was no error",
+					"actionName", actionName,
+					"rowsAffected", affected,
+					"lastID", lastID)
 			}
 		}
 		return nil
 	})
+
 	return err
 }
 
@@ -304,10 +364,14 @@ func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string)
 			return err
 		}
 		affected, err := res.RowsAffected()
+		if err != nil {
+			sl.log.FromContext(ctx).Debug("Error getting rows affected", "actionName", actionName, "error", err)
+		}
+
 		if affected != 1 {
 			sl.log.FromContext(ctx).Debug("Error releasing lock", "actionName", actionName, "rowsAffected", affected)
 		}
-		return err
+		return nil
 	})
 
 	return err
@@ -323,7 +387,7 @@ func (sl *ServerLockService) isLockWithinInterval(lock *serverLock, maxInterval 
 	return false
 }
 
-func (sl ServerLockService) executeFunc(ctx context.Context, actionName string, fn func(ctx context.Context)) {
+func (sl *ServerLockService) executeFunc(ctx context.Context, actionName string, fn func(ctx context.Context)) {
 	start := time.Now()
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.executeFunc")
 	defer span.End()
