@@ -3,7 +3,6 @@ package serverlock
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -142,7 +141,6 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 			}
 			lastID, err := res.LastInsertId()
 			if err != nil {
-				fmt.Println("Error getting last insert id", err)
 				sl.log.FromContext(ctx).Error("Error getting last insert id", "actionName", actionName, "error", err)
 			}
 			lockRow.Id = lastID
