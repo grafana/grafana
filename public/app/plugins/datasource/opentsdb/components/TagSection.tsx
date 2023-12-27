@@ -202,7 +202,7 @@ export function TagSection({
         </Stack>
       )}
       <Stack gap={0} grow={1}>
-        <InlineLabel> </InlineLabel>
+        <InlineLabel/>
       </Stack>
     </Stack>
   );
