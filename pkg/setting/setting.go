@@ -246,7 +246,9 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
+	HideAngularDeprecation           []string
 	PluginInstallToken               string
+	ForwardHostEnvVars               []string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -285,6 +287,9 @@ type Cfg struct {
 	AdminEmail                   string
 	DisableLoginForm             bool
 	SignoutRedirectUrl           string
+	IDResponseHeaderEnabled      bool
+	IDResponseHeaderPrefix       string
+	IDResponseHeaderNamespaces   map[string]struct{}
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
@@ -361,13 +366,14 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Check if a feature toggle is enabled
-	// @deprecated
+	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
 	AnonymousEnabled     bool
 	AnonymousOrgName     string
 	AnonymousOrgRole     string
 	AnonymousHideVersion bool
+	AnonymousDeviceLimit int64
 
 	DateFormats DateFormats
 
@@ -413,6 +419,7 @@ type Cfg struct {
 	StackID string
 	Slug    string
 
+	// Deprecated
 	ForceMigration bool
 
 	// Analytics
@@ -435,22 +442,6 @@ type Cfg struct {
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
-
-	// AzureAD
-	AzureADEnabled         bool
-	AzureADSkipOrgRoleSync bool
-
-	// Google
-	GoogleAuthEnabled     bool
-	GoogleSkipOrgRoleSync bool
-
-	// Gitlab
-	GitLabAuthEnabled     bool
-	GitLabSkipOrgRoleSync bool
-
-	// Generic OAuth
-	GenericOAuthAuthEnabled     bool
-	GenericOAuthSkipOrgRoleSync bool
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -490,25 +481,12 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
-	// GitHub OAuth
-	GitHubAuthEnabled     bool
-	GitHubSkipOrgRoleSync bool
-
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
 	// Grafana.com API URL. Can be set separately to GrafanaComURL
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
-	// Grafana.com Auth enabled
-	GrafanaComAuthEnabled bool
-	// GrafanaComSkipOrgRoleSync can be set for
-	// letting users set org roles from within Grafana and
-	// skip the org roles coming from GrafanaCom
-	GrafanaComSkipOrgRoleSync bool
-
-	// Grafana.com Auth enabled through [auth.grafananet] config section
-	GrafanaNetAuthEnabled bool
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
@@ -531,10 +509,6 @@ type Cfg struct {
 	SAMLSkipOrgRoleSync        bool
 	SAMLRoleValuesGrafanaAdmin string
 
-	// Okta OAuth
-	OktaAuthEnabled     bool
-	OktaSkipOrgRoleSync bool
-
 	// OAuth2 Server
 	OAuth2ServerEnabled bool
 
@@ -548,6 +522,8 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
+	// RBAC single organization. This configuration option is subject to change.
+	RBACSingleOrganization bool
 
 	// GRPC Server.
 	GRPCServerNetwork   string
@@ -564,6 +540,9 @@ type Cfg struct {
 	// This needs to be on the global object since its used in the
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
+
+	// Public dashboards
+	PublicDashboardsEnabled bool
 
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
@@ -697,6 +676,13 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
 	keys := environmentMetricsSection.Keys()
 	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
+
+	cfg.MetricsGrafanaEnvironmentInfo["version"] = cfg.BuildVersion
+	cfg.MetricsGrafanaEnvironmentInfo["commit"] = cfg.BuildCommit
+
+	if cfg.EnterpriseBuildCommit != "NA" && cfg.EnterpriseBuildCommit != "" {
+		cfg.MetricsGrafanaEnvironmentInfo["enterprise_commit"] = cfg.EnterpriseBuildCommit
+	}
 
 	for _, key := range keys {
 		labelName := model.LabelName(key.Name())
@@ -980,7 +966,20 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 		Azure:  &azsettings.AzureSettings{},
+
+		// Avoid nil pointer
+		IsFeatureToggleEnabled: func(_ string) bool {
+			return false
+		},
 	}
+}
+
+// Deprecated: Avoid using IsFeatureToggleEnabled from settings.  If you need to access
+// feature flags, read them from the FeatureToggle (or FeatureManager) interface
+func NewCfgWithFeatures(features func(string) bool) *Cfg {
+	cfg := NewCfg()
+	cfg.IsFeatureToggleEnabled = features
+	return cfg
 }
 
 func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
@@ -1004,6 +1003,7 @@ func (cfg *Cfg) validateStaticRootPath() error {
 	return nil
 }
 
+// nolint:gocyclo
 func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.setHomePath(args)
 
@@ -1037,12 +1037,13 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	Target := valueAsString(iniFile.Section(""), "target", "all")
 	if Target != "" {
-		cfg.Target = strings.Split(Target, " ")
+		cfg.Target = util.SplitString(Target)
 	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
+	//nolint:staticcheck
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
@@ -1155,6 +1156,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
+	// nolint:staticcheck
 	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}
@@ -1173,7 +1175,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
 	cfg.readSessionConfig()
-	cfg.readSmtpSettings()
+	if err := cfg.readSmtpSettings(); err != nil {
+		return err
+	}
 	if err := cfg.readAnnotationSettings(); err != nil {
 		return err
 	}
@@ -1260,6 +1264,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
 	cfg.readFeatureManagementConfig()
+	cfg.readPublicDashboardsSettings()
 
 	return nil
 }
@@ -1395,6 +1400,18 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	return key
 }
 
+func (s *DynamicSection) KeysHash() map[string]string {
+	hash := s.section.KeysHash()
+	for k := range hash {
+		envKey := EnvKey(s.section.Name(), k)
+		envValue := os.Getenv(envKey)
+		if len(envValue) > 0 {
+			hash[k] = envValue
+		}
+	}
+	return hash
+}
+
 // SectionWithEnvOverrides dynamically overrides keys with environment variables.
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
@@ -1445,7 +1462,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 
-	disableFrontendSandboxForPlugins := security.Key("frontend_sandbox_disable_for_plugins").MustString("")
+	disableFrontendSandboxForPlugins := security.Key("disable_frontend_sandbox_for_plugins").MustString("")
 	for _, plug := range strings.Split(disableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.DisableFrontendSandboxForPlugins = append(cfg.DisableFrontendSandboxForPlugins, plug)
@@ -1474,52 +1491,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AdminEmail = valueAsString(security, "admin_email", fmt.Sprintf("%s@localhost", cfg.AdminUser))
 
 	return nil
-}
-func readAuthAzureADSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.azuread")
-	cfg.AzureADEnabled = sec.Key("enabled").MustBool(false)
-	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGrafanaComSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.grafana_com")
-	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGrafanaNetSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.grafananet")
-	cfg.GrafanaNetAuthEnabled = sec.Key("enabled").MustBool(false)
-}
-
-func readAuthGithubSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.github")
-	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GitHubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGoogleSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.google")
-	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(true)
-}
-
-func readAuthGitlabSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.gitlab")
-	cfg.GitLabAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readGenericOAuthSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.generic_oauth")
-	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthOktaSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.okta")
-	cfg.OktaAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
@@ -1579,32 +1550,24 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Azure Auth
 	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
 	cfg.AzureAuthEnabled = AzureAuthEnabled
-	readAuthAzureADSettings(cfg)
 
-	// Google Auth
-	readAuthGoogleSettings(cfg)
+	// ID response header
+	cfg.IDResponseHeaderEnabled = auth.Key("id_response_header_enabled").MustBool(false)
+	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana")
 
-	// GitLab Auth
-	readAuthGitlabSettings(cfg)
-
-	// Generic OAuth
-	readGenericOAuthSettings(cfg)
-
-	// Okta Auth
-	readAuthOktaSettings(cfg)
-
-	// GrafanaCom
-	readAuthGrafanaComSettings(cfg)
-	readAuthGrafanaNetSettings(cfg)
-
-	// Github
-	readAuthGithubSettings(cfg)
+	idHeaderNamespaces := util.SplitString(auth.Key("id_response_header_namespaces").MustString(""))
+	cfg.IDResponseHeaderNamespaces = make(map[string]struct{}, len(idHeaderNamespaces))
+	for _, namespace := range idHeaderNamespaces {
+		cfg.IDResponseHeaderNamespaces[namespace] = struct{}{}
+	}
 
 	// anonymous access
-	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
-	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
+	anonSection := iniFile.Section("auth.anonymous")
+	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
+	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
+	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
+	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
+	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
@@ -1668,6 +1631,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
+	cfg.RBACSingleOrganization = rbac.Key("single_organization").MustBool(false)
 }
 
 func readOAuth2ServerSettings(cfg *Cfg) {
@@ -1943,16 +1907,17 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 }
 
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
-func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
-	if cfg.CDNRootURL != nil {
-		url := *cfg.CDNRootURL
-		preReleaseFolder := ""
-
-		url.Path = path.Join(url.Path, prefix, preReleaseFolder, cfg.BuildVersion)
-		return url.String() + "/"
+func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
+	if cfg.CDNRootURL == nil {
+		return "", nil
 	}
+	if cfg.BuildVersion == "" {
+		return "", errors.New("BuildVersion is not set")
+	}
+	url := *cfg.CDNRootURL
 
-	return ""
+	url.Path = path.Join(url.Path, prefix, cfg.BuildVersion)
+	return url.String() + "/", nil
 }
 
 func (cfg *Cfg) readDataSourcesSettings() {
@@ -2010,4 +1975,9 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
+}
+
+func (cfg *Cfg) readPublicDashboardsSettings() {
+	publicDashboards := cfg.Raw.Section("public_dashboards")
+	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
 }

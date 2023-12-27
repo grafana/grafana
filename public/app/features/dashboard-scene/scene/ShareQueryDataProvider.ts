@@ -22,6 +22,8 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
   private _querySub: Unsubscribable | undefined;
   private _sourceDataDeactivationHandler?: SceneDeactivationHandler;
   private _results = new ReplaySubject<SceneDataProviderResult>();
+  private _sourceProvider?: SceneDataProvider;
+  private _passContainerWidth = false;
 
   constructor(state: ShareQueryDataProviderState) {
     super(state);
@@ -54,38 +56,47 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       this._querySub.unsubscribe();
     }
 
-    if (!query.panelId) {
-      return;
+    if (this.state.$data) {
+      this._sourceProvider = this.state.$data;
+      this._passContainerWidth = true;
+    } else {
+      if (!query.panelId) {
+        return;
+      }
+
+      const keyToFind = getVizPanelKeyForPanelId(query.panelId);
+      const source = findObjectInScene(this.getRoot(), (scene: SceneObject) => scene.state.key === keyToFind);
+
+      if (!source) {
+        console.log('Shared dashboard query refers to a panel that does not exist in the scene');
+        return;
+      }
+
+      this._sourceProvider = source.state.$data;
+      if (!this._sourceProvider) {
+        console.log('No source data found for shared dashboard query');
+        return;
+      }
     }
 
-    const keyToFind = getVizPanelKeyForPanelId(query.panelId);
-    const source = findObjectInScene(this.getRoot(), (scene: SceneObject) => scene.state.key === keyToFind);
-
-    if (!source) {
-      console.log('Shared dashboard query refers to a panel that does not exist in the scene');
-      return;
-    }
-
-    let sourceData = source.state.$data;
-    if (!sourceData) {
-      console.log('No source data found for shared dashboard query');
-      return;
+    // If the source is not active we need to pass the container width
+    if (!this._sourceProvider.isActive) {
+      this._passContainerWidth = true;
     }
 
     // This will activate if sourceData is part of hidden panel
     // Also make sure the sourceData is not deactivated if hidden later
-    this._sourceDataDeactivationHandler = sourceData.activate();
+    this._sourceDataDeactivationHandler = this._sourceProvider.activate();
 
-    if (sourceData instanceof SceneDataTransformer) {
-      if (!query.withTransforms) {
-        if (!sourceData.state.$data) {
-          throw new Error('No source inner query runner found in data transformer');
-        }
-        sourceData = sourceData.state.$data;
+    // If source is a data transformer we might need to get the inner query runner instead depending on withTransforms option
+    if (this._sourceProvider instanceof SceneDataTransformer && !query.withTransforms) {
+      if (!this._sourceProvider.state.$data) {
+        throw new Error('No source inner query runner found in data transformer');
       }
+      this._sourceProvider = this._sourceProvider.state.$data;
     }
 
-    this._querySub = sourceData.subscribeToState((state) => {
+    this._querySub = this._sourceProvider.subscribeToState((state) => {
       this._results.next({
         origin: this,
         data: state.data || {
@@ -99,7 +110,20 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
     });
 
     // Copy the initial state
-    this.setState({ data: sourceData.state.data });
+    this.setState({ data: this._sourceProvider.state.data });
+  }
+
+  public setContainerWidth(width: number) {
+    if (this._passContainerWidth && this._sourceProvider) {
+      this._sourceProvider.setContainerWidth?.(width);
+    }
+  }
+
+  public isDataReadyToDisplay() {
+    if (this._sourceProvider && this._sourceProvider.isDataReadyToDisplay) {
+      return this._sourceProvider.isDataReadyToDisplay();
+    }
+    return false;
   }
 }
 

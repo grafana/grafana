@@ -47,7 +47,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,7 +58,6 @@ var WireSet = wire.NewSet(
 	config.ProvideConfig,
 	pluginstore.ProvideService,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
-	wire.Bind(new(plugins.RendererManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	process.ProvideService,
@@ -111,6 +112,8 @@ var WireSet = wire.NewSet(
 	dynamic.ProvideService,
 	serviceregistration.ProvideService,
 	wire.Bind(new(auth.ExternalServiceRegistry), new(*serviceregistration.Service)),
+	renderer.ProvideService,
+	wire.Bind(new(rendering.PluginManager), new(*renderer.Manager)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -152,7 +155,7 @@ func NewClientDecorator(
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
 	var middlewares []plugins.ClientMiddleware
 
-	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		middlewares = []plugins.ClientMiddleware{
 			clientmiddleware.NewPluginRequestMetaMiddleware(),
 		}
@@ -172,11 +175,11 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	)
 
 	// Placing the new service implementation behind a feature flag until it is known to be stable
-	if features.IsEnabled(featuremgmt.FlagUseCachingService) {
+	if features.IsEnabledGlobally(featuremgmt.FlagUseCachingService) {
 		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
 	}
 
-	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
+	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
 		middlewares = append(middlewares, clientmiddleware.NewForwardIDMiddleware())
 	}
 
@@ -186,7 +189,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
-	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		// StatusSourceMiddleware should be at the very bottom, or any middlewares below it won't see the
 		// correct status source in their context.Context
 		middlewares = append(middlewares, clientmiddleware.NewStatusSourceMiddleware())

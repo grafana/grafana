@@ -51,17 +51,9 @@ import {
   Without,
   BinOpModifier,
   OnOrIgnoringModifier,
+  OrFilter,
 } from '@grafana/lezer-logql';
 
-import {
-  ErrorId,
-  getAllByType,
-  getLeftMostChild,
-  getString,
-  makeBinOp,
-  makeError,
-  replaceVariables,
-} from '../../prometheus/querybuilder/shared/parsingUtils';
 import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
@@ -70,6 +62,15 @@ import {
 
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { checkParamsAreValid, getDefinitionById } from './operations';
+import {
+  ErrorId,
+  getAllByType,
+  getLeftMostChild,
+  getString,
+  makeBinOp,
+  makeError,
+  replaceVariables,
+} from './parsingUtils';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {
@@ -275,7 +276,6 @@ function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
   const filter = getString(expr, node.getChild(Filter));
   const filterExpr = handleQuotes(getString(expr, node.getChild(String)));
   const ipLineFilter = node.getChild(FilterOp)?.getChild(Ip);
-
   if (ipLineFilter) {
     return {
       operation: {
@@ -284,6 +284,14 @@ function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
       },
     };
   }
+
+  const params = [filterExpr];
+  let orFilter = node.getChild(OrFilter);
+  while (orFilter) {
+    params.push(handleQuotes(getString(expr, orFilter.getChild(String))));
+    orFilter = orFilter.getChild(OrFilter);
+  }
+
   const mapFilter: Record<string, LokiOperationId> = {
     '|=': LokiOperationId.LineContains,
     '!=': LokiOperationId.LineContainsNot,
@@ -294,7 +302,7 @@ function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
   return {
     operation: {
       id: mapFilter[filter],
-      params: [filterExpr],
+      params,
     },
   };
 }

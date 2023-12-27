@@ -6,7 +6,15 @@ import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import { EditorProps } from '../QueryEditor';
 import { TestData } from '../dataquery.gen';
 
-const randomWalkFields = [
+const randomWalkFields: Array<{
+  label: string;
+  id: Selector;
+  placeholder: string;
+  min?: number;
+  step?: number;
+  max?: number;
+  tooltip?: string;
+}> = [
   { label: 'Series count', id: 'seriesCount', placeholder: '1', min: 1, step: 1 },
   { label: 'Start value', id: 'startValue', placeholder: 'auto', step: 1 },
   { label: 'Min', id: 'min', placeholder: 'none', step: 0.1 },
@@ -31,7 +39,7 @@ export const RandomWalkEditor = ({ onChange, query }: EditorProps) => {
   return (
     <InlineFieldRow>
       {randomWalkFields.map(({ label, id, min, step, placeholder, tooltip }) => {
-        const selector = testSelectors?.[id as Selector];
+        const selector = testSelectors[id];
         return (
           <InlineField label={label} labelWidth={14} key={id} aria-label={selector} tooltip={tooltip}>
             <Input

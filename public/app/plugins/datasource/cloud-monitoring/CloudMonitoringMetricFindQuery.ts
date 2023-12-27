@@ -1,7 +1,5 @@
 import { isString } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
-
 import { ALIGNMENT_PERIODS, SELECTORS } from './constants';
 import CloudMonitoringDatasource from './datasource';
 import {
@@ -59,7 +57,7 @@ export default class CloudMonitoringMetricFindQuery {
 
   async handleProjectsQuery() {
     const projects = await this.datasource.getProjects();
-    return (projects as SelectableValue<string>).map((s: { label: string; value: string }) => ({
+    return projects.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,

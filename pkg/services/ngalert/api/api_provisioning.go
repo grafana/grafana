@@ -9,13 +9,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -31,7 +31,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user *user.SignedInUser) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user identity.Requester) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
@@ -255,12 +255,35 @@ func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name 
 	return response.Empty(http.StatusNotFound)
 }
 
+func (srv *ProvisioningSrv) RouteGetMuteTimingExport(c *contextmodel.ReqContext, name string) response.Response {
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	for _, timing := range timings {
+		if name == timing.Name {
+			e := AlertingFileExportFromMuteTimings(c.SignedInUser.GetOrgID(), []definitions.MuteTimeInterval{timing})
+			return exportResponse(c, e)
+		}
+	}
+	return response.Empty(http.StatusNotFound)
+}
+
 func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) response.Response {
 	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, timings)
+}
+
+func (srv *ProvisioningSrv) RouteGetMuteTimingsExport(c *contextmodel.ReqContext) response.Response {
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	e := AlertingFileExportFromMuteTimings(c.SignedInUser.GetOrgID(), timings)
+	return exportResponse(c, e)
 }
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval) response.Response {
@@ -325,7 +348,8 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	provenance := determineProvenance(c)
-	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.Provenance(provenance), c.UserID)
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.Provenance(provenance), userID)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -478,7 +502,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 		ErrResp(http.StatusBadRequest, err, "")
 	}
 	provenance := determineProvenance(c)
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), groupModel, c.UserID, alerting_models.Provenance(provenance))
+
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), groupModel, userID, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -548,36 +574,53 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 }
 
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
-	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies))
-	for idx, group := range body.Groups {
-		gr := group
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_rule_group",
-			Name: fmt.Sprintf("rule_group_%04d", idx),
-			Body: &gr,
-		})
-	}
-	for idx, cp := range body.ContactPoints {
-		upd, err := ContactPointFromContactPointExport(cp)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "failed to convert contact points to HCL", err)
+	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
+	convertToResources := func() error {
+		for idx, group := range body.Groups {
+			gr := group
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_rule_group",
+				Name: fmt.Sprintf("rule_group_%04d", idx),
+				Body: &gr,
+			})
 		}
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_contact_point",
-			Name: fmt.Sprintf("contact_point_%d", idx),
-			Body: &upd,
-		})
-	}
+		for idx, cp := range body.ContactPoints {
+			upd, err := ContactPointFromContactPointExport(cp)
+			if err != nil {
+				return fmt.Errorf("failed to convert contact points to HCL:%w", err)
+			}
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_contact_point",
+				Name: fmt.Sprintf("contact_point_%d", idx),
+				Body: &upd,
+			})
+		}
 
-	for idx, cp := range body.Policies {
-		policy := cp.Policy
-		resources = append(resources, hcl.Resource{
-			Type: "grafana_notification_policy",
-			Name: fmt.Sprintf("notification_policy_%d", idx+1),
-			Body: policy,
-		})
-	}
+		for idx, cp := range body.Policies {
+			policy := cp.RouteExport
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_notification_policy",
+				Name: fmt.Sprintf("notification_policy_%d", idx+1),
+				Body: policy,
+			})
+		}
 
+		for idx, mt := range body.MuteTimings {
+			mthcl, err := MuteTimingIntervalToMuteTimeIntervalHclExport(mt)
+			if err != nil {
+				return fmt.Errorf("failed to convert mute timing [%s] to HCL:%w", mt.Name, err)
+			}
+			resources = append(resources, hcl.Resource{
+				Type: "grafana_mute_timing",
+				Name: fmt.Sprintf("mute_timing_%d", idx+1),
+				Body: mthcl,
+			})
+		}
+		return nil
+	}
+	if err := convertToResources(); err != nil {
+		return response.Error(500, "failed to convert to HCL resources", err)
+	}
 	hclBody, err := hcl.Encode(resources...)
 	if err != nil {
 		return response.Error(500, "body hcl encode", err)

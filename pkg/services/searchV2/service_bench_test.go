@@ -140,7 +140,7 @@ func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStor
 				UID:      fmt.Sprintf("dashboard%v", dashID),
 				Title:    fmt.Sprintf("dashboard%v", dashID),
 				IsFolder: false,
-				FolderID: folderID,
+				FolderID: folderID, // nolint:staticcheck
 				OrgID:    1,
 				Created:  now,
 				Updated:  now,

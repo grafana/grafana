@@ -68,7 +68,7 @@ export async function importPluginModule({
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
-  if (isFrontendSandboxSupported({ isAngular, pluginId })) {
+  if (await isFrontendSandboxSupported({ isAngular, pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
@@ -79,7 +79,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angularDetected,
+    isAngular: meta.angular?.detected,
     pluginId: meta.id,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
@@ -107,7 +107,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angularDetected,
+    isAngular: meta.angular?.detected,
     pluginId: meta.id,
   }).then((pluginExports) => {
     const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();

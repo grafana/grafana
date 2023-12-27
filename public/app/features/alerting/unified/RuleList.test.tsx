@@ -5,7 +5,14 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DataSourceSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { PluginExtensionTypes } from '@grafana/data';
+import {
+  DataSourceSrv,
+  getPluginLinkExtensions,
+  locationService,
+  setBackendSrv,
+  setDataSourceSrv,
+} from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
@@ -32,6 +39,10 @@ import {
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(),
+}));
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
@@ -53,6 +64,7 @@ jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
+  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
@@ -137,6 +149,19 @@ describe('RuleList', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
+    mocks.getPluginLinkExtensionsMock.mockReturnValue({
+      extensions: [
+        {
+          pluginId: 'grafana-ml-app',
+          id: '1',
+          type: PluginExtensionTypes.link,
+          title: 'Run investigation',
+          category: 'Sift',
+          description: 'Run a Sift investigation for this alert',
+          onClick: jest.fn(),
+        },
+      ],
+    });
   });
 
   afterEach(() => {
@@ -679,7 +704,7 @@ describe('RuleList', () => {
   describe('RBAC Enabled', () => {
     describe('Export button', () => {
       it('Export button should be visible when the user has alert read permissions', async () => {
-        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.FoldersRead]);
+        grantUserPermissions([AccessControlAction.AlertingRuleRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
         setDataSourceSrv(new MockDataSourceSrv({}));

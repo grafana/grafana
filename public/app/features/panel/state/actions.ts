@@ -46,7 +46,7 @@ export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
 export interface ChangePanelPluginAndOptionsArgs {
   panel: PanelModel;
   pluginId: string;
-  options?: any;
+  options?: Record<string, unknown>;
   fieldConfig?: FieldConfigSource;
   transformations?: DataTransformerConfig[];
 }

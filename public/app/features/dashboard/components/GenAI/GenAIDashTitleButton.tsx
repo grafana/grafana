@@ -31,7 +31,6 @@ export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleBu
     <GenAIButton
       messages={messages}
       onGenerate={onGenerate}
-      loadingText={'Generating title'}
       eventTrackingSrc={EventTrackingSrc.dashboardTitle}
       toggleTipTitle={'Improve your dashboard title'}
     />

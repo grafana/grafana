@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/
-description: Introduction to queries and conditions
+description: Define queries to get the data you want to measure and conditions that need to be met before an alert rule fires
 keywords:
   - grafana
   - alerting
@@ -96,6 +96,27 @@ Checks if any time series data matches the alert condition.
 
 Classic condition expression queries always produce one alert instance only, no matter how many time series meet the condition.
 Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
+
+## Aggregations
+
+Grafana Alerting provides the following aggregation functions to enable you to further refine your query.
+
+These functions are available for **Reduce** and **Classic condition** expressions only.
+
+| Function         | Expression       | What it does                                                                    |
+| ---------------- | ---------------- | ------------------------------------------------------------------------------- |
+| avg              | Reduce / Classic | Displays the average of the values                                              |
+| min              | Reduce / Classic | Displays the lowest value                                                       |
+| max              | Reduce / Classic | Displays the highest value                                                      |
+| sum              | Reduce / Classic | Displays the sum of all values                                                  |
+| count            | Reduce / Classic | Counts the number of values in the result                                       |
+| last             | Reduce / Classic | Displays the last value                                                         |
+| median           | Reduce / Classic | Displays the median value                                                       |
+| diff             | Classic          | Displays the difference between the newest and oldest value                     |
+| diff_abs         | Classic          | Displays the absolute value of diff                                             |
+| percent_diff     | Classic          | Displays the percentage value of the difference between newest and oldest value |
+| percent_diff_abs | Classic          | Displays the absolute value of percent_diff                                     |
+| count_non_null   | Classic          | Displays a count of values in the result set that aren't `null`                 |
 
 ## Alert condition
 
