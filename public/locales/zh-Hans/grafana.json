@@ -407,6 +407,9 @@
       "label": "添加新数据源"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
     "rich-history": {
@@ -964,6 +967,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "最新博客"
   },
   "notifications": {
