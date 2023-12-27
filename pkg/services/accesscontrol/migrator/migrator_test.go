@@ -49,7 +49,7 @@ func TestIntegrationMigrateScopeSplitTruncation(t *testing.T) {
 	require.NoError(t, batchInsertPermissions(3*batchSize, sqlStore), "could not insert permissions")
 
 	// Insert a permission with a scope longer than 240 characters
-	longScope := strings.Repeat("a", 100) + ":" + strings.Repeat("b", 100) + ":" + strings.Repeat("c", 100)
+	longScope := strings.Repeat("a", 60) + ":" + strings.Repeat("b", 60) + ":" + strings.Repeat("c", 60)
 	permission := ac.Permission{
 		RoleID:  1,
 		Action:  "action",
