@@ -97,7 +97,7 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	// should not be able to read that value since its expired
 	_, err = client.Get(context.Background(), "key1")
 	// redis client returns redis.Nil error when key does not exist.
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrCacheItemNotFound)
 }
 
 func TestCollectUsageStats(t *testing.T) {
