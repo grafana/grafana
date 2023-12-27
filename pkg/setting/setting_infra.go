@@ -36,8 +36,7 @@ func readRemoteCacheSettings(iniFile *ini.File) *RemoteCacheOptions {
 func readServerLockSettings(iniFile *ini.File) ServerLockSettings {
 	s := ServerLockSettings{}
 	serverLock := iniFile.Section("server_lock")
-	s.Driver = valueAsString(serverLock, "driver", "memory")
-	serverLock.Key("driver").In(DatabaseLockType, []string{DatabaseLockType, RemoteCacheLockType})
+	s.Driver = serverLock.Key("driver").In(DatabaseLockType, []string{DatabaseLockType, RemoteCacheLockType})
 
 	return s
 }

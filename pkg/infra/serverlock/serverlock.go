@@ -25,7 +25,7 @@ type locker interface {
 func ProvideService(sqlStore db.DB, tracer tracing.Tracer, cfg *setting.Cfg, remoteCache *remotecache.RemoteCache) *ServerLockService {
 	logger := log.New("infra.lockservice")
 
-	if cfg != nil && cfg.ServerLock.Driver == setting.DatabaseLockType {
+	if cfg != nil && cfg.ServerLock.Driver == setting.RemoteCacheLockType {
 		if remoteCache != nil && cfg.RemoteCacheOptions != nil && cfg.RemoteCacheOptions.Name != setting.DatabaseCacheType {
 			logger.Debug("Server lock configured with remote cache")
 			return &ServerLockService{
