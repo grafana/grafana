@@ -98,19 +98,18 @@ func (sl *serverLockDB) AcquireForRelease(ctx context.Context, actionName string
 			result := lockRows[0]
 			if isLockWithinInterval(result, maxInterval) {
 				return &ServerLockExistsError{actionName: actionName}
-			} else {
-				// lock has timeouted, so we update the timestamp
-				result.LastExecution = time.Now().Unix()
-				cond := &serverLock{OperationUID: actionName}
-				affected, err := dbSession.Update(result, cond)
-				if err != nil {
-					return err
-				}
-				if affected != 1 {
-					ctxLogger.Error("Expected rows affected to be 1 if there was no error", "actionName", actionName, "rowsAffected", affected)
-				}
-				return nil
 			}
+			// lock has timeouted, so we update the timestamp
+			result.LastExecution = time.Now().Unix()
+			cond := &serverLock{OperationUID: actionName}
+			affected, err := dbSession.Update(result, cond)
+			if err != nil {
+				return err
+			}
+			if affected != 1 {
+				ctxLogger.Error("Expected rows affected to be 1 if there was no error", "actionName", actionName, "rowsAffected", affected)
+			}
+			return nil
 		} else {
 			// lock not found, creating it
 			lockRow := &serverLock{
@@ -130,6 +129,7 @@ func (sl *serverLockDB) AcquireForRelease(ctx context.Context, actionName string
 		}
 		return nil
 	})
+
 	return err
 }
 

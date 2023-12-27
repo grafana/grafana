@@ -3,6 +3,7 @@ package remotecache
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const redisCacheType = "redis"
+const redisCacheType = setting.RedisCacheType
 
 type redisStorage struct {
 	c *redis.Client
@@ -93,7 +94,12 @@ func (s *redisStorage) Set(ctx context.Context, key string, data []byte, expires
 
 // GetByteArray returns the value as byte array
 func (s *redisStorage) Get(ctx context.Context, key string) ([]byte, error) {
-	return s.c.Get(ctx, key).Bytes()
+	val, err := s.c.Get(ctx, key).Bytes()
+	if errors.Is(err, redis.Nil) {
+		return nil, ErrCacheItemNotFound
+	}
+
+	return val, err
 }
 
 // Delete delete a key from session.

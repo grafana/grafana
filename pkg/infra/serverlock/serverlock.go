@@ -28,7 +28,15 @@ func ProvideService(sqlStore db.DB, tracer tracing.Tracer, cfg *setting.Cfg, rem
 	if cfg != nil && cfg.ServerLock.Driver == setting.DatabaseLockType {
 		if remoteCache != nil && cfg.RemoteCacheOptions != nil && cfg.RemoteCacheOptions.Name != setting.DatabaseCacheType {
 			logger.Debug("Server lock configured with remote cache")
-			// return NewRemoteCacheServerLockService(remoteCache, tracer)
+			return &ServerLockService{
+				tracer: tracer,
+				log:    logger,
+				locker: &serverLockRemoteCache{
+					remoteCache: remoteCache,
+					tracer:      tracer,
+					log:         logger,
+				},
+			}
 		}
 
 		logger.Warn("Remote cache is not configured with non database type, using database lock")

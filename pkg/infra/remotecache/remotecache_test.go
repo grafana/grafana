@@ -10,21 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) CacheStorage {
-	t.Helper()
-
-	cfg := &setting.Cfg{
-		RemoteCacheOptions: opts,
-	}
-	dc, err := ProvideService(cfg, sqlstore, fakes.NewFakeSecretsService())
-	require.Nil(t, err, "Failed to init client for test")
-
-	return dc
-}
 
 func TestCachedBasedOnConfig(t *testing.T) {
 	cfg := setting.NewCfg()
@@ -33,7 +20,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 	})
 	require.Nil(t, err, "Failed to load config")
 
-	client := createTestClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
+	client := CreateTestClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
 	runTestsForClient(t, client)
 	runCountTestsForClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
 }
@@ -49,7 +36,7 @@ func runTestsForClient(t *testing.T, client CacheStorage) {
 }
 
 func runCountTestsForClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) {
-	client := createTestClient(t, opts, sqlstore)
+	client := CreateTestClient(t, opts, sqlstore)
 	expectError := false
 	if opts.Name == memcachedCacheType {
 		expectError = true
