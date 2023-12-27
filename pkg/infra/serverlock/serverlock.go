@@ -214,7 +214,7 @@ func isLockWithinInterval(lock *serverLock, maxInterval time.Duration) bool {
 	return false
 }
 
-func (sl ServerLockService) executeFunc(ctx context.Context, actionName string, fn func(ctx context.Context)) {
+func (sl *ServerLockService) executeFunc(ctx context.Context, actionName string, fn func(ctx context.Context)) {
 	start := time.Now()
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.executeFunc")
 	defer span.End()
