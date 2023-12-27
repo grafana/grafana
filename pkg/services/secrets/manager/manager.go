@@ -15,7 +15,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
@@ -35,11 +34,10 @@ var (
 )
 
 type SecretsService struct {
-	store      secrets.Store
-	enc        encryption.Internal
-	cfg        *setting.Cfg
-	features   featuremgmt.FeatureToggles
-	usageStats usagestats.Service
+	store    secrets.Store
+	enc      encryption.Internal
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
 
 	mtx          sync.Mutex
 	dataKeyCache *dataKeyCache

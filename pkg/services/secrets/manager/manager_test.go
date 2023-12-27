@@ -74,12 +74,11 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 	})
 
 	t.Run("usage stats should be registered", func(t *testing.T) {
-		reports, err := svc.usageStats.GetUsageReport(context.Background())
-		require.NoError(t, err)
+		reports := svc.GetUsageStats(context.Background())
 
-		assert.Equal(t, 1, reports.Metrics["stats.encryption.envelope_encryption_enabled.count"])
-		assert.Equal(t, 1, reports.Metrics["stats.encryption.current_provider.secretKey.count"])
-		assert.Equal(t, 1, reports.Metrics["stats.encryption.providers.secretKey.count"])
+		assert.Equal(t, 1, reports["stats.encryption.envelope_encryption_enabled.count"])
+		assert.Equal(t, 1, reports["stats.encryption.current_provider.secretKey.count"])
+		assert.Equal(t, 1, reports["stats.encryption.providers.secretKey.count"])
 	})
 }
 
