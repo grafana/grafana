@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
-import { EditorRow, llms } from '@grafana/experimental';
+import { EditorRow } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Tooltip, useTheme2 } from '@grafana/ui';
 
@@ -24,6 +24,7 @@ import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 import { PromQail, getStyles } from './promQail/PromQail';
 import AI_Logo_color from './promQail/resources/AI_Logo_color.svg';
+import { isLLMPluginEnabled } from './promQail/state/helpers';
 
 export interface Props {
   query: PromVisualQuery;
@@ -50,10 +51,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
 
   useEffect(() => {
     async function checkLlms() {
-      const openaiEnabled = (await llms.openai.enabled()).ok;
-      const vectorEnabled = (await llms.vector.enabled()).ok;
-
-      const check = openaiEnabled && vectorEnabled;
+      const check = await isLLMPluginEnabled();
       updateLlmAppEnabled(check);
     }
     checkLlms();
@@ -63,6 +61,9 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   const styles = getStyles(theme);
 
   const queryAssistantButton = function () {
+    const llmAppDisabled = !llmAppEnabled;
+    const noMetricSelected = !query.metric;
+
     const button = () => {
       return (
         <Button
@@ -81,13 +82,13 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       );
     };
 
-    const llmAppTrue = (
+    const selectMetricMessage = (
       <Tooltip content={'First, select a metric.'} placement={'bottom-end'}>
         {button()}
       </Tooltip>
     );
 
-    const llmAppFalse = (
+    const llmAppMessage = (
       <Tooltip
         interactive={true}
         placement={'auto-end'}
@@ -117,17 +118,19 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       </Tooltip>
     );
 
-    if (llmAppEnabled) {
-      return llmAppTrue;
+    if (llmAppDisabled) {
+      return llmAppMessage;
+    } else if (noMetricSelected) {
+      return selectMetricMessage;
     } else {
-      return llmAppFalse;
+      return button();
     }
   };
 
   return (
     <>
       {prometheusPromQAIL && showDrawer && (
-        <Drawer scrollableContent={true} closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
+        <Drawer closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
           <PromQail
             query={query}
             closeDrawer={() => setShowDrawer(false)}
