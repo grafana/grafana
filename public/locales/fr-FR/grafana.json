@@ -417,6 +417,9 @@
       "label": "Ajouter une nouvelle source de données"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
     "rich-history": {
@@ -976,6 +979,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Dernières nouvelles sur le blog"
   },
   "notifications": {
