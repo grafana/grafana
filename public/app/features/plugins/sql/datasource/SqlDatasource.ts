@@ -216,6 +216,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
+  isQueryEmpty(query?: SQLQuery | undefined): boolean {
+    return query?.rawSql === undefined || query.rawSql.trim() === '';
+  }
+
   // NOTE: this always runs with the `@grafana/data/getDefaultTimeRange` time range
   async runSql<T extends object>(query: string, options?: RunSQLOptions) {
     const range = getDefaultTimeRange();

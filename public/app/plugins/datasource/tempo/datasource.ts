@@ -515,6 +515,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     });
   }
 
+  isQueryEmpty(query?: TempoQuery | undefined): boolean {
+    return query?.query === undefined || query.query.trim() === '';
+  }
+
   applyVariables(query: TempoQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
 

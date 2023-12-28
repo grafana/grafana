@@ -550,6 +550,10 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     });
   }
 
+  isQueryEmpty(query?: OpenTsdbQuery): boolean {
+    return query?.metric === undefined || query.metric.trim() === '';
+  }
+
   getVariables(): string[] {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }

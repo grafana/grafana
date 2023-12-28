@@ -466,6 +466,10 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
+  isQueryEmpty(query?: LokiQuery): boolean {
+    return query?.expr === undefined || query?.expr.trim() === '';
+  }
+
   /**
    * Implemented as part of DataSourceWithQueryImportSupport.
    * Imports queries from AbstractQuery objects when switching between different data source types.

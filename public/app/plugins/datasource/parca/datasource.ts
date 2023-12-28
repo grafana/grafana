@@ -30,4 +30,8 @@ export class ParcaDataSource extends DataSourceWithBackend<Query, ParcaDataSourc
   async getLabelValues(labelName: string): Promise<string[]> {
     return await super.getResource('labelValues', { label: labelName });
   }
+
+  isQueryEmpty(query?: Query | undefined): boolean {
+    return query?.profileTypeId === undefined || query?.profileTypeId.trim() === '';
+  }
 }

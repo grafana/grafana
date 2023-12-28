@@ -89,6 +89,10 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData>
     });
   }
 
+  isQueryEmpty(query?: ZipkinQuery | undefined): boolean {
+    return query?.query === undefined || query.query.trim() === '';
+  }
+
   applyVariables(query: ZipkinQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
 

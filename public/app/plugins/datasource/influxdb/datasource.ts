@@ -295,6 +295,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return escapedValues.join('|');
   }
 
+  isQueryEmpty(query?: InfluxQuery | undefined): boolean {
+    return query?.query === undefined || query.query.trim() === '';
+  }
+
   async runMetadataQuery(target: InfluxQuery): Promise<MetricFindValue[]> {
     return lastValueFrom(
       super.query({

@@ -358,6 +358,10 @@ export class GraphiteDatasource
     return expandedQueries;
   }
 
+  isQueryEmpty(query?: GraphiteQuery | undefined): boolean {
+    return query?.target === undefined || query.target.trim() === '';
+  }
+
   annotationEvents(range: any, target: any) {
     if (target.target) {
       // Graphite query as target as annotation

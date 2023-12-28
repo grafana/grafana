@@ -77,6 +77,10 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     };
   }
 
+  isQueryEmpty(_: GrafanaQuery): boolean {
+    return false;
+  }
+
   query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
     const results: Array<Observable<DataQueryResponse>> = [];
     const targets: GrafanaQuery[] = [];
