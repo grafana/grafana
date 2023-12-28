@@ -46,6 +46,7 @@ composableKinds: PanelCfg: {
 					common.OptionsWithTooltip
 					common.SingleStatBaseOptions
 					pieType: PieChartType
+					// Show the field name in the legend.
 					showField: bool
 					displayLabels: [...PieChartLabels]
 					legend: PieChartLegendOptions

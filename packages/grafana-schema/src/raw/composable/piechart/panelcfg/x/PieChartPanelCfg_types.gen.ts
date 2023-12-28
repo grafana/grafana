@@ -55,6 +55,9 @@ export interface Options extends common.OptionsWithTooltip, common.SingleStatBas
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
   pieType: PieChartType;
+  /**
+   * Show the field name in the legend.
+   */
   showField: boolean;
 }
 
