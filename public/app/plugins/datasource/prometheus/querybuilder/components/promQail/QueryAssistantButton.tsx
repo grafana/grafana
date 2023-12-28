@@ -52,8 +52,8 @@ export function QueryAssistantButton(props: Props) {
       content={
         <div className={styles.enableButtonTooltip}>
           <h6>Query Advisor is disabled</h6>
-          <div>To enable Query Advisor you must:</div>
-          <div>
+          <div className={styles.enableButtonTooltipText}>To enable Query Advisor you must:</div>
+          <div className={styles.enableButtonTooltipText}>
             <ul>
               <li>
                 <a

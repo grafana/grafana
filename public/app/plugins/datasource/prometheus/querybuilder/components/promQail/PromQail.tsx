@@ -549,12 +549,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     enableButtonTooltip: css({
       padding: 8,
-
-      div: {
-        color: `${theme.colors.text.secondary}`,
-        ul: {
-          marginLeft: 16,
-        },
+    }),
+    enableButtonTooltipText: css({
+      color: `${theme.colors.text.secondary}`,
+      ul: {
+        marginLeft: 16,
       },
     }),
     link: css({
