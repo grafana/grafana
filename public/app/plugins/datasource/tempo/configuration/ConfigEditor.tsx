@@ -12,13 +12,13 @@ import {
   DataSourceDescription,
 } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
+import { TraceToLogsSection, TraceToMetricsSection, TraceToProfilesSection } from '@grafana/traces';
 import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
 
 import { ConfigDescriptionLink } from '../_importedDependencies/components/ConfigDescriptionLink';
 import { Divider } from '../_importedDependencies/components/Divider';
 import { NodeGraphSection } from '../_importedDependencies/components/NodeGraphSettings';
 import { SpanBarSection } from '../_importedDependencies/components/TraceView/SpanBarSettings';
-import { TraceToLogsSettings, TraceToMetricsSettings, TraceToProfilesSettings } from '../grafana-traces/src';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
@@ -50,19 +50,19 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
       />
 
       <Divider />
-      <TraceToLogsSettings.TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
+      <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
 
       <Divider />
       {config.featureToggles.traceToMetrics ? (
         <>
-          <TraceToMetricsSettings.TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
+          <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
           <Divider />
         </>
       ) : null}
 
       {config.featureToggles.traceToProfiles && (
         <>
-          <TraceToProfilesSettings.TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
+          <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
           <Divider />
         </>
       )}

@@ -24,10 +24,10 @@ import {
   DataLinkConfigOrigin,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { TraceToProfilesData } from '@grafana/traces';
 
 import { getDatasourceSrv } from './_importedDependencies/datasource_srv';
 import { SearchTableType } from './dataquery.gen';
-import { TraceToProfilesSettings } from './grafana-traces/src';
 import { createGraphFrames } from './graphTransform';
 import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
 
@@ -513,7 +513,7 @@ export function transformTrace(
 
   // Get profiles links
   if (config.featureToggles.traceToProfiles) {
-    const traceToProfilesData: TraceToProfilesSettings.TraceToProfilesData | undefined = instanceSettings?.jsonData;
+    const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
     const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
     let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
     if (traceToProfilesOptions?.datasourceUid) {

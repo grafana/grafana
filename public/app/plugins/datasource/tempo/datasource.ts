@@ -30,6 +30,7 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
+import { TraceToLogsOptions } from '@grafana/traces';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
@@ -40,7 +41,6 @@ import { LokiOptions } from './_importedDependencies/datasources/loki/types';
 import { PromQuery, PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
 import { serializeParams } from './_importedDependencies/utils/fetch';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
-import { TraceToLogsSettings } from './grafana-traces/src';
 import {
   defaultTableFilter,
   durationMetric,
@@ -97,7 +97,7 @@ interface ServiceMapQueryResponseWithRates {
 }
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
-  tracesToLogs?: TraceToLogsSettings.TraceToLogsOptions;
+  tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
     datasourceUid?: string;
   };

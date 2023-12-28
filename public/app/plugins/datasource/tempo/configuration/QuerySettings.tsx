@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { IntervalInput, invalidTimeShiftError } from '@grafana/traces';
 import { InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
 
-import { IntervalInput, TraceToLogsSettings } from '../grafana-traces/src';
 import { TempoJsonData } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
@@ -50,7 +50,7 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
             spanStartTimeShift: val,
           });
         }}
-        isInvalidError={TraceToLogsSettings.invalidTimeShiftError}
+        isInvalidError={invalidTimeShiftError}
       />
 
       <IntervalInput
@@ -64,7 +64,7 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
             spanEndTimeShift: val,
           });
         }}
-        isInvalidError={TraceToLogsSettings.invalidTimeShiftError}
+        isInvalidError={invalidTimeShiftError}
       />
     </div>
   );
