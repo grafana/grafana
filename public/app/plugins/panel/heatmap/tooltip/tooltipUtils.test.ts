@@ -4,19 +4,19 @@ describe('heatmap tooltip utils', () => {
   it('converts ms to appropriate unit', async () => {
     let msToFormat = 10;
     let formatted = formatMilliseconds(msToFormat);
-    expect(formatted).toBe('10 milliseconds');
+    expect(formatted).toBe('10 ms');
 
     msToFormat = 1000;
     formatted = formatMilliseconds(msToFormat);
-    expect(formatted).toBe('1 second');
+    expect(formatted).toBe('1 s');
 
     msToFormat = 1000 * 120;
     formatted = formatMilliseconds(msToFormat);
-    expect(formatted).toBe('2 minutes');
+    expect(formatted).toBe('2 m');
 
     msToFormat = 1000 * 60 * 60;
     formatted = formatMilliseconds(msToFormat);
-    expect(formatted).toBe('1 hour');
+    expect(formatted).toBe('1 h');
 
     msToFormat = 1000 * 60 * 60 * 24;
     formatted = formatMilliseconds(msToFormat);

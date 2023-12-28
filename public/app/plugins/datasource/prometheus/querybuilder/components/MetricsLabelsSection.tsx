@@ -6,7 +6,7 @@ import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
 import { truncateResult } from '../../language_utils';
 import { promQueryModeller } from '../PromQueryModeller';
-import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
+import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
