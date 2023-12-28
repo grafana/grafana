@@ -20,7 +20,7 @@ interface AnnotationEditFormDTO {
   tags: string[];
 }
 
-export const AnnotationEditor = ({ annoVals, annoIdx, onSave, onDismiss, timeFormatter, ...otherProps }: Props) => {
+export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFormatter, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const panelContext = usePanelContext();
 
@@ -40,7 +40,7 @@ export const AnnotationEditor = ({ annoVals, annoIdx, onSave, onDismiss, timeFor
     return result;
   });
 
-  const isUpdatingAnnotation = annoVals.id?.[annoIdx] !== undefined;
+  const isUpdatingAnnotation = annoVals.id?.[annoIdx] != null;
   const isRegionAnnotation = annoVals.isRegion[annoIdx];
   const operation = isUpdatingAnnotation ? updateAnnotation : createAnnotation;
   const stateIndicator = isUpdatingAnnotation ? updateAnnotationState : createAnnotationState;

@@ -5,7 +5,7 @@ import useClickAway from 'react-use/lib/useClickAway';
 import { dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 
-import { AnnotationEditor } from './AnnotationEditor';
+import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
 
 interface AnnoBoxProps {
@@ -97,7 +97,7 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, isWip, 
 
   const renderAnnotationEditor = useCallback(() => {
     return (
-      <AnnotationEditor
+      <AnnotationEditor2
         onDismiss={() => setIsEditing(false)}
         onSave={() => setIsEditing(false)}
         timeFormatter={timeFormatter}

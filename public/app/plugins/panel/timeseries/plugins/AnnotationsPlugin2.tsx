@@ -194,6 +194,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
               style={style}
               timezone={timeZone}
               key={i}
+              // isWip={newRangeRef.current != null}
             />
           );
         }
