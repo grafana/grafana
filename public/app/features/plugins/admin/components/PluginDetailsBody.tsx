@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { CatalogPlugin, PluginTabIds } from '../types';
+import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
@@ -18,9 +19,27 @@ type Props = {
   pageId: string;
 };
 
+type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
+
 export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
+
+  const columns: Array<Column<Permission>> = useMemo(
+    () => [
+      {
+        id: 'action',
+        header: 'Action',
+        cell: ({ cell: { value } }: Cell<'action'>) => value,
+      },
+      {
+        id: 'scope',
+        header: 'Scope',
+        cell: ({ cell: { value } }: Cell<'scope'>) => value,
+      },
+    ],
+    []
+  );
 
   if (pageId === PluginTabIds.OVERVIEW) {
     return (
@@ -46,6 +65,31 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
       <div className={styles.container}>
         <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
       </div>
+    );
+  }
+
+  // Permissions will be returned in the iam field for installed plugins and in the details.iam field when fetching details from gcom
+  const permissions = plugin.iam?.permissions || plugin.details?.iam?.permissions;
+
+  const displayPermissions =
+    config.featureToggles.externalServiceAccounts &&
+    pageId === PluginTabIds.IAM &&
+    permissions &&
+    permissions.length > 0;
+
+  if (displayPermissions) {
+    return (
+      <>
+        <Stack direction="row">
+          The {plugin.name} plugin needs a service account to be able to query Grafana. The following list contains the
+          permissions available to the service account:
+        </Stack>
+        <InteractiveTable
+          columns={columns}
+          data={permissions}
+          getRowId={(permission: Permission) => String(permission.action)}
+        />
+      </>
     );
   }
 
