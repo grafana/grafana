@@ -143,8 +143,13 @@ export class Connections {
 
     const transformScale = this.scene.scale;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
-    const x = event.pageX - parentBoundingRect!.x ?? 0;
-    const y = event.pageY - parentBoundingRect!.y ?? 0;
+
+    if (!parentBoundingRect) {
+      return;
+    }
+
+    const x = event.pageX - parentBoundingRect.x ?? 0;
+    const y = event.pageY - parentBoundingRect.y ?? 0;
 
     this.connectionLine.setAttribute('x2', `${x / transformScale}`);
     this.connectionLine.setAttribute('y2', `${y / transformScale}`);
