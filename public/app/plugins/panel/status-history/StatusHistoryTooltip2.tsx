@@ -145,7 +145,7 @@ export const StatusHistoryTooltip2 = ({
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
+      {isPinned && <VizTooltipFooter dataLinks={links} />}
     </div>
   );
 };

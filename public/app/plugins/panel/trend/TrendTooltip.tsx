@@ -14,7 +14,7 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
-import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { SeriesTableRowProps, useStyles2, useTheme2 } from '@grafana/ui';
 import { SeriesList } from '@grafana/ui/src/components/VizTooltip/SeriesList';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -159,7 +159,7 @@ export const TrendTooltip = ({
     <div>
       <div className={styles.wrapper}>
         <VizTooltipHeader headerLabel={getHeaderLabel()} customValueDisplay={tooltip} />
-        {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
+        {isPinned && <VizTooltipFooter dataLinks={links} />}
       </div>
     </div>
   );
