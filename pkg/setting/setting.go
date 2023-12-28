@@ -677,6 +677,13 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	keys := environmentMetricsSection.Keys()
 	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
 
+	cfg.MetricsGrafanaEnvironmentInfo["version"] = cfg.BuildVersion
+	cfg.MetricsGrafanaEnvironmentInfo["commit"] = cfg.BuildCommit
+
+	if cfg.EnterpriseBuildCommit != "NA" && cfg.EnterpriseBuildCommit != "" {
+		cfg.MetricsGrafanaEnvironmentInfo["enterprise_commit"] = cfg.EnterpriseBuildCommit
+	}
+
 	for _, key := range keys {
 		labelName := model.LabelName(key.Name())
 		labelValue := model.LabelValue(key.Value())
@@ -1546,7 +1553,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// ID response header
 	cfg.IDResponseHeaderEnabled = auth.Key("id_response_header_enabled").MustBool(false)
-	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana-")
+	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana")
 
 	idHeaderNamespaces := util.SplitString(auth.Key("id_response_header_namespaces").MustString(""))
 	cfg.IDResponseHeaderNamespaces = make(map[string]struct{}, len(idHeaderNamespaces))
