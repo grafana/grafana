@@ -13,7 +13,7 @@ export const PanZoomHelp = ({}: StandardEditorProps<string, unknown, unknown, un
     <>
       <HorizontalGroup className={styles.hGroup}>
         <Alert
-          title="Pan and Zoom Controls"
+          title="Pan and zoom controls"
           severity="info"
           buttonContent={<Icon name="question-circle" size="xl" />}
           className={styles.alert}

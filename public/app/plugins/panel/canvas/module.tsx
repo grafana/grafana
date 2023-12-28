@@ -27,7 +27,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
 
   builder.addBooleanSwitch({
     path: 'panZoom',
-    name: 'Pan and Zoom',
+    name: 'Pan and zoom',
     description: 'Enable pan and zoom',
     defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
@@ -35,7 +35,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
   builder.addCustomEditor({
     id: 'panZoomHelp',
     path: 'panZoomHelp',
-    name: 'More information...',
+    name: '',
     editor: PanZoomHelp,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
