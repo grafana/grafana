@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Tooltip, useTheme2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Drawer } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -22,8 +22,8 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
-import { PromQail, getStyles } from './promQail/PromQail';
-import AI_Logo_color from './promQail/resources/AI_Logo_color.svg';
+import { PromQail } from './promQail/PromQail';
+import { QueryAssistantButton } from './promQail/QueryAssistantButton';
 import { isLLMPluginEnabled } from './promQail/state/helpers';
 
 export interface Props {
@@ -56,76 +56,6 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     }
     checkLlms();
   }, []);
-
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-
-  const queryAssistantButton = function () {
-    const llmAppDisabled = !llmAppEnabled;
-    const noMetricSelected = !query.metric;
-
-    const button = () => {
-      return (
-        <Button
-          variant={'secondary'}
-          onClick={() => {
-            reportInteraction('grafana_prometheus_promqail_ai_button_clicked', {
-              metric: query.metric,
-            });
-            setShowDrawer(true);
-          }}
-          disabled={!query.metric || !llmAppEnabled}
-        >
-          <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
-          {'\u00A0'}Get query suggestions
-        </Button>
-      );
-    };
-
-    const selectMetricMessage = (
-      <Tooltip content={'First, select a metric.'} placement={'bottom-end'}>
-        {button()}
-      </Tooltip>
-    );
-
-    const llmAppMessage = (
-      <Tooltip
-        interactive={true}
-        placement={'auto-end'}
-        content={
-          <div className={styles.enableButtonTooltip}>
-            <h6>Query Advisor is disabled</h6>
-            <div>To enable Query Advisor you must:</div>
-            <div>
-              <ul>
-                <li>
-                  <a
-                    href={'https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/'}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className={styles.link}
-                  >
-                    Install and enable the LLM plugin
-                  </a>
-                </li>
-                <li>Select a metric</li>
-              </ul>
-            </div>
-          </div>
-        }
-      >
-        {button()}
-      </Tooltip>
-    );
-
-    if (llmAppDisabled) {
-      return llmAppMessage;
-    } else if (noMetricSelected) {
-      return selectMetricMessage;
-    } else {
-      return button();
-    }
-  };
 
   return (
     <>
@@ -178,7 +108,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
               padding: '0 0 0 6px',
             })}
           >
-            {queryAssistantButton()}
+            <QueryAssistantButton llmAppEnabled={llmAppEnabled} metric={query.metric} setShowDrawer={setShowDrawer} />
           </div>
         )}
         <QueryBuilderHints<PromVisualQuery>
