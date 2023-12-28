@@ -87,7 +87,7 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
         />
       </Stack>
       <Stack gap={0} grow={1}>
-        <InlineLabel />
+        <InlineLabel> </InlineLabel>
       </Stack>
     </Stack>
   );
