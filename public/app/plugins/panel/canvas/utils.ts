@@ -245,6 +245,7 @@ export const getParentBoundingClientRect = (scene: Scene) => {
     const transformRef = scene.transformComponentRef?.current;
     return transformRef?.instance.contentComponent?.getBoundingClientRect();
   }
+
   return scene.div?.getBoundingClientRect();
 };
 

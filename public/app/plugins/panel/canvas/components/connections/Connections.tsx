@@ -166,15 +166,13 @@ export class Connections {
 
         const transformScale = this.scene.scale;
         const parentRect = getParentBoundingClientRect(this.scene);
-        const parentRectObj = {
-          top: parentRect?.top ?? 0,
-          left: parentRect?.left ?? 0,
-          height: parentRect?.height ?? 0,
-          width: parentRect?.width ?? 0,
-        };
 
-        const sourceVerticalCenter = (sourceRect.top - parentRectObj.top + sourceRect.height / 2) / transformScale;
-        const sourceHorizontalCenter = (sourceRect.left - parentRectObj.left + sourceRect.width / 2) / transformScale;
+        if (!parentRect) {
+          return;
+        }
+
+        const sourceVerticalCenter = (sourceRect.top - parentRect.top + sourceRect.height / 2) / transformScale;
+        const sourceHorizontalCenter = (sourceRect.left - parentRect.left + sourceRect.width / 2) / transformScale;
 
         // Convert from DOM coords to connection coords
         // TODO: Break this out into util function and add tests
@@ -188,18 +186,18 @@ export class Connections {
         if (this.connectionTarget && this.connectionTarget.div) {
           const targetRect = this.connectionTarget.div.getBoundingClientRect();
 
-          const targetVerticalCenter = targetRect.top - parentRectObj.top + targetRect.height / 2;
-          const targetHorizontalCenter = targetRect.left - parentRectObj.left + targetRect.width / 2;
+          const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
+          const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
 
           targetX = (x - targetHorizontalCenter) / (targetRect.width / 2);
           targetY = (targetVerticalCenter - y) / (targetRect.height / 2);
           targetName = this.connectionTarget.options.name;
         } else {
-          const parentVerticalCenter = parentRectObj.height / 2;
-          const parentHorizontalCenter = parentRectObj.width / 2;
+          const parentVerticalCenter = parentRect.height / 2;
+          const parentHorizontalCenter = parentRect.width / 2;
 
-          targetX = (x - parentHorizontalCenter) / (parentRectObj.width / 2);
-          targetY = (parentVerticalCenter - y) / (parentRectObj.height / 2);
+          targetX = (x - parentHorizontalCenter) / (parentRect.width / 2);
+          targetY = (parentVerticalCenter - y) / (parentRect.height / 2);
         }
 
         const connection = {
@@ -256,16 +254,24 @@ export class Connections {
       const transformScale = this.scene.scale;
       const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
-      const x = connectionStartTargetBox.x - parentBoundingRect!.x + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
-      const y = connectionStartTargetBox.y - parentBoundingRect!.y + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
+      if (!parentBoundingRect) {
+        return;
+      }
 
-      const mouseX = clientX - parentBoundingRect!.x;
-      const mouseY = clientY - parentBoundingRect!.y;
+      // Multiply by transform scale to calculate the correct scaled offset
+      const connectionAnchorOffsetX = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * transformScale;
+      const connectionAnchorOffsetY = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * transformScale;
 
-      this.connectionLine.setAttribute('x1', `${x / transformScale}`);
-      this.connectionLine.setAttribute('y1', `${y / transformScale}`);
-      this.connectionLine.setAttribute('x2', `${mouseX / transformScale}`);
-      this.connectionLine.setAttribute('y2', `${mouseY / transformScale}`);
+      const x = (connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorOffsetX) / transformScale;
+      const y = (connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorOffsetY) / transformScale;
+
+      const mouseX = clientX - parentBoundingRect.x;
+      const mouseY = clientY - parentBoundingRect.y;
+
+      this.connectionLine.setAttribute('x1', `${x}`);
+      this.connectionLine.setAttribute('y1', `${y}`);
+      this.connectionLine.setAttribute('x2', `${mouseX}`);
+      this.connectionLine.setAttribute('y2', `${mouseY}`);
       this.didConnectionLeaveHighlight = false;
     }
 
