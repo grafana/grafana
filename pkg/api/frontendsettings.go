@@ -270,6 +270,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		GithubSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
 		GitLabSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
 		OktaSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
+		DisableLogin:                hs.Cfg.DisableLogin,
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
