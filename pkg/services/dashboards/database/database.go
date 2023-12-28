@@ -989,10 +989,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	// Only use modified search for non-empty search queries, otherwise it's just listing and new query can't help there yet.
-	if query.Title != "" &&
-		d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
-		len(query.FolderUIDs) == 0 &&
-		len(query.FolderIds) == 0 { //nolint:staticcheck
+	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) && d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
+		query.Title != "" && len(query.FolderUIDs) == 0 && len(query.FolderIds) == 0 { //nolint:staticcheck
 		results, err := d.findDashboards(ctx, query)
 		if err != nil {
 			d.log.Info("new search failed", "error", err)
