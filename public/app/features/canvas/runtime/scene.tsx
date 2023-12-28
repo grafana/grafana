@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { createRef, CSSProperties, RefObject } from 'react';
-import { TransformWrapper, TransformComponent, ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -38,6 +38,7 @@ import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
+import { SceneTransformWrapper } from './SceneTransformWrapper';
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
@@ -708,34 +709,7 @@ export class Scene {
     );
 
     return config.featureToggles.canvasPanelPanZoom ? (
-      <TransformWrapper
-        doubleClick={{ mode: 'reset' }}
-        ref={this.transformComponentRef}
-        onZoom={(zoomPanPinchRef) => {
-          const scale = zoomPanPinchRef.state.scale;
-          if (this.moveable && scale > 0) {
-            this.moveable.zoom = 1 / scale;
-          }
-          this.scale = scale;
-        }}
-        onTransformed={(ref, state) => {
-          this.scale = state.scale;
-        }}
-        limitToBounds={true}
-        disabled={!config.featureToggles.canvasPanelPanZoom || !this.shouldPanZoom}
-        panning={{ allowLeftClickPan: false }}
-      >
-        <div
-          style={{
-            backgroundColor: config.theme2.colors.background.secondary,
-            position: 'fixed',
-            zIndex: 5,
-            bottom: '0px',
-            right: '0px',
-          }}
-        ></div>
-        <TransformComponent>{sceneDiv}</TransformComponent>
-      </TransformWrapper>
+      <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper>
     ) : (
       sceneDiv
     );
