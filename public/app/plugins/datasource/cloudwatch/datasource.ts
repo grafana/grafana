@@ -37,6 +37,7 @@ import {
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
+  CloudWatchQueryMode,
 } from './types';
 import { CloudWatchVariableSupport } from './variables';
 
@@ -141,6 +142,10 @@ export class CloudWatchDatasource
       ...(isCloudWatchMetricsQuery(query) &&
         this.metricsQueryRunner.interpolateMetricsQueryVariables(query, scopedVars)),
     }));
+  }
+
+  isQueryEmpty(query?: CloudWatchQuery | undefined): boolean {
+    return query?.region === undefined || query.region.trim() === '';
   }
 
   getLogRowContext(

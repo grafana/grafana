@@ -59,6 +59,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
+  isQueryEmpty(query?: CloudMonitoringQuery | undefined): boolean {
+    return query?.queryType === undefined;
+  }
+
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars) {
     const { timeSeriesList, timeSeriesQuery, sloQuery, promQLQuery } = target;
 

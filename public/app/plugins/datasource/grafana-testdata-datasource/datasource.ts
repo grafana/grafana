@@ -141,6 +141,10 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     return merge(...streams);
   }
 
+  isQueryEmpty(_?: TestData | undefined): boolean {
+    return false;
+  }
+
   resolveTemplateVariables(query: TestData, scopedVars: ScopedVars) {
     if (query.labels) {
       query.labels = this.templateSrv.replace(query.labels, scopedVars);

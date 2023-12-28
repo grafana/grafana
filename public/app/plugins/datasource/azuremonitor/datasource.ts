@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 
 import {
   DataFrame,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -120,6 +121,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     }
 
     return of({ state: LoadingState.Done, data: [] });
+  }
+
+  isQueryEmpty(query?: AzureMonitorQuery | undefined): boolean {
+    return query?.region === undefined || query.region.trim() === '';
   }
 
   targetContainsTemplate(query: AzureMonitorQuery) {
