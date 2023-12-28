@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { createRef, CSSProperties, RefObject } from 'react';
@@ -671,6 +670,8 @@ export class Scene {
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (
+      // TODO: Address this eslint error
+      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
       <div
         key={this.revId}
         className={this.styles.wrap}
