@@ -90,7 +90,7 @@ export function RateSection({ query, onChange, onRunQuery, tsdbVersion }: RateSe
         </>
       )}
       <Stack gap={0} grow={1}>
-        <InlineLabel/>
+        <InlineLabel />
       </Stack>
     </Stack>
   );

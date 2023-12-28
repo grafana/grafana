@@ -77,7 +77,7 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
         />
       </Stack>
       <Stack gap={0} grow={1}>
-        <InlineLabel/>
+        <InlineLabel />
       </Stack>
     </Stack>
   );
