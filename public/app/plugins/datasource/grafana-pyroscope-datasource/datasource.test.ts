@@ -113,6 +113,37 @@ describe('Pyroscope data source', () => {
       expect(query).toMatchObject({ labelSelector: `{interpolated="interpolated"}`, profileTypeId: 'interpolated' });
     });
   });
+
+  describe('when calling isQueryEmpty', () => {
+    const templateSrv = getTemplateSrv();
+
+    it('should return false when expr has content', () => {
+      const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
+      const query: Query = {
+        refId: 'A',
+        profileTypeId: 'foo',
+        groupBy: ['bar'],
+        queryType: 'both',
+        labelSelector: 'baz',
+      };
+      expect(ds.isQueryEmpty(query)).toBe(false);
+    });
+    it('should return true when query is not defined', () => {
+      const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
+      expect(ds.isQueryEmpty()).toBe(true);
+    });
+    it('should return true when expr is whitespace', () => {
+      const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
+      const query: Query = {
+        refId: 'A',
+        profileTypeId: '    ',
+        groupBy: ['bar'],
+        queryType: 'both',
+        labelSelector: 'baz',
+      };
+      expect(ds.isQueryEmpty(query)).toBe(true);
+    });
+  });
 });
 
 describe('normalizeQuery', () => {

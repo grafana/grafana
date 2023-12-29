@@ -131,6 +131,38 @@ describe('Tempo data source', () => {
     });
   });
 
+  describe('when calling isQueryEmpty', () => {
+    it('should return false when expr has content', () => {
+      const templateSrv: any = { replace: jest.fn() };
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      const query: TempoQuery = {
+        queryType: 'search',
+        refId: 'A',
+        query: 'foo',
+        search: '',
+        filters: [],
+      };
+      expect(ds.isQueryEmpty(query)).toBe(false);
+    });
+    it('should return true when query is not defined', () => {
+      const templateSrv: any = { replace: jest.fn() };
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      expect(ds.isQueryEmpty()).toBe(true);
+    });
+    it('should return true when expr is whitespace', () => {
+      const templateSrv: any = { replace: jest.fn() };
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      const query: TempoQuery = {
+        queryType: 'search',
+        refId: 'A',
+        query: '',
+        search: '    ',
+        filters: [],
+      };
+      expect(ds.isQueryEmpty(query)).toBe(true);
+    });
+  });
+
   it('parses json fields from backend', async () => {
     setupBackendSrv(
       createDataFrame({

@@ -2,7 +2,7 @@ import { createMockInstanceSetttings } from './__mocks__/instanceSettings';
 import createMockQuery from './__mocks__/query';
 import { singleVariable } from './__mocks__/variables';
 import Datasource from './datasource';
-import { AzureQueryType } from './types';
+import { AzureQueryType, AzureMonitorQuery } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -56,6 +56,29 @@ describe('Azure Monitor Datasource', () => {
           datasource: expect.objectContaining({ type: 'azuremonitor', uid: 'abc' }),
         })
       );
+    });
+  });
+
+  describe('when calling isQueryEmpty', () => {
+    it('should return false when region has content', () => {
+      const ds = new Datasource(createMockInstanceSetttings());
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        region: 'foo',
+      };
+      expect(ds.isQueryEmpty(query)).toBe(false);
+    });
+    it('should return true when query is not defined', () => {
+      const ds = new Datasource(createMockInstanceSetttings());
+      expect(ds.isQueryEmpty()).toBe(true);
+    });
+    it('should return true when region is whitespace', () => {
+      const ds = new Datasource(createMockInstanceSetttings());
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        region: '    ',
+      };
+      expect(ds.isQueryEmpty(query)).toBe(true);
     });
   });
 

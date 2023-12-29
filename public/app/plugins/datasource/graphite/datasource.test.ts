@@ -657,6 +657,28 @@ describe('graphiteDatasource', () => {
     });
   });
 
+  describe('when calling isQueryEmpty', () => {
+    const ctx = {
+      templateSrv: new TemplateSrv(),
+      instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
+    };
+
+    it('should return false when target has content', () => {
+      const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.templateSrv);
+      const query: GraphiteQuery = { refId: 'A', target: 'foo' };
+      expect(ds.isQueryEmpty(query)).toBe(false);
+    });
+    it('should return true when query is not defined', () => {
+      const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.templateSrv);
+      expect(ds.isQueryEmpty()).toBe(true);
+    });
+    it('should return true when target is whitespace', () => {
+      const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.templateSrv);
+      const query: GraphiteQuery = { refId: 'A', target: '   ' };
+      expect(ds.isQueryEmpty(query)).toBe(true);
+    });
+  });
+
   describe('exporting to abstract query', () => {
     async function assertQueryExport(target: string, labelMatchers: AbstractLabelMatcher[]): Promise<void> {
       let abstractQueries = await ctx.ds.exportToAbstractQueries([

@@ -77,7 +77,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     };
   }
 
-  isQueryEmpty(_: GrafanaQuery): boolean {
+  isQueryEmpty(_?: GrafanaQuery): boolean {
     return false;
   }
 

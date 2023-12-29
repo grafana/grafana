@@ -679,6 +679,26 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('when calling isQueryEmpty', () => {
+    it('should return false when expr has content', () => {
+      const ds = new PrometheusDatasource(instanceSettings, templateSrvStub);
+      const query: PromQuery = {
+        refId: 'A',
+        expr: 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))',
+      };
+      expect(ds.isQueryEmpty(query)).toBe(false);
+    });
+    it('should return true when query is not defined', () => {
+      const ds = new PrometheusDatasource(instanceSettings, templateSrvStub);
+      expect(ds.isQueryEmpty()).toBe(true);
+    });
+    it('should return true when expr is whitespace', () => {
+      const ds = new PrometheusDatasource(instanceSettings, templateSrvStub);
+      const query: PromQuery = { refId: 'A', expr: '   ' };
+      expect(ds.isQueryEmpty(query)).toBe(true);
+    });
+  });
+
   describe('metricFindQuery', () => {
     beforeEach(() => {
       const prometheusDatasource = new PrometheusDatasource(

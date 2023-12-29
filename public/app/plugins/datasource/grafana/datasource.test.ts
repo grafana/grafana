@@ -21,6 +21,13 @@ describe('grafana data source', () => {
     jest.clearAllMocks();
   });
 
+  describe('when calling isQueryEmpty', () => {
+    it('should return false', () => {
+      const ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
+      expect(ds.isQueryEmpty()).toBe(false);
+    });
+  });
+
   describe('when executing an annotations query', () => {
     let calledBackendSrvParams: any;
     let ds: GrafanaDatasource;

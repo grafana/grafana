@@ -875,6 +875,33 @@ describe('ElasticDatasource', () => {
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
   });
 
+  describe('when calling isQueryEmpty', () => {
+    it('should return false when query has content', () => {
+      const { ds } = getTestContext();
+      const query: ElasticsearchQuery = {
+        refId: 'A',
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: 'foo',
+      };
+      expect(ds.isQueryEmpty(query)).toBe(false);
+    });
+    it('should return true when query is not defined', () => {
+      const { ds } = getTestContext();
+      expect(ds.isQueryEmpty()).toBe(true);
+    });
+    it('should return true when query is whitespace', () => {
+      const { ds } = getTestContext();
+      const query: ElasticsearchQuery = {
+        refId: 'A',
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '   ',
+      };
+      expect(ds.isQueryEmpty(query)).toBe(true);
+    });
+  });
+
   describe('getSupplementaryQuery', () => {
     let ds: ElasticDatasource;
     beforeEach(() => {

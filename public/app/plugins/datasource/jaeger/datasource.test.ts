@@ -251,6 +251,23 @@ describe('JaegerDatasource', () => {
       url: `${defaultSettings.url}/api/traces?service=interpolationText&operation=interpolationText&minDuration=interpolationText&maxDuration=interpolationText&start=1531468681000&end=1531489712000&lookback=custom`,
     });
   });
+
+  describe('when calling isQueryEmpty', () => {
+    it('should return false when query has content', () => {
+      const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+      const query: JaegerQuery = { refId: 'A', query: 'foo' };
+      expect(ds.isQueryEmpty(query)).toBe(false);
+    });
+    it('should return true when query is not defined', () => {
+      const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+      expect(ds.isQueryEmpty()).toBe(true);
+    });
+    it('should return true when query is whitespace', () => {
+      const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+      const query: JaegerQuery = { refId: 'A', query: '   ' };
+      expect(ds.isQueryEmpty(query)).toBe(true);
+    });
+  });
 });
 
 describe('when performing testDataSource', () => {
