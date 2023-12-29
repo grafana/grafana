@@ -7,7 +7,8 @@ on:
       - cron:  '30 10 * * *'
 jobs:
     feature-toggle-cleanup:
-        runs-on: ubuntu-latest    
+        runs-on: ubuntu-latest
+        # This check is here to prevent this workflow from running on forks.    
         if: github.repository == 'grafana/grafana'
         steps:
             - name: Check out the code
