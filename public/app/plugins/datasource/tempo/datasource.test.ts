@@ -132,8 +132,9 @@ describe('Tempo data source', () => {
   });
 
   describe('when calling isQueryEmpty', () => {
+    const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
+
     it('should return false when expr has content', () => {
-      const templateSrv: any = { replace: jest.fn() };
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const query: TempoQuery = {
         queryType: 'search',
@@ -145,12 +146,10 @@ describe('Tempo data source', () => {
       expect(ds.isQueryEmpty(query)).toBe(false);
     });
     it('should return true when query is not defined', () => {
-      const templateSrv: any = { replace: jest.fn() };
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       expect(ds.isQueryEmpty()).toBe(true);
     });
     it('should return true when expr is whitespace', () => {
-      const templateSrv: any = { replace: jest.fn() };
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const query: TempoQuery = {
         queryType: 'search',
@@ -180,7 +179,7 @@ describe('Tempo data source', () => {
         ],
       })
     );
-    const templateSrv: any = { replace: jest.fn() };
+    const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
     const ds = new TempoDatasource(defaultSettings, templateSrv);
     const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
 
@@ -274,10 +273,9 @@ describe('Tempo data source', () => {
   });
 
   it('should build search query correctly', () => {
-    const templateSrv: any = { replace: jest.fn() };
-    const ds = new TempoDatasource(defaultSettings, templateSrv);
     const duration = '10ms';
-    templateSrv.replace.mockReturnValue(duration);
+    const templateSrv: TemplateSrv = { replace: jest.fn().mockReturnValue(duration) } as unknown as TemplateSrv;
+    const ds = new TempoDatasource(defaultSettings, templateSrv);
     const tempoQuery: TempoQuery = {
       queryType: 'search',
       refId: 'A',
