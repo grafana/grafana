@@ -1,8 +1,7 @@
 name: Feature Toggle Cleanup
 
 on:
-    repository_dispatch:
-        types: feature-toggle-cleanup
+  workflow_dispatch:    
 
 jobs:
     fetch:
