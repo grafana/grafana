@@ -7,11 +7,11 @@ import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensi
 
 import { Options, ScatterSeriesConfig } from './panelcfg.gen';
 
-export const ScatterSeriesEditor = ({
-  value,
-  onChange,
-  context,
-}: StandardEditorProps<ScatterSeriesConfig, unknown, Options>) => {
+export interface Props extends StandardEditorProps<ScatterSeriesConfig, unknown, Options> {
+  baseNameMode: FieldNamePickerBaseNameMode;
+}
+
+export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode }: Props) => {
   const onFieldChange = (val: unknown | undefined, field: string) => {
     onChange({ ...value, [field]: val });
   };
@@ -27,7 +27,7 @@ export const ScatterSeriesEditor = ({
             id: 'x',
             name: 'x',
             settings: {
-              baseNameMode: FieldNamePickerBaseNameMode.ExcludeBaseNames,
+              baseNameMode,
             },
           }}
         />
@@ -41,7 +41,7 @@ export const ScatterSeriesEditor = ({
             id: 'x',
             name: 'x',
             settings: {
-              baseNameMode: FieldNamePickerBaseNameMode.ExcludeBaseNames,
+              baseNameMode,
             },
           }}
         />
@@ -55,7 +55,7 @@ export const ScatterSeriesEditor = ({
             id: 'x',
             name: 'x',
             settings: {
-              baseNameMode: FieldNamePickerBaseNameMode.ExcludeBaseNames,
+              baseNameMode,
               isClearable: true,
               placeholder: 'Use standard color scheme',
             },

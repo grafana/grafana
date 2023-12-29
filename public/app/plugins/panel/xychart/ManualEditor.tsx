@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
 import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
@@ -98,6 +98,7 @@ export const ManualEditor = ({
       {selected >= 0 && value[selected] && (
         <ScatterSeriesEditor
           key={`series/${selected}`}
+          baseNameMode={FieldNamePickerBaseNameMode.ExcludeBaseNames}
           item={{} as any}
           context={context}
           value={value[selected]}
