@@ -442,11 +442,8 @@ export function getConfig(opts: TimelineCoreOptions) {
       return hovered[seriesIdx]?.didx;
     },
     focus: {
-      prox: 30,
-      dist: (u, seriesIdx, dataIdx, valPos, curPos) => {
-        valPos = yMids[seriesIdx - 1] / uPlot.pxRatio;
-        return valPos - curPos;
-      },
+      prox: 1e3,
+      dist: (u, seriesIdx, dataIdx, valPos, curPos) => (hoveredAtCursor?.sidx === seriesIdx ? 0 : Infinity),
     },
     points: {
       fill: 'rgba(255,255,255,0.2)',
