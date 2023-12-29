@@ -147,11 +147,11 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
           errors: res.errors,
         };
       }),
-      catchError((err: any) => {
+      catchError((err: unknown) => {
         if (Array.isArray(err)) {
           return of({ data: [], errors: err });
         } else {
-          return of({ data: [], errors: [{ message: err.toString() }] });
+          return of({ data: [], errors: [{ message: err }] })
         }
       })
     );
