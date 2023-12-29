@@ -37,7 +37,6 @@ import {
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
-  CloudWatchQueryMode,
 } from './types';
 import { CloudWatchVariableSupport } from './variables';
 

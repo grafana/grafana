@@ -4,7 +4,6 @@ import { map } from 'rxjs/operators';
 
 import {
   DataFrame,
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
