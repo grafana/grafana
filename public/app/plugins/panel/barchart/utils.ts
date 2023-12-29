@@ -492,7 +492,7 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  // If stacking is percent, we need to correct the fields unit and display
+  // If stacking is percent, we need to correct the legend fields unit and display
   let legendFields: Field[] = cloneDeep(fields);
   if (options.stacking === StackingMode.Percent) {
     legendFields.map((field) => {
