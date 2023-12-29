@@ -336,6 +336,12 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
+	// TODO: hack the resource version for now
+	// Watch is failing when set the list resourceVersion to 0, even though informers provide that in the opts
+	if opts.ResourceVersion == "0" {
+		opts.ResourceVersion = "1"
+	}
+
 	if opts.ResourceVersion != "" {
 		resourceVersionInt, err := s.Versioner().ParseResourceVersion(opts.ResourceVersion)
 		if err != nil {

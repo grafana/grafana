@@ -35,6 +35,7 @@ import (
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -231,12 +232,12 @@ func (o *AggregatorServerOptions) CreateAggregatorConfig() (*aggregatorapiserver
 	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(v1.SchemeGroupVersion,
 		schema.GroupKind{Group: v1beta1.GroupName},
 		schema.GroupKind{Group: servicev0alpha1.GROUP})
-	etcdOptions.StorageConfig.Transport.ServerList = []string{"127.0.0.1:2379"}
+	// etcdOptions.StorageConfig.Transport.ServerList = []string{"127.0.0.1:2379"}
 	etcdOptions.SkipHealthEndpoints = true // avoid double wiring of health checks
 	if err := etcdOptions.ApplyTo(&genericConfig); err != nil {
 		return nil, err
 	}
-	// genericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter("/tmp/grafana.aggregator", etcdOptions.StorageConfig)
+	genericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter("/tmp/grafana.aggregator", etcdOptions.StorageConfig)
 
 	versionedInformers := informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
