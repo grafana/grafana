@@ -283,7 +283,9 @@ describe('CloudWatchMetricsQueryRunner', () => {
       });
 
       it('should display one alert error message per region+datasource combination', async () => {
-        const { runner, request, queryMock } = setupMockedMetricsQueryRunner({response: toDataQueryResponse(dataWithThrottlingError)});
+        const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
+          response: toDataQueryResponse(dataWithThrottlingError),
+        });
         const memoizedDebounceSpy = jest.spyOn(runner, 'debouncedAlert');
 
         await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
@@ -296,7 +298,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
       });
     });
   });
-  
 
   describe('handleMetricQueries ', () => {
     const queries: CloudWatchMetricsQuery[] = [

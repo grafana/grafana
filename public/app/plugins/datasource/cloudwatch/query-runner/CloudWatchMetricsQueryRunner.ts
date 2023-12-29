@@ -26,7 +26,6 @@ import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
 
-
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
     notifyApp(
@@ -38,7 +37,7 @@ const displayAlert = (datasourceName: string, region: string) =>
       )
     )
   );
-  
+
 // This class handles execution of CloudWatch metrics query data queries
 export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   debouncedAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
@@ -122,10 +121,14 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
           });
         });
 
-        if(res.errors?.length) {
-          if (res.errors.some((err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message)))) {
-            const failedRefIds = res.errors.map(error => error.refId).filter(refId => refId);
-            if(failedRefIds.length > 0) {
+        if (res.errors?.length) {
+          if (
+            res.errors.some(
+              (err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message))
+            )
+          ) {
+            const failedRefIds = res.errors.map((error) => error.refId).filter((refId) => refId);
+            if (failedRefIds.length > 0) {
               const regionsAffected = Object.values(request.targets).reduce(
                 (res: string[], { refId, region }) =>
                   (refId && !failedRefIds.includes(refId)) || res.includes(region) ? res : [...res, region],
@@ -136,7 +139,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
                 if (actualRegion) {
                   this.debouncedAlert(this.instanceSettings.name, actualRegion);
                 }
-              });  
+              });
             }
           }
         }
@@ -151,7 +154,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         if (Array.isArray(err)) {
           return of({ data: [], errors: err });
         } else {
-          return of({ data: [], errors: [{ message: err }] })
+          return of({ data: [], errors: [{ message: err }] });
         }
       })
     );
