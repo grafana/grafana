@@ -6,12 +6,25 @@ import {
   PluginType,
   DataSourceJsonData,
 } from '@grafana/data';
-import { setPluginExtensionGetter, getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { setPluginExtensionGetter, getBackendSrv, setBackendSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';
 import { normalizeQuery, PyroscopeDataSource } from './datasource';
 import { Query } from './types';
+
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    getTemplateSrv: () => {
+      return {
+        replace: (query: string): string => {
+          return query.replace(/\$var/g, 'interpolated');
+        },
+      };
+    },
+  };
+});
 
 /** The datasource QueryEditor fetches datasource settings to send to the extension's `configure` method */
 export function mockFetchPyroscopeDatasourceSettings(
@@ -80,10 +93,7 @@ describe('Pyroscope data source', () => {
   });
 
   describe('applyTemplateVariables', () => {
-    const templateSrv = new TemplateSrv();
-    templateSrv.replace = jest.fn((query: string): string => {
-      return query.replace(/\$var/g, 'interpolated');
-    });
+    const templateSrv = getTemplateSrv();
 
     it('should not update labelSelector if there are no template variables', () => {
       ds = new PyroscopeDataSource(defaultSettings, templateSrv);

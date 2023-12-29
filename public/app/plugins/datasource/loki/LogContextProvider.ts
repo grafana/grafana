@@ -13,6 +13,7 @@ import {
   toUtc,
   LogRowContextQueryDirection,
   LogRowContextOptions,
+  dateTime,
 } from '@grafana/data';
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 import { Labels } from '@grafana/schema';
@@ -44,22 +45,38 @@ export type PreservedLabels = {
 
 export class LogContextProvider {
   datasource: LokiDatasource;
-  appliedContextFilters: ContextFilter[];
+  cachedContextFilters: ContextFilter[];
   onContextClose: (() => void) | undefined;
 
   constructor(datasource: LokiDatasource) {
     this.datasource = datasource;
-    this.appliedContextFilters = [];
+    this.cachedContextFilters = [];
   }
 
-  private async getQueryAndRange(row: LogRowModel, options?: LogRowContextOptions, origQuery?: LokiQuery) {
+  private async getQueryAndRange(
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: LokiQuery,
+    cacheFilters = true
+  ) {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const limit = (options && options.limit) || this.datasource.maxLines;
-    // This happens only on initial load, when user haven't applied any filters yet
-    // We need to get the initial filters from the row labels
-    if (this.appliedContextFilters.length === 0) {
-      const filters = (await this.getInitContextFilters(row.labels, origQuery)).filter((filter) => filter.enabled);
-      this.appliedContextFilters = filters;
+    // If the user doesn't have any filters applied already, or if we don't want
+    // to use the cached filters, we need to reinitialize them.
+    if (this.cachedContextFilters.length === 0 || !cacheFilters) {
+      const filters = (
+        await this.getInitContextFilters(
+          row.labels,
+          origQuery,
+          {
+            from: dateTime(row.timeEpochMs),
+            to: dateTime(row.timeEpochMs),
+            raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
+          },
+          cacheFilters
+        )
+      ).filter((filter) => filter.enabled);
+      this.cachedContextFilters = filters;
     }
 
     return await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
@@ -68,9 +85,15 @@ export class LogContextProvider {
   getLogRowContextQuery = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    origQuery?: LokiQuery
+    origQuery?: LokiQuery,
+    cacheFilters = true
   ): Promise<LokiQuery> => {
-    const { query } = await this.getQueryAndRange(row, options, origQuery);
+    const { query } = await this.getQueryAndRange(row, options, origQuery, cacheFilters);
+
+    if (!cacheFilters) {
+      // If the caller doesn't want to cache the filters, we need to reset them.
+      this.cachedContextFilters = [];
+    }
 
     return query;
   };
@@ -117,7 +140,7 @@ export class LogContextProvider {
     direction: LogRowContextQueryDirection,
     origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
-    const expr = this.prepareExpression(this.appliedContextFilters, origQuery);
+    const expr = this.prepareExpression(this.cachedContextFilters, origQuery);
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
@@ -173,7 +196,7 @@ export class LogContextProvider {
 
   getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, origQuery?: LokiQuery): React.ReactNode {
     const updateFilter = (contextFilters: ContextFilter[]) => {
-      this.appliedContextFilters = contextFilters;
+      this.cachedContextFilters = contextFilters;
 
       if (runContextQuery) {
         runContextQuery();
@@ -184,7 +207,7 @@ export class LogContextProvider {
     this.onContextClose =
       this.onContextClose ??
       (() => {
-        this.appliedContextFilters = [];
+        this.cachedContextFilters = [];
       });
 
     return LokiContextUi({
@@ -285,7 +308,7 @@ export class LogContextProvider {
     );
   };
 
-  getInitContextFilters = async (labels: Labels, query?: LokiQuery) => {
+  getInitContextFilters = async (labels: Labels, query?: LokiQuery, timeRange?: TimeRange, cacheFilters?: boolean) => {
     if (!query || isEmpty(labels)) {
       return [];
     }
@@ -296,13 +319,13 @@ export class LogContextProvider {
     if (!isQueryWithParser(query.expr).queryWithParser) {
       // If there is no parser, we use getLabelKeys because it has better caching
       // and all labels should already be fetched
-      await this.datasource.languageProvider.start();
+      await this.datasource.languageProvider.start(timeRange);
       allLabels = this.datasource.languageProvider.getLabelKeys();
     } else {
       // If we have parser, we use fetchSeriesLabels to fetch actual labels for selected stream
       const stream = getStreamSelectorsFromQuery(query.expr);
       // We are using stream[0] as log query can always have just 1 stream selector
-      const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0]);
+      const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0], { timeRange });
       allLabels = Object.keys(series);
     }
 
@@ -350,8 +373,10 @@ export class LogContextProvider {
         // If we end up with no real labels enabled, we need to reset the init filters
         return contextFilters;
       } else {
-        // Otherwise use new filters
-        if (arePreservedLabelsUsed) {
+        // Otherwise use new filters; also only show the notification if filters
+        // are supposed to be cached, which is currently used in the UI, not
+        // when tab-opened
+        if (arePreservedLabelsUsed && cacheFilters) {
           dispatch(notifyApp(createSuccessNotification('Previously used log context filters have been applied.')));
         }
         return newContextFilters;

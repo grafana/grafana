@@ -26,6 +26,7 @@ import {
   SceneDataLayerControls,
   AdHocFilterSet,
   TextBoxVariable,
+  UserActionEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -39,11 +40,13 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { getPanelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { PanelNotices } from '../scene/PanelNotices';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
   getIntervalsFromOldIntervalModel,
@@ -192,6 +195,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     variables = new SceneVariableSet({
       variables: variableObjects,
     });
+  } else {
+    // Create empty variable set
+    variables = new SceneVariableSet({
+      variables: [],
+    });
   }
 
   if (oldModel.annotations?.list?.length) {
@@ -223,12 +231,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     );
   }
 
-  return new DashboardScene({
+  const dashboardScene = new DashboardScene({
     title: oldModel.title,
     tags: oldModel.tags || [],
     links: oldModel.links || [],
     uid: oldModel.uid,
     id: oldModel.id,
+    description: oldModel.description,
+    editable: oldModel.editable,
     meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,
@@ -247,6 +257,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      registerPanelInteractionsReporter,
     ],
     $data:
       layers.length > 0
@@ -257,19 +268,20 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     controls: [
       new DashboardControls({
         variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
-        timeControls: Boolean(oldModel.timepicker.hidden)
-          ? []
-          : [
-              new SceneTimePicker({}),
-              new SceneRefreshPicker({
-                refresh: oldModel.refresh,
-                intervals: oldModel.timepicker.refresh_intervals,
-              }),
-            ],
+        timeControls: [
+          new SceneTimePicker({}),
+          new SceneRefreshPicker({
+            refresh: oldModel.refresh,
+            intervals: oldModel.timepicker.refresh_intervals,
+          }),
+        ],
         linkControls: new DashboardLinksControls({}),
+        hideTimeControls: oldModel.timepicker.hidden,
       }),
     ],
   });
+
+  return dashboardScene;
 }
 
 export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
@@ -308,6 +320,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.multi,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+      definition: variable.definition,
     });
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
@@ -365,13 +378,15 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     return null;
   }
 
+  const body = new LibraryVizPanel({
+    title: panel.title,
+    uid: panel.libraryPanel.uid,
+    name: panel.libraryPanel.name,
+    key: getVizPanelKeyForPanelId(panel.id),
+  });
+
   return new SceneGridItem({
-    body: new LibraryVizPanel({
-      title: panel.title,
-      uid: panel.libraryPanel.uid,
-      name: panel.libraryPanel.name,
-      key: getVizPanelKeyForPanelId(panel.id),
-    }),
+    body,
     y: panel.gridPos.y,
     x: panel.gridPos.x,
     width: panel.gridPos.w,
@@ -381,13 +396,17 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   const hasPanelLinks = panel.links && panel.links.length > 0;
+  const titleItems: SceneObject[] = [];
   let panelLinks;
 
   if (hasPanelLinks) {
     panelLinks = new VizPanelLinks({
       menu: new VizPanelLinksMenu({ $behaviors: [getPanelLinksBehavior(panel)] }),
     });
+    titleItems.push(panelLinks);
   }
+
+  titleItems.push(new PanelNotices());
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
@@ -404,7 +423,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    titleItems: panelLinks,
+    titleItems,
 
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
@@ -435,14 +454,51 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     });
   }
 
+  const body = new VizPanel(vizPanelState);
+
   return new SceneGridItem({
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
-    body: new VizPanel(vizPanelState),
+    body,
   });
 }
 
 const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
+
+const getLimitedDescriptionReporter = () => {
+  const reportedPanels: string[] = [];
+
+  return (key: string) => {
+    if (reportedPanels.includes(key)) {
+      return;
+    }
+    reportedPanels.push(key);
+    DashboardInteractions.panelDescriptionShown();
+  };
+};
+
+function registerPanelInteractionsReporter(scene: DashboardScene) {
+  const descriptionReporter = getLimitedDescriptionReporter();
+
+  // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
+  scene.subscribeToEvent(UserActionEvent, (e) => {
+    const { interaction } = e.payload;
+    switch (interaction) {
+      case 'panel-description-shown':
+        descriptionReporter(e.payload.origin.state.key || '');
+        break;
+      case 'panel-status-message-clicked':
+        DashboardInteractions.panelStatusMessageClicked();
+        break;
+      case 'panel-cancel-query-clicked':
+        DashboardInteractions.panelCancelQueryClicked();
+        break;
+      case 'panel-menu-shown':
+        DashboardInteractions.panelMenuShown();
+        break;
+    }
+  });
+}

@@ -19,6 +19,7 @@ labels:
     - oss
 menuTitle: Use dashboards
 title: Use dashboards
+description: Learn about the features of a Grafana dashboard
 weight: 1
 ---
 
@@ -32,7 +33,7 @@ The dashboard user interface provides a number of features that you can use to c
 
 The following image and descriptions highlight all dashboard features.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-annotated-9-5-0.png" width="700px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-annotated-9-5-0.png" width="700px" alt="An annotated image of a dashboard" >}}
 
 - (1) **Grafana home**: Click **Home** in the breadcrumb to be redirected to the home page configured in the Grafana instance.
 - (2) **Dashboard title**: When you click the dashboard title, you can search for dashboards contained in the current folder.

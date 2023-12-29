@@ -73,6 +73,7 @@ export type {
   VariableModel,
   DataSourceRef,
   DataTransformerConfig,
+  TimePickerConfig,
   Panel,
   FieldConfigSource,
   MatcherConfig,
@@ -95,15 +96,13 @@ export {
   defaultAnnotationQuery,
   defaultVariableModel,
   VariableHide,
+  defaultTimePickerConfig,
   defaultPanel,
   defaultFieldConfigSource,
   defaultMatcherConfig,
   defaultFieldConfig,
   defaultRowPanel
 } from './veneer/dashboard.types';
-
-// Raw generated types from Folder kind.
-export type { Folder } from './raw/folder/x/folder_types.gen';
 
 // Raw generated types from LibraryPanel kind.
 export type {
