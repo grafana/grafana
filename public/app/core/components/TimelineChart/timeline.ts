@@ -441,6 +441,13 @@ export function getConfig(opts: TimelineCoreOptions) {
 
       return hovered[seriesIdx]?.didx;
     },
+    focus: {
+      prox: 30,
+      dist: (u, seriesIdx, dataIdx, valPos, curPos) => {
+        valPos = yMids[seriesIdx - 1] / uPlot.pxRatio;
+        return valPos - curPos;
+      },
+    },
     points: {
       fill: 'rgba(255,255,255,0.2)',
       bbox: (u, seriesIdx) => {
