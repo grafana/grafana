@@ -443,7 +443,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     },
     focus: {
       prox: 1e3,
-      dist: (u, seriesIdx, dataIdx, valPos, curPos) => (hoveredAtCursor?.sidx === seriesIdx ? 0 : Infinity),
+      dist: (u, seriesIdx) => (hoveredAtCursor?.sidx === seriesIdx ? 0 : Infinity),
     },
     points: {
       fill: 'rgba(255,255,255,0.2)',
