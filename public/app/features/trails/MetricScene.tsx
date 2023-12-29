@@ -1,5 +1,7 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -12,7 +14,7 @@ import {
   PanelBuilders,
   sceneGraph,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack, Icon } from '@grafana/ui';
+import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
@@ -104,6 +106,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
 
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
+    const styles = useStyles2(getStyles);
     const trail = getTrailFor(model);
     const [isBookmarked, setBookmarked] = useState(false);
     const { actionView } = metricScene.useState();
@@ -115,39 +118,58 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
 
     return (
       <Box paddingY={1}>
-        <Stack gap={2}>
-          {actionViewsDefinitions.map((viewDef) => (
+        <div className={styles.actions}>
+          <Stack gap={2}>
+            <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled>
+              Explore
+            </ToolbarButton>
+            <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
+            <ToolbarButton variant={'canvas'} icon="share-alt" tooltip="Copy url (todo)" disabled />
             <ToolbarButton
-              key={viewDef.value}
-              variant={viewDef.value === actionView ? 'active' : 'canvas'}
-              onClick={() => metricScene.setActionView(viewDef)}
-            >
-              {viewDef.displayName}
-            </ToolbarButton>
-          ))}
-          <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
-          <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled />
-          <ToolbarButton
-            variant={'canvas'}
-            icon={
-              isBookmarked ? (
-                <Icon name={'favorite'} type={'mono'} size={'lg'} />
-              ) : (
-                <Icon name={'star'} type={'default'} size={'lg'} />
-              )
-            }
-            tooltip={'Bookmark'}
-            onClick={onBookmarkTrail}
-          />
-          <ToolbarButton variant={'canvas'} icon="share-alt" tooltip="Copy url (todo)" disabled />
-          {trail.state.embedded && (
-            <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
-              Open
-            </ToolbarButton>
-          )}
-        </Stack>
+              variant={'canvas'}
+              icon={
+                isBookmarked ? (
+                  <Icon name={'favorite'} type={'mono'} size={'lg'} />
+                ) : (
+                  <Icon name={'star'} type={'default'} size={'lg'} />
+                )
+              }
+              tooltip={'Bookmark'}
+              onClick={onBookmarkTrail}
+            />
+            {trail.state.embedded && (
+              <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
+                Open
+              </ToolbarButton>
+            )}
+          </Stack>
+        </div>
+
+        <TabsBar>
+          {actionViewsDefinitions.map((tab, index) => {
+            return (
+              <Tab
+                key={index}
+                label={tab.displayName}
+                active={actionView === tab.value}
+                onChangeTab={() => metricScene.setActionView(tab)}
+              />
+            );
+          })}
+        </TabsBar>
       </Box>
     );
+  };
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    actions: css({
+      [theme.breakpoints.up(theme.breakpoints.values.md)]: {
+        position: 'absolute',
+        right: 0,
+      },
+    }),
   };
 }
 
