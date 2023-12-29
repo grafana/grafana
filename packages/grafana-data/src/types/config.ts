@@ -260,5 +260,5 @@ export interface AuthSettings {
   // @deprecated -- this is no longer used and will be removed in Grafana 11
   GenericOAuthSkipOrgRoleSync?: boolean;
 
-  DisableLogin?: boolean;
+  disableLogin?: boolean;
 }

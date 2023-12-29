@@ -30,7 +30,7 @@ type FrontendSettingsAuthDTO struct {
 	// Deprecated: this is no longer used and will be removed in Grafana 11
 	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
 
-	DisableLogin bool `json:"DisableLogin"`
+	DisableLogin bool `json:"disableLogin"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {

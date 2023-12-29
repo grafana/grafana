@@ -48,7 +48,7 @@ export const LoginPage = () => {
               {!disableLoginForm && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
                   <HorizontalGroup justify="flex-end">
-                    {!config.auth.DisableLogin && (
+                    {!config.auth.disableLogin && (
                       <LinkButton
                         className={styles.forgottenPassword}
                         fill="text"
