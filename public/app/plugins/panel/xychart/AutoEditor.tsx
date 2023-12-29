@@ -79,7 +79,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
 
   const styles = useStyles2(getStyles);
 
-  if (!context.data) {
+  if (!context.data?.length) {
     return <div>No data...</div>;
   }
 
@@ -87,12 +87,14 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
     <div>
       <Field label={'Data'}>
         <Select
+          isClearable={true}
           options={frameNames}
-          value={frameNames.find((v) => v.value === value?.frame) ?? frameNames[0]}
+          placeholder={`First frame: ${frameNames[0].label}`}
+          value={frameNames.find((v) => v.value === value?.frame)}
           onChange={(v) => {
             onChange({
               ...value,
-              frame: v.value!,
+              frame: v?.value!,
             });
           }}
         />

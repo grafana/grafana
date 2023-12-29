@@ -2,11 +2,10 @@ import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
-import { Button, Field, IconButton, useStyles2 } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
-import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
+import { ScatterSeriesEditor } from './ScatterSeriesEditor';
 import { Options, ScatterSeriesConfig, defaultFieldConfig } from './panelcfg.gen';
 
 export const ManualEditor = ({
@@ -97,42 +96,22 @@ export const ManualEditor = ({
       </div>
 
       {selected >= 0 && value[selected] && (
-        <>
-          <div key={`series/${selected}`}>
-            <Field label={'X Field'}>
-              <FieldNamePicker
-                value={value[selected].x ?? ''}
-                context={context}
-                onChange={(field) => onFieldChange(field, selected, 'x')}
-                item={{} as any}
-              />
-            </Field>
-            <Field label={'Y Field'}>
-              <FieldNamePicker
-                value={value[selected].y ?? ''}
-                context={context}
-                onChange={(field) => onFieldChange(field, selected, 'y')}
-                item={{} as any}
-              />
-            </Field>
-            <Field label={'Point color'}>
-              <ColorDimensionEditor
-                value={value[selected].pointColor!}
-                context={context}
-                onChange={(field) => onFieldChange(field, selected, 'pointColor')}
-                item={{} as any}
-              />
-            </Field>
-            <Field label={'Point size'}>
-              <ScaleDimensionEditor
-                value={value[selected].pointSize!}
-                context={context}
-                onChange={(field) => onFieldChange(field, selected, 'pointSize')}
-                item={{ settings: { min: 1, max: 100 } } as any}
-              />
-            </Field>
-          </div>
-        </>
+        <ScatterSeriesEditor
+          key={`series/${selected}`}
+          item={{} as any}
+          context={context}
+          value={value[selected]}
+          onChange={(v) => {
+            onChange(
+              value.map((obj, i) => {
+                if (i === selected) {
+                  return v!;
+                }
+                return obj;
+              })
+            );
+          }}
+        />
       )}
     </>
   );
