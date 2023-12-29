@@ -65,8 +65,6 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: handle fetching all available orgs when no namespace is specified
-	// To test: kubectl get playlists --all-namespaces
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err == nil {
 		err = s.checkEnabled(info.Value)
@@ -80,13 +78,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	limit := 100
+	limit := 5000
 	if options.Limit > 0 {
 		limit = int(options.Limit)
 	}
 	res, err := s.service.SearchDashboardSnapshots(ctx, &dashboardsnapshots.GetDashboardSnapshotsQuery{
 		OrgID:        info.OrgID,
 		SignedInUser: user,
+		Limit:        limit,
 	})
 	if err != nil {
 		return nil, err
@@ -95,9 +94,6 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	list := &dashsnap.DashboardSnapshotList{}
 	for _, v := range res {
 		list.Items = append(list.Items, *convertDTOToSnapshot(v, s.namespacer))
-	}
-	if len(list.Items) == limit {
-		list.Continue = "<more>" // TODO?
 	}
 	return list, nil
 }
