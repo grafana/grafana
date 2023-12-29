@@ -1,7 +1,12 @@
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
-import { CustomVariableModel, DataQueryError, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
+import {
+  CustomVariableModel,
+  DataQueryError,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchMetricsQueryRunner } from '../query-runner/CloudWatchMetricsQueryRunner';
@@ -11,15 +16,12 @@ import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchData
 import { TimeRangeMock } from './timeRange';
 
 export function setupMockedMetricsQueryRunner({
-  data = {
-    results: {},
-  },
+  response = { data: [] },
   variables,
   mockGetVariableName = true,
-  errorResponse,
   instanceSettings = CloudWatchSettings,
 }: {
-  data?: BackendDataSourceResponse;
+  response?: DataQueryResponse;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
   errorResponse?: DataQueryError;
@@ -33,9 +35,7 @@ export function setupMockedMetricsQueryRunner({
     }
   }
 
-  const queryMock = errorResponse
-    ? jest.fn().mockImplementation(() => throwError(errorResponse))
-    : jest.fn().mockReturnValue(of(toDataQueryResponse({ data })));
+  const queryMock = jest.fn().mockImplementation(() => of(response));
   const runner = new CloudWatchMetricsQueryRunner(instanceSettings, templateService);
 
   const request: DataQueryRequest<CloudWatchQuery> = {
