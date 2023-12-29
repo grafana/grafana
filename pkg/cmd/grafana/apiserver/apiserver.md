@@ -13,7 +13,7 @@ aggregation path altogether and just run this example apiserver as a standalone 
 
 ```shell
 go run ./pkg/cmd/grafana apiserver example.grafana.app \
-  --secure-port 8443
+  --secure-port 7443
 ```
 
 ### Verify that all works
@@ -46,7 +46,7 @@ go run ./pkg/cmd/grafana apiserver example.grafana.app \
   --authentication-kubeconfig ~/.kube/config \
   --authorization-kubeconfig ~/.kube/config \
   --kubeconfig ~/.kube/config \
-  --secure-port 8443
+  --secure-port 7443
 ```
 
 Once, the `example-apiserver` is running, you can configure aggregation against your kind cluster

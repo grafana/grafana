@@ -6,5 +6,5 @@ spec:
   type: ExternalName
   externalName: host.docker.internal
   ports:
-    - port: 8443
+    - port: 7443
       name: https
