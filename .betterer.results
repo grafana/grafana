@@ -598,17 +598,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"]
     ],
-    "packages/grafana-traces/src/TraceToLogs/TagMappingInput.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-traces/src/TraceToMetrics/TraceToMetricsSettings.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "packages/grafana-traces/src/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -5969,6 +5958,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "public/app/plugins/datasource/tempo/_importedDependencies/grafana-traces/src/TraceToLogs/TagMappingInput.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/datasource/tempo/_importedDependencies/grafana-traces/src/TraceToMetrics/TraceToMetricsSettings.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "public/app/plugins/datasource/tempo/_importedDependencies/grafana-traces/src/utils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/tempo/_importedDependencies/store.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

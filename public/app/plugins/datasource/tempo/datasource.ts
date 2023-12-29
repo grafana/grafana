@@ -30,7 +30,6 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
-import { TraceToLogsOptions } from '@grafana/traces';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
@@ -39,6 +38,7 @@ import { SpanBarOptions } from './_importedDependencies/components/TraceView/Spa
 import { getDatasourceSrv } from './_importedDependencies/datasource_srv';
 import { LokiOptions } from './_importedDependencies/datasources/loki/types';
 import { PromQuery, PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
+import { TraceToLogsOptions } from './_importedDependencies/grafana-traces/src';
 import { serializeParams } from './_importedDependencies/utils/fetch';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
