@@ -15,7 +15,7 @@ import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBui
 import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { findRect, intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
