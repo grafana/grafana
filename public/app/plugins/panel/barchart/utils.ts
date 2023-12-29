@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -492,8 +493,9 @@ export function prepareBarChartDisplayValues(
   }
 
   // If stacking is percent, we need to correct the fields unit and display
+  let legendFields: Field[] = cloneDeep(fields);
   if (options.stacking === StackingMode.Percent) {
-    fields.map((field) => {
+    legendFields.map((field) => {
       const alignedFrameField = frame.fields.find(
         (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(f, frame)
       );
@@ -511,10 +513,14 @@ export function prepareBarChartDisplayValues(
     colorByField,
     viz: [
       {
-        length: firstField.values.length,
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
+        length: firstField.values.length,
       },
     ],
+    legend: {
+      fields: legendFields,
+      length: firstField.values.length,
+    },
   };
 }
 
