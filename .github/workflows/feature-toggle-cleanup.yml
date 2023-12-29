@@ -6,8 +6,9 @@ on:
       # * is a special character in YAML so you have to quote this string
       - cron:  '30 10 * * *'
 jobs:
-    fetch:
+    feature-toggle-cleanup:
         runs-on: ubuntu-latest    
+        if: github.repository == 'grafana/grafana'
         steps:
             - name: Check out the code
               uses: actions/checkout@v3
