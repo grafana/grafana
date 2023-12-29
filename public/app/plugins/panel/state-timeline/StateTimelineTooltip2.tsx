@@ -97,10 +97,13 @@ export const StateTimelineTooltip2 = ({
     duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
   }
 
+  const from = xFieldFmt(xField.values[datapointIdx!]).text;
+  const to = xFieldFmt(xField.values[nextStateIdx!]).text;
+
   const getHeaderLabel = (): LabelValue => {
     return {
       label: '',
-      value: xFieldFmt(xField.values[nextStateIdx!]).text ?? xFieldFmt(xField.values[datapointIdx!]).text,
+      value: Boolean(to) ? to : from,
     };
   };
 
