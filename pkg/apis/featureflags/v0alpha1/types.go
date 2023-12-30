@@ -1,8 +1,6 @@
 package v0alpha1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
@@ -30,27 +28,23 @@ type FeatureFlag struct {
 }
 
 type Spec struct {
-	// Properties from featuremgmt.FeatureFlag
-	Description string    `json:"description"`
-	Stage       string    `json:"stage,omitempty"`
-	Created     time.Time `json:"created,omitempty"`
-	Owner       string    `json:"codeowner,omitempty"`
+	// The feature description
+	Description string `json:"description"`
 
-	AllowSelfServe    bool `json:"allowSelfServe"`
-	HideFromAdminPage bool `json:"hideFromAdminPage"`
+	// Indicates the features level of stability
+	Stage string `json:"stage"`
 
-	RequiresDevMode bool `json:"requiresDevMode"`
-	RequiresLicense bool `json:"requiresLicense"`
-	FrontendOnly    bool `json:"frontend"`
-	HideFromDocs    bool `json:"hideFromDocs"`
+	// The team who owns this feature development
+	Owner string `json:"codeowner,omitempty"`
 
-	Enabled bool `json:"enabled"`
+	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`
+	HideFromAdminPage bool `json:"hideFromAdminPage,omitempty"`
 
-	RequiresRestart bool `json:"requiresRestart"`
-
-	// Properties from featuremgmt.FeatureToggleDTO
-	ReadOnly bool `json:"readOnly"`
-	Hidden   bool `json:"hidden"`
+	RequiresDevMode bool `json:"requiresDevMode,omitempty"`
+	RequiresLicense bool `json:"requiresLicense,omitempty"`
+	FrontendOnly    bool `json:"frontend,omitempty"`
+	HideFromDocs    bool `json:"hideFromDocs,omitempty"`
+	RequiresRestart bool `json:"requiresRestart,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

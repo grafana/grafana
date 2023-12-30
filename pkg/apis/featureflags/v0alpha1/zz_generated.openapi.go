@@ -170,7 +170,7 @@ func schema_pkg_apis_featureflags_v0alpha1_Spec(ref common.ReferenceCallback) co
 				Properties: map[string]spec.Schema{
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Describe the feature toggle",
+							Description: "Properties from featuremgmt.FeatureFlag",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -178,72 +178,63 @@ func schema_pkg_apis_featureflags_v0alpha1_Spec(ref common.ReferenceCallback) co
 					},
 					"stage": {
 						SchemaProps: spec.SchemaProps{
-							Description: "How far along in development is this",
-							Type:        []string{"integer"},
-							Format:      "int32",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
-					"docsURL": {
+					"created": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Additional documentation",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: map[string]interface{}{},
+							Type:    []string{"string"},
+							Format:  "date-time",
 						},
 					},
-					"expression": {
+					"codeowner": {
 						SchemaProps: spec.SchemaProps{
-							Description: "CEL-GO expression.  Using the value \"true\" will mean this is on by default",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"requiresDevMode": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Special behavior flags",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"requiresRestart": {
-						SchemaProps: spec.SchemaProps{
-							Description: "This flag is currently unused.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"requiresLicense": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The server must be initialized with the value",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"frontend": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Must be enabled in the license",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"hideFromDocs": {
-						SchemaProps: spec.SchemaProps{
-							Description: "change is only seen in the frontend",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"hideFromAdminPage": {
-						SchemaProps: spec.SchemaProps{
-							Description: "don't add the values to docs",
-							Type:        []string{"boolean"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"allowSelfServe": {
 						SchemaProps: spec.SchemaProps{
-							Description: "don't display the feature in the admin page - add a comment with the reasoning",
-							Type:        []string{"boolean"},
-							Format:      "",
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"hideFromAdminPage": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"requiresDevMode": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"requiresLicense": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"frontend": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"hideFromDocs": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"requiresRestart": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 				},
@@ -685,6 +676,7 @@ func schema_pkg_apis_meta_v1_Condition(ref common.ReferenceCallback) common.Open
 					"lastTransitionTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -1240,7 +1232,8 @@ func schema_pkg_apis_meta_v1_List(ref common.ReferenceCallback) common.OpenAPIDe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
 									},
 								},
 							},
@@ -1526,6 +1519,7 @@ func schema_pkg_apis_meta_v1_ObjectMeta(ref common.ReferenceCallback) common.Ope
 					"creationTimestamp": {
 						SchemaProps: spec.SchemaProps{
 							Description: "CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
@@ -2307,6 +2301,7 @@ func schema_pkg_apis_meta_v1_TableRow(ref common.ReferenceCallback) common.OpenA
 					"object": {
 						SchemaProps: spec.SchemaProps{
 							Description: "This field contains the requested additional information about each object based on the includeObject policy when requesting the Table. If \"None\", this field is empty, if \"Object\" this will be the default serialization of the object for the current API version, and if \"Metadata\" (the default) will contain the object metadata. Check the returned kind and apiVersion of the object before parsing. The media type of the object will always match the enclosing list - if this as a JSON table, these will be JSON encoded objects.",
+							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
 						},
 					},
@@ -2505,6 +2500,7 @@ func schema_pkg_apis_meta_v1_WatchEvent(ref common.ReferenceCallback) common.Ope
 					"object": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
+							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/runtime.RawExtension"),
 						},
 					},

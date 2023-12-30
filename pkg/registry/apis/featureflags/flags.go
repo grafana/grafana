@@ -54,7 +54,7 @@ func (s *flagsStorage) ConvertToTable(ctx context.Context, object runtime.Object
 func (s *flagsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	flags := &v0alpha1.FeatureFlagList{}
 	for _, flag := range s.features.GetFlags() {
-		flags.Items = append(flags.Items, toK8sForm(ctx, flag, s.cfg, s.features))
+		flags.Items = append(flags.Items, toK8sForm(flag))
 	}
 	return flags, nil
 }
@@ -62,15 +62,14 @@ func (s *flagsStorage) List(ctx context.Context, options *internalversion.ListOp
 func (s *flagsStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	for _, flag := range s.features.GetFlags() {
 		if name == flag.Name {
-			obj := toK8sForm(ctx, flag, s.cfg, s.features)
+			obj := toK8sForm(flag)
 			return &obj, nil
 		}
 	}
 	return nil, fmt.Errorf("not found")
 }
 
-func toK8sForm(ctx context.Context, flag featuremgmt.FeatureFlag, cfg *setting.Cfg, features *featuremgmt.FeatureManager) v0alpha1.FeatureFlag {
-	enabledFeatures := features.GetEnabled(ctx)
+func toK8sForm(flag featuremgmt.FeatureFlag) v0alpha1.FeatureFlag {
 	return v0alpha1.FeatureFlag{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
@@ -79,9 +78,7 @@ func toK8sForm(ctx context.Context, flag featuremgmt.FeatureFlag, cfg *setting.C
 		},
 		Spec: v0alpha1.Spec{
 			Description:       flag.Description,
-			Enabled:           enabledFeatures[flag.Name],
 			Stage:             flag.Stage.String(),
-			Created:           flag.Created,
 			Owner:             string(flag.Owner),
 			AllowSelfServe:    flag.AllowSelfServe,
 			HideFromAdminPage: flag.HideFromAdminPage,
@@ -90,34 +87,6 @@ func toK8sForm(ctx context.Context, flag featuremgmt.FeatureFlag, cfg *setting.C
 			RequiresDevMode:   flag.RequiresDevMode,
 			RequiresLicense:   flag.RequiresLicense,
 			RequiresRestart:   flag.RequiresRestart,
-			Hidden:            isFeatureHidden(flag, cfg.FeatureManagement.HiddenToggles),
-			ReadOnly:          !isFeatureWriteable(flag, cfg.FeatureManagement.ReadOnlyToggles) || !isFeatureEditingAllowed(cfg),
 		},
 	}
-}
-
-// isFeatureHidden returns whether a toggle should be hidden from the admin page.
-// filters out statuses Unknown, Experimental, and Private Preview
-func isFeatureHidden(flag featuremgmt.FeatureFlag, hideCfg map[string]struct{}) bool {
-	if _, ok := hideCfg[flag.Name]; ok {
-		return true
-	}
-	return flag.Stage == featuremgmt.FeatureStageUnknown || flag.Stage == featuremgmt.FeatureStageExperimental || flag.Stage == featuremgmt.FeatureStagePrivatePreview || flag.HideFromAdminPage
-}
-
-// isFeatureWriteable returns whether a toggle on the admin page can be updated by the user.
-// only allows writing of GA and Deprecated toggles, and excludes the feature toggle admin page toggle
-func isFeatureWriteable(flag featuremgmt.FeatureFlag, readOnlyCfg map[string]struct{}) bool {
-	if _, ok := readOnlyCfg[flag.Name]; ok {
-		return false
-	}
-	if flag.Name == featuremgmt.FlagFeatureToggleAdminPage {
-		return false
-	}
-	return (flag.Stage == featuremgmt.FeatureStageGeneralAvailability || flag.Stage == featuremgmt.FeatureStageDeprecated) && flag.AllowSelfServe
-}
-
-// isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
-func isFeatureEditingAllowed(cfg *setting.Cfg) bool {
-	return cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateWebhook != ""
 }

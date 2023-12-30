@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { useGetFeatureTogglesQuery, useGetManagerStateQuery } from './AdminFeatureTogglesAPI';
+import { getFeatureManager } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
 
 export default function AdminFeatureTogglesPage() {
-  const { data: featureToggles, isLoading, isError } = useGetFeatureTogglesQuery();
-  const { data: featureMgmtState } = useGetManagerStateQuery();
+  const { value, loading, error } = useAsync(() => getFeatureManager().getInfo());
   const [updateSuccessful, setUpdateSuccessful] = useState(false);
 
   const styles = useStyles2(getStyles);
@@ -30,7 +30,7 @@ export default function AdminFeatureTogglesPage() {
           <Icon name="exclamation-triangle" />
         </div>
         <span className={styles.message}>
-          {featureMgmtState?.restartRequired || updateSuccessful
+          {value?.state?.restartRequired || updateSuccessful
             ? 'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
             : 'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'}
         </span>
@@ -56,13 +56,13 @@ export default function AdminFeatureTogglesPage() {
     <Page navId="feature-toggles" subTitle={subTitle}>
       <Page.Contents>
         <>
-          {isError && getErrorMessage()}
-          {isLoading && 'Fetching feature toggles'}
-          {featureMgmtState?.allowEditing && <EditingAlert />}
-          {featureToggles && (
+          {error && getErrorMessage()}
+          {loading && 'Fetching feature toggles'}
+          {value?.state?.allowEditing && <EditingAlert />}
+          {value?.toggles && (
             <AdminFeatureTogglesTable
-              featureToggles={featureToggles}
-              allowEditing={featureMgmtState?.allowEditing || false}
+              featureToggles={value.toggles}
+              allowEditing={value.state.allowEditing || false}
               onUpdateSuccess={handleUpdateSuccess}
             />
           )}
