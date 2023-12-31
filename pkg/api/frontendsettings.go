@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -157,22 +158,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
+		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
-
-		Auth: dtos.FrontendSettingsAuthDTO{
-			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
-			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
-			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
-			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
-			GrafanaComSkipOrgRoleSync:   hs.Cfg.GrafanaComSkipOrgRoleSync,
-			GenericOAuthSkipOrgRoleSync: hs.Cfg.GenericOAuthSkipOrgRoleSync,
-			AzureADSkipOrgRoleSync:      hs.Cfg.AzureADSkipOrgRoleSync,
-			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
-			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
-			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
-			AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
-		},
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -259,6 +246,30 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	if setting.AlertingEnabled != nil {
 		frontendSettings.AlertingEnabled = *setting.AlertingEnabled
+	}
+
+	// It returns false if the provider is not enabled or the skip org role sync is false.
+	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
+		if info == nil {
+			return false
+		}
+		return info.SkipOrgRoleSync
+	}
+
+	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
+	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
+		AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
+		OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+		SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
+		LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
+		JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
+		GoogleSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
+		GrafanaComSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
+		GenericOAuthSkipOrgRoleSync: parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
+		AzureADSkipOrgRoleSync:      parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
+		GithubSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
+		GitLabSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
+		OktaSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {

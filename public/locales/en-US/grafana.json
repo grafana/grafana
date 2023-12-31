@@ -25,6 +25,9 @@
       "user": "User"
     }
   },
+  "bouncing-loader": {
+    "label": "Loading"
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
@@ -409,6 +412,9 @@
       "label": "Add new data source"
     }
   },
+  "drawer": {
+    "close": "Close Drawer"
+  },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "rich-history": {
@@ -527,7 +533,13 @@
     },
     "toolbar": {
       "aria-label": "Explore toolbar",
-      "copy-shortened-link": "Copy shortened link",
+      "copy-link": "Copy URL",
+      "copy-link-abs-time": "Copy absolute URL",
+      "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
+      "copy-links-normal-category": "Normal URL links",
+      "copy-shortened-link": "Copy shortened URL",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-menu": "Open shortened link menu",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
       "split-close": "Close",
@@ -961,6 +973,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": "Close Drawer"
+    },
     "title": "Latest from the blog"
   },
   "notifications": {

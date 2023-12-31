@@ -25,6 +25,9 @@
       "user": "Usuario"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancelar",
@@ -414,6 +417,9 @@
       "label": "Añadir nueva fuente de datos"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
     "rich-history": {
@@ -532,7 +538,13 @@
     },
     "toolbar": {
       "aria-label": "Barra de herramientas de Explore",
+      "copy-link": "",
+      "copy-link-abs-time": "",
+      "copy-links-absolute-category": "",
+      "copy-links-normal-category": "",
       "copy-shortened-link": "Copiar enlace acortado",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "Ejecutar consulta",
       "split-close": "Cerrar",
@@ -967,6 +979,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Últimas entradas del blog"
   },
   "notifications": {

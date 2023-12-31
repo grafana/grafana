@@ -25,6 +25,9 @@
       "user": "用户"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "取消",
@@ -404,6 +407,9 @@
       "label": "添加新数据源"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
     "rich-history": {
@@ -522,7 +528,13 @@
     },
     "toolbar": {
       "aria-label": "浏览 工具栏",
+      "copy-link": "",
+      "copy-link-abs-time": "",
+      "copy-links-absolute-category": "",
+      "copy-links-normal-category": "",
       "copy-shortened-link": "复制短链接",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "取消",
       "refresh-picker-run": "运行查询",
       "split-close": "关闭",
@@ -955,6 +967,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "最新博客"
   },
   "notifications": {

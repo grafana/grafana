@@ -14,6 +14,8 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
+
+	foldersV0 "github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -89,13 +91,13 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 	fields := []string{
 		"guid",
 		"key",
-		"namespace", "group", "group_version", "resource", "uid", "folder",
-		"version", "size", "etag", "errors", // errors are always returned
+		"namespace", "group", "group_version", "resource", "name", "folder",
+		"resource_version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
 		"origin", "origin_key", "origin_ts",
 		"meta",
-		"name", "slug", "description", "labels", "fields",
+		"title", "slug", "description", "labels", "fields",
 	}
 
 	if r.WithBody {
@@ -134,13 +136,13 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 	args := []any{
 		&raw.Guid,
 		&raw.Key,
-		&raw.Namespace, &raw.Group, &raw.GroupVersion, &raw.Resource, &raw.Uid, &raw.Folder,
-		&raw.Version, &raw.Size, &raw.ETag, &errors,
+		&raw.Namespace, &raw.Group, &raw.GroupVersion, &raw.Resource, &raw.Name, &raw.Folder,
+		&raw.ResourceVersion, &raw.Size, &raw.ETag, &errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
 		&raw.Origin.Source, &raw.Origin.Key, &raw.Origin.Time,
 		&raw.Meta,
-		&raw.Name, &raw.Slug, &raw.Description, &labels, &fields,
+		&raw.Title, &raw.Slug, &raw.Description, &labels, &fields,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
@@ -190,13 +192,13 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return nil, err
 	}
 
-	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("uid")+"=?")
+	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("name")+"=?")
 	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
 
-	if r.Version != "" {
+	if r.ResourceVersion != 0 {
 		table = "entity_history"
-		where = append(where, s.dialect.Quote("version")+"=?")
-		args = append(args, r.Version)
+		where = append(where, s.dialect.Quote("resource_version")+"=?")
+		args = append(args, r.ResourceVersion)
 	}
 
 	query, err := s.getReadSelect(r)
@@ -247,7 +249,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 		constraints = append(constraints, s.dialect.Quote("key")+"=?")
 		args = append(args, r.Key)
 
-		if r.Version != "" {
+		if r.ResourceVersion != 0 {
 			return nil, fmt.Errorf("version not supported for batch read (yet?)")
 		}
 	}
@@ -333,7 +335,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		current.Group = key.Group
 		current.GroupVersion = r.Entity.GroupVersion
 		current.Resource = key.Resource
-		current.Uid = key.Name
+		current.Name = key.Name
 
 		if r.Entity.Folder != "" {
 			current.Folder = r.Entity.Folder
@@ -360,8 +362,8 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		current.UpdatedAt = updatedAt
 		current.UpdatedBy = updatedBy
 
-		if r.Entity.Name != "" {
-			current.Name = r.Entity.Name
+		if r.Entity.Title != "" {
+			current.Title = r.Entity.Title
 		}
 		if r.Entity.Description != "" {
 			current.Description = r.Entity.Description
@@ -407,37 +409,37 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		// Update version
-		current.Version = s.snowflake.Generate().String()
+		current.ResourceVersion = s.snowflake.Generate().Int64()
 
 		values := map[string]any{
-			"guid":          current.Guid,
-			"key":           current.Key,
-			"namespace":     current.Namespace,
-			"group":         current.Group,
-			"resource":      current.Resource,
-			"uid":           current.Uid,
-			"created_at":    createdAt,
-			"created_by":    createdBy,
-			"group_version": current.GroupVersion,
-			"folder":        current.Folder,
-			"slug":          current.Slug,
-			"updated_at":    updatedAt,
-			"updated_by":    updatedBy,
-			"body":          current.Body,
-			"meta":          current.Meta,
-			"status":        current.Status,
-			"size":          current.Size,
-			"etag":          current.ETag,
-			"version":       current.Version,
-			"name":          current.Name,
-			"description":   current.Description,
-			"labels":        labels,
-			"fields":        fields,
-			"errors":        errors,
-			"origin":        current.Origin.Source,
-			"origin_key":    current.Origin.Key,
-			"origin_ts":     current.Origin.Time,
-			"message":       current.Message,
+			"guid":             current.Guid,
+			"key":              current.Key,
+			"namespace":        current.Namespace,
+			"group":            current.Group,
+			"resource":         current.Resource,
+			"name":             current.Name,
+			"created_at":       createdAt,
+			"created_by":       createdBy,
+			"group_version":    current.GroupVersion,
+			"folder":           current.Folder,
+			"slug":             current.Slug,
+			"updated_at":       updatedAt,
+			"updated_by":       updatedBy,
+			"body":             current.Body,
+			"meta":             current.Meta,
+			"status":           current.Status,
+			"size":             current.Size,
+			"etag":             current.ETag,
+			"resource_version": current.ResourceVersion,
+			"title":            current.Title,
+			"description":      current.Description,
+			"labels":           labels,
+			"fields":           fields,
+			"errors":           errors,
+			"origin":           current.Origin.Source,
+			"origin_key":       current.Origin.Key,
+			"origin_ts":        current.Origin.Time,
+			"message":          current.Message,
 		}
 
 		// 1. Add row to the `entity_history` values
@@ -471,10 +473,10 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		switch current.Group {
-		case entity.FolderGroupName:
+		case foldersV0.GROUP:
 			switch current.Resource {
-			case entity.FolderResourceName:
-				err = updateFolderTree(ctx, tx, current.Namespace)
+			case foldersV0.RESOURCE:
+				err = s.updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
 					return err
@@ -533,7 +535,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		// Optimistic locking
-		if r.PreviousVersion != "" && r.PreviousVersion != current.Version {
+		if r.PreviousVersion > 0 && r.PreviousVersion != current.ResourceVersion {
 			return fmt.Errorf("optimistic lock failed")
 		}
 
@@ -581,8 +583,8 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		current.UpdatedAt = updatedAt
 		current.UpdatedBy = updatedBy
 
-		if r.Entity.Name != "" {
-			current.Name = r.Entity.Name
+		if r.Entity.Title != "" {
+			current.Title = r.Entity.Title
 		}
 		if r.Entity.Description != "" {
 			current.Description = r.Entity.Description
@@ -628,7 +630,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		// Update version
-		current.Version = s.snowflake.Generate().String()
+		current.ResourceVersion = s.snowflake.Generate().Int64()
 
 		values := map[string]any{
 			// below are only set in history table
@@ -637,30 +639,30 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"namespace":  current.Namespace,
 			"group":      current.Group,
 			"resource":   current.Resource,
-			"uid":        current.Uid,
+			"name":       current.Name,
 			"created_at": current.CreatedAt,
 			"created_by": current.CreatedBy,
 			// below are updated
-			"group_version": current.GroupVersion,
-			"folder":        current.Folder,
-			"slug":          current.Slug,
-			"updated_at":    updatedAt,
-			"updated_by":    updatedBy,
-			"body":          current.Body,
-			"meta":          current.Meta,
-			"status":        current.Status,
-			"size":          current.Size,
-			"etag":          current.ETag,
-			"version":       current.Version,
-			"name":          current.Name,
-			"description":   current.Description,
-			"labels":        labels,
-			"fields":        fields,
-			"errors":        errors,
-			"origin":        current.Origin.Source,
-			"origin_key":    current.Origin.Key,
-			"origin_ts":     current.Origin.Time,
-			"message":       current.Message,
+			"group_version":    current.GroupVersion,
+			"folder":           current.Folder,
+			"slug":             current.Slug,
+			"updated_at":       updatedAt,
+			"updated_by":       updatedBy,
+			"body":             current.Body,
+			"meta":             current.Meta,
+			"status":           current.Status,
+			"size":             current.Size,
+			"etag":             current.ETag,
+			"resource_version": current.ResourceVersion,
+			"title":            current.Title,
+			"description":      current.Description,
+			"labels":           labels,
+			"fields":           fields,
+			"errors":           errors,
+			"origin":           current.Origin.Source,
+			"origin_key":       current.Origin.Key,
+			"origin_ts":        current.Origin.Time,
+			"message":          current.Message,
 		}
 
 		// 1. Add the `entity_history` values
@@ -684,7 +686,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "namespace")
 		delete(values, "group")
 		delete(values, "resource")
-		delete(values, "uid")
+		delete(values, "name")
 		delete(values, "created_at")
 		delete(values, "created_by")
 
@@ -707,10 +709,10 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		switch current.Group {
-		case entity.FolderGroupName:
+		case foldersV0.GROUP:
 			switch current.Resource {
-			case entity.FolderResourceName:
-				err = updateFolderTree(ctx, tx, current.Namespace)
+			case foldersV0.RESOURCE:
+				err = s.updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
 					return err
@@ -786,7 +788,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 			return err
 		}
 
-		if r.PreviousVersion != "" && r.PreviousVersion != rsp.Entity.Version {
+		if r.PreviousVersion > 0 && r.PreviousVersion != rsp.Entity.ResourceVersion {
 			rsp.Status = entity.DeleteEntityResponse_ERROR
 			return fmt.Errorf("optimistic lock failed")
 		}
@@ -825,10 +827,10 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	}
 
 	switch ent.Group {
-	case entity.FolderGroupName:
+	case foldersV0.GROUP:
 		switch ent.Resource {
-		case entity.FolderResourceName:
-			err = updateFolderTree(ctx, tx, ent.Namespace)
+		case foldersV0.RESOURCE:
+			err = s.updateFolderTree(ctx, tx, ent.Namespace)
 			if err != nil {
 				s.log.Error("error updating folder tree", "msg", err.Error())
 				return err
@@ -872,17 +874,20 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	where := []string{}
 	args := []any{}
 
-	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("uid")+"=?")
+	where = append(where, s.dialect.Quote("namespace")+"=?", s.dialect.Quote("group")+"=?", s.dialect.Quote("resource")+"=?", s.dialect.Quote("name")+"=?")
 	args = append(args, key.Namespace, key.Group, key.Resource, key.Name)
 
 	if r.NextPageToken != "" {
+		if true {
+			return nil, fmt.Errorf("tokens not yet supported")
+		}
 		where = append(where, "version <= ?")
 		args = append(args, r.NextPageToken)
 	}
 
 	query += " FROM entity_history" +
 		" WHERE " + strings.Join(where, " AND ") +
-		" ORDER BY version DESC" +
+		" ORDER BY resource_version DESC" +
 		// select 1 more than we need to see if there is a next page
 		" LIMIT " + fmt.Sprint(limit+1)
 
@@ -903,7 +908,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 
 		// found more than requested
 		if int64(len(rsp.Versions)) >= limit {
-			rsp.NextPageToken = v.Version
+			rsp.NextPageToken = fmt.Sprintf("rv:%d", v.ResourceVersion)
 			break
 		}
 
@@ -969,7 +974,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
 			if key.Name != "" {
 				args = append(args, key.Name)
-				whereclause += " AND " + s.dialect.Quote("uid") + "=?"
+				whereclause += " AND " + s.dialect.Quote("name") + "=?"
 			}
 			whereclause += ")"
 
@@ -1060,29 +1065,18 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 	}
 
 	fields := []string{
-		"guid", "guid",
-		"namespace", "group", "group_version", "resource", "uid",
-		"version", "folder", "slug", "errors", // errors are always returned
-		"size", "updated_at", "updated_by",
-		"name", "description", "meta",
+		"e.guid", "e.guid",
+		"e.namespace", "e.group", "e.group_version", "e.resource", "e.name",
+		"e.resource_version", "e.folder", "e.slug", "e.errors", // errors are always returned
+		"e.size", "e.updated_at", "e.updated_by",
+		"e.title", "e.description", "e.meta",
 	}
 
-	// SELECT entity_ref.* FROM entity_ref
-	// 	JOIN entity ON entity_ref.key = entity.key
-	// 	WHERE family='librarypanel' AND resolved_to='a7975b7a-fb53-4ab7-951d-15810953b54f';
+	sql := "SELECT " + strings.Join(fields, ",") +
+		" FROM entity_ref AS er JOIN entity AS e ON er.guid = e.guid" +
+		" WHERE er.namespace=? AND er.group=? AND er.resource=? AND er.resolved_to=?"
 
-	sql := strings.Builder{}
-	_, _ = sql.WriteString("SELECT ")
-	for i, f := range fields {
-		if i > 0 {
-			_, _ = sql.WriteString(",")
-		}
-		_, _ = sql.WriteString(fmt.Sprintf("entity.%s", f))
-	}
-	_, _ = sql.WriteString(" FROM entity_ref JOIN entity ON entity_ref.key = entity.key")
-	_, _ = sql.WriteString(" WHERE family=? AND resolved_to=?") // TODO tenant ID!!!!
-
-	rows, err := s.sess.Query(ctx, sql.String(), r.Resource, r.Uid)
+	rows, err := s.sess.Query(ctx, sql, r.Namespace, r.Group, r.Resource, r.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -1094,10 +1088,10 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 
 		args := []any{
 			&token, &result.Guid,
-			&result.Namespace, &result.Group, &result.GroupVersion, &result.Resource, &result.Uid,
-			&result.Version, &result.Folder, &result.Slug, &result.Errors,
+			&result.Namespace, &result.Group, &result.GroupVersion, &result.Resource, &result.Name,
+			&result.ResourceVersion, &result.Folder, &result.Slug, &result.Errors,
 			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
-			&result.Name, &result.Description, &result.Meta,
+			&result.Title, &result.Description, &result.Meta,
 		}
 
 		err = rows.Scan(args...)

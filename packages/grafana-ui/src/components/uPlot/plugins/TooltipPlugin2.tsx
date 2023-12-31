@@ -10,6 +10,8 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
+export const DEFAULT_TOOLTIP_WIDTH = 280;
+
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {
   // Single mode in TimeSeries, Candlestick, Trend, StateTimeline, Heatmap?
@@ -170,7 +172,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
       if (pendingPinned) {
         _style = { pointerEvents: _isPinned ? 'all' : 'none' };
 
-        domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', _isPinned);
+        domRef.current?.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', _isPinned);
 
         // @ts-ignore
         _plot!.cursor._lock = _isPinned;
