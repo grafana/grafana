@@ -1,7 +1,12 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
-import { GrafanaTheme2, StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  StandardEditorProps,
+  FieldNamePickerBaseNameMode,
+  StandardEditorsRegistryItem,
+} from '@grafana/data';
 import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
@@ -12,11 +17,11 @@ export const ManualEditor = ({
   value,
   onChange,
   context,
-}: StandardEditorProps<ScatterSeriesConfig[], any, Options>) => {
+}: StandardEditorProps<ScatterSeriesConfig[], unknown, Options>) => {
   const [selected, setSelected] = useState(0);
   const style = useStyles2(getStyles);
 
-  const onFieldChange = (val: any | undefined, index: number, field: string) => {
+  const onFieldChange = (val: unknown | undefined, index: number, field: string) => {
     onChange(
       value.map((obj, i) => {
         if (i === index) {
@@ -31,7 +36,7 @@ export const ManualEditor = ({
     onChange([
       ...value,
       {
-        pointColor: {} as any,
+        pointColor: undefined,
         pointSize: defaultFieldConfig.pointSize,
       },
     ]);
@@ -99,7 +104,7 @@ export const ManualEditor = ({
         <ScatterSeriesEditor
           key={`series/${selected}`}
           baseNameMode={FieldNamePickerBaseNameMode.ExcludeBaseNames}
-          item={{} as any}
+          item={{} as StandardEditorsRegistryItem}
           context={context}
           value={value[selected]}
           onChange={(v) => {
@@ -119,35 +124,35 @@ export const ManualEditor = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  marginBot: css`
-    margin-bottom: 20px;
-  `,
-  row: css`
-    padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.radius.default};
-    background: ${theme.colors.background.secondary};
-    min-height: ${theme.spacing(4)};
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 3px;
-    cursor: pointer;
+  marginBot: css({
+    marginBottom: '20px',
+  }),
+  row: css({
+    padding: `${theme.spacing(0.5, 1)}`,
+    borderRadius: `${theme.shape.radius.default}`,
+    background: `${theme.colors.background.secondary}`,
+    minHeight: `${theme.spacing(4)}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '3px',
+    cursor: 'pointer',
 
-    border: 1px solid ${theme.components.input.borderColor};
-    &:hover {
-      border: 1px solid ${theme.components.input.borderHover};
-    }
-  `,
-  sel: css`
-    border: 1px solid ${theme.colors.primary.border};
-    &:hover {
-      border: 1px solid ${theme.colors.primary.border};
-    }
-  `,
-  actionIcon: css`
-    color: ${theme.colors.text.secondary};
-    &:hover {
-      color: ${theme.colors.text};
-    }
-  `,
+    border: `1px solid ${theme.components.input.borderColor}`,
+    '&:hover': {
+      border: `1px solid ${theme.components.input.borderHover}`,
+    },
+  }),
+  sel: css({
+    border: `1px solid ${theme.colors.primary.border}`,
+    '&:hover': {
+      border: `1px solid ${theme.colors.primary.border}`,
+    },
+  }),
+  actionIcon: css({
+    color: `${theme.colors.text.secondary}`,
+    '&:hover': {
+      color: `${theme.colors.text}`,
+    },
+  }),
 });
