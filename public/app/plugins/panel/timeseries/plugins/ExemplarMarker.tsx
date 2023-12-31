@@ -174,21 +174,16 @@ export const ExemplarMarker = ({
       marginRight: 0,
     };
 
-    return (
-      <div
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        className={styles.tooltip}
-        ref={setPopperElement}
-        style={popperStyles.popper}
-        {...attributes.popper}
-      >
-        {runtimeConfig.featureToggles.newVizTooltips ? (
+    const getExemplarMarkerContent = () => {
+      if (runtimeConfig.featureToggles.newVizTooltips) {
+        return (
           <>
             {isLocked && <ExemplarModalHeader onClick={onClose} style={exemplarHeaderCustomStyle} />}
             <ExemplarHoverView displayValues={displayValues} links={links} />
           </>
-        ) : (
+        );
+      } else {
+        return (
           <div className={styles.wrapper}>
             {isLocked && <ExemplarModalHeader onClick={onClose} />}
             <div className={styles.body}>
@@ -220,7 +215,20 @@ export const ExemplarMarker = ({
               </div>
             </div>
           </div>
-        )}
+        );
+      }
+    };
+
+    return (
+      <div
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        className={styles.tooltip}
+        ref={setPopperElement}
+        style={popperStyles.popper}
+        {...attributes.popper}
+      >
+        {getExemplarMarkerContent()}
       </div>
     );
   }, [

@@ -45,6 +45,7 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar' }:
     </div>
   );
 };
+
 const getStyles = (theme: GrafanaTheme2, padding = 0) => {
   return {
     exemplarWrapper: css({
