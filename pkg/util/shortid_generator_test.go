@@ -1,12 +1,14 @@
 package util
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 
 	"cuelang.org/go/pkg/strings"
 	"github.com/lithammer/shortuuid"
 	"github.com/stretchr/testify/require"
+	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -54,6 +56,22 @@ func TestRandomUIDs(t *testing.T) {
 		//fmt.Println(v)
 	}
 	// t.FailNow()
+}
+
+func TestCaseInsensitiveCollisionsUIDs(t *testing.T) {
+	history := make(map[string]bool, 0)
+	for i := 0; i < 100000; i++ {
+		v := GenerateShortUID()
+		if false {
+			v, _ = shortid.Generate() // collides in less then 500 iterations
+		}
+
+		lower := strings.ToLower(v)
+		_, exists := history[lower]
+		require.False(t, exists, fmt.Sprintf("already found: %s (index:%d)", v, i))
+
+		history[lower] = true
+	}
 }
 
 func TestIsShortUIDTooLong(t *testing.T) {
