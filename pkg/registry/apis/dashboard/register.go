@@ -1,4 +1,4 @@
-package dashboards
+package dashboard
 
 import (
 	"fmt"
@@ -14,10 +14,10 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboards/access"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"

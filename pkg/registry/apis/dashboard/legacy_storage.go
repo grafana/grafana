@@ -1,4 +1,4 @@
-package dashboards
+package dashboard
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboards/access"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 

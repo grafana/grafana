@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	GROUP      = "dashboards.grafana.app"
+	GROUP      = "dashboard.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 )
