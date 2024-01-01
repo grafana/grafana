@@ -350,9 +350,10 @@ export class PanelQueryRunner {
         const last = this.lastResult;
         const next = skipPreProcess ? data : preProcessPanelData(data, last);
 
-        if (last != null) {
+        if (last != null && next.state !== LoadingState.Streaming) {
           let sameSeries = compareArrayValues(last.series ?? [], next.series ?? [], (a, b) => a === b);
           let sameAnnotations = compareArrayValues(last.annotations ?? [], next.annotations ?? [], (a, b) => a === b);
+          let sameState = last.state === next.state;
 
           if (sameSeries) {
             next.series = last.series;
@@ -362,7 +363,7 @@ export class PanelQueryRunner {
             next.annotations = last.annotations;
           }
 
-          if (sameSeries && sameAnnotations) {
+          if (sameSeries && sameAnnotations && sameState) {
             return;
           }
         }

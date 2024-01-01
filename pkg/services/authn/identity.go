@@ -185,23 +185,6 @@ func (i *Identity) IsNil() bool {
 	return i == nil
 }
 
-// NamespacedID returns the namespace, e.g. "user" and the id for that namespace
-// FIXME(kalleep): Replace with GetNamespacedID
-func (i *Identity) NamespacedID() (string, int64) {
-	split := strings.Split(i.ID, ":")
-	if len(split) != 2 {
-		return "", -1
-	}
-
-	id, err := strconv.ParseInt(split[1], 10, 64)
-	if err != nil {
-		// FIXME (kalleep): Improve error handling
-		return "", -1
-	}
-
-	return split[0], id
-}
-
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
 	namespace, id := i.GetNamespacedID()

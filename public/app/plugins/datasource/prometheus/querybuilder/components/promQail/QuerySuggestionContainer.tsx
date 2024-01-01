@@ -31,7 +31,6 @@ export function QuerySuggestionContainer(props: Props) {
 
   if (suggestionType === SuggestionType.Historical) {
     text = `Here are ${querySuggestions.length} query suggestions:`;
-    secondaryText = 'These queries are based off of historical data (top used queries) for your metric.';
     refineText = 'I want to write a prompt';
   } else if (suggestionType === SuggestionType.AI) {
     text = text = 'Here is your query suggestion:';
@@ -42,8 +41,15 @@ export function QuerySuggestionContainer(props: Props) {
 
   return (
     <>
-      <div className={styles.textPadding}>{text}</div>
-      <div className={cx(styles.secondaryText, styles.bottomMargin)}>{secondaryText}</div>
+      {suggestionType === SuggestionType.Historical ? (
+        <div className={styles.bottomMargin}>{text}</div>
+      ) : (
+        <>
+          <div className={styles.textPadding}>{text}</div>
+          <div className={cx(styles.secondaryText, styles.bottomMargin)}>{secondaryText}</div>
+        </>
+      )}
+
       <div className={styles.infoContainerWrapper}>
         <div className={styles.infoContainer}>
           {querySuggestions.map((qs: QuerySuggestion, idx: number) => {
