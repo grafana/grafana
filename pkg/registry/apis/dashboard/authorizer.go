@@ -28,7 +28,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				// Discourage use of the "list" command for non super admin users
 				if attr.GetVerb() == "list" && attr.GetResource() == v0alpha1.DashboardResourceInfo.GroupResource().Resource {
 					if !user.IsGrafanaAdmin {
-						return authorizer.DecisionDeny, "list summary objects (or connect GrafanaAdmin)", err
+						return authorizer.DecisionDeny, "list summary objects (or connect as GrafanaAdmin)", err
 					}
 				}
 				return authorizer.DecisionNoOpinion, "", nil

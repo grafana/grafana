@@ -27,6 +27,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -50,6 +51,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	dashboardService dashboards.DashboardService,
 	dashboardVersionService dashver.Service,
 	accessControl accesscontrol.AccessControl,
+	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
 	sql db.DB,
 ) *DashboardsAPIBuilder {
@@ -64,7 +66,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashStore:               dashStore,
 		accessControl:           accessControl,
 		namespacer:              namespacer,
-		access:                  access.NewDashboardAccess(sql, namespacer, dashStore),
+		access:                  access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
 		log:                     log.New("grafana-apiserver.dashboards"),
 	}
 	apiregistration.RegisterAPI(builder)

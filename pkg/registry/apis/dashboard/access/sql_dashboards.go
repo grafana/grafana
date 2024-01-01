@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
@@ -46,18 +48,20 @@ type dashboardRow struct {
 }
 
 type dashboardSqlAccess struct {
-	sql        db.DB
-	sess       *session.SessionDB
-	namespacer request.NamespaceMapper
-	dashStore  dashboards.Store
+	sql          db.DB
+	sess         *session.SessionDB
+	namespacer   request.NamespaceMapper
+	dashStore    dashboards.Store
+	provisioning provisioning.ProvisioningService
 }
 
-func NewDashboardAccess(sql db.DB, namespacer request.NamespaceMapper, dashStore dashboards.Store) DashboardAccess {
+func NewDashboardAccess(sql db.DB, namespacer request.NamespaceMapper, dashStore dashboards.Store, provisioning provisioning.ProvisioningService) DashboardAccess {
 	return &dashboardSqlAccess{
-		sql:        sql,
-		sess:       sql.GetSqlxSession(),
-		namespacer: namespacer,
-		dashStore:  dashStore,
+		sql:          sql,
+		sess:         sql.GetSqlxSession(),
+		namespacer:   namespacer,
+		dashStore:    dashStore,
+		provisioning: provisioning,
 	}
 }
 
@@ -315,9 +319,18 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 		if origin_name.Valid {
 			ts := time.Unix(origin_ts.Int64, 0)
+
+			originPath, err := filepath.Rel(
+				a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String),
+				origin_path.String,
+			)
+			if err != nil {
+				return nil, err
+			}
+
 			meta.SetOriginInfo(&kinds.ResourceOriginInfo{
 				Name:      origin_name.String,
-				Path:      origin_path.String, // TODO, strip prefix!!!
+				Path:      originPath,
 				Key:       origin_key.String,
 				Timestamp: &ts,
 			})
