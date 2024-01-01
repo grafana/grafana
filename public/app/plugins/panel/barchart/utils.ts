@@ -375,7 +375,7 @@ export function prepareBarChartDisplayValues(
   theme: GrafanaTheme2,
   options: Options
 ): BarChartDisplayValues | BarChartDisplayWarning {
-  if (!series?.length) {
+  if (!series.length || series.every((fr) => fr.length === 0)) {
     return { warn: 'No data in response' };
   }
 
