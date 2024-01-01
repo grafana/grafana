@@ -13,21 +13,21 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var FeatureFlagResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"features", "feature", "FeatureFlag",
-	func() runtime.Object { return &FeatureFlag{} },
-	func() runtime.Object { return &FeatureFlagList{} },
+var FeatureResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"features", "feature", "Feature",
+	func() runtime.Object { return &Feature{} },
+	func() runtime.Object { return &FeatureList{} },
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FeatureFlag struct {
+type Feature struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec Spec `json:"spec,omitempty"`
+	Spec FeatureSpec `json:"spec,omitempty"`
 }
 
-type Spec struct {
+type FeatureSpec struct {
 	// The feature description
 	Description string `json:"description"`
 
@@ -48,10 +48,32 @@ type Spec struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FeatureFlagList struct {
+type FeatureList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []FeatureFlag `json:"items,omitempty"`
+	Items []Feature `json:"items,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FeatureToggle struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// The configured flags.  Note this may include unknown fields
+	Spec map[string]bool `json:"spec,omitempty"`
+}
+
+type ToggleStatus struct {
+	UnknownToggles []string
+}
+
+type FlagInfo struct {
+	// Name of the feature
+	Feature string
+	Enabled bool   // only false if explicitly set to false
+	Source  string // startup | tenant|org | user | browser
+
+	Unknown bool // valid?
 }
