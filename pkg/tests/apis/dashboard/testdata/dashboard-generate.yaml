@@ -1,4 +1,4 @@
-apiVersion: dashboards.grafana.app/v0alpha1
+apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
 metadata:
   generateName: x # anything is ok here... except yes or true -- they become boolean!

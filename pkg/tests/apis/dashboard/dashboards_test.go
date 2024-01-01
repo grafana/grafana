@@ -15,7 +15,7 @@ func TestDashboardsApp(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // do not start extra port 6443
+		AppModeProduction: false, // required for experimental APIs
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServer,
@@ -24,8 +24,8 @@ func TestDashboardsApp(t *testing.T) {
 	})
 
 	t.Run("Check discovery client", func(t *testing.T) {
-		disco := helper.GetGroupVersionInfoJSON("dashboards.grafana.app")
-		//fmt.Printf("%s", string(disco))
+		disco := helper.GetGroupVersionInfoJSON("dashboard.grafana.app")
+		// fmt.Printf("%s", string(disco))
 
 		require.JSONEq(t, `[
 			{
@@ -35,7 +35,7 @@ func TestDashboardsApp(t *testing.T) {
 				  "resource": "dashboards",
 				  "responseKind": {
 					"group": "",
-					"kind": "DashboardResource",
+					"kind": "Dashboard",
 					"version": ""
 				  },
 				  "scope": "Namespaced",
@@ -64,6 +64,24 @@ func TestDashboardsApp(t *testing.T) {
 					  ]
 					}
 				  ],
+				  "verbs": [
+					"create",
+					"delete",
+					"get",
+					"list",
+					"patch",
+					"update"
+				  ]
+				},
+				{
+				  "resource": "summary",
+				  "responseKind": {
+					"group": "",
+					"kind": "DashboardSummary",
+					"version": ""
+				  },
+				  "scope": "Namespaced",
+				  "singularResource": "summary",
 				  "verbs": [
 					"get",
 					"list"
