@@ -243,15 +243,10 @@ describe('frame results with warnings', () => {
   });
 });
 describe('QueryEditorRow', () => {
-  const props = (errorRefId: string): Props<DataQuery> => ({
+  const props = (data: PanelData): Props<DataQuery> => ({
     dataSource: mockDS,
     query: { refId: 'B' },
-    data: {
-      state: LoadingState.Error,
-      series: [],
-      errors: [{ message: 'Error!!', refId: errorRefId }],
-      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
-    },
+    data,
     queries: [{ refId: 'B' }],
     id: 'test',
     onAddQuery: jest.fn(),
@@ -261,12 +256,35 @@ describe('QueryEditorRow', () => {
     index: 0,
   });
   it('should display error message in corresponding panel', async () => {
-    render(<QueryEditorRow {...props('B')} />);
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      errors: [{ message: 'Error!!', refId: 'B' }],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
+    expect(await screen.findByText('Error!!')).toBeInTheDocument();
+  });
+  it('should display error message in corresponding panel if only error field is provided', async () => {
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      error: { message: 'Error!!', refId: 'B' },
+      errors: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
     expect(await screen.findByText('Error!!')).toBeInTheDocument();
   });
   it('should not display error message if error.refId doesnt match', async () => {
-      render(<QueryEditorRow {...props('A')} />);
-      await waitFor(() => {
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      errors: [{ message: 'Error!!', refId: 'A' }],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
+    await waitFor(() => {
       expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
     });
   });
