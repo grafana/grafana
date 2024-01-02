@@ -48,7 +48,6 @@ export function QueryEditor(props: Props) {
               size="sm"
               onClick={() => {
                 reportInteraction('grafana_traces_copy_to_traceql_clicked', {
-                  datasourceType: 'tempo',
                   app: props.app ?? '',
                   grafana_version: config.buildInfo.version,
                   location: 'traceql_tab',
