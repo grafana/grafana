@@ -21,10 +21,10 @@ describe('grafana data source', () => {
     jest.clearAllMocks();
   });
 
-  describe('when calling isQueryEmpty', () => {
+  describe('when calling isIncompleteQuery', () => {
     it('should return false', () => {
       const ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
-      expect(ds.isQueryEmpty()).toBe(false);
+      expect(ds.isIncompleteQuery()).toBe(false);
     });
   });
 

@@ -131,7 +131,7 @@ describe('Tempo data source', () => {
     });
   });
 
-  describe('when calling isQueryEmpty', () => {
+  describe('when calling isIncompleteQuery', () => {
     const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
 
     it('should return false when expr has content', () => {
@@ -143,11 +143,11 @@ describe('Tempo data source', () => {
         search: '',
         filters: [],
       };
-      expect(ds.isQueryEmpty(query)).toBe(false);
+      expect(ds.isIncompleteQuery(query)).toBe(false);
     });
     it('should return true when query is not defined', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
-      expect(ds.isQueryEmpty()).toBe(true);
+      expect(ds.isIncompleteQuery()).toBe(true);
     });
     it('should return true when expr is whitespace', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
@@ -158,7 +158,7 @@ describe('Tempo data source', () => {
         search: '    ',
         filters: [],
       };
-      expect(ds.isQueryEmpty(query)).toBe(true);
+      expect(ds.isIncompleteQuery(query)).toBe(true);
     });
   });
 

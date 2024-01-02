@@ -967,7 +967,7 @@ export class PrometheusDatasource
     return defaults;
   }
 
-  isQueryEmpty(query?: PromQuery): boolean {
+  isIncompleteQuery(query?: PromQuery): boolean {
     return query?.expr === undefined || query?.expr.trim() === '';
   }
 }

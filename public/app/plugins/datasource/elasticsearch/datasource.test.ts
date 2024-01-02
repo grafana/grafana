@@ -875,7 +875,7 @@ describe('ElasticDatasource', () => {
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
   });
 
-  describe('when calling isQueryEmpty', () => {
+  describe('when calling isIncompleteQuery', () => {
     it('should return false when query has content', () => {
       const { ds } = getTestContext();
       const query: ElasticsearchQuery = {
@@ -884,11 +884,11 @@ describe('ElasticDatasource', () => {
         metrics: [{ type: 'count', id: '1' }],
         query: 'foo',
       };
-      expect(ds.isQueryEmpty(query)).toBe(false);
+      expect(ds.isIncompleteQuery(query)).toBe(false);
     });
     it('should return true when query is not defined', () => {
       const { ds } = getTestContext();
-      expect(ds.isQueryEmpty()).toBe(true);
+      expect(ds.isIncompleteQuery()).toBe(true);
     });
     it('should return true when query is whitespace', () => {
       const { ds } = getTestContext();
@@ -898,7 +898,7 @@ describe('ElasticDatasource', () => {
         metrics: [{ type: 'count', id: '1' }],
         query: '   ',
       };
-      expect(ds.isQueryEmpty(query)).toBe(true);
+      expect(ds.isIncompleteQuery(query)).toBe(true);
     });
   });
 

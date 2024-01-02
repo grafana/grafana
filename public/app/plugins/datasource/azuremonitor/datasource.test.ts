@@ -59,18 +59,18 @@ describe('Azure Monitor Datasource', () => {
     });
   });
 
-  describe('when calling isQueryEmpty', () => {
+  describe('when calling isIncompleteQuery', () => {
     it('should return false when region has content', () => {
       const ds = new Datasource(createMockInstanceSetttings());
       const query: AzureMonitorQuery = {
         refId: 'A',
         region: 'foo',
       };
-      expect(ds.isQueryEmpty(query)).toBe(false);
+      expect(ds.isIncompleteQuery(query)).toBe(false);
     });
     it('should return true when query is not defined', () => {
       const ds = new Datasource(createMockInstanceSetttings());
-      expect(ds.isQueryEmpty()).toBe(true);
+      expect(ds.isIncompleteQuery()).toBe(true);
     });
     it('should return true when region is whitespace', () => {
       const ds = new Datasource(createMockInstanceSetttings());
@@ -78,7 +78,7 @@ describe('Azure Monitor Datasource', () => {
         refId: 'A',
         region: '    ',
       };
-      expect(ds.isQueryEmpty(query)).toBe(true);
+      expect(ds.isIncompleteQuery(query)).toBe(true);
     });
   });
 

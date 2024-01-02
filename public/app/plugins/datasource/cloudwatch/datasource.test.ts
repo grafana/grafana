@@ -127,20 +127,20 @@ describe('datasource', () => {
       });
     });
 
-    describe('when calling isQueryEmpty', () => {
+    describe('when calling isIncompleteQuery', () => {
       it('should return false when region has content', () => {
         const { datasource } = setupMockedDataSource();
         const query: CloudWatchQuery = { refId: 'A', id: '1', namespace: 'foo', region: 'bar' };
-        expect(datasource.isQueryEmpty(query)).toBe(false);
+        expect(datasource.isIncompleteQuery(query)).toBe(false);
       });
       it('should return true when query is not defined', () => {
         const { datasource } = setupMockedDataSource();
-        expect(datasource.isQueryEmpty()).toBe(true);
+        expect(datasource.isIncompleteQuery()).toBe(true);
       });
       it('should return true when region is whitespace', () => {
         const { datasource } = setupMockedDataSource();
         const query: CloudWatchQuery = { refId: 'A', id: '1', namespace: 'foo', region: '   ' };
-        expect(datasource.isQueryEmpty(query)).toBe(true);
+        expect(datasource.isIncompleteQuery(query)).toBe(true);
       });
     });
 

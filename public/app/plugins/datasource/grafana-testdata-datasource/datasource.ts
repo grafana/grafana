@@ -141,7 +141,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     return merge(...streams);
   }
 
-  isQueryEmpty(_?: TestData | undefined): boolean {
+  isIncompleteQuery(_?: TestData | undefined): boolean {
     return false;
   }
 

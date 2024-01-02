@@ -114,7 +114,7 @@ describe('Pyroscope data source', () => {
     });
   });
 
-  describe('when calling isQueryEmpty', () => {
+  describe('when calling isIncompleteQuery', () => {
     const templateSrv = getTemplateSrv();
 
     it('should return false when expr has content', () => {
@@ -126,11 +126,11 @@ describe('Pyroscope data source', () => {
         queryType: 'both',
         labelSelector: 'baz',
       };
-      expect(ds.isQueryEmpty(query)).toBe(false);
+      expect(ds.isIncompleteQuery(query)).toBe(false);
     });
     it('should return true when query is not defined', () => {
       const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
-      expect(ds.isQueryEmpty()).toBe(true);
+      expect(ds.isIncompleteQuery()).toBe(true);
     });
     it('should return true when expr is whitespace', () => {
       const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
@@ -141,7 +141,7 @@ describe('Pyroscope data source', () => {
         queryType: 'both',
         labelSelector: 'baz',
       };
-      expect(ds.isQueryEmpty(query)).toBe(true);
+      expect(ds.isIncompleteQuery(query)).toBe(true);
     });
   });
 });

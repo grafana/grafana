@@ -466,7 +466,7 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  isQueryEmpty(query?: LokiQuery): boolean {
+  isIncompleteQuery(query?: LokiQuery): boolean {
     return query?.expr === undefined || query?.expr.trim() === '';
   }
 

@@ -70,20 +70,20 @@ describe('ZipkinDatasource', () => {
       expect(response.data.length).toBe(0);
     });
 
-    describe('when calling isQueryEmpty', () => {
+    describe('when calling isIncompleteQuery', () => {
       it('should return false when query has content', () => {
         const ds = new ZipkinDatasource(defaultSettings);
         const query: ZipkinQuery = { refId: 'A', query: 'foo' };
-        expect(ds.isQueryEmpty(query)).toBe(false);
+        expect(ds.isIncompleteQuery(query)).toBe(false);
       });
       it('should return true when query is not defined', () => {
         const ds = new ZipkinDatasource(defaultSettings);
-        expect(ds.isQueryEmpty()).toBe(true);
+        expect(ds.isIncompleteQuery()).toBe(true);
       });
       it('should return true when query is whitespace', () => {
         const ds = new ZipkinDatasource(defaultSettings);
         const query: ZipkinQuery = { refId: 'A', query: '   ' };
-        expect(ds.isQueryEmpty(query)).toBe(true);
+        expect(ds.isIncompleteQuery(query)).toBe(true);
       });
     });
   });

@@ -59,7 +59,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
-  isQueryEmpty(query?: CloudMonitoringQuery | undefined): boolean {
+  isIncompleteQuery(query?: CloudMonitoringQuery | undefined): boolean {
     return query?.queryType === undefined;
   }
 

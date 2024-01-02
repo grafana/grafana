@@ -48,7 +48,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
     });
   }
 
-  isQueryEmpty(query?: Query | undefined): boolean {
+  isIncompleteQuery(query?: Query | undefined): boolean {
     return query?.profileTypeId === undefined || query.profileTypeId.trim() === '';
   }
 

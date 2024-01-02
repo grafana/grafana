@@ -216,7 +216,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
-  isQueryEmpty(query?: SQLQuery | undefined): boolean {
+  isIncompleteQuery(query?: SQLQuery | undefined): boolean {
     return query?.rawSql === undefined || query.rawSql.trim() === '';
   }
 

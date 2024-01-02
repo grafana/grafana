@@ -427,20 +427,20 @@ describe('InfluxDataSource Frontend Mode', () => {
     });
   });
 
-  describe('when calling isQueryEmpty', () => {
+  describe('when calling isIncompleteQuery', () => {
     it('should return false when query has content', () => {
       const ds = getMockInfluxDS();
       const query: InfluxQuery = { refId: 'A', query: 'foo' };
-      expect(ds.isQueryEmpty(query)).toBe(false);
+      expect(ds.isIncompleteQuery(query)).toBe(false);
     });
     it('should return true when query is not defined', () => {
       const ds = getMockInfluxDS();
-      expect(ds.isQueryEmpty()).toBe(true);
+      expect(ds.isIncompleteQuery()).toBe(true);
     });
     it('should return true when query is whitespace', () => {
       const ds = getMockInfluxDS();
       const query: InfluxQuery = { refId: 'A', query: '   ' };
-      expect(ds.isQueryEmpty(query)).toBe(true);
+      expect(ds.isIncompleteQuery(query)).toBe(true);
     });
   });
 });

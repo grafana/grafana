@@ -143,7 +143,7 @@ export class CloudWatchDatasource
     }));
   }
 
-  isQueryEmpty(query?: CloudWatchQuery | undefined): boolean {
+  isIncompleteQuery(query?: CloudWatchQuery | undefined): boolean {
     return query?.region === undefined || query.region.trim() === '';
   }
 

@@ -550,7 +550,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     });
   }
 
-  isQueryEmpty(query?: OpenTsdbQuery): boolean {
+  isIncompleteQuery(query?: OpenTsdbQuery): boolean {
     return query?.metric === undefined || query.metric.trim() === '';
   }
 

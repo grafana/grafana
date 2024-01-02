@@ -257,7 +257,7 @@ export class ElasticDatasource
     );
   }
 
-  isQueryEmpty(query?: ElasticsearchQuery | undefined): boolean {
+  isIncompleteQuery(query?: ElasticsearchQuery | undefined): boolean {
     return query?.query === undefined || query.query.trim() === '';
   }
 
