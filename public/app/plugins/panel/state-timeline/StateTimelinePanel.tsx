@@ -213,6 +213,7 @@ export const StateTimelinePanel = ({
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
+                          timeRange={timeRange}
                         />
                       );
                     }}

@@ -9,6 +9,7 @@ import {
   getDisplayProcessor,
   GrafanaTheme2,
   LinkModel,
+  TimeRange,
   TimeZone,
 } from '@grafana/data';
 import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
@@ -31,6 +32,7 @@ interface StateTimelineTooltip2Props {
   seriesIdx: number | null | undefined;
   isPinned: boolean;
   timeZone?: TimeZone;
+  timeRange: TimeRange;
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
 }
@@ -41,6 +43,7 @@ export const StateTimelineTooltip2 = ({
   dataIdxs,
   seriesIdx,
   timeZone,
+  timeRange,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   isPinned,
@@ -98,10 +101,13 @@ export const StateTimelineTooltip2 = ({
     }
 
     const stateTs = xField.values[datapointIdx!];
-    let duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+    let duration: string;
 
     if (nextStateTs) {
       duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+    } else {
+      const to = timeRange.to.unix() * 1000;
+      duration = fmtDuration(to - stateTs);
     }
 
     const durationEntry: LabelValue[] = duration ? [{ label: 'Duration', value: duration }] : [];
