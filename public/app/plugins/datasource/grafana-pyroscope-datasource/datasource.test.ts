@@ -117,7 +117,7 @@ describe('Pyroscope data source', () => {
   describe('when calling isIncompleteQuery', () => {
     const templateSrv = getTemplateSrv();
 
-    it('should return false when expr has content', () => {
+    it('should return false when profileTypeId has content', () => {
       const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
       const query: Query = {
         refId: 'A',
@@ -132,7 +132,7 @@ describe('Pyroscope data source', () => {
       const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
       expect(ds.isIncompleteQuery()).toBe(true);
     });
-    it('should return true when expr is whitespace', () => {
+    it('should return true when profileTypeId is whitespace', () => {
       const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
       const query: Query = {
         refId: 'A',
