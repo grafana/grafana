@@ -28,10 +28,16 @@ function getSecret(options: DataSourceSettings<any, any>): undefined | string | 
 }
 
 export function hasCredentials(options: DataSourceSettings<any, any>): boolean {
-  return (
-    typeof options.jsonData.azureCredentials === 'object' ||
-    (typeof options.jsonData.tenantId === 'string' && typeof options.jsonData.clientId === 'string')
-  );
+  if (typeof options.jsonData.azureCredentials === 'object') {
+    // Credentials in common format
+    return true;
+  } else if (typeof options.jsonData.azureAuthType === 'string') {
+    // Credentials in legacy format
+    return true;
+  } else {
+    // Oldest legacy format before auth type was used (App Registration only)
+    return typeof options.jsonData.tenantId === 'string' || typeof options.jsonData.clientId === 'string';
+  }
 }
 
 export function getDefaultCredentials(): AzureCredentials {

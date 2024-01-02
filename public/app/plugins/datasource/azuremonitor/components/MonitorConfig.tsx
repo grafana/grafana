@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { AzureDataSourceSettings } from '../types';
 import { AzureCredentials } from './AzureCredentials';
-import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
+import { getCredentials, getDefaultCredentials, hasCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';
 import {KnownAzureClouds} from "../../prometheus/configuration/AzureCredentials";
@@ -35,6 +35,12 @@ export const MonitorConfig = (props: Props) => {
 
   const onSubscriptionChange = (subscriptionId?: string) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, subscriptionId } }));
+
+  useEffect(() => {
+    if (!hasCredentials(options)) {
+      updateOptions((options) => updateCredentials(options, getDefaultCredentials()));
+    }
+  }, [options, updateOptions]);
 
   return (
     <>
