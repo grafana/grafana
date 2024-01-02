@@ -51,6 +51,7 @@ export function QueryEditor(props: Props) {
                   datasourceType: 'tempo',
                   app: props.app ?? '',
                   grafana_version: config.buildInfo.version,
+                  location: 'traceql_tab',
                 });
 
                 props.onClearResults();
