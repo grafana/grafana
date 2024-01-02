@@ -25,6 +25,9 @@
       "user": "User"
     }
   },
+  "bouncing-loader": {
+    "label": "Loading"
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
@@ -408,6 +411,9 @@
     "datasource-add-button": {
       "label": "Add new data source"
     }
+  },
+  "drawer": {
+    "close": "Close Drawer"
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
@@ -967,6 +973,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": "Close Drawer"
+    },
     "title": "Latest from the blog"
   },
   "notifications": {

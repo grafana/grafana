@@ -173,7 +173,7 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
-		if !shouldRecord(state) {
+		if !shouldRecordAnnotation(state) {
 			continue
 		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())

@@ -852,7 +852,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
 				},
 			},
-			expectedAnnotations: 1,
+			expectedAnnotations: 0,
 			expectedStates: []*state.State{
 				{
 					Labels:      labels["system + rule + labels1"],

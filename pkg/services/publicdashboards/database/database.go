@@ -55,7 +55,7 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	}
 
 	pubdashBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
-	pubdashBuilder.Write("SELECT dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title")
+	pubdashBuilder.Write("SELECT dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title, dashboard.slug")
 	pubdashBuilder.Write(" FROM dashboard_public")
 	pubdashBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
 	pubdashBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
