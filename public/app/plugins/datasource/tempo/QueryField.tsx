@@ -20,7 +20,6 @@ import { LokiQuery } from '../loki/types';
 import { LokiSearch } from './LokiSearch';
 import NativeSearch from './NativeSearch/NativeSearch';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
-import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { ServiceGraphSection } from './ServiceGraphSection';
 import { TempoQueryType } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
@@ -159,42 +158,15 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
                 }}
                 size="md"
               />
-              <>
-                {query.queryType === 'traceqlSearch' && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    style={{ marginRight: '10px' }}
-                    onClick={() => {
-                      reportInteraction('grafana_traces_copy_to_traceql_clicked', {
-                        datasourceType: 'tempo',
-                        app: app ?? '',
-                        grafana_version: config.buildInfo.version,
-                        location: 'search_tab',
-                      });
-
-                      this.onClearResults();
-                      const traceQlQuery = generateQueryFromFilters(query.filters || []);
-                      onChange({
-                        ...query,
-                        query: traceQlQuery,
-                        queryType: 'traceql',
-                      });
-                    }}
-                  >
-                    Copy to TraceQL
-                  </Button>
-                )}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    this.setState({ uploadModalOpen: true });
-                  }}
-                >
-                  Import trace
-                </Button>
-              </>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  this.setState({ uploadModalOpen: true });
+                }}
+              >
+                Import trace
+              </Button>
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
@@ -221,6 +193,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             query={query}
             onChange={onChange}
             onBlur={this.props.onBlur}
+            app={app}
+            onClearResults={this.onClearResults}
           />
         )}
         {query.queryType === 'serviceMap' && (
