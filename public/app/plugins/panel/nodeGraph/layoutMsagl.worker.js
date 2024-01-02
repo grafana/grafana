@@ -21,7 +21,7 @@ addEventListener('message', async (event) => {
  * and also fills in node references in edges instead of node ids.
  */
 export function layout(nodes, edges) {
-  const { mappedEdges, DOTToIdMap, idToDOTMap } = createMappings(nodes, edges);
+  const { mappedEdges, DOTToIdMap } = createMappings(nodes, edges);
 
   const dot = edgesToDOT(mappedEdges);
   const graph = parseDot(dot);
@@ -129,6 +129,9 @@ export function layout(nodes, edges) {
   return [finalNodes, edgesMapped];
 }
 
+// We create mapping because the DOT language we use later to create the graph doesn't support arbitrary IDs. So we
+// map our IDs to just an index of the node so the IDs are safe for the DOT parser and also create and inverse mapping
+// for quick lookup.
 function createMappings(nodes, edges) {
   // Edges where the source and target IDs are the indexes we use for layout
   const mappedEdges = [];
@@ -158,7 +161,6 @@ function createMappings(nodes, edges) {
 
   return {
     mappedEdges,
-    idToDOTMap,
     DOTToIdMap,
   };
 }
