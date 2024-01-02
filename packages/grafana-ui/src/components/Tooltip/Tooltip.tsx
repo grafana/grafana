@@ -70,6 +70,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       delay: {
         close: interactive ? 100 : 0,
       },
+      move: false,
     });
     const focus = useFocus(context);
     const dismiss = useDismiss(context);
