@@ -22,9 +22,9 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
   const muteTimingOptions = useMuteTimingOptions();
   return (
     <Field
-      label="Mute timings"
+      label="Mute timings (optional)"
       data-testid="am-mute-timing-select"
-      description="Add mute timing to policy"
+      description="Select the mute timing to define when not to send notification for this alert rule"
       invalid={!!errors.contactPoints?.[alertManager]?.muteTimeIntervals}
     >
       <InputControl
@@ -35,6 +35,7 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
             className={styles.input}
             onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
             options={muteTimingOptions}
+            placeholder="Select mute timings..."
           />
         )}
         control={control}
