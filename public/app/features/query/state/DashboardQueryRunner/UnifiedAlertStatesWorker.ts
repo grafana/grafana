@@ -7,6 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import {
   getThresholdsForQueries,
   ThresholdDefinition,
+  ThresholdDefinitions,
 } from 'app/features/alerting/unified/components/rule-editor/util';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
@@ -101,7 +102,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
 
         // extract the thresholds from the ruler API
         if (fetchRulerRulesResult) {
-          result.threshold = this.extractThresholds(fetchRulerRulesResult);
+          result.thresholdsByRefId = this.extractThresholds(fetchRulerRulesResult);
         }
 
         return result;
@@ -152,15 +153,12 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
 
   // we'll extract the thresholds from linked alert rules.
   // we will _only_ use the first alert rule definition for this since we don't support merging thresholds from multiple alert rules
-  extractThresholds(rulerRules: RulerRulesConfigDTO<RulerGrafanaRuleDTO>): ThresholdDefinition | undefined {
+  extractThresholds(rulerRules: RulerRulesConfigDTO<RulerGrafanaRuleDTO>): ThresholdDefinitions {
     const firstRule = Object.values(rulerRules).at(0)?.at(0)?.rules.at(0);
     if (!firstRule) {
-      return;
+      return {};
     }
 
-    const thresholdsForRefID = getThresholdsForQueries(firstRule.grafana_alert.data);
-    const threshold = Object.values(thresholdsForRefID).at(0);
-
-    return threshold;
+    return getThresholdsForQueries(firstRule.grafana_alert.data);
   }
 }

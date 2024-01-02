@@ -170,26 +170,26 @@ export class PanelQueryRunner {
                 }
               }
 
-              const thresholdStyleOverrides = [
-                {
+              const thresholdStyleOverrides = Object.entries(data.thresholdsByRefId ?? []).map(([refId, threshold]) => {
+                return {
                   matcher: {
-                    id: 'byName',
-                    options: 'Value',
+                    id: 'byFrameRefID',
+                    options: refId,
                   },
                   properties: [
                     {
                       id: 'custom.thresholdsStyle',
                       value: {
-                        mode: data.threshold?.mode,
+                        mode: threshold.mode,
                       },
                     },
                     {
                       id: 'thresholds',
-                      value: data.threshold?.config,
+                      value: threshold.config,
                     },
                   ],
-                },
-              ];
+                };
+              });
 
               if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
                 lastConfigRev = this.dataConfigSource.configRev!;

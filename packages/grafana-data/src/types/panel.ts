@@ -31,7 +31,7 @@ export interface PanelPluginMeta extends PluginMeta {
   sort: number;
 }
 
-export interface ThresholdDefinition {
+interface ThresholdDefinition {
   mode: GraphTresholdsStyleMode;
   config: ThresholdsConfig;
 }
@@ -59,7 +59,9 @@ export interface PanelData {
   /**
    * @internal
    */
-  threshold?: ThresholdDefinition;
+  thresholdsByRefId?: {
+    [refId: string]: ThresholdDefinition;
+  };
 
   /** Request contains the queries and properties sent to the datasource */
   request?: DataQueryRequest;

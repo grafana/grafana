@@ -19,9 +19,9 @@ export function mergePanelAndDashData(
 
         const annotations = panelData.annotations.concat(new ArrayDataFrame(dashData.annotations));
         const alertState = dashData.alertState;
-        const threshold = dashData.threshold;
+        const thresholdsByRefId = dashData.thresholdsByRefId;
 
-        return of({ ...panelData, annotations, alertState, threshold });
+        return of({ ...panelData, annotations, alertState, thresholdsByRefId });
       }
 
       return of(panelData);
