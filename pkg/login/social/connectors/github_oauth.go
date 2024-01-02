@@ -30,7 +30,6 @@ var _ ssosettings.Reloadable = (*SocialGithub)(nil)
 type SocialGithub struct {
 	*SocialBase
 	allowedOrganizations []string
-	apiUrl               string
 	teamIds              []int
 }
 
@@ -61,7 +60,6 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	config := createOAuthConfig(info, cfg, social.GitHubProviderName)
 	provider := &SocialGithub{
 		SocialBase:           newSocialBase(social.GitHubProviderName, config, info, cfg.AutoAssignOrgRole, *features),
-		apiUrl:               info.ApiUrl,
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -135,7 +133,7 @@ func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Clien
 		Verified bool   `json:"verified"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.apiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/emails"))
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
@@ -158,7 +156,7 @@ func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Clien
 }
 
 func (s *SocialGithub) FetchTeamMemberships(ctx context.Context, client *http.Client) ([]GithubTeam, error) {
-	url := fmt.Sprintf(s.apiUrl + "/teams?per_page=100")
+	url := fmt.Sprintf(s.info.ApiUrl + "/teams?per_page=100")
 	hasMore := true
 	teams := make([]GithubTeam, 0)
 
@@ -240,7 +238,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		Name  string `json:"name"`
 	}
 
-	response, err := s.httpGet(ctx, client, s.apiUrl)
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
@@ -266,13 +264,13 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 			return nil, err
 		}
 
-		if s.allowAssignGrafanaAdmin {
+		if s.info.AllowAssignGrafanaAdmin {
 			isGrafanaAdmin = &grafanaAdmin
 		}
 	}
 
 	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
-	if s.allowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -289,7 +287,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		userInfo.Name = data.Name
 	}
 
-	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs?per_page=100")
+	organizationsUrl := fmt.Sprintf(s.info.ApiUrl + "/orgs?per_page=100")
 
 	if !s.IsTeamMember(ctx, client) {
 		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", s.teamIds)

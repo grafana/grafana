@@ -58,7 +58,13 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		for _, ssoSetting := range allSettings {
-			conn, err := createOAuthConnector(ssoSetting.Provider, ssoSetting.OAuthSettings, cfg, ssoSettings, features, cache)
+			info, err := connectors.CreateOAuthInfoFromKeyValues(ssoSetting.Settings)
+			if err != nil {
+				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", ssoSetting.Provider)
+				continue
+			}
+
+			conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, ssoSettings, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 				continue
