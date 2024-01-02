@@ -44,6 +44,9 @@ export type SSOProviderSettingsBase = {
   type: string;
   usePKCE?: boolean;
   useRefreshToken?: boolean;
+  nameAttributePath?: string;
+  loginAttributePath?: string;
+  idTokenAttributeName?: string;
 };
 
 // SSO data received from the API and sent to it

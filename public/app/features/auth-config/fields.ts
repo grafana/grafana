@@ -45,7 +45,21 @@ export const sectionFields: Section = {
         'signoutRedirectUrl',
       ],
     },
-    { name: 'User mapping', id: 'user', fields: ['emailAttributeName', 'emailAttributePath', 'roleAttributePath'] },
+    {
+      name: 'User mapping',
+      id: 'user',
+      fields: [
+        'nameAttributePath',
+        'loginAttributePath',
+        'emailAttributeName',
+        'emailAttributePath',
+        'idTokenAttributeName',
+        'roleAttributePath',
+        'roleAttributeStrict',
+        'allowAssignGrafanaAdmin',
+        'skipOrgRoleSync',
+      ],
+    },
   ],
 };
 
@@ -136,6 +150,7 @@ export const fieldMap: Record<string, FieldData> = {
   },
   roleAttributePath: {
     label: 'Role Attribute Path',
+    description: 'JMESPath expression to use for Grafana role lookup.',
     type: 'text',
     validation: {
       required: false,
@@ -172,6 +187,38 @@ export const fieldMap: Record<string, FieldData> = {
     label: 'Email attribute path',
     description: 'JMESPath expression to use for user email lookup from the user information.',
     type: 'text',
+  },
+  nameAttributePath: {
+    label: 'Name attribute path',
+    description:
+      'JMESPath expression to use for user name lookup from the user ID token. \n' +
+      'This name will be used as the user’s display name.',
+    type: 'text',
+  },
+  loginAttributePath: {
+    label: 'Login attribute path',
+    description: 'JMESPath expression to use for user login lookup from the user ID token.',
+    type: 'text',
+  },
+  idTokenAttributeName: {
+    label: 'ID token attribute name',
+    description: 'The name of the key used to extract the ID token from the returned OAuth2 token.',
+    type: 'text',
+  },
+  roleAttributeStrict: {
+    label: 'Role attribute strict mode',
+    description: 'If enabled, denies user login if the Grafana role cannot be extracted using Role attribute path',
+    type: 'switch',
+  },
+  allowAssignGrafanaAdmin: {
+    label: 'Allow assign Grafana admin',
+    description: 'If enabled, it will automatically sync the Grafana server administrator role',
+    type: 'switch',
+  },
+  skipOrgRoleSync: {
+    label: 'Skip organization role sync',
+    description: 'Prevent synchronizing users’ organization roles from your IdP',
+    type: 'switch',
   },
 };
 
