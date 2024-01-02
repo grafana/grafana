@@ -370,7 +370,6 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 		}
 	}
 
-	time.Sleep(time.Second * 10)
 	return aggregatorServer, nil
 }
 
