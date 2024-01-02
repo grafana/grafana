@@ -110,7 +110,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
         key="explore"
         variant="primary"
         icon="chart-line"
-        target="__blank"
+        target="_blank"
         href={createExploreLink(rulesSource, rule.query)}
       >
         See graph
@@ -124,7 +124,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
         key="runbook"
         variant="primary"
         icon="book"
-        target="__blank"
+        target="_blank"
         href={textUtil.sanitizeUrl(rule.annotations[Annotation.runbookURL])}
       >
         View runbook
@@ -140,7 +140,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
           key="dashboard"
           variant="primary"
           icon="apps"
-          target="__blank"
+          target="_blank"
           href={`d/${encodeURIComponent(dashboardUID)}`}
         >
           Go to dashboard
@@ -154,7 +154,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             key="panel"
             variant="primary"
             icon="apps"
-            target="__blank"
+            target="_blank"
             href={`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}`}
           >
             Go to panel
@@ -170,7 +170,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
         size="sm"
         key="silence"
         icon="bell-slash"
-        target="__blank"
+        target="_blank"
         href={makeRuleBasedSilenceLink(alertmanagerSourceName, rule)}
       >
         Silence
