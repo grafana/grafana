@@ -17,8 +17,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
         defaultValue: 'auto',
         settings: {
           options: [
-            { value: 'auto', label: 'Auto', description: 'No changes to saved model since 8.0' },
-            { value: 'manual', label: 'Manual' },
+            { value: 'auto', label: 'Table', description: 'Plot values within a single table result' },
+            { value: 'manual', label: 'Manual', description: 'Construct values from any result' },
           ],
         },
       })

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -154,8 +155,9 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	namespace, id := identity.NamespacedID()
-	if namespace != authn.NamespaceAPIKey {
+	id, exists := s.getAPIKeyID(ctx, identity, r)
+
+	if !exists {
 		return nil
 	}
 
@@ -171,6 +173,32 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 	}(id)
 
 	return nil
+}
+
+func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
+	namespace, identifier := identity.GetNamespacedID()
+
+	id, err := authidentity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		s.log.Warn("Failed to parse ID from identifier", "err", err)
+		return -1, false
+	}
+	if namespace == authn.NamespaceAPIKey {
+		return id, true
+	}
+
+	if namespace == authn.NamespaceServiceAccount {
+		// When the identity is service account, the ID in from the namespace is the service account ID.
+		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
+		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
+		if err != nil {
+			s.log.Warn("Failed to fetch the API Key from request")
+			return -1, false
+		}
+
+		return apiKey.ID, true
+	}
+	return -1, false
 }
 
 func looksLikeApiKey(token string) bool {

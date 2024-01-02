@@ -36,7 +36,7 @@ import {
   makeBinOp,
   makeError,
   replaceVariables,
-} from './shared/parsingUtils';
+} from './parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery, PromVisualQueryBinary } from './types';
 

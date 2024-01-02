@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { memo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { Button, HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
@@ -22,7 +24,7 @@ const getServiceAccountsAriaLabel = (name: string) => {
   return `Edit service account's ${name} details`;
 };
 
-const ServiceAccountListItem = memo(
+const ServiceAccountListItemComponent = memo(
   ({
     serviceAccount,
     onRoleChange,
@@ -81,7 +83,7 @@ const ServiceAccountListItem = memo(
                 onBasicRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 basicRoleDisabled={!canUpdateRole}
-                disabled={serviceAccount.isDisabled}
+                disabled={serviceAccount.isExternal || serviceAccount.isDisabled}
                 width={40}
               />
             )}
@@ -113,7 +115,7 @@ const ServiceAccountListItem = memo(
         </td>
         <td>
           {!serviceAccount.isExternal && (
-            <HorizontalGroup justify="flex-end">
+            <Stack alignItems="center" justifyContent="flex-end">
               {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
                 <Button
                   onClick={() => onAddTokenClick(serviceAccount)}
@@ -142,54 +144,97 @@ const ServiceAccountListItem = memo(
                   tooltip={`Delete service account ${serviceAccount.name}`}
                 />
               )}
-            </HorizontalGroup>
+            </Stack>
           )}
           {serviceAccount.isExternal && (
-            <HorizontalGroup justify="flex-end">
+            <Stack alignItems="center" justifyContent="flex-end">
               <IconButton
                 disabled={true}
                 name="lock"
                 size="md"
                 tooltip={`This is a managed service account and cannot be modified.`}
               />
-            </HorizontalGroup>
+            </Stack>
           )}
         </td>
       </tr>
     );
   }
 );
-ServiceAccountListItem.displayName = 'ServiceAccountListItem';
+ServiceAccountListItemComponent.displayName = 'ServiceAccountListItem';
+
+const ServiceAccountsListItemSkeleton: SkeletonComponent = ({ rootProps }) => {
+  const styles = useStyles2(getSkeletonStyles);
+
+  return (
+    <tr {...rootProps}>
+      <td className="width-4 text-center">
+        <Skeleton containerClassName={styles.blockSkeleton} circle width={25} height={25} />
+      </td>
+      <td className="max-width-10">
+        <Skeleton width={100} />
+      </td>
+      <td className="max-width-10">
+        <Skeleton width={100} />
+      </td>
+      <td>
+        <Skeleton containerClassName={styles.blockSkeleton} width="100%" height={32} />
+      </td>
+      <td className="max-width-10">
+        <Skeleton width={40} />
+      </td>
+      <td>
+        <Stack alignItems="center" justifyContent="flex-end">
+          <Skeleton containerClassName={styles.blockSkeleton} width={102} height={32} />
+          <Skeleton containerClassName={styles.blockSkeleton} width={85} height={32} />
+          <Skeleton containerClassName={cx(styles.blockSkeleton, styles.deleteButton)} width={16} height={16} />
+        </Stack>
+      </td>
+    </tr>
+  );
+};
+
+const ServiceAccountListItem = attachSkeleton(ServiceAccountListItemComponent, ServiceAccountsListItemSkeleton);
+
+const getSkeletonStyles = (theme: GrafanaTheme2) => ({
+  blockSkeleton: css({
+    display: 'block',
+    lineHeight: 1,
+  }),
+  deleteButton: css({
+    marginRight: theme.spacing(0.5),
+  }),
+});
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    iconRow: css`
-      svg {
-        margin-left: ${theme.spacing(0.5)};
-      }
-    `,
+    iconRow: css({
+      svg: {
+        marginLeft: theme.spacing(0.5),
+      },
+    }),
     accountId: cx(
       'ellipsis',
-      css`
-        color: ${theme.colors.text.secondary};
-      `
+      css({
+        color: theme.colors.text.secondary,
+      })
     ),
-    deleteButton: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    tokensInfo: css`
-      span {
-        margin-right: ${theme.spacing(1)};
-      }
-    `,
-    tokensInfoSecondary: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    disabled: css`
-      td a {
-        color: ${theme.colors.text.secondary};
-      }
-    `,
+    deleteButton: css({
+      color: theme.colors.text.secondary,
+    }),
+    tokensInfo: css({
+      span: {
+        marginRight: theme.spacing(1),
+      },
+    }),
+    tokensInfoSecondary: css({
+      color: theme.colors.text.secondary,
+    }),
+    disabled: css({
+      'td a': {
+        color: theme.colors.text.secondary,
+      },
+    }),
     actionButton: css({
       minWidth: 85,
     }),

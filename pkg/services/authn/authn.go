@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -74,6 +75,8 @@ type Service interface {
 	RegisterPostLoginHook(hook PostLoginHookFn, priority uint)
 	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
+	// Logout revokes session token and does additional clean up if client used to authenticate supports it
+	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
 }
@@ -113,6 +116,14 @@ type HookClient interface {
 type RedirectClient interface {
 	Client
 	RedirectURL(ctx context.Context, r *Request) (*Redirect, error)
+}
+
+// LogoutCLient is an optional interface that auth client can implement.
+// Clients that implements this interface can implement additional logic
+// that should happen during logout and supports client specific redirect URL.
+type LogoutClient interface {
+	Client
+	Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*Redirect, bool)
 }
 
 type PasswordClient interface {

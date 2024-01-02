@@ -589,8 +589,6 @@ const routePropertyToLabel = (key: keyof InhertitableProperties | string): strin
       return 'Group interval';
     case 'group_wait':
       return 'Group wait';
-    case 'mute_time_intervals':
-      return 'Mute timings';
     case 'repeat_interval':
       return 'Repeat interval';
     default:

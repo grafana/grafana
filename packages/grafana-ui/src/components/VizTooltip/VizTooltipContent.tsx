@@ -10,7 +10,7 @@ import { LabelValue } from './types';
 
 interface Props {
   contentLabelValue: LabelValue[];
-  customContent?: ReactElement | null;
+  customContent?: ReactElement[];
 }
 
 export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) => {
@@ -19,7 +19,7 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
   return (
     <div className={styles.wrapper}>
       <div>
-        {contentLabelValue?.map((labelValue, i) => {
+        {contentLabelValue.map((labelValue, i) => {
           const { label, value, color, colorIndicator, colorPlacement, isActive } = labelValue;
           return (
             <VizTooltipRow
@@ -29,14 +29,19 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
               color={color}
               colorIndicator={colorIndicator}
               colorPlacement={colorPlacement}
-              colorFirst={false}
               isActive={isActive}
               justify={'space-between'}
             />
           );
         })}
       </div>
-      {customContent && <div className={styles.customContentPadding}>{customContent}</div>}
+      {customContent?.map((content, i) => {
+        return (
+          <div key={i} className={styles.customContentPadding}>
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 };
