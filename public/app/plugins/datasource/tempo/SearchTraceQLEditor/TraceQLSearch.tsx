@@ -168,7 +168,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
                     id: 'duration-type',
                     value: 'span',
                   };
-                  updateFilter({ ...filter, value: v?.value ?? '' });
+                  updateFilter({ ...filter, value: v?.value });
                 }}
                 aria-label={'duration type'}
               />
