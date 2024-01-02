@@ -6,6 +6,8 @@ import { scenarios } from './mocks/resources';
 
 const PANEL_TITLE = 'Table panel E2E test';
 const TABLE_VIZ_NAME = 'Table';
+const STANDARD_OTIONS_CATEGORY = 'Standard options';
+const DISPLAY_NAME_LABEL = 'Display name';
 
 test.describe('query editor query data', () => {
   test('query data response should be OK when query is valid', async ({ panelEditPage }) => {
@@ -51,8 +53,6 @@ test.describe('edit panel plugin settings', () => {
     selectors,
     page,
   }) => {
-    const res = getAllStandardFieldConfigs().find((x) => x.id === 'displayName');
-    expect(res, 'displayName field config not found').toBeDefined();
     await panelEditPage.setVisualization(TABLE_VIZ_NAME);
     await expect(panelEditPage.getByTestIdOrAriaLabel(selectors.components.PanelEditor.toggleVizPicker)).toHaveText(
       TABLE_VIZ_NAME
@@ -61,7 +61,7 @@ test.describe('edit panel plugin settings', () => {
     await expect(
       panelEditPage.getByTestIdOrAriaLabel(selectors.components.Panels.Panel.title(PANEL_TITLE))
     ).toBeVisible();
-    await panelEditPage.collapseSection(res?.category?.[0] ?? 'Standard options');
-    await expect(page.getByText(res?.name ?? 'Display name')).toBeVisible();
+    await panelEditPage.collapseSection(STANDARD_OTIONS_CATEGORY);
+    await expect(page.getByText(DISPLAY_NAME_LABEL)).toBeVisible();
   });
 });
