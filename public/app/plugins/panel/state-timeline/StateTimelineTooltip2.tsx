@@ -7,6 +7,7 @@ import {
   Field,
   FieldType,
   getDisplayProcessor,
+  getFieldDisplayName,
   GrafanaTheme2,
   LinkModel,
   TimeRange,
@@ -22,8 +23,6 @@ import { DEFAULT_TOOLTIP_WIDTH } from '@grafana/ui/src/components/uPlot/plugins/
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getDataLinks } from '../status-history/utils';
-
-import { getTooltipFieldDisplayName } from './utils';
 
 interface StateTimelineTooltip2Props {
   data: DataFrame[];
@@ -92,7 +91,6 @@ export const StateTimelineTooltip2 = ({
     const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
     const value = field.values[datapointIdx!];
     const display = fieldFmt(value);
-    const fieldDisplayName = getTooltipFieldDisplayName(field, data);
 
     const nextStateIdx = findNextStateIndex(field, datapointIdx!);
     let nextStateTs;
@@ -114,7 +112,7 @@ export const StateTimelineTooltip2 = ({
 
     contentLabelValue = [
       {
-        label: fieldDisplayName ?? '',
+        label: getFieldDisplayName(field),
         value: display.text,
         color: display.color,
         colorIndicator: ColorIndicator.value,
@@ -144,11 +142,9 @@ export const StateTimelineTooltip2 = ({
       const v = field.values[dataIdxs[i]!];
       const display = fieldFmt(v);
 
-      const fieldDisplayName = getTooltipFieldDisplayName(field, data);
-
       sortIdx.push(v);
       contentLabelValue.push({
-        label: fieldDisplayName ?? '',
+        label: getFieldDisplayName(field),
         value: display.text,
         color: display.color,
         colorIndicator: ColorIndicator.value,
