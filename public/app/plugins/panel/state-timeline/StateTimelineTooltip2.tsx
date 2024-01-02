@@ -2,16 +2,17 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import {
+  arrayUtils,
   DataFrame,
   Field,
   FieldType,
   getDisplayProcessor,
-  getFieldDisplayName,
   GrafanaTheme2,
   LinkModel,
   TimeZone,
 } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
+import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
@@ -21,6 +22,8 @@ import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineCha
 
 import { getDataLinks } from '../status-history/utils';
 
+import { getTooltipFieldDisplayName } from './utils';
+
 interface StateTimelineTooltip2Props {
   data: DataFrame[];
   alignedData: DataFrame;
@@ -28,6 +31,8 @@ interface StateTimelineTooltip2Props {
   seriesIdx: number | null | undefined;
   isPinned: boolean;
   timeZone?: TimeZone;
+  mode?: TooltipDisplayMode;
+  sortOrder?: SortOrder;
 }
 
 export const StateTimelineTooltip2 = ({
@@ -36,6 +41,8 @@ export const StateTimelineTooltip2 = ({
   dataIdxs,
   seriesIdx,
   timeZone,
+  mode = TooltipDisplayMode.Single,
+  sortOrder = SortOrder.None,
   isPinned,
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
@@ -65,52 +72,43 @@ export const StateTimelineTooltip2 = ({
     return null;
   }
 
-  const field = alignedData.fields[seriesIdx!];
-
-  const links: Array<LinkModel<Field>> = getDataLinks(field, datapointIdx);
+  let contentLabelValue: LabelValue[] = [];
 
   const xField = alignedData.fields[0];
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
 
-  const dataFrameFieldIndex = field.state?.origin;
-  const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
-  const value = field.values[datapointIdx!];
-  const display = fieldFmt(value);
-  const fieldDisplayName = dataFrameFieldIndex
-    ? getFieldDisplayName(
-        data[dataFrameFieldIndex.frameIndex].fields[dataFrameFieldIndex.fieldIndex],
-        data[dataFrameFieldIndex.frameIndex],
-        data
-      )
-    : null;
-
-  const nextStateIdx = findNextStateIndex(field, datapointIdx!);
-  let nextStateTs;
-  if (nextStateIdx) {
-    nextStateTs = xField.values[nextStateIdx!];
-  }
-
-  const stateTs = xField.values[datapointIdx!];
-  let duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-
-  if (nextStateTs) {
-    duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-  }
+  let links: Array<LinkModel<Field>> = [];
 
   const from = xFieldFmt(xField.values[datapointIdx!]).text;
-  const to = xFieldFmt(xField.values[nextStateIdx!]).text;
+  let to: string;
 
-  const getHeaderLabel = (): LabelValue => {
-    return {
-      label: '',
-      value: Boolean(to) ? to : from,
-    };
-  };
+  // Single mode
+  if (mode === TooltipDisplayMode.Single || isPinned) {
+    const field = alignedData.fields[seriesIdx!];
+    links = getDataLinks(field, datapointIdx);
 
-  const getContentLabelValue = (): LabelValue[] => {
+    const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
+    const value = field.values[datapointIdx!];
+    const display = fieldFmt(value);
+    const fieldDisplayName = getTooltipFieldDisplayName(field, data);
+
+    const nextStateIdx = findNextStateIndex(field, datapointIdx!);
+    let nextStateTs;
+    if (nextStateIdx) {
+      nextStateTs = xField.values[nextStateIdx!];
+    }
+
+    const stateTs = xField.values[datapointIdx!];
+    let duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+
+    if (nextStateTs) {
+      duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+    }
+
+    to = xFieldFmt(xField.values[nextStateIdx!]).text;
     const durationEntry: LabelValue[] = duration ? [{ label: 'Duration', value: duration }] : [];
 
-    return [
+    contentLabelValue = [
       {
         label: fieldDisplayName ?? '',
         value: display.text,
@@ -120,6 +118,64 @@ export const StateTimelineTooltip2 = ({
       },
       ...durationEntry,
     ];
+  }
+
+  if (mode === TooltipDisplayMode.Multi && !isPinned) {
+    const fields = alignedData.fields;
+    const sortIdx: unknown[] = [];
+
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      if (
+        !field ||
+        field === xField ||
+        field.type === FieldType.time ||
+        field.config.custom?.hideFrom?.tooltip ||
+        field.config.custom?.hideFrom?.viz
+      ) {
+        continue;
+      }
+
+      const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
+      const v = field.values[dataIdxs[i]!];
+      const display = fieldFmt(v);
+
+      const fieldDisplayName = getTooltipFieldDisplayName(field, data);
+
+      sortIdx.push(v);
+      contentLabelValue.push({
+        label: fieldDisplayName ?? '',
+        value: display.text,
+        color: display.color,
+        colorIndicator: ColorIndicator.value,
+        colorPlacement: ColorPlacement.trailing,
+        isActive: seriesIdx === i,
+      });
+    }
+
+    if (sortOrder !== SortOrder.None) {
+      // create sort reference series array, as Array.sort() mutates the original array
+      const sortRef = [...contentLabelValue];
+      const sortFn = arrayUtils.sortValues(sortOrder);
+
+      contentLabelValue.sort((a, b) => {
+        // get compared values indices to retrieve raw values from sortIdx
+        const aIdx = sortRef.indexOf(a);
+        const bIdx = sortRef.indexOf(b);
+        return sortFn(sortIdx[aIdx], sortIdx[bIdx]);
+      });
+    }
+  }
+
+  const getHeaderLabel = (): LabelValue => {
+    return {
+      label: '',
+      value: Boolean(to) ? to : from,
+    };
+  };
+
+  const getContentLabelValue = (): LabelValue[] => {
+    return contentLabelValue;
   };
 
   return (
