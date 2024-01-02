@@ -533,3 +533,33 @@ export function getAlignmentFactor(
     return alignmentFactor;
   }
 }
+
+// since the conversion from timeseries panel crosshair to time is pixel based, we need
+// to set a threshold where the table row highlights when the crosshair is hovered over a certain point
+// because multiple pixels (converted to times) may represent the same point/row in table
+export function isPointTimeValAroundTableTimeVal(pointTime: number, rowTime: number, threshold: number) {
+  return Math.abs(Math.floor(pointTime) - rowTime) < threshold;
+}
+
+// calculate the threshold for which we consider a point in a chart
+// to match a row in a table based on a time value
+export function calculateAroundPointThreshold(timeField: Field): number {
+  let max = -Number.MAX_VALUE;
+  let min = Number.MAX_VALUE;
+
+  if (timeField.values.length < 2) {
+    return 0;
+  }
+
+  for (let i = 0; i < timeField.values.length; i++) {
+    const value = timeField.values[i];
+    if (value > max) {
+      max = value;
+    }
+    if (value < min) {
+      min = value;
+    }
+  }
+
+  return (max - min) / timeField.values.length;
+}

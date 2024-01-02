@@ -249,6 +249,16 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Children:   alertsAndIncidentsChildren,
 				Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
 			})
+		case navtree.NavIDTestingAndSynthetics:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Testing & synthetics",
+				Id:         navtree.NavIDTestingAndSynthetics,
+				SubTitle:   "Optimize performance with k6 and Synthetic Monitoring insights",
+				Icon:       "k6",
+				SortWeight: navtree.WeightTestingAndSynthetics,
+				Children:   []*navtree.NavLink{appLink},
+				Url:        s.cfg.AppSubURL + "/testing-and-synthetics",
+			})
 		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
@@ -276,6 +286,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 	appO11yCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Application"}
 	profilesCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 3, Text: "Profiles"}
 	frontendCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 4, Text: "Frontend"}
+	k6Cfg := NavigationAppConfig{SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"}
 	syntheticsCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 5, Text: "Synthetics"}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagDockedMegaMenu) {
@@ -283,14 +294,20 @@ func (s *ServiceImpl) readNavigationSettings() {
 
 		appO11yCfg.SectionID = navtree.NavIDRoot
 		appO11yCfg.SortWeight = navtree.WeightApplication
+		appO11yCfg.Icon = "graph-bar"
 
 		profilesCfg.SectionID = navtree.NavIDExplore
 		profilesCfg.SortWeight = 1
 
-		frontendCfg.SectionID = navtree.NavIDFrontend
-		frontendCfg.SortWeight = 1
+		frontendCfg.SectionID = navtree.NavIDRoot
+		frontendCfg.SortWeight = navtree.WeightFrontend
+		frontendCfg.Icon = "frontend-observability"
 
-		syntheticsCfg.SectionID = navtree.NavIDFrontend
+		k6Cfg.SectionID = navtree.NavIDTestingAndSynthetics
+		k6Cfg.SortWeight = 1
+		k6Cfg.Text = "Performance"
+
+		syntheticsCfg.SectionID = navtree.NavIDTestingAndSynthetics
 		syntheticsCfg.SortWeight = 2
 	}
 
@@ -306,7 +323,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
-		"k6-app":                           {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
+		"k6-app":                           k6Cfg,
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagCostManagementUi) {

@@ -46,15 +46,16 @@ describe('ServerStats', () => {
     expect(screen.getByText('Snapshots')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Manage dashboards' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Manage data sources' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage alerts' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Manage users' })).toBeInTheDocument();
   });
 
   it('Should render page with anonymous stats', async () => {
     config.featureToggles.displayAnonymousStats = true;
+    config.anonymousEnabled = true;
+    config.anonymousDeviceLimit = 10;
     render(<ServerStats />);
     expect(await screen.findByRole('heading', { name: /instance statistics/i })).toBeInTheDocument();
-    expect(screen.getByText('Active anonymous devices in last 30 days')).toBeInTheDocument();
-    expect(screen.getByText('Active anonymous users in last 30 days')).toBeInTheDocument();
+    expect(screen.getByText('Active anonymous devices')).toBeInTheDocument();
   });
 });

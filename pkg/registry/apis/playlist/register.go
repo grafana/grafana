@@ -2,12 +2,14 @@ package playlist
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -21,10 +23,6 @@ import (
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-// GroupName is the group name for this API.
-const GroupName = "playlist.grafana.app"
-const VersionID = "v0alpha1"
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
@@ -42,7 +40,7 @@ func RegisterAPIService(p playlistsvc.Service,
 	builder := &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
-		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
+		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -52,21 +50,44 @@ func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
-func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(b.gv,
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
 		&playlist.Playlist{},
 		&playlist.PlaylistList{},
 	)
+}
+
+func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	addKnownTypes(scheme, b.gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	scheme.AddKnownTypes(schema.GroupVersion{
+	addKnownTypes(scheme, schema.GroupVersion{
 		Group:   b.gv.Group,
 		Version: runtime.APIVersionInternal,
-	},
-		&playlist.Playlist{},
-		&playlist.PlaylistList{},
+	})
+
+	gvk := playlist.PlaylistResourceInfo.GroupVersionKind()
+
+	// Add playlist thing
+	_ = scheme.AddFieldLabelConversionFunc(gvk,
+		runtime.FieldLabelConversionFunc(
+			func(label, value string) (string, string, error) {
+				if strings.HasPrefix(label, "grafana.app/") {
+					return label, value, nil
+				}
+
+				switch label {
+				case "metadata.name":
+					return label, value, nil
+				case "metadata.namespace":
+					return label, value, nil
+				default:
+					return "", "", fmt.Errorf("%q is not a known field selector: only %q, %q", label, "metadata.name", "metadata.namespace")
+				}
+			},
+		),
 	)
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
@@ -82,17 +103,16 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
+	resource := playlist.PlaylistResourceInfo
 	legacyStore := &legacyStorage{
-		service:                   b.service,
-		namespacer:                b.namespacer,
-		DefaultQualifiedResource:  b.gv.WithResource("playlists").GroupResource(),
-		SingularQualifiedResource: b.gv.WithResource("playlist").GroupResource(),
+		service:    b.service,
+		namespacer: b.namespacer,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
-		legacyStore.DefaultQualifiedResource,
+		resource.GroupResource(),
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
@@ -112,7 +132,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			}, nil
 		},
 	)
-	storage["playlists"] = legacyStore
+	storage[resource.StoragePath()] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil {
@@ -120,10 +140,10 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
+		storage[resource.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
@@ -133,4 +153,8 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 
 func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil // no custom API routes
+}
+
+func (b *PlaylistAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return nil // default authorizer is fine
 }

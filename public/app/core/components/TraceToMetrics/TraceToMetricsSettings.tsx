@@ -135,8 +135,11 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               value={query.name}
               width={40}
               onChange={(e) => {
-                let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
-                newQueries[i].name = e.currentTarget.value;
+                const newQueries = (options.jsonData.tracesToMetrics?.queries ?? []).map(
+                  (traceToMetricQuery, index) => {
+                    return index === i ? { ...traceToMetricQuery, name: e.currentTarget.value } : traceToMetricQuery;
+                  }
+                );
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                   ...options.jsonData.tracesToMetrics,
                   queries: newQueries,
@@ -156,11 +159,14 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               allowFullScreen
               value={query.query}
               onChange={(e) => {
-                let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
-                newQueries[i].query = e.currentTarget.value;
+                const updatedQueries = (options.jsonData.tracesToMetrics?.queries ?? []).map(
+                  (traceToMetricQuery, index) => {
+                    return index === i ? { ...traceToMetricQuery, query: e.currentTarget.value } : traceToMetricQuery;
+                  }
+                );
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                   ...options.jsonData.tracesToMetrics,
-                  queries: newQueries,
+                  queries: updatedQueries,
                 });
               }}
             />
@@ -172,8 +178,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
             icon="times"
             type="button"
             onClick={() => {
-              let newQueries = options.jsonData.tracesToMetrics?.queries.slice();
-              newQueries?.splice(i, 1);
+              const newQueries = options.jsonData.tracesToMetrics?.queries.filter((_, index) => index !== i);
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
                 queries: newQueries,
