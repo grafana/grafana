@@ -1,5 +1,29 @@
-import { VariableOption, UserProps, OrgProps, DashboardProps, ScopedVars, getVariableName } from '@grafana/data';
+import { VariableOption, UserProps, OrgProps, DashboardProps, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
+
+/*
+ * This regex matches 3 types of variable reference with an optional format specifier
+ * There are 6 capture groups that replace will return
+ * \$(\w+)                                    $var1
+ * \[\[(\w+?)(?::(\w+))?\]\]                  [[var2]] or [[var2:fmt2]]
+ * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
+ */
+const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
+
+// Helper function since lastIndex is not reset
+const variableRegexExec = (variableString: string) => {
+  variableRegex.lastIndex = 0;
+  return variableRegex.exec(variableString);
+};
+
+export const getVariableName = (expression: string) => {
+  const match = variableRegexExec(expression);
+  if (!match) {
+    return null;
+  }
+  const variableName = match.slice(1).find((match) => match !== undefined);
+  return variableName;
+};
 
 /**
  * @remarks

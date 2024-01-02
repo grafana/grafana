@@ -2,7 +2,6 @@ import { lastValueFrom } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 
 import { CoreApp, Field } from '@grafana/data';
-import * as data from '@grafana/data';
 
 import {
   CloudWatchSettings,
@@ -22,6 +21,7 @@ import {
   MetricEditorMode,
   MetricQueryType,
 } from './types';
+import * as templateUtils from './utils/templateVariableUtils';
 
 describe('datasource', () => {
   beforeEach(() => {
@@ -305,7 +305,7 @@ describe('datasource', () => {
       const { datasource, templateService } = setupMockedDataSource();
       templateService.replace = jest.fn();
       const mockGetVariableName = jest
-        .spyOn(data, 'getVariableName')
+        .spyOn(templateUtils, 'getVariableName')
         .mockImplementation((name: string) => name.replace('$', ''));
       const variableName = 'someVar';
       const metricsQuery: CloudWatchMetricsQuery = {

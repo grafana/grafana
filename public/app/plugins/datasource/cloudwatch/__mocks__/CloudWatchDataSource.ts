@@ -8,13 +8,13 @@ import {
   PluginType,
   ScopedVars,
   VariableHide,
-  getVariableName,
 } from '@grafana/data';
 import { getBackendSrv, setBackendSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
 
 import { initialCustomVariableModelState } from '../__mocks__/variables';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData } from '../types';
+import { getVariableName } from '../utils/templateVariableUtils';
 
 const queryMock = jest.fn().mockReturnValue(of({ data: [] }));
 jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation((args) => queryMock(args));
