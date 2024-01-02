@@ -97,8 +97,6 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
             }
           }
 
-          console.log(options);
-
           // Construct a subframe of any fields
           // that aren't being group on or reduced
           const subFrames: DataFrame[][] = [];
@@ -125,14 +123,12 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
             // push a new subframe with the fields
             // otherwise push an empty frame
             if (nestedFields.length > 0) {
-              console.log(nestedFields[0].values.length);
               subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length)]);
             }
             else {
               subFrames.push([createSubframe([], 0)]);
             }
           }
-          
           // At this point we have fields for each nested frame
           // However we need to turn them into frames so they can be nested 
           const fields: Field[] = [];
