@@ -2893,6 +2893,33 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/parca@workspace:*, @grafana-plugins/parca@workspace:public/app/plugins/datasource/parca":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/parca@workspace:public/app/plugins/datasource/parca"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "npm:10.3.0-pre"
+    "@grafana/plugin-configs": "npm:10.3.0-pre"
+    "@grafana/runtime": "npm:10.3.0-pre"
+    "@grafana/schema": "npm:10.3.0-pre"
+    "@grafana/ui": "npm:10.3.0-pre"
+    "@testing-library/react": "npm:14.0.0"
+    "@testing-library/user-event": "npm:14.5.1"
+    "@types/lodash": "npm:4.14.195"
+    "@types/react": "npm:18.2.15"
+    lodash: "npm:4.17.21"
+    monaco-editor: "npm:0.34.0"
+    react: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.1"
+    tslib: "npm:2.6.0"
+    webpack: "npm:5.89.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/async-query-data@npm:0.1.4":
   version: 0.1.4
   resolution: "@grafana/async-query-data@npm:0.1.4"
@@ -2969,7 +2996,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "npm:1.6.28"
     xss: "npm:^1.0.14"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -3481,7 +3508,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "npm:1.6.28"
     uuid: "npm:9.0.0"
     webpack: "npm:5.89.0"
   peerDependencies:
@@ -17303,6 +17330,7 @@ __metadata:
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
     "@glideapps/glide-data-grid": "npm:^5.2.1"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
+    "@grafana-plugins/parca": "workspace:*"
     "@grafana/aws-sdk": "npm:0.3.1"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -17617,7 +17645,7 @@ __metadata:
     tslib: "npm:2.6.0"
     tween-functions: "npm:^1.2.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "npm:1.6.28"
     uuid: "npm:9.0.0"
     vendor: "link:./public/vendor"
     visjs-network: "npm:4.25.0"
@@ -29926,10 +29954,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.27":
-  version: 1.6.27
-  resolution: "uplot@npm:1.6.27"
-  checksum: b46de70804fdec2aa62101d8980aa18517a9a84e94fdeac922baa8121140ddae35685002a7cbdc74bbe6ea2306e341628490f5a5e2fa4b8086ff1643dccf2be9
+"uplot@npm:1.6.28":
+  version: 1.6.28
+  resolution: "uplot@npm:1.6.28"
+  checksum: 6771289c45f2b8e8ad5d56abd8c92e7f5687244d75265f80957af857c2034b7b5e3128122262e5a546da2fc4437b600e56a058523eff1435b5bf6728ddc19612
   languageName: node
   linkType: hard
 
