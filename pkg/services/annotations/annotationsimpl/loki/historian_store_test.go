@@ -356,21 +356,37 @@ func TestFloat64Map(t *testing.T) {
 	})
 }
 
-func TestBuildState(t *testing.T) {
-	t.Run("should build stub correctly", func(t *testing.T) {
+func TestBuildTransition(t *testing.T) {
+	t.Run("should return error when entry contains invalid state strings", func(t *testing.T) {
+		_, err := buildTransition(historian.LokiEntry{
+			Current: "Invalid",
+		})
+		require.Error(t, err)
+
+		_, err = buildTransition(historian.LokiEntry{
+			Current:  "Normal",
+			Previous: "Invalid",
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("should return error when values are not numbers", func(t *testing.T) {
+		_, err := buildTransition(historian.LokiEntry{
+			Current: "Normal",
+			Values:  simplejson.NewFromAny(map[string]any{"key1": "not a float"}),
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("should build transition correctly", func(t *testing.T) {
 		values := map[string]float64{
 			"key1": 1.0,
 			"key2": 2.0,
 		}
+
 		labels := map[string]string{
 			"key1": "value1",
 			"key2": "value2",
-		}
-
-		expected := &state.State{
-			State:  eval.Normal,
-			Values: values,
-			Labels: labels,
 		}
 
 		jsonValues := simplejson.New()
@@ -378,33 +394,29 @@ func TestBuildState(t *testing.T) {
 			jsonValues.Set(k, json.Number(strconv.FormatFloat(v, 'f', -1, 64)))
 		}
 
-		stub, err := buildState(
-			historian.LokiEntry{
-				Current:        "Normal",
-				Previous:       "Error (NoData)",
-				Values:         jsonValues,
-				InstanceLabels: labels,
+		entry := historian.LokiEntry{
+			Current:        "Normal",
+			Previous:       "Error (NoData)",
+			Values:         jsonValues,
+			InstanceLabels: labels,
+		}
+
+		expected := &state.StateTransition{
+			State: &state.State{
+				State:              eval.Normal,
+				StateReason:        "",
+				LastEvaluationTime: time.Time{},
+				Values:             values,
+				Labels:             labels,
 			},
-		)
+			PreviousState:       eval.Error,
+			PreviousStateReason: eval.NoData.String(),
+		}
+
+		stub, err := buildTransition(entry)
 
 		require.NoError(t, err)
 		require.Equal(t, expected, stub)
-	})
-
-	t.Run("fails when passed map with non-float values", func(t *testing.T) {
-		_, err := buildState(
-			historian.LokiEntry{
-				Current:  "Normal",
-				Previous: "Error (NoData)",
-				Values:   simplejson.NewFromAny(map[string]any{"key1": "not a float"}),
-				InstanceLabels: map[string]string{
-					"key1": "value1",
-					"key2": "value2",
-				},
-			},
-		)
-
-		require.Error(t, err)
 	})
 }
 

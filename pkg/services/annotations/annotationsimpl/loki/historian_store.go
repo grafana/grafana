@@ -132,9 +132,14 @@ func (r *LokiHistorianStore) annotationsFromStream(ctx context.Context, stream h
 			continue
 		}
 
-		currentState, err := buildState(entry)
+		transition, err := buildTransition(entry)
 		if err != nil {
 			// bad data, skip
+			continue
+		}
+
+		if !historian.ShouldRecordAnnotation(*transition) {
+			// skip non-annotation transition
 			continue
 		}
 
@@ -142,7 +147,7 @@ func (r *LokiHistorianStore) annotationsFromStream(ctx context.Context, stream h
 			historymodel.RuleMeta{
 				Title: entry.RuleTitle,
 			},
-			currentState,
+			transition.State,
 		)
 
 		items = append(items, &annotations.ItemDTO{
@@ -227,10 +232,15 @@ func numericMap[N number](j *simplejson.Json) (map[string]N, error) {
 	return values, nil
 }
 
-func buildState(entry historian.LokiEntry) (*state.State, error) {
+func buildTransition(entry historian.LokiEntry) (*state.StateTransition, error) {
 	curState, curStateReason, err := state.ParseFormattedState(entry.Current)
 	if err != nil {
-		return nil, fmt.Errorf("parsing state: %w", err)
+		return nil, fmt.Errorf("parsing current state: %w", err)
+	}
+
+	prevState, prevReason, err := state.ParseFormattedState(entry.Previous)
+	if err != nil {
+		return nil, fmt.Errorf("parsing previous state: %w", err)
 	}
 
 	v, err := numericMap[float64](entry.Values)
@@ -238,19 +248,17 @@ func buildState(entry historian.LokiEntry) (*state.State, error) {
 		return nil, fmt.Errorf("parsing entry values: %w", err)
 	}
 
-	state := &state.State{
-		State:       curState,
-		StateReason: curStateReason,
-		Values:      v,
-		Labels:      entry.InstanceLabels,
-	}
-	if entry.Error != "" {
-		state.Error = errors.New(entry.Error)
-	}
-
-	return state, nil
+	return &state.StateTransition{
+		State: &state.State{
+			State:       curState,
+			StateReason: curStateReason,
+			Values:      v,
+			Labels:      entry.InstanceLabels,
+		},
+		PreviousState:       prevState,
+		PreviousStateReason: prevReason,
+	}, nil
 }
-
 func buildHistoryQuery(ctx context.Context, query *annotations.ItemQuery, dashboards map[string]int64, ruleUID string) ngmodels.HistoryQuery {
 	historyQuery := ngmodels.HistoryQuery{
 		OrgID:        query.OrgID,
