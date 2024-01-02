@@ -441,31 +441,13 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		// 1. Add row to the `entity_history` values
-		query, args, err := s.dialect.InsertQuery("entity_history", values)
-		if err != nil {
-			s.log.Error("error building entity history insert", "msg", err.Error())
-			return err
-		}
-
-		s.log.Debug("create", "query", query, "args", args)
-
-		_, err = tx.Exec(ctx, query, args...)
-		if err != nil {
-			s.log.Error("error writing entity history", "msg", err.Error())
+		if err := s.dialect.InsertQuery(ctx, "entity_history", values, tx); err != nil {
+			s.log.Error("error inserting entity history", "msg", err.Error())
 			return err
 		}
 
 		// 2. Add row to the main `entity` table
-		query, args, err = s.dialect.InsertQuery("entity", values)
-		if err != nil {
-			s.log.Error("error building entity insert sql", "msg", err.Error())
-			return err
-		}
-
-		s.log.Debug("create", "query", query, "args", args)
-
-		_, err = tx.Exec(ctx, query, args...)
-		if err != nil {
+		if err := s.dialect.InsertQuery(ctx, "entity", values, tx); err != nil {
 			s.log.Error("error inserting entity", "msg", err.Error())
 			return err
 		}
@@ -664,15 +646,8 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		// 1. Add the `entity_history` values
-		query, args, err := s.dialect.InsertQuery("entity_history", values)
-		if err != nil {
-			s.log.Error("error building entity history insert", "msg", err.Error())
-			return err
-		}
-
-		_, err = tx.Exec(ctx, query, args...)
-		if err != nil {
-			s.log.Error("error writing entity history", "msg", err.Error())
+		if err := s.dialect.InsertQuery(ctx, "entity_history", values, tx); err != nil {
+			s.log.Error("error inserting entity history", "msg", err.Error())
 			return err
 		}
 
@@ -688,19 +663,15 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "created_at")
 		delete(values, "created_by")
 
-		query, args, err = s.dialect.UpdateQuery(
+		err = s.dialect.UpdateQuery(
+			ctx,
 			"entity",
 			values,
 			map[string]any{
 				"guid": current.Guid,
 			},
+			tx,
 		)
-		if err != nil {
-			s.log.Error("error building entity update sql", "msg", err.Error())
-			return err
-		}
-
-		_, err = tx.Exec(ctx, query, args...)
 		if err != nil {
 			s.log.Error("error updating entity", "msg", err.Error())
 			return err

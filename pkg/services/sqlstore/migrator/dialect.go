@@ -1,10 +1,12 @@
 package migrator
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"golang.org/x/exp/slices"
 	"xorm.io/xorm"
 )
@@ -75,13 +77,13 @@ type Dialect interface {
 
 	GetDBName(string) (string, error)
 
-	// InsertQuery accepts a table name and a map of column names to values to insert.
-	// It returns a query string and a slice of parameters that can be executed against the database.
-	InsertQuery(tableName string, row map[string]any) (string, []any, error)
+	// InsertQuery accepts a table name and a map of column names to insert.
+	// The insert is executed as part of the provided session.
+	InsertQuery(ctx context.Context, tableName string, row map[string]any, tx *session.SessionTx) error
 	// UpdateQuery accepts a table name, a map of column names to values to update, and a map of
 	// column names to values to use in the where clause.
-	// It returns a query string and a slice of parameters that can be executed against the database.
-	UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error)
+	// The update is executed as part of the provided session.
+	UpdateQuery(ctx context.Context, tableName string, row map[string]any, where map[string]any, tx *session.SessionTx) error
 }
 
 type LockCfg struct {
@@ -354,9 +356,9 @@ func (b *BaseDialect) GetDBName(_ string) (string, error) {
 	return "", nil
 }
 
-func (b *BaseDialect) InsertQuery(tableName string, row map[string]any) (string, []any, error) {
+func (b *BaseDialect) InsertQuery(ctx context.Context, tableName string, row map[string]any, tx *session.SessionTx) error {
 	if len(row) < 1 {
-		return "", nil, fmt.Errorf("no columns provided")
+		return fmt.Errorf("no columns provided")
 	}
 
 	// allocate slices
@@ -376,16 +378,19 @@ func (b *BaseDialect) InsertQuery(tableName string, row map[string]any) (string,
 		vals = append(vals, row[col])
 	}
 
-	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Repeat("?, ", len(row)-1)+"?"), vals, nil
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Repeat("?, ", len(row)-1)+"?")
+
+	_, err := tx.Exec(ctx, query, vals...)
+	return err
 }
 
-func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error) {
+func (b *BaseDialect) UpdateQuery(ctx context.Context, tableName string, row map[string]any, where map[string]any, tx *session.SessionTx) error {
 	if len(row) < 1 {
-		return "", nil, fmt.Errorf("no columns provided")
+		return fmt.Errorf("no columns provided")
 	}
 
 	if len(where) < 1 {
-		return "", nil, fmt.Errorf("no where clause provided")
+		return fmt.Errorf("no where clause provided")
 	}
 
 	// allocate slices
@@ -419,5 +424,8 @@ func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where ma
 		vals = append(vals, where[col])
 	}
 
-	return fmt.Sprintf("UPDATE %s SET %s WHERE %s", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Join(whereCols, " AND ")), vals, nil
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Join(whereCols, " AND "))
+
+	_, err := tx.Exec(ctx, query, vals...)
+	return err
 }
