@@ -319,7 +319,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     // Trace service field
     expect(frame.fields[1].name).toBe('traceService');
     expect(frame.fields[1].type).toBe('string');
-    expect(frame.fields[1].values[1]).toBe('prometheus');
+    expect(frame.fields[1].values[0]).toBe('prometheus');
     // Trace name field
     expect(frame.fields[2].name).toBe('traceName');
     expect(frame.fields[2].type).toBe('string');
