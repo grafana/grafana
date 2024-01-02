@@ -149,10 +149,12 @@ func (st *Manager) warmOrg(ctx context.Context, orgID int64, rules RuleReader) (
 		st.log.Error("Unable to fetch previous state", "error", err)
 	}
 
+	orphanedInstances := make([]ngModels.AlertInstanceKey, 0)
+
 	for _, entry := range alertInstances {
 		ruleForEntry, ok := ruleByUID[entry.RuleUID]
 		if !ok {
-			// TODO Should we delete the orphaned state from the db?
+			orphanedInstances = append(orphanedInstances, entry.AlertInstanceKey)
 			continue
 		}
 
@@ -183,7 +185,17 @@ func (st *Manager) warmOrg(ctx context.Context, orgID int64, rules RuleReader) (
 		count++
 	}
 
+	st.cleanupOrphanedInstances(ctx, orphanedInstances)
+
 	return states, count
+}
+
+func (st *Manager) cleanupOrphanedInstances(ctx context.Context, instances []ngModels.AlertInstanceKey) error {
+	const batchSize = 10000
+
+	return batch(len(instances), batchSize, func(start, end int) error {
+		return st.instanceStore.DeleteAlertInstances(ctx, instances[start:end]...)
+	})
 }
 
 func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
