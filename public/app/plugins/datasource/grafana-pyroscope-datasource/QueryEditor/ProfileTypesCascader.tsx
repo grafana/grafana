@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { TimeRange } from '@grafana/data';
 import { Cascader, CascaderOption } from '@grafana/ui';
 
 import { PyroscopeDataSource } from '../datasource';
@@ -73,15 +74,20 @@ function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption
  * @param start The start of the time range.
  * @param end The end of the time range.
  */
-export function useProfileTypes(datasource: PyroscopeDataSource, start: number, end: number) {
+export function useProfileTypes(datasource: PyroscopeDataSource, range?: TimeRange) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>();
+
+  const impreciseRange = {
+    to: Math.ceil((range?.to.valueOf() || 0) / 60000) * 60000,
+    from: Math.floor((range?.from.valueOf() || 0) / 60000) * 60000,
+  };
 
   useEffect(() => {
     (async () => {
-      const profileTypes = await datasource.getProfileTypes(start, end);
+      const profileTypes = await datasource.getProfileTypes(impreciseRange.from.valueOf(), impreciseRange.to.valueOf());
       setProfileTypes(profileTypes);
     })();
-  }, [datasource, start, end]);
+  }, [datasource, impreciseRange.from, impreciseRange.to]);
 
   return profileTypes;
 }
