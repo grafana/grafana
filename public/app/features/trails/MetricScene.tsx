@@ -19,6 +19,7 @@ import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@graf
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { buildBreakdownActionScene } from './BreakdownScene';
+import { buildMetricOverviewScene } from './MetricOverviewScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getTrailStore } from './TrailStore/TrailStore';
@@ -88,6 +89,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 }
 
 const actionViewsDefinitions: ActionViewDefinition[] = [
+  { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
   { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
   { displayName: 'Logs', value: 'logs', getScene: buildLogsScene },
   { displayName: 'Related metrics', value: 'related', getScene: buildRelatedMetricsScene },
@@ -115,6 +117,10 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
       getTrailStore().addBookmark(trail);
       setBookmarked(!isBookmarked);
     };
+
+    if (!actionView) {
+      metricScene.setActionView(actionViewsDefinitions[0]);
+    }
 
     return (
       <Box paddingY={1}>
