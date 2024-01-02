@@ -1179,6 +1179,14 @@ var (
 			Created:         time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "canvasPanelPanZoom",
+			Description:  "Allow pan and zoom in canvas panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2023, time.December, 27, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:         "logsInfiniteScrolling",
 			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
 			Stage:        FeatureStageExperimental,

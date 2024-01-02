@@ -17613,6 +17613,7 @@ __metadata:
     react-virtualized-auto-sizer: "npm:1.0.7"
     react-window: "npm:1.8.9"
     react-window-infinite-loader: "npm:1.0.9"
+    react-zoom-pan-pinch: "npm:^3.3.0"
     redux: "npm:4.2.1"
     redux-mock-store: "npm:1.5.4"
     redux-thunk: "npm:2.4.2"
@@ -26214,6 +26215,16 @@ __metadata:
     react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 946bf990b58cafe054c6a36ae9f56ce084a94ab69366c7bc6c9117d8ec94227fd0d0e8efc39f1aa0f9dc13e29b7f6bb7d0e7284d0c7546a50a9e51465269e221
+  languageName: node
+  linkType: hard
+
+"react-zoom-pan-pinch@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "react-zoom-pan-pinch@npm:3.3.0"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 56e102f603dc5d0dbcff2effe403a1f46b718bde0bbad395fc990db0ef48f25fefb6969fec465948e90471a8e8e702cddaaa93742f77075cb1f4f32b10c1ab43
   languageName: node
   linkType: hard
 
