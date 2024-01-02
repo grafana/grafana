@@ -976,6 +976,23 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	sql, params := sb.ToSQL(limit, page)
 
+	// Only use modified search for non-empty search queries, otherwise it's just listing and new query can't help there yet.
+	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) && d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
+		query.Title != "" && len(query.FolderUIDs) == 0 && len(query.FolderIds) == 0 { //nolint:staticcheck
+		derivedCtx := context.WithoutCancel(ctx)
+		go func() {
+			start := time.Now()
+			defer func() {
+				d.log.Info("Alternative search query", "time", time.Since(start), "results", len(res))
+			}()
+			results, err := d.findDashboards(derivedCtx, query)
+			if err != nil {
+				d.log.Info("new search failed", "error", err)
+			}
+			_ = results
+		}()
+	}
+
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		start := time.Now()
 		defer func() {
@@ -988,15 +1005,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return nil, err
 	}
 
-	// Only use modified search for non-empty search queries, otherwise it's just listing and new query can't help there yet.
-	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) && d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
-		query.Title != "" && len(query.FolderUIDs) == 0 && len(query.FolderIds) == 0 { //nolint:staticcheck
-		results, err := d.findDashboards(ctx, query)
-		if err != nil {
-			d.log.Info("new search failed", "error", err)
-		}
-		return results, nil
-	}
 	return res, nil
 }
 
