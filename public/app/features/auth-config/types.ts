@@ -42,11 +42,15 @@ export type SSOProviderSettingsBase = {
   tlsSkipVerify?: boolean;
   tokenUrl?: string;
   type: string;
-  usePKCE?: boolean;
+  usePkce?: boolean;
   useRefreshToken?: boolean;
   nameAttributePath?: string;
   loginAttributePath?: string;
   idTokenAttributeName?: string;
+  defineAllowedGroups?: boolean;
+  defineAllowedTeamsIds?: boolean;
+  configureTLS?: boolean;
+  tlsSkipVerifyInsecure?: boolean;
 };
 
 // SSO data received from the API and sent to it

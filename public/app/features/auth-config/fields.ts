@@ -60,6 +60,23 @@ export const sectionFields: Section = {
         'skipOrgRoleSync',
       ],
     },
+    {
+      name: 'Extra security measures',
+      id: 'extra',
+      fields: [
+        'allowedOrganizations',
+        'allowedDomains',
+        'defineAllowedGroups',
+        'defineAllowedTeamsIds',
+        'usePkce',
+        'useRefreshToken',
+      ],
+    },
+    {
+      name: 'TLS',
+      id: 'tls',
+      fields: ['configureTLS', 'tlsSkipVerifyInsecure', 'tlsClientCert', 'tlsClientKey', 'tlsClientCa'],
+    },
   ],
 };
 
@@ -218,6 +235,50 @@ export const fieldMap: Record<string, FieldData> = {
   skipOrgRoleSync: {
     label: 'Skip organization role sync',
     description: 'Prevent synchronizing users’ organization roles from your IdP',
+    type: 'switch',
+  },
+  defineAllowedGroups: {
+    label: 'Define Allowed Groups',
+    type: 'switch',
+  },
+  defineAllowedTeamsIds: {
+    label: 'Define Allowed Teams Ids',
+    type: 'switch',
+  },
+  usePkce: {
+    label: 'Use Pkce',
+    description: 'If enabled, it will automatically sync the Grafana server administrator role',
+    type: 'switch',
+  },
+  useRefreshToken: {
+    label: 'Use Refresh Token',
+    description: 'If enabled, it will automatically sync the Grafana server administrator role',
+    type: 'switch',
+  },
+  configureTLS: {
+    label: 'Configure TLS',
+    type: 'switch',
+  },
+  tlsClientCa: {
+    label: 'TLS Client CA',
+    description: 'The path to the trusted certificate authority list',
+    type: 'text',
+  },
+  tlsClientCert: {
+    label: 'TLS Client Cert',
+    type: 'text',
+  },
+  tlsClientKey: {
+    label: 'TLS Client Key',
+    description: 'The path to the key',
+    type: 'text',
+  },
+  tlsSkipVerifyInsecure: {
+    label: 'TLS Skip Verify',
+    description:
+      'If enabled, the client accepts any certificate presented by the server and any host \n' +
+      'name in that certificate. You should only use this for testing, because this mode leaves \n' +
+      'SSL/TLS susceptible to man-in-the-middle attacks.',
     type: 'switch',
   },
 };
