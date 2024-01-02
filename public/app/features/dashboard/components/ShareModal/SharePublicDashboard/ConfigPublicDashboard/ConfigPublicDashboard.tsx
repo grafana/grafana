@@ -127,7 +127,7 @@ export function ConfigPublicDashboardBase({
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
 
       <Field
-        label={t('config-public-dashboard.public-dashboard.field-label', 'Dashboard URL')}
+        label={t('config-public-dashboard.public-dashboard.dashboard-url-field-label', 'Dashboard URL')}
         className={styles.fieldSpace}
       >
         <Input

@@ -73,8 +73,6 @@ const EmailList = ({
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
-  const translatedRevokeLabel = t('email-sharing-configuration.public-dashboard.revoke-label', 'Revoke');
-  const translatedResendLabel = t('email-sharing-configuration.public-dashboard.resend-label', 'Resend');
 
   return (
     <table className={styles.table} data-testid={selectors.EmailSharingList}>
@@ -88,27 +86,25 @@ const EmailList = ({
                   type="button"
                   variant="destructive"
                   fill="text"
-                  aria-label={translatedRevokeLabel}
-                  title={translatedRevokeLabel}
+                  title={t('email-sharing-configuration.public-dashboard.revoke-button-title', 'Revoke')}
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                   data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
-                  <Trans i18nKey="email-sharing-configuration.public-dashboard.revoke-text">Revoke</Trans>
+                  <Trans i18nKey="email-sharing-configuration.public-dashboard.revoke-button-text">Revoke</Trans>
                 </Button>
                 <Button
                   type="button"
                   variant="primary"
                   fill="text"
-                  aria-label={translatedResendLabel}
-                  title={translatedResendLabel}
+                  title={t('email-sharing-configuration.public-dashboard.resend-button-title', 'Resend')}
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onReshare(recipient.uid)}
                   data-testid={`${selectors.ReshareLink}-${idx}`}
                 >
-                  <Trans i18nKey="email-sharing-configuration.public-dashboard.resend-text">Resend</Trans>
+                  <Trans i18nKey="email-sharing-configuration.public-dashboard.resend-button-text">Resend</Trans>
                 </Button>
               </ButtonGroup>
             </td>

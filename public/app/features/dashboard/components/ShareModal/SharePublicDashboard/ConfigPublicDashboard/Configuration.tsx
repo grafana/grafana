@@ -34,7 +34,7 @@ export const Configuration = ({
                 'The public dashboard uses the default time range settings of the dashboard'
               )}
             >
-              <Trans i18nKey="configuration.public-dashboard.default-time-range">Default time range</Trans>
+              <Trans i18nKey="configuration.public-dashboard.default-time-range-label">Default time range</Trans>
             </Label>
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
           </Layout>
@@ -55,7 +55,7 @@ export const Configuration = ({
                 'Allow viewers to change time range'
               )}
             >
-              <Trans i18nKey="configuration.public-dashboard.time-range-picker-enabled">
+              <Trans i18nKey="configuration.public-dashboard.time-range-picker-label">
                 Time range picker enabled
               </Trans>
             </Label>

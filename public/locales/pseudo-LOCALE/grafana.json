@@ -128,7 +128,7 @@
   "config-public-dashboard": {
     "public-dashboard": {
       "copy-button": "Cőpy",
-      "field-label": "Đäşĥþőäřđ ŮŖĿ",
+      "dashboard-url-field-label": "Đäşĥþőäřđ ŮŖĿ",
       "pause-sharing-dashboard": "Päūşę şĥäřįŉģ đäşĥþőäřđ",
       "revoke-public-URL": "Ŗęvőĸę pūþľįč ŮŖĿ",
       "settings-title": "Ŝęŧŧįŉģş"
@@ -136,11 +136,11 @@
   },
   "configuration": {
     "public-dashboard": {
-      "default-time-range": "Đęƒäūľŧ ŧįmę řäŉģę",
+      "default-time-range-label": "Đęƒäūľŧ ŧįmę řäŉģę",
       "default-time-range-label-desc": "Ŧĥę pūþľįč đäşĥþőäřđ ūşęş ŧĥę đęƒäūľŧ ŧįmę řäŉģę şęŧŧįŉģş őƒ ŧĥę đäşĥþőäřđ",
       "show-annotations": "Ŝĥőŵ äŉŉőŧäŧįőŉş",
       "show-annotations-label-desc": "Ŝĥőŵ äŉŉőŧäŧįőŉş őŉ pūþľįč đäşĥþőäřđ",
-      "time-range-picker-enabled": "Ŧįmę řäŉģę pįčĸęř ęŉäþľęđ",
+      "time-range-picker-label": "Ŧįmę řäŉģę pįčĸęř ęŉäþľęđ",
       "time-range-picker-label-desc": "Åľľőŵ vįęŵęřş ŧő čĥäŉģę ŧįmę řäŉģę"
     }
   },
@@ -472,10 +472,10 @@
       "invite-label": "Ĩŉvįŧę",
       "public-share-type-label": "Åŉyőŉę ŵįŧĥ ä ľįŉĸ",
       "required-email": "Ēmäįľ įş řęqūįřęđ",
-      "resend-label": "Ŗęşęŉđ",
-      "resend-text": "Ŗęşęŉđ",
-      "revoke-label": "Ŗęvőĸę",
-      "revoke-text": "Ŗęvőĸę"
+      "resend-button-text": "Ŗęşęŉđ",
+      "resend-button-title": "Ŗęşęŉđ",
+      "revoke-button-text": "Ŗęvőĸę",
+      "revoke-button-title": "Ŗęvőĸę"
     }
   },
   "explore": {

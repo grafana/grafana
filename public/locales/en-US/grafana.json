@@ -128,7 +128,7 @@
   "config-public-dashboard": {
     "public-dashboard": {
       "copy-button": "Copy",
-      "field-label": "Dashboard URL",
+      "dashboard-url-field-label": "Dashboard URL",
       "pause-sharing-dashboard": "Pause sharing dashboard",
       "revoke-public-URL": "Revoke public URL",
       "settings-title": "Settings"
@@ -136,11 +136,11 @@
   },
   "configuration": {
     "public-dashboard": {
-      "default-time-range": "Default time range",
+      "default-time-range-label": "Default time range",
       "default-time-range-label-desc": "The public dashboard uses the default time range settings of the dashboard",
       "show-annotations": "Show annotations",
       "show-annotations-label-desc": "Show annotations on public dashboard",
-      "time-range-picker-enabled": "Time range picker enabled",
+      "time-range-picker-label": "Time range picker enabled",
       "time-range-picker-label-desc": "Allow viewers to change time range"
     }
   },
@@ -472,10 +472,10 @@
       "invite-label": "Invite",
       "public-share-type-label": "Anyone with a link",
       "required-email": "Email is required",
-      "resend-label": "Resend",
-      "resend-text": "Resend",
-      "revoke-label": "Revoke",
-      "revoke-text": "Revoke"
+      "resend-button-text": "Resend",
+      "resend-button-title": "Resend",
+      "revoke-button-text": "Revoke",
+      "revoke-button-title": "Revoke"
     }
   },
   "explore": {

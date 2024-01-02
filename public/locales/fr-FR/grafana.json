@@ -133,7 +133,7 @@
   "config-public-dashboard": {
     "public-dashboard": {
       "copy-button": "",
-      "field-label": "",
+      "dashboard-url-field-label": "",
       "pause-sharing-dashboard": "",
       "revoke-public-URL": "",
       "settings-title": ""
@@ -141,11 +141,11 @@
   },
   "configuration": {
     "public-dashboard": {
-      "default-time-range": "",
+      "default-time-range-label": "",
       "default-time-range-label-desc": "",
       "show-annotations": "",
       "show-annotations-label-desc": "",
-      "time-range-picker-enabled": "",
+      "time-range-picker-label": "",
       "time-range-picker-label-desc": ""
     }
   },
@@ -477,10 +477,10 @@
       "invite-label": "",
       "public-share-type-label": "",
       "required-email": "",
-      "resend-label": "",
-      "resend-text": "",
-      "revoke-label": "",
-      "revoke-text": ""
+      "resend-button-text": "",
+      "resend-button-title": "",
+      "revoke-button-text": "",
+      "revoke-button-title": ""
     }
   },
   "explore": {
