@@ -21,7 +21,7 @@ const MIN_HEIGHT = ITEM_HEIGHT * 5;
 const operatorSelectableValue = (op: string): SelectableValue<string> => {
   const result: SelectableValue<string> = { label: op, value: op };
   switch (op) {
-    case 'contains':
+    case 'Contains':
       result.description = 'Contains';
       break;
     case '=':
@@ -42,16 +42,16 @@ const operatorSelectableValue = (op: string): SelectableValue<string> => {
     case '<=':
       result.description = 'Less or Equal';
       break;
-    case 'expression':
+    case 'Expression':
       result.description =
         'Bool Expression (Char v represents the column value in the expression, e.g. "v >= 10 && v <= 12")';
       break;
   }
   return result;
 };
-const OPERATORS = ['contains', '=', '!=', '<', '<=', '>', '>=', 'expression'].map(operatorSelectableValue);
-const REGEX_OPERATOR = OPERATORS.filter((op) => op.value === 'contains')[0];
-const XPR_OPERATOR = OPERATORS.filter((op) => op.value === 'expression')[0];
+const OPERATORS = ['Contains', '=', '!=', '<', '<=', '>', '>=', 'Expression'].map(operatorSelectableValue);
+const REGEX_OPERATOR = OPERATORS.filter((op) => op.value === 'Contains')[0];
+const XPR_OPERATOR = OPERATORS.filter((op) => op.value === 'Expression')[0];
 
 const comparableValue = (value: string): string | number | Date | boolean => {
   value = value.trim().replace(/\\/g, '');
