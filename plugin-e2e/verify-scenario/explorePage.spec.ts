@@ -1,7 +1,5 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { prometheusLabels } from './mocks/resources';
-
 test('query data response should be OK when query is valid', async ({ explorePage, page }) => {
   await explorePage.datasource.set('gdev-testdata');
   await expect(explorePage.runQuery()).toBeOK();
