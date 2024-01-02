@@ -38,8 +38,6 @@ export const defaultConfig: Config = {
   gridLayout: false,
 };
 
-// let graphviz: undefined | typeof Graphviz;
-
 /**
  * This will return copy of the nods and edges with x,y positions filled in. Also the layout changes source/target props
  * in edges from string ids to actual nodes.
