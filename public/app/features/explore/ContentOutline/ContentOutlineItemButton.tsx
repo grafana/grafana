@@ -59,9 +59,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: 'none',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
       whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '160px',
     }),
   };
 };

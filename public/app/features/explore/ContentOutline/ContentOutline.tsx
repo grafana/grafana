@@ -46,6 +46,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     indent: css({
+      width: '100%',
       paddingLeft: '68px',
       '&:hover': {
         color: theme.colors.text.primary,
@@ -99,6 +100,9 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
   };
 
+  // TODO: fix indenting for buttons that are not in a section
+  // figure out why ellipsis is not working
+
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <CustomScrollbar>
@@ -112,8 +116,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             aria-expanded={contentOutlineExpanded}
           />
 
-          {/* TODO: implement a collapsible section if item has children
-           */}
           {outlineItems.map((item) => (
             <>
               <div className={styles.sectionWrapper}>
