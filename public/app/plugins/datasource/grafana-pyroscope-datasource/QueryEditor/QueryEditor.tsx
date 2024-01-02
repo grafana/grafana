@@ -25,7 +25,7 @@ export function QueryEditor(props: Props) {
     onRunQuery();
   }
 
-  const profileTypes = useProfileTypes(datasource, range?.from.valueOf() || 0, range?.to.valueOf() || 0);
+  const profileTypes = useProfileTypes(datasource, range);
   const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
