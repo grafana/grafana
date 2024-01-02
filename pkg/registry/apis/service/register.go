@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -35,6 +36,10 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration gra
 	builder := NewServiceAPIBuilder()
 	apiregistration.RegisterAPI(NewServiceAPIBuilder())
 	return builder
+}
+
+func (b *ServiceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return nil // default authorizer is fine
 }
 
 func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {
