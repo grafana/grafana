@@ -21,7 +21,7 @@ type ResourceInfo struct {
 
 func NewResourceInfo(group, version, resourceName, singularName, kind string,
 	newObj func() runtime.Object, newList func() runtime.Object) ResourceInfo {
-	shortName := ""
+	shortName := "" // an optional alias helpful in kubectl eg ("sa" for serviceaccounts)
 	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList}
 }
 
