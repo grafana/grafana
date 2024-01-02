@@ -106,7 +106,7 @@ export const StateTimelineTooltip2 = ({
     if (nextStateTs) {
       duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
     } else {
-      const to = timeRange.to.unix() * 1000;
+      const to = timeRange.to.valueOf();
       duration = fmtDuration(to - stateTs);
     }
 
