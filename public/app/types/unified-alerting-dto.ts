@@ -242,4 +242,6 @@ export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
 
 export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
-export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };
+export type RulerRulesConfigDTO<R = RulerRuleDTO> = {
+  [namespace: string]: Array<RulerRuleGroupDTO<R>>;
+};

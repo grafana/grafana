@@ -144,7 +144,7 @@ export type ThresholdDefinitions = Record<string, ThresholdDefinition>;
 /**
  * This function will retrieve threshold definitions for the given array of data and expression queries.
  */
-export function getThresholdsForQueries(queries: AlertQuery[]) {
+export function getThresholdsForQueries(queries: AlertQuery[]): ThresholdDefinitions {
   const thresholds: ThresholdDefinitions = {};
   const SUPPORTED_EXPRESSION_TYPES = [ExpressionQueryType.threshold, ExpressionQueryType.classic];
 

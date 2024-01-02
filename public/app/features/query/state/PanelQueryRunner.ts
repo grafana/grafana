@@ -170,6 +170,27 @@ export class PanelQueryRunner {
                 }
               }
 
+              const thresholdStyleOverrides = [
+                {
+                  matcher: {
+                    id: 'byName',
+                    options: 'Value',
+                  },
+                  properties: [
+                    {
+                      id: 'custom.thresholdsStyle',
+                      value: {
+                        mode: data.threshold?.mode,
+                      },
+                    },
+                    {
+                      id: 'thresholds',
+                      value: data.threshold?.config,
+                    },
+                  ],
+                },
+              ];
+
               if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
                 lastConfigRev = this.dataConfigSource.configRev!;
                 processedData = {
@@ -178,8 +199,13 @@ export class PanelQueryRunner {
                     timeZone: data.request?.timezone ?? 'browser',
                     data: processedData.series,
                     ...fieldConfig!,
+                    fieldConfig: {
+                      ...fieldConfig.fieldConfig,
+                      overrides: [...thresholdStyleOverrides, ...fieldConfig.fieldConfig.overrides],
+                    },
                   }),
                 };
+
                 if (processedData.annotations) {
                   processedData.annotations = applyFieldOverrides({
                     data: processedData.annotations,
@@ -331,7 +357,7 @@ export class PanelQueryRunner {
 
     if (dataSupport.alertStates || dataSupport.annotations) {
       const panel = this.dataConfigSource as unknown as PanelModel;
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panel.id));
+      panelData = mergePanelAndDashData(panelData, getDashboardQueryRunner().getResult(panel.id));
     }
 
     this.subscription = panelData.subscribe({
