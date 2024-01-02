@@ -3,18 +3,12 @@ import React, { useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getCredentials, updateCredentials } from '../credentials';
-import { AzureCredentials } from './AzureCredentials';
 import { AzureDataSourceSettings } from '../types';
-
+import { AzureCredentials } from './AzureCredentials';
+import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';
-
-const azureClouds: SelectableValue[] = [
-  { value: 'azuremonitor', label: 'Azure' },
-  { value: 'govazuremonitor', label: 'Azure US Government' },
-  { value: 'chinaazuremonitor', label: 'Azure China' },
-];
+import {KnownAzureClouds} from "../../prometheus/configuration/AzureCredentials";
 
 export interface Props {
   options: AzureDataSourceSettings;
@@ -48,7 +42,7 @@ export const MonitorConfig = (props: Props) => {
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         credentials={credentials}
-        azureCloudOptions={azureClouds}
+        azureCloudOptions={KnownAzureClouds}
         onCredentialsChange={onCredentialsChange}
         disabled={props.options.readOnly}
       >

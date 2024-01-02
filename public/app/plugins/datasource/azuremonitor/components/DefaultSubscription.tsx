@@ -3,7 +3,7 @@ import React, { useEffect, useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select, Button, Field } from '@grafana/ui';
 
-import { isCredentialsComplete } from '../credentials';
+import { isCredentialsComplete } from './AzureCredentialsConfig';
 import { selectors } from '../e2e/selectors';
 import { AzureDataSourceJsonData } from '../types';
 import { AzureCredentials } from './AzureCredentials';

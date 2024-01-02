@@ -4,7 +4,8 @@ import { find, startsWith } from 'lodash';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { AzureCredentials } from '../components/AzureCredentials';
+import { getCredentials } from '../components/AzureCredentialsConfig';
 import TimegrainConverter from '../time_grain_converter';
 import {
   AzureDataSourceJsonData,
@@ -38,6 +39,8 @@ function hasValue(item?: string) {
 }
 
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
+  private readonly credentials: AzureCredentials;
+
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
   listByResourceGroupApiVersion = '2021-04-01';
@@ -45,21 +48,19 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   resourcePath: string;
-  azurePortalUrl: string;
   declare resourceGroup: string;
   declare resourceName: string;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.credentials = getCredentials(instanceSettings);
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
-    const cloud = getAzureCloud(instanceSettings);
     this.resourcePath = routeNames.azureMonitor;
-    this.azurePortalUrl = getAzurePortalUrl(cloud);
   }
 
   isConfigured(): boolean {
@@ -302,17 +303,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   private validateDatasource(): DatasourceValidationResult | undefined {
-    const authType = getAuthType(this.instanceSettings);
-
-    if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+    if (this.credentials.authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.credentials.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+      if (!this.isValidConfigField(this.credentials.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',
