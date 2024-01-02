@@ -25,22 +25,24 @@ type NGAlert struct {
 	// Registerer is used by subcomponents which register their own metrics.
 	Registerer prometheus.Registerer
 
-	schedulerMetrics            *Scheduler
-	stateMetrics                *State
-	multiOrgAlertmanagerMetrics *MultiOrgAlertmanager
-	apiMetrics                  *API
-	historianMetrics            *Historian
+	schedulerMetrics               *Scheduler
+	stateMetrics                   *State
+	multiOrgAlertmanagerMetrics    *MultiOrgAlertmanager
+	apiMetrics                     *API
+	historianMetrics               *Historian
+	remoteSecondaryForkedAMMetrics *RemoteSecondaryForkedAlertmanager
 }
 
 // NewNGAlert manages the metrics of all the alerting components.
 func NewNGAlert(r prometheus.Registerer) *NGAlert {
 	return &NGAlert{
-		Registerer:                  r,
-		schedulerMetrics:            NewSchedulerMetrics(r),
-		stateMetrics:                NewStateMetrics(r),
-		multiOrgAlertmanagerMetrics: NewMultiOrgAlertmanagerMetrics(r),
-		apiMetrics:                  NewAPIMetrics(r),
-		historianMetrics:            NewHistorianMetrics(r, Subsystem),
+		Registerer:                     r,
+		schedulerMetrics:               NewSchedulerMetrics(r),
+		stateMetrics:                   NewStateMetrics(r),
+		multiOrgAlertmanagerMetrics:    NewMultiOrgAlertmanagerMetrics(r),
+		apiMetrics:                     NewAPIMetrics(r),
+		historianMetrics:               NewHistorianMetrics(r, Subsystem),
+		remoteSecondaryForkedAMMetrics: NewRemoteSecondaryForkedAlertmanagerMetrics(r, Subsystem),
 	}
 }
 
@@ -62,4 +64,8 @@ func (ng *NGAlert) GetMultiOrgAlertmanagerMetrics() *MultiOrgAlertmanager {
 
 func (ng *NGAlert) GetHistorianMetrics() *Historian {
 	return ng.historianMetrics
+}
+
+func (ng *NGAlert) GetRemoteSecondaryForkedAMMetrics() *RemoteSecondaryForkedAlertmanager {
+	return ng.remoteSecondaryForkedAMMetrics
 }

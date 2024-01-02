@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
@@ -24,9 +25,10 @@ type remoteAlertmanager interface {
 }
 
 type RemoteSecondaryForkedAlertmanager struct {
-	log   log.Logger
-	orgID int64
-	store configStore
+	metrics *metrics.RemoteSecondaryForkedAlertmanager
+	log     log.Logger
+	orgID   int64
+	store   configStore
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
@@ -36,9 +38,10 @@ type RemoteSecondaryForkedAlertmanager struct {
 }
 
 type RemoteSecondaryConfig struct {
-	Logger log.Logger
-	OrgID  int64
-	Store  configStore
+	Logger  log.Logger
+	Metrics *metrics.RemoteSecondaryForkedAlertmanager
+	OrgID   int64
+	Store   configStore
 
 	// SyncInterval determines how often we should attempt to synchronize
 	// state and configuration on the external Alertmanager.
@@ -57,6 +60,7 @@ func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 		return nil, err
 	}
 	return &RemoteSecondaryForkedAlertmanager{
+		metrics:      cfg.Metrics,
 		log:          cfg.Logger,
 		orgID:        cfg.OrgID,
 		store:        cfg.Store,
@@ -88,14 +92,19 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
 		if time.Since(fam.lastSync) >= fam.syncInterval {
 			fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
+			orgID := fmt.Sprint(fam.orgID)
+			fam.metrics.SyncsTotal.WithLabelValues(orgID).Inc()
+
 			cfgErr := fam.remote.CompareAndSendConfiguration(ctx, config)
 			if cfgErr != nil {
 				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", cfgErr)
+				fam.metrics.ConfigurationSyncsFailedTotal.WithLabelValues(orgID).Inc()
 			}
 
 			stateErr := fam.remote.CompareAndSendState(ctx)
 			if stateErr != nil {
 				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", stateErr)
+				fam.metrics.StateSyncsFailedTotal.WithLabelValues(orgID).Inc()
 			}
 			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
 
@@ -179,17 +188,23 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	// Send config and state to the remote Alertmanager.
 	// Using context.TODO() here as we think we want to allow this operation to finish regardless of time.
 	ctx := context.TODO()
+	orgID := fmt.Sprint(fam.orgID)
+	fam.metrics.SyncsTotal.WithLabelValues(orgID).Inc()
+
 	if err := fam.remote.CompareAndSendState(ctx); err != nil {
 		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
+		fam.metrics.StateSyncsFailedTotal.WithLabelValues(orgID).Inc()
 	}
 
 	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
 	if err != nil {
 		fam.log.Error("Error getting latest Alertmanager configuration while stopping", "err", err)
+		fam.metrics.ConfigurationSyncsFailedTotal.WithLabelValues(orgID).Inc()
 		return
 	}
 	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
 		fam.log.Error("Error sending configuration to the remote Alertmanager while stopping", "err", err)
+		fam.metrics.ConfigurationSyncsFailedTotal.WithLabelValues(orgID).Inc()
 	}
 }
 
