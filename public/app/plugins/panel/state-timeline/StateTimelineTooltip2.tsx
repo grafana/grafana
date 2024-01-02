@@ -80,7 +80,6 @@ export const StateTimelineTooltip2 = ({
   let links: Array<LinkModel<Field>> = [];
 
   const from = xFieldFmt(xField.values[datapointIdx!]).text;
-  let to: string;
 
   // Single mode
   if (mode === TooltipDisplayMode.Single || isPinned) {
@@ -105,7 +104,6 @@ export const StateTimelineTooltip2 = ({
       duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
     }
 
-    to = xFieldFmt(xField.values[nextStateIdx!]).text;
     const durationEntry: LabelValue[] = duration ? [{ label: 'Duration', value: duration }] : [];
 
     contentLabelValue = [
@@ -170,7 +168,7 @@ export const StateTimelineTooltip2 = ({
   const getHeaderLabel = (): LabelValue => {
     return {
       label: '',
-      value: Boolean(to) ? to : from,
+      value: from,
     };
   };
 
