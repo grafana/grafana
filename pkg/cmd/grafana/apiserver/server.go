@@ -15,7 +15,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/util/openapi"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
@@ -117,20 +116,23 @@ func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedC
 		return err
 	}
 
-	kubeClient, err := kubernetes.NewForConfig(config.ClientConfig)
+	// TODO: determine whether we need flow control (API priority and fairness)
+	// We can't assume that a shared informers config was provided in standalone mode and will need a guard
+	// when enabling below
+	/* kubeClient, err := kubernetes.NewForConfig(config.ClientConfig)
 	if err != nil {
 		return err
 	}
 
 	if err := o.RecommendedOptions.Features.ApplyTo(&config.Config, kubeClient, config.SharedInformerFactory); err != nil {
 		return err
-	}
+	} */
 
 	if err := o.RecommendedOptions.CoreAPI.ApplyTo(config); err != nil {
 		return err
 	}
 
-	_, err = o.RecommendedOptions.ExtraAdmissionInitializers(config)
+	_, err := o.RecommendedOptions.ExtraAdmissionInitializers(config)
 	if err != nil {
 		return err
 	}
@@ -145,15 +147,14 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	}
 
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
-	// o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization = nil
 
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
 
-	/* if o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
+	if o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath == "" {
 		o.RecommendedOptions.CoreAPI = nil
-	} */
+	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 

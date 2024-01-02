@@ -37,7 +37,7 @@ the specified `GroupVersion` therein.
 4. In another tab, start the example microservice that will be aggregated by the parent apiserver:
   ```shell
   go run ./pkg/cmd/grafana apiserver example.grafana.app \
-    --kubeconfig $PWD/data/grafana-apiserver/aggregator.kubeconfig \
+    --kubeconfig $PWD/data/grafana-aggregator/aggregator.kubeconfig \
     --secure-port 7443 \
    --client-ca-file=$PWD/data/grafana-aggregator/ca.crt
   ```

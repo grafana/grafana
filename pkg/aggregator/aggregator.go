@@ -148,6 +148,8 @@ func (o *AggregatorServerOptions) ModifiedApplyTo(config *genericapiserver.Recom
 	if err := o.RecommendedOptions.Audit.ApplyTo(&config.Config); err != nil {
 		return err
 	}
+
+	// TODO: determine whether we need flow control (API priority and fairness)
 	//if err := o.RecommendedOptions.Features.ApplyTo(&config.Config); err != nil {
 	//	return err
 	//}
