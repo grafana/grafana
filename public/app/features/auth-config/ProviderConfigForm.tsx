@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import {
+  Box,
   Button,
   CollapsableSection,
   Field,
@@ -174,18 +175,18 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
 
   return (
     <Page.Contents isLoading={isLoading}>
-      <Stack grow={1} direction={'column'}>
-        <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
-          <>
-            <FormPrompt
-              // TODO Figure out why isDirty is not working
-              confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
-              onDiscard={() => {
-                reset();
-              }}
-            />
-            {sections ? (
-              sections.map((section, index) => {
+      <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
+        <>
+          <FormPrompt
+            // TODO Figure out why isDirty is not working
+            confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
+            onDiscard={() => {
+              reset();
+            }}
+          />
+          {sections ? (
+            <Stack gap={2} direction={'column'}>
+              {sections.map((section, index) => {
                 return (
                   <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
                     {section.fields.map((fieldName) => {
@@ -198,31 +199,31 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                     })}
                   </CollapsableSection>
                 );
-              })
-            ) : (
-              <>
-                <Field label="Enabled">
-                  <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
-                </Field>
-                {providerFields.map((fieldName) => {
-                  const field = fieldMap[fieldName];
-                  return renderField(fieldName, field);
-                })}
-              </>
-            )}
-            <Stack gap={2}>
-              <Field>
-                <Button type={'submit'}>{isSaving ? 'Saving...' : 'Save'}</Button>
-              </Field>
-              <Field>
-                <LinkButton href={'/admin/authentication'} variant={'secondary'}>
-                  Discard
-                </LinkButton>
-              </Field>
+              })}
             </Stack>
-          </>
-        </form>
-      </Stack>
+          ) : (
+            <>
+              <Field label="Enabled">
+                <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
+              </Field>
+              {providerFields.map((fieldName) => {
+                const field = fieldMap[fieldName];
+                return renderField(fieldName, field);
+              })}
+            </>
+          )}
+          <Box display={'flex'} gap={2} marginTop={6}>
+            <Field>
+              <Button type={'submit'}>{isSaving ? 'Saving...' : 'Save'}</Button>
+            </Field>
+            <Field>
+              <LinkButton href={'/admin/authentication'} variant={'secondary'}>
+                Discard
+              </LinkButton>
+            </Field>
+          </Box>
+        </>
+      </form>
     </Page.Contents>
   );
 };
