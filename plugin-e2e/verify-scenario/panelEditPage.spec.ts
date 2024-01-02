@@ -1,7 +1,11 @@
 import { expect, test } from '@grafana/plugin-e2e';
+import { getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { successfulDataQuery } from './mocks/queries';
 import { scenarios } from './mocks/resources';
+
+const PANEL_TITLE = 'Table panel E2E test';
+const TABLE_VIZ_NAME = 'Table';
 
 test.describe('query editor query data', () => {
   test('query data response should be OK when query is valid', async ({ panelEditPage }) => {
@@ -32,7 +36,7 @@ test.describe('query editor with mocked responses', () => {
   test('mocked query data response', async ({ panelEditPage, page, selectors }) => {
     await panelEditPage.mockQueryDataResponse(successfulDataQuery, 200);
     await panelEditPage.datasource.set('gdev-testdata');
-    await panelEditPage.setVisualization('Table');
+    await panelEditPage.setVisualization(TABLE_VIZ_NAME);
     await panelEditPage.refreshPanel();
     await expect(panelEditPage).not.toHavePanelError();
     await expect(panelEditPage.getByTestIdOrAriaLabel(selectors.components.Panels.Visualization.Table.body)).toHaveText(
@@ -47,16 +51,17 @@ test.describe('edit panel plugin settings', () => {
     selectors,
     page,
   }) => {
-    await panelEditPage.setVisualization('Table');
+    const res = getAllStandardFieldConfigs().find((x) => x.id === 'displayName');
+    expect(res, 'displayName field config not found').toBeDefined();
+    await panelEditPage.setVisualization(TABLE_VIZ_NAME);
     await expect(panelEditPage.getByTestIdOrAriaLabel(selectors.components.PanelEditor.toggleVizPicker)).toHaveText(
-      'Table'
+      TABLE_VIZ_NAME
     );
-    const panelName = 'Table panel E2E test';
-    await panelEditPage.setPanelTitle(panelName);
+    await panelEditPage.setPanelTitle(PANEL_TITLE);
     await expect(
-      panelEditPage.getByTestIdOrAriaLabel(selectors.components.Panels.Panel.title(panelName))
+      panelEditPage.getByTestIdOrAriaLabel(selectors.components.Panels.Panel.title(PANEL_TITLE))
     ).toBeVisible();
-    await panelEditPage.collapseSection('Standard options');
-    await expect(page.getByText('Display name')).toBeVisible();
+    await panelEditPage.collapseSection(res?.category?.[0] ?? 'Standard options');
+    await expect(page.getByText(res?.name ?? 'Display name')).toBeVisible();
   });
 });
