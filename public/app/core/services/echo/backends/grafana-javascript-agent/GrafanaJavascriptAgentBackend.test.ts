@@ -47,7 +47,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
       ...faroWebSdkModule.faro,
       api: {
-        ...faroWebSdkModule.api,
+        ...faroWebSdkModule.faro.api,
         setUser: jest.fn(),
       },
     });
