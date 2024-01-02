@@ -120,6 +120,7 @@ module.exports = {
         type: 'asset/source',
       },
       {
+        // Required for msagl library (used in Nodegraph panel) to work
         test: /\.m?js$/,
         resolve: {
           fullySpecified: false,
