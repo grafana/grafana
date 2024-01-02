@@ -10,6 +10,23 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
+func TestRequiresDevMode(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction: true, // should fail
+		DisableAnonymous:  true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrafanaAPIServer,
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+		},
+	})
+
+	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("dashboard.grafana.app/v0alpha1")
+	require.Error(t, err)
+}
+
 func TestDashboardsApp(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -22,6 +39,8 @@ func TestDashboardsApp(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
 	})
+	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("dashboard.grafana.app/v0alpha1")
+	require.NoError(t, err)
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("dashboard.grafana.app")
