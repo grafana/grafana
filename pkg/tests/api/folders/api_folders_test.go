@@ -128,7 +128,7 @@ func TestGetFolders(t *testing.T) {
 		for i := range res.Payload {
 			actualFolders = append(actualFolders, res.Payload[i].UID)
 		}
-		assert.Equal(t, []string{"folder-0", "folder-1", "folder-2", "folder-3", "folder-4", folder.SharedWithMeFolderUID}, actualFolders)
+		assert.Equal(t, []string{folder.SharedWithMeFolderUID, "folder-0", "folder-1", "folder-2", "folder-3", "folder-4"}, actualFolders)
 	})
 
 	t.Run("Pagination works as expect for editor", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestGetFolders(t *testing.T) {
 		for i := range res.Payload {
 			actualFolders = append(actualFolders, res.Payload[i].UID)
 		}
-		assert.Equal(t, []string{"folder-0", "folder-1", folder.SharedWithMeFolderUID}, actualFolders)
+		assert.Equal(t, []string{folder.SharedWithMeFolderUID, "folder-0", "folder-1"}, actualFolders)
 
 		page = int64(2)
 		res, err = editorClient.Folders.GetFolders(folders.NewGetFoldersParams().WithLimit(&limit).WithPage(&page))
@@ -168,7 +168,7 @@ func TestGetFolders(t *testing.T) {
 		for i := range res.Payload {
 			actualFolders = append(actualFolders, res.Payload[i].UID)
 		}
-		assert.Equal(t, []string{"folder-0", "folder-1", "folder-2", "folder-4", folder.SharedWithMeFolderUID}, actualFolders)
+		assert.Equal(t, []string{folder.SharedWithMeFolderUID, "folder-0", "folder-1", "folder-2", "folder-4"}, actualFolders)
 	})
 
 	t.Run("Pagination works as expect for viewer", func(t *testing.T) {
@@ -180,7 +180,7 @@ func TestGetFolders(t *testing.T) {
 		for i := range res.Payload {
 			actualFolders = append(actualFolders, res.Payload[i].UID)
 		}
-		assert.Equal(t, []string{"folder-0", "folder-1", folder.SharedWithMeFolderUID}, actualFolders)
+		assert.Equal(t, []string{folder.SharedWithMeFolderUID, "folder-0", "folder-1"}, actualFolders)
 
 		page = int64(2)
 		res, err = viewerClient.Folders.GetFolders(folders.NewGetFoldersParams().WithLimit(&limit).WithPage(&page))

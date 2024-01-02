@@ -951,9 +951,15 @@ export class LokiDatasource
   getLogRowContextQuery = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    origQuery?: DataQuery
+    origQuery?: DataQuery,
+    cacheFilters?: boolean
   ): Promise<DataQuery> => {
-    return await this.logContextProvider.getLogRowContextQuery(row, options, getLokiQueryFromDataQuery(origQuery));
+    return await this.logContextProvider.getLogRowContextQuery(
+      row,
+      options,
+      getLokiQueryFromDataQuery(origQuery),
+      cacheFilters
+    );
   };
 
   /**

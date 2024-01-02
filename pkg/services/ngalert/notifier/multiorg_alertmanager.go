@@ -77,7 +77,7 @@ type MultiOrgAlertmanager struct {
 	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
-	factory     orgAlertmanagerFactory
+	factory     OrgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
@@ -85,13 +85,13 @@ type MultiOrgAlertmanager struct {
 	ns      notifications.Service
 }
 
-type orgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
+type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
 
 type Option func(*MultiOrgAlertmanager)
 
-func WithAlertmanagerOverride(f orgAlertmanagerFactory) Option {
+func WithAlertmanagerOverride(f func(OrgAlertmanagerFactory) OrgAlertmanagerFactory) Option {
 	return func(moa *MultiOrgAlertmanager) {
-		moa.factory = f
+		moa.factory = f(moa.factory)
 	}
 }
 
@@ -122,7 +122,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 	// Set up the default per tenant Alertmanager factory.
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-		return newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
 	}
 
 	for _, opt := range opts {

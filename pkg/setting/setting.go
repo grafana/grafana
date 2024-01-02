@@ -677,6 +677,13 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	keys := environmentMetricsSection.Keys()
 	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
 
+	cfg.MetricsGrafanaEnvironmentInfo["version"] = cfg.BuildVersion
+	cfg.MetricsGrafanaEnvironmentInfo["commit"] = cfg.BuildCommit
+
+	if cfg.EnterpriseBuildCommit != "NA" && cfg.EnterpriseBuildCommit != "" {
+		cfg.MetricsGrafanaEnvironmentInfo["enterprise_commit"] = cfg.EnterpriseBuildCommit
+	}
+
 	for _, key := range keys {
 		labelName := model.LabelName(key.Name())
 		labelValue := model.LabelValue(key.Value())
