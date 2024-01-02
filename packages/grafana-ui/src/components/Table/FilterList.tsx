@@ -44,8 +44,8 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
   const selectCheckDescription = useMemo(
     () =>
       items.length !== selectedItems.length
-        ? 'Click to add all displayed values to the filter'
-        : 'Click to remove all displayed values from the filter',
+        ? 'Add all displayed values to the filter'
+        : 'Remove all displayed values from the filter',
     [items, selectedItems]
   );
 
@@ -103,13 +103,15 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
       {items.length && (
         <VerticalGroup spacing="xs">
           <div className={cx(styles.selectDivider)} />
-          <Checkbox
-            value={selectCheckValue}
-            indeterminate={selectCheckIndeterminate}
-            label={selectCheckLabel}
-            description={selectCheckDescription}
-            onChange={onSelectChanged}
-          />
+          <div className={cx(styles.filterListRow)}>
+            <Checkbox
+              value={selectCheckValue}
+              indeterminate={selectCheckIndeterminate}
+              label={selectCheckLabel}
+              description={selectCheckDescription}
+              onChange={onSelectChanged}
+            />
+          </div>
         </VerticalGroup>
       )}
     </VerticalGroup>
