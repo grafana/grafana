@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
+	"github.com/spf13/pflag"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -68,13 +69,17 @@ import (
 	netutils "k8s.io/utils/net"
 )
 
+type ExtraOptions struct {
+	ProxyClientCertFile string
+	ProxyClientKeyFile  string
+}
+
 // AggregatorServerOptions contains the state for the aggregator apiserver
 type AggregatorServerOptions struct {
 	Builders           []grafanaAPIServer.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
-	// TODO: encapsulate ProxyClientCertFile and ProxyClientCertKey and pass those through CLI args
-	// ExtraOptions       *aggregator.ExtraOptions
-	AlternateDNS []string
+	ExtraOptions       *ExtraOptions
+	AlternateDNS       []string
 
 	sharedInformerFactory informersv0alpha1.SharedInformerFactory
 
@@ -84,8 +89,9 @@ type AggregatorServerOptions struct {
 
 func NewAggregatorServerOptions(out, errOut io.Writer) *AggregatorServerOptions {
 	return &AggregatorServerOptions{
-		StdOut: out,
-		StdErr: errOut,
+		StdOut:       out,
+		StdErr:       errOut,
+		ExtraOptions: &ExtraOptions{},
 		Builders: []grafanaAPIServer.APIGroupBuilder{
 			service.NewServiceAPIBuilder(),
 		},
@@ -184,6 +190,20 @@ func (o *AggregatorServerOptions) getMergedOpenAPIDefinitions(ref common.Referen
 	return aggregatorAPIs
 }
 
+func (o *AggregatorServerOptions) AddFlags(fs *pflag.FlagSet) {
+	if o == nil {
+		return
+	}
+
+	o.RecommendedOptions.AddFlags(fs)
+
+	fs.StringVar(&o.ExtraOptions.ProxyClientCertFile, "proxy-client-cert-file", o.ExtraOptions.ProxyClientCertFile,
+		"path to proxy client cert file")
+
+	fs.StringVar(&o.ExtraOptions.ProxyClientKeyFile, "proxy-client-key-file", o.ExtraOptions.ProxyClientKeyFile,
+		"path to proxy client cert file")
+}
+
 func (o *AggregatorServerOptions) CreateAggregatorConfig() (*aggregatorapiserver.Config, error) {
 	sharedConfig, err := o.Config(aggregatorscheme.Codecs)
 	if err != nil {
@@ -261,8 +281,8 @@ func (o *AggregatorServerOptions) CreateAggregatorConfig() (*aggregatorapiserver
 			ClientConfig:          genericConfig.LoopbackClientConfig,
 		},
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
-			ProxyClientCertFile: "/Users/charandas/go/src/github.com/grafana/grafana/client.crt",
-			ProxyClientKeyFile:  "/Users/charandas/go/src/github.com/grafana/grafana/client.key",
+			ProxyClientCertFile: o.ExtraOptions.ProxyClientCertFile,
+			ProxyClientKeyFile:  o.ExtraOptions.ProxyClientKeyFile,
 			ProxyTransport:      createProxyTransport(),
 		},
 	}

@@ -11,15 +11,15 @@ the specified `GroupVersion` therein.
 
 1. Generate the PKI using `openssl` (for development purposes, we will use the CN of `system:masters`):
   ```shell
-  openssl req -nodes -new -x509 -keyout ca.key -out ca.crt
-  openssl req -out client.csr -new -newkey rsa:4096 -nodes -keyout client.key -subj "/CN=development/O=system:masters"
-  openssl x509 -req -days 365 -in client.csr -CA ca.crt -CAkey ca.key -set_serial 01 -sha256 -out client.crt
+  ./hack/make-aggregator-pki.sh
   ```
 2. Start the aggregator:
   ```shell
   # This will generate the kubeconfig which you can use in the extension apiservers for
   # enforcing delegate authnz under $PWD/data/grafana-apiserver/aggregator.kubeconfig 
-  go run ./pkg/cmd/grafana aggregator --secure-port 8443
+  go run ./pkg/cmd/grafana aggregator --secure-port 8443 \
+    --proxy-client-cert-file $PWD/data/grafana-aggregator/client.crt \
+    --proxy-client-key-file $PWD/data/grafana-aggregator/client.key
   ```
 3. Apply the manifests: 
   ```shell
@@ -39,7 +39,7 @@ the specified `GroupVersion` therein.
   go run ./pkg/cmd/grafana apiserver example.grafana.app \
     --kubeconfig $PWD/data/grafana-apiserver/aggregator.kubeconfig \
     --secure-port 7443 \
-   --client-ca-file=$PWD/ca.crt
+   --client-ca-file=$PWD/data/grafana-aggregator/ca.crt
   ```
 5. Check `APIService` again:
   ```shell

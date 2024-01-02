@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	aggregatorDataPath              = "data/grafana-aggregator"
 	defaultAggregatorEtcdPathPrefix = "/registry/grafana.aggregator"
 )
 
@@ -131,7 +132,7 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 
 	if err := clientcmd.WriteToFile(
 		utils.FormatKubeConfig(aggregator.GenericAPIServer.LoopbackClientConfig),
-		path.Join(dataPath, "aggregator.kubeconfig"),
+		path.Join(aggregatorDataPath, "aggregator.kubeconfig"),
 	); err != nil {
 		klog.Errorf("Error persisting aggregator.kubeconfig: %s", err)
 		return err
@@ -160,7 +161,7 @@ func RunCobraWrapper() int {
 
 	cmd := newCommandStartAggregator(serverOptions)
 
-	serverOptions.RecommendedOptions.AddFlags(cmd.Flags())
+	serverOptions.AddFlags(cmd.Flags())
 
 	return cli.Run(cmd)
 }
