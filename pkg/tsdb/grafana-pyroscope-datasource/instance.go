@@ -219,9 +219,10 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
-	// Since this is a health check mechanism, there is no start/end that is
-	// meaningful. Setting start/end to 0 will override the windowing behavior.
-	const start, end = int64(0), int64(0)
+	// Since this is a health check mechanism and we only care about whether the
+	// request succeeded or failed, we set the window to be small.
+	start := time.Now().Add(-5 * time.Minute).UnixMilli()
+	end := time.Now().UnixMilli()
 	if _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
