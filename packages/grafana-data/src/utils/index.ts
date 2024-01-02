@@ -26,3 +26,4 @@ export { withLoadingIndicator, type WithLoadingIndicatorOptions } from './withLo
 export { convertOldAngularValueMappings, LegacyMappingType } from './valueMappings';
 export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './variables';
 export { renderLegendFormat } from './legend';
+export { matchPluginId } from './matchPluginId';
