@@ -37,14 +37,12 @@ runtime                example.grafana.app/v0alpha1   false        RuntimeInfo
 
 ### Usage
 
-You can start the example-apiserver with an invocation as shown below. The Authn / Authz flags are set up so that the kind cluster
-can be used as a root server for this example-apiserver (in aggregated mode). Here, it's assumed that you have a local
-kind cluster and that you can provide its kubeconfig in the parameters to the example-apiserver.
+You can start the example-apiserver with an invocation as shown below. The delegate Authn / Authz flags are skipped for
+ease of development. Here, it's assumed that you have a local  kind cluster and that you can provide its kubeconfig in
+the parameters to the example-apiserver so kind can play the part as a root apiserver.
 
 ```shell
 go run ./pkg/cmd/grafana apiserver example.grafana.app \
-  --authentication-kubeconfig ~/.kube/config \
-  --authorization-kubeconfig ~/.kube/config \
   --kubeconfig ~/.kube/config \
   --secure-port 7443
 ```
@@ -54,7 +52,7 @@ by applying a `APIService` and it's corresponding `Service` object. Sample kusto
 for local development on [Linux](./deploy/linux/kustomization.yaml) and [macOS](./deploy/darwin/kustomization.yaml).
 
 ```shell
-kubectl deploy -k ./deploy/darwin # or /linux
+kubectl apply -k ./deploy/darwin # or /linux
 ```
 
 
