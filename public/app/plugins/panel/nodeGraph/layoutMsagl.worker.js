@@ -27,7 +27,7 @@ export function layout(nodes, edges) {
   const graph = parseDot(dot);
   const geomGraph = new GeomGraph(graph);
   for (const e of graph.deepEdges) {
-    const gbc = new GeomEdge(e);
+    new GeomEdge(e);
   }
 
   for (const n of graph.nodesBreadthFirst) {
