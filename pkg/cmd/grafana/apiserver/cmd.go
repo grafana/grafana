@@ -22,7 +22,7 @@ const (
 )
 
 func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
-	devAcknowledgementNotice := "The apiserver command is in heavy development.  The entire setup is subject to change without notice"
+	devAcknowledgementNotice := "The apiserver command is in heavy development. The entire setup is subject to change without notice"
 
 	cmd := &cobra.Command{
 		Use:   "apiserver [api group(s)]",
@@ -73,7 +73,7 @@ func RunCLI() int {
 }
 
 func newCommandStartAggregator(o *aggregator.AggregatorServerOptions) *cobra.Command {
-	devAcknowledgementNotice := "The apiserver command is in heavy development.  The entire setup is subject to change without notice"
+	devAcknowledgementNotice := "The aggregator command is in heavy development. The entire setup is subject to change without notice"
 
 	cmd := &cobra.Command{
 		Use:   "aggregator",
