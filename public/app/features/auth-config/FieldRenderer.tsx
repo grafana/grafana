@@ -7,14 +7,12 @@ import { fieldMap } from './fields';
 import { SSOProviderDTO, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 
-type FieldRendererProps = Pick<
-  UseFormReturn<SSOProviderDTO>,
-  'register' | 'control' | 'watch' | 'setValue' | 'unregister'
-> & {
+interface FieldRendererProps
+  extends Pick<UseFormReturn<SSOProviderDTO>, 'register' | 'control' | 'watch' | 'setValue' | 'unregister'> {
   field: SSOSettingsField;
   errors: UseFormReturn['formState']['errors'];
   secretConfigured: boolean;
-};
+}
 
 export const FieldRenderer = ({
   field,
@@ -45,6 +43,8 @@ export const FieldRenderer = ({
     console.log('missing field:', name);
     return null;
   }
+
+  // Dependant field means the field depends on another fields value
   if (isDependantField) {
     const parentValue = watch(field.dependsOn);
     if (!parentValue) {
