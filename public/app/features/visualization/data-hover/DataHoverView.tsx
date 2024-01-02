@@ -113,7 +113,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
 
   const { displayValues, links } = dispValuesAndLinks;
 
-  if (config.featureToggles.newVizTooltips) {
+  if (config.featureToggles.newVizTooltips && header === 'Exemplar') {
     return <ExemplarHoverView displayValues={displayValues} links={links} header={header} />;
   }
 
