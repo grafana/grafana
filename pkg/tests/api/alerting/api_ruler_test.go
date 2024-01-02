@@ -136,11 +136,9 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 			for _, rule := range allRules["folder1"][0].Rules {
 				assert.Equal(t, "folder1", rule.GrafanaManagedAlert.NamespaceUID)
-				assert.Equal(t, int64(1), rule.GrafanaManagedAlert.NamespaceID)
 			}
 			for _, rule := range allRules["folder2"][0].Rules {
 				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
-				assert.Equal(t, int64(2), rule.GrafanaManagedAlert.NamespaceID)
 			}
 		})
 
@@ -664,7 +662,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
-				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
 				"exec_err_state": "Alerting"
@@ -698,7 +695,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
-				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "Alerting",
 				"exec_err_state": "Alerting"
@@ -744,7 +740,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
-				"namespace_id": 1,
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
 				"exec_err_state": "Alerting"
