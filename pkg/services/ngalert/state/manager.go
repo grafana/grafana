@@ -98,7 +98,7 @@ func NewManager(cfg ManagerCfg) *Manager {
 	return m
 }
 
-func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
+func (st *Manager) Warm(ctx context.Context, rules RuleReader) {
 	if st.instanceStore == nil {
 		st.log.Info("Skip warming the state because instance store is not configured")
 		return
@@ -113,69 +113,77 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 
 	statesCount := 0
 	states := make(map[int64]map[string]*ruleStates, len(orgIds))
-	for _, orgId := range orgIds {
-		// Get Rules
-		ruleCmd := ngModels.ListAlertRulesQuery{
-			OrgID: orgId,
-		}
-		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
-		if err != nil {
-			st.log.Error("Unable to fetch previous state", "error", err)
-		}
-
-		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
-		for _, rule := range alertRules {
-			ruleByUID[rule.UID] = rule
-		}
-
-		orgStates := make(map[string]*ruleStates, len(ruleByUID))
-		states[orgId] = orgStates
-
-		// Get Instances
-		cmd := ngModels.ListAlertInstancesQuery{
-			RuleOrgID: orgId,
-		}
-		alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
-		if err != nil {
-			st.log.Error("Unable to fetch previous state", "error", err)
-		}
-
-		for _, entry := range alertInstances {
-			ruleForEntry, ok := ruleByUID[entry.RuleUID]
-			if !ok {
-				// TODO Should we delete the orphaned state from the db?
-				continue
-			}
-
-			rulesStates, ok := orgStates[entry.RuleUID]
-			if !ok {
-				rulesStates = &ruleStates{states: make(map[string]*State)}
-				orgStates[entry.RuleUID] = rulesStates
-			}
-
-			lbs := map[string]string(entry.Labels)
-			cacheID, err := entry.Labels.StringKey()
-			if err != nil {
-				st.log.Error("Error getting cacheId for entry", "error", err)
-			}
-			rulesStates.states[cacheID] = &State{
-				AlertRuleUID:         entry.RuleUID,
-				OrgID:                entry.RuleOrgID,
-				CacheID:              cacheID,
-				Labels:               lbs,
-				State:                translateInstanceState(entry.CurrentState),
-				StateReason:          entry.CurrentReason,
-				LastEvaluationString: "",
-				StartsAt:             entry.CurrentStateSince,
-				EndsAt:               entry.CurrentStateEnd,
-				LastEvaluationTime:   entry.LastEvalTime,
-				Annotations:          ruleForEntry.Annotations,
-			}
-			statesCount++
-		}
+	for _, orgID := range orgIds {
+		orgStates, count := st.warmOrg(ctx, orgID, rules)
+		statesCount += count
+		states[orgID] = orgStates
 	}
 	st.cache.setAllStates(states)
 	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
+}
+
+func (st *Manager) warmOrg(ctx context.Context, orgID int64, rules RuleReader) (map[string]*ruleStates, int) {
+	// Get Rules
+	ruleCmd := ngModels.ListAlertRulesQuery{
+		OrgID: orgID,
+	}
+	alertRules, err := rules.ListAlertRules(ctx, &ruleCmd)
+	if err != nil {
+		st.log.Error("Unable to fetch previous state", "error", err)
+	}
+
+	ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
+	for _, rule := range alertRules {
+		ruleByUID[rule.UID] = rule
+	}
+
+	states := make(map[string]*ruleStates, len(ruleByUID))
+	count := 0
+
+	// Get Instances
+	cmd := ngModels.ListAlertInstancesQuery{
+		RuleOrgID: orgID,
+	}
+	alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
+	if err != nil {
+		st.log.Error("Unable to fetch previous state", "error", err)
+	}
+
+	for _, entry := range alertInstances {
+		ruleForEntry, ok := ruleByUID[entry.RuleUID]
+		if !ok {
+			// TODO Should we delete the orphaned state from the db?
+			continue
+		}
+
+		rulesStates, ok := states[entry.RuleUID]
+		if !ok {
+			rulesStates = &ruleStates{states: make(map[string]*State)}
+			states[entry.RuleUID] = rulesStates
+		}
+
+		lbs := map[string]string(entry.Labels)
+		cacheID, err := entry.Labels.StringKey()
+		if err != nil {
+			st.log.Error("Error getting cacheId for entry", "error", err)
+		}
+		rulesStates.states[cacheID] = &State{
+			AlertRuleUID:         entry.RuleUID,
+			OrgID:                entry.RuleOrgID,
+			CacheID:              cacheID,
+			Labels:               lbs,
+			State:                translateInstanceState(entry.CurrentState),
+			StateReason:          entry.CurrentReason,
+			LastEvaluationString: "",
+			StartsAt:             entry.CurrentStateSince,
+			EndsAt:               entry.CurrentStateEnd,
+			LastEvaluationTime:   entry.LastEvalTime,
+			Annotations:          ruleForEntry.Annotations,
+		}
+		count++
+	}
+
+	return states, count
 }
 
 func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
