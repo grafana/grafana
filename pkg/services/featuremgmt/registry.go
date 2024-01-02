@@ -718,7 +718,8 @@ var (
 		{
 			Name:            "grafanaAPIServer",
 			Description:     "Enable Kubernetes API Server for Grafana resources",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
+			Expression:      "true", // enabled by default
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Created:         time.Date(2023, time.July, 14, 12, 0, 0, 0, time.UTC),
