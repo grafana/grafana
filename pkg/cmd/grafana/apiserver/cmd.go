@@ -95,9 +95,6 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 		return err
 	}
 
-	serverOptions.RecommendedOptions.Authentication.ClientCert = options.ClientCertAuthenticationOptions{
-		ClientCA: "/Users/charandas/go/src/github.com/grafana/grafana/ca.crt",
-	}
 	serverOptions.RecommendedOptions.SecureServing.BindPort = 8443
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 
