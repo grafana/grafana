@@ -161,11 +161,11 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		provider.roleAttributePath = test.RoleAttributePath
-		provider.allowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
+		provider.info.RoleAttributePath = test.RoleAttributePath
+		provider.info.AllowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
 		provider.autoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
-		provider.roleAttributeStrict = test.Cfg.RoleAttributeStrict
-		provider.skipOrgRoleSync = test.Cfg.SkipOrgRoleSync
+		provider.info.RoleAttributeStrict = test.Cfg.RoleAttributeStrict
+		provider.info.SkipOrgRoleSync = test.Cfg.SkipOrgRoleSync
 
 		t.Run(test.Name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +187,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 					require.Fail(t, "unexpected request URI: "+r.RequestURI)
 				}
 			}))
-			provider.apiUrl = ts.URL + apiURI
+			provider.info.ApiUrl = ts.URL + apiURI
 			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), &oauth2.Token{})
 			if test.ExpectedError != nil {
 				require.ErrorIs(t, err, test.ExpectedError)
@@ -353,15 +353,13 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 					AllowSignup:         false,
 					RoleAttributePath:   "",
 					RoleAttributeStrict: false,
-					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
-					//SkipOrgRoleSync:     false,
-					AuthUrl:  tc.config.Endpoint.AuthURL,
-					TokenUrl: tc.config.Endpoint.TokenURL,
+					SkipOrgRoleSync:     false,
+					AuthUrl:             tc.config.Endpoint.AuthURL,
+					TokenUrl:            tc.config.Endpoint.TokenURL,
 				},
 				&setting.Cfg{
 					AutoAssignOrgRole:          "",
 					OAuthSkipOrgRoleUpdateSync: false,
-					GitLabSkipOrgRoleSync:      false,
 				}, &ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
