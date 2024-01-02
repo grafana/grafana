@@ -1,4 +1,4 @@
-import { FieldData, SSOProvider } from './types';
+import { FieldData, SSOProvider, SSOSettingsField } from './types';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
@@ -23,7 +23,7 @@ type Section = Record<
   Array<{
     name: string;
     id: string;
-    fields: Array<keyof SSOProvider['settings']>;
+    fields: SSOSettingsField[];
   }>
 >;
 
@@ -67,7 +67,12 @@ export const sectionFields: Section = {
         'allowedOrganizations',
         'allowedDomains',
         'defineAllowedGroups',
+        { name: 'allowedGroups', dependsOn: 'defineAllowedGroups' },
+        { name: 'groupsAttributePath', dependsOn: 'defineAllowedGroups' },
         'defineAllowedTeamsIds',
+        { name: 'teamIds', dependsOn: 'defineAllowedTeamsIds' },
+        { name: 'teamsUrl', dependsOn: 'defineAllowedTeamsIds' },
+        { name: 'teamIdsAttributePath', dependsOn: 'defineAllowedTeamsIds' },
         'usePkce',
         'useRefreshToken',
       ],
@@ -280,6 +285,26 @@ export const fieldMap: Record<string, FieldData> = {
       'name in that certificate. You should only use this for testing, because this mode leaves \n' +
       'SSL/TLS susceptible to man-in-the-middle attacks.',
     type: 'switch',
+  },
+  groupsAttributePath: {
+    label: 'Groups attribute path',
+    description:
+      'JMESPath expression to use for user group lookup. If you configure allowed_groups, \n' +
+      'you must also configure groups_attribute_path.',
+    type: 'text',
+  },
+  teamsUrl: {
+    label: 'Teams URL',
+    description:
+      'The URL used to query for team IDs. If not set, the default value is /teams. \n' +
+      'If you configure teams_url, you must also configure team_ids_attribute_path.',
+    type: 'text',
+  },
+  teamIdsAttributePath: {
+    label: 'Team IDs attribute path',
+    description:
+      'The JMESPath expression to use for Grafana team ID lookup within the results returned by the teams_url endpoint.',
+    type: 'text',
   },
 };
 

@@ -40,7 +40,7 @@ export const emptySettings: SSOProviderDTO = {
   tlsSkipVerify: false,
   tokenUrl: '',
   type: '',
-  usePKCE: false,
+  usePkce: false,
   useRefreshToken: false,
 };
 

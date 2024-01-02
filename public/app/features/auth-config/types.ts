@@ -111,3 +111,7 @@ export type FieldData = {
   options?: Array<SelectableValue<string>>;
   placeholder?: string;
 };
+
+export type SSOSettingsField =
+  | keyof SSOProvider['settings']
+  | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings'] };

@@ -3,27 +3,15 @@ import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import {
-  Box,
-  Button,
-  CollapsableSection,
-  Field,
-  Input,
-  InputControl,
-  LinkButton,
-  SecretInput,
-  Select,
-  Stack,
-  Switch,
-} from '@grafana/ui';
+import { Box, Button, CollapsableSection, Field, LinkButton, Stack, Switch } from '@grafana/ui';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
 
-import { fieldMap, fields, sectionFields } from './fields';
-import { FieldData, SSOProvider, SSOProviderDTO } from './types';
+import { FieldRenderer } from './FieldRenderer';
+import { fields, sectionFields } from './fields';
+import { SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
-import { isSelectableValue } from './utils/guards';
 
 const appEvents = getAppEvents();
 
@@ -41,10 +29,10 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     reset,
     watch,
     setValue,
+    unregister,
     formState: { errors, dirtyFields, isSubmitted },
   } = useForm({ defaultValues: dataToDTO(config) });
   const [isSaving, setIsSaving] = useState(false);
-  const [isSecretConfigured, setIsSecretConfigured] = useState(!!config?.settings.clientSecret);
   const providerFields = fields[provider];
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
@@ -87,92 +75,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     }
   };
 
-  const renderField = (name: keyof SSOProvider['settings'], fieldData: FieldData) => {
-    const fieldProps = {
-      label: fieldData.label,
-      required: !!fieldData.validation?.required,
-      invalid: !!errors[name],
-      error: fieldData.validation?.message,
-      key: name,
-      description: fieldData.description,
-    };
-
-    switch (fieldData.type) {
-      case 'text':
-        return (
-          <Field {...fieldProps}>
-            <Input
-              {...register(name, { required: !!fieldData.validation?.required })}
-              type={fieldData.type}
-              id={name}
-              autoComplete={'off'}
-            />
-          </Field>
-        );
-      case 'secret':
-        return (
-          <Field {...fieldProps} htmlFor={name}>
-            <InputControl
-              name={name}
-              control={control}
-              rules={fieldData.validation}
-              render={({ field: { ref, value, ...field } }) => (
-                <SecretInput
-                  {...field}
-                  autoComplete={'off'}
-                  id={name}
-                  value={typeof value === 'string' ? value : ''}
-                  isConfigured={isSecretConfigured}
-                  onReset={() => {
-                    setIsSecretConfigured(false);
-                    setValue(name, '');
-                  }}
-                />
-              )}
-            />
-          </Field>
-        );
-      case 'select':
-        const watchOptions = watch(name);
-        const options = isSelectableValue(watchOptions) ? watchOptions : [{ label: '', value: '' }];
-        return (
-          <Field {...fieldProps} htmlFor={name}>
-            <InputControl
-              rules={fieldData.validation}
-              name={name}
-              control={control}
-              render={({ field: { ref, onChange, ...fieldProps }, fieldState: { invalid } }) => {
-                return (
-                  <Select
-                    {...fieldProps}
-                    placeholder={fieldData.placeholder}
-                    isMulti={fieldData.multi}
-                    invalid={invalid}
-                    inputId={name}
-                    options={options}
-                    allowCustomValue
-                    onChange={onChange}
-                    onCreateOption={(v) => {
-                      const customValue = { value: v, label: v };
-                      onChange([...options, customValue]);
-                    }}
-                  />
-                );
-              }}
-            />
-          </Field>
-        );
-      case 'switch':
-        return (
-          <Field {...fieldProps}>
-            <Switch {...register(name)} id={name} />
-          </Field>
-        );
-      default:
-        throw new Error(`Unknown field type: ${fieldData.type}`);
-    }
-  };
-
   return (
     <Page.Contents isLoading={isLoading}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
@@ -189,13 +91,20 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
               {sections.map((section, index) => {
                 return (
                   <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
-                    {section.fields.map((fieldName) => {
-                      const field = fieldMap[fieldName];
-                      if (!field) {
-                        console.log('missing field:', fieldName);
-                        return null;
-                      }
-                      return renderField(fieldName, field);
+                    {section.fields.map((field) => {
+                      return (
+                        <FieldRenderer
+                          key={typeof field === 'string' ? field : field.name}
+                          field={field}
+                          control={control}
+                          errors={errors}
+                          setValue={setValue}
+                          register={register}
+                          watch={watch}
+                          unregister={unregister}
+                          secretConfigured={!!config?.settings.clientSecret}
+                        />
+                      );
                     })}
                   </CollapsableSection>
                 );
@@ -206,9 +115,20 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
               <Field label="Enabled">
                 <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
               </Field>
-              {providerFields.map((fieldName) => {
-                const field = fieldMap[fieldName];
-                return renderField(fieldName, field);
+              {providerFields.map((field) => {
+                return (
+                  <FieldRenderer
+                    key={field}
+                    field={field}
+                    control={control}
+                    errors={errors}
+                    setValue={setValue}
+                    register={register}
+                    watch={watch}
+                    unregister={unregister}
+                    secretConfigured={!!config?.settings.clientSecret}
+                  />
+                );
               })}
             </>
           )}
