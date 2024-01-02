@@ -2,7 +2,9 @@ import { setDataSourceSrv } from '@grafana/runtime';
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
 import {
+  getCloudRule,
   mockAlertQuery,
+  mockCombinedCloudRuleNamespace,
   mockCombinedRule,
   mockCombinedRuleGroup,
   mockCombinedRuleNamespace,
@@ -154,16 +156,58 @@ describe('filterRules', function () {
           data: [mockAlertQuery({ datasourceUid: dataSources.loki.uid })],
         }),
       }),
+      getCloudRule({ name: 'Cloud' }),
+    ];
+
+    const ns = mockCombinedRuleNamespace({
+      groups: [mockCombinedRuleGroup('Resources usage group', rules)],
+    });
+    const cloudNs = mockCombinedCloudRuleNamespace(
+      {
+        groups: [mockCombinedRuleGroup('Resources usage group', rules)],
+      },
+      'Prometheus-ds'
+    );
+
+    const filtered = filterRules([ns, cloudNs], getFilter({ dataSourceNames: ['loki', 'Prometheus-ds'] }));
+
+    expect(filtered[0].groups[0].rules).toHaveLength(2);
+    expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
+    expect(filtered[0].groups[0].rules[1].name).toBe('Cloud');
+  });
+
+  it('should be able to combine multiple predicates with AND', () => {
+    const rules = [
+      mockCombinedRule({
+        name: 'Memory too low',
+        labels: { team: 'operations', region: 'EMEA' },
+        promRule: mockPromAlertingRule({
+          health: RuleHealth.Ok,
+        }),
+      }),
+      mockCombinedRule({
+        name: 'Memory too low',
+        labels: { team: 'operations', region: 'NASA' },
+        promRule: mockPromAlertingRule({
+          health: RuleHealth.Ok,
+        }),
+      }),
     ];
 
     const ns = mockCombinedRuleNamespace({
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ dataSourceNames: ['loki'] }));
+    const filtered = filterRules(
+      [ns],
+      getFilter({
+        ruleHealth: RuleHealth.Ok,
+        labels: ['team=operations', 'region=EMEA'],
+      })
+    );
 
-    expect(filtered[0].groups[0].rules).toHaveLength(1);
-    expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
+    expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
+    expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe('Memory too low');
   });
 
   // Typos there are deliberate to test the fuzzy search

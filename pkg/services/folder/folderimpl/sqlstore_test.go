@@ -642,6 +642,26 @@ func TestIntegrationGetChildren(t *testing.T) {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
+		// fetch folder with specific UIDs and pagination
+		children, err = folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
+			UID:        parent.UID,
+			OrgID:      orgID,
+			Limit:      2,
+			Page:       1,
+			FolderUIDs: treeLeaves[3:4],
+		})
+		require.NoError(t, err)
+
+		childrenUIDs = make([]string, 0, len(children))
+		for _, c := range children {
+			assert.NotEmpty(t, c.URL)
+			childrenUIDs = append(childrenUIDs, c.UID)
+		}
+
+		if diff := cmp.Diff(treeLeaves[3:4], childrenUIDs); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+
 		// no page is set
 		children, err = folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
 			UID:   parent.UID,

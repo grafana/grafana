@@ -119,7 +119,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if setting.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
-			Id:         "explore",
+			Id:         navtree.NavIDExplore,
 			SubTitle:   "Explore your data",
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,
@@ -358,7 +358,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",

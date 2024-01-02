@@ -7,11 +7,10 @@ import { useStyles2 } from '../../themes';
 import { Tooltip } from '../Tooltip';
 
 import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { LabelValue } from './types';
+import { ColorPlacement, LabelValue } from './types';
 
 interface Props extends LabelValue {
   justify?: string;
-  colorFirst?: boolean;
   isActive?: boolean; // for series list
   marginRight?: string;
 }
@@ -21,8 +20,8 @@ export const VizTooltipRow = ({
   value,
   color,
   colorIndicator,
+  colorPlacement = ColorPlacement.first,
   justify = 'flex-start',
-  colorFirst = true,
   isActive = false,
   marginRight = '0px',
 }: Props) => {
@@ -51,7 +50,9 @@ export const VizTooltipRow = ({
     <div className={styles.contentWrapper}>
       {(color || label) && (
         <div className={styles.valueWrapper}>
-          {color && colorFirst && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
+          {color && colorPlacement === ColorPlacement.first && (
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
+          )}
           <Tooltip content={label} interactive={false} show={showLabelTooltip}>
             <div
               className={cx(styles.label, isActive && styles.activeSeries)}
@@ -65,12 +66,20 @@ export const VizTooltipRow = ({
       )}
 
       <div className={styles.valueWrapper}>
-        {color && !colorFirst && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
+        {color && colorPlacement === ColorPlacement.leading && (
+          <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
+        )}
         <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
           <div className={cx(styles.value, isActive)} onMouseEnter={onMouseEnterValue} onMouseLeave={onMouseLeaveValue}>
             {value}
           </div>
         </Tooltip>
+        {color && colorPlacement === ColorPlacement.trailing && (
+          <>
+            &nbsp;
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
+          </>
+        )}
       </div>
     </div>
   );

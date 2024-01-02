@@ -109,7 +109,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 	if !ok {
 		permissionsToFolder = make(map[permissionHash]*folder.Folder)
 		// nolint:staticcheck
-		om.permissionsMap[dash.FolderID] = permissionsToFolder
+		om.permissionsMap[parentFolder.ID] = permissionsToFolder
 
 		folderPerms, err := om.getFolderPermissions(ctx, parentFolder)
 		if err != nil {

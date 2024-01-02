@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -135,8 +137,37 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			attribute.Int64("userId", reqContext.UserID),
 		))
 
+		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
+			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
+		}
+
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
+		if w.Written() {
+			return
+		}
+
+		namespace, id := ident.GetNamespacedID()
+		if !identity.IsNamespace(
+			namespace,
+			identity.NamespaceUser,
+			identity.NamespaceServiceAccount,
+			identity.NamespaceAPIKey,
+		) || id == "0" {
+			return
+		}
+
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace]; !ok {
+			return
+		}
+
+		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
+		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
+	}
 }
 
 func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {

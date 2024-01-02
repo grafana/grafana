@@ -10,11 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
-	"xorm.io/core"
 )
 
 func TestPostgresProxyDriver(t *testing.T) {
-	dialect := "postgres"
 	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
 	proxySettings := setting.SecureSocksDSProxySettings{
 		Enabled:      true,
@@ -40,17 +38,6 @@ func TestPostgresProxyDriver(t *testing.T) {
 		testDriver, err := createPostgresProxyDriver("server=localhost;user id=sa;password=yourStrong(!)Password;database=db2", opts)
 		require.NoError(t, err)
 		require.NotEqual(t, driverName, testDriver)
-	})
-
-	t.Run("Parse should have the same result as xorm mssql parse", func(t *testing.T) {
-		xormDriver := core.QueryDriver(dialect)
-		xormResult, err := xormDriver.Parse(dialect, cnnstr)
-		require.NoError(t, err)
-
-		xormNewDriver := core.QueryDriver(driverName)
-		xormNewResult, err := xormNewDriver.Parse(dialect, cnnstr)
-		require.NoError(t, err)
-		require.Equal(t, xormResult, xormNewResult)
 	})
 
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
