@@ -42,13 +42,6 @@ jest.mock('../language_provider', () => {
   });
 });
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    reportInteraction: jest.fn(),
-  };
-});
-
 describe('TraceQLSearch', () => {
   initTemplateSrv('key', []);
 
