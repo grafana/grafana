@@ -8,10 +8,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/alertmanager_mock"
 	remote_alertmanager_mock "github.com/grafana/grafana/pkg/services/ngalert/remote/mock"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -621,6 +623,7 @@ func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval t
 			SyncInterval: syncInterval,
 			OrgID:        1,
 			Store:        notifier.NewFakeConfigStore(t, configs),
+			Metrics:      metrics.NewRemoteSecondaryForkedAlertmanagerMetrics(prometheus.NewRegistry(), metrics.Subsystem),
 		}
 		forked, err := NewRemoteSecondaryForkedAlertmanager(cfg, internal, remote)
 		require.NoError(t, err)
