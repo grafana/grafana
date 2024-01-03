@@ -44,7 +44,7 @@ export const FieldRenderer = ({
     return null;
   }
 
-  // Dependant field means the field depends on another fields value
+  // Dependant field means the field depends on another field's value and shouldn't be rendered if the parent field is false
   if (isDependantField) {
     const parentValue = watch(field.dependsOn);
     if (!parentValue) {
