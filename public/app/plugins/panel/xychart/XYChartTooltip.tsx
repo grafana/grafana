@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataFrame, Field, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -49,7 +50,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
       label,
       value: null,
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      color: series.pointColor(frame) as string,
+      color: alpha(series.pointColor(frame) as string, 0.5),
       colorIndicator: ColorIndicator.marker_md,
     };
   };
@@ -60,7 +61,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
       val: yField.values[rowIndex],
       field: yField,
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      color: series.pointColor(frame) as string,
+      color: alpha(series.pointColor(frame) as string, 0.5),
     };
 
     const content: LabelValue[] = [
