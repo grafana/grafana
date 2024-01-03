@@ -62,12 +62,7 @@ export function useStateSync(params: ExploreQueryParams) {
         */
 
           {
-            if (changeDatasource.pending.type === action.type) {
-              paused.current = true;
-            }
-            if (changeDatasource.fulfilled.type === action.type) {
-              paused.current = false;
-            }
+            paused.current = changeDatasource.pending.type === action.type;
 
             return (
               [
