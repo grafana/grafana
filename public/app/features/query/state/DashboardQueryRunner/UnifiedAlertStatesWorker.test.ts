@@ -181,14 +181,20 @@ describe('UnifiedAlertStatesWorker', () => {
             { id: 1, state: AlertState.Pending, dashboardId: 12345, panelId: 2 },
           ],
           annotations: [],
+          thresholdsByPanelId: {},
         });
       });
 
-      expect(getMock).toHaveBeenCalledTimes(1);
+      expect(getMock).toHaveBeenCalledTimes(2);
       expect(getMock).toHaveBeenCalledWith(
         '/api/prometheus/grafana/api/v1/rules',
         { dashboard_uid: 'a uid' },
         'dashboard-query-runner-unified-alert-states-12345'
+      );
+      expect(getMock).toHaveBeenCalledWith(
+        '/api/ruler/grafana/api/v1/rules',
+        { dashboard_uid: 'a uid' },
+        'dashboard-query-runner-unified-alert-definition-12345'
       );
     });
   });
@@ -203,7 +209,7 @@ describe('UnifiedAlertStatesWorker', () => {
         expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual({ alertStates: [], annotations: [] });
-        expect(getMock).toHaveBeenCalledTimes(1);
+        expect(getMock).toHaveBeenCalledTimes(2);
         expect(dispatchMock).toHaveBeenCalledTimes(1);
       });
     });
@@ -219,7 +225,7 @@ describe('UnifiedAlertStatesWorker', () => {
         expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual({ alertStates: [], annotations: [] });
-        expect(getMock).toHaveBeenCalledTimes(1);
+        expect(getMock).toHaveBeenCalledTimes(2);
         expect(dispatchMock).not.toHaveBeenCalled();
       });
     });

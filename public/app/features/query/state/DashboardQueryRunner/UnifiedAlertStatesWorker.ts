@@ -154,12 +154,12 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
   // we'll extract the thresholds from linked alert rules.
   // we will _only_ use the first alert rule definition for this since we don't support merging thresholds from multiple alert rules
   extractThresholds(rulerRules: RulerRulesConfigDTO<RulerGrafanaRuleDTO>): Record<number, ThresholdDefinitions> {
-    // we flatten the object of namespace => groups => rules first
+    // we flatten the object of namespace => groups => rules
     return (
       chain(rulerRules)
         .values()
         .flatMap()
-        .flatMap((group) => group.rules)
+        .flatMap((group) => group.rules ?? [])
         // then proceed to group by "panelId"
         .groupBy((rule) => rule.annotations[Annotation.panelID])
         // turn the key in to numbers
