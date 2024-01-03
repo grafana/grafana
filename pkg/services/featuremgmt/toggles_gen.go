@@ -567,6 +567,10 @@ const (
 	// Enables the SSO settings API
 	FlagSsoSettingsApi = "ssoSettingsApi"
 
+	// FlagCanvasPanelPanZoom
+	// Allow pan and zoom in canvas panel
+	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
+
 	// FlagLogsInfiniteScrolling
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"

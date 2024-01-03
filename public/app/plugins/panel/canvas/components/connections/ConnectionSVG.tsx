@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
-import { calculateCoordinates, getConnectionStyles } from '../../utils';
+import { calculateCoordinates, getConnectionStyles, getParentBoundingClientRect } from '../../utils';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -104,13 +104,14 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const { source, target, info } = v;
       const sourceRect = source.div?.getBoundingClientRect();
       const parent = source.div?.parentElement;
-      const parentRect = parent?.getBoundingClientRect();
+      const transformScale = scene.scale;
+      const parentRect = getParentBoundingClientRect(scene);
 
       if (!sourceRect || !parent || !parentRect) {
         return;
       }
 
-      const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target);
+      const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
 
       const { strokeColor, strokeWidth } = getConnectionStyles(info, scene, defaultArrowSize);
 
