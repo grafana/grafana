@@ -185,7 +185,9 @@ func (st *Manager) warmOrg(ctx context.Context, orgID int64, rules RuleReader) (
 		count++
 	}
 
-	st.cleanupOrphanedInstances(ctx, orphanedInstances)
+	if err := st.cleanupOrphanedInstances(ctx, orphanedInstances); err != nil {
+		st.log.Warn("Failed to delete orphaned instances from database, scheduler will ignore them", "err", err)
+	}
 
 	return states, count
 }
