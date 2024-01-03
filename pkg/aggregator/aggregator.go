@@ -51,7 +51,6 @@ import (
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 	"k8s.io/kube-openapi/pkg/common"
-	netutils "k8s.io/utils/net"
 )
 
 type ExtraOptions struct {
