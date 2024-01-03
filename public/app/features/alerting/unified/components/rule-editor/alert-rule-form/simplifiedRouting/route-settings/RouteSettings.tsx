@@ -44,6 +44,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   const { groupBy, groupIntervalValue, groupWaitValue, repeatIntervalValue } = useGetDefaultsForRoutingSettings();
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
+  const requiredFieldsInGroupBy = ['grafana_folder', 'alertname'];
   const styles = useStyles2(getStyles);
   return (
     <Stack direction="column">
@@ -66,6 +67,19 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
           className={styles.optionalContent}
         >
           <InputControl
+            rules={{
+              validate: (value: string[]) => {
+                if (!value || value.length === 0) {
+                  return 'At least one group by option is required.';
+                }
+                // we need to make sure that the required fields are included
+                const requiredFieldsIncluded = requiredFieldsInGroupBy.every((field) => value.includes(field));
+                if (!requiredFieldsIncluded) {
+                  return `Group by must include ${requiredFieldsInGroupBy.join(', ')}`;
+                }
+                return true;
+              },
+            }}
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <MultiSelect
@@ -82,7 +96,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
                   options={[...commonGroupByOptions, ...groupByOptions]}
                 />
-                {error && <FieldValidationMessage>{'At least one group by option is required'}</FieldValidationMessage>}
+                {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
               </>
             )}
             name={`contactPoints.${alertManager}.groupBy`}
