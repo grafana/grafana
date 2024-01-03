@@ -202,7 +202,7 @@ func WithFeatures(spec ...any) *FeatureManager {
 		}
 	}
 
-	return &FeatureManager{enabled: enabled, flags: features}
+	return &FeatureManager{enabled: enabled, flags: features, startup: enabled, warnings: map[string]string{}}
 }
 
 // WithFeatureManager is used to define feature toggle manager for testing.
@@ -226,5 +226,5 @@ func WithFeatureManager(flags []*FeatureFlag, disabled ...string) *FeatureManage
 		enabled[f.Name] = !dis[f.Name]
 	}
 
-	return &FeatureManager{enabled: enabled, flags: features, startup: enabled}
+	return &FeatureManager{enabled: enabled, flags: features, startup: enabled, warnings: map[string]string{}}
 }
