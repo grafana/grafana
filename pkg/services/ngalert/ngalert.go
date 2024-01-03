@@ -394,7 +394,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 	// Clean up any stale objects prior to starting up.
 	// Do this regardless of whether we are executing alerts or not; there might still be data in the DB.
-	ng.stateManager.Clean(ctx, ng.store)
+	if err := ng.stateManager.Clean(ctx, ng.store); err != nil {
+		ng.Log.Error("Failed to clean up orphaned states", "error", err)
+	}
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
 		// Only Warm() the state manager if we are actually executing alerts.
