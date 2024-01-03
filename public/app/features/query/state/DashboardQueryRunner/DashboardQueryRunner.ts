@@ -61,7 +61,8 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
       map((result) => {
         const annotations = getAnnotationsByPanelId(result.annotations, panelId);
         const alertState = result.alertStates.find((res) => Boolean(panelId) && res.panelId === panelId);
-        const thresholdsByRefId = result.thresholdsByRefId;
+        const thresholdsByRefId = panelId ? result.thresholdsByPanelId?.[panelId] : undefined;
+
         return { annotations: dedupAnnotations(annotations), alertState, thresholdsByRefId };
       })
     );

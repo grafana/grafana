@@ -27,7 +27,7 @@ export interface DashboardQueryRunner {
 export interface DashboardQueryRunnerWorkerResult {
   annotations: AnnotationEvent[];
   alertStates: AlertStateInfo[];
-  thresholdsByRefId?: ThresholdDefinitions;
+  thresholdsByPanelId?: Record<number, ThresholdDefinitions>;
 }
 
 export interface DashboardQueryRunnerWorker {
