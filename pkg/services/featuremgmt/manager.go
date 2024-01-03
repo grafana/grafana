@@ -19,9 +19,11 @@ type FeatureManager struct {
 	allowEditing    bool
 	licensing       licensing.Licensing
 	flags           map[string]*FeatureFlag
-	enabled         map[string]bool // only the "on" values
-	config          string          // path to config file
+	config          string
 	vars            map[string]any
+	enabled         map[string]bool   // only the "on" values
+	startup         map[string]bool   // the explicit values registered at startup
+	warnings        map[string]string // potential warnings about the flag
 	log             log.Logger
 }
 
@@ -73,16 +75,16 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 }
 
 // meetsRequirements checks if grafana is able to run the given feature due to dev mode or licensing requirements
-func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) bool {
+func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) (bool, string) {
 	if ff.RequiresDevMode && !fm.isDevMod {
-		return false
+		return false, "requires dev mode"
 	}
 
 	if ff.RequiresLicense && (fm.licensing == nil || !fm.licensing.FeatureEnabled(ff.Name)) {
-		return false
+		return false, "license requirement"
 	}
 
-	return true
+	return true, ""
 }
 
 // Update
@@ -90,14 +92,16 @@ func (fm *FeatureManager) update() {
 	enabled := make(map[string]bool)
 	for _, flag := range fm.flags {
 		// if grafana cannot run the feature, omit metrics around it
-		if !fm.meetsRequirements(flag) {
+		ok, reason := fm.meetsRequirements(flag)
+		if !ok {
+			fm.warnings[flag.Name] = reason
 			continue
 		}
 
 		// Update the registry
 		track := 0.0
-		// TODO: CEL - expression
-		if flag.Expression == "true" {
+
+		if flag.Expression == "true" || (fm.startup[flag.Name]) {
 			track = 1
 			enabled[flag.Name] = true
 		}
@@ -192,7 +196,7 @@ func WithFeatures(spec ...any) *FeatureManager {
 			idx++
 		}
 
-		features[key] = &FeatureFlag{Name: key, Enabled: val}
+		features[key] = &FeatureFlag{Name: key}
 		if val {
 			enabled[key] = true
 		}
@@ -214,7 +218,7 @@ func WithFeatureFlags(flags []*FeatureFlag) *FeatureManager {
 			continue
 		}
 		features[f.Name] = f
-		enabled[f.Name] = f.Enabled
+		enabled[f.Name] = true
 	}
 
 	return &FeatureManager{enabled: enabled, flags: features}
