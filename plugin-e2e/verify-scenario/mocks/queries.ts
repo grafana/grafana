@@ -37,7 +37,7 @@ export const successfulDataQuery = {
   },
 };
 
-export const successfullAnnotationQuery = {
+export const successfulAnnotationQuery = {
   results: {
     Anno: {
       status: 200,
