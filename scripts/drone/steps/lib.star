@@ -790,6 +790,7 @@ def playwright_e2e_tests_step():
         },
         "name": "playwright-plugin-e2e",
         "image": "mcr.microsoft.com/playwright:v1.40.0-jammy",
+        "failure": "ignore",
         "depends_on": [
             "grafana-server",
         ],

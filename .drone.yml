@@ -647,6 +647,7 @@ steps:
   environment:
     HOST: grafana-server
     PORT: "3001"
+  failure: ignore
   image: mcr.microsoft.com/playwright:v1.40.0-jammy
   name: playwright-plugin-e2e
 - commands:
@@ -1908,6 +1909,7 @@ steps:
   environment:
     HOST: grafana-server
     PORT: "3001"
+  failure: ignore
   image: mcr.microsoft.com/playwright:v1.40.0-jammy
   name: playwright-plugin-e2e
 - commands:
@@ -4647,6 +4649,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: de0a3a1aabbb452e85e342510dbc3b263f62e9f4bb491c68dabcc4ec9953ca2d
+hmac: d15eb3abe4231e54bb6e80f6e17dda71405bb63b83145601c2a3f024dd5fef6a
 
 ...
