@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 import { config, FetchError, getTemplateSrv } from '@grafana/runtime';
-import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { Alert, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 
 import { notifyApp } from '../_importedDependencies/actions/appNotification';
 import { createErrorNotification } from '../_importedDependencies/core/appNotification';
@@ -95,12 +95,15 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   // filter out tags that already exist in the static fields
   const staticTags = datasource.search?.filters?.map((f) => f.tag) || [];
   staticTags.push('duration');
+  staticTags.push('traceDuration');
 
   // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
   // The duration and status fields are a special case since its selector is hard-coded
   const dynamicFilters = (query.filters || []).filter(
     (f) =>
-      !hardCodedFilterIds.includes(f.id) && (datasource.search?.filters?.findIndex((sf) => sf.id === f.id) || 0) === -1
+      !hardCodedFilterIds.includes(f.id) &&
+      (datasource.search?.filters?.findIndex((sf) => sf.id === f.id) || 0) === -1 &&
+      f.id !== 'duration-type'
   );
 
   return (
@@ -150,10 +153,25 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
             />
           </InlineSearchField>
           <InlineSearchField
-            label={'Span Duration'}
-            tooltip="The span duration, i.e.	end - start time of the span. Accepted units are ns, ms, s, m, h"
+            label={'Duration'}
+            tooltip="The trace or span duration, i.e. end - start time of the trace/span. Accepted units are ns, ms, s, m, h"
           >
             <HorizontalGroup spacing={'sm'}>
+              <Select
+                options={[
+                  { label: 'span', value: 'span' },
+                  { label: 'trace', value: 'trace' },
+                ]}
+                value={findFilter('duration-type')?.value ?? 'span'}
+                onChange={(v) => {
+                  const filter = findFilter('duration-type') || {
+                    id: 'duration-type',
+                    value: 'span',
+                  };
+                  updateFilter({ ...filter, value: v?.value });
+                }}
+                aria-label={'duration type'}
+              />
               <DurationInput
                 filter={
                   findFilter('min-duration') || {

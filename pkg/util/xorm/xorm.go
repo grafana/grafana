@@ -35,8 +35,6 @@ func regDrvsNDialects() bool {
 		"postgres": {"postgres", func() core.Driver { return &pqDriver{} }, func() core.Dialect { return &postgres{} }},
 		"pgx":      {"postgres", func() core.Driver { return &pqDriverPgx{} }, func() core.Dialect { return &postgres{} }},
 		"sqlite3":  {"sqlite3", func() core.Driver { return &sqlite3Driver{} }, func() core.Dialect { return &sqlite3{} }},
-		"mssql":    {"mssql", func() core.Driver { return &odbcDriver{} }, func() core.Dialect { return &mssql{} }},
-		"azuresql": {"azuresql", func() core.Driver { return &odbcDriver{} }, func() core.Dialect { return &mssql{} }},
 	}
 
 	for driverName, v := range providedDrvsNDialects {
