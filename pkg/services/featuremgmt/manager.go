@@ -19,9 +19,9 @@ type FeatureManager struct {
 	allowEditing    bool
 	licensing       licensing.Licensing
 	flags           map[string]*FeatureFlag
-	config          string
+	enabled         map[string]bool // only the "on" values
+	config          string          // path to config file
 	vars            map[string]any
-	enabled         map[string]bool   // only the "on" values
 	startup         map[string]bool   // the explicit values registered at startup
 	warnings        map[string]string // potential warnings about the flag
 	log             log.Logger
