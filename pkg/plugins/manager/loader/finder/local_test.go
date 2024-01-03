@@ -384,20 +384,17 @@ func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
 			expected   []string
 		}{
 			{
-				name:       "When followDistFolder is enabled, a nested dist folder will also be resolved",
+				name:       "When followDistFolder is enabled, only the nested dist folder will be followed",
 				followDist: true,
 				expected: []string{
-					filepath.Join(dir, "datasource/plugin.json"),
 					filepath.Join(dir, "dist/plugin.json"),
-					filepath.Join(dir, "panel/dist/plugin.json"),
 				},
 			},
 			{
-				name:       "When followDistFolder is disabled, a nested dist folder will not be resolved",
+				name:       "When followDistFolder is disabled, no dist folders will be followed",
 				followDist: false,
 				expected: []string{
 					filepath.Join(dir, "datasource/plugin.json"),
-					filepath.Join(dir, "dist/plugin.json"),
 					filepath.Join(dir, "panel/src/plugin.json"),
 				},
 			},
