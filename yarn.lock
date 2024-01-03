@@ -2893,6 +2893,33 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/parca@workspace:*, @grafana-plugins/parca@workspace:public/app/plugins/datasource/parca":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/parca@workspace:public/app/plugins/datasource/parca"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "npm:10.3.0-pre"
+    "@grafana/plugin-configs": "npm:10.3.0-pre"
+    "@grafana/runtime": "npm:10.3.0-pre"
+    "@grafana/schema": "npm:10.3.0-pre"
+    "@grafana/ui": "npm:10.3.0-pre"
+    "@testing-library/react": "npm:14.0.0"
+    "@testing-library/user-event": "npm:14.5.1"
+    "@types/lodash": "npm:4.14.195"
+    "@types/react": "npm:18.2.15"
+    lodash: "npm:4.17.21"
+    monaco-editor: "npm:0.34.0"
+    react: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.1"
+    tslib: "npm:2.6.0"
+    webpack: "npm:5.89.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/async-query-data@npm:0.1.4":
   version: 0.1.4
   resolution: "@grafana/async-query-data@npm:0.1.4"
@@ -17303,6 +17330,7 @@ __metadata:
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
     "@glideapps/glide-data-grid": "npm:^5.2.1"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
+    "@grafana-plugins/parca": "workspace:*"
     "@grafana/aws-sdk": "npm:0.3.1"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -17585,6 +17613,7 @@ __metadata:
     react-virtualized-auto-sizer: "npm:1.0.7"
     react-window: "npm:1.8.9"
     react-window-infinite-loader: "npm:1.0.9"
+    react-zoom-pan-pinch: "npm:^3.3.0"
     redux: "npm:4.2.1"
     redux-mock-store: "npm:1.5.4"
     redux-thunk: "npm:2.4.2"
@@ -26186,6 +26215,16 @@ __metadata:
     react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 946bf990b58cafe054c6a36ae9f56ce084a94ab69366c7bc6c9117d8ec94227fd0d0e8efc39f1aa0f9dc13e29b7f6bb7d0e7284d0c7546a50a9e51465269e221
+  languageName: node
+  linkType: hard
+
+"react-zoom-pan-pinch@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "react-zoom-pan-pinch@npm:3.3.0"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 56e102f603dc5d0dbcff2effe403a1f46b718bde0bbad395fc990db0ef48f25fefb6969fec465948e90471a8e8e702cddaaa93742f77075cb1f4f32b10c1ab43
   languageName: node
   linkType: hard
 
