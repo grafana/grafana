@@ -545,7 +545,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		})
 		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(tc.permissions)}}
 
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
@@ -716,7 +716,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			}),
 			},
 		}
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
