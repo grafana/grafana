@@ -1,7 +1,5 @@
 import { defaultsDeep } from 'lodash';
 
-import { GraphTresholdsStyleMode, ThresholdsConfig } from '@grafana/schema';
-
 import { EventBus } from '../events';
 import { StandardEditorProps } from '../field';
 import { Registry } from '../utils';
@@ -31,11 +29,6 @@ export interface PanelPluginMeta extends PluginMeta {
   sort: number;
 }
 
-interface ThresholdDefinition {
-  mode: GraphTresholdsStyleMode;
-  config: ThresholdsConfig;
-}
-
 export interface PanelData {
   /** State of the data (loading, done, error, streaming) */
   state: LoadingState;
@@ -56,12 +49,6 @@ export interface PanelData {
    * @internal
    */
   alertState?: AlertStateInfo;
-  /**
-   * @internal
-   */
-  thresholdsByRefId?: {
-    [refId: string]: ThresholdDefinition;
-  };
 
   /** Request contains the queries and properties sent to the datasource */
   request?: DataQueryRequest;

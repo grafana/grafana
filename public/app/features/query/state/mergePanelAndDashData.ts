@@ -12,20 +12,15 @@ export function mergePanelAndDashData(
     mergeMap((data) => {
       const [panelData, dashData] = data;
 
-      if (
-        Boolean(dashData.annotations?.length) ||
-        Boolean(dashData.alertState) ||
-        Boolean(dashData.thresholdsByRefId)
-      ) {
+      if (Boolean(dashData.annotations?.length) || Boolean(dashData.alertState)) {
         if (!panelData.annotations) {
           panelData.annotations = [];
         }
 
         const annotations = panelData.annotations.concat(new ArrayDataFrame(dashData.annotations));
         const alertState = dashData.alertState;
-        const thresholdsByRefId = dashData.thresholdsByRefId;
 
-        return of({ ...panelData, annotations, alertState, thresholdsByRefId });
+        return of({ ...panelData, annotations, alertState });
       }
 
       return of(panelData);

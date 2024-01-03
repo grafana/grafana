@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { Observable, of, ReplaySubject, Unsubscribable, combineLatest } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
@@ -109,26 +109,29 @@ export class PanelQueryRunner {
       return of(snapshotPanelData);
     }
 
-    return this.subject.pipe(
-      mergeMap((data: PanelData) => {
+    const panel = this.dataConfigSource as unknown as PanelModel;
+    const dashData = getDashboardQueryRunner().getResult(panel.id);
+
+    return combineLatest([this.subject, dashData]).pipe(
+      mergeMap(([panelData, dashData]) => {
         let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
         let transformations = this.dataConfigSource.getTransformations();
 
         if (
-          data.series === lastRawFrames &&
+          panelData.series === lastRawFrames &&
           lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig &&
           lastTransformations === transformations
         ) {
-          return of({ ...data, structureRev, series: lastProcessedFrames });
+          return of({ ...panelData, structureRev, series: lastProcessedFrames });
         }
 
         lastFieldConfig = fieldConfig;
         lastTransformations = transformations;
-        lastRawFrames = data.series;
-        let dataWithTransforms = of(data);
+        lastRawFrames = panelData.series;
+        let dataWithTransforms = of(panelData);
 
         if (withTransforms) {
-          dataWithTransforms = this.applyTransformations(data);
+          dataWithTransforms = this.applyTransformations(panelData);
         }
 
         return dataWithTransforms.pipe(
@@ -170,26 +173,28 @@ export class PanelQueryRunner {
                 }
               }
 
-              const thresholdStyleOverrides = Object.entries(data.thresholdsByRefId ?? []).map(([refId, threshold]) => {
-                return {
-                  matcher: {
-                    id: 'byFrameRefID',
-                    options: refId,
-                  },
-                  properties: [
-                    {
-                      id: 'custom.thresholdsStyle',
-                      value: {
-                        mode: threshold.mode,
+              const thresholdStyleOverrides = Object.entries(dashData.thresholdsByRefId ?? []).map(
+                ([refId, threshold]) => {
+                  return {
+                    matcher: {
+                      id: 'byFrameRefID',
+                      options: refId,
+                    },
+                    properties: [
+                      {
+                        id: 'custom.thresholdsStyle',
+                        value: {
+                          mode: threshold.mode,
+                        },
                       },
-                    },
-                    {
-                      id: 'thresholds',
-                      value: threshold.config,
-                    },
-                  ],
-                };
-              });
+                      {
+                        id: 'thresholds',
+                        value: threshold.config,
+                      },
+                    ],
+                  };
+                }
+              );
 
               if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
                 lastConfigRev = this.dataConfigSource.configRev!;
