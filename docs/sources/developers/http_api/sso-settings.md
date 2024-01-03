@@ -24,6 +24,53 @@ title: SSO Settings API
 
 The API can be used to create, update, delete, get, and list SSO Settings.
 
+## Update SSO Settings
+
+`PUT /api/v1/sso-settings/:provider`
+
+Updates the SSO Settings for a provider.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
+
+| Action           | Scope                        |
+| ---------------- | ---------------------------- |
+| `settings:write` | `settings:auth.{provider}:*` |
+
+**Example Request**:
+
+```http
+PUT /api/v1/sso-settings/github HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "settings": {
+    "apiUrl": "https://api.github.com/user",
+    "clientId": "my_github_client",
+    "clientSecret": "my_github_secret",
+    "enabled": true,
+    "scopes": "user:email,read:org"
+  }
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 204
+Content-Type: application/json
+```
+
+Status Codes:
+
+- **204** – SSO Settings updated
+- **400** – Bad Request
+- **401** – Unauthorized
+- **403** – Access Denied
+
 ## Delete SSO Settings
 
 `DELETE /api/v1/sso-settings/:provider`
