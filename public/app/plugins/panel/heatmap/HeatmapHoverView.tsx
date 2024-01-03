@@ -16,7 +16,7 @@ import {
   FieldType,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { TooltipDisplayMode, useStyles2, } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
@@ -31,6 +31,7 @@ import { renderHistogram } from './renderHistogram';
 import { getSparseCellMinMax, getFieldFromData, getHoverCellColor, formatMilliseconds } from './tooltip/utils';
 
 interface Props {
+  mode: TooltipDisplayMode;
   dataIdxs: Array<number | null>;
   seriesIdx: number | null | undefined;
   dataRef: React.MutableRefObject<HeatmapData>;
@@ -70,6 +71,7 @@ const HeatmapHoverCell = ({
   scopedVars,
   replaceVars,
   dismiss,
+  mode,
 }: Props) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -81,6 +83,10 @@ const HeatmapHoverCell = ({
   const xField = getFieldFromData(data.heatmap!, 'x', isSparse)!;
   const yField = getFieldFromData(data.heatmap!, 'y', isSparse)!;
   const countField = getFieldFromData(data.heatmap!, 'count', isSparse)!;
+
+  if (mode === TooltipDisplayMode.Multi) {
+    console.log(index);
+  }
 
   const xDisp = (v: number) => {
     if (xField?.display) {
