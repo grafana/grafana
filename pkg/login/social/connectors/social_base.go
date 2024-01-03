@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
 
 type SocialBase struct {
@@ -208,4 +209,12 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 	}
 
 	return org.RoleType(cases.Title(language.Und).String(role)), false
+}
+
+func validateInfo(info *social.OAuthInfo) error {
+	if info.ClientId == "" {
+		return ssosettings.ErrEmptyClientId.Errorf("clientId is empty")
+	}
+
+	return nil
 }
