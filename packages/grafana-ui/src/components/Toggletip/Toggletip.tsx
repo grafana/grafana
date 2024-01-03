@@ -31,7 +31,7 @@ export interface ToggletipProps {
   /** determine whether to show or not the close button **/
   closeButton?: boolean;
   /** Callback function to be called when the toggletip is closed */
-  onClose?: Function;
+  onClose?: () => void;
   /** The preferred placement of the toggletip */
   placement?: Placement;
   /** The text or component that houses the content of the toggleltip */
