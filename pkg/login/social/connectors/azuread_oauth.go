@@ -180,20 +180,6 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 	return nil
 }
 
-func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
-	if err != nil {
-		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
-	}
-
-	s.infoMutex.Lock()
-	defer s.infoMutex.Unlock()
-
-	s.info = info
-
-	return nil
-}
-
 func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
 	claims, err := s.validateIDTokenSignature(ctx, client, parsedToken)
 	if err != nil {

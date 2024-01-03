@@ -69,21 +69,6 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOS
 	return nil
 }
 
-func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
-	if err != nil {
-		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
-	}
-
-	s.infoMutex.Lock()
-	defer s.infoMutex.Unlock()
-
-	// TODO: decide if we also want to apply the overwrites from the constructor (lines 40-42)
-	s.info = info
-
-	return nil
-}
-
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }

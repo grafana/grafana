@@ -77,20 +77,6 @@ func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSetting
 	return nil
 }
 
-func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
-	if err != nil {
-		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
-	}
-
-	s.infoMutex.Lock()
-	defer s.infoMutex.Unlock()
-
-	s.info = info
-
-	return nil
-}
-
 func (claims *OktaClaims) extractEmail() string {
 	if claims.Email == "" && claims.PreferredUsername != "" {
 		return claims.PreferredUsername
