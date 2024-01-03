@@ -60,24 +60,24 @@ func (sync *sync) syncAndSaveState(
 	dashboardUpgrades []*migmodels.DashboardUpgrade,
 	contactPairs []*migmodels.ContactPair,
 	skipExisting bool,
-) error {
+) (apiModels.OrgMigrationSummary, error) {
 	oldState, err := sync.migrationStore.GetOrgMigrationState(ctx, sync.orgID)
 	if err != nil {
-		return fmt.Errorf("get state: %w", err)
+		return apiModels.OrgMigrationSummary{}, fmt.Errorf("get state: %w", err)
 	}
 
 	delta := createDelta(oldState, dashboardUpgrades, contactPairs, skipExisting)
-	err = sync.syncDelta(ctx, oldState, delta)
+	summary, err := sync.syncDelta(ctx, oldState, delta)
 	if err != nil {
-		return fmt.Errorf("sync state: %w", err)
+		return apiModels.OrgMigrationSummary{}, fmt.Errorf("sync state: %w", err)
 	}
 
 	err = sync.migrationStore.SetOrgMigrationState(ctx, sync.orgID, oldState)
 	if err != nil {
-		return fmt.Errorf("save state: %w", err)
+		return apiModels.OrgMigrationSummary{}, fmt.Errorf("save state: %w", err)
 	}
 
-	return nil
+	return summary, nil
 }
 
 // StateDelta contains the changes to be made to the database based on the difference between
@@ -144,24 +144,59 @@ func createDelta(
 	return delta
 }
 
+func summaryFromDelta(delta StateDelta) apiModels.OrgMigrationSummary {
+	summary := apiModels.OrgMigrationSummary{
+		NewDashboards: len(delta.DashboardsToAdd),
+		NewChannels:   len(delta.ChannelsToAdd),
+		HasErrors:     hasErrors(delta),
+	}
+
+	for _, du := range delta.DashboardsToAdd {
+		summary.NewAlerts += len(du.MigratedAlerts)
+	}
+
+	return summary
+}
+
+func hasErrors(delta StateDelta) bool {
+	for _, du := range delta.DashboardsToAdd {
+		for _, pair := range du.MigratedAlerts {
+			if pair.Error != nil {
+				return true
+			}
+		}
+	}
+	for _, pair := range delta.AlertsToAdd {
+		if pair.Error != nil {
+			return true
+		}
+	}
+	for _, pair := range delta.ChannelsToAdd {
+		if pair.Error != nil {
+			return true
+		}
+	}
+	return false
+}
+
 // syncDelta persists the given delta to the state and database.
-func (sync *sync) syncDelta(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta) error {
+func (sync *sync) syncDelta(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta) (apiModels.OrgMigrationSummary, error) {
 	amConfig, err := sync.handleAlertmanager(ctx, state, delta)
 	if err != nil {
-		return err
+		return apiModels.OrgMigrationSummary{}, err
 	}
 
 	err = sync.handleDeleteRules(ctx, state, delta)
 	if err != nil {
-		return err
+		return apiModels.OrgMigrationSummary{}, err
 	}
 
 	err = sync.handleAddRules(ctx, state, delta, amConfig)
 	if err != nil {
-		return err
+		return apiModels.OrgMigrationSummary{}, err
 	}
 
-	return nil
+	return summaryFromDelta(delta), nil
 }
 
 // handleAlertmanager persists the given channel delta to the state and database.

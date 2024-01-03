@@ -3,6 +3,7 @@ package migration
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -393,6 +394,7 @@ func checkAlertRulesCount(t *testing.T, x *xorm.Engine, orgID int64, count int) 
 type testcase struct {
 	name         string
 	orgToMigrate int64
+	skipExisting bool
 
 	// Common Inputs
 	folders        []*dashboards.Dashboard
@@ -409,9 +411,10 @@ type legacyState struct {
 	channels []*legacymodels.AlertNotification
 }
 type uaState struct {
-	alerts   []*models.AlertRule
-	amConfig *definitions.PostableUserConfig
-	migState *migrationStore.OrgMigrationState
+	alerts       []*models.AlertRule
+	amConfig     *definitions.PostableUserConfig
+	migState     *migrationStore.OrgMigrationState
+	serviceState *definitions.OrgMigrationState // output only.
 }
 
 type testOp struct {
@@ -453,6 +456,7 @@ func TestCommonServicePatterns(t *testing.T) {
 	_, pairs3 := sh.genAlertPairs(f2, d3, alerts3)
 
 	channels1 := sh.genChannels(10)
+	channels2 := sh.genChannels(10)
 
 	modifiedAlerts := func(alerts []*legacymodels.Alert, muts ...func(alert *legacymodels.Alert)) []*legacymodels.Alert {
 		newAlerts := copyAlerts(alerts...)
@@ -462,6 +466,10 @@ func TestCommonServicePatterns(t *testing.T) {
 			}
 		}
 		return newAlerts
+	}
+
+	withModifiedName := func(alert *legacymodels.Alert) {
+		alert.Name = alert.Name + "-modified"
 	}
 
 	withName := func(name string) func(alert *legacymodels.Alert) {
@@ -482,6 +490,10 @@ func TestCommonServicePatterns(t *testing.T) {
 			}
 		}
 		return newPairs
+	}
+
+	withModifiedTitle := func(pair *migmodels.AlertPair) {
+		pair.Rule.Title = pair.Rule.Title + "-modified"
 	}
 
 	withTitle := func(name string) func(pair *migmodels.AlertPair) {
@@ -512,6 +524,26 @@ func TestCommonServicePatterns(t *testing.T) {
 		}
 	}
 
+	modifiedChannels := func(channels []*legacymodels.AlertNotification, muts ...func(c *legacymodels.AlertNotification)) []*legacymodels.AlertNotification {
+		newChannels := copyChannels(channels...)
+		for _, c := range newChannels {
+			for _, mut := range muts {
+				mut(c)
+			}
+		}
+		return newChannels
+	}
+
+	withModifiedChannelName := func(c *legacymodels.AlertNotification) {
+		c.Name = c.Name + "-modified"
+	}
+
+	withType := func(t string) func(c *legacymodels.AlertNotification) {
+		return func(c *legacymodels.AlertNotification) {
+			c.Type = t
+		}
+	}
+
 	modifiedState := func(state *uaState, muts ...func(state *uaState)) *uaState {
 		for _, mut := range muts {
 			mut(state)
@@ -533,7 +565,7 @@ func TestCommonServicePatterns(t *testing.T) {
 			operations: []testOp{
 				{
 					description:     "initial migration",
-					operation:       migrateAllOrgsOp,
+					operation:       migrateOrgOp,
 					expectedUAState: sh.uaState(t, channels1, pairs1),
 				},
 			},
@@ -550,8 +582,401 @@ func TestCommonServicePatterns(t *testing.T) {
 			operations: []testOp{
 				{
 					description:     "initial migration",
-					operation:       migrateAllOrgsOp,
+					operation:       migrateOrgOp,
 					expectedUAState: sh.uaState(t, nil, pairs1, pairs2, pairs3),
+				},
+			},
+		},
+		{
+			name:         "with existing alerts & channels not from migration, doesn't delete existing",
+			orgToMigrate: 1,
+			folders:      []*dashboards.Dashboard{f1, f2},
+			dashboards:   []*dashboards.Dashboard{d1},
+
+			initialLegacyState: legacyState{
+				alerts:   alerts1,
+				channels: channels1,
+			},
+			initialUAState: &uaState{ // Not connected to the migration.
+				alerts:   rules2,
+				amConfig: createPostableUserConfig(t, channels2...),
+			},
+			operations: []testOp{
+				{
+					description: "initial migration",
+					operation:   migrateOrgOp,
+					expectedUAState: modifiedState(sh.uaState(t, channels1, pairs1), func(state *uaState) {
+						state.alerts = append(state.alerts, rules2...)
+						state.amConfig = createPostableUserConfig(t, append(channels1, channels2...)...)
+					}),
+				},
+				{
+					description: "all dashboards migration, no change",
+					operation:   migrateAllDashboardAlertsOp(false),
+					expectedUAState: modifiedState(sh.uaState(t, channels1, pairs1), func(state *uaState) {
+						state.alerts = append(state.alerts, rules2...)
+						state.amConfig = createPostableUserConfig(t, append(channels1, channels2...)...)
+					}),
+				},
+				{
+					description: "all channels migration, no change",
+					operation:   migrateAllChannelsOp(false),
+					expectedUAState: modifiedState(sh.uaState(t, channels1, pairs1), func(state *uaState) {
+						state.alerts = append(state.alerts, rules2...)
+						state.amConfig = createPostableUserConfig(t, append(channels1, channels2...)...)
+					}),
+				},
+				{
+					description: "dashboard d1 migration, no change",
+					operation:   migrateDashboardAlertsOp(false, d1.ID),
+					expectedUAState: modifiedState(sh.uaState(t, channels1, pairs1), func(state *uaState) {
+						state.alerts = append(state.alerts, rules2...)
+						state.amConfig = createPostableUserConfig(t, append(channels1, channels2...)...)
+					}),
+				},
+				{
+					description: "channels[0] migration, no change",
+					operation:   migrateChannelOp(d1.ID, channels1[0].ID),
+					expectedUAState: modifiedState(sh.uaState(t, channels1, pairs1), func(state *uaState) {
+						state.alerts = append(state.alerts, rules2...)
+						state.amConfig = createPostableUserConfig(t, append(channels1, channels2...)...)
+					}),
+				},
+				{
+					description: "alerts d1[0] migration, no change",
+					operation:   migrateAlertOp(d1.ID, alerts1[0].PanelID),
+					expectedUAState: modifiedState(sh.uaState(t, channels1, pairs1), func(state *uaState) {
+						state.alerts = append(state.alerts, rules2...)
+						state.amConfig = createPostableUserConfig(t, append(channels1, channels2...)...)
+					}),
+				},
+			},
+		},
+		{
+			name:         "migrateAlert with existing alerts in different folder",
+			orgToMigrate: 1,
+			folders:      []*dashboards.Dashboard{f1, f2},
+			dashboards:   []*dashboards.Dashboard{d1},
+			initialLegacyState: legacyState{
+				alerts: alerts1[:5:5],
+			},
+			operations: []testOp{
+				{
+					description:     "initial migration",
+					operation:       migrateOrgOp,
+					expectedUAState: sh.uaState(t, nil, pairs1[:5:5]),
+				},
+				{
+					description: "move dashboard d1 to folder f2",
+					operation: func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+						d1Copy := *d1
+						d1Copy.FolderID = f2.ID
+						_, err := x.ID(d1.ID).Update(d1Copy)
+						return err
+					},
+				},
+				{
+					description: "add more alerts to d1 and migrate them",
+					newLegacyState: &legacyState{
+						alerts: alerts1[5:6:6],
+					},
+					operation: migrateAlertOp(d1.ID, alerts1[5].PanelID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1[:6:6]), func(state *uaState) {
+						state.serviceState.MigratedDashboards[0].FolderUID = f2.UID
+						state.serviceState.MigratedDashboards[0].FolderName = f2.Title
+					}),
+				},
+				{
+					description: "add more alerts to d1 and migrate them using migrate dashboard skipExisting=true",
+					newLegacyState: &legacyState{
+						alerts: alerts1[6:10:10],
+					},
+					operation: migrateDashboardAlertsOp(true, d1.ID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1), func(state *uaState) {
+						state.serviceState.MigratedDashboards[0].FolderUID = f2.UID
+						state.serviceState.MigratedDashboards[0].FolderName = f2.Title
+					}),
+				},
+				{
+					description: "migrate with skipExisting=false should move all the alerts to f2",
+					operation:   migrateDashboardAlertsOp(false, d1.ID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, modifiedPairs(pairs1, func(p *migmodels.AlertPair) { p.Rule.NamespaceUID = f2.UID })), func(state *uaState) {
+						state.serviceState.MigratedDashboards[0].FolderUID = f2.UID
+						state.serviceState.MigratedDashboards[0].FolderName = f2.Title
+					}),
+				},
+			},
+		},
+		{
+			name:         "migrate alerts using various skipExisting",
+			orgToMigrate: 1,
+			folders:      []*dashboards.Dashboard{f1, f2},
+			dashboards:   []*dashboards.Dashboard{d1, d2, d3},
+
+			initialLegacyState: legacyState{
+				alerts: alerts1,
+			},
+			operations: []testOp{
+				{
+					description:     "initial migration",
+					operation:       migrateOrgOp,
+					expectedUAState: sh.uaState(t, nil, pairs1),
+				},
+				{
+					description: "add some alerts for d2 & d3 and migrate dashboard d2",
+					newLegacyState: &legacyState{
+						alerts: append(alerts2[:5:5], alerts3[:5:5]...),
+					},
+					operation: migrateDashboardAlertsOp(false, d2.ID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, pairs2[:5:5]), func(state *uaState) {
+						state.serviceState.MigratedDashboards = append(state.serviceState.MigratedDashboards, &definitions.DashboardUpgrade{
+							DashboardID:    d3.ID,
+							DashboardUID:   d3.UID,
+							DashboardName:  d3.Title,
+							FolderUID:      f2.UID,
+							FolderName:     f2.Title,
+							MigratedAlerts: make([]*definitions.AlertPair, 5),
+							Error:          "dashboard not upgraded",
+						})
+						for i, a := range alerts3[:5:5] {
+							state.serviceState.MigratedDashboards[2].MigratedAlerts[i] = &definitions.AlertPair{
+								LegacyAlert: fromLegacyAlert(a),
+								Error:       "alert not upgraded",
+							}
+						}
+					}),
+				},
+				{
+					description: "modify the alerts already migrated for d2 and add the rest, migrate dashboard d2 with skipExisting",
+					updateLegacyState: &legacyState{
+						alerts: modifiedAlerts(alerts2[:5:5], withModifiedName),
+					},
+					newLegacyState: &legacyState{
+						alerts: alerts2[5:],
+					},
+					operation: migrateDashboardAlertsOp(true, d2.ID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, pairs2), func(state *uaState) {
+						for i := 0; i < 5; i++ {
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+						}
+						state.serviceState.MigratedDashboards = append(state.serviceState.MigratedDashboards, &definitions.DashboardUpgrade{
+							DashboardID:    d3.ID,
+							DashboardUID:   d3.UID,
+							DashboardName:  d3.Title,
+							FolderUID:      f2.UID,
+							FolderName:     f2.Title,
+							MigratedAlerts: make([]*definitions.AlertPair, 5),
+							Error:          "dashboard not upgraded",
+						})
+						for i, a := range alerts3[:5:5] {
+							state.serviceState.MigratedDashboards[2].MigratedAlerts[i] = &definitions.AlertPair{
+								LegacyAlert: fromLegacyAlert(a),
+								Error:       "alert not upgraded",
+							}
+						}
+					}), // Because of skipExisting, expected doesn't contain the modifications.
+				},
+				{
+					description: "migrate dashboard d3 using migrate all dashboards",
+					operation:   migrateAllDashboardAlertsOp(true),
+					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, pairs2, pairs3[:5:5]), func(state *uaState) {
+						for i := 0; i < 5; i++ {
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+						}
+					}),
+				},
+				{
+					description: "migrate dashboard d2 with skipExisting=false should update using the modifications",
+					operation:   migrateDashboardAlertsOp(false, d2.ID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, append(modifiedPairs(pairs2[:5:5], withModifiedTitle), pairs2[5:]...), pairs3[:5:5]), func(state *uaState) {
+						for i := 0; i < 5; i++ {
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+						}
+					}),
+				},
+				{
+					description: "modify existing d3 alerts and add the rest, migrate one new alert on dashboard d3, should not update modifications",
+					updateLegacyState: &legacyState{
+						alerts: modifiedAlerts(alerts3[:5:5], withModifiedName),
+					},
+					newLegacyState: &legacyState{
+						alerts: alerts3[5:],
+					},
+					operation: migrateAlertOp(d3.ID, alerts3[5].PanelID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, append(modifiedPairs(pairs2[:5:5], withModifiedTitle), pairs2[5:]...), pairs3[:6:6]), func(state *uaState) {
+						for i := 0; i < 5; i++ {
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+						}
+						for _, a := range alerts3[6:] {
+							state.serviceState.MigratedDashboards[2].MigratedAlerts = append(state.serviceState.MigratedDashboards[2].MigratedAlerts, &definitions.AlertPair{
+								LegacyAlert: fromLegacyAlert(a),
+								Error:       "alert not upgraded",
+							})
+						}
+					}),
+				},
+				{
+					description: "migrate one existing alert on dashboard d3, should update modifications",
+					operation:   migrateAlertOp(d3.ID, alerts3[0].PanelID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, append(modifiedPairs(pairs2[:5:5], withModifiedTitle), pairs2[5:]...), append(modifiedPairs(pairs3[0:1:1], withModifiedTitle), pairs3[1:6:6]...)), func(state *uaState) {
+						for i := 0; i < 5; i++ {
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+						}
+						for _, a := range alerts3[6:] {
+							state.serviceState.MigratedDashboards[2].MigratedAlerts = append(state.serviceState.MigratedDashboards[2].MigratedAlerts, &definitions.AlertPair{
+								LegacyAlert: fromLegacyAlert(a),
+								Error:       "alert not upgraded",
+							})
+						}
+					}),
+				},
+				{
+					description: "update d1 alerts, and re-migrate all dashboards",
+					updateLegacyState: &legacyState{
+						alerts: modifiedAlerts(alerts1, withModifiedName),
+					},
+					operation: migrateAllDashboardAlertsOp(false),
+					expectedUAState: modifiedState(sh.uaState(t, nil, modifiedPairs(pairs1, withModifiedTitle), append(modifiedPairs(pairs2[:5:5], withModifiedTitle), pairs2[5:]...), append(modifiedPairs(pairs3[0:5:5], withModifiedTitle), pairs3[5:]...)), func(state *uaState) {
+						for i := 0; i < 5; i++ {
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+						}
+						for i := 0; i < 10; i++ {
+							state.serviceState.MigratedDashboards[0].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+						}
+					}),
+				},
+			},
+		},
+		{
+			name:               "MigrateAllChannels skip=true doesn't update existing channels",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			initialUAState:     sh.uaState(t, channels1),
+			operations: []testOp{
+				{
+					updateLegacyState: &legacyState{channels: modifiedChannels(channels1, withModifiedChannelName)},
+					operation:         migrateAllChannelsOp(true),
+					expectedUAState: modifiedState(sh.uaState(t, channels1), func(state *uaState) {
+						for _, c := range state.serviceState.MigratedChannels {
+							c.LegacyChannel.Name += "-modified"
+						}
+					}),
+				},
+			},
+		},
+		{
+			name:               "MigrateAllChannels skip=false updates existing channels",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			initialUAState:     sh.uaState(t, channels1),
+			operations: []testOp{
+				{
+					updateLegacyState: &legacyState{channels: modifiedChannels(channels1, withModifiedChannelName)},
+					operation:         migrateAllChannelsOp(false),
+					expectedUAState:   sh.uaState(t, modifiedChannels(channels1, withModifiedChannelName)),
+				},
+			},
+		},
+		{
+			name:               "MigrateAllChannels skip=false doesn't delete existing channels unrelated to migration",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			initialUAState: &uaState{
+				amConfig: createPostableUserConfig(t, channels2...),
+			},
+			operations: []testOp{
+				{
+					operation: migrateAllChannelsOp(false),
+					expectedUAState: modifiedState(sh.uaState(t, channels1), func(state *uaState) {
+						state.amConfig = createPostableUserConfig(t, append(channels1, channels2...)...)
+					}),
+				},
+			},
+		},
+		{
+			name:               "MigrateAllChannels skip=true adds new channels",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			initialUAState:     sh.uaState(t, channels1),
+			operations: []testOp{
+				{
+					newLegacyState:  &legacyState{channels: channels2},
+					operation:       migrateAllChannelsOp(true),
+					expectedUAState: sh.uaState(t, append(channels1, channels2...)),
+				},
+			},
+		},
+		{
+			name:               "MigrateAllChannels skip=false adds new channels",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			initialUAState:     sh.uaState(t, channels1),
+			operations: []testOp{
+				{
+					newLegacyState:  &legacyState{channels: channels2},
+					operation:       migrateAllChannelsOp(false),
+					expectedUAState: sh.uaState(t, append(channels1, channels2...)),
+				},
+			},
+		},
+		{
+			name:               "MigrateSingleChannel adds new channel and doesn't affect others",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			initialUAState:     sh.uaState(t, channels1),
+			operations: []testOp{
+				{
+					newLegacyState:  &legacyState{channels: channels2[0:1:1]},
+					operation:       migrateChannelOp(channels2[0].ID),
+					expectedUAState: sh.uaState(t, append(channels1, channels2[0])),
+				},
+			},
+		},
+		{
+			name:               "MigrateSingleChannel updates existing channel and doesn't affect others",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			initialUAState:     sh.uaState(t, channels1),
+			operations: []testOp{
+				{
+					updateLegacyState: &legacyState{channels: modifiedChannels(channels1, withModifiedChannelName)},
+					operation:         migrateChannelOp(channels1[9].ID),
+					expectedUAState: modifiedState(sh.uaState(t, append(channels1[0:9:9], modifiedChannels(channels1[9:], withModifiedChannelName)...)), func(state *uaState) {
+						for i := 0; i < 10; i++ {
+							state.serviceState.MigratedChannels[i].LegacyChannel.Name = channels1[i].Name + "-modified"
+						}
+					}),
+				},
+			},
+		},
+		{
+			name:               "MigrateSingleChannel removes deleted channel and doesn't affect others",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1[0:9:9]},
+			initialUAState:     sh.uaState(t, channels1), // Existing state has channels1[9].
+			operations: []testOp{
+				{
+					operation:       migrateChannelOp(channels1[9].ID),
+					expectedUAState: sh.uaState(t, channels1[0:9:9]),
+				},
+			},
+		},
+		{
+			name:               "MigrateSingleChannel doesn't delete existing channels unrelated to migration",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: []*legacymodels.AlertNotification{channels1[0]}},
+			initialUAState: &uaState{
+				amConfig: createPostableUserConfig(t, channels2...),
+			},
+			operations: []testOp{
+				{
+					operation: migrateChannelOp(channels1[0].ID),
+					expectedUAState: modifiedState(sh.uaState(t, channels1[0:1:1]), func(state *uaState) {
+						state.amConfig = createPostableUserConfig(t, append(channels2, channels1[0])...)
+					}),
 				},
 			},
 		},
@@ -567,11 +992,14 @@ func TestCommonServicePatterns(t *testing.T) {
 			operations: []testOp{
 				{
 					description: "initial migration",
-					operation:   migrateAllOrgsOp,
+					operation:   migrateOrgOp,
 					expectedUAState: modifiedState(sh.uaState(t, nil, modifiedPairs(pairs1, withTitle("duplicate name"))), func(state *uaState) {
 						state.alerts[0].Title = "duplicate name"
 						for i := 1; i < len(state.alerts); i++ { // First pair doesn't need to be deduplicated.
 							state.alerts[i].Title = fmt.Sprintf("duplicate name #%d", i+1)
+						}
+						for i := 0; i < len(state.alerts); i++ {
+							state.serviceState.MigratedDashboards[0].MigratedAlerts[i].AlertRule.Title = state.alerts[i].Title
 						}
 					}),
 				},
@@ -588,9 +1016,10 @@ func TestCommonServicePatterns(t *testing.T) {
 			},
 			operations: []testOp{
 				{
-					operation:       migrateAllOrgsOp,
-					expectedUAState: modifiedState(sh.uaState(t, nil, modifiedPairs(pairs1[0:1:1], withTitle(strings.Repeat("a", store.AlertDefinitionMaxTitleLength))))),
-				},
+					operation: migrateOrgOp,
+					expectedUAState: modifiedState(sh.uaState(t, nil, modifiedPairs(pairs1[0:1:1], withTitle(strings.Repeat("a", store.AlertDefinitionMaxTitleLength)))), func(state *uaState) {
+						state.serviceState.MigratedDashboards[0].MigratedAlerts[0].LegacyAlert.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
+					})},
 			},
 		},
 		{
@@ -604,7 +1033,7 @@ func TestCommonServicePatterns(t *testing.T) {
 			},
 			operations: []testOp{
 				{
-					operation: migrateAllOrgsOp,
+					operation: migrateOrgOp,
 					expectedUAState: func() *uaState {
 						pairs := modifiedPairs(pairs1, withTitle(strings.Repeat("a", store.AlertDefinitionMaxTitleLength)))
 						for i := 1; i < len(pairs); i++ { // First pair doesn't need to be deduplicated.
@@ -612,8 +1041,68 @@ func TestCommonServicePatterns(t *testing.T) {
 							pairs[i].Rule.Title = fmt.Sprintf("%s%s", pairs[i].Rule.Title[:store.AlertDefinitionMaxTitleLength-len(suffix)], suffix)
 						}
 						state := sh.uaState(t, nil, pairs)
+						for i := 0; i < len(pairs); i++ {
+							state.serviceState.MigratedDashboards[0].MigratedAlerts[i].LegacyAlert.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
+						}
 						return state
 					}(),
+				},
+			},
+		},
+		{
+			name:         "alert has invalid settings, should return pair with error",
+			orgToMigrate: 1,
+			folders:      []*dashboards.Dashboard{f1, f2},
+			dashboards:   []*dashboards.Dashboard{d1},
+
+			initialLegacyState: legacyState{
+				// Break the last half of the alerts.
+				alerts: append(alerts1[:5:5], modifiedAlerts(alerts1[5:10:10], func(alert *legacymodels.Alert) { alert.Settings.Set("noDataState", 1.5) })...),
+			},
+			operations: []testOp{
+				{
+					operation: migrateOrgOp,
+					expectedUAState: &uaState{
+						alerts: rules1[:5:5],
+						migState: &migrationStore.OrgMigrationState{
+							OrgID: 1,
+							MigratedDashboards: map[int64]*migrationStore.DashboardUpgrade{
+								d1.ID: sh.dashUpgrade(d1.ID, f1.UID, append(pairs1[:5:5], modifiedPairs(pairs1[5:10:10], func(pair *migmodels.AlertPair) {
+									pair.Error = errors.New("parse settings: json: cannot unmarshal number into Go struct field dashAlertSettings.noDataState of type string")
+									pair.Rule.UID = ""
+								})...), ""),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:         "alert has missing dashboard, should return pair with error",
+			orgToMigrate: 1,
+			folders:      []*dashboards.Dashboard{f1, f2},
+			dashboards:   []*dashboards.Dashboard{d1},
+
+			initialLegacyState: legacyState{
+				// Set dashboard to nonexisting id for the last half of the alerts.
+				alerts: append(alerts1[:5:5], modifiedAlerts(alerts1[5:10:10], func(alert *legacymodels.Alert) { alert.DashboardID = -42 })...),
+			},
+			operations: []testOp{
+				{
+					operation: migrateOrgOp,
+					expectedUAState: &uaState{
+						alerts: rules1[:5:5],
+						migState: &migrationStore.OrgMigrationState{
+							OrgID: 1,
+							MigratedDashboards: map[int64]*migrationStore.DashboardUpgrade{
+								d1.ID: sh.dashUpgrade(d1.ID, f1.UID, pairs1[:5:5], ""),
+								-42: sh.dashUpgrade(-42, "", modifiedPairs(pairs1[5:10:10], func(pair *migmodels.AlertPair) {
+									pair.Error = errors.New("orphaned: missing dashboard")
+									pair.Rule.UID = ""
+								}), ""),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -629,7 +1118,7 @@ func TestCommonServicePatterns(t *testing.T) {
 			},
 			operations: []testOp{
 				{
-					operation: migrateAllOrgsOp,
+					operation: migrateOrgOp,
 					expectedUAState: &uaState{
 						alerts: append(modifiedRules(rules1, withFolder(generalAlertingFolder)), rules2...),
 						migState: &migrationStore.OrgMigrationState{
@@ -655,7 +1144,8 @@ func TestCommonServicePatterns(t *testing.T) {
 			},
 			operations: []testOp{
 				{
-					operation: migrateAllOrgsOp,
+					description: "initial migration",
+					operation:   migrateOrgOp,
 					expectedUAState: &uaState{
 						alerts: append(modifiedRules(rules1[0:1:1], withFolder(generalAlertingFolder)), rules2[0]),
 						migState: &migrationStore.OrgMigrationState{
@@ -663,6 +1153,36 @@ func TestCommonServicePatterns(t *testing.T) {
 							MigratedDashboards: map[int64]*migrationStore.DashboardUpgrade{
 								d1.ID: sh.dashUpgrade(d1.ID, generalAlertingFolder.UID, pairs1[0:1:1], "dashboard alerts moved to general alerting folder during upgrade: general folder not supported"),
 								d2.ID: sh.dashUpgrade(d2.ID, f1.UID, pairs2[0:1:1], ""),
+							},
+						},
+						serviceState: &definitions.OrgMigrationState{
+							OrgID: 1,
+							MigratedDashboards: []*definitions.DashboardUpgrade{
+								{
+									DashboardID:   d1.ID,
+									DashboardUID:  d1.UID,
+									DashboardName: d1.Title,
+									FolderUID:     generalFolder.UID,
+									FolderName:    generalFolder.Title,
+									NewFolderUID:  generalAlertingFolder.UID,
+									NewFolderName: generalAlertingFolder.Title,
+									MigratedAlerts: []*definitions.AlertPair{
+										{LegacyAlert: fromLegacyAlert(alerts1[0]), AlertRule: fromAlertRuleUpgrade(rules1[0], []string{"autogen-contact-point-default"})},
+									},
+									Warning: "dashboard alerts moved to general alerting folder during upgrade: general folder not supported",
+								},
+								{
+									DashboardID:   d2.ID,
+									DashboardUID:  d2.UID,
+									DashboardName: d2.Title,
+									FolderUID:     f1.UID,
+									FolderName:    f1.Title,
+									NewFolderUID:  f1.UID,
+									NewFolderName: f1.Title,
+									MigratedAlerts: []*definitions.AlertPair{
+										{LegacyAlert: fromLegacyAlert(alerts2[0]), AlertRule: fromAlertRuleUpgrade(rules2[0], []string{"autogen-contact-point-default"})},
+									},
+								},
 							},
 						},
 					},
@@ -690,7 +1210,7 @@ func TestCommonServicePatterns(t *testing.T) {
 			},
 			operations: []testOp{
 				{
-					operation: migrateAllOrgsOp,
+					operation: migrateOrgOp,
 					expectedUAState: &uaState{
 						alerts: append(rules1, modifiedRules(rules2, withFolder(&dashboards.Dashboard{UID: "created-folder-id"}))...),
 						migState: &migrationStore.OrgMigrationState{
@@ -705,7 +1225,32 @@ func TestCommonServicePatterns(t *testing.T) {
 			},
 		},
 		{
-			name:         "alert labels are correct",
+			name:               "channel is discontinued, should return pair with error",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			operations: []testOp{
+				{
+					updateLegacyState: &legacyState{channels: modifiedChannels([]*legacymodels.AlertNotification{channels1[8], channels1[9]}, withType("hipchat"))},
+					operation:         migrateAllChannelsOp(false),
+					expectedUAState: &uaState{
+						amConfig: createPostableUserConfig(t, channels1[:8:8]...),
+						migState: &migrationStore.OrgMigrationState{
+							OrgID: 1,
+							MigratedChannels: func() map[int64]*migrationStore.ContactPair {
+								pairs := sh.contactPairs(channels1...)
+								pairs[channels1[8].ID].Error = "'hipchat': discontinued"
+								pairs[channels1[8].ID].NewReceiverUID = ""
+								pairs[channels1[9].ID].Error = "'hipchat': discontinued"
+								pairs[channels1[9].ID].NewReceiverUID = ""
+								return pairs
+							}(),
+						},
+					},
+				},
+			},
+		},
+		{
+			name:         "channel name updates are reflected in alert labels",
 			orgToMigrate: 1,
 			folders:      []*dashboards.Dashboard{f1, f2},
 			dashboards:   []*dashboards.Dashboard{d1},
@@ -717,8 +1262,185 @@ func TestCommonServicePatterns(t *testing.T) {
 			operations: []testOp{
 				{
 					description:     "initial migration",
-					operation:       migrateAllOrgsOp,
+					operation:       migrateOrgOp,
 					expectedUAState: sh.uaState(t, channels1, modifiedPairs(pairs1, withNotifierLabels)),
+				},
+				{
+					description: "update channel names and migrate single channel",
+					updateLegacyState: &legacyState{
+						channels: modifiedChannels(channels1, withModifiedChannelName),
+					},
+					operation: migrateChannelOp(channels1[9].ID),
+					expectedUAState: modifiedState(sh.uaState(t,
+						append(channels1[:9:9], modifiedChannels(channels1[9:10:10], withModifiedChannelName)...),
+						append(modifiedPairs(pairs1[:9:9], withNotifierLabels), modifiedPairs(pairs1[9:10:10], func(a *migmodels.AlertPair) {
+							withNotifiers(a.LegacyRule)
+							a.Rule.Labels[contactLabel(fmt.Sprintf("notifiername%d-modified", a.LegacyRule.ID))] = "true"
+						})...),
+					), func(state *uaState) {
+						for i := range pairs1 {
+							// Service state knows the updated legacy channel names.
+							state.serviceState.MigratedChannels[i].LegacyChannel.Name = channels1[i].Name + "-modified"
+						}
+					}),
+				},
+				{
+					description: "migrate the rest of the channels",
+					operation:   migrateAllChannelsOp(false),
+					expectedUAState: sh.uaState(t,
+						modifiedChannels(channels1, withModifiedChannelName),
+						modifiedPairs(pairs1, func(a *migmodels.AlertPair) {
+							withNotifiers(a.LegacyRule)
+							a.Rule.Labels[contactLabel(fmt.Sprintf("notifiername%d-modified", a.LegacyRule.ID))] = "true"
+						}),
+					),
+				},
+			},
+		},
+		{
+			name:         "contact point name updates are reflected in alert labels",
+			orgToMigrate: 1,
+			folders:      []*dashboards.Dashboard{f1, f2},
+			dashboards:   []*dashboards.Dashboard{d1},
+
+			initialLegacyState: legacyState{
+				alerts:   modifiedAlerts(alerts1, withNotifiers),
+				channels: channels1,
+			},
+			initialUAState: modifiedState(sh.uaState(t, channels1, modifiedPairs(pairs1, withNotifierLabels)), func(state *uaState) {
+				// Update all the contact points names. Done here so we simulate it being done post-migration.
+				for i := 0; i < 10; i++ {
+					state.amConfig.AlertmanagerConfig.Receivers[i+1].Name += "-modified"
+					state.amConfig.AlertmanagerConfig.Receivers[i+1].GrafanaManagedReceivers[0].Name += "-modified"
+					state.amConfig.AlertmanagerConfig.Route.Routes[0].Routes[i].Receiver += "-modified"
+				}
+			}),
+			operations: []testOp{
+				{
+					description: "re-migrated alerts should get the label to route to the correct contact point",
+					operation:   migrateAllDashboardAlertsOp(false),
+					expectedUAState: modifiedState(sh.uaState(t, channels1, modifiedPairs(pairs1, withNotifierLabels)), func(state *uaState) {
+						for i := range pairs1 {
+							state.serviceState.MigratedDashboards[0].MigratedAlerts[i].AlertRule.SendsTo = []string{channels1[i].Name + "-modified"}
+							state.serviceState.MigratedChannels[i].ContactPointUpgrade.Name += "-modified"
+						}
+						for i := 0; i < 10; i++ {
+							state.amConfig.AlertmanagerConfig.Receivers[i+1].Name += "-modified"
+							state.amConfig.AlertmanagerConfig.Receivers[i+1].GrafanaManagedReceivers[0].Name += "-modified"
+							state.amConfig.AlertmanagerConfig.Route.Routes[0].Routes[i].Receiver += "-modified"
+						}
+					}),
+				},
+			},
+		},
+		{
+			name:         "alert labels are correct when when alert is migrated before channel",
+			orgToMigrate: 1,
+			folders:      []*dashboards.Dashboard{f1, f2},
+			dashboards:   []*dashboards.Dashboard{d1},
+
+			initialLegacyState: legacyState{
+				alerts:   modifiedAlerts(alerts1[:5:5], withNotifiers),
+				channels: channels1[:5:5],
+			},
+			operations: []testOp{
+				{
+					description:     "initial migration of first 5 alerts and channels",
+					operation:       migrateOrgOp,
+					expectedUAState: sh.uaState(t, channels1[:5:5], modifiedPairs(pairs1[:5:5], withNotifierLabels)),
+				},
+				{
+					description: "add the last 5 alerts and channels, migrate just the last 5 alerts",
+					newLegacyState: &legacyState{
+						alerts:   modifiedAlerts(alerts1[5:10:10], withNotifiers),
+						channels: channels1[5:10:10],
+					},
+					operation: migrateAllDashboardAlertsOp(true),
+				},
+				{
+					description:     "migrate the last 5 channels",
+					operation:       migrateAllChannelsOp(true),
+					expectedUAState: sh.uaState(t, channels1, modifiedPairs(pairs1, withNotifierLabels)),
+				},
+			},
+		},
+		{
+			name:         "empty folders previously created by migration should be deleted",
+			orgToMigrate: 1,
+			folders:      []*dashboards.Dashboard{f1, f2},
+			dashboards:   []*dashboards.Dashboard{d1},
+			initialLegacyState: legacyState{
+				alerts: alerts1,
+			},
+			initialUAState: &uaState{
+				migState: &migrationStore.OrgMigrationState{
+					OrgID:          1,
+					CreatedFolders: []string{f1.UID},
+				},
+			},
+			operations: []testOp{
+				{
+					description: "initial migration",
+					operation:   migrateOrgOp,
+					expectedUAState: func() *uaState {
+						state := sh.uaState(t, nil, pairs1)
+						state.migState.CreatedFolders = []string{f1.UID}
+						return state
+					}(),
+				},
+				{
+					description: "move dashboard d1 to folder f2",
+					operation: func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+						d1Copy := *d1
+						d1Copy.FolderID = f2.ID
+						_, err := x.ID(d1.ID).Update(d1Copy)
+						return err
+					},
+				},
+				{
+					description: "migrate with skipExisting=false should move all the alerts to f2 and cleanup f1",
+					operation:   migrateDashboardAlertsOp(false, d1.ID),
+					expectedUAState: modifiedState(sh.uaState(t, nil, modifiedPairs(pairs1, func(p *migmodels.AlertPair) { p.Rule.NamespaceUID = f2.UID })), func(state *uaState) {
+						state.serviceState.MigratedDashboards[0].FolderUID = f2.UID
+						state.serviceState.MigratedDashboards[0].FolderName = f2.Title
+					}),
+				},
+			},
+		},
+		{
+			name:               "unmigrated channels should show up in GetOrgMigration state",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1},
+			operations: []testOp{
+				{
+					operation: migrateChannelOp(channels1[0].ID),
+					expectedUAState: modifiedState(sh.uaState(t, channels1[0:1:1]), func(state *uaState) {
+						for _, c := range channels1[1:] {
+							state.serviceState.MigratedChannels = append(state.serviceState.MigratedChannels, &definitions.ContactPair{
+								LegacyChannel: fromLegacyChannel(c),
+								Error:         "channel not upgraded",
+							})
+						}
+
+					}),
+				},
+			},
+		},
+		{
+			name:               "channels deleted after migration should show up in GetOrgMigration state",
+			orgToMigrate:       1,
+			initialLegacyState: legacyState{channels: channels1[0:9:9]},
+			initialUAState:     sh.uaState(t, channels1), // Existing state has channels1[9].
+			operations: []testOp{
+				{
+					expectedUAState: modifiedState(sh.uaState(t, channels1), func(state *uaState) {
+						for _, c := range state.serviceState.MigratedChannels {
+							if c.LegacyChannel.ID == channels1[9].ID {
+								c.LegacyChannel = &definitions.LegacyChannel{ID: c.LegacyChannel.ID}
+								c.Error = "channel no longer exists"
+							}
+						}
+					}),
 				},
 			},
 		},
@@ -729,12 +1451,68 @@ func TestCommonServicePatterns(t *testing.T) {
 	}
 }
 
-var migrateAllOrgsOp = func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
-	err := service.migrateAllOrgs(ctx)
+var migrateOrgOp = func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+	_, err := service.MigrateOrg(ctx, tt.orgToMigrate, tt.skipExisting)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+var migrateAllDashboardAlertsOp = func(skipExisting bool) func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+	return func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+		_, err := service.MigrateAllDashboardAlerts(ctx, tt.orgToMigrate, skipExisting)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+var migrateAllChannelsOp = func(skipExisting bool) func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+	return func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+		_, err := service.MigrateAllChannels(ctx, tt.orgToMigrate, skipExisting)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+var migrateDashboardAlertsOp = func(skipExisting bool, ids ...int64) func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+	return func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+		for _, id := range ids {
+			_, err := service.MigrateDashboardAlerts(ctx, tt.orgToMigrate, id, skipExisting)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+var migrateChannelOp = func(ids ...int64) func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+	return func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+		for _, id := range ids {
+			_, err := service.MigrateChannel(ctx, tt.orgToMigrate, id)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+var migrateAlertOp = func(dashboardId int64, panelIds ...int64) func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+	return func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
+		for _, id := range panelIds {
+			_, err := service.MigrateAlert(ctx, tt.orgToMigrate, dashboardId, id)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
 
 func tcRun(t *testing.T, tt testcase) {
@@ -767,6 +1545,7 @@ func tcRun(t *testing.T, tt testcase) {
 	}
 
 	ctx := context.Background()
+	require.NoError(t, service.migrationStore.SetMigrated(context.Background(), tt.orgToMigrate, true)) // To bypass verification.
 
 	for _, op := range tt.operations {
 		if op.description != "" {
@@ -815,7 +1594,7 @@ func tcRun(t *testing.T, tt testcase) {
 		if op.expectedUAState != nil {
 			compareRules(t, x, tt.orgToMigrate, op.expectedUAState.alerts)
 			compareAmConfig(t, x, tt.orgToMigrate, op.expectedUAState.amConfig)
-			compareState(t, x, service, tt.orgToMigrate, op.expectedUAState.migState)
+			compareState(t, x, service, tt.orgToMigrate, op.expectedUAState.migState, op.expectedUAState.serviceState)
 		}
 	}
 }
@@ -874,8 +1653,8 @@ func compareAmConfig(t *testing.T, x *xorm.Engine, orgId int64, expectedConfig *
 	}
 }
 
-func compareState(t *testing.T, x *xorm.Engine, service *migrationService, orgId int64, expectedState *migrationStore.OrgMigrationState) {
-	if expectedState == nil {
+func compareState(t *testing.T, x *xorm.Engine, service *migrationService, orgId int64, expectedState *migrationStore.OrgMigrationState, expectedServiceState *definitions.OrgMigrationState) {
+	if expectedState == nil && expectedServiceState == nil {
 		return
 	}
 
@@ -907,6 +1686,31 @@ func compareState(t *testing.T, x *xorm.Engine, service *migrationService, orgId
 	}
 	if !cmp.Equal(expectedState, state, cOpt...) {
 		t.Errorf("Unexpected OrgMigrationState: %v", cmp.Diff(expectedState, state, cOpt...))
+	}
+
+	if expectedServiceState != nil {
+		for _, du := range expectedServiceState.MigratedDashboards {
+			for _, a := range du.MigratedAlerts {
+				if a.AlertRule != nil {
+					a.AlertRule.UID = uidMap[a.AlertRule.UID]
+				}
+			}
+		}
+
+		serviceState, err := service.GetOrgMigrationState(context.Background(), orgId)
+		require.NoError(t, err)
+
+		cOpt := []cmp.Option{
+			cmpopts.SortSlices(func(a, b *definitions.DashboardUpgrade) bool { return a.DashboardID < b.DashboardID }),
+			cmpopts.SortSlices(func(a, b *definitions.AlertPair) bool { return a.LegacyAlert.ID < b.LegacyAlert.ID }),
+			cmpopts.SortSlices(func(a, b *definitions.ContactPair) bool { return a.LegacyChannel.ID < b.LegacyChannel.ID }),
+			cmpopts.IgnoreMapEntries(func(k string, v string) bool { return k == "rule_uid" }),
+			cmpopts.IgnoreUnexported(labels.Matcher{}),
+			cmpopts.EquateEmpty(),
+		}
+		if !cmp.Equal(expectedServiceState, serviceState, cOpt...) {
+			t.Errorf("Unexpected OrgMigrationState: %v", cmp.Diff(expectedServiceState, serviceState, cOpt...))
+		}
 	}
 }
 
@@ -1138,6 +1942,7 @@ func (h *serviceHelper) uaState(t *testing.T, channels []*legacymodels.AlertNoti
 		migState: &migrationStore.OrgMigrationState{
 			OrgID: 1,
 		},
+		serviceState: h.serviceState(channels, dashPairs...),
 	}
 
 	if len(channels) > 0 {
@@ -1156,6 +1961,67 @@ func (h *serviceHelper) uaState(t *testing.T, channels []*legacymodels.AlertNoti
 	}
 
 	return s
+}
+
+func (h *serviceHelper) serviceState(channels []*legacymodels.AlertNotification, dashPairs ...[]*migmodels.AlertPair) *definitions.OrgMigrationState {
+	state := &definitions.OrgMigrationState{
+		OrgID:              1,
+		MigratedDashboards: []*definitions.DashboardUpgrade{},
+		MigratedChannels:   []*definitions.ContactPair{},
+	}
+	channelName := make(map[int64]string)
+	for _, c := range channels {
+		channelName[c.ID] = c.Name
+	}
+
+	for _, pairs := range dashPairs {
+		d := h.dashes[pairs[0].LegacyRule.DashboardID]
+		f := h.folders[d.FolderID]
+		f2 := h.foldersByUID[pairs[0].Rule.NamespaceUID]
+		du := &definitions.DashboardUpgrade{
+			DashboardID:   d.ID,
+			DashboardUID:  d.UID,
+			DashboardName: d.Title,
+			FolderUID:     f.UID,
+			FolderName:    f.Title,
+			NewFolderUID:  f2.UID,
+			NewFolderName: f2.Title,
+			Provisioned:   false,
+			Warning:       "",
+		}
+		for _, pair := range pairs {
+			var sendsTo []string
+			for _, v := range extractChannelIds(h.t, pair.LegacyRule) {
+				sendsTo = append(sendsTo, channelName[v.ID])
+			}
+			if len(sendsTo) == 0 {
+				sendsTo = []string{"autogen-contact-point-default"}
+			}
+			p := &definitions.AlertPair{
+				LegacyAlert: fromLegacyAlert(pair.LegacyRule),
+				AlertRule:   fromAlertRuleUpgrade(pair.Rule, sendsTo),
+			}
+			if pair.Error != nil {
+				p.Error = pair.Error.Error()
+			}
+			du.MigratedAlerts = append(du.MigratedAlerts, p)
+		}
+		state.MigratedDashboards = append(state.MigratedDashboards, du)
+	}
+	if len(channels) > 0 {
+		for _, c := range channels {
+			route, _ := createRoute(c, c.Name)
+			state.MigratedChannels = append(state.MigratedChannels, &definitions.ContactPair{
+				LegacyChannel: fromLegacyChannel(c),
+				ContactPointUpgrade: &definitions.ContactPointUpgrade{
+					Name:          c.Name,
+					Type:          c.Type,
+					RouteMatchers: route.ObjectMatchers,
+				},
+			})
+		}
+	}
+	return state
 }
 
 func copyMap(m map[string]string) map[string]string {
@@ -1192,6 +2058,15 @@ func copyRules(rules ...*models.AlertRule) []*models.AlertRule {
 	return copies
 }
 
+func copyChannels(channels ...*legacymodels.AlertNotification) []*legacymodels.AlertNotification {
+	copies := make([]*legacymodels.AlertNotification, len(channels))
+	for i, a := range channels {
+		c := *a
+		copies[i] = &c
+	}
+	return copies
+}
+
 func copyPairs(pairs ...*migmodels.AlertPair) []*migmodels.AlertPair {
 	newPairs := make([]*migmodels.AlertPair, len(pairs))
 	for i, pair := range pairs {
@@ -1217,4 +2092,38 @@ func extractChannelIds(t *testing.T, alert *legacymodels.Alert) []notificationKe
 		return nots
 	}
 	return nil
+}
+
+func fromLegacyAlert(alert *legacymodels.Alert) *definitions.LegacyAlert {
+	if alert == nil {
+		return nil
+	}
+	return &definitions.LegacyAlert{
+		ID:          alert.ID,
+		DashboardID: alert.DashboardID,
+		PanelID:     alert.PanelID,
+		Name:        alert.Name,
+	}
+}
+
+func fromAlertRuleUpgrade(rule *models.AlertRule, sendsTo []string) *definitions.AlertRuleUpgrade {
+	if rule == nil {
+		return nil
+	}
+	return &definitions.AlertRuleUpgrade{
+		UID:     rule.UID,
+		Title:   rule.Title,
+		SendsTo: sendsTo,
+	}
+}
+
+func fromLegacyChannel(channel *legacymodels.AlertNotification) *definitions.LegacyChannel {
+	if channel == nil {
+		return nil
+	}
+	return &definitions.LegacyChannel{
+		ID:   channel.ID,
+		Name: channel.Name,
+		Type: channel.Type,
+	}
 }

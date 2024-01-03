@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
@@ -17,6 +18,7 @@ type Alertmanager struct {
 	legacyRoute           *apiModels.Route
 	legacyReceiverToRoute map[string]*apiModels.Route
 	legacyUIDToReceiver   map[string]*apiModels.PostableGrafanaReceiver
+	matcherRoute          *dispatch.Route
 }
 
 // FromPostableUserConfig creates an Alertmanager from a PostableUserConfig.
@@ -34,6 +36,7 @@ func FromPostableUserConfig(config *apiModels.PostableUserConfig) *Alertmanager 
 		legacyRoute:           getOrCreateNestedLegacyRoute(config),
 		legacyReceiverToRoute: make(map[string]*apiModels.Route),
 		legacyUIDToReceiver:   config.GetGrafanaReceiverMap(),
+		matcherRoute:          dispatch.NewRoute(config.AlertmanagerConfig.Route.AsAMRoute(), nil),
 	}
 
 	for _, r := range am.legacyRoute.Routes {
@@ -54,6 +57,10 @@ func CleanAlertmanager(am *Alertmanager) *apiModels.PostableUserConfig {
 	return am.config
 }
 
+func (am *Alertmanager) Match(lset model.LabelSet) []*dispatch.Route {
+	return dispatch.NewRoute(am.config.AlertmanagerConfig.Route.AsAMRoute(), nil).Match(lset)
+}
+
 // AddRoute adds a route to the alertmanager config.
 func (am *Alertmanager) AddRoute(route *apiModels.Route) {
 	if route == nil {
@@ -61,6 +68,7 @@ func (am *Alertmanager) AddRoute(route *apiModels.Route) {
 	}
 	am.legacyReceiverToRoute[route.Receiver] = route
 	am.legacyRoute.Routes = append(am.legacyRoute.Routes, route)
+	am.matcherRoute = dispatch.NewRoute(am.config.AlertmanagerConfig.Route.AsAMRoute(), nil)
 }
 
 // AddReceiver adds a receiver to the alertmanager config.

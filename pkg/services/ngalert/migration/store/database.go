@@ -48,6 +48,8 @@ type ReadStore interface {
 	GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error)
 	GetNotificationChannel(ctx context.Context, q GetNotificationChannelQuery) (*legacymodels.AlertNotification, error)
 
+	GetDashboardAlert(ctx context.Context, orgID int64, dashboardID int64, panelID int64) (*legacymodels.Alert, error)
+	GetDashboardAlerts(ctx context.Context, orgID int64, dashboardID int64) ([]*legacymodels.Alert, error)
 	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error)
 
 	GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
@@ -65,6 +67,11 @@ type ReadStore interface {
 	GetRuleLabels(ctx context.Context, orgID int64, ruleUIDs []string) (map[models.AlertRuleKeyWithVersion]data.Labels, error) // Rule UID -> Labels
 
 	CaseInsensitive() bool
+
+	// Slims for performance optimization of GetOrgSummary rehydration.
+	GetSlimDashboards(ctx context.Context, orgID int64) (map[int64]SlimDashboard, error)
+	GetSlimOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*SlimAlert, error)
+	GetSlimAlertRules(ctx context.Context, orgID int64) (map[string]*SlimAlertRule, error)
 }
 
 // WriteStore is the database abstraction for write migration persistence.
@@ -653,6 +660,39 @@ func (ms *migrationStore) GetNotificationChannel(ctx context.Context, q GetNotif
 	return &res, err
 }
 
+// GetDashboardAlert loads a single legacy dashboard alerts for the given org and alert id.
+func (ms *migrationStore) GetDashboardAlert(ctx context.Context, orgID int64, dashboardID int64, panelID int64) (*legacymodels.Alert, error) {
+	var dashAlert legacymodels.Alert
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.SQL("select * from alert WHERE org_id = ? AND dashboard_id = ? AND panel_id = ?", orgID, dashboardID, panelID).Get(&dashAlert)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return ErrNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &dashAlert, nil
+}
+
+// GetDashboardAlerts loads all legacy dashboard alerts for the given org and dashboard.
+func (ms *migrationStore) GetDashboardAlerts(ctx context.Context, orgID int64, dashboardID int64) ([]*legacymodels.Alert, error) {
+	var dashAlerts []*legacymodels.Alert
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL("select * from alert WHERE org_id = ? AND dashboard_id = ?", orgID, dashboardID).Find(&dashAlerts)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dashAlerts, nil
+}
+
 // GetOrgDashboardAlerts loads all legacy dashboard alerts for the given org mapped by dashboard id.
 func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error) {
 	var dashAlerts []*legacymodels.Alert
@@ -700,4 +740,67 @@ func (ms *migrationStore) MapActions(permission accesscontrol.ResourcePermission
 
 func (ms *migrationStore) CaseInsensitive() bool {
 	return ms.store.GetDialect().SupportEngine()
+}
+
+// GetSlimDashboards returns a map of dashboard id -> SlimDashboard for all dashboards in the given org. This is used as a
+// performance optimization to avoid loading the full dashboards in bulk.
+func (ms *migrationStore) GetSlimDashboards(ctx context.Context, orgID int64) (map[int64]SlimDashboard, error) {
+	res := make(map[int64]SlimDashboard)
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		dashes := make([]SlimDashboard, 0)
+		err := sess.Table("dashboard").Alias("d").Select("d.id, d.uid, d.title, d.folder_id, dashboard_provisioning.id IS NOT NULL as provisioned").
+			Join("LEFT", "dashboard_provisioning", `d.id = dashboard_provisioning.dashboard_id`).
+			Where("org_id = ?", orgID).Find(&dashes)
+		if err != nil {
+			return err
+		}
+		for _, d := range dashes {
+			res[d.ID] = d
+		}
+		res[0] = SlimDashboard{ID: 0, Title: folder.GeneralFolder.Title}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// GetSlimOrgDashboardAlerts returns a map of dashboard id -> SlimAlert for all alerts in the given org. This is used as a
+// performance optimization to avoid loading the full alerts in bulk.
+func (ms *migrationStore) GetSlimOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*SlimAlert, error) {
+	res := make(map[int64][]*SlimAlert)
+	rules := make([]*SlimAlert, 0)
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Table("alert").Cols("id", "dashboard_id", "panel_id", "name").Where("org_id = ?", orgID).Find(&rules)
+		if err != nil {
+			return err
+		}
+
+		for _, r := range rules {
+			res[r.DashboardID] = append(res[r.DashboardID], r)
+		}
+		return nil
+	})
+	return res, err
+}
+
+// GetSlimAlertRules returns a map of rule UID -> SlimAlertRule for all alert rules in the given org. This is used as a
+// performance optimization to avoid loading the full alert rules in bulk.
+func (ms *migrationStore) GetSlimAlertRules(ctx context.Context, orgID int64) (map[string]*SlimAlertRule, error) {
+	res := make(map[string]*SlimAlertRule)
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		rules := make([]*SlimAlertRule, 0)
+		err := sess.Table("alert_rule").Cols("uid", "title", "namespace_uid", "labels").Where("org_id = ?", orgID).Find(&rules)
+		if err != nil {
+			return err
+		}
+
+		for _, r := range rules {
+			res[r.UID] = r
+		}
+		return nil
+	})
+	return res, err
 }
