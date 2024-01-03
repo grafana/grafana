@@ -8,10 +8,13 @@ import (
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+// Clean removes superfluous and orphan instances from the database.
+// It does not affect the manager's loaded cache. The manager will not load orphan states to begin with.
 func (st *Manager) Clean(ctx context.Context, rules RuleReader) error {
 	return Clean(ctx, st.instanceStore, rules, st.log)
 }
 
+// Clean removes orphan instances from `instances`, based on the rules given by `rules`.
 func Clean(ctx context.Context, instances InstanceStore, rules RuleReader, logger log.Logger) error {
 	orgIds, err := instances.FetchOrgIds(ctx)
 	if err != nil {
