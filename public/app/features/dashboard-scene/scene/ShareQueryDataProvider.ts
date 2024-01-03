@@ -1,6 +1,6 @@
 import { Observable, ReplaySubject, Unsubscribable } from 'rxjs';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import {
   SceneDataProvider,
   SceneDataProviderResult,
@@ -26,11 +26,14 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
   private _passContainerWidth = false;
 
   constructor(state: ShareQueryDataProviderState) {
-    super(state);
+    super({
+      data: emptyPanelData,
+      ...state,
+    });
 
     this.addActivationHandler(() => {
       // TODO handle changes to query model (changed panelId / withTransforms)
-      //this.subscribeToState(this._onStateChanged);
+      this.subscribeToState(this._onStateChanged);
 
       this._subscribeToSource();
 
@@ -110,8 +113,14 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
     });
 
     // Copy the initial state
-    this.setState({ data: this._sourceProvider.state.data });
+    this.setState({ data: this._sourceProvider.state.data || emptyPanelData });
   }
+
+  private _onStateChanged = (n: ShareQueryDataProviderState, p: ShareQueryDataProviderState) => {
+    if (n.$data !== p.$data) {
+      this._subscribeToSource();
+    }
+  };
 
   public setContainerWidth(width: number) {
     if (this._passContainerWidth && this._sourceProvider) {
@@ -143,3 +152,5 @@ export function findObjectInScene(scene: SceneObject, check: (scene: SceneObject
 
   return found;
 }
+
+const emptyPanelData: PanelData = { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() };

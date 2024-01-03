@@ -32,7 +32,7 @@ import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
+import { DASHBOARD_DATASOURCE_PLUGIN_ID, DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
@@ -61,10 +61,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   > = {};
 
   private _dataObjectSubscription: Unsubscribable | undefined;
+  private _dashboardRef: SceneObjectRef<DashboardScene>;
 
   public constructor(panel: VizPanel, dashboardRef: SceneObjectRef<DashboardScene>) {
     super({ panel });
 
+    this._dashboardRef = dashboardRef;
     /**
      * If the panel uses a shared query, we clone the source runner and attach it as a data provider for the shared one.
      * This way the source panel does not to be present in the edit scene hierarchy.
@@ -347,9 +349,30 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public changeQueries(queries: DataQuery[]) {
-    const dataObj = this.queryRunner;
-    dataObj.setState({ queries });
-    // TODO: Handle dashboard query
+    const dataObj = this.state.panel.state.$data;
+    const runner = this.queryRunner;
+
+    // Updating Dashboard query requires a special treatment as the SharedDataProvider in edit mode contains
+    // data provider that is a clone of the source panel's data provider.
+    if (dataObj instanceof ShareQueryDataProvider && queries.length > 0) {
+      const dashboardQuery = queries[0] as DashboardQuery;
+      if (dashboardQuery.panelId) {
+        const keyToFind = getVizPanelKeyForPanelId(dashboardQuery.panelId);
+        const source = findObjectInScene(
+          this._dashboardRef.resolve(),
+          (scene: SceneObject) => scene.state.key === keyToFind
+        );
+
+        if (source) {
+          dataObj.setState({
+            $data: source.state.$data!.clone(),
+            query: dashboardQuery,
+          });
+        }
+      }
+    } else {
+      runner.setState({ queries });
+    }
   }
 
   public inspectPanel() {
