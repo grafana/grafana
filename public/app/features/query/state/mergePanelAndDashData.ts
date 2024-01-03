@@ -1,4 +1,5 @@
-import { combineLatest, mergeMap, Observable, of } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 
 import { arrayToDataFrame, DataFrame, DataTopic, PanelData } from '@grafana/data';
 
@@ -18,8 +19,8 @@ export function mergePanelAndDashData(
   dashObservable: Observable<DashboardQueryRunnerResult>
 ): Observable<PanelData> {
   return combineLatest([panelObservable, dashObservable]).pipe(
-    mergeMap((data) => {
-      const [panelData, dashData] = data;
+    mergeMap((combined) => {
+      const [panelData, dashData] = combined;
 
       if (Boolean(dashData.annotations?.length) || Boolean(dashData.alertState)) {
         if (!panelData.annotations) {
@@ -31,7 +32,6 @@ export function mergePanelAndDashData(
         addAnnoDataTopic(annotations);
 
         const alertState = dashData.alertState;
-
         return of({ ...panelData, annotations, alertState });
       }
 

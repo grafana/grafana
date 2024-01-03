@@ -40,6 +40,7 @@ import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datas
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
+import { createThresholdOverrides } from './DashboardQueryRunner/utils';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { runRequest } from './runRequest';
 
@@ -114,25 +115,25 @@ export class PanelQueryRunner {
     const dashData = getDashboardQueryRunner().getResult(panel.id);
 
     return combineLatest([this.subject, dashData]).pipe(
-      mergeMap(([panelData, dashData]) => {
+      mergeMap(([panel, dashData]) => {
         let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
         let transformations = this.dataConfigSource.getTransformations();
 
         if (
-          panelData.series === lastRawFrames &&
+          panel.series === lastRawFrames &&
           lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig &&
           lastTransformations === transformations
         ) {
-          return of({ ...panelData, structureRev, series: lastProcessedFrames });
+          return of({ ...panel, structureRev, series: lastProcessedFrames });
         }
 
         lastFieldConfig = fieldConfig;
         lastTransformations = transformations;
-        lastRawFrames = panelData.series;
-        let dataWithTransforms = of(panelData);
+        lastRawFrames = panel.series;
+        let dataWithTransforms = of(panel);
 
         if (withTransforms) {
-          dataWithTransforms = this.applyTransformations(panelData);
+          dataWithTransforms = this.applyTransformations(panel);
         }
 
         return dataWithTransforms.pipe(
@@ -174,28 +175,7 @@ export class PanelQueryRunner {
                 }
               }
 
-              const thresholdStyleOverrides = Object.entries(dashData.thresholdsByRefId ?? []).map(
-                ([refId, threshold]) => {
-                  return {
-                    matcher: {
-                      id: 'byFrameRefID',
-                      options: refId,
-                    },
-                    properties: [
-                      {
-                        id: 'custom.thresholdsStyle',
-                        value: {
-                          mode: threshold.mode,
-                        },
-                      },
-                      {
-                        id: 'thresholds',
-                        value: threshold.config,
-                      },
-                    ],
-                  };
-                }
-              );
+              const thresholdStyleOverrides = createThresholdOverrides(dashData.thresholdsByRefId);
 
               if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
                 lastConfigRev = this.dataConfigSource.configRev!;
@@ -373,7 +353,7 @@ export class PanelQueryRunner {
 
     if (dataSupport.alertStates || dataSupport.annotations) {
       const panel = this.dataConfigSource as unknown as PanelModel;
-      panelData = mergePanelAndDashData(panelData, getDashboardQueryRunner().getResult(panel.id));
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panel.id));
     }
 
     this.subscription = panelData.subscribe({
