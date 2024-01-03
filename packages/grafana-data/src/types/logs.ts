@@ -135,9 +135,15 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   getLogRowContext: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<DataQueryResponse>;
 
   /**
-   * Retrieve the context query object for a given log row. This is currently used to open LogContext queries in a split view.
+   * Retrieve the context query object for a given log row. This is currently used to open LogContext queries in a split view and in a new browser tab.
+   * The `cacheFilters` parameter can be used to force a refetch of the cached applied filters. Default value `true`.
    */
-  getLogRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<TQuery | null>;
+  getLogRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    query?: TQuery,
+    cacheFilters?: boolean
+  ) => Promise<TQuery | null>;
 
   /**
    * @deprecated Deprecated since 10.3. To display the context option and support the feature implement DataSourceWithLogsContextSupport interface instead.

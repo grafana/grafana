@@ -52,7 +52,6 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 					string(connectionInfo),
 				},
 			},
-			Paging:                    false,
 			Codec:                     f.Codec,
 			EncodeVersioner:           nil,
 			Transformer:               nil,
