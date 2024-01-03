@@ -20,7 +20,7 @@ type FeatureToggles interface {
 	IsEnabledGlobally(flag string) bool
 
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)
-	// but it is gaurenteed to have the enabled ones listed
+	// but it is guaranteed to have the enabled ones listed
 	GetEnabled(ctx context.Context) map[string]bool
 }
 
