@@ -167,7 +167,7 @@ export function ConfigPublicDashboardBase({
               margin-bottom: 0;
             `}
           >
-            <Trans i18nKey="config-public-dashboard.public-dashboard.pause-sharing-dashboard">
+            <Trans i18nKey="config-public-dashboard.public-dashboard.pause-sharing-dashboard-label">
               Pause sharing dashboard
             </Trans>
           </Label>
@@ -199,8 +199,7 @@ export function ConfigPublicDashboardBase({
       >
         <HorizontalGroup justify="flex-end">
           <Button
-            aria-label="Revoke public URL"
-            title="Revoke public URL"
+            title={t('config-public-dashboard.public-dashboard.revoke-public-URL-button-title', 'Revoke public URL')}
             onClick={onRevoke}
             type="button"
             disabled={disableInputs}
@@ -208,7 +207,7 @@ export function ConfigPublicDashboardBase({
             variant="destructive"
             fill="outline"
           >
-            <Trans i18nKey="config-public-dashboard.public-dashboard.revoke-public-URL">Revoke public URL</Trans>
+            <Trans i18nKey="config-public-dashboard.public-dashboard.revoke-public-URL-button">Revoke public URL</Trans>
           </Button>
         </HorizontalGroup>
       </Layout>

@@ -73,7 +73,6 @@ const EmailList = ({
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
-
   return (
     <table className={styles.table} data-testid={selectors.EmailSharingList}>
       <tbody>
@@ -92,7 +91,7 @@ const EmailList = ({
                   onClick={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                   data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
-                  <Trans i18nKey="email-sharing-configuration.public-dashboard.revoke-button-text">Revoke</Trans>
+                  <Trans i18nKey="email-sharing-configuration.public-dashboard.revoke-button">Revoke</Trans>
                 </Button>
                 <Button
                   type="button"
@@ -104,7 +103,7 @@ const EmailList = ({
                   onClick={() => onReshare(recipient.uid)}
                   data-testid={`${selectors.ReshareLink}-${idx}`}
                 >
-                  <Trans i18nKey="email-sharing-configuration.public-dashboard.resend-button-text">Resend</Trans>
+                  <Trans i18nKey="email-sharing-configuration.public-dashboard.resend-button">Resend</Trans>
                 </Button>
               </ButtonGroup>
             </td>
@@ -205,10 +204,10 @@ export const EmailSharingConfiguration = () => {
                   placeholder="email"
                   autoCapitalize="none"
                   {...register('email', {
-                    required: t('email-sharing-configuration.public-dashboard.required-email', 'Email is required'),
+                    required: t('email-sharing-configuration.public-dashboard.input-required-email-text', 'Email is required'),
                     pattern: {
                       value: validEmailRegex,
-                      message: t('email-sharing-configuration.public-dashboard.invalid-email', 'Invalid email'),
+                      message: t('email-sharing-configuration.public-dashboard.input-invalid-email-text', 'Invalid email'),
                     },
                   })}
                   data-testid={selectors.EmailSharingInput}
@@ -219,7 +218,7 @@ export const EmailSharingConfiguration = () => {
                   disabled={isAddEmailLoading}
                   data-testid={selectors.EmailSharingInviteButton}
                 >
-                  <Trans i18nKey="email-sharing-configuration.public-dashboard.invite-content">Invite</Trans>
+                  <Trans i18nKey="email-sharing-configuration.public-dashboard.invite-button">Invite</Trans>
                   {isAddEmailLoading && <Spinner />}
                 </Button>
               </div>

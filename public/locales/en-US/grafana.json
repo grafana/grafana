@@ -129,8 +129,9 @@
     "public-dashboard": {
       "copy-button": "Copy",
       "dashboard-url-field-label": "Dashboard URL",
-      "pause-sharing-dashboard": "Pause sharing dashboard",
-      "revoke-public-URL": "Revoke public URL",
+      "pause-sharing-dashboard-label": "Pause sharing dashboard",
+      "revoke-public-URL-button": "Revoke public URL",
+      "revoke-public-URL-button-title": "Revoke public URL",
       "settings-title": "Settings"
     }
   },
@@ -414,7 +415,7 @@
       "dashboard-title": "{{dashboardTitle}}",
       "loading-text": "Loading...",
       "modal-title": "Public dashboards",
-      "open-dashboard-list": "Open dashboards list",
+      "open-dashboard-list-text": "Open dashboards list",
       "public-dashboard-link": "Public dashboard URL",
       "public-dashboard-setting": "Public dashboard settings"
     }
@@ -443,14 +444,14 @@
   },
   "delete-public-dashboard-button": {
     "public-dashboard": {
-      "revoke-button-label": "Revoke public URL"
+      "revoke-button-text": "Revoke public URL"
     }
   },
   "delete-public-dashboard-modal": {
     "public-dashboard": {
       "ask-for-revoke-nonorphaned": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
       "ask-for-revoke-orphaned": "Orphaned public dashboard will no longer be public.",
-      "confirm-revocation-title": "Revoke public URL"
+      "confirm-revocation-text": "Revoke public URL"
     }
   },
   "delete-user-modal-button": {
@@ -466,15 +467,15 @@
     "public-dashboard": {
       "can-view-dashboard-label": "Can view dashboard",
       "email-share-type-label": "Only specified people",
-      "invalid-email": "Invalid email",
-      "invite-content": "Invite",
+      "input-invalid-email-text": "Invalid email",
+      "input-required-email-text": "Email is required",
+      "invite-button": "Invite",
       "invite-desc": "Invite people by email",
       "invite-label": "Invite",
       "public-share-type-label": "Anyone with a link",
-      "required-email": "Email is required",
-      "resend-button-text": "Resend",
+      "resend-button": "Resend",
       "resend-button-title": "Resend",
-      "revoke-button-text": "Revoke",
+      "revoke-button": "Revoke",
       "revoke-button-title": "Revoke"
     }
   },
@@ -1130,7 +1131,7 @@
       "not-orphaned-title": "<0>{{title}}</0>",
       "orphaned-title": "<0>Orphaned public dashboard</0>",
       "orphaned-tooltip": "The linked dashboard has already been deleted",
-      "pause-sharing-label": "Pause sharing",
+      "pause-sharing-text": "Pause sharing",
       "revoke-tooltip": "Revoke public dashboard URL",
       "view-tooltip": "View public dashboard"
     }
@@ -1206,8 +1207,8 @@
   },
   "settings-bar-header": {
     "public-dashboard": {
-      "collapse-tooltip": "Collapse settings",
-      "expand-tooltip": "Expand settings"
+      "collapse-settings-tooltip": "Collapse settings",
+      "expand-settings-tooltip": "Expand settings"
     }
   },
   "settings-summary": {
@@ -1262,16 +1263,16 @@
       "ack-title": "Before you make the dashboard public, acknowledge the following:",
       "data-src-ack-desc": "Publishing currently only works with a subset of data sources*",
       "data-src-ack-tooltip": "Learn more about public datasources",
-      "description": "Currently, we don’t support template variables or frontend data sources",
       "generate-public-url-button": "Generate public URL",
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} create public dashboards",
       "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a public dashboard",
       "public-ack-desc": "Your entire dashboard will be public*",
       "public-ack-tooltip": "Learn more about public dashboards",
-      "unsupport-data-source-alert-readmore": "Read more about supported data sources",
-      "unsupported-data-source-alert-description": "There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}.",
+      "unsupport-data-source-alert-readmore-link": "Read more about supported data sources",
+      "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Unsupported data sources",
-      "unsupported-template-variable-alert": "This public dashboard may not work since it uses template variables",
+      "unsupported-features-description": "Currently, we don’t support template variables or frontend data sources",
+      "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
       "unsupported-template-variable-alert-title": "Template variables are not supported",
       "usage-ack-desc": "Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*",
       "usage-ack-tooltip": "Learn more about query caching",
@@ -1430,12 +1431,12 @@
   },
   "user-list-public-dashboard-page": {
     "public-dashboard": {
-      "activated": "Activated",
-      "earliest-active-user-time-desc": "Earliest time user has been an active user to a dashboard",
-      "email": "Email",
-      "last-active": "Last active",
-      "origin": "Origin",
-      "role": "Role"
+      "activated-header": "Activated",
+      "earliest-active-user-time-tooltip-desc": "Earliest time user has been an active user to a dashboard",
+      "email-header": "Email",
+      "last-active-header": "Last active",
+      "origin-header": "Origin",
+      "role-header": "Role"
     }
   },
   "user-orgs": {

@@ -58,8 +58,8 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
   };
 
   const CardActions = useMemo(() => (isMobile ? Card.Actions : Card.SecondaryActions), [isMobile]);
-  const translatedPauseSharingLabel = t(
-    'public-dashboard-list-table.public-dashboard.pause-sharing-label',
+  const translatedPauseSharingText = t(
+    'public-dashboard-list-table.public-dashboard.pause-sharing-text',
     'Pause sharing'
   );
 
@@ -93,7 +93,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
         <div className={styles.pauseSwitch}>
           <Switch
             value={!pd.isEnabled}
-            label={translatedPauseSharingLabel}
+            label={translatedPauseSharingText}
             disabled={isUpdateLoading}
             onChange={(e) => {
               reportInteraction('grafana_dashboards_public_enable_clicked', {
@@ -103,7 +103,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
             }}
             data-testid={selectors.ListItem.pauseSwitch}
           />
-          <span>{translatedPauseSharingLabel}</span>
+          <span>{translatedPauseSharingText}</span>
         </div>
         <LinkButton
           disabled={isOrphaned}

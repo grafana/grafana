@@ -33,7 +33,7 @@ export const DeletePublicDashboardModal = ({
   onDismiss: () => void;
 }) => {
   const translatedRevocationModalText = t(
-    'delete-public-dashboard-modal.public-dashboard.confirm-revocation-title',
+    'delete-public-dashboard-modal.public-dashboard.confirm-revocation-text',
     'Revoke public URL'
   );
   return (

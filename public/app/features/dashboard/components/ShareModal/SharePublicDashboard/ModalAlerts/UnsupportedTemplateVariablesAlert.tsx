@@ -16,7 +16,7 @@ export const UnsupportedTemplateVariablesAlert = () => (
     data-testid={selectors.TemplateVariablesWarningAlert}
     bottomSpacing={0}
   >
-    <Trans i18nKey="share-modal.public-dashboard.unsupported-template-variable-alert">
+    <Trans i18nKey="share-modal.public-dashboard.unsupported-template-variable-alert-desc">
       This public dashboard may not work since it uses template variables
     </Trans>
   </Alert>

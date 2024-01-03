@@ -59,7 +59,7 @@ export const CreatePublicDashboardBase = ({
           <Trans i18nKey="share-modal.public-dashboard.welcome-title">Welcome to public dashboards!</Trans>
         </p>
         <p className={styles.description}>
-          <Trans i18nKey="share-modal.public-dashboard.description">
+          <Trans i18nKey="share-modal.public-dashboard.unsupported-features-description">
             Currently, we don’t support template variables or frontend data sources
           </Trans>
         </p>

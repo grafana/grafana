@@ -70,7 +70,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
 
 export const DashboardsListModalButton = ({ email }: { email: string }) => {
   const translatedDashboardListModalButtonText = t(
-    'dashboards-list-modal-button.public-dashboard.open-dashboard-list',
+    'dashboards-list-modal-button.public-dashboard.open-dashboard-list-text',
     'Open dashboards list'
   );
   return (

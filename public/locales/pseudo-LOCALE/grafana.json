@@ -129,8 +129,9 @@
     "public-dashboard": {
       "copy-button": "Cőpy",
       "dashboard-url-field-label": "Đäşĥþőäřđ ŮŖĿ",
-      "pause-sharing-dashboard": "Päūşę şĥäřįŉģ đäşĥþőäřđ",
-      "revoke-public-URL": "Ŗęvőĸę pūþľįč ŮŖĿ",
+      "pause-sharing-dashboard-label": "Päūşę şĥäřįŉģ đäşĥþőäřđ",
+      "revoke-public-URL-button": "Ŗęvőĸę pūþľįč ŮŖĿ",
+      "revoke-public-URL-button-title": "Ŗęvőĸę pūþľįč ŮŖĿ",
       "settings-title": "Ŝęŧŧįŉģş"
     }
   },
@@ -414,7 +415,7 @@
       "dashboard-title": "{{dashboardTitle}}",
       "loading-text": "Ŀőäđįŉģ...",
       "modal-title": "Pūþľįč đäşĥþőäřđş",
-      "open-dashboard-list": "Øpęŉ đäşĥþőäřđş ľįşŧ",
+      "open-dashboard-list-text": "Øpęŉ đäşĥþőäřđş ľįşŧ",
       "public-dashboard-link": "Pūþľįč đäşĥþőäřđ ŮŖĿ",
       "public-dashboard-setting": "Pūþľįč đäşĥþőäřđ şęŧŧįŉģş"
     }
@@ -443,14 +444,14 @@
   },
   "delete-public-dashboard-button": {
     "public-dashboard": {
-      "revoke-button-label": "Ŗęvőĸę pūþľįč ŮŖĿ"
+      "revoke-button-text": "Ŗęvőĸę pūþľįč ŮŖĿ"
     }
   },
   "delete-public-dashboard-modal": {
     "public-dashboard": {
       "ask-for-revoke-nonorphaned": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş ŮŖĿ? Ŧĥę đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
       "ask-for-revoke-orphaned": "Øřpĥäŉęđ pūþľįč đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
-      "confirm-revocation-title": "Ŗęvőĸę pūþľįč ŮŖĿ"
+      "confirm-revocation-text": "Ŗęvőĸę pūþľįč ŮŖĿ"
     }
   },
   "delete-user-modal-button": {
@@ -466,15 +467,15 @@
     "public-dashboard": {
       "can-view-dashboard-label": "Cäŉ vįęŵ đäşĥþőäřđ",
       "email-share-type-label": "Øŉľy şpęčįƒįęđ pęőpľę",
-      "invalid-email": "Ĩŉväľįđ ęmäįľ",
-      "invite-content": "Ĩŉvįŧę",
+      "input-invalid-email-text": "Ĩŉväľįđ ęmäįľ",
+      "input-required-email-text": "Ēmäįľ įş řęqūįřęđ",
+      "invite-button": "Ĩŉvįŧę",
       "invite-desc": "Ĩŉvįŧę pęőpľę þy ęmäįľ",
       "invite-label": "Ĩŉvįŧę",
       "public-share-type-label": "Åŉyőŉę ŵįŧĥ ä ľįŉĸ",
-      "required-email": "Ēmäįľ įş řęqūįřęđ",
-      "resend-button-text": "Ŗęşęŉđ",
+      "resend-button": "Ŗęşęŉđ",
       "resend-button-title": "Ŗęşęŉđ",
-      "revoke-button-text": "Ŗęvőĸę",
+      "revoke-button": "Ŗęvőĸę",
       "revoke-button-title": "Ŗęvőĸę"
     }
   },
@@ -1130,7 +1131,7 @@
       "not-orphaned-title": "<0>{{title}}</0>",
       "orphaned-title": "<0>Øřpĥäŉęđ pūþľįč đäşĥþőäřđ</0>",
       "orphaned-tooltip": "Ŧĥę ľįŉĸęđ đäşĥþőäřđ ĥäş äľřęäđy þęęŉ đęľęŧęđ",
-      "pause-sharing-label": "Päūşę şĥäřįŉģ",
+      "pause-sharing-text": "Päūşę şĥäřįŉģ",
       "revoke-tooltip": "Ŗęvőĸę pūþľįč đäşĥþőäřđ ŮŖĿ",
       "view-tooltip": "Vįęŵ pūþľįč đäşĥþőäřđ"
     }
@@ -1206,8 +1207,8 @@
   },
   "settings-bar-header": {
     "public-dashboard": {
-      "collapse-tooltip": "Cőľľäpşę şęŧŧįŉģş",
-      "expand-tooltip": "Ēχpäŉđ şęŧŧįŉģş"
+      "collapse-settings-tooltip": "Cőľľäpşę şęŧŧįŉģş",
+      "expand-settings-tooltip": "Ēχpäŉđ şęŧŧįŉģş"
     }
   },
   "settings-summary": {
@@ -1262,16 +1263,16 @@
       "ack-title": "ßęƒőřę yőū mäĸę ŧĥę đäşĥþőäřđ pūþľįč, äčĸŉőŵľęđģę ŧĥę ƒőľľőŵįŉģ:",
       "data-src-ack-desc": "Pūþľįşĥįŉģ čūřřęŉŧľy őŉľy ŵőřĸş ŵįŧĥ ä şūþşęŧ őƒ đäŧä şőūřčęş*",
       "data-src-ack-tooltip": "Ŀęäřŉ mőřę äþőūŧ pūþľįč đäŧäşőūřčęş",
-      "description": "Cūřřęŉŧľy, ŵę đőŉ’ŧ şūppőřŧ ŧęmpľäŧę väřįäþľęş őř ƒřőŉŧęŉđ đäŧä şőūřčęş",
       "generate-public-url-button": "Ğęŉęřäŧę pūþľįč ŮŖĿ",
       "no-upsert-perm-alert-desc": "Cőŉŧäčŧ yőūř äđmįŉ ŧő ģęŧ pęřmįşşįőŉ ŧő {{mode}} čřęäŧę pūþľįč đäşĥþőäřđş",
       "no-upsert-perm-alert-title": "Ÿőū đőŉ’ŧ ĥävę pęřmįşşįőŉ ŧő {{ mode }} ä pūþľįč đäşĥþőäřđ",
       "public-ack-desc": "Ÿőūř ęŉŧįřę đäşĥþőäřđ ŵįľľ þę pūþľįč*",
       "public-ack-tooltip": "Ŀęäřŉ mőřę äþőūŧ pūþľįč đäşĥþőäřđş",
-      "unsupport-data-source-alert-readmore": "Ŗęäđ mőřę äþőūŧ şūppőřŧęđ đäŧä şőūřčęş",
-      "unsupported-data-source-alert-description": "Ŧĥęřę äřę đäŧä şőūřčęş įŉ ŧĥįş đäşĥþőäřđ ŧĥäŧ äřę ūŉşūppőřŧęđ ƒőř pūþľįč đäşĥþőäřđş. Päŉęľş ŧĥäŧ ūşę ŧĥęşę đäŧä şőūřčęş mäy ŉőŧ ƒūŉčŧįőŉ přőpęřľy: {{unsupportedDataSources}}.",
+      "unsupport-data-source-alert-readmore-link": "Ŗęäđ mőřę äþőūŧ şūppőřŧęđ đäŧä şőūřčęş",
+      "unsupported-data-source-alert-desc": "Ŧĥęřę äřę đäŧä şőūřčęş įŉ ŧĥįş đäşĥþőäřđ ŧĥäŧ äřę ūŉşūppőřŧęđ ƒőř pūþľįč đäşĥþőäřđş. Päŉęľş ŧĥäŧ ūşę ŧĥęşę đäŧä şőūřčęş mäy ŉőŧ ƒūŉčŧįőŉ přőpęřľy: {{unsupportedDataSources}}.",
       "unsupported-data-source-alert-title": "Ůŉşūppőřŧęđ đäŧä şőūřčęş",
-      "unsupported-template-variable-alert": "Ŧĥįş pūþľįč đäşĥþőäřđ mäy ŉőŧ ŵőřĸ şįŉčę įŧ ūşęş ŧęmpľäŧę väřįäþľęş",
+      "unsupported-features-description": "Cūřřęŉŧľy, ŵę đőŉ’ŧ şūppőřŧ ŧęmpľäŧę väřįäþľęş őř ƒřőŉŧęŉđ đäŧä şőūřčęş",
+      "unsupported-template-variable-alert-desc": "Ŧĥįş pūþľįč đäşĥþőäřđ mäy ŉőŧ ŵőřĸ şįŉčę įŧ ūşęş ŧęmpľäŧę väřįäþľęş",
       "unsupported-template-variable-alert-title": "Ŧęmpľäŧę väřįäþľęş äřę ŉőŧ şūppőřŧęđ",
       "usage-ack-desc": "Mäĸįŉģ ä đäşĥþőäřđ pūþľįč ŵįľľ čäūşę qūęřįęş ŧő řūŉ ęäčĥ ŧįmę įŧ įş vįęŵęđ, ŵĥįčĥ mäy įŉčřęäşę čőşŧş*",
       "usage-ack-tooltip": "Ŀęäřŉ mőřę äþőūŧ qūęřy čäčĥįŉģ",
@@ -1430,12 +1431,12 @@
   },
   "user-list-public-dashboard-page": {
     "public-dashboard": {
-      "activated": "Åčŧįväŧęđ",
-      "earliest-active-user-time-desc": "Ēäřľįęşŧ ŧįmę ūşęř ĥäş þęęŉ äŉ äčŧįvę ūşęř ŧő ä đäşĥþőäřđ",
-      "email": "Ēmäįľ",
-      "last-active": "Ŀäşŧ äčŧįvę",
-      "origin": "Øřįģįŉ",
-      "role": "Ŗőľę"
+      "activated-header": "Åčŧįväŧęđ",
+      "earliest-active-user-time-tooltip-desc": "Ēäřľįęşŧ ŧįmę ūşęř ĥäş þęęŉ äŉ äčŧįvę ūşęř ŧő ä đäşĥþőäřđ",
+      "email-header": "Ēmäįľ",
+      "last-active-header": "Ŀäşŧ äčŧįvę",
+      "origin-header": "Øřįģįŉ",
+      "role-header": "Ŗőľę"
     }
   },
   "user-orgs": {

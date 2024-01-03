@@ -21,16 +21,16 @@ export const UserListPublicDashboardPage = () => {
         <thead>
           <tr>
             <th>
-              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.email">Email</Trans>
+              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.email-header">Email</Trans>
             </th>
             <th>
               <span>
-                <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.activated">Activated</Trans>
+                <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.activated-header">Activated</Trans>
               </span>
               <Tooltip
                 placement="top"
                 content={t(
-                  'user-list-public-dashboard-page.public-dashboard.earliest-active-user-time-desc',
+                  'user-list-public-dashboard-page.public-dashboard.earliest-active-user-time-tooltip-desc',
                   'Earliest time user has been an active user to a dashboard'
                 )}
               >
@@ -38,13 +38,13 @@ export const UserListPublicDashboardPage = () => {
               </Tooltip>
             </th>
             <th>
-              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.last-active">Last active</Trans>
+              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.last-active-header">Last active</Trans>
             </th>
             <th>
-              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.origin">Origin</Trans>
+              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.origin-header">Origin</Trans>
             </th>
             <th>
-              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.role">Role</Trans>
+              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.role-header">Role</Trans>
             </th>
             <th></th>
           </tr>
