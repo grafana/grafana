@@ -38,9 +38,6 @@ import (
 	"k8s.io/kube-aggregator/pkg/controllers"
 )
 
-// making sure we only register metrics once into legacy registry
-var registerIntoLegacyRegistryOnce sync.Once
-
 type certKeyFunc func() ([]byte, []byte)
 
 // ServiceResolver knows how to convert a service reference into an actual location.
@@ -224,7 +221,7 @@ func (c *AvailableConditionController) sync(key string) error {
 					transport.SetAuthProxyHeaders(newReq, "system:kube-aggregator", []string{"system:masters"}, nil)
 					resp, err := discoveryClient.Do(newReq)
 					if resp != nil {
-						resp.Body.Close()
+						_ = resp.Body.Close()
 						// we should always been in the 200s or 300s
 						if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 							errCh <- fmt.Errorf("bad status from %v: %v", discoveryURL, resp.StatusCode)

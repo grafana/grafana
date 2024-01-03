@@ -44,7 +44,10 @@ func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := service.SchemeGroupVersion
-	service.AddToScheme(scheme)
+	err := service.AddToScheme(scheme)
+	if err != nil {
+		return err
+	}
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:

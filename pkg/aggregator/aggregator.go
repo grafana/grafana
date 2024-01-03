@@ -15,13 +15,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/pflag"
+
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
-	"github.com/spf13/pflag"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -414,7 +415,7 @@ func makeAPIServiceAvailableHealthCheck(name string, apiServices []*v1.APIServic
 	}
 
 	// Watch add/update events for APIServices
-	apiServiceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, _ = apiServiceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(obj interface{}) { handleAPIServiceChange(obj.(*v1.APIService)) },
 		UpdateFunc: func(old, new interface{}) { handleAPIServiceChange(new.(*v1.APIService)) },
 	})
