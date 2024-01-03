@@ -397,7 +397,7 @@ func runGetScenario(
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.Features = featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
+		hs.Features = featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
 			Name:  featuremgmt.FlagFeatureToggleAdminPage,
 			Stage: featuremgmt.FeatureStageGeneralAvailability,
 		}}, features...), disabled...)
@@ -461,7 +461,7 @@ func runSetScenario(
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.Features = featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
+		hs.Features = featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
 			Name:  featuremgmt.FlagFeatureToggleAdminPage,
 			Stage: featuremgmt.FeatureStageGeneralAvailability,
 		}}, serverFeatures...), disabled...)
