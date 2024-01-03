@@ -461,6 +461,63 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 	assert.Equal(t, 2, calls)
 }
 
+func TestSocialGitlab_Validate(t *testing.T) {
+	testCases := []struct {
+		name        string
+		settings    ssoModels.SSOSettings
+		expectError bool
+	}{
+		{
+			name: "SSOSettings is valid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "fails if settings map contains an invalid field",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "client-id",
+					"invalid_field": []int{1, 2, 3},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "fails if client id is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "",
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "fails if client id does not exist",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Validate(context.Background(), tc.settings)
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestSocialGitlab_Reload(t *testing.T) {
 	testCases := []struct {
 		name         string
