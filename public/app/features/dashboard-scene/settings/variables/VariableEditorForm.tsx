@@ -1,5 +1,6 @@
 import React, { FormEvent } from 'react';
 
+import { SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
@@ -26,7 +27,7 @@ function onNameChange(event: FormEvent<HTMLInputElement>) {
   console.log('onNameChange');
 }
 
-function onTypeChange(type: SceneVariable) {
+function onTypeChange(option: SelectableValue<VariableType>) {
   console.log('onTypeChange');
 }
 
@@ -67,7 +68,7 @@ export function VariableEditorForm({ variable }: VariableEditorFormProps) {
   return (
     <>
       <form aria-label="Variable editor Form" onSubmit={onHandleSubmit}>
-        <VariableTypeSelect onChange={onTypeChange} type={variable.type} />
+        <VariableTypeSelect onChange={onTypeChange} type={variable.state.type} />
 
         <VariableLegend>General</VariableLegend>
         <VariableTextField
@@ -86,14 +87,14 @@ export function VariableEditorForm({ variable }: VariableEditorFormProps) {
         <VariableTextField
           name="Label"
           description="Optional display name"
-          value={variable.label ?? ''}
+          value={variable.state.label ?? ''}
           placeholder="Label name"
           onChange={onLabelChange}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
         />
         <VariableTextAreaField
           name="Description"
-          value={variable.description ?? ''}
+          value={variable.state.description ?? ''}
           placeholder="Descriptive text"
           onChange={onDescriptionChange}
           width={52}
@@ -134,7 +135,7 @@ export function VariableEditorForm({ variable }: VariableEditorFormProps) {
       </form>
       <ConfirmDeleteModal
         isOpen={false}
-        varName={variable.name}
+        varName={variable.state.name}
         onConfirm={() => console.log('needs implementation')}
         onDismiss={() => console.log('needs implementation')}
       />
