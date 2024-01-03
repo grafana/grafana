@@ -696,7 +696,6 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (i
 	return resp.StatusCode, string(body)
 }
 
-
 func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.Frame, int, string) {
 	t.Helper()
 	u, err := url.Parse(fmt.Sprintf("%s/api/v1/rules/history", a.url))
@@ -708,20 +707,7 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	require.NoError(t, err)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-
-	require.NoError(t, err)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	b, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	var frame data.Frame
-	if resp.StatusCode == http.StatusOK {
-		require.NoError(t, json.Unmarshal(b, &frame))
-	}
-	return frame, resp.StatusCode, string(b)
+	return sendRequest[data.Frame](t, req, http.StatusOK)
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
