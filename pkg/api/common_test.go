@@ -258,9 +258,9 @@ func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *u
 	return &user.SignedInUser{IsAnonymous: true, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
 
-func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
+func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 	if features == nil {
-		features = featuremgmt.WithManager()
+		features = featuremgmt.WithFeatures()
 	}
 	// nolint:staticcheck
 	cfg := setting.NewCfgWithFeatures(features.IsEnabledGlobally)
@@ -296,7 +296,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	hs := &HTTPServer{
 		RouteRegister:      routing.NewRouteRegister(),
 		License:            &licensing.OSSLicensingService{},
-		Features:           featuremgmt.WithManager(),
+		Features:           featuremgmt.WithFeatures(),
 		QuotaService:       quotatest.New(false, nil),
 		searchUsersService: &searchusers.OSSService{},
 	}

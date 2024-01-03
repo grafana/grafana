@@ -59,7 +59,7 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 }
 
 func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
-	hs := setupSimpleHTTPServer(featuremgmt.WithManager())
+	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 
 	sqlStore := db.InitTestDB(t)

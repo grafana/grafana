@@ -95,85 +95,85 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		desc        string
 		url         string
 		expectedLen int
-		features    *featuremgmt.FeatureManager
+		features    featuremgmt.FeatureToggles
 	}{
 		{
 			desc:        "impl=default nested_folders=on get root folders",
 			url:         "/api/folders",
 			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
-			features:    featuremgmt.WithManager(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
 			desc:        "impl=default nested_folders=on get subfolders",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
-			features:    featuremgmt.WithManager(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
 			desc:        "impl=default nested_folders=on list all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
-			features:    featuremgmt.WithManager(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on list all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
-			features:    featuremgmt.WithManager(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "impl=default nested_folders=on search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithManager(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithManager(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "impl=default nested_folders=on search for specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithManager(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithManager(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "impl=default nested_folders=off get root folders",
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
-			features:    featuremgmt.WithManager(),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
 			desc:        "impl=default nested_folders=off list all dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
-			features:    featuremgmt.WithManager(),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off list all dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
-			features:    featuremgmt.WithManager(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "impl=default nested_folders=off search specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithManager(),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off search specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithManager(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 	}
 	for _, bm := range benchmarks {
@@ -423,7 +423,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 }
 
-func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureManager) *web.Macaron {
+func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureToggles) *web.Macaron {
 	b.Helper()
 
 	m := web.New()

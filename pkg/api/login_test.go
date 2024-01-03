@@ -113,7 +113,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
 		SecretsService:   secretsService,
-		Features:         featuremgmt.WithManager(),
+		Features:         featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -161,7 +161,7 @@ func TestLoginViewRedirect(t *testing.T) {
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
-		Features:         featuremgmt.WithManager(),
+		Features:         featuremgmt.WithFeatures(),
 		log:              log.NewNopLogger(),
 	}
 	hs.Cfg.CookieSecure = true
@@ -336,7 +336,7 @@ func TestLoginPostRedirect(t *testing.T) {
 			ExpectedIdentity: &authn.Identity{ID: "user:42", SessionToken: &usertoken.UserToken{}},
 		},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
-		Features:         featuremgmt.WithManager(),
+		Features:         featuremgmt.WithFeatures(),
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -497,7 +497,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    mock,
-		Features:         featuremgmt.WithManager(),
+		Features:         featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -524,7 +524,7 @@ func TestLoginInternal(t *testing.T) {
 		Cfg:      setting.NewCfg(),
 		License:  &licensing.OSSLicensingService{},
 		log:      log.New("test"),
-		Features: featuremgmt.WithManager(),
+		Features: featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -589,7 +589,7 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 		SocialService:    mock,
-		Features:         featuremgmt.WithManager(),
+		Features:         featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -629,7 +629,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 		SocialService:    &mockSocialService{},
-		Features:         featuremgmt.WithManager(),
+		Features:         featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -663,7 +663,7 @@ func TestLogoutSaml(t *testing.T) {
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          license,
 		SocialService:    &mockSocialService{},
-		Features:         featuremgmt.WithManager(),
+		Features:         featuremgmt.WithFeatures(),
 		authInfoService: &authinfotest.FakeService{
 			ExpectedUserAuth: &loginservice.UserAuth{AuthModule: loginservice.SAMLAuthModule},
 		},

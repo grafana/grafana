@@ -82,12 +82,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
-		hs.Features = featuremgmt.WithManager(featuremgmt.FlagDatasourceQueryMultiStatus, true)
+		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
 		hs.QuotaService = quotatest.New(false, nil)
 	})
 	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
-		hs.Features = featuremgmt.WithManager(featuremgmt.FlagDatasourceQueryMultiStatus, false)
+		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
 		hs.QuotaService = quotatest.New(false, nil)
 	})
 

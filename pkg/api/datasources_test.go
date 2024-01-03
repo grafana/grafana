@@ -289,7 +289,7 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 					expectedDatasource: &datasources.DataSource{},
 				},
 				Cfg:                  setting.NewCfg(),
-				Features:             featuremgmt.WithManager(featuremgmt.FlagTeamHttpHeaders),
+				Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
 				accesscontrolService: actest.FakeService{},
 				AccessControl: actest.FakeAccessControl{
 					ExpectedEvaluate: true,

@@ -149,11 +149,6 @@ func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
 }
 
-type FeatureToggles interface {
-	IsEnabledGlobally(flag string) bool
-	GetEnabled(ctx context.Context) map[string]bool
-}
-
 type SignatureCalculator interface {
 	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
 }

@@ -68,7 +68,7 @@ func TestInitializer_skipHostEnvVars(t *testing.T) {
 	}
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
-		envVarsProvider := NewProvider(&config.Cfg{Features: featuremgmt.WithManager()}, nil)
+		envVarsProvider := NewProvider(&config.Cfg{Features: featuremgmt.WithFeatures()}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 
 		// We want to test that the envvars.Provider does not add any of the host env vars.
@@ -576,7 +576,7 @@ func TestInitializer_featureToggleEnvVar(t *testing.T) {
 
 		p := &plugins.Plugin{}
 		envVarsProvider := NewProvider(&config.Cfg{
-			Features: featuremgmt.WithManager(expectedFeatures[0], true, expectedFeatures[1], true),
+			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 
@@ -648,7 +648,7 @@ func TestService_GetConfigMap(t *testing.T) {
 		{
 			name: "Both features and proxy settings enabled",
 			cfg: &config.Cfg{
-				Features: featuremgmt.WithManager("feat-2", "feat-500", "feat-1"),
+				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:       true,
 					ShowUI:        true,
@@ -674,7 +674,7 @@ func TestService_GetConfigMap(t *testing.T) {
 		{
 			name: "Features enabled but proxy settings disabled",
 			cfg: &config.Cfg{
-				Features: featuremgmt.WithManager("feat-2", "feat-500", "feat-1"),
+				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
 				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:      false,
 					ShowUI:       true,
@@ -692,7 +692,7 @@ func TestService_GetConfigMap(t *testing.T) {
 		{
 			name: "Both features and proxy settings disabled",
 			cfg: &config.Cfg{
-				Features: featuremgmt.WithManager("feat-2", false),
+				Features: featuremgmt.WithFeatures("feat-2", false),
 				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:      false,
 					ShowUI:       true,
@@ -727,35 +727,35 @@ func TestService_GetConfigMap(t *testing.T) {
 func TestService_GetConfigMap_featureToggles(t *testing.T) {
 	t.Run("Feature toggles list is deterministic", func(t *testing.T) {
 		tcs := []struct {
-			enabledFeatures []string
-			expectedConfig  map[string]string
+			features       featuremgmt.FeatureToggles
+			expectedConfig map[string]string
 		}{
 			{
-				enabledFeatures: nil,
-				expectedConfig:  map[string]string{},
+				features:       nil,
+				expectedConfig: map[string]string{},
 			},
 			{
-				enabledFeatures: []string{},
-				expectedConfig:  map[string]string{},
+				features:       featuremgmt.WithFeatures(),
+				expectedConfig: map[string]string{},
 			},
 			{
-				enabledFeatures: []string{"A", "B", "C"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
+				features:       featuremgmt.WithFeatures("A", "B", "C"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
 			},
 			{
-				enabledFeatures: []string{"C", "B", "A"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
+				features:       featuremgmt.WithFeatures("C", "B", "A"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
 			},
 			{
-				enabledFeatures: []string{"b", "a", "c", "d"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "a,b,c,d"},
+				features:       featuremgmt.WithFeatures("b", "a", "c", "d"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "a,b,c,d"},
 			},
 		}
 
 		for _, tc := range tcs {
 			s := &Service{
 				cfg: &config.Cfg{
-					Features: fakes.NewFakeFeatureToggles(tc.enabledFeatures...),
+					Features: tc.features,
 				},
 			}
 			require.Equal(t, tc.expectedConfig, s.GetConfigMap(context.Background(), "", nil))
