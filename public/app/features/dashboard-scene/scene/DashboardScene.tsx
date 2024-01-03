@@ -33,6 +33,7 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
+import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -248,6 +249,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         }
         if (event.payload.changedObject instanceof SceneTimeRange) {
           this.setIsDirty();
+        }
+        if (event.payload.changedObject instanceof DashboardControls) {
+          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'hideTimeControls')) {
+            this.setIsDirty();
+          }
         }
       }
     );

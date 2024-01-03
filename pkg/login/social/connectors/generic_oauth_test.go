@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -207,7 +208,7 @@ func TestSearchJSONForRole(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			provider.roleAttributePath = test.RoleAttributePath
+			provider.info.RoleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
 				actualResult, err := provider.searchJSONForStringAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
 				if test.ExpectedError == "" {
@@ -453,9 +454,9 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		provider.roleAttributePath = test.RoleAttributePath
-		provider.allowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
-		provider.skipOrgRoleSync = test.SkipOrgRoleSync
+		provider.info.RoleAttributePath = test.RoleAttributePath
+		provider.info.AllowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
+		provider.info.SkipOrgRoleSync = test.SkipOrgRoleSync
 
 		t.Run(test.Name, func(t *testing.T) {
 			body, err := json.Marshal(test.ResponseBody)
@@ -466,7 +467,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				_, err = w.Write(body)
 				require.NoError(t, err)
 			}))
-			provider.apiUrl = ts.URL
+			provider.info.ApiUrl = ts.URL
 			staticToken := oauth2.Token{
 				AccessToken:  "",
 				TokenType:    "",
@@ -566,7 +567,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 					_, err = w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+				provider.info.ApiUrl = ts.URL
 				staticToken := oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
@@ -663,7 +664,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 					_, err = w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+				provider.info.ApiUrl = ts.URL
 				staticToken := oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
@@ -912,6 +913,63 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 			require.Equal(t, tc.want.idTokenAttributeName, s.idTokenAttributeName)
 			require.Equal(t, tc.want.teamIds, s.teamIds)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
+		})
+	}
+}
+
+func TestSocialGenericOAuth_Validate(t *testing.T) {
+	testCases := []struct {
+		name        string
+		settings    ssoModels.SSOSettings
+		expectError bool
+	}{
+		{
+			name: "SSOSettings is valid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "fails if settings map contains an invalid field",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "client-id",
+					"invalid_field": []int{1, 2, 3},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "fails if client id is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "",
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "fails if client id does not exist",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Validate(context.Background(), tc.settings)
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

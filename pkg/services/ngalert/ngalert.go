@@ -162,32 +162,70 @@ type AlertNG struct {
 }
 
 func (ng *AlertNG) init() error {
-	var err error
-
 	// AlertNG should be initialized before the cancellation deadline of initCtx
 	initCtx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 
 	ng.store.Logger = ng.Log
 
+	// If enabled, configure the remote Alertmanager.
+	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
+	// - If no toggles are enabled, we default to using only the internal Alertmanager
+	// We currently support only remote secondary mode, so in case other toggles are enabled we fall back to remote secondary.
+	var overrides []notifier.Option
+	moaLogger := log.New("ngalert.multiorg.alertmanager")
+	remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
+	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
+	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
+		switch {
+		case remoteOnly, remotePrimary:
+			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
+			fallthrough
+
+		case remoteSecondary:
+			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
+			// This function will be used by the MOA to create new Alertmanagers.
+			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+					// Create internal Alertmanager.
+					internalAM, err := factoryFn(ctx, orgID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Create remote Alertmanager.
+					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore)
+					if err != nil {
+						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+						return internalAM, nil
+					}
+
+					// Use both Alertmanager implementations in the forked Alertmanager.
+					cfg := remote.RemoteSecondaryConfig{
+						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
+						OrgID:        orgID,
+						Store:        ng.store,
+						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+					}
+					return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
+				}
+			})
+
+			overrides = append(overrides, override)
+
+		default:
+			ng.Log.Error("A mode should be selected when enabling the remote Alertmanager, falling back to using only the internal Alertmanager")
+		}
+	}
+
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-
-	var overrides []notifier.Option
-	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
-		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			externalAMCfg := remote.AlertmanagerConfig{}
-			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
-			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
-			return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
-		})
-
-		overrides = append(overrides, override)
-	}
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService, overrides...)
+	moa, err := notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, overrides...)
 	if err != nil {
 		return err
 	}
+	ng.MultiOrgAlertmanager = moa
 
 	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
 	if err != nil {
@@ -236,7 +274,7 @@ func (ng *AlertNG) init() error {
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
 	// If any are set, override the config accordingly.
-	applyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
+	ApplyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
 	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
 	if err != nil {
 		return err
@@ -446,8 +484,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
 
-// applyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
-func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
+// ApplyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
+func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
 	backend, _ := historian.ParseBackendType(cfg.Backend)
 	// These feature toggles represent specific, common backend configurations.
 	// If all toggles are enabled, we listen to the state history config as written.
@@ -489,4 +527,16 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
+}
+
+func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore) (*remote.Alertmanager, error) {
+	externalAMCfg := remote.AlertmanagerConfig{
+		OrgID:             orgID,
+		URL:               amCfg.URL,
+		TenantID:          amCfg.TenantID,
+		BasicAuthPassword: amCfg.Password,
+	}
+	// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+	stateStore := notifier.NewFileStore(orgID, kvstore, "")
+	return remote.NewAlertmanager(externalAMCfg, stateStore)
 }

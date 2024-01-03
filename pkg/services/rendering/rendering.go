@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -28,7 +28,7 @@ var _ Service = (*RenderingService)(nil)
 
 type RenderingService struct {
 	log               log.Logger
-	pluginInfo        *plugins.Plugin
+	plugin            Plugin
 	renderAction      renderFunc
 	renderCSVAction   renderCSVFunc
 	sanitizeSVGAction sanitizeFunc
@@ -43,10 +43,20 @@ type RenderingService struct {
 	Cfg                         *setting.Cfg
 	features                    *featuremgmt.FeatureManager
 	RemoteCacheService          *remotecache.RemoteCache
-	RendererPluginManager       plugins.RendererManager
+	RendererPluginManager       PluginManager
 }
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
+type PluginManager interface {
+	Renderer(ctx context.Context) (Plugin, bool)
+}
+
+type Plugin interface {
+	Client() (pluginextensionv2.RendererPlugin, error)
+	Start(ctx context.Context) error
+	Version() string
+}
+
+func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -167,15 +177,13 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		}
 	}
 
-	if rs.pluginAvailable(ctx) {
+	if rp, exists := rs.RendererPluginManager.Renderer(ctx); exists {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = rs.RendererPluginManager.Renderer(ctx)
-
-		if err := rs.startPlugin(ctx); err != nil {
+		rs.plugin = rp
+		if err := rs.plugin.Start(ctx); err != nil {
 			return err
 		}
-
-		rs.version = rs.pluginInfo.Info.Version
+		rs.version = rp.Version()
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
@@ -193,7 +201,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) pluginAvailable(ctx context.Context) bool {
-	return rs.RendererPluginManager.Renderer(ctx) != nil
+	_, exists := rs.RendererPluginManager.Renderer(ctx)
+	return exists
 }
 
 func (rs *RenderingService) remoteAvailable() bool {

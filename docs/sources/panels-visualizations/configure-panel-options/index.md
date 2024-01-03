@@ -19,6 +19,7 @@ labels:
     - oss
 menuTitle: Configure panel options
 title: Configure panel options
+description: Add titles, descriptions, repeating rows and panel links
 weight: 50
 ---
 
