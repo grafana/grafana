@@ -77,8 +77,8 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     };
   }
 
-  isIncompleteQuery(_?: GrafanaQuery): boolean {
-    return false;
+  isCompleteQuery(_?: GrafanaQuery | undefined): boolean {
+    return true;
   }
 
   query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {

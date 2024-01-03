@@ -161,8 +161,8 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     });
   }
 
-  isIncompleteQuery(query?: JaegerQuery | undefined): boolean {
-    return query?.query === undefined || query.query.trim() === '';
+  isCompleteQuery(query?: JaegerQuery | undefined): boolean {
+    return query?.query !== undefined && query.query.trim() !== '';
   }
 
   applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {

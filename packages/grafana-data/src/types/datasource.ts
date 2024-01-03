@@ -364,10 +364,10 @@ abstract class DataSourceApi<
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 
   /**
-   * Define if the contents of a query are incomplete
+   * Define if the contents of a query are complete
    * @alpha -- experimental
    */
-  isIncompleteQuery?(query?: DataQuery): boolean;
+  isCompleteQuery?(query?: DataQuery): boolean;
 }
 
 /**

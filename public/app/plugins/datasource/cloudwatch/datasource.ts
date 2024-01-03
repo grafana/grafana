@@ -143,8 +143,8 @@ export class CloudWatchDatasource
     }));
   }
 
-  isIncompleteQuery(query?: CloudWatchQuery | undefined): boolean {
-    return query?.region === undefined || query.region.trim() === '';
+  isCompleteQuery(query?: CloudWatchQuery | undefined): boolean {
+    return query?.region !== undefined && query.region.trim() !== '';
   }
 
   getLogRowContext(

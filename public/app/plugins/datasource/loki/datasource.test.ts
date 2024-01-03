@@ -469,20 +469,20 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('when calling isIncompleteQuery', () => {
-    it('should return false when expr has content', () => {
+  describe('when calling isCompleteQuery', () => {
+    it('should return true when expr has content', () => {
       const ds = createLokiDatasource(templateSrvStub);
       const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
-      expect(ds.isIncompleteQuery(query)).toBe(false);
+      expect(ds.isCompleteQuery(query)).toBe(true);
     });
-    it('should return true when query is not defined', () => {
+    it('should return false when query is not defined', () => {
       const ds = createLokiDatasource(templateSrvStub);
-      expect(ds.isIncompleteQuery()).toBe(true);
+      expect(ds.isCompleteQuery()).toBe(false);
     });
-    it('should return true when expr is whitespace', () => {
+    it('should return false when expr is whitespace', () => {
       const ds = createLokiDatasource(templateSrvStub);
       const query: LokiQuery = { refId: 'A', expr: '   ' };
-      expect(ds.isIncompleteQuery(query)).toBe(true);
+      expect(ds.isCompleteQuery(query)).toBe(false);
     });
   });
 

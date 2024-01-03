@@ -122,8 +122,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return of({ state: LoadingState.Done, data: [] });
   }
 
-  isIncompleteQuery(query?: AzureMonitorQuery | undefined): boolean {
-    return query?.region === undefined || query.region.trim() === '';
+  isCompleteQuery(query?: AzureMonitorQuery | undefined): boolean {
+    return query?.region !== undefined && query.region.trim() !== '';
   }
 
   targetContainsTemplate(query: AzureMonitorQuery) {

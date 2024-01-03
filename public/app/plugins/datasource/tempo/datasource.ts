@@ -515,8 +515,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     });
   }
 
-  isIncompleteQuery(query?: TempoQuery | undefined): boolean {
-    return query?.query === undefined || query.query.trim() === '';
+  isCompleteQuery(query?: TempoQuery | undefined): boolean {
+    return query?.query !== undefined && query.query.trim() !== '';
   }
 
   applyVariables(query: TempoQuery, scopedVars: ScopedVars) {

@@ -131,10 +131,10 @@ describe('Tempo data source', () => {
     });
   });
 
-  describe('when calling isIncompleteQuery', () => {
+  describe('when calling isCompleteQuery', () => {
     const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
 
-    it('should return false when expr has content', () => {
+    it('should return true when expr has content', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const query: TempoQuery = {
         queryType: 'search',
@@ -143,13 +143,13 @@ describe('Tempo data source', () => {
         search: '',
         filters: [],
       };
-      expect(ds.isIncompleteQuery(query)).toBe(false);
+      expect(ds.isCompleteQuery(query)).toBe(true);
     });
-    it('should return true when query is not defined', () => {
+    it('should return false when query is not defined', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
-      expect(ds.isIncompleteQuery()).toBe(true);
+      expect(ds.isCompleteQuery()).toBe(false);
     });
-    it('should return true when expr is whitespace', () => {
+    it('should return false when expr is whitespace', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const query: TempoQuery = {
         queryType: 'search',
@@ -158,7 +158,7 @@ describe('Tempo data source', () => {
         search: '    ',
         filters: [],
       };
-      expect(ds.isIncompleteQuery(query)).toBe(true);
+      expect(ds.isCompleteQuery(query)).toBe(false);
     });
   });
 

@@ -339,17 +339,17 @@ describe('Cloud Monitoring Datasource', () => {
     });
   });
 
-  describe('when calling isIncompleteQuery', () => {
-    it('should return false when queryType has a value', () => {
+  describe('when calling isCompleteQuery', () => {
+    it('should return true when queryType has a value', () => {
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings);
       const query: CloudMonitoringQuery = { refId: 'A', queryType: QueryType.PROMQL };
-      expect(ds.isIncompleteQuery(query)).toBe(false);
+      expect(ds.isCompleteQuery(query)).toBe(true);
     });
-    it('should return true when query is not defined', () => {
+    it('should return false when query is not defined', () => {
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings);
-      expect(ds.isIncompleteQuery()).toBe(true);
+      expect(ds.isCompleteQuery()).toBe(false);
     });
   });
 });

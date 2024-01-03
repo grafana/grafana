@@ -257,8 +257,8 @@ export class ElasticDatasource
     );
   }
 
-  isIncompleteQuery(query?: ElasticsearchQuery | undefined): boolean {
-    return query?.query === undefined || query.query.trim() === '';
+  isCompleteQuery(query?: ElasticsearchQuery | undefined): boolean {
+    return query?.query !== undefined && query.query.trim() !== '';
   }
 
   private prepareAnnotationRequest(options: { annotation: ElasticsearchAnnotationQuery; range: TimeRange }) {

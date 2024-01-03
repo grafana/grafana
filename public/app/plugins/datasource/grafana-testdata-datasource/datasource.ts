@@ -141,8 +141,8 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     return merge(...streams);
   }
 
-  isIncompleteQuery(_?: TestData | undefined): boolean {
-    return false;
+  isCompleteQuery(_?: TestData | undefined): boolean {
+    return true;
   }
 
   resolveTemplateVariables(query: TestData, scopedVars: ScopedVars) {

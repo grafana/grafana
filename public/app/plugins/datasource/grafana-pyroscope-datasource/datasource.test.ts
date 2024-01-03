@@ -114,10 +114,10 @@ describe('Pyroscope data source', () => {
     });
   });
 
-  describe('when calling isIncompleteQuery', () => {
+  describe('when calling isCompleteQuery', () => {
     const templateSrv = getTemplateSrv();
 
-    it('should return false when profileTypeId has content', () => {
+    it('should return true when profileTypeId has content', () => {
       const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
       const query: Query = {
         refId: 'A',
@@ -126,13 +126,13 @@ describe('Pyroscope data source', () => {
         queryType: 'both',
         labelSelector: 'baz',
       };
-      expect(ds.isIncompleteQuery(query)).toBe(false);
+      expect(ds.isCompleteQuery(query)).toBe(true);
     });
-    it('should return true when query is not defined', () => {
+    it('should return false when query is not defined', () => {
       const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
-      expect(ds.isIncompleteQuery()).toBe(true);
+      expect(ds.isCompleteQuery()).toBe(false);
     });
-    it('should return true when profileTypeId is whitespace', () => {
+    it('should return false when profileTypeId is whitespace', () => {
       const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
       const query: Query = {
         refId: 'A',
@@ -141,7 +141,7 @@ describe('Pyroscope data source', () => {
         queryType: 'both',
         labelSelector: 'baz',
       };
-      expect(ds.isIncompleteQuery(query)).toBe(true);
+      expect(ds.isCompleteQuery(query)).toBe(false);
     });
   });
 });

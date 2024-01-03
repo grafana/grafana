@@ -358,8 +358,8 @@ export class GraphiteDatasource
     return expandedQueries;
   }
 
-  isIncompleteQuery(query?: GraphiteQuery | undefined): boolean {
-    return query?.target === undefined || query.target.trim() === '';
+  isCompleteQuery(query?: GraphiteQuery | undefined): boolean {
+    return query?.target !== undefined && query.target.trim() !== '';
   }
 
   annotationEvents(range: any, target: any) {

@@ -31,7 +31,7 @@ export class ParcaDataSource extends DataSourceWithBackend<Query, ParcaDataSourc
     return await super.getResource('labelValues', { label: labelName });
   }
 
-  isIncompleteQuery(query?: Query | undefined): boolean {
-    return query?.profileTypeId === undefined || query?.profileTypeId.trim() === '';
+  isCompleteQuery(query?: Query | undefined): boolean {
+    return query?.profileTypeId !== undefined && query.profileTypeId.trim() !== '';
   }
 }

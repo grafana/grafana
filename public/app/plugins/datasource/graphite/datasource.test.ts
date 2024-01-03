@@ -657,25 +657,25 @@ describe('graphiteDatasource', () => {
     });
   });
 
-  describe('when calling isIncompleteQuery', () => {
+  describe('when calling isCompleteQuery', () => {
     const ctx = {
       templateSrv: new TemplateSrv(),
       instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
     };
 
-    it('should return false when target has content', () => {
+    it('should return true when target has content', () => {
       const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.templateSrv);
       const query: GraphiteQuery = { refId: 'A', target: 'foo' };
-      expect(ds.isIncompleteQuery(query)).toBe(false);
+      expect(ds.isCompleteQuery(query)).toBe(true);
     });
-    it('should return true when query is not defined', () => {
+    it('should return false when query is not defined', () => {
       const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.templateSrv);
-      expect(ds.isIncompleteQuery()).toBe(true);
+      expect(ds.isCompleteQuery()).toBe(false);
     });
-    it('should return true when target is whitespace', () => {
+    it('should return false when target is whitespace', () => {
       const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.templateSrv);
       const query: GraphiteQuery = { refId: 'A', target: '   ' };
-      expect(ds.isIncompleteQuery(query)).toBe(true);
+      expect(ds.isCompleteQuery(query)).toBe(false);
     });
   });
 

@@ -48,8 +48,8 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
     });
   }
 
-  isIncompleteQuery(query?: Query | undefined): boolean {
-    return query?.profileTypeId === undefined || query.profileTypeId.trim() === '';
+  isCompleteQuery(query?: Query | undefined): boolean {
+    return query?.profileTypeId !== undefined && query.profileTypeId.trim() !== '';
   }
 
   async getProfileTypes(): Promise<ProfileTypeMessage[]> {
