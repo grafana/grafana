@@ -37,6 +37,7 @@ interface Props {
   panelPluginId?: string;
   fieldConfig?: FieldConfigSource;
   hasTransformations?: boolean;
+  formattedDataDescription?: string;
   onOptionsChange?: (options: GetDataOptions) => void;
 }
 
@@ -242,7 +243,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isLoading, options, data, onOptionsChange, hasTransformations } = this.props;
+    const { isLoading, options, data, formattedDataDescription, onOptionsChange, hasTransformations } = this.props;
     const { dataFrameIndex, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -278,6 +279,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
             transformationOptions={transformationOptions}
             selectedDataFrame={selectedDataFrame}
             downloadForExcel={downloadForExcel}
+            formattedDataDescription={formattedDataDescription}
             onOptionsChange={onOptionsChange}
             onDataFrameChange={this.onDataFrameChange}
             toggleDownloadForExcel={this.onToggleDownloadForExcel}
