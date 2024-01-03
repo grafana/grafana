@@ -2,21 +2,6 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/grafana/grafana/pkg/apis"
-)
-
-const (
-	GROUP      = "service.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
-)
-
-var ExternalNameResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"externalnames", "externalname", "ExternalName",
-	func() runtime.Object { return &ExternalName{} },
-	func() runtime.Object { return &ExternalNameList{} },
 )
 
 // +genclient

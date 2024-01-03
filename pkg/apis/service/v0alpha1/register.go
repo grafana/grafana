@@ -4,12 +4,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apis"
 )
 
-// SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: "v0alpha1"}
+const (
+	GROUP      = "service.grafana.app"
+	VERSION    = "v0alpha1"
+	APIVERSION = GROUP + "/" + VERSION
+)
+
+var ExternalNameResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"externalnames", "externalname", "ExternalName",
+	func() runtime.Object { return &ExternalName{} },
+	func() runtime.Object { return &ExternalNameList{} },
+)
 
 var (
+	// SchemeGroupVersion is group version used to register these objects
+	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
+
+	// SchemaBuilder is used by standard codegen
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
 	AddToScheme        = localSchemeBuilder.AddToScheme

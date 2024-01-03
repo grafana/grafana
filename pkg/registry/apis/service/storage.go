@@ -1,14 +1,18 @@
 package service
 
 import (
-	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	"fmt"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/apiserver/pkg/registry/rest"
 
+	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -27,8 +31,25 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 		PredicateFunc:             grafanaregistry.Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor:            rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
-
+		TableConvertor: utils.NewTableConverter(
+			resourceInfo.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Host", Type: "string", Format: "string", Description: "The service host"},
+				{Name: "Created At", Type: "date"},
+			},
+			func(obj any) ([]interface{}, error) {
+				m, ok := obj.(*service.ExternalName)
+				if !ok {
+					return nil, fmt.Errorf("expected playlist")
+				}
+				return []interface{}{
+					m.Name,
+					m.Spec.Host,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			},
+		),
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
