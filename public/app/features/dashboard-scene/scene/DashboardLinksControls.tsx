@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Tooltip } from '@grafana/ui';
-import { linkIconMap } from 'app/features/dashboard/components/LinksSettings/LinkSettingsEdit';
+import { linkIconMap } from 'app/features/dashboard/components/LinksSettings';
 import {
   DashboardLinkButton,
   DashboardLinksDashboard,

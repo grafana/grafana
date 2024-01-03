@@ -9,7 +9,7 @@ import { Tooltip, useForceUpdate } from '@grafana/ui';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardModel } from '../../state';
-import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
+import { linkIconMap } from '../LinksSettings';
 
 import { DashboardLinkButton, DashboardLinksDashboard } from './DashboardLinksDashboard';
 

@@ -48,7 +48,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** Tags */
   tags?: string[];
   /** Links */
-  links?: DashboardLink[];
+  links: DashboardLink[];
   /** Is editable */
   editable?: boolean;
   /** A uid when saved */
@@ -109,6 +109,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       meta: {},
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
+      links: state.links ?? [],
       ...state,
     });
 
