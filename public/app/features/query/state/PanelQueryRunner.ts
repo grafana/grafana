@@ -40,7 +40,8 @@ import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datas
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
-import { createThresholdOverrides } from './DashboardQueryRunner/utils';
+import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
+import { createThresholdOverrides, emptyResult } from './DashboardQueryRunner/utils';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { runRequest } from './runRequest';
 
@@ -112,7 +113,13 @@ export class PanelQueryRunner {
     }
 
     const panel = this.dataConfigSource as unknown as PanelModel;
-    const dashData = getDashboardQueryRunner().getResult(panel.id);
+    let dashData: Observable<DashboardQueryRunnerResult>;
+
+    try {
+      dashData = getDashboardQueryRunner().getResult(panel.id);
+    } catch (err) {
+      dashData = emptyResult();
+    }
 
     return combineLatest([this.subject, dashData]).pipe(
       mergeMap(([panel, dashData]) => {
