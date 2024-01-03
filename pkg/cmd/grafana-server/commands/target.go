@@ -50,7 +50,10 @@ func RunTargetServer(opts ServerOptions) error {
 	logger := log.New("cli")
 	defer func() {
 		if err := log.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+			_, writeErr := fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+			if writeErr != nil {
+				fmt.Println(writingToStdErrFailed)
+			}
 		}
 	}()
 
