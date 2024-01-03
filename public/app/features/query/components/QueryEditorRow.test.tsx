@@ -1,8 +1,31 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import React, { PropsWithChildren } from 'react';
 
 import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { filterPanelDataToQuery, QueryEditorRow } from './QueryEditorRow';
+import { DataSourceType } from '../../alerting/unified/utils/datasource';
+
+import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
+
+const mockDS = mockDataSource({
+  name: 'test',
+  type: DataSourceType.Alertmanager,
+});
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () => Promise.resolve(mockDS),
+      getList: () => {},
+      getInstanceSettings: () => mockDS,
+    }),
+  };
+});
+// Draggable fails to render in tests, so we mock it out
+jest.mock('app/core/components/QueryOperationRow/QueryOperationRow', () => ({
+  QueryOperationRow: (props: PropsWithChildren) => <div>{props.children}</div>,
+}));
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {
   return {
@@ -217,5 +240,52 @@ describe('frame results with warnings', () => {
 
     const warningsComponent = editorRow.renderWarnings();
     expect(warningsComponent).toBe(null);
+  });
+});
+describe('QueryEditorRow', () => {
+  const props = (data: PanelData): Props<DataQuery> => ({
+    dataSource: mockDS,
+    query: { refId: 'B' },
+    data,
+    queries: [{ refId: 'B' }],
+    id: 'test',
+    onAddQuery: jest.fn(),
+    onRunQuery: jest.fn(),
+    onChange: jest.fn(),
+    onRemoveQuery: jest.fn(),
+    index: 0,
+  });
+  it('should display error message in corresponding panel', async () => {
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      errors: [{ message: 'Error!!', refId: 'B' }],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
+    expect(await screen.findByText('Error!!')).toBeInTheDocument();
+  });
+  it('should display error message in corresponding panel if only error field is provided', async () => {
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      error: { message: 'Error!!', refId: 'B' },
+      errors: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
+    expect(await screen.findByText('Error!!')).toBeInTheDocument();
+  });
+  it('should not display error message if error.refId doesnt match', async () => {
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      errors: [{ message: 'Error!!', refId: 'A' }],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
+    });
   });
 });
