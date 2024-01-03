@@ -9,6 +9,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"sync"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
@@ -23,6 +24,7 @@ import (
 type SocialBase struct {
 	*oauth2.Config
 	info              *social.OAuthInfo
+	infoMutex         sync.RWMutex
 	log               log.Logger
 	autoAssignOrgRole string
 	features          featuremgmt.FeatureManager
@@ -68,6 +70,13 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
 	bf.WriteString("```\n\n")
 	return nil
+}
+
+func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
+	s.infoMutex.RLock()
+	defer s.infoMutex.RUnlock()
+
+	return s.info
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {

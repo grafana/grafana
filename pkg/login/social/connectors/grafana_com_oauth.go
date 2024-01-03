@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
 
 	"golang.org/x/oauth2"
 
@@ -28,7 +27,6 @@ type SocialGrafanaCom struct {
 	*SocialBase
 	url                  string
 	allowedOrganizations []string
-	reloadMutex          sync.Mutex
 }
 
 type OrgRecord struct {
@@ -65,8 +63,8 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	s.reloadMutex.Lock()
-	defer s.reloadMutex.Unlock()
+	s.infoMutex.Lock()
+	defer s.infoMutex.Unlock()
 
 	// TODO: decide if we also want to apply the overwrites from the constructor (lines 40-42)
 	s.info = info
@@ -105,6 +103,8 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
+	info := s.GetOAuthInfo()
+
 	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
 
 	if err != nil {
@@ -118,7 +118,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 
 	// on login we do not want to display the role from the external provider
 	var role roletype.RoleType
-	if !s.info.SkipOrgRoleSync {
+	if !info.SkipOrgRoleSync {
 		role = org.RoleType(data.Role)
 	}
 	userInfo := &social.BasicUserInfo{
@@ -136,8 +136,4 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	return userInfo, nil
-}
-
-func (s *SocialGrafanaCom) GetOAuthInfo() *social.OAuthInfo {
-	return s.info
 }

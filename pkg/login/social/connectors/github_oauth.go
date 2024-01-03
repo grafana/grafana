@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 
 	"golang.org/x/oauth2"
 
@@ -32,7 +31,6 @@ type SocialGithub struct {
 	*SocialBase
 	allowedOrganizations []string
 	teamIds              []int
-	reloadMutex          sync.Mutex
 }
 
 type GithubTeam struct {
@@ -87,8 +85,8 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	s.reloadMutex.Lock()
-	defer s.reloadMutex.Unlock()
+	s.infoMutex.Lock()
+	defer s.infoMutex.Unlock()
 
 	s.info = info
 
@@ -145,7 +143,9 @@ func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Clien
 		Verified bool   `json:"verified"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/emails"))
+	info := s.GetOAuthInfo()
+
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(info.ApiUrl+"/emails"))
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
@@ -168,7 +168,9 @@ func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Clien
 }
 
 func (s *SocialGithub) FetchTeamMemberships(ctx context.Context, client *http.Client) ([]GithubTeam, error) {
-	url := fmt.Sprintf(s.info.ApiUrl + "/teams?per_page=100")
+	info := s.GetOAuthInfo()
+
+	url := fmt.Sprintf(info.ApiUrl + "/teams?per_page=100")
 	hasMore := true
 	teams := make([]GithubTeam, 0)
 
@@ -250,7 +252,9 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		Name  string `json:"name"`
 	}
 
-	response, err := s.httpGet(ctx, client, s.info.ApiUrl)
+	info := s.GetOAuthInfo()
+
+	response, err := s.httpGet(ctx, client, info.ApiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
@@ -269,20 +273,20 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	var role roletype.RoleType
 	var isGrafanaAdmin *bool = nil
 
-	if !s.info.SkipOrgRoleSync {
+	if !info.SkipOrgRoleSync {
 		var grafanaAdmin bool
 		role, grafanaAdmin, err = s.extractRoleAndAdmin(response.Body, teams)
 		if err != nil {
 			return nil, err
 		}
 
-		if s.info.AllowAssignGrafanaAdmin {
+		if info.AllowAssignGrafanaAdmin {
 			isGrafanaAdmin = &grafanaAdmin
 		}
 	}
 
 	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
-	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
+	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -299,7 +303,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		userInfo.Name = data.Name
 	}
 
-	organizationsUrl := fmt.Sprintf(s.info.ApiUrl + "/orgs?per_page=100")
+	organizationsUrl := fmt.Sprintf(info.ApiUrl + "/orgs?per_page=100")
 
 	if !s.IsTeamMember(ctx, client) {
 		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", s.teamIds)
@@ -326,10 +330,6 @@ func (t *GithubTeam) GetShorthand() (string, error) {
 		return "", errors.New("Error getting team shorthand")
 	}
 	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
-}
-
-func (s *SocialGithub) GetOAuthInfo() *social.OAuthInfo {
-	return s.info
 }
 
 func convertToGroupList(t []GithubTeam) []string {
