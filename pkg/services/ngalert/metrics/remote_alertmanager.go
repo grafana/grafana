@@ -33,5 +33,4 @@ func NewRemoteAlertmanagerMetrics(r prometheus.Registerer, subsystem string) *Re
 			Help:      "Histogram of request durations to the remote Alertmanager.",
 		}, instrument.HistogramCollectorBuckets)),
 	}
-
 }
