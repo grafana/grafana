@@ -147,6 +147,10 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	}
 
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
+
+	// TODO: determine authorization, currently insecure because Authorization provided by recommended options doesn't work
+	// reason: an aggregated server won't be able to post subjectaccessreviews (Grafana doesn't have this kind)
+	// exact error: the server could not find the requested resource (post subjectaccessreviews.authorization.k8s.io)
 	o.RecommendedOptions.Authorization = nil
 
 	o.RecommendedOptions.Admission = nil
