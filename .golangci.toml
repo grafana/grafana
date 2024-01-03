@@ -56,6 +56,8 @@ deny = [
 files = [
   "**/pkg/tsdb/grafana-testdata-datasource/*",
   "**/pkg/tsdb/grafana-testdata-datasource/**/*",
+  "**/pkg/tsdb/parca/*",
+  "**/pkg/tsdb/parca/**/*",
 ]
 
 [linters-settings.gocritic]

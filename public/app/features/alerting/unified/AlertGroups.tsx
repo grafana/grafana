@@ -91,7 +91,7 @@ const AlertGroups = () => {
 };
 
 const AlertGroupsPage = () => (
-  <AlertmanagerPageWrapper pageId="groups" accessType="instance">
+  <AlertmanagerPageWrapper navId="groups" accessType="instance">
     <AlertGroups />
   </AlertmanagerPageWrapper>
 );

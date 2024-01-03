@@ -42,7 +42,7 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			if err != nil {
 				return nil, err
 			}
-			sub.HandleFunc(route.Path, route.Handler).
+			sub.HandleFunc("/"+route.Path, route.Handler).
 				Methods(methods...)
 		}
 
@@ -60,7 +60,7 @@ func GetAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			if err != nil {
 				return nil, err
 			}
-			sub.HandleFunc(route.Path, route.Handler).
+			sub.HandleFunc("/"+route.Path, route.Handler).
 				Methods(methods...)
 		}
 	}
