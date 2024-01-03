@@ -49,7 +49,7 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
     collapsedInfo.push(`Group by: ${query.groupBy.join(', ')}`);
   }
   if (query.spanSelector?.length) {
-    collapsedInfo.push(`Span ID: ${query.spanSelector}`);
+    collapsedInfo.push(`Span IDs: ${query.spanSelector.join(', ')}`);
   }
   if (query.maxNodes) {
     collapsedInfo.push(`Max nodes: ${query.maxNodes}`);
