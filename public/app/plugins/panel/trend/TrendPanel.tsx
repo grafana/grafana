@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
+import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin, TooltipPlugin2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { DashboardCursorSync, DataFrameType, PanelProps } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlugin } from '@grafana/ui';

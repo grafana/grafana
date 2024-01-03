@@ -7,34 +7,30 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataHoverPayload,
-  DecimalCount,
-  FieldColorModeId,
   FieldConfig,
   FieldType,
   formattedValueToString,
-  getDisplayProcessor,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
+  getFieldDisplayName,
+  getDisplayProcessor,
+  FieldColorModeId,
+  DecimalCount,
 } from '@grafana/data';
 // eslint-disable-next-line import/order
 import {
-  AxisColorMode,
   AxisPlacement,
   GraphDrawStyle,
   GraphFieldConfig,
-  GraphGradientMode,
-  GraphTransform,
   GraphTresholdsStyleMode,
+  VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
   StackingMode,
-  VisibilityMode,
+  GraphTransform,
+  AxisColorMode,
+  GraphGradientMode,
 } from '@grafana/schema';
-import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
-import { getScaleGradientFn } from '@grafana/ui/src/components/uPlot/config/gradientFills';
-import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
 // see categories.ts is @grafana/data
@@ -65,6 +61,11 @@ const BIN_INCRS = Array(53);
 for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
+
+import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
+import { getScaleGradientFn } from '@grafana/ui/src/components/uPlot/config/gradientFills';
+import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 

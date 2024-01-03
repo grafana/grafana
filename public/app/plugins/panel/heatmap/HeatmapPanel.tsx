@@ -18,13 +18,13 @@ import {
   Portal,
   ScaleDistribution,
   TooltipPlugin2,
+  ZoomPlugin,
   UPlotChart,
   usePanelContext,
   useStyles2,
   useTheme2,
   VizLayout,
   VizTooltipContainer,
-  ZoomPlugin,
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
