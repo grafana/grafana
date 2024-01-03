@@ -194,7 +194,7 @@ func TestWarmStateCache(t *testing.T) {
 	instances = append(instances, models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
 			RuleOrgID:  rule.OrgID,
-			RuleUID:    "does not exist",
+			RuleUID:    "does-not-exist",
 			LabelsHash: hash,
 		},
 		CurrentState:      models.InstanceStateFiring,
@@ -232,6 +232,18 @@ func TestWarmStateCache(t *testing.T) {
 				t.FailNow()
 			}
 		}
+	})
+
+	t.Run("database no longer contains orphaned entries", func(t *testing.T) {
+		query := &models.ListAlertInstancesQuery{
+			RuleOrgID: rule.OrgID,
+			RuleUID:   "does-not-exist", //  Same UID as previously inserted `test6` entry.
+		}
+
+		res, err := dbstore.ListAlertInstances(ctx, query)
+
+		require.NoError(t, err)
+		require.Empty(t, res, "Orphaned entry was not cleared from database")
 	})
 }
 
