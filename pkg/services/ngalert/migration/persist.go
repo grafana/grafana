@@ -94,11 +94,13 @@ func createDelta(
 // syncDelta persists the given delta to the state and database.
 func (sync *sync) syncDelta(ctx context.Context, delta StateDelta) (*migrationStore.OrgMigrationState, error) {
 	state := &migrationStore.OrgMigrationState{
-		OrgID:          sync.orgID,
-		CreatedFolders: make([]string, 0),
+		OrgID:              sync.orgID,
+		CreatedFolders:     make([]string, 0),
+		MigratedDashboards: make(map[int64]*migrationStore.DashboardUpgrade, len(delta.DashboardsToAdd)),
+		MigratedChannels:   make(map[int64]*migrationStore.ContactPair, len(delta.ChannelsToAdd)),
 	}
 
-	amConfig, err := sync.handleAlertmanager(ctx, delta)
+	amConfig, err := sync.handleAlertmanager(ctx, state, delta)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +114,7 @@ func (sync *sync) syncDelta(ctx context.Context, delta StateDelta) (*migrationSt
 }
 
 // handleAlertmanager persists the given channel delta to the state and database.
-func (sync *sync) handleAlertmanager(ctx context.Context, delta StateDelta) (*migmodels.Alertmanager, error) {
+func (sync *sync) handleAlertmanager(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta) (*migmodels.Alertmanager, error) {
 	amConfig := migmodels.NewAlertmanager()
 
 	if len(delta.ChannelsToAdd) == 0 {
@@ -122,16 +124,19 @@ func (sync *sync) handleAlertmanager(ctx context.Context, delta StateDelta) (*mi
 	for _, pair := range delta.ChannelsToAdd {
 		amConfig.AddReceiver(pair.ContactPoint)
 		amConfig.AddRoute(pair.Route)
+		state.MigratedChannels[pair.Channel.ID] = newContactPair(pair)
 	}
+
+	config := migmodels.CleanAlertmanager(amConfig)
 
 	// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
 	// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
-	if err := sync.validateAlertmanagerConfig(amConfig.Config); err != nil {
+	if err := sync.validateAlertmanagerConfig(config); err != nil {
 		return nil, fmt.Errorf("validate AlertmanagerConfig: %w", err)
 	}
 
-	sync.log.Info("Writing alertmanager config", "receivers", len(amConfig.Config.AlertmanagerConfig.Receivers), "routes", len(amConfig.Config.AlertmanagerConfig.Route.Routes))
-	if err := sync.migrationStore.SaveAlertmanagerConfiguration(ctx, sync.orgID, amConfig.Config); err != nil {
+	sync.log.Info("Writing alertmanager config", "receivers", len(config.AlertmanagerConfig.Receivers), "routes", len(config.AlertmanagerConfig.Route.Routes))
+	if err := sync.migrationStore.SaveAlertmanagerConfiguration(ctx, sync.orgID, config); err != nil {
 		return nil, fmt.Errorf("write AlertmanagerConfig: %w", err)
 	}
 
@@ -143,8 +148,13 @@ func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgM
 	pairs := make([]*migmodels.AlertPair, 0)
 	createdFolderUIDs := make(map[string]struct{})
 	for _, duToAdd := range delta.DashboardsToAdd {
+		du := &migrationStore.DashboardUpgrade{
+			DashboardID:    duToAdd.ID,
+			MigratedAlerts: make(map[int64]*migrationStore.AlertPair, len(duToAdd.MigratedAlerts)),
+		}
 		pairsWithRules := make([]*migmodels.AlertPair, 0, len(duToAdd.MigratedAlerts))
 		for _, pair := range duToAdd.MigratedAlerts {
+			du.MigratedAlerts[pair.LegacyRule.PanelID] = newAlertPair(pair)
 			if pair.Rule != nil {
 				pairsWithRules = append(pairsWithRules, pair)
 			}
@@ -156,6 +166,8 @@ func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgM
 			if err != nil {
 				return err
 			}
+			du.AlertFolderUID = migratedFolder.uid
+			du.Warning = migratedFolder.warning
 
 			// Keep track of folders created by the migration.
 			if _, exists := createdFolderUIDs[migratedFolder.uid]; migratedFolder.created && !exists {
@@ -168,6 +180,7 @@ func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgM
 				pairs = append(pairs, pair)
 			}
 		}
+		state.MigratedDashboards[du.DashboardID] = du
 	}
 
 	if len(pairs) > 0 {
@@ -182,7 +195,7 @@ func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgM
 		if err != nil {
 			return fmt.Errorf("deduplicate titles: %w", err)
 		}
-		rules, err := sync.attachContactPointLabels(ctx, pairs, amConfig)
+		rules, err := sync.attachContactPointLabels(ctx, state, pairs, amConfig)
 		if err != nil {
 			return fmt.Errorf("attach contact point labels: %w", err)
 		}
@@ -237,7 +250,7 @@ func (sync *sync) deduplicateTitles(ctx context.Context, pairs []*migmodels.Aler
 }
 
 // attachContactPointLabels attaches contact point labels to the given alert rules.
-func (sync *sync) attachContactPointLabels(ctx context.Context, pairs []*migmodels.AlertPair, amConfig *migmodels.Alertmanager) ([]models.AlertRule, error) {
+func (sync *sync) attachContactPointLabels(ctx context.Context, state *migrationStore.OrgMigrationState, pairs []*migmodels.AlertPair, amConfig *migmodels.Alertmanager) ([]models.AlertRule, error) {
 	rules := make([]models.AlertRule, 0, len(pairs))
 	for _, pair := range pairs {
 		alertChannels, err := sync.extractChannels(ctx, pair.LegacyRule)
@@ -245,10 +258,12 @@ func (sync *sync) attachContactPointLabels(ctx context.Context, pairs []*migmode
 			return nil, fmt.Errorf("extract channel IDs: %w", err)
 		}
 
+		statePair := state.MigratedDashboards[pair.LegacyRule.DashboardID].MigratedAlerts[pair.LegacyRule.PanelID]
+		statePair.ChannelIDs = make([]int64, 0, len(alertChannels))
 		for _, c := range alertChannels {
+			statePair.ChannelIDs = append(statePair.ChannelIDs, c.ID)
 			pair.Rule.Labels[contactLabel(c.Name)] = "true"
 		}
-
 		rules = append(rules, *pair.Rule)
 	}
 	return rules, nil
@@ -315,4 +330,33 @@ func (sync *sync) validateAlertmanagerConfig(config *apiModels.PostableUserConfi
 	}
 
 	return nil
+}
+
+func newContactPair(pair *migmodels.ContactPair) *migrationStore.ContactPair {
+	p := &migrationStore.ContactPair{
+		LegacyID: pair.Channel.ID,
+	}
+	if pair.Error != nil {
+		p.Error = pair.Error.Error()
+	}
+
+	if pair.ContactPoint != nil {
+		p.NewReceiverUID = pair.ContactPoint.UID
+	}
+	return p
+}
+
+func newAlertPair(a *migmodels.AlertPair) *migrationStore.AlertPair {
+	pair := &migrationStore.AlertPair{}
+	if a.Error != nil {
+		pair.Error = a.Error.Error()
+	}
+	if a.LegacyRule != nil {
+		pair.LegacyID = a.LegacyRule.ID
+		pair.PanelID = a.LegacyRule.PanelID
+	}
+	if a.Rule != nil {
+		pair.NewRuleUID = a.Rule.UID
+	}
+	return pair
 }
