@@ -46,7 +46,7 @@ interface ChangeDatasourcePayload {
   options?: { importQueries: boolean };
 }
 export const changeDatasource = createAsyncThunk(
-  'explorer/changeDatasource',
+  'explore/changeDatasource',
   async ({ datasource, exploreId, options }: ChangeDatasourcePayload, { getState, dispatch }) => {
     const orgId = getState().user.orgId;
     const { history, instance } = await loadAndInitDatasource(orgId, datasource);
