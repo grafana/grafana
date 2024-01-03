@@ -26,7 +26,7 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
-  const { sync, dataLinkPostProcessor } = usePanelContext();
+  const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
     options.xField ?? data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
