@@ -174,10 +174,14 @@ func (fm *FeatureManager) LookupFlag(name string) (FeatureFlag, bool) {
 
 // ############# Test Functions #############
 
+func WithFeatures(spec ...any) FeatureToggles {
+	return WithManager(spec...)
+}
+
 // WithFeatures is used to define feature toggles for testing.
 // The arguments are a list of strings that are optionally followed by a boolean value for example:
 // WithFeatures([]any{"my_feature", "other_feature"}) or WithFeatures([]any{"my_feature", true})
-func WithFeatures(spec ...any) *FeatureManager {
+func WithManager(spec ...any) *FeatureManager {
 	count := len(spec)
 	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)

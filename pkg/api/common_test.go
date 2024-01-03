@@ -260,7 +260,7 @@ func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *u
 
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	if features == nil {
-		features = featuremgmt.WithFeatures()
+		features = featuremgmt.WithManager()
 	}
 	// nolint:staticcheck
 	cfg := setting.NewCfgWithFeatures(features.IsEnabledGlobally)
@@ -296,7 +296,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	hs := &HTTPServer{
 		RouteRegister:      routing.NewRouteRegister(),
 		License:            &licensing.OSSLicensingService{},
-		Features:           featuremgmt.WithFeatures(),
+		Features:           featuremgmt.WithManager(),
 		QuotaService:       quotatest.New(false, nil),
 		searchUsersService: &searchusers.OSSService{},
 	}

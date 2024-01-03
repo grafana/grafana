@@ -282,7 +282,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := NewLocalFinder(false, featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins))
+			f := NewLocalFinder(false, featuremgmt.WithManager(featuremgmt.FlagExternalCorePlugins))
 			pluginBundles, err := f.Find(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return tc.pluginClass
@@ -318,7 +318,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
+		finder := NewLocalFinder(false, featuremgmt.WithManager())
 		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -333,7 +333,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
+		finder := NewLocalFinder(false, featuremgmt.WithManager())
 		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -348,7 +348,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
+		finder := NewLocalFinder(false, featuremgmt.WithManager())
 		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.Error(t, err)
 		require.Empty(t, paths)
@@ -366,7 +366,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
+		finder := NewLocalFinder(false, featuremgmt.WithManager())
 		paths, err := finder.getAbsPluginJSONPaths("test", false)
 		require.ErrorIs(t, err, filepath.SkipDir)
 		require.Empty(t, paths)
@@ -403,7 +403,7 @@ func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
 			},
 		}
 		for _, tc := range tcs {
-			pluginBundles, err := NewLocalFinder(false, featuremgmt.WithFeatures()).getAbsPluginJSONPaths(dir, tc.followDist)
+			pluginBundles, err := NewLocalFinder(false, featuremgmt.WithManager()).getAbsPluginJSONPaths(dir, tc.followDist)
 			require.NoError(t, err)
 
 			sort.Strings(pluginBundles)

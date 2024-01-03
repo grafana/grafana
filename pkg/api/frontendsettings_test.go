@@ -104,7 +104,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	cfg.BuildVersion = "7.8.9"
 	cfg.BuildCommit = "01234567"
 
-	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil)
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithManager(), nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
@@ -195,7 +195,7 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 			if test.mutateCfg != nil {
 				test.mutateCfg(cfg)
 			}
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil)
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithManager(), nil, nil)
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -326,7 +326,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings())
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithManager(), test.pluginStore(), test.pluginSettings())
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()

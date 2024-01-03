@@ -675,7 +675,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
-				Features:                     featuremgmt.WithFeatures(),
+				Features:                     featuremgmt.WithManager(),
 				starService:                  startest.NewStarServiceFake(),
 			}
 			hs.callGetDashboard(sc)
@@ -708,7 +708,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			pluginStore:             &pluginstore.FakePluginStore{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
-			Features:                featuremgmt.WithFeatures(),
+			Features:                featuremgmt.WithManager(),
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 			QuotaService:            quotatest.New(false, nil),
@@ -850,7 +850,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		AccessControl:                accesscontrolmock.New(),
 		dashboardProvisioningService: dashboardProvisioningService,
 		DashboardService:             dashboardService,
-		Features:                     featuremgmt.WithFeatures(),
+		Features:                     featuremgmt.WithManager(),
 		starService:                  startest.NewStarServiceFake(),
 	}
 
@@ -902,7 +902,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			LibraryElementService: &mockLibraryElementService{},
 			DashboardService:      dashboardService,
 			folderService:         folderService,
-			Features:              featuremgmt.WithFeatures(),
+			Features:              featuremgmt.WithManager(),
 			accesscontrolService:  actest.FakeService{},
 			log:                   log.New("test-logger"),
 		}
@@ -938,7 +938,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
-			Features:                featuremgmt.WithFeatures(),
+			Features:                featuremgmt.WithManager(),
 			DashboardService:        dashSvc,
 		}
 
@@ -979,7 +979,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			LibraryElementService:   &mockLibraryElementService{},
 			DashboardService:        mock,
 			SQLStore:                sqlStore,
-			Features:                featuremgmt.WithFeatures(),
+			Features:                featuremgmt.WithManager(),
 			dashboardVersionService: fakeDashboardVersionService,
 			accesscontrolService:    actest.FakeService{},
 			folderService:           folderSvc,

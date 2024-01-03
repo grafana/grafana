@@ -392,7 +392,7 @@ func TestAPI_Annotations(t *testing.T) {
 				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0})
 				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1})
 				hs.annotationsRepo = repo
-				hs.Features = featuremgmt.WithFeatures(tt.featureFlags...)
+				hs.Features = featuremgmt.WithManager(tt.featureFlags...)
 				dashService := &dashboards.FakeDashboardService{}
 				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil)
 				folderService := &foldertest.FakeService{}

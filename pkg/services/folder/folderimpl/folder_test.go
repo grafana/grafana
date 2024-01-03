@@ -587,7 +587,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 		testCases := []struct {
 			service           *Service
-			featuresFlag      *featuremgmt.FeatureManager
+			featuresFlag      featuremgmt.FeatureToggles
 			prefix            string
 			depth             int
 			forceDelete       bool

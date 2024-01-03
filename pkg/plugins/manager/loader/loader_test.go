@@ -68,7 +68,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a Core plugin",
 			class:       plugins.ClassCore,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.Cfg{Features: featuremgmt.WithManager()},
 			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
 				{
@@ -118,7 +118,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a Bundled plugin",
 			class:       plugins.ClassBundled,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.Cfg{Features: featuremgmt.WithManager()},
 			pluginPaths: []string{"../testdata/valid-v2-signature"},
 			want: []*plugins.Plugin{
 				{
@@ -158,7 +158,7 @@ func TestLoader_Load(t *testing.T) {
 		}, {
 			name:        "Load plugin with symbolic links",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.Cfg{Features: featuremgmt.WithManager()},
 			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
 			want: []*plugins.Plugin{
 				{
@@ -236,7 +236,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				DevMode:  true,
-				Features: featuremgmt.WithFeatures(),
+				Features: featuremgmt.WithManager(),
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want: []*plugins.Plugin{
@@ -274,7 +274,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load an unsigned plugin (production)",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.Cfg{Features: featuremgmt.WithManager()},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want:        []*plugins.Plugin{},
 		},
@@ -283,7 +283,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
-				Features:             featuremgmt.WithFeatures(),
+				Features:             featuremgmt.WithManager(),
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want: []*plugins.Plugin{
@@ -321,7 +321,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a plugin with v1 manifest should return signatureInvalid",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
+			cfg:         &config.Cfg{Features: featuremgmt.WithManager()},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
 		},
@@ -330,7 +330,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
-				Features:             featuremgmt.WithFeatures(),
+				Features:             featuremgmt.WithManager(),
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
@@ -340,7 +340,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
-				Features:             featuremgmt.WithFeatures(),
+				Features:             featuremgmt.WithManager(),
 			},
 			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
 			want:        []*plugins.Plugin{},
@@ -350,7 +350,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
-				Features:             featuremgmt.WithFeatures(),
+				Features:             featuremgmt.WithManager(),
 			},
 			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
 			want:        []*plugins.Plugin{},
@@ -360,7 +360,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-app"},
-				Features:             featuremgmt.WithFeatures(),
+				Features:             featuremgmt.WithManager(),
 			},
 			pluginPaths: []string{"../testdata/test-app-with-includes"},
 			want: []*plugins.Plugin{
@@ -412,7 +412,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg: &config.Cfg{
 				DevMode:          true,
 				GrafanaAppSubURL: "grafana",
-				Features:         featuremgmt.WithFeatures(),
+				Features:         featuremgmt.WithManager(),
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want: []*plugins.Plugin{

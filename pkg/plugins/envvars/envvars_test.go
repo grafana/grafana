@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -67,7 +68,7 @@ func TestInitializer_skipHostEnvVars(t *testing.T) {
 	}
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
-		envVarsProvider := NewProvider(&config.Cfg{Features: featuremgmt.WithFeatures()}, nil)
+		envVarsProvider := NewProvider(&config.Cfg{Features: featuremgmt.WithManager()}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 
 		// We want to test that the envvars.Provider does not add any of the host env vars.
@@ -575,7 +576,7 @@ func TestInitializer_featureToggleEnvVar(t *testing.T) {
 
 		p := &plugins.Plugin{}
 		envVarsProvider := NewProvider(&config.Cfg{
-			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
+			Features: featuremgmt.WithManager(expectedFeatures[0], true, expectedFeatures[1], true),
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 
@@ -647,7 +648,7 @@ func TestService_GetConfigMap(t *testing.T) {
 		{
 			name: "Both features and proxy settings enabled",
 			cfg: &config.Cfg{
-				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
+				Features: featuremgmt.WithManager("feat-2", "feat-500", "feat-1"),
 				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:       true,
 					ShowUI:        true,
@@ -673,7 +674,7 @@ func TestService_GetConfigMap(t *testing.T) {
 		{
 			name: "Features enabled but proxy settings disabled",
 			cfg: &config.Cfg{
-				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
+				Features: featuremgmt.WithManager("feat-2", "feat-500", "feat-1"),
 				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:      false,
 					ShowUI:       true,
@@ -691,7 +692,7 @@ func TestService_GetConfigMap(t *testing.T) {
 		{
 			name: "Both features and proxy settings disabled",
 			cfg: &config.Cfg{
-				Features: featuremgmt.WithFeatures("feat-2", false),
+				Features: featuremgmt.WithManager("feat-2", false),
 				ProxySettings: setting.SecureSocksDSProxySettings{
 					Enabled:      false,
 					ShowUI:       true,

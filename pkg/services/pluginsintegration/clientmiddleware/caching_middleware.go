@@ -27,7 +27,7 @@ func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientM
 
 // NewCachingMiddlewareWithFeatureManager creates a new plugins.ClientMiddleware that will
 // attempt to read and write query results to the cache with a feature manager
-func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingService, features *featuremgmt.FeatureManager) plugins.ClientMiddleware {
+func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingService, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
 	log := log.New("caching_middleware")
 	if err := prometheus.Register(QueryCachingRequestHistogram); err != nil {
 		log.Error("Error registering prometheus collector 'QueryRequestHistogram'", "error", err)
@@ -49,7 +49,7 @@ type CachingMiddleware struct {
 	next     plugins.Client
 	caching  caching.CachingService
 	log      log.Logger
-	features *featuremgmt.FeatureManager
+	features featuremgmt.FeatureToggles
 }
 
 // QueryData receives a data request and attempts to access results already stored in the cache for that request.

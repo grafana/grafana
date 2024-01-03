@@ -15,7 +15,7 @@ import (
 )
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
-	features *featuremgmt.FeatureManager) *AccessControlAPI {
+	features featuremgmt.FeatureToggles) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
@@ -28,7 +28,7 @@ type AccessControlAPI struct {
 	Service       ac.Service
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
-	features      *featuremgmt.FeatureManager
+	features      featuremgmt.FeatureToggles
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {

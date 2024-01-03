@@ -64,7 +64,7 @@ func TestSession_Authenticate(t *testing.T) {
 
 	type fields struct {
 		sessionService auth.UserTokenService
-		features       *featuremgmt.FeatureManager
+		features       featuremgmt.FeatureToggles
 	}
 	type args struct {
 		r *authn.Request
