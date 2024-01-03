@@ -46,6 +46,10 @@ function onApply() {
   locationService.partial({ editIndex: null });
 }
 
+function onModalOpen() {
+  console.log('onModalOpen');
+}
+
 // function onPropChanged(prop: string, value: any) {
 //   console.log('onPropChanged');
 // }

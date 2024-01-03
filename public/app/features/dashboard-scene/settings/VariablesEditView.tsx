@@ -1,16 +1,20 @@
 import React from 'react';
 
-import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneVariables, sceneGraph } from '@grafana/scenes';
+import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
+import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
-export interface VariablesEditViewState extends DashboardEditViewState {}
+export interface VariablesEditViewState extends DashboardEditViewState {
+  editIndex: number | undefined;
+}
 
 export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> implements DashboardEditView {
   public static Component = VariableEditorSettingsListView;
@@ -18,6 +22,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   public getUrlKey(): string {
     return 'variables';
   }
+
+  protected _urlSync = new EditListViewSceneUrlSync(this);
 
   public getDashboard(): DashboardScene {
     return getDashboardSceneFor(this);
@@ -106,7 +112,12 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   };
 
   public onEdit = (identifier: string) => {
-    return 'not implemented';
+    const variableIndex = this.getVariableIndex(identifier);
+    if (variableIndex === -1) {
+      console.error('Variable not found');
+      return;
+    }
+    this.setState({ editIndex: variableIndex });
   };
 }
 
@@ -116,6 +127,16 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   // get variables from dashboard state
   const { onDelete, onDuplicated, onOrderChanged, onEdit } = model;
   const { variables } = model.getVariableSet().useState();
+  const { editIndex } = model.useState();
+
+  if (editIndex !== undefined) {
+    const variable = variables[editIndex];
+    if (variable) {
+      return (
+        <VariableEditorSettingsView variable={variable} pageNav={pageNav} navModel={navModel} dashboard={dashboard} />
+      );
+    }
+  }
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -128,6 +149,29 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
         onAdd={() => {}}
         onEdit={onEdit}
       />
+    </Page>
+  );
+}
+
+interface VariableEditorSettingsEditViewProps {
+  variable: SceneVariable;
+  pageNav: NavModelItem;
+  navModel: NavModel;
+  dashboard: DashboardScene;
+}
+
+function VariableEditorSettingsView({ variable, pageNav, navModel, dashboard }: VariableEditorSettingsEditViewProps) {
+  const parentTab = pageNav.children!.find((p) => p.active)!;
+  parentTab.parentItem = pageNav;
+
+  const editVariablePageNav = {
+    text: 'Edit Variable',
+    parentItem: parentTab,
+  };
+  return (
+    <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
+      <NavToolbarActions dashboard={dashboard} />
+      <VariableEditorForm variable={variable} />
     </Page>
   );
 }
