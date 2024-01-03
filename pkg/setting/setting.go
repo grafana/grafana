@@ -443,22 +443,6 @@ type Cfg struct {
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
 
-	// AzureAD
-	AzureADEnabled         bool
-	AzureADSkipOrgRoleSync bool
-
-	// Google
-	GoogleAuthEnabled     bool
-	GoogleSkipOrgRoleSync bool
-
-	// Gitlab
-	GitLabAuthEnabled     bool
-	GitLabSkipOrgRoleSync bool
-
-	// Generic OAuth
-	GenericOAuthAuthEnabled     bool
-	GenericOAuthSkipOrgRoleSync bool
-
 	// LDAP
 	LDAPAuthEnabled       bool
 	LDAPSkipOrgRoleSync   bool
@@ -497,25 +481,12 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
-	// GitHub OAuth
-	GitHubAuthEnabled     bool
-	GitHubSkipOrgRoleSync bool
-
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
 	// Grafana.com API URL. Can be set separately to GrafanaComURL
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
-	// Grafana.com Auth enabled
-	GrafanaComAuthEnabled bool
-	// GrafanaComSkipOrgRoleSync can be set for
-	// letting users set org roles from within Grafana and
-	// skip the org roles coming from GrafanaCom
-	GrafanaComSkipOrgRoleSync bool
-
-	// Grafana.com Auth enabled through [auth.grafananet] config section
-	GrafanaNetAuthEnabled bool
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
@@ -537,10 +508,6 @@ type Cfg struct {
 	SAMLAuthEnabled            bool
 	SAMLSkipOrgRoleSync        bool
 	SAMLRoleValuesGrafanaAdmin string
-
-	// Okta OAuth
-	OktaAuthEnabled     bool
-	OktaSkipOrgRoleSync bool
 
 	// OAuth2 Server
 	OAuth2ServerEnabled bool
@@ -573,6 +540,9 @@ type Cfg struct {
 	// This needs to be on the global object since its used in the
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
+
+	// Public dashboards
+	PublicDashboardsEnabled bool
 
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
@@ -706,6 +676,13 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
 	keys := environmentMetricsSection.Keys()
 	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
+
+	cfg.MetricsGrafanaEnvironmentInfo["version"] = cfg.BuildVersion
+	cfg.MetricsGrafanaEnvironmentInfo["commit"] = cfg.BuildCommit
+
+	if cfg.EnterpriseBuildCommit != "NA" && cfg.EnterpriseBuildCommit != "" {
+		cfg.MetricsGrafanaEnvironmentInfo["enterprise_commit"] = cfg.EnterpriseBuildCommit
+	}
 
 	for _, key := range keys {
 		labelName := model.LabelName(key.Name())
@@ -1287,6 +1264,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
 	cfg.readFeatureManagementConfig()
+	cfg.readPublicDashboardsSettings()
 
 	return nil
 }
@@ -1514,52 +1492,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	return nil
 }
-func readAuthAzureADSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.azuread")
-	cfg.AzureADEnabled = sec.Key("enabled").MustBool(false)
-	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGrafanaComSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.grafana_com")
-	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGrafanaNetSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.grafananet")
-	cfg.GrafanaNetAuthEnabled = sec.Key("enabled").MustBool(false)
-}
-
-func readAuthGithubSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.github")
-	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GitHubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthGoogleSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.google")
-	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(true)
-}
-
-func readAuthGitlabSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.gitlab")
-	cfg.GitLabAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readGenericOAuthSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.generic_oauth")
-	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
-
-func readAuthOktaSettings(cfg *Cfg) {
-	sec := cfg.SectionWithEnvOverrides("auth.okta")
-	cfg.OktaAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-}
 
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
@@ -1621,34 +1553,13 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// ID response header
 	cfg.IDResponseHeaderEnabled = auth.Key("id_response_header_enabled").MustBool(false)
-	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana-")
+	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana")
 
 	idHeaderNamespaces := util.SplitString(auth.Key("id_response_header_namespaces").MustString(""))
 	cfg.IDResponseHeaderNamespaces = make(map[string]struct{}, len(idHeaderNamespaces))
 	for _, namespace := range idHeaderNamespaces {
 		cfg.IDResponseHeaderNamespaces[namespace] = struct{}{}
 	}
-
-	readAuthAzureADSettings(cfg)
-
-	// Google Auth
-	readAuthGoogleSettings(cfg)
-
-	// GitLab Auth
-	readAuthGitlabSettings(cfg)
-
-	// Generic OAuth
-	readGenericOAuthSettings(cfg)
-
-	// Okta Auth
-	readAuthOktaSettings(cfg)
-
-	// GrafanaCom
-	readAuthGrafanaComSettings(cfg)
-	readAuthGrafanaNetSettings(cfg)
-
-	// Github
-	readAuthGithubSettings(cfg)
 
 	// anonymous access
 	anonSection := iniFile.Section("auth.anonymous")
@@ -2064,4 +1975,9 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
+}
+
+func (cfg *Cfg) readPublicDashboardsSettings() {
+	publicDashboards := cfg.Raw.Section("public_dashboards")
+	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
 }

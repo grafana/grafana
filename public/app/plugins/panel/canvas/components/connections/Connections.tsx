@@ -7,7 +7,7 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
-import { getConnections, isConnectionSource, isConnectionTarget } from '../../utils';
+import { getConnections, getParentBoundingClientRect, isConnectionSource, isConnectionTarget } from '../../utils';
 
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
@@ -103,7 +103,8 @@ export class Connections {
     }
 
     const elementBoundingRect = element.div!.getBoundingClientRect();
-    const parentBoundingRect = this.scene.div?.getBoundingClientRect();
+    const transformScale = this.scene.scale;
+    const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
     const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
@@ -111,10 +112,10 @@ export class Connections {
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
       this.connectionAnchorDiv.style.display = 'block';
-      this.connectionAnchorDiv.style.top = `${relativeTop}px`;
-      this.connectionAnchorDiv.style.left = `${relativeLeft}px`;
-      this.connectionAnchorDiv.style.height = `${elementBoundingRect.height}px`;
-      this.connectionAnchorDiv.style.width = `${elementBoundingRect.width}px`;
+      this.connectionAnchorDiv.style.top = `${relativeTop / transformScale}px`;
+      this.connectionAnchorDiv.style.left = `${relativeLeft / transformScale}px`;
+      this.connectionAnchorDiv.style.height = `${elementBoundingRect.height / transformScale}px`;
+      this.connectionAnchorDiv.style.width = `${elementBoundingRect.width / transformScale}px`;
     }
   };
 
@@ -140,12 +141,18 @@ export class Connections {
       return;
     }
 
-    const parentBoundingRect = this.scene.div.parentElement.getBoundingClientRect();
-    const x = event.pageX - parentBoundingRect.x;
-    const y = event.pageY - parentBoundingRect.y;
+    const transformScale = this.scene.scale;
+    const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
-    this.connectionLine.setAttribute('x2', `${x}`);
-    this.connectionLine.setAttribute('y2', `${y}`);
+    if (!parentBoundingRect) {
+      return;
+    }
+
+    const x = event.pageX - parentBoundingRect.x ?? 0;
+    const y = event.pageY - parentBoundingRect.y ?? 0;
+
+    this.connectionLine.setAttribute('x2', `${x / transformScale}`);
+    this.connectionLine.setAttribute('y2', `${y / transformScale}`);
 
     const connectionLineX1 = this.connectionLine.x1.baseVal.value;
     const connectionLineY1 = this.connectionLine.y1.baseVal.value;
@@ -161,15 +168,21 @@ export class Connections {
     if (!event.buttons) {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
         const sourceRect = this.connectionSource.div.getBoundingClientRect();
-        const parentRect = this.connectionSource.div.parentElement.getBoundingClientRect();
 
-        const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
-        const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
+        const transformScale = this.scene.scale;
+        const parentRect = getParentBoundingClientRect(this.scene);
+
+        if (!parentRect) {
+          return;
+        }
+
+        const sourceVerticalCenter = (sourceRect.top - parentRect.top + sourceRect.height / 2) / transformScale;
+        const sourceHorizontalCenter = (sourceRect.left - parentRect.left + sourceRect.width / 2) / transformScale;
 
         // Convert from DOM coords to connection coords
         // TODO: Break this out into util function and add tests
-        const sourceX = (connectionLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
-        const sourceY = (sourceVerticalCenter - connectionLineY1) / (sourceRect.height / 2);
+        const sourceX = (connectionLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2 / transformScale);
+        const sourceY = (sourceVerticalCenter - connectionLineY1) / (sourceRect.height / 2 / transformScale);
 
         let targetX;
         let targetY;
@@ -242,10 +255,20 @@ export class Connections {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     if (this.connectionSVG && this.connectionLine && this.scene.div && this.scene.div.parentElement) {
       const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
-      const parentBoundingRect = this.scene.div.parentElement.getBoundingClientRect();
 
-      const x = connectionStartTargetBox.x - parentBoundingRect.x + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
-      const y = connectionStartTargetBox.y - parentBoundingRect.y + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
+      const transformScale = this.scene.scale;
+      const parentBoundingRect = getParentBoundingClientRect(this.scene);
+
+      if (!parentBoundingRect) {
+        return;
+      }
+
+      // Multiply by transform scale to calculate the correct scaled offset
+      const connectionAnchorOffsetX = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * transformScale;
+      const connectionAnchorOffsetY = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * transformScale;
+
+      const x = (connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorOffsetX) / transformScale;
+      const y = (connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorOffsetY) / transformScale;
 
       const mouseX = clientX - parentBoundingRect.x;
       const mouseY = clientY - parentBoundingRect.y;

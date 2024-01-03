@@ -25,6 +25,9 @@
       "user": "Ůşęř"
     }
   },
+  "bouncing-loader": {
+    "label": "Ŀőäđįŉģ"
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cäŉčęľ",
@@ -408,6 +411,9 @@
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
     }
+  },
+  "drawer": {
+    "close": "Cľőşę Đřäŵęř"
   },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
@@ -967,6 +973,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": "Cľőşę Đřäŵęř"
+    },
     "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
   "notifications": {
