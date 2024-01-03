@@ -103,6 +103,7 @@ describe('AppRootPage', () => {
   });
 
   it("should show a not found page if the plugin settings can't load", async () => {
+    jest.spyOn(console, 'error').mockImplementation();
     getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
     // Renders once for the first time
     await act(async () => {
