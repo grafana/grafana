@@ -6,7 +6,6 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   getThresholdsForQueries,
-  ThresholdDefinition,
   ThresholdDefinitions,
 } from 'app/features/alerting/unified/components/rule-editor/util';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';

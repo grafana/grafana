@@ -12,7 +12,11 @@ export function mergePanelAndDashData(
     mergeMap((data) => {
       const [panelData, dashData] = data;
 
-      if (Boolean(dashData.annotations?.length) || Boolean(dashData.alertState) || Boolean(dashData.threshold)) {
+      if (
+        Boolean(dashData.annotations?.length) ||
+        Boolean(dashData.alertState) ||
+        Boolean(dashData.thresholdsByRefId)
+      ) {
         if (!panelData.annotations) {
           panelData.annotations = [];
         }
