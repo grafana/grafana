@@ -95,7 +95,7 @@ func (o *AggregatorServerOptions) LoadAPIGroupBuilders() error {
 
 func (o *AggregatorServerOptions) Config(codecs serializer.CodecFactory) (*genericapiserver.RecommendedConfig, error) {
 	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts(
-		"localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")},
+		"localhost", o.AlternateDNS, []net.IP{net.IPv4(127, 0, 0, 1)},
 	); err != nil {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
