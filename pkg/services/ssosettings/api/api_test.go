@@ -288,7 +288,7 @@ func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
 		{
 			desc:                "fails when action doesn't match",
 			key:                 "azuread",
-			action:              "",
+			action:              "settings:write",
 			scope:               "settings:auth.azuread:*",
 			expectedResult:      nil,
 			expectedError:       nil,
@@ -298,8 +298,8 @@ func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
 		{
 			desc:                "fails when scope doesn't match",
 			key:                 "azuread",
-			action:              "settings:write",
-			scope:               "settings:auth.azuread:read",
+			action:              "settings:read",
+			scope:               "settings:auth.azuread:write",
 			expectedResult:      nil,
 			expectedError:       nil,
 			expectedServiceCall: false,

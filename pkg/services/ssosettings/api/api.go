@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -113,7 +114,6 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
-// 500: internalServerError
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
@@ -127,6 +127,12 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 			return response.Error(http.StatusNotFound, "The provider was not found", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get provider settings", err)
+	}
+
+	for setting := range provider.Settings {
+		if IsSecret(setting) {
+			provider.Settings[setting] = "*********"
+		}
 	}
 
 	if clientSecret, ok := provider.Settings["ClientSecret"].(string); ok && len(clientSecret) > 0 {
@@ -227,4 +233,15 @@ type RemoveProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
+}
+
+func IsSecret(fieldName string) bool {
+	secretFieldPatterns := []string{"secret"}
+
+	for _, v := range secretFieldPatterns {
+		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+			return true
+		}
+	}
+	return false
 }

@@ -8,19 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var DefaultOAuthSettings = &social.OAuthInfo{
-	AllowAssignGrafanaAdmin: false,
-	AllowSignup:             false,
-	AutoLogin:               false,
-	EmptyScopes:             false,
-	Enabled:                 false,
-	RoleAttributeStrict:     false,
-	SkipOrgRoleSync:         false,
-	TlsSkipVerify:           false,
-	UsePKCE:                 false,
-	UseRefreshToken:         false,
-}
-
 type OAuthStrategy struct {
 	cfg                *setting.Cfg
 	settingsByProvider map[string]map[string]any

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -217,7 +216,7 @@ func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosetting
 func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if isSecret(k) {
+		if api.IsSecret(k) {
 			strValue, ok := v.(string)
 			if !ok {
 				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
@@ -234,17 +233,6 @@ func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[st
 	}
 
 	return result, nil
-}
-
-func isSecret(fieldName string) bool {
-	secretFieldPatterns := []string{"secret"}
-
-	for _, v := range secretFieldPatterns {
-		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
-			return true
-		}
-	}
-	return false
 }
 
 func mergeSettings(apiSettings, systemSettings map[string]any) map[string]any {
