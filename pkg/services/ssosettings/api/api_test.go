@@ -255,7 +255,7 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 }
 
 func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
-	// TODO-Colin: add the annotations/comments for the openapi/swagger specification + unit test + the http api spec
+	// TODO-Colin:  add unit test + the http api spec
 	type TestCase struct {
 		desc                string
 		key                 string

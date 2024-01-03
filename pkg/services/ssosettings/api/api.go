@@ -103,8 +103,6 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 
 // swagger:route GET /v1/sso-settings/{key} sso_settings getProviderSettings
 //
-// # Get SSO Settings
-//
 // # Get an SSO Settings entry by Key
 //
 // You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
@@ -205,6 +203,13 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 	}
 
 	return response.JSON(http.StatusNoContent, nil)
+}
+
+// swagger:parameters getProviderSettings
+type getProviderSettingsWrapper struct {
+	// in:path
+	// required:true
+	Provider string `json:"key"`
 }
 
 // swagger:parameters updateProviderSettings
