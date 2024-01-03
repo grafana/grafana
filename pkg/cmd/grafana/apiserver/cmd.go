@@ -77,7 +77,7 @@ func newCommandStartAggregator(o *aggregator.AggregatorServerOptions) *cobra.Com
 
 	cmd := &cobra.Command{
 		Use:   "aggregator",
-		Short: "Run the grafana apiserver",
+		Short: "Run the grafana aggregator",
 		Long: "Run a standalone kubernetes based aggregator server. " +
 			devAcknowledgementNotice,
 		Example: "grafana aggregator",

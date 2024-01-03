@@ -47,9 +47,9 @@ func main() {
 			},
 			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 			{
-				// The kubernetes standalone apiserver service runner
+				// The kube-aggregator inspired grafana aggregator
 				Name:  "aggregator",
-				Usage: "run a standalone api service (experimental)",
+				Usage: "run grafana aggregator (experimental)",
 				// Skip parsing flags because the command line is actually managed by cobra
 				SkipFlagParsing: true,
 				Action: func(context *cli.Context) error {
