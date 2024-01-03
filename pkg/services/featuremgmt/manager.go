@@ -20,8 +20,6 @@ type FeatureManager struct {
 	licensing       licensing.Licensing
 	flags           map[string]*FeatureFlag
 	enabled         map[string]bool // only the "on" values
-	config          string          // path to config file
-	vars            map[string]any
 	log             log.Logger
 }
 
@@ -106,23 +104,6 @@ func (fm *FeatureManager) update() {
 		featureToggleInfo.WithLabelValues(flag.Name).Set(track)
 	}
 	fm.enabled = enabled
-}
-
-// Run is called by background services
-func (fm *FeatureManager) readFile() error {
-	if fm.config == "" {
-		return nil // not configured
-	}
-
-	cfg, err := readConfigFile(fm.config)
-	if err != nil {
-		return err
-	}
-
-	fm.registerFlags(cfg.Flags...)
-	fm.vars = cfg.Vars
-
-	return nil
 }
 
 // IsEnabled checks if a feature is enabled
