@@ -210,7 +210,10 @@ export const StateTimelinePanel = ({
                           alignedData={alignedFrame}
                           seriesIdx={seriesIdx}
                           timeZone={timeZone}
+                          mode={options.tooltip.mode}
+                          sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
+                          timeRange={timeRange}
                         />
                       );
                     }}
