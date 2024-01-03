@@ -43,14 +43,17 @@ export const reportPageview = () => {
  *
  * @public
  */
-export const reportInteraction = (interactionName: string, properties?: Record<string, unknown>) => {
-  getEchoSrv().addEvent<InteractionEchoEvent>({
-    type: EchoEventType.Interaction,
-    payload: {
-      interactionName,
-      properties,
+export const reportInteraction = (interactionName: string, properties?: Record<string, unknown>, meta?: {}) => {
+  getEchoSrv().addEvent<InteractionEchoEvent>(
+    {
+      type: EchoEventType.Interaction,
+      payload: {
+        interactionName,
+        properties,
+      },
     },
-  });
+    meta
+  );
 };
 
 /**
