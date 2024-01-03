@@ -16,7 +16,7 @@ import {
   GrafanaTheme2,
   TimeZone,
 } from '@grafana/data';
-import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { Portal } from '../../Portal/Portal';

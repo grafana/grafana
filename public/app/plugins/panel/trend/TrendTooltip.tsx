@@ -14,7 +14,7 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
-import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { SeriesTableRowProps, useStyles2, useTheme2 } from '@grafana/ui';
 import { SeriesList } from '@grafana/ui/src/components/VizTooltip/SeriesList';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -43,7 +43,6 @@ export const TrendTooltip = ({
   data,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
-  sync,
   dataIdxs,
   seriesIdx,
   isPinned,

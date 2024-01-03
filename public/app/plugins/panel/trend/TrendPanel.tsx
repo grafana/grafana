@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin, TooltipPlugin2 } from '@grafana/ui';
+import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
@@ -137,7 +137,6 @@ export const TrendPanel = ({
                           data={alignedDataFrame}
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
-                          sync={sync}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
                           isPinned={isPinned}
@@ -152,7 +151,6 @@ export const TrendPanel = ({
                     config={uPlotConfig}
                     mode={options.tooltip.mode}
                     sortOrder={options.tooltip.sort}
-                    sync={sync}
                     timeZone={timeZone}
                   />
                 )}
