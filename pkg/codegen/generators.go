@@ -14,6 +14,8 @@ type OneToMany codejen.OneToMany[SchemaForGen]
 type ManyToOne codejen.ManyToOne[SchemaForGen]
 type ManyToMany codejen.ManyToMany[SchemaForGen]
 
+const writingToStdErrFailed = "failed to write to stderr"
+
 // SlashHeaderMapper produces a FileMapper that injects a comment header onto
 // a [codejen.File] indicating the main generator that produced it (via the provided
 // maingen, which should be a path) and the jenny or jennies that constructed the
@@ -39,7 +41,10 @@ func SlashHeaderMapper(maingen string) codejen.FileMapper {
 		}); err != nil {
 			return codejen.File{}, fmt.Errorf("failed executing gen header template: %w", err)
 		}
-		fmt.Fprint(buf, string(f.Data))
+		_, writeErr := fmt.Fprint(buf, string(f.Data))
+		if writeErr != nil {
+			fmt.Println(writingToStdErrFailed)
+		}
 		f.Data = buf.Bytes()
 		return f, nil
 	}

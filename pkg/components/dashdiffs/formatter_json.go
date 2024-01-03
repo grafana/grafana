@@ -19,6 +19,7 @@ const (
 	ChangeOld
 	ChangeNew
 	ChangeUnchanged
+	writingToBufferFailed = "failed to write to buffer"
 )
 
 var (
@@ -405,7 +406,10 @@ func (f *JSONFormatter) closeLine() {
 func (f *JSONFormatter) printKey(name string) {
 	if !f.inArray[len(f.inArray)-1] {
 		f.line.key = name
-		fmt.Fprintf(f.line.buffer, `"%s": `, name)
+		_, writeErr := fmt.Fprintf(f.line.buffer, `"%s": `, name)
+		if writeErr != nil {
+			fmt.Println(writingToBufferFailed)
+		}
 	}
 }
 
@@ -420,13 +424,19 @@ func (f *JSONFormatter) printValue(value any) {
 	switch value.(type) {
 	case string:
 		f.line.val = value
-		fmt.Fprintf(f.line.buffer, `"%s"`, value)
+		_, writeErr := fmt.Fprintf(f.line.buffer, `"%s"`, value)
+		if writeErr != nil {
+			fmt.Println(writingToBufferFailed)
+		}
 	case nil:
 		f.line.val = "null"
 		f.line.buffer.WriteString("null")
 	default:
 		f.line.val = value
-		fmt.Fprintf(f.line.buffer, `%#v`, value)
+		_, writeErr := fmt.Fprintf(f.line.buffer, `%#v`, value)
+		if writeErr != nil {
+			fmt.Println(writingToBufferFailed)
+		}
 	}
 }
 

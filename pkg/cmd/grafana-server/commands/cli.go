@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const writingToStdErrFailed = "failed to write to stderr"
+
 type ServerOptions struct {
 	Version          string
 	Commit           string
@@ -73,7 +75,10 @@ func RunServer(opts ServerOptions) error {
 	logger := log.New("cli")
 	defer func() {
 		if err := log.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+			_, writeErr := fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+			if writeErr != nil {
+				fmt.Println(writingToStdErrFailed)
+			}
 		}
 	}()
 
@@ -159,13 +164,19 @@ func listenToSystemSignals(ctx context.Context, s gserver) {
 		select {
 		case <-sighupChan:
 			if err := log.Reload(); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
+				_, writeErr := fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
+				if writeErr != nil {
+					fmt.Println(writingToStdErrFailed)
+				}
 			}
 		case sig := <-signalChan:
 			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel()
 			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
-				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
+				_, writeErr := fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
+				if writeErr != nil {
+					fmt.Println(writingToStdErrFailed)
+				}
 			}
 			return
 		}
@@ -175,7 +186,10 @@ func listenToSystemSignals(ctx context.Context, s gserver) {
 func checkPrivileges() {
 	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error checking server process execution privilege. error: %s\n", err.Error())
+		_, writeErr := fmt.Fprintf(os.Stderr, "Error checking server process execution privilege. error: %s\n", err.Error())
+		if writeErr != nil {
+			fmt.Println(writingToStdErrFailed)
+		}
 	}
 	if elevated {
 		fmt.Println("Grafana server is running with elevated privileges. This is not recommended")

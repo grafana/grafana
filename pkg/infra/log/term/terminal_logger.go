@@ -20,9 +20,10 @@ var (
 )
 
 const (
-	floatFormat = 'f'
-	termMsgJust = 40
-	errorKey    = "LOG15_ERROR"
+	floatFormat           = 'f'
+	termMsgJust           = 40
+	errorKey              = "LOG15_ERROR"
+	writingToBufferFailed = "failed to write to buffer"
 )
 
 type terminalLogger struct {
@@ -52,9 +53,15 @@ func (l terminalLogger) Log(keyvals ...interface{}) error {
 	lvl := fmt.Sprintf("%-5s", strings.ToUpper(r.level.String()))
 
 	if r.color > 0 {
-		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
+		_, writeErr := fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
+		if writeErr != nil {
+			fmt.Println(writingToBufferFailed)
+		}
 	} else {
-		fmt.Fprintf(b, "[%s] [%s] %s ", lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
+		_, writeErr := fmt.Fprintf(b, "[%s] [%s] %s ", lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
+		if writeErr != nil {
+			fmt.Println(writingToBufferFailed)
+		}
 	}
 
 	// try to justify the log output for short messages
@@ -170,7 +177,10 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int) {
 
 		// XXX: we should probably check that all of your key bytes aren't invalid
 		if color > 0 {
-			fmt.Fprintf(buf, "\x1b[%dm%s\x1b[0m=%s", color, k, v) // lgtm[go/log-injection]
+			_, writeErr := fmt.Fprintf(buf, "\x1b[%dm%s\x1b[0m=%s", color, k, v) // lgtm[go/log-injection]
+			if writeErr != nil {
+				fmt.Println(writingToBufferFailed)
+			}
 		} else {
 			buf.WriteString(k)
 			buf.WriteByte('=')
