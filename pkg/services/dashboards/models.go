@@ -301,8 +301,9 @@ type GetDashboardQuery struct {
 	UID   string
 	Title *string
 	// Deprecated: use FolderUID instead
-	FolderID *int64
-	OrgID    int64
+	FolderID  *int64
+	FolderUID string
+	OrgID     int64
 }
 
 type DashboardTagCloudItem struct {

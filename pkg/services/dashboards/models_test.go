@@ -66,12 +66,10 @@ func TestSaveDashboardCommand_GetDashboardModel(t *testing.T) {
 		json := simplejson.New()
 		json.Set("title", "test dash")
 
-		// nolint:staticcheck
-		cmd := &SaveDashboardCommand{Dashboard: json, FolderID: 1, FolderUID: "1"}
+		cmd := &SaveDashboardCommand{Dashboard: json, FolderUID: "1"}
 		dash := cmd.GetDashboardModel()
 
-		// nolint:staticcheck
-		assert.Equal(t, int64(1), dash.FolderID)
+		assert.Equal(t, "1", dash.FolderUID)
 	})
 }
 
@@ -107,6 +105,7 @@ func TestResourceConversion(t *testing.T) {
 	dash.PluginID = "plugin-xyz"
 	// nolint:staticcheck
 	dash.FolderID = 1234
+	dash.FolderUID = "folder-uid"
 	dash.SetID(12345) // should be removed in resource version
 
 	dst := dash.ToResource()
