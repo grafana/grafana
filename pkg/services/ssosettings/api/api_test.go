@@ -255,7 +255,6 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 }
 
 func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
-	// TODO-Colin:  add unit test + the http api spec
 	type TestCase struct {
 		desc                string
 		key                 string
