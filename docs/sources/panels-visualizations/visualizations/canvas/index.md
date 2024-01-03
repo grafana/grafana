@@ -85,6 +85,20 @@ You can edit your canvas inline while in the context of dashboard mode.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" caption="Inline editor demo" >}}
 
+### Pan and zoom
+
+You can enable panning and zooming in canvas. This allows you to both create and navigate more complex designs.
+
+{{% admonition type="note" %}}
+To try out pan and zoom, enable the `canvasPanelPanZoom` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#preview-feature-toggles).
+{{% /admonition %}}
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" caption="Canvas pan zoom control" >}}
+
+<!-- TODO: Update this video to be canvas pan zoom enablement video -->
+
+{{< video-embed src="/media/docs/grafana/screen-recording-grafana-10-3-canvas-pan-zoom-placeholder-video.mp4" max-width="750px" caption="Pan and zoom demo" >}}
+
 ### Context menu
 
 The context menu lets you perform common tasks quickly and efficiently. Supported functionality includes opening / closing the inline editor, duplicating an element, deleting an element, and more.
