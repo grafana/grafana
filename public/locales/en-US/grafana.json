@@ -138,7 +138,7 @@
     "public-dashboard": {
       "default-time-range-label": "Default time range",
       "default-time-range-label-desc": "The public dashboard uses the default time range settings of the dashboard",
-      "show-annotations": "Show annotations",
+      "show-annotations-label": "Show annotations",
       "show-annotations-label-desc": "Show annotations on public dashboard",
       "time-range-picker-label": "Time range picker enabled",
       "time-range-picker-label-desc": "Allow viewers to change time range"
@@ -1212,11 +1212,11 @@
   },
   "settings-summary": {
     "public-dashboard": {
-      "annotations-hidden": "Annotations = hide",
-      "annotations-shown": "Annotations = show",
-      "time-range": "Time range =",
-      "time-range-picker-disabled": "Time range picker = disabled",
-      "time-range-picker-enabled": "Time range picker = enabled"
+      "annotations-hide-text": "Annotations = hide",
+      "annotations-show-text": "Annotations = show",
+      "time-range-picker-disabled-text": "Time range picker = disabled",
+      "time-range-picker-enabled-text": "Time range picker = enabled",
+      "time-range-text": "Time range = "
     }
   },
   "share-modal": {

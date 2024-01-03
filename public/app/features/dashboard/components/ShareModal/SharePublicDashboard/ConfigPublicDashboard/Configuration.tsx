@@ -77,7 +77,7 @@ export const Configuration = ({
                 'Show annotations on public dashboard'
               )}
             >
-              <Trans i18nKey="configuration.public-dashboard.show-annotations">Show annotations</Trans>
+              <Trans i18nKey="configuration.public-dashboard.show-annotations-label">Show annotations</Trans>
             </Label>
           </Layout>
         </VerticalGroup>

@@ -143,7 +143,7 @@
     "public-dashboard": {
       "default-time-range-label": "",
       "default-time-range-label-desc": "",
-      "show-annotations": "",
+      "show-annotations-label": "",
       "show-annotations-label-desc": "",
       "time-range-picker-label": "",
       "time-range-picker-label-desc": ""
@@ -1218,11 +1218,11 @@
   },
   "settings-summary": {
     "public-dashboard": {
-      "annotations-hidden": "",
-      "annotations-shown": "",
-      "time-range": "",
-      "time-range-picker-disabled": "",
-      "time-range-picker-enabled": ""
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
     }
   },
   "share-modal": {

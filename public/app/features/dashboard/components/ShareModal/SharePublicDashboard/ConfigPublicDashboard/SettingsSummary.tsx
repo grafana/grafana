@@ -23,19 +23,19 @@ export function SettingsSummary({
   const styles = useStyles2(getStyles);
 
   const translatedTimeRangePickerEnabledStatus = t(
-    'settings-summary.public-dashboard.time-range-picker-enabled',
+    'settings-summary.public-dashboard.time-range-picker-enabled-text',
     'Time range picker = enabled'
   );
   const translatedTimeRangePickerDisabledStatus = t(
-    'settings-summary.public-dashboard.time-range-picker-disabled',
+    'settings-summary.public-dashboard.time-range-picker-disabled-text',
     'Time range picker = disabled'
   );
   const translatedAnnotationShownStatus = t(
-    'settings-summary.public-dashboard.annotations-shown',
+    'settings-summary.public-dashboard.annotations-show-text',
     'Annotations = show'
   );
   const translatedAnnotationHiddenStatus = t(
-    'settings-summary.public-dashboard.annotations-hidden',
+    'settings-summary.public-dashboard.annotations-hide-text',
     'Annotations = hide'
   );
 
@@ -46,7 +46,7 @@ export function SettingsSummary({
   ) : (
     <div className={cx(styles.summaryWrapper, className)}>
       <span className={styles.summary}>
-        <Trans i18nKey="settings-summary.public-dashboard.time-range">Time range =</Trans>
+        <Trans i18nKey="settings-summary.public-dashboard.time-range-text">Time range = </Trans>
         <TimeRangeLabel className={styles.timeRange} value={timeRange} />
       </span>
       <span className={styles.summary}>

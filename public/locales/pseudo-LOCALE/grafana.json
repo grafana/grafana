@@ -138,7 +138,7 @@
     "public-dashboard": {
       "default-time-range-label": "Đęƒäūľŧ ŧįmę řäŉģę",
       "default-time-range-label-desc": "Ŧĥę pūþľįč đäşĥþőäřđ ūşęş ŧĥę đęƒäūľŧ ŧįmę řäŉģę şęŧŧįŉģş őƒ ŧĥę đäşĥþőäřđ",
-      "show-annotations": "Ŝĥőŵ äŉŉőŧäŧįőŉş",
+      "show-annotations-label": "Ŝĥőŵ äŉŉőŧäŧįőŉş",
       "show-annotations-label-desc": "Ŝĥőŵ äŉŉőŧäŧįőŉş őŉ pūþľįč đäşĥþőäřđ",
       "time-range-picker-label": "Ŧįmę řäŉģę pįčĸęř ęŉäþľęđ",
       "time-range-picker-label-desc": "Åľľőŵ vįęŵęřş ŧő čĥäŉģę ŧįmę řäŉģę"
@@ -1212,11 +1212,11 @@
   },
   "settings-summary": {
     "public-dashboard": {
-      "annotations-hidden": "Åŉŉőŧäŧįőŉş = ĥįđę",
-      "annotations-shown": "Åŉŉőŧäŧįőŉş = şĥőŵ",
-      "time-range": "Ŧįmę řäŉģę =",
-      "time-range-picker-disabled": "Ŧįmę řäŉģę pįčĸęř = đįşäþľęđ",
-      "time-range-picker-enabled": "Ŧįmę řäŉģę pįčĸęř = ęŉäþľęđ"
+      "annotations-hide-text": "Åŉŉőŧäŧįőŉş = ĥįđę",
+      "annotations-show-text": "Åŉŉőŧäŧįőŉş = şĥőŵ",
+      "time-range-picker-disabled-text": "Ŧįmę řäŉģę pįčĸęř = đįşäþľęđ",
+      "time-range-picker-enabled-text": "Ŧįmę řäŉģę pįčĸęř = ęŉäþľęđ",
+      "time-range-text": "Ŧįmę řäŉģę = "
     }
   },
   "share-modal": {
