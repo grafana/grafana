@@ -52,7 +52,7 @@ func (s *flagsStorage) ConvertToTable(ctx context.Context, object runtime.Object
 }
 
 func (s *flagsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	flags := &v0alpha1.FeatureFlagList{}
+	flags := &v0alpha1.FeatureList{}
 	for _, flag := range s.features.GetFlags() {
 		flags.Items = append(flags.Items, toK8sForm(flag))
 	}
@@ -69,14 +69,14 @@ func (s *flagsStorage) Get(ctx context.Context, name string, options *metav1.Get
 	return nil, fmt.Errorf("not found")
 }
 
-func toK8sForm(flag featuremgmt.FeatureFlag) v0alpha1.FeatureFlag {
-	return v0alpha1.FeatureFlag{
+func toK8sForm(flag featuremgmt.FeatureFlag) v0alpha1.Feature {
+	return v0alpha1.Feature{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              flag.Name,
 			CreationTimestamp: metav1.NewTime(flag.Created),
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.FeatureSpec{
 			Description:       flag.Description,
 			Stage:             flag.Stage.String(),
 			Owner:             string(flag.Owner),
@@ -85,7 +85,6 @@ func toK8sForm(flag featuremgmt.FeatureFlag) v0alpha1.FeatureFlag {
 			HideFromDocs:      flag.HideFromDocs,
 			FrontendOnly:      flag.FrontendOnly,
 			RequiresDevMode:   flag.RequiresDevMode,
-			RequiresLicense:   flag.RequiresLicense,
 			RequiresRestart:   flag.RequiresRestart,
 		},
 	}

@@ -25,7 +25,7 @@ import (
 
 var _ grafanaapiserver.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
 
-var resourceInfo = v0alpha1.FeatureFlagResourceInfo
+var resourceInfo = v0alpha1.FeatureResourceInfo
 
 // This is used just so wire has something unique to return
 type FeatureFlagAPIBuilder struct {
@@ -59,8 +59,8 @@ func (b *FeatureFlagAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.FeatureFlag{},
-		&v0alpha1.FeatureFlagList{},
+		&v0alpha1.Feature{},
+		&v0alpha1.FeatureList{},
 	)
 }
 
@@ -109,7 +109,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 			{Name: "Owner", Type: "string", Format: "string", Description: "Which team owns the feature"},
 		},
 		func(obj any) ([]interface{}, error) {
-			r, ok := obj.(*v0alpha1.FeatureFlag)
+			r, ok := obj.(*v0alpha1.Feature)
 			if ok {
 				return []interface{}{
 					r.Name,
