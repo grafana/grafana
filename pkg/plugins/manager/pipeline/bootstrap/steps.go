@@ -153,8 +153,6 @@ func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plu
 	if parent.IsCorePlugin() {
 		child.Module = path.Join("core:plugin", parent.ID, appSubPath)
 	} else {
-		// TODO
-		// child.Module = path.Join("core:plugin", parent.ID, appSubPath)
 		child.Module = path.Join("/", cfg.GrafanaAppSubURL, "/public/plugins", parent.ID, appSubPath, "module.js")
 	}
 }

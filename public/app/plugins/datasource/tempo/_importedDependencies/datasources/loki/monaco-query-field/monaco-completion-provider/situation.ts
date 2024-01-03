@@ -56,10 +56,9 @@ export type Situation =
       logQuery: string;
     };
 
-// TODO incomplete support for LogQL autocomplete
-// from 'public/app/plugins/datasource/loki/components/monaco-query-field/monaco-completion-provider/situation.ts';
 /**
- * THIS METHOD IS KNOWN TO BE INCOMPLETE due to the decoupling of the Tempo datasource from Grafana core.
+ * THIS METHOD IS KNOWN TO BE INCOMPLETE due to the decoupling of the Tempo datasource from Grafana core:
+ * Incomplete support for LogQL autocomplete from 'public/app/plugins/datasource/loki/components/monaco-query-field/monaco-completion-provider/situation.ts';
  */
 export const getSituation = (text: string, pos: number): Situation | null => {
   return {
