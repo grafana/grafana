@@ -15,7 +15,7 @@ export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource,
           label="Query type"
           labelWidth={20}
           tooltip={
-            <div>The Prometheus data source plugin provides the following query types for template variables</div>
+            <div>The Pyroscope data source plugin provides the following query types for template variables</div>
           }
         >
           <Select
