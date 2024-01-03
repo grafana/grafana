@@ -85,7 +85,20 @@ const HeatmapHoverCell = ({
   const countField = getFieldFromData(data.heatmap!, 'count', isSparse)!;
 
   if (mode === TooltipDisplayMode.Multi) {
-    console.log(index);
+    let xVal = xField.values[index];
+    let fromIdx = index;
+    let toIdx = index;
+
+    while (xField.values[fromIdx - 1] === xVal) {
+      fromIdx--;
+    }
+
+    while (xField.values[toIdx + 1] === xVal) {
+      toIdx++;
+    }
+
+    // this index range represents a single vertical slice through the heatmap, containing each bucket for this timestamp
+    console.log(fromIdx, toIdx);
   }
 
   const xDisp = (v: number) => {
