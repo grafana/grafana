@@ -311,6 +311,8 @@
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
+/plugin-e2e/auth.setup.ts @grafana/plugins-platform-frontend
+/plugin-e2e/verify-scenario/ @grafana/plugins-platform-frontend
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-e2e/ @grafana/grafana-frontend-platform
@@ -370,6 +372,7 @@ lerna.json @grafana/frontend-ops
 .husky/pre-commit @grafana/frontend-ops
 cypress.config.js @grafana/grafana-frontend-platform
 .levignore.js @grafana/plugins-platform-frontend
+playwright.config.ts @grafana/plugins-platform-frontend
 
 
 # public folder
