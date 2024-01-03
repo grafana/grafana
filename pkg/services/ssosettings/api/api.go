@@ -133,11 +133,8 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 	settings.Provider = key
 
 	err := api.SSOSettingsService.Upsert(c.Req.Context(), settings)
-	// TODO: first check whether the error is referring to validation errors
-
-	// other error
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update provider settings", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}
 
 	return response.JSON(http.StatusNoContent, nil)
@@ -156,6 +153,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
