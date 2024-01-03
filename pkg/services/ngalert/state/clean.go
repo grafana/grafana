@@ -10,6 +10,7 @@ import (
 
 // Clean removes superfluous and orphan instances from the database.
 // It does not affect the manager's loaded cache. The manager will not load orphan states to begin with.
+// If orphan states are present in the cache, they will be left there.
 func (st *Manager) Clean(ctx context.Context, rules RuleReader) error {
 	return Clean(ctx, st.instanceStore, rules, st.log)
 }
