@@ -37,7 +37,7 @@ import {
 import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
-import { DeclareIncident } from '../bridges/DeclareIncidentButton';
+import { DeclareIncidentButton } from '../bridges/DeclareIncidentButton';
 
 import { RedirectToCloneRule } from './CloneRule';
 
@@ -110,7 +110,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
         key="explore"
         variant="primary"
         icon="chart-line"
-        target="__blank"
+        target="_blank"
         href={createExploreLink(rulesSource, rule.query)}
       >
         See graph
@@ -124,7 +124,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
         key="runbook"
         variant="primary"
         icon="book"
-        target="__blank"
+        target="_blank"
         href={textUtil.sanitizeUrl(rule.annotations[Annotation.runbookURL])}
       >
         View runbook
@@ -140,7 +140,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
           key="dashboard"
           variant="primary"
           icon="apps"
-          target="__blank"
+          target="_blank"
           href={`d/${encodeURIComponent(dashboardUID)}`}
         >
           Go to dashboard
@@ -154,7 +154,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             key="panel"
             variant="primary"
             icon="apps"
-            target="__blank"
+            target="_blank"
             href={`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}`}
           >
             Go to panel
@@ -170,7 +170,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
         size="sm"
         key="silence"
         icon="bell-slash"
-        target="__blank"
+        target="_blank"
         href={makeRuleBasedSilenceLink(alertmanagerSourceName, rule)}
       >
         Silence
@@ -196,7 +196,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   if (isFiringRule && shouldShowDeclareIncidentButton()) {
     buttons.push(
       <Fragment key="declare-incident">
-        <DeclareIncident title={rule.name} url={buildShareUrl()} />
+        <DeclareIncidentButton title={rule.name} url={buildShareUrl()} />
       </Fragment>
     );
   }
@@ -318,7 +318,8 @@ function shouldShowDeclareIncidentButton() {
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    padding: ${theme.spacing(2)} 0;
+    padding: 0 0 ${theme.spacing(2)} 0;
+    gap: ${theme.spacing(1)};
     display: flex;
     flex-direction: row;
     justify-content: space-between;

@@ -20,7 +20,7 @@ var (
 	auto_login = true
 	client_id = test_client_id
 	client_secret = test_client_secret
-	scopes = ["openid", "profile", "email"]
+	scopes = openid, profile, email
 	empty_scopes = false
 	email_attribute_name = email:primary
 	email_attribute_path = email
@@ -61,7 +61,7 @@ var (
 		"auto_login":                 true,
 		"client_id":                  "test_client_id",
 		"client_secret":              "test_client_secret",
-		"scopes":                     "[\"openid\", \"profile\", \"email\"]",
+		"scopes":                     "openid, profile, email",
 		"empty_scopes":               false,
 		"email_attribute_name":       "email:primary",
 		"email_attribute_path":       "email",
@@ -151,7 +151,7 @@ func setupEnvVars(t *testing.T) {
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_AUTO_LOGIN", "true")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_CLIENT_ID", "test_client_id")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET", "test_client_secret")
-	t.Setenv("GF_AUTH_GENERIC_OAUTH_SCOPES", `["openid", "profile", "email"]`)
+	t.Setenv("GF_AUTH_GENERIC_OAUTH_SCOPES", "openid, profile, email")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_EMPTY_SCOPES", "")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_NAME", "email:primary")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_PATH", "email")

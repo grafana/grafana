@@ -158,8 +158,24 @@ describe('BarChart utils', () => {
   });
 
   describe('prepareGraphableFrames', () => {
-    it('will warn when there is no data in the response', () => {
+    it('will warn when there is no frames in the response', () => {
       const result = prepareBarChartDisplayValues([], createTheme(), { stacking: StackingMode.None } as Options);
+      const warning = assertIsDefined('warn' in result ? result : null);
+
+      expect(warning.warn).toEqual('No data in response');
+    });
+
+    it('will warn when there is no data in the response', () => {
+      const result = prepareBarChartDisplayValues(
+        [
+          {
+            length: 0,
+            fields: [],
+          },
+        ],
+        createTheme(),
+        { stacking: StackingMode.None } as Options
+      );
       const warning = assertIsDefined('warn' in result ? result : null);
 
       expect(warning.warn).toEqual('No data in response');
