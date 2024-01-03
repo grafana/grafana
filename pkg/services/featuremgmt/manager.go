@@ -208,18 +208,23 @@ func WithFeatures(spec ...any) *FeatureManager {
 // WithFeatureFlags is used to define feature toggles for testing.
 // It should be used when your test feature toggles require metadata beyond `Name` and `Enabled`.
 // You should provide a feature toggle Name at a minimum.
-func WithFeatureFlags(flags []*FeatureFlag) *FeatureManager {
+func WithFeatureFlags(flags []*FeatureFlag, disabled ...string) *FeatureManager {
 	count := len(flags)
 	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)
+
+	dis := make(map[string]bool)
+	for _, v := range disabled {
+		dis[v] = true
+	}
 
 	for _, f := range flags {
 		if f.Name == "" {
 			continue
 		}
 		features[f.Name] = f
-		enabled[f.Name] = true
+		enabled[f.Name] = !dis[f.Name]
 	}
 
-	return &FeatureManager{enabled: enabled, flags: features}
+	return &FeatureManager{enabled: enabled, flags: features, startup: enabled}
 }
