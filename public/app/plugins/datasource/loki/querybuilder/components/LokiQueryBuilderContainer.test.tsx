@@ -1,4 +1,4 @@
-import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, findAllByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getSelectParent } from 'test/helpers/selectOptionInTest';
@@ -49,7 +49,7 @@ describe('LokiQueryBuilderContainer', () => {
     render(<LokiQueryBuilderContainer {...props} />);
     await userEvent.click(screen.getByLabelText('Add'));
     const labels = screen.getByText(/Label filters/);
-    const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
+    const selects = await findAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
     userEvent.click(await screen.findByText('job'));
 
