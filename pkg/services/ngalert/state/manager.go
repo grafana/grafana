@@ -191,6 +191,12 @@ func (st *Manager) warmOrg(ctx context.Context, orgID int64, rules RuleReader) (
 }
 
 func (st *Manager) cleanupOrphanedInstances(ctx context.Context, instances []ngModels.AlertInstanceKey) error {
+	if len(instances) == 0 {
+		return nil
+	}
+
+	st.log.Warn("Detected states for deleted rules, cleaning them up", "count", len(instances))
+
 	const batchSize = 10000
 
 	return batch(len(instances), batchSize, func(start, end int) error {
