@@ -39,8 +39,7 @@ const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 const pyroscopePlugin = async () =>
   await import(/* webpackChunkName: "pyroscopePlugin" */ 'app/plugins/datasource/grafana-pyroscope-datasource/module');
-const parcaPlugin = async () =>
-  await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
+const parcaPlugin = async () => await import(/* webpackChunkName: "parcaPlugin" */ '@grafana-plugins/parca/module');
 
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';

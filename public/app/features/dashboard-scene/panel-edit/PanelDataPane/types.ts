@@ -5,6 +5,7 @@ export interface PanelDataPaneTabState extends SceneObjectState {}
 
 export interface PanelDataPaneTab extends SceneObject {
   getTabLabel(): string;
+  getItemsCount?(): number | null;
   tabId: string;
   icon: IconName;
 }

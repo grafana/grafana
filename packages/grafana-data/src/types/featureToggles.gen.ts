@@ -53,7 +53,6 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
-  accessTokenExpirationCheck?: boolean;
   emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -159,6 +158,7 @@ export interface FeatureToggles {
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
+  canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
@@ -170,4 +170,5 @@ export interface FeatureToggles {
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;
+  lokiQueryHints?: boolean;
 }

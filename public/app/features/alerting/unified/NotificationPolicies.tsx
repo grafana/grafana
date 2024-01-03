@@ -329,7 +329,7 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
 }
 
 const NotificationPoliciesPage = () => (
-  <AlertmanagerPageWrapper pageId="am-routes" accessType="notification">
+  <AlertmanagerPageWrapper navId="am-routes" accessType="notification">
     <AmRoutes />
   </AlertmanagerPageWrapper>
 );

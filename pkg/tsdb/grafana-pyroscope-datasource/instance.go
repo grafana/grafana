@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"go.opentelemetry.io/otel/attribute"
@@ -43,11 +42,10 @@ type PyroscopeDatasource struct {
 	httpClient *http.Client
 	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
-	ac         accesscontrol.AccessControl
 }
 
 // NewPyroscopeDatasource creates a new datasource instance.
-func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
+func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	ctxLogger := logger.FromContext(ctx)
 	opt, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
@@ -64,7 +62,6 @@ func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.P
 		httpClient: httpClient,
 		client:     NewPyroscopeClient(httpClient, settings.URL),
 		settings:   settings,
-		ac:         ac,
 	}, nil
 }
 

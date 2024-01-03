@@ -2,12 +2,13 @@ import { BuildInfo } from '@grafana/data';
 import { BaseTransport } from '@grafana/faro-core';
 import {
   initializeFaro,
-  defaultMetas,
   BrowserConfig,
   ErrorsInstrumentation,
   ConsoleInstrumentation,
   WebVitalsInstrumentation,
+  SessionInstrumentation,
   FetchTransport,
+  type Instrumentation,
 } from '@grafana/faro-web-sdk';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
@@ -31,8 +32,9 @@ export class GrafanaJavascriptAgentBackend
   transports: BaseTransport[];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
-    // configure instrumentalizations
-    const instrumentations = [];
+    // configure instrumentations.
+    const instrumentations: Instrumentation[] = [];
+
     this.transports = [];
 
     if (options.customEndpoint) {
@@ -49,6 +51,9 @@ export class GrafanaJavascriptAgentBackend
       instrumentations.push(new WebVitalsInstrumentation());
     }
 
+    // session instrumentation must be added!
+    instrumentations.push(new SessionInstrumentation());
+
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
       globalObjectKey: options.globalObjectKey || 'faro',
@@ -64,15 +69,15 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
       ],
-      metas: [
-        ...defaultMetas,
-        {
-          session: {
-            // new session id for every page load
-            id: (Math.random() + 1).toString(36).substring(2),
-          },
+      sessionTracking: {
+        persistent: true,
+        generateSessionId() {
+          return (Math.random() + 1).toString(36).substring(2);
         },
-      ],
+      },
+      batching: {
+        sendTimeout: 1000,
+      },
     };
     this.faroInstance = initializeFaro(grafanaJavaScriptAgentOptions);
 

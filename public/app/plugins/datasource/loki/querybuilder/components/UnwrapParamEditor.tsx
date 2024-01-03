@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { QueryBuilderOperationParamEditorProps } from '../../../prometheus/querybuilder/shared/types';
@@ -31,7 +32,7 @@ export function UnwrapParamEditor({
       inputId={getOperationParamId(operationId, index)}
       onOpenMenu={async () => {
         // This check is always true, we do it to make typescript happy
-        if (datasource instanceof LokiDatasource) {
+        if (datasource instanceof LokiDatasource && config.featureToggles.lokiQueryHints) {
           setState({ isLoading: true });
           const options = await loadUnwrapOptions(query, datasource, timeRange);
           setState({ options, isLoading: undefined });

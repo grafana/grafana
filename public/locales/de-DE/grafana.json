@@ -25,6 +25,9 @@
       "user": "Nutzer"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Abbrechen",
@@ -408,6 +411,9 @@
     "datasource-add-button": {
       "label": "Neue Datenquelle hinzufügen"
     }
+  },
+  "drawer": {
+    "close": ""
   },
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
@@ -967,6 +973,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {

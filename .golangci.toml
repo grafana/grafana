@@ -59,6 +59,8 @@ files = [
   "**/pkg/tsdb/grafana-testdata-datasource/**/*",
   "**/pkg/tsdb/azuremonitor/*",
   "**/pkg/tsdb/azuremonitor/**/*",
+  "**/pkg/tsdb/parca/*",
+  "**/pkg/tsdb/parca/**/*",
 ]
 
 [linters-settings.gocritic]
