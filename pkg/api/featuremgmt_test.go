@@ -406,13 +406,16 @@ func runGetScenario(
 	cfg := setting.NewCfg()
 	cfg.FeatureManagement = settings
 
+	fm := featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
+		Name:    featuremgmt.FlagFeatureToggleAdminPage,
+		Enabled: true,
+		Stage:   featuremgmt.FeatureStageGeneralAvailability,
+	}}, features...))
+
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.Features = featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
-			Name:    featuremgmt.FlagFeatureToggleAdminPage,
-			Enabled: true,
-			Stage:   featuremgmt.FeatureStageGeneralAvailability,
-		}}, features...))
+		hs.Features = fm
+		hs.featureManager = fm
 		hs.orgService = orgtest.NewOrgServiceFake()
 		hs.userService = &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 1},
