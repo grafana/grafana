@@ -22,7 +22,7 @@ RUN yarn build
 
 FROM golang:1.19.2-alpine3.15 as go-builder
 
-RUN apk add --no-cache gcc g++ make
+RUN apk add --no-cache gcc g++ make openssl
 
 WORKDIR /grafana
 

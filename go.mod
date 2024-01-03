@@ -104,13 +104,13 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
 	go.opentelemetry.io/otel/sdk v1.6.3
 	go.opentelemetry.io/otel/trace v1.6.3
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858
-	golang.org/x/tools v0.1.12
+	golang.org/x/tools v0.6.0
 	gonum.org/v1/gonum v0.11.0
 	google.golang.org/api v0.74.0
 	google.golang.org/grpc v1.45.0
@@ -229,8 +229,8 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0
 	go.uber.org/goleak v1.1.12 // indirect
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
-	golang.org/x/text v0.3.8
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/text v0.14.0
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
@@ -335,7 +335,7 @@ require (
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.6.3 // indirect
 	go.opentelemetry.io/proto/otlp v0.15.0 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/mod v0.8.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	k8s.io/api v0.22.5 // indirect
 	k8s.io/apimachinery v0.22.5 // indirect
