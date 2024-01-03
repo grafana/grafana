@@ -188,6 +188,22 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
 	})
+
+	labels = models.InstanceLabels{"test6": "testValue6"}
+	_, hash, _ = labels.StringAndHash()
+	instances = append(instances, models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    "does not exist",
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateFiring,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	})
+
 	for _, instance := range instances {
 		_ = dbstore.SaveAlertInstance(ctx, instance)
 	}
