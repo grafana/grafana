@@ -19,11 +19,6 @@ type Alertmanager struct {
 	legacyUIDToReceiver   map[string]*apiModels.PostableGrafanaReceiver
 }
 
-// NewAlertmanager creates a new Alertmanager.
-func NewAlertmanager() *Alertmanager {
-	return FromPostableUserConfig(nil)
-}
-
 // FromPostableUserConfig creates an Alertmanager from a PostableUserConfig.
 func FromPostableUserConfig(config *apiModels.PostableUserConfig) *Alertmanager {
 	if config == nil {
@@ -82,6 +77,34 @@ func (am *Alertmanager) AddReceiver(recv *apiModels.PostableGrafanaReceiver) {
 		},
 	})
 	am.legacyUIDToReceiver[recv.UID] = recv
+}
+
+// RemoveContactPointsAndRoutes removes all receivers and routes given legacy channel name.
+func (am *Alertmanager) RemoveContactPointsAndRoutes(uid string) {
+	if recv, ok := am.legacyUIDToReceiver[uid]; ok {
+		for i, r := range am.config.AlertmanagerConfig.Receivers {
+			if r.Name == recv.Name {
+				am.config.AlertmanagerConfig.Receivers = append(am.config.AlertmanagerConfig.Receivers[:i], am.config.AlertmanagerConfig.Receivers[i+1:]...)
+			}
+		}
+
+		// Don't keep receiver and remove all nested routes that reference it.
+		// This will fail validation if the user has created other routes that reference this receiver.
+		// In that case, they must manually delete the added routes.
+		am.RemoveRoutes(recv.Name)
+	}
+}
+
+// RemoveRoutes legacy routes that send to the given receiver.
+func (am *Alertmanager) RemoveRoutes(recv string) {
+	var keptRoutes []*apiModels.Route
+	for i, route := range am.legacyRoute.Routes {
+		if route.Receiver != recv {
+			keptRoutes = append(keptRoutes, am.legacyRoute.Routes[i])
+		}
+	}
+	delete(am.legacyReceiverToRoute, recv)
+	am.legacyRoute.Routes = keptRoutes
 }
 
 // GetLegacyRoute retrieves the legacy route for a given migrated channel UID.

@@ -3,6 +3,7 @@ package migration
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -58,14 +59,20 @@ func (sync *sync) syncAndSaveState(
 	ctx context.Context,
 	dashboardUpgrades []*migmodels.DashboardUpgrade,
 	contactPairs []*migmodels.ContactPair,
+	skipExisting bool,
 ) error {
-	delta := createDelta(dashboardUpgrades, contactPairs)
-	state, err := sync.syncDelta(ctx, delta)
+	oldState, err := sync.migrationStore.GetOrgMigrationState(ctx, sync.orgID)
+	if err != nil {
+		return fmt.Errorf("get state: %w", err)
+	}
+
+	delta := createDelta(oldState, dashboardUpgrades, contactPairs, skipExisting)
+	err = sync.syncDelta(ctx, oldState, delta)
 	if err != nil {
 		return fmt.Errorf("sync state: %w", err)
 	}
 
-	err = sync.migrationStore.SetOrgMigrationState(ctx, sync.orgID, state)
+	err = sync.migrationStore.SetOrgMigrationState(ctx, sync.orgID, oldState)
 	if err != nil {
 		return fmt.Errorf("save state: %w", err)
 	}
@@ -76,55 +83,135 @@ func (sync *sync) syncAndSaveState(
 // StateDelta contains the changes to be made to the database based on the difference between
 // existing migration state and new migration state.
 type StateDelta struct {
-	DashboardsToAdd []*migmodels.DashboardUpgrade
-	ChannelsToAdd   []*migmodels.ContactPair
+	AlertsToAdd        []*migmodels.AlertPair
+	AlertsToDelete     []*migmodels.AlertPair
+	DashboardsToAdd    []*migmodels.DashboardUpgrade
+	DashboardsToDelete []*migrationStore.DashboardUpgrade
+
+	ChannelsToAdd    []*migmodels.ContactPair
+	ChannelsToDelete []*migrationStore.ContactPair
 }
 
-// createDelta creates a StateDelta from the new dashboards upgrades and contact pairs.
+// createDelta creates a StateDelta based on the difference between oldState and the new dashboardUpgrades and contactPairs.
+// If skipExisting is true, existing alerts in each dashboard as well as existing channels will be not be deleted.
+// If skipExisting is false, each given dashboard will be entirely replaced with the new state and all channels will be replaced.
 func createDelta(
+	oldState *migrationStore.OrgMigrationState,
 	dashboardUpgrades []*migmodels.DashboardUpgrade,
 	contactPairs []*migmodels.ContactPair,
+	skipExisting bool,
 ) StateDelta {
-	return StateDelta{
-		DashboardsToAdd: dashboardUpgrades,
-		ChannelsToAdd:   contactPairs,
+	delta := StateDelta{}
+	for _, du := range dashboardUpgrades {
+		oldDu, ok := oldState.MigratedDashboards[du.ID]
+		if !ok {
+			// Old state doesn't contain this dashboard, so add all alerts.
+			delta.DashboardsToAdd = append(delta.DashboardsToAdd, du)
+			continue
+		}
+
+		if !skipExisting {
+			delta.DashboardsToDelete = append(delta.DashboardsToDelete, oldDu)
+			delta.DashboardsToAdd = append(delta.DashboardsToAdd, du)
+			continue
+		}
+
+		for _, pair := range du.MigratedAlerts {
+			if _, ok := oldDu.MigratedAlerts[pair.LegacyRule.PanelID]; !ok {
+				// Only add alerts that don't already exist.
+				delta.AlertsToAdd = append(delta.AlertsToAdd, pair)
+			}
+		}
 	}
+
+	for _, newPair := range contactPairs {
+		oldPair, ok := oldState.MigratedChannels[newPair.Channel.ID]
+		if !ok || oldPair.NewReceiverUID == "" {
+			// Old state doesn't contain this channel, or this channel is a stub. We create a new contact point and route for it.
+			delta.ChannelsToAdd = append(delta.ChannelsToAdd, newPair)
+			continue
+		}
+
+		// Old state contains this channel, so it's either a re-migrated channel or a deleted channel.
+		if skipExisting {
+			// We're only migrating new channels, so we skip this one.
+			continue
+		}
+		delta.ChannelsToDelete = append(delta.ChannelsToDelete, oldPair)
+		delta.ChannelsToAdd = append(delta.ChannelsToAdd, newPair)
+	}
+
+	return delta
 }
 
 // syncDelta persists the given delta to the state and database.
-func (sync *sync) syncDelta(ctx context.Context, delta StateDelta) (*migrationStore.OrgMigrationState, error) {
-	state := &migrationStore.OrgMigrationState{
-		OrgID:              sync.orgID,
-		CreatedFolders:     make([]string, 0),
-		MigratedDashboards: make(map[int64]*migrationStore.DashboardUpgrade, len(delta.DashboardsToAdd)),
-		MigratedChannels:   make(map[int64]*migrationStore.ContactPair, len(delta.ChannelsToAdd)),
-	}
-
+func (sync *sync) syncDelta(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta) error {
 	amConfig, err := sync.handleAlertmanager(ctx, state, delta)
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	err = sync.handleDeleteRules(ctx, state, delta)
+	if err != nil {
+		return err
 	}
 
 	err = sync.handleAddRules(ctx, state, delta, amConfig)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return state, nil
+	return nil
 }
 
 // handleAlertmanager persists the given channel delta to the state and database.
 func (sync *sync) handleAlertmanager(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta) (*migmodels.Alertmanager, error) {
-	amConfig := migmodels.NewAlertmanager()
+	cfg, err := sync.migrationStore.GetAlertmanagerConfig(ctx, sync.orgID)
+	if err != nil {
+		return nil, fmt.Errorf("get alertmanager config: %w", err)
+	}
+	amConfig := migmodels.FromPostableUserConfig(cfg)
 
-	if len(delta.ChannelsToAdd) == 0 {
+	if len(delta.ChannelsToDelete) == 0 && len(delta.ChannelsToAdd) == 0 {
 		return amConfig, nil
 	}
 
+	// Get the reverse relationship between rules and channels, so we can update labels on rules that reference modified channels.
+	rulesWithChannels := make(map[int64][]string)
+	for _, du := range state.MigratedDashboards {
+		for _, pair := range du.MigratedAlerts {
+			if pair.NewRuleUID != "" {
+				for _, id := range pair.ChannelIDs {
+					rulesWithChannels[id] = append(rulesWithChannels[id], pair.NewRuleUID)
+				}
+			}
+		}
+	}
+
+	// Information tracked to facilitate alert rule contact point label updates.
+	ruleToAddLabels := make(map[string][]string)
+	ruleToRemoveLabels := make(map[string][]string)
+	for _, pair := range delta.ChannelsToDelete {
+		delete(state.MigratedChannels, pair.LegacyID)
+		if pair.NewReceiverUID != "" {
+			label := amConfig.GetContactLabel(pair.NewReceiverUID)
+			for _, uid := range rulesWithChannels[pair.LegacyID] {
+				ruleToRemoveLabels[uid] = append(ruleToRemoveLabels[uid], label)
+			}
+			// Remove receivers and routes for channels that are being replaced.
+			amConfig.RemoveContactPointsAndRoutes(pair.NewReceiverUID)
+		}
+	}
+
 	for _, pair := range delta.ChannelsToAdd {
+		state.MigratedChannels[pair.Channel.ID] = newContactPair(pair)
 		amConfig.AddReceiver(pair.ContactPoint)
 		amConfig.AddRoute(pair.Route)
-		state.MigratedChannels[pair.Channel.ID] = newContactPair(pair)
+		if pair.ContactPoint != nil {
+			for _, uid := range rulesWithChannels[pair.Channel.ID] {
+				ruleToAddLabels[uid] = append(ruleToAddLabels[uid], contactLabel(pair.ContactPoint.Name))
+			}
+		}
 	}
 
 	config := migmodels.CleanAlertmanager(amConfig)
@@ -140,47 +227,167 @@ func (sync *sync) handleAlertmanager(ctx context.Context, state *migrationStore.
 		return nil, fmt.Errorf("write AlertmanagerConfig: %w", err)
 	}
 
+	// For the channels that have been changed, we need to update the labels on the alert rules that reference them.
+	err = sync.replaceLabels(ctx, ruleToAddLabels, ruleToRemoveLabels)
+	if err != nil {
+		return nil, fmt.Errorf("replace labels: %w", err)
+	}
+
 	return amConfig, nil
+}
+
+// replaceLabels replaces labels for the given alert rule UIDs.
+func (sync *sync) replaceLabels(ctx context.Context, ruleToAddLabels map[string][]string, ruleToRemoveLabels map[string][]string) error {
+	var ruleUIDs []string
+	for uid := range ruleToAddLabels {
+		ruleUIDs = append(ruleUIDs, uid)
+	}
+	for uid := range ruleToRemoveLabels {
+		if _, ok := ruleToAddLabels[uid]; !ok {
+			ruleUIDs = append(ruleUIDs, uid)
+		}
+	}
+	ruleLabels, err := sync.migrationStore.GetRuleLabels(ctx, sync.orgID, ruleUIDs)
+	if err != nil {
+		return fmt.Errorf("get rule labels: %w", err)
+	}
+	for key, labels := range ruleLabels {
+		if labelsToRemove, ok := ruleToRemoveLabels[key.UID]; ok {
+			for _, label := range labelsToRemove {
+				delete(labels, label)
+			}
+		}
+		if labelsToAdd, ok := ruleToAddLabels[key.UID]; ok {
+			for _, label := range labelsToAdd {
+				labels[label] = "true"
+			}
+		}
+		err := sync.migrationStore.UpdateRuleLabels(ctx, key, labels)
+		if err != nil {
+			return fmt.Errorf("update rule labels: %w", err)
+		}
+	}
+	return nil
+}
+
+// handleDeleteRules persists the given delete rule delta to the state and database.
+func (sync *sync) handleDeleteRules(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta) error {
+	if len(delta.AlertsToDelete) == 0 && len(delta.DashboardsToDelete) == 0 {
+		return nil
+	}
+	// First we delete alerts so that empty folders can be deleted.
+	uids := make([]string, 0, len(delta.AlertsToDelete))
+	for _, pair := range delta.AlertsToDelete {
+		du, ok := state.MigratedDashboards[pair.LegacyRule.DashboardID]
+		if !ok {
+			return fmt.Errorf("dashboard '%d' not found in state", pair.LegacyRule.DashboardID)
+		}
+		delete(du.MigratedAlerts, pair.LegacyRule.PanelID)
+		if pair.Rule != nil {
+			uids = append(uids, pair.Rule.UID)
+		}
+	}
+	for _, du := range delta.DashboardsToDelete {
+		delete(state.MigratedDashboards, du.DashboardID)
+		for _, pair := range du.MigratedAlerts {
+			if pair.NewRuleUID != "" {
+				uids = append(uids, pair.NewRuleUID)
+			}
+		}
+	}
+	if len(uids) > 0 {
+		err := sync.migrationStore.DeleteAlertRules(ctx, sync.orgID, uids...)
+		if err != nil {
+			return fmt.Errorf("delete alert rules: %w", err)
+		}
+
+		// Attempt to delete folders that might be empty.
+		if len(delta.DashboardsToDelete) > 0 {
+			createdbyMigration := make(map[string]struct{}, len(state.CreatedFolders))
+			for _, uid := range state.CreatedFolders {
+				createdbyMigration[uid] = struct{}{}
+			}
+
+			for _, du := range delta.DashboardsToDelete {
+				if _, ok := createdbyMigration[du.AlertFolderUID]; ok {
+					err := sync.migrationStore.DeleteFolders(ctx, sync.orgID, du.AlertFolderUID)
+					if err != nil {
+						if !errors.Is(err, migrationStore.ErrFolderNotDeleted) {
+							return fmt.Errorf("delete folder '%s': %w", du.AlertFolderUID, err)
+						}
+						sync.log.Info("Failed to delete folder during cleanup", "error", err)
+					} else {
+						delete(createdbyMigration, du.AlertFolderUID)
+					}
+				}
+			}
+			state.CreatedFolders = make([]string, 0, len(createdbyMigration))
+			for uid := range createdbyMigration {
+				state.CreatedFolders = append(state.CreatedFolders, uid)
+			}
+		}
+	}
+
+	return nil
 }
 
 // handleAddRules persists the given add rule delta to the state and database.
 func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta, amConfig *migmodels.Alertmanager) error {
-	pairs := make([]*migmodels.AlertPair, 0)
-	createdFolderUIDs := make(map[string]struct{})
-	for _, duToAdd := range delta.DashboardsToAdd {
-		du := &migrationStore.DashboardUpgrade{
-			DashboardID:    duToAdd.ID,
-			MigratedAlerts: make(map[int64]*migrationStore.AlertPair, len(duToAdd.MigratedAlerts)),
-		}
-		pairsWithRules := make([]*migmodels.AlertPair, 0, len(duToAdd.MigratedAlerts))
-		for _, pair := range duToAdd.MigratedAlerts {
-			du.MigratedAlerts[pair.LegacyRule.PanelID] = newAlertPair(pair)
-			if pair.Rule != nil {
-				pairsWithRules = append(pairsWithRules, pair)
-			}
+	pairs := make([]*migmodels.AlertPair, 0, len(delta.AlertsToAdd))
+	for _, pair := range delta.AlertsToAdd {
+		du, ok := state.MigratedDashboards[pair.LegacyRule.DashboardID]
+		if !ok {
+			return fmt.Errorf("dashboard '%d' not found in state", pair.LegacyRule.DashboardID)
 		}
 
-		if len(pairsWithRules) > 0 {
-			l := sync.log.New("dashboardTitle", duToAdd.Title, "dashboardUid", duToAdd.UID)
-			migratedFolder, err := sync.migratedFolder(ctx, l, duToAdd.UID, duToAdd.FolderID)
-			if err != nil {
-				return err
-			}
-			du.AlertFolderUID = migratedFolder.uid
-			du.Warning = migratedFolder.warning
-
-			// Keep track of folders created by the migration.
-			if _, exists := createdFolderUIDs[migratedFolder.uid]; migratedFolder.created && !exists {
-				createdFolderUIDs[migratedFolder.uid] = struct{}{}
-				state.CreatedFolders = append(state.CreatedFolders, migratedFolder.uid)
-			}
-
-			for _, pair := range pairsWithRules {
-				pair.Rule.NamespaceUID = migratedFolder.uid
-				pairs = append(pairs, pair)
-			}
+		if pair.Rule != nil {
+			// These individually added alerts are created in the same folder as the existing ones.
+			pair.Rule.NamespaceUID = du.AlertFolderUID
+			pairs = append(pairs, pair)
 		}
-		state.MigratedDashboards[du.DashboardID] = du
+		du.MigratedAlerts[pair.LegacyRule.PanelID] = newAlertPair(pair)
+	}
+	if len(delta.DashboardsToAdd) > 0 {
+		createdFolderUIDs := make(map[string]struct{}, len(state.CreatedFolders))
+		for _, uid := range state.CreatedFolders {
+			createdFolderUIDs[uid] = struct{}{}
+		}
+
+		for _, duToAdd := range delta.DashboardsToAdd {
+			du := &migrationStore.DashboardUpgrade{
+				DashboardID:    duToAdd.ID,
+				MigratedAlerts: make(map[int64]*migrationStore.AlertPair, len(duToAdd.MigratedAlerts)),
+			}
+			pairsWithRules := make([]*migmodels.AlertPair, 0, len(duToAdd.MigratedAlerts))
+			for _, pair := range duToAdd.MigratedAlerts {
+				du.MigratedAlerts[pair.LegacyRule.PanelID] = newAlertPair(pair)
+				if pair.Rule != nil {
+					pairsWithRules = append(pairsWithRules, pair)
+				}
+			}
+
+			if len(pairsWithRules) > 0 {
+				l := sync.log.New("dashboardTitle", duToAdd.Title, "dashboardUid", duToAdd.UID)
+				migratedFolder, err := sync.migratedFolder(ctx, l, duToAdd.UID, duToAdd.FolderID)
+				if err != nil {
+					return err
+				}
+				du.AlertFolderUID = migratedFolder.uid
+				du.Warning = migratedFolder.warning
+
+				// Keep track of folders created by the migration.
+				if _, exists := createdFolderUIDs[migratedFolder.uid]; migratedFolder.created && !exists {
+					createdFolderUIDs[migratedFolder.uid] = struct{}{}
+					state.CreatedFolders = append(state.CreatedFolders, migratedFolder.uid)
+				}
+
+				for _, pair := range pairsWithRules {
+					pair.Rule.NamespaceUID = migratedFolder.uid
+					pairs = append(pairs, pair)
+				}
+			}
+			state.MigratedDashboards[du.DashboardID] = du
+		}
 	}
 
 	if len(pairs) > 0 {
@@ -253,6 +460,7 @@ func (sync *sync) deduplicateTitles(ctx context.Context, pairs []*migmodels.Aler
 func (sync *sync) attachContactPointLabels(ctx context.Context, state *migrationStore.OrgMigrationState, pairs []*migmodels.AlertPair, amConfig *migmodels.Alertmanager) ([]models.AlertRule, error) {
 	rules := make([]models.AlertRule, 0, len(pairs))
 	for _, pair := range pairs {
+		l := sync.log.New("legacyRuleId", pair.LegacyRule.ID, "ruleUid", pair.Rule.UID)
 		alertChannels, err := sync.extractChannels(ctx, pair.LegacyRule)
 		if err != nil {
 			return nil, fmt.Errorf("extract channel IDs: %w", err)
@@ -262,7 +470,17 @@ func (sync *sync) attachContactPointLabels(ctx context.Context, state *migration
 		statePair.ChannelIDs = make([]int64, 0, len(alertChannels))
 		for _, c := range alertChannels {
 			statePair.ChannelIDs = append(statePair.ChannelIDs, c.ID)
-			pair.Rule.Labels[contactLabel(c.Name)] = "true"
+			channelPair, ok := state.MigratedChannels[c.ID]
+			if ok {
+				label := amConfig.GetContactLabel(channelPair.NewReceiverUID)
+				if label != "" {
+					pair.Rule.Labels[label] = "true"
+				}
+			} else {
+				l.Warn("Failed to find migrated channel", "channel", c.Name)
+				// Creating stub so that when we eventually migrate the channel, we can update the labels on this rule.
+				state.MigratedChannels[c.ID] = &migrationStore.ContactPair{LegacyID: c.ID, Error: "channel not upgraded"}
+			}
 		}
 		rules = append(rules, *pair.Rule)
 	}
