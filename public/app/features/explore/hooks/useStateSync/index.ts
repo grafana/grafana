@@ -54,7 +54,7 @@ export function useStateSync(params: ExploreQueryParams) {
            - a query is run
            - range is changed
            - panel state is updated
-           - a dtasource change has completed.
+           - a datasource change has completed.
 
           Note: Changing datasource causes a bunch of actions to be dispatched, we want to update the URL 
           only when the change set has completed. This is done by checking if the changeDatasource.pending action
