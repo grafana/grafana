@@ -392,6 +392,10 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.AlertsRouter.Run(subCtx)
 	})
 
+	// Clean up any stale objects prior to starting up.
+	// Do this regardless of whether we are executing alerts or not; there might still be data in the DB.
+	ng.stateManager.Clean(ctx, ng.store)
+
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
 		// Only Warm() the state manager if we are actually executing alerts.
 		// Doing so when we are not executing alerts is wasteful and could lead

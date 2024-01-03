@@ -98,7 +98,7 @@ func NewManager(cfg ManagerCfg) *Manager {
 	return m
 }
 
-func (st *Manager) Warm(ctx context.Context, rules RuleReader) {
+func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	if st.instanceStore == nil {
 		st.log.Info("Skip warming the state because instance store is not configured")
 		return
@@ -113,97 +113,69 @@ func (st *Manager) Warm(ctx context.Context, rules RuleReader) {
 
 	statesCount := 0
 	states := make(map[int64]map[string]*ruleStates, len(orgIds))
-	for _, orgID := range orgIds {
-		orgStates, count := st.warmOrg(ctx, orgID, rules)
-		statesCount += count
-		states[orgID] = orgStates
+	for _, orgId := range orgIds {
+		// Get Rules
+		ruleCmd := ngModels.ListAlertRulesQuery{
+			OrgID: orgId,
+		}
+		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
+		if err != nil {
+			st.log.Error("Unable to fetch previous state", "error", err)
+		}
+
+		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
+		for _, rule := range alertRules {
+			ruleByUID[rule.UID] = rule
+		}
+
+		orgStates := make(map[string]*ruleStates, len(ruleByUID))
+		states[orgId] = orgStates
+
+		// Get Instances
+		cmd := ngModels.ListAlertInstancesQuery{
+			RuleOrgID: orgId,
+		}
+		alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
+		if err != nil {
+			st.log.Error("Unable to fetch previous state", "error", err)
+		}
+
+		for _, entry := range alertInstances {
+			ruleForEntry, ok := ruleByUID[entry.RuleUID]
+			// Ignore states if we don't see a rule.
+			if !ok {
+				continue
+			}
+
+			rulesStates, ok := orgStates[entry.RuleUID]
+			if !ok {
+				rulesStates = &ruleStates{states: make(map[string]*State)}
+				orgStates[entry.RuleUID] = rulesStates
+			}
+
+			lbs := map[string]string(entry.Labels)
+			cacheID, err := entry.Labels.StringKey()
+			if err != nil {
+				st.log.Error("Error getting cacheId for entry", "error", err)
+			}
+			rulesStates.states[cacheID] = &State{
+				AlertRuleUID:         entry.RuleUID,
+				OrgID:                entry.RuleOrgID,
+				CacheID:              cacheID,
+				Labels:               lbs,
+				State:                translateInstanceState(entry.CurrentState),
+				StateReason:          entry.CurrentReason,
+				LastEvaluationString: "",
+				StartsAt:             entry.CurrentStateSince,
+				EndsAt:               entry.CurrentStateEnd,
+				LastEvaluationTime:   entry.LastEvalTime,
+				Annotations:          ruleForEntry.Annotations,
+			}
+			statesCount++
+		}
 	}
 	st.cache.setAllStates(states)
 	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
-}
-
-func (st *Manager) warmOrg(ctx context.Context, orgID int64, rules RuleReader) (map[string]*ruleStates, int) {
-	// Get Rules
-	ruleCmd := ngModels.ListAlertRulesQuery{
-		OrgID: orgID,
-	}
-	alertRules, err := rules.ListAlertRules(ctx, &ruleCmd)
-	if err != nil {
-		st.log.Error("Unable to fetch previous state", "error", err)
-	}
-
-	ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
-	for _, rule := range alertRules {
-		ruleByUID[rule.UID] = rule
-	}
-
-	states := make(map[string]*ruleStates, len(ruleByUID))
-	count := 0
-
-	// Get Instances
-	cmd := ngModels.ListAlertInstancesQuery{
-		RuleOrgID: orgID,
-	}
-	alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
-	if err != nil {
-		st.log.Error("Unable to fetch previous state", "error", err)
-	}
-
-	orphanedInstances := make([]ngModels.AlertInstanceKey, 0)
-
-	for _, entry := range alertInstances {
-		ruleForEntry, ok := ruleByUID[entry.RuleUID]
-		if !ok {
-			orphanedInstances = append(orphanedInstances, entry.AlertInstanceKey)
-			continue
-		}
-
-		rulesStates, ok := states[entry.RuleUID]
-		if !ok {
-			rulesStates = &ruleStates{states: make(map[string]*State)}
-			states[entry.RuleUID] = rulesStates
-		}
-
-		lbs := map[string]string(entry.Labels)
-		cacheID, err := entry.Labels.StringKey()
-		if err != nil {
-			st.log.Error("Error getting cacheId for entry", "error", err)
-		}
-		rulesStates.states[cacheID] = &State{
-			AlertRuleUID:         entry.RuleUID,
-			OrgID:                entry.RuleOrgID,
-			CacheID:              cacheID,
-			Labels:               lbs,
-			State:                translateInstanceState(entry.CurrentState),
-			StateReason:          entry.CurrentReason,
-			LastEvaluationString: "",
-			StartsAt:             entry.CurrentStateSince,
-			EndsAt:               entry.CurrentStateEnd,
-			LastEvaluationTime:   entry.LastEvalTime,
-			Annotations:          ruleForEntry.Annotations,
-		}
-		count++
-	}
-
-	if err := st.cleanupOrphanedInstances(ctx, orphanedInstances); err != nil {
-		st.log.Warn("Failed to delete orphaned instances from database, scheduler will ignore them", "err", err)
-	}
-
-	return states, count
-}
-
-func (st *Manager) cleanupOrphanedInstances(ctx context.Context, instances []ngModels.AlertInstanceKey) error {
-	if len(instances) == 0 {
-		return nil
-	}
-
-	st.log.Warn("Detected states for deleted rules, cleaning them up", "count", len(instances))
-
-	const batchSize = 10000
-
-	return batch(len(instances), batchSize, func(start, end int) error {
-		return st.instanceStore.DeleteAlertInstances(ctx, instances[start:end]...)
-	})
 }
 
 func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {

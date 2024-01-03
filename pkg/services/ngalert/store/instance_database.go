@@ -92,6 +92,17 @@ func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 	return orgIds, err
 }
 
+// FetchRuleUIDs fetches all rule UIDs which have existing instances associated with them.
+func (st DBstore) FetchRuleUIDs(ctx context.Context, orgID int64) ([]string, error) {
+	ruleUIDs := make([]string, 0)
+
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL("SELECT DISTINCT rule_uid FROM alert_instance WHERE rule_org_id=?", orgID).Find(&ruleUIDs)
+	})
+
+	return ruleUIDs, err
+}
+
 // DeleteAlertInstances deletes instances with the provided keys in a single transaction.
 func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {
 	if len(keys) == 0 {

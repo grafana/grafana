@@ -10,6 +10,7 @@ import (
 // InstanceStore represents the ability to fetch and write alert instances.
 type InstanceStore interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
+	FetchRuleUIDs(ctx context.Context, orgID int64) ([]string, error)
 	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
 	SaveAlertInstance(ctx context.Context, instance models.AlertInstance) error
 	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
