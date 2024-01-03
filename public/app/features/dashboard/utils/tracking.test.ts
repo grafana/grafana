@@ -35,22 +35,26 @@ describe('trackDashboardLoaded', () => {
 
     trackDashboardLoaded(model, 16);
 
-    expect(reportInteractionSpy).toHaveBeenCalledWith('dashboards_init_dashboard_completed', {
-      uid: 'dashboard-123',
-      title: 'Test Dashboard',
-      schemaVersion: model.schemaVersion, // This value is based on public/app/features/dashboard/state/DashboardMigrator.ts#L81
-      panels_count: 7,
-      variable_type_query_count: 2,
-      variable_type_interval_count: 1,
-      version_before_migration: 16,
-      panel_type_row_count: 1,
-      panel_type_stat_count: 1,
-      panel_type_graph_count: 2,
-      panel_type_timeseries_count: 1,
-      'panel_type_grafana-worldmap-panel_count': 1,
-      panel_type_geomap_count: 1,
-      settings_nowdelay: '1m',
-      settings_livenow: true,
-    });
+    expect(reportInteractionSpy).toHaveBeenCalledWith(
+      'dashboards_init_dashboard_completed',
+      {
+        uid: 'dashboard-123',
+        title: 'Test Dashboard',
+        schemaVersion: model.schemaVersion, // This value is based on public/app/features/dashboard/state/DashboardMigrator.ts#L81
+        panels_count: 7,
+        variable_type_query_count: 2,
+        variable_type_interval_count: 1,
+        version_before_migration: 16,
+        panel_type_row_count: 1,
+        panel_type_stat_count: 1,
+        panel_type_graph_count: 2,
+        panel_type_timeseries_count: 1,
+        'panel_type_grafana-worldmap-panel_count': 1,
+        panel_type_geomap_count: 1,
+        settings_nowdelay: '1m',
+        settings_livenow: true,
+      },
+      undefined
+    );
   });
 });

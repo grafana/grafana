@@ -371,9 +371,13 @@ describe('SharePublic - Report interactions', () => {
 
     await waitFor(() => {
       expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_time_picker_clicked', {
-        enabled: !pubdashResponse.timeSelectionEnabled,
-      });
+      expect(reportInteraction).toHaveBeenLastCalledWith(
+        'dashboards_sharing_public_time_picker_clicked',
+        {
+          enabled: !pubdashResponse.timeSelectionEnabled,
+        },
+        undefined
+      );
     });
   });
 
@@ -388,9 +392,13 @@ describe('SharePublic - Report interactions', () => {
 
     await waitFor(() => {
       expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_annotations_clicked', {
-        enabled: !pubdashResponse.annotationsEnabled,
-      });
+      expect(reportInteraction).toHaveBeenLastCalledWith(
+        'dashboards_sharing_public_annotations_clicked',
+        {
+          enabled: !pubdashResponse.annotationsEnabled,
+        },
+        undefined
+      );
     });
   });
   it('reports interaction when pause is clicked', async () => {
@@ -402,9 +410,13 @@ describe('SharePublic - Report interactions', () => {
 
     await waitFor(() => {
       expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_pause_clicked', {
-        paused: pubdashResponse.isEnabled,
-      });
+      expect(reportInteraction).toHaveBeenLastCalledWith(
+        'dashboards_sharing_public_pause_clicked',
+        {
+          paused: pubdashResponse.isEnabled,
+        },
+        undefined
+      );
     });
   });
 });
