@@ -145,7 +145,7 @@ flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profilin
 alertingDetailsViewV2,experimental,@grafana/alerting-squad,2023-11-09,false,false,false,true
 datatrails,experimental,@grafana/dashboards-squad,2023-11-15,false,false,false,true
 alertingSimplifiedRouting,experimental,@grafana/alerting-squad,2023-11-10,false,false,false,false
-logRowsPopoverMenu,experimental,@grafana/observability-logs,2023-11-16,false,false,false,true
+logRowsPopoverMenu,GA,@grafana/observability-logs,2023-11-16,false,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,2023-11-15,false,false,false,false
 tableSharedCrosshair,experimental,@grafana/grafana-bi-squad,2023-12-12,false,false,false,true
 regressionTransformation,preview,@grafana/grafana-bi-squad,2023-11-24,false,false,false,true
