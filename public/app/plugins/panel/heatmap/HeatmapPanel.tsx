@@ -167,7 +167,7 @@ export const HeatmapPanel = ({
       theme,
       eventBus,
       onhover: !showNewVizTooltips ? onhover : null,
-      onclick: options.tooltip.show ? onclick : null,
+      onclick: !showNewVizTooltips && options.tooltip.show ? onclick : null,
       isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
