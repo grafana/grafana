@@ -782,8 +782,6 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     step = dict(step, when = when)
     return step
 
-
-
 def playwright_e2e_tests_step():
     return {
         "environment": {
