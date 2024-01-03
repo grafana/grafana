@@ -18,8 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azmoncredentials"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
@@ -27,16 +25,16 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
-		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy, Features: features},
+		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy},
 		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
 		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy},
 		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
 	}
 
-	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, httpClientProvider, executors))
+	im := datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider, executors))
 
 	s := &Service{
 		im:        im,
@@ -65,9 +63,9 @@ type Service struct {
 	resourceHandler backend.CallResourceHandler
 }
 
-func getDatasourceService(ctx context.Context, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
+func getDatasourceService(ctx context.Context, settings *backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
 	route := dsInfo.Routes[routeName]
-	client, err := newHTTPClient(ctx, route, dsInfo, settings, cfg, clientProvider)
+	client, err := newHTTPClient(ctx, route, dsInfo, settings, azureSettings, clientProvider)
 	if err != nil {
 		return types.DatasourceService{}, err
 	}
@@ -77,7 +75,7 @@ func getDatasourceService(ctx context.Context, settings *backend.DataSourceInsta
 	}, nil
 }
 
-func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -91,14 +89,20 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
+		azureSettings, err := azsettings.ReadSettings(ctx)
+		if err != nil {
+			backend.Logger.Error("failed to read Azure settings from Grafana", "error", err.Error())
+			return nil, err
+		}
+
 		credentials, err := azmoncredentials.FromDatasourceData(jsonData, settings.DecryptedSecureJSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		} else if credentials == nil {
-			credentials = azmoncredentials.GetDefaultCredentials(cfg.Azure)
+			credentials = azmoncredentials.GetDefaultCredentials(azureSettings)
 		}
 
-		cloud, err := azcredentials.GetAzureCloud(cfg.Azure, credentials)
+		cloud, err := azcredentials.GetAzureCloud(azureSettings, credentials)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -120,7 +124,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(ctx, &settings, cfg, clientProvider, model, routeName)
+			service, err := getDatasourceService(ctx, &settings, azureSettings, clientProvider, model, routeName)
 			if err != nil {
 				return nil, err
 			}
