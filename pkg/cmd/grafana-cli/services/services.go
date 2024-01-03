@@ -78,7 +78,7 @@ func GetLocalPlugin(pluginDir, pluginID string) (plugins.FoundPlugin, error) {
 }
 
 func GetLocalPlugins(pluginDir string) []*plugins.FoundBundle {
-	f := finder.NewLocalFinder(true, featuremgmt.WithManager())
+	f := finder.NewLocalFinder(true, featuremgmt.WithFeatures())
 
 	res, err := f.Find(context.Background(), sources.NewLocalSource(plugins.ClassExternal, []string{pluginDir}))
 	if err != nil {

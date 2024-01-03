@@ -118,22 +118,8 @@ func GetMockService(version string, rt RoundTripper) *Service {
 			version:          version,
 			fakeRoundTripper: rt,
 		},
-		features: &fakeFeatureToggles{
-			flags: map[string]bool{
-				featuremgmt.FlagInfluxqlStreamingParser: false,
-			},
-		},
+
+		// featuremgmt.FlagInfluxqlStreamingParser: false
+		features: featuremgmt.WithFeatures(),
 	}
-}
-
-type fakeFeatureToggles struct {
-	flags map[string]bool
-}
-
-func (f *fakeFeatureToggles) IsEnabledGlobally(flag string) bool {
-	return f.flags[flag]
-}
-
-func (f *fakeFeatureToggles) IsEnabled(ctx context.Context, flag string) bool {
-	return f.flags[flag]
 }
