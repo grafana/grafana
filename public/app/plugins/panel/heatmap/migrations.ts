@@ -18,6 +18,15 @@ export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => 
   if (Object.keys(panel.options ?? {}).length === 0) {
     return heatmapChangedHandler(panel, 'heatmap', { angular: panel }, panel.fieldConfig);
   }
+
+  // multi tooltip mode in 10.3+
+  let showTooltip = panel.options?.tooltip?.show;
+  if (showTooltip === true) {
+    panel.options.tooltip.mode = TooltipDisplayMode.Single;
+  } else if (showTooltip === false) {
+    panel.options.tooltip.mode = TooltipDisplayMode.None;
+  }
+
   return panel.options;
 };
 
@@ -35,16 +44,7 @@ export const heatmapChangedHandler: PanelTypeChangedHandler = (panel, prevPlugin
   }
   // alpha for 8.5+, then beta at 9.0.1
   if (prevPluginId === 'heatmap-new') {
-    const { bucketFrame, tooltip, ...options } = panel.options;
-
-    // multi tooltip mode in 10.3+
-    let showTooltip = options.tooltip?.show;
-    if (showTooltip === true) {
-      options.tooltip.mode = TooltipDisplayMode.Single;
-    } else if (showTooltip === false) {
-      options.tooltip.mode = TooltipDisplayMode.None;
-    }
-
+    const { bucketFrame, ...options } = panel.options;
     if (bucketFrame) {
       return { ...options, rowsFrame: bucketFrame };
     }
