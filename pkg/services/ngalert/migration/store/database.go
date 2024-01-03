@@ -219,13 +219,25 @@ func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64)
 	}
 
 	if !exists {
-		return &OrgMigrationState{OrgID: orgID}, nil
+		return &OrgMigrationState{
+			OrgID:              orgID,
+			MigratedDashboards: make(map[int64]*DashboardUpgrade),
+			MigratedChannels:   make(map[int64]*ContactPair),
+		}, nil
 	}
 
 	var state OrgMigrationState
 	err = json.Unmarshal([]byte(content), &state)
 	if err != nil {
 		return nil, err
+	}
+
+	if state.MigratedChannels == nil {
+		state.MigratedChannels = make(map[int64]*ContactPair)
+	}
+
+	if state.MigratedDashboards == nil {
+		state.MigratedDashboards = make(map[int64]*DashboardUpgrade)
 	}
 
 	return &state, nil
