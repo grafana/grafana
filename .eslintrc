@@ -97,7 +97,11 @@
     {
       "files": [
         "public/app/plugins/datasource/grafana-testdata-datasource/*.{ts,tsx}",
-        "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}"
+        "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/azuremonitor/*.{ts,tsx}",
+        "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/parca/*.{ts,tsx}",
+        "public/app/plugins/datasource/parca/**/*.{ts,tsx}"
       ],
       "settings": {
         "import/resolver": {

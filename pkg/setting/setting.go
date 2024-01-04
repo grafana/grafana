@@ -551,7 +551,7 @@ type Cfg struct {
 // AddChangePasswordLink returns if login form is disabled or not since
 // the same intention can be used to hide both features.
 func (cfg *Cfg) AddChangePasswordLink() bool {
-	return !cfg.DisableLoginForm
+	return !(cfg.DisableLoginForm || cfg.DisableLogin)
 }
 
 type CommandLineArgs struct {
@@ -676,6 +676,13 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
 	keys := environmentMetricsSection.Keys()
 	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
+
+	cfg.MetricsGrafanaEnvironmentInfo["version"] = cfg.BuildVersion
+	cfg.MetricsGrafanaEnvironmentInfo["commit"] = cfg.BuildCommit
+
+	if cfg.EnterpriseBuildCommit != "NA" && cfg.EnterpriseBuildCommit != "" {
+		cfg.MetricsGrafanaEnvironmentInfo["enterprise_commit"] = cfg.EnterpriseBuildCommit
+	}
 
 	for _, key := range keys {
 		labelName := model.LabelName(key.Name())
@@ -1546,7 +1553,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// ID response header
 	cfg.IDResponseHeaderEnabled = auth.Key("id_response_header_enabled").MustBool(false)
-	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana-")
+	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana")
 
 	idHeaderNamespaces := util.SplitString(auth.Key("id_response_header_namespaces").MustString(""))
 	cfg.IDResponseHeaderNamespaces = make(map[string]struct{}, len(idHeaderNamespaces))
