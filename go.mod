@@ -31,7 +31,7 @@ require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/partner-datasources
-	github.com/Azure/go-autorest/autorest v0.11.29 // @grafana/partner-datasources
+	github.com/Azure/go-autorest/autorest v0.11.29 // @grafana/backend-platform
 	github.com/BurntSushi/toml v1.3.2 // @grafana/grafana-authnz-team
 	github.com/Masterminds/semver v1.5.0 // @grafana/backend-platform
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/backend-platform
