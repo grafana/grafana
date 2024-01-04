@@ -977,19 +977,23 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	sql, params := sb.ToSQL(limit, page)
 
 	// Only use modified search for non-empty search queries, otherwise it's just listing and new query can't help there yet.
+	resc := make(chan []dashboards.DashboardSearchProjection, 1)
 	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) && d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
 		query.Title != "" && len(query.FolderUIDs) == 0 && len(query.FolderIds) == 0 { //nolint:staticcheck
 		derivedCtx := context.WithoutCancel(ctx)
 		go func() {
 			start := time.Now()
-			defer func() {
-				d.log.Info("Alternative search query", "time", time.Since(start), "results", len(res))
-			}()
 			results, err := d.findDashboards(derivedCtx, query)
 			if err != nil {
-				d.log.Info("new search failed", "error", err)
+				d.log.Info("Alternative search query failed", "error", err)
+			} else {
+				d.log.Info("Alternative search query", "time", time.Since(start), "results", len(res))
 			}
-			_ = results
+
+			expected := <-resc
+			if len(results) != len(expected) {
+				d.log.Info("Alternative search query got different results", "expected", len(expected), "got", len(results))
+			}
 		}()
 	}
 
@@ -1005,6 +1009,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return nil, err
 	}
 
+	resc <- res
 	return res, nil
 }
 
@@ -1171,10 +1176,10 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 		return nil
 	})
 
-	results := []dashboards.DashboardSearchProjection{}
-	for _, hit := range hits {
+	results := make([]dashboards.DashboardSearchProjection, len(hits))
+	for i, hit := range hits {
 		d.log.Debug("Search hit", "org_id", hit.OrgID, "kind", hit.Kind, "uid", hit.UID, "title", hit.Title, "folder_uid", hit.FolderUID, "folder", hit.FolderTitle, "term", hit.Term)
-		results = append(results, dashboards.DashboardSearchProjection{
+		results[i] = dashboards.DashboardSearchProjection{
 			ID:          hit.ID,
 			UID:         hit.UID,
 			Title:       hit.Title,
@@ -1182,7 +1187,7 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 			IsFolder:    hit.Kind == "folder",
 			FolderUID:   hit.FolderUID,
 			FolderTitle: hit.FolderTitle,
-		})
+		}
 	}
 
 	return results, err
