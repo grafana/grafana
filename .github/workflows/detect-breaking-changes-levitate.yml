@@ -159,9 +159,6 @@ jobs:
           name: levitate
           path: levitate/
 
-      - name: Exit
-        run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
-        shell: bash
 
   Report:
     name: Report breaking changes in PR
@@ -335,3 +332,7 @@ jobs:
                 reviewers: [],
                 team_reviewers: ['plugins-platform-frontend']
               });
+
+        - name: Exit
+          run: exit ${{ steps.levitate-run.outputs.exit_code }}
+          shell: bash
