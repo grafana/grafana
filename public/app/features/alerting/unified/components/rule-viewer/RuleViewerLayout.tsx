@@ -4,10 +4,12 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { PageProps } from 'app/core/components/Page/types';
 
 type Props = {
   children: React.ReactNode | React.ReactNode[];
   title: string;
+  renderTitle?: PageProps['renderTitle'];
   wrapInContent?: boolean;
 };
 
@@ -17,11 +19,11 @@ const defaultPageNav: Partial<NavModelItem> = {
 };
 
 export function RuleViewerLayout(props: Props): JSX.Element | null {
-  const { wrapInContent = true, children, title } = props;
+  const { wrapInContent = true, children, title, renderTitle } = props;
   const styles = useStyles2(getPageStyles);
 
   return (
-    <Page pageNav={{ ...defaultPageNav, text: title }} navId="alert-list">
+    <Page pageNav={{ ...defaultPageNav, text: title }} renderTitle={renderTitle} navId="alert-list">
       <Page.Contents>
         <div className={styles.content}>{wrapInContent ? <RuleViewerLayoutContent {...props} /> : children}</div>
       </Page.Contents>

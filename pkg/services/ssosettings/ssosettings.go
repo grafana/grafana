@@ -36,6 +36,8 @@ type Service interface {
 }
 
 // Reloadable is an interface that can be implemented by a provider to allow it to be validated and reloaded
+//
+//go:generate mockery --name Reloadable --structname MockReloadable --outpkg ssosettingstests --filename reloadable_mock.go --output ./ssosettingstests/
 type Reloadable interface {
 	Reload(ctx context.Context, settings models.SSOSettings) error
 	Validate(ctx context.Context, settings models.SSOSettings) error
