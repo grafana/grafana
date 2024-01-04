@@ -87,7 +87,7 @@ You can edit your canvas inline while in the context of dashboard mode.
 
 ### Pan and zoom
 
-You can enable panning and zooming in canvas. This allows you to both create and navigate more complex designs.
+You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
 
 {{< docs/public-preview product="Canvas pan and zoom" featureFlag="canvasPanelPanZoom" >}}
 
