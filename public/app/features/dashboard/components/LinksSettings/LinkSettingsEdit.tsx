@@ -4,7 +4,7 @@ import { DashboardLink } from '@grafana/schema';
 
 import { DashboardModel } from '../../state/DashboardModel';
 
-import { DashboardLinkEdit } from './DashboardLinkEdit';
+import { DashboardLinkForm } from './DashboardLinkForm';
 import { newLink } from './utils';
 
 type LinkSettingsEditProps = {
@@ -23,5 +23,5 @@ export const LinkSettingsEdit = ({ editLinkIdx, dashboard, onGoBack }: LinkSetti
     setLinkSettings(link);
   };
 
-  return <DashboardLinkEdit link={linkSettings} onUpdate={onUpdate} onGoBack={onGoBack} />;
+  return <DashboardLinkForm link={linkSettings} onUpdate={onUpdate} onGoBack={onGoBack} />;
 };

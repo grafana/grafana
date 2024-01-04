@@ -38,7 +38,7 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip'];
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links'];
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */

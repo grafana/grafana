@@ -98,14 +98,14 @@ export function DashboardLinkList({
 }
 
 const getStyles = () => ({
-  titleWrapper: css`
-    width: 20vw;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  `,
-  urlWrapper: css`
-    width: 40vw;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  `,
+  titleWrapper: css({
+    width: '20vw',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  }),
+  urlWrapper: css({
+    width: '40vw',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  }),
 });

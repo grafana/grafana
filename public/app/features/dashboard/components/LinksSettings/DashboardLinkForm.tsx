@@ -13,13 +13,13 @@ const linkTypeOptions = [
 
 const linkIconOptions = Object.keys(linkIconMap).map((key) => ({ label: key, value: key }));
 
-interface DashboardLinkEditProps {
+interface DashboardLinkFormProps {
   link: DashboardLink;
   onUpdate: (link: DashboardLink) => void;
   onGoBack: () => void;
 }
 
-export function DashboardLinkEdit({ link, onUpdate, onGoBack }: DashboardLinkEditProps) {
+export function DashboardLinkForm({ link, onUpdate, onGoBack }: DashboardLinkFormProps) {
   const onTagsChange = (tags: string[]) => {
     onUpdate({ ...link, tags: tags });
   };
