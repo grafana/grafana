@@ -25,6 +25,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
+import { newLink } from 'app/features/dashboard/components/LinksSettings';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
@@ -185,6 +186,7 @@ describe('transformSceneToSaveModel', () => {
           time_options: ['5m', '15m', '30m'],
           hidden: true,
         },
+        links: [{ ...newLink, title: 'Link 1' }],
       };
       const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
@@ -817,15 +819,14 @@ describe('transformSceneToSaveModel', () => {
         expect(result.panels?.[0].gridPos).toEqual({ w: 24, x: 0, y: 0, h: 20 });
       });
 
-      // TODO: Uncomment when we support links
-      // it('should remove links', async () => {
-      //   const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
-      //   activateFullSceneTree(scene);
-      //   const snapshot = transformSceneToSaveModel(scene, true);
-      //   expect(snapshot.links?.length).toBe(1);
-      //   const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
-      //   expect(result.links?.length).toBe(0);
-      // });
+      it('should remove links', async () => {
+        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+        activateFullSceneTree(scene);
+        const snapshot = transformSceneToSaveModel(scene, true);
+        expect(snapshot.links?.length).toBe(1);
+        const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
+        expect(result.links?.length).toBe(0);
+      });
     });
   });
 });

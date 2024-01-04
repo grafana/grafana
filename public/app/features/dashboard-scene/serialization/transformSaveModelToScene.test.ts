@@ -34,6 +34,7 @@ import {
   RowPanel,
   VariableType,
 } from '@grafana/schema';
+import { newLink } from 'app/features/dashboard/components/LinksSettings';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -71,6 +72,7 @@ describe('transformSaveModelToScene', () => {
           ...defaultTimePickerConfig,
           hidden: true,
         },
+        links: [{ ...newLink, title: 'Link 1' }],
         templating: {
           list: [
             {
@@ -110,6 +112,8 @@ describe('transformSaveModelToScene', () => {
 
       expect(scene.state.title).toBe('test');
       expect(scene.state.uid).toBe('test-uid');
+      expect(scene.state.links).toHaveLength(1);
+      expect(scene.state.links[0].title).toBe('Link 1');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
       expect(scene.state?.$timeRange?.state.fiscalYearStartMonth).toEqual(2);
       expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
