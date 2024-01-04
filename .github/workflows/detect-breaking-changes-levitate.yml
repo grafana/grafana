@@ -172,6 +172,8 @@ jobs:
             app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
             private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
 
+        - uses: actions/checkout@v4
+
         - name: 'Download artifact'
           uses: actions/download-artifact@v3
           with:
