@@ -39,7 +39,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const styles = useStyles2((theme) => getStyles(theme));
   const scrollerRef = useRef(scroller as HTMLElement);
   const { y: verticalScroll } = useScroll(scrollerRef);
-  const directClick = useRef<boolean>(false);
 
   const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
     let scrollValue = 0;
@@ -54,14 +53,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       top: scrollValue,
       behavior: 'smooth',
     });
-
-    /* doing this to prevent immediate updates to verticalScroll
-    which will cause the useEffect to fire multiple times and 
-    set active items at each point of the scroll
-    */
-    setTimeout(() => {
-      directClick.current = false;
-    }, 1000);
 
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'select_section',
@@ -78,12 +69,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   useEffect(() => {
-    // TODO: this doesn't work because scrolling will still happen and directClick will be set to false
-
-    if (directClick.current) {
-      return;
-    }
-
     const activeItem = outlineItems.find((item) => {
       const top = item?.ref?.getBoundingClientRect().top;
 
@@ -100,12 +85,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
     setActiveItemId(activeItem.id);
   }, [outlineItems, verticalScroll]);
-
-  const handleDirectClick = (item: ContentOutlineItemContextProps) => {
-    directClick.current = true;
-    setActiveItemId(item.id);
-    scrollIntoView(item.ref, item.title);
-  };
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
@@ -128,7 +107,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 className={styles.buttonStyles}
                 icon={item.icon}
                 onClick={() => {
-                  handleDirectClick(item);
+                  scrollIntoView(item.ref, item.title);
                 }}
                 tooltip={!expanded ? item.title : undefined}
                 isActive={activeItemId === item.id}
