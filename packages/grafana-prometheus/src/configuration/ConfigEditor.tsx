@@ -3,7 +3,7 @@ import React from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Alert, FieldValidationMessage, useTheme2 } from '@grafana/ui';
 
@@ -12,7 +12,6 @@ import { PromOptions } from '../types';
 import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
-import { AdvancedHttpSettings } from './overhaul/AdvancedHttpSettings';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
 
