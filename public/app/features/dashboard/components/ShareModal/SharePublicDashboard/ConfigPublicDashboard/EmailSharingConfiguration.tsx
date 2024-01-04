@@ -35,17 +35,6 @@ interface EmailSharingConfigurationForm {
   email: string;
 }
 
-const options: Array<SelectableValue<PublicDashboardShareType>> = [
-  {
-    label: t('email-sharing-configuration.public-dashboard.public-share-type-label', 'Anyone with a link'),
-    value: PublicDashboardShareType.PUBLIC,
-  },
-  {
-    label: t('email-sharing-configuration.public-dashboard.email-share-type-label', 'Only specified people'),
-    value: PublicDashboardShareType.EMAIL,
-  },
-];
-
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
 
 const EmailList = ({
@@ -172,6 +161,16 @@ export const EmailSharingConfiguration = () => {
             control={control}
             render={({ field }) => {
               const { ref, ...rest } = field;
+              const options: Array<SelectableValue<PublicDashboardShareType>> = [
+                {
+                  label: t('email-sharing-configuration.public-dashboard.public-share-type-label', 'Anyone with a link'),
+                  value: PublicDashboardShareType.PUBLIC,
+                },
+                {
+                  label: t('email-sharing-configuration.public-dashboard.email-share-type-label', 'Only specified people'),
+                  value: PublicDashboardShareType.EMAIL,
+                },
+              ];
               return (
                 <RadioButtonGroup
                   {...rest}
