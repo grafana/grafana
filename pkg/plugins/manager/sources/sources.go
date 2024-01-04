@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -36,6 +37,9 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 	}
 
 	pluginsPath := s.cfg.PluginsPath
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+	// variable.
+	// nolint:gosec
 	d, err := os.Open(pluginsPath)
 	if err != nil {
 		s.log.Error("Failed to open plugins path", "path", pluginsPath, "error", err)
@@ -52,6 +56,7 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 	if err != nil {
 		s.log.Error("Failed to read directory names in plugins path", "path", pluginsPath, "error", err)
 	}
+	slices.Sort(pluginDirs)
 
 	for _, dir := range pluginDirs {
 		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{filepath.Join(pluginsPath, dir)}))
