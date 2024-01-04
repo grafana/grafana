@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { InlineFormLabel, TextArea } from '@grafana/ui/src';
+import { Field, FieldSet, InlineFormLabel, TextArea } from '@grafana/ui';
 
 import InfluxDatasource from '../../../datasource';
 import { InfluxVersion } from '../../../types';
@@ -33,11 +33,20 @@ export default class VariableQueryEditor extends PureComponent<Props> {
             onChange={(v) => onChange(v.query)}
           />
         );
-      //@todo add support for SQL
       case InfluxVersion.SQL:
-        return <div className="gf-form-inline">TODO</div>;
-
-      // Influx/default case
+        return (
+          <FieldSet>
+            <Field htmlFor="influx-sql-variable-query">
+              <TextArea
+                id="influx-sql-variable-query"
+                defaultValue={query || ''}
+                placeholder="metric name or tags query"
+                rows={1}
+                onBlur={(e) => onChange(e.currentTarget.value)}
+              />
+            </Field>
+          </FieldSet>
+        );
       case InfluxVersion.InfluxQL:
       default:
         return (

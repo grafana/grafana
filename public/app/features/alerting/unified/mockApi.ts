@@ -427,6 +427,10 @@ export function setupMswServer() {
     server.listen({ onUnhandledRequest: 'error' });
   });
 
+  afterEach(() => {
+    server.resetHandlers();
+  });
+
   afterAll(() => {
     server.close();
   });

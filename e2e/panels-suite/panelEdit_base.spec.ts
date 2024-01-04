@@ -39,7 +39,7 @@ describe('Panel edit tests', () => {
         e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
           expect(li.text()).equals('Transform data0'); // there's no transform so therefore Transform + 0
         });
-        e2e.components.Transforms.card('Merge').scrollIntoView().should('be.visible');
+        e2e.components.Transforms.addTransformationButton().scrollIntoView().should('be.visible');
         e2e.components.QueryTab.content().should('not.exist');
         e2e.components.AlertTab.content().should('not.exist');
         e2e.components.PanelAlertTabContent.content().should('not.exist');

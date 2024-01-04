@@ -27,6 +27,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.action.hover,
+        '@media (forced-colors: active), (prefers-contrast: more)': {
+          border: `1px solid ${theme.colors.primary.border}`,
+        },
       },
     }),
     optionIcon: css({
@@ -55,6 +58,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     optionFocused: css({
       label: 'grafana-select-option-focused',
       background: theme.colors.action.focus,
+      '@media (forced-colors: active), (prefers-contrast: more)': {
+        border: `1px solid ${theme.colors.primary.border}`,
+      },
     }),
     optionSelected: css({
       background: theme.colors.action.selected,
@@ -90,6 +96,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       display: 'flex',
     }),
+    valueContainerMultiNoWrap: css({
+      flexWrap: 'nowrap',
+    }),
     loadingMessage: css({
       label: 'grafana-select-loading-message',
       padding: theme.spacing(1),
@@ -107,6 +116,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       padding: theme.spacing(0.25, 0, 0.25, 1),
       color: theme.colors.text.primary,
       fontSize: theme.typography.size.sm,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary),

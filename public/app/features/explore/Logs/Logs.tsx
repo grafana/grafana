@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
@@ -57,11 +57,12 @@ import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
+import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsTableWrap } from './LogsTableWrap';
+import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTINGS_KEYS } from './utils/logs';
+import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -86,12 +87,16 @@ interface Props extends Themeable2 {
   loadLogsVolumeData: () => void;
   showContextToggle?: (row: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<any>;
-  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
@@ -102,6 +107,8 @@ interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
+  onClickFilterValue?: (value: string, refId?: string) => void;
+  onClickFilterOutValue?: (value: string, refId?: string) => void;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -134,6 +141,14 @@ const DEDUP_OPTIONS = [
   LogsDedupStrategy.signature,
 ];
 
+const getDefaultVisualisationType = (): LogsVisualisationType => {
+  const visualisationType = store.get(visualisationTypeKey);
+  if (visualisationType === 'table') {
+    return 'table';
+  }
+  return 'logs';
+};
+
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
@@ -154,7 +169,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     contextOpen: false,
     contextRow: undefined,
     tableFrame: undefined,
-    visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
+    visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
   };
 
@@ -171,8 +186,24 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.cancelFlippingTimer) {
       window.clearTimeout(this.cancelFlippingTimer);
     }
-  }
 
+    // If we're unmounting logs (e.g. switching to another datasource), we need to remove the table specific panel state, otherwise it will persist in the explore url
+    if (
+      this.props?.panelState?.logs?.columns ||
+      this.props?.panelState?.logs?.refId ||
+      this.props?.panelState?.logs?.labelFieldName
+    ) {
+      dispatch(
+        changePanelState(this.props.exploreId, 'logs', {
+          ...this.props.panelState?.logs,
+          columns: undefined,
+          visualisationType: this.state.visualisationType,
+          labelFieldName: undefined,
+          refId: undefined,
+        })
+      );
+    }
+  }
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
     if (state?.panelsState) {
@@ -181,6 +212,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
           ...state.panelsState.logs,
           columns: logsPanelState.columns ?? this.props.panelState?.logs?.columns,
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
+          labelFieldName: logsPanelState.labelFieldName,
+          refId: logsPanelState.refId ?? this.props.panelState?.logs?.refId,
         })
       );
     }
@@ -190,6 +223,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
+
       dispatch(
         changePanelState(this.props.exploreId, 'logs', {
           ...this.props.panelState,
@@ -197,9 +231,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
       );
     }
     if (this.props.panelState?.logs?.visualisationType !== prevProps.panelState?.logs?.visualisationType) {
+      const visualisationType = this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
+
       this.setState({
-        visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
+        visualisationType: visualisationType,
       });
+      store.set(visualisationTypeKey, visualisationType);
     }
   }
 
@@ -253,6 +290,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     reportInteraction('grafana_explore_logs_visualisation_changed', {
       newVisualizationType: visualisation,
+      datasourceType: this.props.datasourceType ?? 'unknown',
     });
   };
 
@@ -413,7 +451,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
     urlState.panelsState = {
       ...this.props.panelState,
-      logs: { id: row.uid, visualisationType: this.state.visualisationType ?? 'logs' },
+      logs: { id: row.uid, visualisationType: this.state.visualisationType ?? getDefaultVisualisationType() },
     };
     urlState.range = {
       from: new Date(this.props.absoluteRange.from).toISOString(),
@@ -540,7 +578,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       contextRow,
     } = this.state;
 
-    const styles = getStyles(theme, wrapLogMessage);
+    const tableHeight = getLogsTableHeight();
+    const styles = getStyles(theme, wrapLogMessage, tableHeight);
     const hasData = logRows && logRows.length > 0;
     const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
@@ -587,24 +626,23 @@ class UnthemedLogs extends PureComponent<Props, State> {
         </PanelChrome>
         <PanelChrome
           titleItems={[
-            config.featureToggles.logsExploreTableVisualisation ? (
-              this.state.visualisationType === 'logs' ? null : (
-                <PanelChrome.TitleItem title="Experimental" key="A">
-                  <FeatureBadge
-                    featureState={FeatureState.beta}
-                    tooltip="This feature is experimental and may change in future versions"
-                  />
-                </PanelChrome.TitleItem>
-              )
-            ) : null,
-          ]}
-          title={
             config.featureToggles.logsExploreTableVisualisation
               ? this.state.visualisationType === 'logs'
-                ? 'Logs'
-                : 'Table'
-              : 'Logs'
-          }
+                ? null
+                : [
+                    <PanelChrome.TitleItem title="Experimental" key="A">
+                      <FeatureBadge
+                        featureState={FeatureState.beta}
+                        tooltip="Table view is experimental and may change in future versions"
+                      />
+                    </PanelChrome.TitleItem>,
+                    <PanelChrome.TitleItem title="Feedback" key="B">
+                      <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
+                    </PanelChrome.TitleItem>,
+                  ]
+              : null,
+          ]}
+          title={'Logs'}
           actions={
             <>
               {config.featureToggles.logsExploreTableVisualisation && (
@@ -613,14 +651,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     className={styles.visualisationTypeRadio}
                     options={[
                       {
-                        label: 'Table',
-                        value: 'table',
-                        description: 'Show results in table visualisation',
-                      },
-                      {
                         label: 'Logs',
                         value: 'logs',
                         description: 'Show results in logs visualisation',
+                      },
+                      {
+                        label: 'Table',
+                        value: 'table',
+                        description: 'Show results in table visualisation',
                       },
                     ]}
                     size="sm"
@@ -724,7 +762,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
               clearDetectedFields={this.clearDetectedFields}
             />
           </div>
-          <div className={styles.logsSection}>
+          <div
+            className={cx(styles.logsSection, this.state.visualisationType === 'table' ? styles.logsTable : undefined)}
+          >
             {this.state.visualisationType === 'table' && hasData && (
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logs navigation and padding */}
@@ -740,6 +780,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   panelState={this.props.panelState?.logs}
                   theme={theme}
                   updatePanelState={this.updatePanelState}
+                  datasourceType={this.props.datasourceType}
                 />
               </div>
             )}
@@ -752,6 +793,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   showContextToggle={showContextToggle}
+                  getRowContextQuery={getRowContextQuery}
                   showLabels={showLabels}
                   showTime={showTime}
                   enableLogDetails={true}
@@ -772,6 +814,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   scrollIntoView={this.scrollIntoView}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   containerRendered={!!this.state.logsContainer}
+                  onClickFilterValue={this.props.onClickFilterValue}
+                  onClickFilterOutValue={this.props.onClickFilterOutValue}
                 />
               </div>
             )}
@@ -816,7 +860,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
 export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
+const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
     noData: css`
       > * {
@@ -853,6 +897,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       flex-direction: row;
       justify-content: space-between;
     `,
+    logsTable: css({
+      maxHeight: `${tableHeight}px`,
+    }),
     logRows: css`
       overflow-x: ${scrollableLogsContainer ? 'scroll;' : `${wrapLogMessage ? 'unset' : 'scroll'};`}
       overflow-y: visible;

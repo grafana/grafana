@@ -22,8 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,6 +35,11 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
+var SharedWithMeFolderPermission = accesscontrol.Permission{
+	Action: dashboards.ActionFoldersRead,
+	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
+}
+
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
@@ -43,7 +49,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 		return nil, err
 	}
 
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSplitScopes) {
+	if features.IsEnabledGlobally(featuremgmt.FlagSplitScopes) {
 		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
 		// This will be removed once we've:
 		// 1) removed the feature toggle and
@@ -116,16 +122,13 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		}
 	}
 
-	namespace, identifier := user.GetNamespacedID()
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, SharedWithMeFolderPermission)
+	}
 
-	var userID int64
-	switch namespace {
-	case authn.NamespaceUser, authn.NamespaceServiceAccount:
-		var err error
-		userID, err = strconv.ParseInt(identifier, 10, 64)
-		if err != nil {
-			return nil, err
-		}
+	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	if err != nil {
+		return nil, err
 	}
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
@@ -213,9 +216,9 @@ func permissionCacheKey(user identity.Requester) string {
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []plugins.RoleRegistration) error {
+func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
 	// Protect behind feature toggle
-	if !s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
 		return nil
 	}
 
@@ -397,7 +400,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	if !(s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
+	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -410,7 +413,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	if !(s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
+	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}

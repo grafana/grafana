@@ -59,6 +59,7 @@ func TestGet(t *testing.T) {
 				pCtx, err := pcp.Get(context.Background(), tc.input, identity, identity.OrgID)
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
+				require.NotNil(t, pCtx.GrafanaConfig)
 			})
 
 			t.Run("GetWithDataSource", func(t *testing.T) {
@@ -71,6 +72,7 @@ func TestGet(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
+				require.NotNil(t, pCtx.GrafanaConfig)
 			})
 		})
 	}

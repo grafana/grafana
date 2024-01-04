@@ -7,12 +7,12 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectRef } from '@grafana/s
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Switch, VerticalGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
-import { trackDashboardSharingActionPerType } from 'app/features/dashboard/components/ShareModal/analytics';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { SceneShareTabState } from './types';
 
@@ -25,6 +25,7 @@ interface ShareExportTabState extends SceneShareTabState {
 }
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
+  public tabId = shareDashboardType.export;
   static Component = ShareExportTabRenderer;
 
   private _exporter = new DashboardExporter();
@@ -71,6 +72,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
   public async onSaveAsFile() {
     const dashboardJson = await this.getExportableDashboardJson();
     const dashboardJsonPretty = JSON.stringify(dashboardJson, null, 2);
+    const { isSharingExternally } = this.state;
 
     const blob = new Blob([dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
@@ -82,7 +84,9 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
       title = dashboardJson.title;
     }
     saveAs(blob, `${title}-${time}.json`);
-    trackDashboardSharingActionPerType('save_export', shareDashboardType.export);
+    DashboardInteractions.exportDownloadJsonClicked({
+      externally: isSharingExternally,
+    });
   }
 }
 

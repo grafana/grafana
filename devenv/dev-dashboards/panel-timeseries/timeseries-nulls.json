@@ -21,6 +21,7 @@
       }
     ]
   },
+  "description": "",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -39,6 +40,295 @@
   "liveNow": false,
   "panels": [
     {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 44,
+      "title": "Enums",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "This visualizes a time series of enumerated values, displaying minimum, maximum, and average values over time to track fluctuations and trends",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Info"
+            },
+            "properties": [
+              {
+                "id": "custom.lineInterpolation",
+                "value": "stepAfter"
+              },
+              {
+                "id": "custom.axisColorMode",
+                "value": "series"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.lineInterpolation",
+                "value": "stepAfter"
+              },
+              {
+                "id": "custom.axisColorMode",
+                "value": "series"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 45,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"2023-06-14T08:16:41Z\",\n          \"2023-06-14T08:16:50Z\",\n          \"2023-06-14T08:16:55Z\",\n          \"2023-06-14T08:17:15Z\",\n          \"2023-06-14T08:17:46Z\",\n          \"2023-06-14T08:17:59Z\",\n          \"2023-06-14T08:18:20Z\",\n          \"2023-06-14T08:18:25Z\"\n        ],\n        [\n          97.56700088585262,\n          97.51875596242603,\n          97.88367836664669,\n          97.64813860191066,\n          97.46344237059202,\n          97.06932713353162,\n          97.11185691118344,\n          97.4315327939052\n        ],\n        [\n          96.17381933561288,\n          96.86449303671965,\n          95.5851820937877,\n          96.94658694041154,\n          96.7433590164638,\n          96.74913605945137,\n          95.61938577725707,\n          96.24186355022567\n        ],\n        [\n          99.69898997339244,\n          98.68620205532211,\n          99.5800005905314,\n          98.2998754185445,\n          98.02873998081307,\n          99.01798295660049,\n          97.95260164072228,\n          98.24811606848421\n        ],\n        [\n          \"down\",\n          \"down\",\n          \"up\",\n          \"down\",\n          \"down\",\n          \"down\",\n          \"up\",\n          \"up\"\n        ],\n        [\n          \"ON\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"STANDBY\",\n          \"OFF\"\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "Time series enums",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "enum",
+                "enumConfig": {
+                  "text": [
+                    "OFF",
+                    "STANDBY",
+                    "ON"
+                  ]
+                },
+                "targetField": "Status"
+              }
+            ],
+            "fields": {}
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 95
+              },
+              {
+                "color": "#E24D42",
+                "value": 95.5
+              },
+              {
+                "color": "#EF843C",
+                "value": 96
+              },
+              {
+                "color": "#1F78C1",
+                "value": 96.5
+              },
+              {
+                "color": "#BA43A9",
+                "value": 96.75
+              },
+              {
+                "color": "#EAB839",
+                "value": 98
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 99
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 46,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"2023-06-14T08:16:41Z\",\n          \"2023-06-14T08:16:50Z\",\n          \"2023-06-14T08:16:55Z\",\n          \"2023-06-14T08:17:15Z\",\n          \"2023-06-14T08:17:46Z\",\n          \"2023-06-14T08:17:59Z\",\n          \"2023-06-14T08:18:20Z\",\n          \"2023-06-14T08:18:25Z\"\n        ],\n        [\n          97.56700088585262,\n          97.51875596242603,\n          97.88367836664669,\n          97.64813860191066,\n          97.46344237059202,\n          97.06932713353162,\n          97.11185691118344,\n          97.4315327939052\n        ],\n        [\n          96.17381933561288,\n          96.86449303671965,\n          95.5851820937877,\n          96.94658694041154,\n          96.7433590164638,\n          96.74913605945137,\n          95.61938577725707,\n          96.24186355022567\n        ],\n        [\n          99.69898997339244,\n          98.68620205532211,\n          99.5800005905314,\n          98.2998754185445,\n          98.02873998081307,\n          99.01798295660049,\n          97.95260164072228,\n          98.24811606848421\n        ],\n        [\n          \"ON\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"STANDBY\",\n          \"OFF\"\n        ]\n      ]\n    }\n  }\n]",
+          "refId": "A",
+          "scenarioId": "raw_frame"
+        }
+      ],
+      "title": "State timeline enums",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "enum",
+                "enumConfig": {
+                  "text": [
+                    "OFF",
+                    "STANDBY",
+                    "ON"
+                  ]
+                },
+                "targetField": "Status"
+              }
+            ],
+            "fields": {}
+          }
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 43,
+      "title": "Gaps and connected",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "testdata"
       },
@@ -48,6 +338,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -100,7 +391,7 @@
         "h": 7,
         "w": 7,
         "x": 0,
-        "y": 0
+        "y": 18
       },
       "id": 3,
       "links": [],
@@ -161,6 +452,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -214,7 +506,7 @@
         "h": 7,
         "w": 8,
         "x": 7,
-        "y": 0
+        "y": 18
       },
       "id": 2,
       "links": [],
@@ -283,6 +575,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -336,7 +629,7 @@
         "h": 7,
         "w": 9,
         "x": 15,
-        "y": 0
+        "y": 18
       },
       "id": 6,
       "links": [],
@@ -424,6 +717,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -476,7 +770,7 @@
         "h": 7,
         "w": 7,
         "x": 0,
-        "y": 7
+        "y": 25
       },
       "id": 4,
       "links": [],
@@ -537,6 +831,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -590,7 +885,7 @@
         "h": 7,
         "w": 8,
         "x": 7,
-        "y": 7
+        "y": 25
       },
       "id": 5,
       "links": [],
@@ -659,6 +954,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -712,7 +1008,7 @@
         "h": 7,
         "w": 9,
         "x": 15,
-        "y": 7
+        "y": 25
       },
       "id": 7,
       "links": [],
@@ -800,6 +1096,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -883,7 +1180,7 @@
         "h": 8,
         "w": 7,
         "x": 0,
-        "y": 14
+        "y": 32
       },
       "id": 11,
       "options": {
@@ -948,6 +1245,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1031,7 +1329,7 @@
         "h": 8,
         "w": 7,
         "x": 7,
-        "y": 14
+        "y": 32
       },
       "id": 9,
       "options": {
@@ -1097,6 +1395,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1151,7 +1450,7 @@
         "h": 8,
         "w": 5,
         "x": 14,
-        "y": 14
+        "y": 32
       },
       "id": 15,
       "options": {
@@ -1187,6 +1486,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1241,7 +1541,7 @@
         "h": 8,
         "w": 5,
         "x": 19,
-        "y": 14
+        "y": 32
       },
       "id": 16,
       "options": {
@@ -1281,6 +1581,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1332,7 +1633,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 40
       },
       "id": 18,
       "maxDataPoints": 150,
@@ -1373,6 +1674,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1424,7 +1726,7 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 51
       },
       "id": 20,
       "maxDataPoints": 150,
@@ -1465,6 +1767,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1516,7 +1819,7 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 51
       },
       "id": 22,
       "maxDataPoints": 150,
@@ -1557,6 +1860,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1608,7 +1912,7 @@
         "h": 10,
         "w": 8,
         "x": 0,
-        "y": 43
+        "y": 61
       },
       "id": 24,
       "maxDataPoints": 150,
@@ -1649,6 +1953,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1700,7 +2005,7 @@
         "h": 10,
         "w": 8,
         "x": 8,
-        "y": 43
+        "y": 61
       },
       "id": 26,
       "maxDataPoints": 150,
@@ -1741,6 +2046,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1792,7 +2098,7 @@
         "h": 10,
         "w": 8,
         "x": 16,
-        "y": 43
+        "y": 61
       },
       "id": 28,
       "maxDataPoints": 150,
@@ -1828,7 +2134,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 71
       },
       "id": 34,
       "panels": [],
@@ -1837,7 +2143,7 @@
     },
     {
       "datasource": {
-        "type": "testdata",
+        "type": "grafana-testdata-datasource",
         "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
@@ -1846,6 +2152,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1898,7 +2205,7 @@
         "h": 6,
         "w": 7,
         "x": 0,
-        "y": 54
+        "y": 72
       },
       "id": 32,
       "options": {
@@ -1940,6 +2247,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1992,7 +2300,7 @@
         "h": 6,
         "w": 7,
         "x": 7,
-        "y": 54
+        "y": 72
       },
       "id": 35,
       "options": {
@@ -2078,7 +2386,7 @@
         "h": 6,
         "w": 10,
         "x": 14,
-        "y": 54
+        "y": 72
       },
       "id": 39,
       "options": {
@@ -2123,6 +2431,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -2175,7 +2484,7 @@
         "h": 6,
         "w": 7,
         "x": 0,
-        "y": 60
+        "y": 78
       },
       "id": 31,
       "options": {
@@ -2215,6 +2524,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -2267,7 +2577,7 @@
         "h": 6,
         "w": 7,
         "x": 7,
-        "y": 60
+        "y": 78
       },
       "id": 36,
       "options": {
@@ -2351,7 +2661,7 @@
         "h": 6,
         "w": 10,
         "x": 14,
-        "y": 60
+        "y": 78
       },
       "id": 40,
       "options": {
@@ -2394,6 +2704,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -2446,7 +2757,7 @@
         "h": 6,
         "w": 7,
         "x": 0,
-        "y": 66
+        "y": 84
       },
       "id": 30,
       "options": {
@@ -2486,6 +2797,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -2538,7 +2850,7 @@
         "h": 6,
         "w": 7,
         "x": 7,
-        "y": 66
+        "y": 84
       },
       "id": 37,
       "options": {
@@ -2622,7 +2934,7 @@
         "h": 6,
         "w": 10,
         "x": 14,
-        "y": 66
+        "y": 84
       },
       "id": 41,
       "options": {
@@ -2665,6 +2977,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -2717,7 +3030,7 @@
         "h": 6,
         "w": 7,
         "x": 0,
-        "y": 72
+        "y": 90
       },
       "id": 29,
       "options": {
@@ -2757,6 +3070,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -2809,7 +3123,7 @@
         "h": 6,
         "w": 7,
         "x": 7,
-        "y": 72
+        "y": 90
       },
       "id": 38,
       "options": {
@@ -2893,7 +3207,7 @@
         "h": 6,
         "w": 10,
         "x": 14,
-        "y": 72
+        "y": 90
       },
       "id": 42,
       "options": {
@@ -2926,15 +3240,16 @@
       "type": "state-timeline"
     }
   ],
-  "refresh": "",
-  "schemaVersion": 38,
+  "refresh": false,
+  "schemaVersion": 39,
   "tags": [
     "gdev",
     "panel-tests",
     "graph-ng",
     "timeseries",
     "trend",
-    "state-timeline"
+    "state-timeline",
+    "transform"
   ],
   "templating": {
     "list": []
@@ -2945,8 +3260,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Panel Tests - Graph NG - Gaps and Connected",
+  "title": "Panel Tests - Graph NG - Discrete panels",
   "uid": "8mmCAF1Mz",
-  "version": 5,
+  "version": 25,
   "weekStart": ""
 }

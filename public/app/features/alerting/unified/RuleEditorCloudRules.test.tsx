@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
@@ -141,8 +140,8 @@ describe('RuleEditor cloud', () => {
 
     expect(screen.getByTestId('datasource-picker')).toBeInTheDocument();
 
-    const dataSourceSelect = ui.inputs.dataSource.get();
-    await user.click(byRole('combobox').get(dataSourceSelect));
+    const dataSourceSelect = await ui.inputs.dataSource.find();
+    await user.click(dataSourceSelect);
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
 

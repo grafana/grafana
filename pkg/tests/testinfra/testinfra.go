@@ -154,17 +154,41 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	publicDir := filepath.Join(tmpDir, "public")
 	err = os.MkdirAll(publicDir, 0750)
 	require.NoError(t, err)
+
 	viewsDir := filepath.Join(publicDir, "views")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "views"), viewsDir)
 	require.NoError(t, err)
-	// Copy index template to index.html, since Grafana will try to use the latter
-	err = fs.CopyFile(filepath.Join(rootDir, "public", "views", "index-template.html"),
-		filepath.Join(viewsDir, "index.html"))
+
+	// add a stub manifest to the build directory
+	buildDir := filepath.Join(publicDir, "build")
+	err = os.MkdirAll(buildDir, 0750)
 	require.NoError(t, err)
-	// Copy error template to error.html, since Grafana will try to use the latter
-	err = fs.CopyFile(filepath.Join(rootDir, "public", "views", "error-template.html"),
-		filepath.Join(viewsDir, "error.html"))
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
+		"entrypoints": {
+		  "app": {
+			"assets": {
+			  "js": ["public/build/runtime.XYZ.js"]
+			}
+		  },
+		  "dark": {
+			"assets": {
+			  "css": ["public/build/dark.css"]
+			}
+		  },
+		  "light": {
+			"assets": {
+			  "css": ["public/build/light.css"]
+			}
+		  }
+		},
+		"runtime.50398398ecdeaf58968c.js": {
+		  "src": "public/build/runtime.XYZ.js",
+		  "integrity": "sha256-k1g7TksMHFQhhQGE"
+		}
+	  }
+	  `), 0750)
 	require.NoError(t, err)
+
 	emailsDir := filepath.Join(publicDir, "emails")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "emails"), emailsDir)
 	require.NoError(t, err)
@@ -342,6 +366,19 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 
+		if o.APIServerStorageType != "" {
+			section, err := getOrCreateSection("grafana-apiserver")
+			require.NoError(t, err)
+			_, err = section.NewKey("storage_type", o.APIServerStorageType)
+			require.NoError(t, err)
+
+			// Hardcoded local etcd until this is needed to run in CI
+			if o.APIServerStorageType == "etcd" {
+				_, err = section.NewKey("etcd_servers", "localhost:2379")
+				require.NoError(t, err)
+			}
+		}
+
 		if o.GRPCServerAddress != "" {
 			logSection, err := getOrCreateSection("grpc_server")
 			require.NoError(t, err)
@@ -357,6 +394,15 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 		_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 		require.NoError(t, err)
+
+		if o.NGAlertSchedulerBaseInterval > 0 {
+			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("scheduler_tick_interval", o.NGAlertSchedulerBaseInterval.String())
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("min_interval", o.NGAlertSchedulerBaseInterval.String())
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -382,6 +428,7 @@ type GrafanaOpts struct {
 	EnableFeatureToggles                  []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
+	NGAlertSchedulerBaseInterval          time.Duration
 	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool
 	DashboardOrgQuota                     *int64
@@ -397,6 +444,7 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
+	APIServerStorageType                  string
 }
 
 func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {

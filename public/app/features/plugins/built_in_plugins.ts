@@ -22,7 +22,7 @@ const mixedPlugin = async () =>
 const mysqlPlugin = async () =>
   await import(/* webpackChunkName: "mysqlPlugin" */ 'app/plugins/datasource/mysql/module');
 const postgresPlugin = async () =>
-  await import(/* webpackChunkName: "postgresPlugin" */ 'app/plugins/datasource/postgres/module');
+  await import(/* webpackChunkName: "postgresPlugin" */ 'app/plugins/datasource/grafana-postgresql-datasource/module');
 const prometheusPlugin = async () =>
   await import(/* webpackChunkName: "prometheusPlugin" */ 'app/plugins/datasource/prometheus/module');
 const mssqlPlugin = async () =>
@@ -32,15 +32,14 @@ const testDataDSPlugin = async () =>
 const cloudMonitoringPlugin = async () =>
   await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
 const azureMonitorPlugin = async () =>
-  await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/azuremonitor/module');
+  await import(/* webpackChunkName: "azureMonitorPlugin" */ '@grafana-plugins/grafana-azure-monitor-datasource/module');
 const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 const pyroscopePlugin = async () =>
   await import(/* webpackChunkName: "pyroscopePlugin" */ 'app/plugins/datasource/grafana-pyroscope-datasource/module');
-const parcaPlugin = async () =>
-  await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
+const parcaPlugin = async () => await import(/* webpackChunkName: "parcaPlugin" */ '@grafana-plugins/parca/module');
 
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
@@ -94,7 +93,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/zipkin': zipkinPlugin,
   'core:plugin/mixed': mixedPlugin,
   'core:plugin/mysql': mysqlPlugin,
-  'core:plugin/postgres': postgresPlugin,
+  'core:plugin/grafana-postgresql-datasource': postgresPlugin,
   'core:plugin/mssql': mssqlPlugin,
   'core:plugin/prometheus': prometheusPlugin,
   'core:plugin/grafana-testdata-datasource': testDataDSPlugin,

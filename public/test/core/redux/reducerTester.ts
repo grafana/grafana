@@ -25,32 +25,29 @@ export interface Then<State> {
   whenActionIsDispatched: (action: AnyAction) => Then<State>;
 }
 
+const isNotException = (object: unknown, propertyName: string) =>
+  typeof object === 'function'
+    ? propertyName !== 'caller' && propertyName !== 'callee' && propertyName !== 'arguments'
+    : true;
+
 export const deepFreeze = <T>(obj: T): T => {
-  Object.freeze(obj);
+  if (typeof obj === 'object') {
+    for (const key in obj) {
+      const prop = obj[key];
 
-  const isNotException = (object: unknown, propertyName: string) =>
-    typeof object === 'function'
-      ? propertyName !== 'caller' && propertyName !== 'callee' && propertyName !== 'arguments'
-      : true;
-  const hasOwnProp = Object.prototype.hasOwnProperty;
-
-  if (obj && obj instanceof Object) {
-    const object: Record<string, unknown> = obj;
-    Object.getOwnPropertyNames(object).forEach((propertyName) => {
-      const objectProperty = object[propertyName];
       if (
-        hasOwnProp.call(object, propertyName) &&
-        isNotException(object, propertyName) &&
-        objectProperty &&
-        (typeof objectProperty === 'object' || typeof objectProperty === 'function') &&
-        Object.isFrozen(objectProperty) === false
+        prop &&
+        Object.hasOwn(obj, key) &&
+        isNotException(obj, key) &&
+        (typeof prop === 'object' || typeof prop === 'function') &&
+        !Object.isFrozen(prop)
       ) {
-        deepFreeze(objectProperty);
+        deepFreeze(prop);
       }
-    });
+    }
   }
 
-  return obj;
+  return Object.freeze(obj);
 };
 
 interface ReducerTester<State> extends Given<State>, When<State>, Then<State> {}

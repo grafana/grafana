@@ -48,10 +48,16 @@ type Policytree struct {
 	Body Route
 }
 
+// swagger:parameters RoutePutPolicyTree
+type PolicyTreeHeaders struct {
+	// in:header
+	XDisableProvenance string `json:"X-Disable-Provenance"`
+}
+
 // NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.
 type NotificationPolicyExport struct {
-	OrgID  int64        `json:"orgId" yaml:"orgId"`
-	Policy *RouteExport `json:",inline" yaml:",inline"`
+	OrgID        int64 `json:"orgId" yaml:"orgId"`
+	*RouteExport `yaml:",inline"`
 }
 
 // RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in

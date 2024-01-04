@@ -98,7 +98,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
           streams.push(this.flameGraphQuery(target));
           break;
         case 'trace':
-          streams.push(this.trace(target, options));
+          streams.push(this.trace(options));
           break;
         case 'raw_frame':
           streams.push(this.rawFrameQuery(target, options));
@@ -252,7 +252,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     return of({ data: [{ ...data, refId: target.refId }] }).pipe(delay(100));
   }
 
-  trace(target: TestData, options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
+  trace(options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
     const frame = new MutableDataFrame({
       meta: {
         preferredVisualisationType: 'trace',
@@ -269,11 +269,15 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
         { name: 'logs' },
         { name: 'references' },
         { name: 'tags' },
+        { name: 'kind' },
+        { name: 'statusCode' },
       ],
     });
     const numberOfSpans = options.targets[0].spanCount || 10;
     const spanIdPrefix = '75c665dfb68';
     const start = Date.now() - 1000 * 60 * 30;
+    const kinds = ['client', 'server', ''];
+    const statusCodes = [0, 1, 2];
 
     for (let i = 0; i < numberOfSpans; i++) {
       frame.add({
@@ -284,6 +288,26 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
         serviceName: `Service ${i}`,
         startTime: start + i * 100,
         duration: 300,
+        tags: [
+          { key: 'http.method', value: 'POST' },
+          { key: 'http.status_code', value: 200 },
+          { key: 'http.url', value: `Service${i}:80` },
+        ],
+        serviceTags: [
+          { key: 'client-uuid', value: '6238bacefsecba865' },
+          { key: 'service.name', value: `Service${i}` },
+          { key: 'ip', value: '0.0.0.1' },
+          { key: 'latest_version', value: false },
+        ],
+        logs:
+          i % 4 === 0
+            ? [
+                { timestamp: start + i * 100, fields: [{ key: 'msg', value: 'Service updated' }] },
+                { timestamp: start + i * 100 + 200, fields: [{ key: 'host', value: 'app' }] },
+              ]
+            : [],
+        kind: i === 0 ? 'client' : kinds[Math.floor(Math.random() * kinds.length)],
+        statusCode: statusCodes[Math.floor(Math.random() * statusCodes.length)],
       });
     }
 

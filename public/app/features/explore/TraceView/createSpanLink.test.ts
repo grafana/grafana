@@ -17,7 +17,7 @@ import { TemplateSrv } from '../../templating/template_srv';
 
 import { Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';
-import { createSpanLinkFactory } from './createSpanLink';
+import { createSpanLinkFactory, pyroscopeProfileIdTagKey } from './createSpanLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;
 const dummyDataFrame = createDataFrame({
@@ -1555,7 +1555,7 @@ function createTraceSpan(overrides: Partial<TraceSpan> = {}) {
         value: 'host',
       },
       {
-        key: 'pyroscope.profiling.enabled',
+        key: pyroscopeProfileIdTagKey,
         value: 'hdgfljn23u982nj',
       },
     ],

@@ -105,6 +105,28 @@ describe('CompletionProvider', () => {
     ]);
   });
 
+  it('suggests options when inside quotes', async () => {
+    const { provider, model } = setup('{.foo=""}', 7, undefined, v2Tags);
+
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolve([
+            {
+              type: 'string',
+              value: 'foobar',
+              label: 'foobar',
+            },
+          ]);
+        })
+    );
+
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      expect.objectContaining({ label: 'foobar', insertText: 'foobar' }),
+    ]);
+  });
+
   it('suggests nothing without tags', async () => {
     const { provider, model } = setup('{.foo="}', 8, emptyTags);
     const result = await provider.provideCompletionItems(model, emptyPosition);
@@ -342,6 +364,27 @@ describe('CompletionProvider', () => {
       [...scopes, ...intrinsics].map((s) => expect.objectContaining({ label: s }))
     );
   });
+
+  it.each([
+    ['{span.ht', 8],
+    ['{span.http', 10],
+    ['{span.http.', 11],
+    ['{span.http.status', 17],
+  ])(
+    'suggests attributes when containing trigger characters and missing `}`- %s, %i',
+    async (input: string, offset: number) => {
+      const { provider, model } = setup(input, offset, undefined, [
+        {
+          name: 'span',
+          tags: ['http.status_code'],
+        },
+      ]);
+      const result = await provider.provideCompletionItems(model, emptyPosition);
+      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+        expect.objectContaining({ label: 'http.status_code', insertText: 'http.status_code' }),
+      ]);
+    }
+  );
 });
 
 function setup(value: string, offset: number, tagsV1?: string[], tagsV2?: Scope[]) {

@@ -9,6 +9,16 @@
 
 
 /**
+ * A topic is attached to DataFrame metadata in query results.
+ * This specifies where the data should be used.
+ */
+export enum DataTopic {
+  AlertStates = 'alertStates',
+  Annotations = 'annotations',
+  Series = 'series',
+}
+
+/**
  * TODO docs
  */
 export interface DataSourceJsonData {
@@ -642,6 +652,14 @@ export enum BarGaugeNamePlacement {
   Auto = 'auto',
   Left = 'left',
   Top = 'top',
+}
+
+/**
+ * Allows for the bar gauge size to be set explicitly
+ */
+export enum BarGaugeSizing {
+  Auto = 'auto',
+  Manual = 'manual',
 }
 
 /**

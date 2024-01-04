@@ -16,7 +16,7 @@ func NewPluginRequestMetaMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &PluginRequestMetaMiddleware{
 			next:                next,
-			defaultStatusSource: pluginrequestmeta.StatusSourcePlugin,
+			defaultStatusSource: pluginrequestmeta.DefaultStatusSource,
 		}
 	})
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -36,15 +36,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *migrationStore {
+func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *migrationStore {
 	if cfg.UnifiedAlerting.BaseInterval == 0 {
 		cfg.UnifiedAlerting.BaseInterval = time.Second * 10
 	}
 	features := featuremgmt.WithFeatures()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 	alertingStore := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg:      cfg.UnifiedAlerting,
+		Logger:   &logtest.Fake{},
 	}
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -64,9 +65,12 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	userSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamSvc, cache, quotaService, bundleregistry.ProvideService())
 	require.NoError(t, err)
 
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
-	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features, nil)
+
+	err = folderService.RegisterService(alertingStore)
+	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
@@ -79,6 +83,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		folderService,
+		nil,
 	)
 	require.NoError(t, err)
 	guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashboardService)
@@ -90,7 +95,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		log:                            &logtest.Fake{},
 		cfg:                            cfg,
 		store:                          sqlStore,
-		kv:                             fakes.NewFakeKVStore(t),
+		kv:                             kvstore.ProvideService(sqlStore),
 		alertingStore:                  &alertingStore,
 		dashboardService:               dashboardService,
 		folderService:                  folderService,

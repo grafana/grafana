@@ -1,5 +1,5 @@
 ---
-description: Feature and improvement highlights for Grafana v9.5
+description: Learn about new and updated features in Grafana v9.5
 keywords:
   - grafana
   - new

@@ -19,7 +19,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
@@ -28,8 +27,7 @@ import (
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
 type AzureMonitorDatasource struct {
-	Proxy    types.ServiceProxy
-	Features featuremgmt.FeatureToggles
+	Proxy types.ServiceProxy
 }
 
 var (
@@ -109,14 +107,17 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 				MetricNamespace:     azJSONModel.MetricNamespace,
 				ResourceName:        resourceName,
 			}
-			azureURL = ub.BuildMetricsURL()
-			// POST requests are only supported at the subscription level
-			filterInBody = false
+
+			// Construct the resourceURI (for legacy query objects pre Grafana 9)
 			resourceUri, err := ub.buildResourceURI()
 			if err != nil {
 				return nil, err
 			}
+
+			// POST requests are only supported at the subscription level
+			filterInBody = false
 			if resourceUri != nil {
+				azureURL = fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceUri)
 				resourceMap[*resourceUri] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
 			}
 		} else {
@@ -128,7 +129,11 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 					MetricNamespace:     azJSONModel.MetricNamespace,
 					ResourceName:        r.ResourceName,
 				}
-				resourceUri, _ := ub.buildResourceURI()
+				resourceUri, err := ub.buildResourceURI()
+				if err != nil {
+					return nil, err
+				}
+
 				if resourceUri != nil {
 					resourceMap[*resourceUri] = r
 				}
@@ -393,9 +398,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 		}
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
-		if e.Features.IsEnabled(featuremgmt.FlagAzureMonitorDataplane) {
-			frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
-		}
+		frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
 		frame.RefID = query.RefID
 		timeField := frame.Fields[0]
 		timeField.Name = data.TimeSeriesTimeFieldName

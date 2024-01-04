@@ -49,7 +49,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       204: description: The contact point was deleted successfully.
+//       202: description: The contact point was deleted successfully.
 
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {
@@ -74,6 +74,12 @@ type ContactPointPayload struct {
 
 // swagger:model
 type ContactPoints []EmbeddedContactPoint
+
+// swagger:parameters RoutePostContactpoints RoutePutContactpoint
+type ContactPointHeaders struct {
+	// in:header
+	XDisableProvenance string `json:"X-Disable-Provenance"`
+}
 
 // EmbeddedContactPoint is the contact point type that is used
 // by grafanas embedded alertmanager implementation.

@@ -34,11 +34,6 @@ endif
 # First project is considered the primary one used for doc-validator.
 PRIMARY_PROJECT := $(subst /,-,$(firstword $(subst :, ,$(firstword $(PROJECTS)))))
 
-# Name for the container.
-ifeq ($(origin DOCS_CONTAINER), undefined)
-export DOCS_CONTAINER := $(PRIMARY_PROJECT)-docs
-endif
-
 # Host port to publish container port to.
 ifeq ($(origin DOCS_HOST_PORT), undefined)
 export DOCS_HOST_PORT := 3002

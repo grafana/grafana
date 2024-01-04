@@ -3,25 +3,15 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  Button,
-  Field,
-  InlineLabel,
-  Label,
-  useStyles2,
-  Text,
-  Tooltip,
-  Icon,
-  Input,
-  LoadingPlaceholder,
-  Stack,
-} from '@grafana/ui';
+import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import AlertLabelDropdown from '../AlertLabelDropdown';
+
+import { NeedHelpInfo } from './NeedHelpInfo';
 
 interface Props {
   className?: string;
@@ -271,23 +261,20 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
 
   return (
     <div>
-      <Label description="A set of default labels is automatically added. Add additional labels as required.">
-        <Stack gap={0.5} alignItems="center">
-          <Text variant="bodySmall" color="primary">
-            Labels
+      <Stack direction="column" gap={1}>
+        <Text element="h5">Labels</Text>
+        <Stack direction={'row'} gap={1}>
+          <Text variant="bodySmall" color="secondary">
+            Add labels to your rule to annotate your rules, ease searching, or route to a notification policy.
           </Text>
-          <Tooltip
-            content={
-              <div>
-                The dropdown only displays labels that you have previously used for alerts. Select a label from the
-                dropdown or type in a new one.
-              </div>
-            }
-          >
-            <Icon className={styles.icon} name="info-circle" size="sm" />
-          </Tooltip>
+          <NeedHelpInfo
+            contentText="The dropdown only displays labels that you have previously used for alerts. 
+            Select a label from the options below or type in a new one."
+            title="Labels"
+          />
         </Stack>
-      </Label>
+      </Stack>
+      <div className={styles.labelsContainer}></div>
       {dataSourceName ? <LabelsWithSuggestions dataSourceName={dataSourceName} /> : <LabelsWithoutSuggestions />}
     </div>
   );
@@ -295,47 +282,48 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
-    flexColumn: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-
-      & + button {
-        margin-left: ${theme.spacing(0.5)};
-      }
-    `,
-    deleteLabelButton: css`
-      margin-left: ${theme.spacing(0.5)};
-      align-self: flex-start;
-    `,
-    addLabelButton: css`
-      flex-grow: 0;
-      align-self: flex-start;
-    `,
-    centerAlignRow: css`
-      align-items: baseline;
-    `,
-    equalSign: css`
-      align-self: flex-start;
-      width: 28px;
-      justify-content: center;
-      margin-left: ${theme.spacing(0.5)};
-    `,
-    labelInput: css`
-      width: 175px;
-      margin-bottom: -${theme.spacing(1)};
-
-      & + & {
-        margin-left: ${theme.spacing(1)};
-      }
-    `,
+    icon: css({
+      marginRight: theme.spacing(0.5),
+    }),
+    flexColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    flexRow: css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      '& + button': {
+        marginLeft: theme.spacing(0.5),
+      },
+    }),
+    deleteLabelButton: css({
+      marginLeft: theme.spacing(0.5),
+      alignSelf: 'flex-start',
+    }),
+    addLabelButton: css({
+      flexGrow: 0,
+      alignSelf: 'flex-start',
+    }),
+    centerAlignRow: css({
+      alignItems: 'baseline',
+    }),
+    equalSign: css({
+      alignSelf: 'flex-start',
+      width: '28px',
+      justifyContent: 'center',
+      marginLeft: theme.spacing(0.5),
+    }),
+    labelInput: css({
+      width: '175px',
+      marginBottom: `-${theme.spacing(1)}`,
+      '& + &': {
+        marginLeft: theme.spacing(1),
+      },
+    }),
+    labelsContainer: css({
+      marginBottom: theme.spacing(3),
+    }),
   };
 };
 

@@ -5,7 +5,7 @@ import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { Message, Role } from './utils';
+import { Message, Role, getFilteredPanelString } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;
@@ -26,7 +26,6 @@ export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButt
     <GenAIButton
       messages={messages}
       onGenerate={onGenerate}
-      loadingText={'Generating title'}
       eventTrackingSrc={EventTrackingSrc.panelTitle}
       toggleTipTitle={'Improve your panel title'}
     />
@@ -35,6 +34,7 @@ export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButt
 
 function getMessages(panel: PanelModel): Message[] {
   const dashboard = getDashboardSrv().getCurrent()!;
+  const panelString = getFilteredPanelString(panel);
 
   return [
     {
@@ -50,7 +50,7 @@ function getMessages(panel: PanelModel): Message[] {
       role: Role.system,
     },
     {
-      content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
+      content: `Use this JSON object which defines the panel: ${panelString}`,
       role: Role.system,
     },
   ];

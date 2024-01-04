@@ -41,7 +41,7 @@ export const OptionField: FC<Props> = ({
         readOnly={readOnly}
         defaultValue={defaultValue}
         option={option}
-        errors={error as DeepMap<any, FieldError> | undefined}
+        errors={error}
         pathPrefix={optionPath}
       />
     );

@@ -21,6 +21,32 @@ describe('generateQueryFromFilters generates the correct query for', () => {
     expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue' }])).toBe('{}');
   });
 
+  describe('generates correct query for duration when duration type', () => {
+    it('not set', () => {
+      expect(
+        generateQueryFromFilters([
+          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
+        ])
+      ).toBe('{duration>100ms}');
+    });
+    it('set to span', () => {
+      expect(
+        generateQueryFromFilters([
+          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
+          { id: 'duration-type', value: 'span' },
+        ])
+      ).toBe('{duration>100ms}');
+    });
+    it('set to trace', () => {
+      expect(
+        generateQueryFromFilters([
+          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
+          { id: 'duration-type', value: 'trace' },
+        ])
+      ).toBe('{traceDuration>100ms}');
+    });
+  });
+
   it('a field with tag, operator and tag', () => {
     expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue', operator: '=' }])).toBe(
       '{.footag=foovalue}'
