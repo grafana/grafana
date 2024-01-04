@@ -15,10 +15,10 @@ var (
 	ErrNoAlertmanagerConfiguration  = errutil.Internal("alerting.notification.configMissing", errutil.WithPublicMessage("No alertmanager configuration present in this organization"))
 	ErrBadAlertmanagerConfiguration = errutil.Internal("alerting.notification.configCorrupted").MustTemplate("Failed to unmarshal the Alertmanager configuration", errutil.WithPublic("Current Alertmanager configuration in the storage is corrupted. Reset the configuration or rollback to a recent valid one."))
 
-	ErrMuteTimingsNotFound = errutil.NotFound("alerting.notifications.mute-timings.notFound")
-	ErrMuteTimingExists    = errutil.BadRequest("alerting.notifications.mute-timings.nameExists", errutil.WithPublicMessage("Mute timing with this name already exists. Use a different name or update existing one."))
-	ErrMuteTimingInvalid   = errutil.BadRequest("alerting.notifications.mute-timings.invalidFormat").MustTemplate("Invalid format of the submitted mute timing", errutil.WithPublic("Mute timing is in invalid format. Correct the payload and try again."))
-	ErrMuteTimingInUse     = errutil.Conflict("alerting.notifications.mute-timings.used", errutil.WithPublicMessage("Mute timing is used by one or many notification policies"))
+	ErrTimeIntervalNotFound = errutil.NotFound("alerting.notifications.time-intervals.notFound")
+	ErrTimeIntervalExists   = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))
+	ErrTimeIntervalInvalid  = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
+	ErrTimeIntervalInUse    = errutil.Conflict("alerting.notifications.time-intervals.used", errutil.WithPublicMessage("Time interval is used by one or many notification policies"))
 )
 
 func makeErrBadAlertmanagerConfiguration(err error) error {
@@ -31,8 +31,8 @@ func makeErrBadAlertmanagerConfiguration(err error) error {
 	return ErrBadAlertmanagerConfiguration.Build(data)
 }
 
-// MakeErrMuteTimingInvalid creates an error with the ErrMuteTimingInvalid template
-func MakeErrMuteTimingInvalid(err error) error {
+// MakeErrTimeIntervalInvalid creates an error with the ErrTimeIntervalInvalid template
+func MakeErrTimeIntervalInvalid(err error) error {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"Error": err.Error(),
@@ -40,5 +40,5 @@ func MakeErrMuteTimingInvalid(err error) error {
 		Error: err,
 	}
 
-	return ErrMuteTimingInvalid.Build(data)
+	return ErrTimeIntervalInvalid.Build(data)
 }

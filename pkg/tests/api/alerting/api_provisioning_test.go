@@ -495,7 +495,7 @@ func TestMuteTimings(t *testing.T) {
 		var validationError errutil.PublicError
 		assert.NoError(t, json.Unmarshal([]byte(body), &validationError))
 		assert.NotEmpty(t, validationError, validationError.Message)
-		assert.Equal(t, "alerting.notifications.mute-timings.nameExists", validationError.MessageID)
+		assert.Equal(t, "alerting.notifications.time-intervals.nameExists", validationError.MessageID)
 		if t.Failed() {
 			t.Fatalf("response: %s", body)
 		}
@@ -608,7 +608,7 @@ func TestMuteTimings(t *testing.T) {
 		var validationError errutil.PublicError
 		assert.NoError(t, json.Unmarshal([]byte(response), &validationError))
 		assert.NotEmpty(t, validationError, validationError.Message)
-		assert.Equal(t, "alerting.notifications.mute-timings.used", validationError.MessageID)
+		assert.Equal(t, "alerting.notifications.time-intervals.used", validationError.MessageID)
 		if t.Failed() {
 			t.Fatalf("response: %s", response)
 		}
