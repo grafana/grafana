@@ -190,7 +190,13 @@ export const AmRoutesExpandedForm = ({
             <Switch id="continue-toggle" {...register('continue')} disabled={isReadOnly} />
           </Field>
           <Field label="Override grouping">
-            <Switch id="override-grouping-toggle" {...register('overrideGrouping')} disabled={isReadOnly} />
+            <InputControl
+              render={({ field: { onChange, ref, ...field } }) => (
+                <Switch id="override-grouping-toggle" {...field} disabled={isReadOnly} onChange={onChange} />
+              )}
+              control={control}
+              name="overrideGrouping"
+            />
           </Field>
           {watch().overrideGrouping && (
             <Field
@@ -233,7 +239,13 @@ export const AmRoutesExpandedForm = ({
             </Field>
           )}
           <Field label="Override general timings">
-            <Switch id="override-timings-toggle" {...register('overrideTimings')} disabled={isReadOnly} />
+            <InputControl
+              render={({ field: { onChange, ref, ...field } }) => (
+                <Switch id="override-timings-toggle" {...field} disabled={isReadOnly} onChange={onChange} />
+              )}
+              control={control}
+              name="overrideTimings"
+            />
           </Field>
           {watch().overrideTimings && (
             <>
@@ -338,6 +350,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };
