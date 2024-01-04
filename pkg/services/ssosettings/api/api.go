@@ -44,6 +44,7 @@ func ProvideApi(
 	return api
 }
 
+// generateFNVETag computes a FNV hash-based ETag the SSOSettings struct
 func generateFNVETag(SSOSettings *models.SSOSettings) string {
 	hasher := fnv.New64()
 	data, _ := json.Marshal(SSOSettings)
@@ -212,7 +213,7 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 }
 
 // swagger:parameters getProviderSettings
-type getProviderSettingsWrapper struct {
+type GetProviderSettingsWrapper struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
