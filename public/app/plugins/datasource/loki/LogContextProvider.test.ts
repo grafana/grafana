@@ -18,22 +18,6 @@ import {
 import { createLokiDatasource } from './mocks';
 import { LokiQuery } from './types';
 
-jest.mock('app/core/store', () => {
-  return {
-    get(item: string) {
-      return window.localStorage.getItem(item);
-    },
-    getBool(key: string, defaultValue?: boolean) {
-      const item = window.localStorage.getItem(key);
-      if (item === null) {
-        return defaultValue;
-      } else {
-        return item === 'true';
-      }
-    },
-  };
-});
-
 const defaultLanguageProviderMock = {
   start: jest.fn(),
   fetchSeriesLabels: jest.fn(() => ({ bar: ['baz'], xyz: ['abc'] })),

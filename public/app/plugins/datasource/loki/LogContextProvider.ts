@@ -19,7 +19,6 @@ import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } fr
 import { Labels } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import store from 'app/core/store';
 import { dispatch } from 'app/store/store';
 
 import { LokiContextUi } from './components/LokiContextUi';
@@ -222,7 +221,7 @@ export class LogContextProvider {
 
   prepareExpression(contextFilters: ContextFilter[], query: LokiQuery | undefined): string {
     let preparedExpression = this.processContextFiltersToExpr(contextFilters, query);
-    if (store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)) {
+    if (window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
       preparedExpression = this.processPipelineStagesToExpr(preparedExpression, query);
     }
     return preparedExpression;
@@ -343,10 +342,13 @@ export class LogContextProvider {
 
     // Secondly we check for preserved labels and update enabled state of filters based on that
     let preservedLabels: undefined | PreservedLabels = undefined;
-    try {
-      preservedLabels = JSON.parse(store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS));
-      // Do nothing when error occurs
-    } catch (e) {}
+    const preservedLabelsString = window.localStorage.getItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+    if (preservedLabelsString) {
+      try {
+        preservedLabels = JSON.parse(preservedLabelsString);
+        // Do nothing when error occurs
+      } catch (e) {}
+    }
 
     if (!preservedLabels) {
       // If we don't have preservedLabels, we return contextFilters as they are
