@@ -70,9 +70,6 @@ export class GrafanaJavascriptAgentBackend
       ],
       sessionTracking: {
         persistent: true,
-        generateSessionId() {
-          return (Math.random() + 1).toString(36).substring(2);
-        },
       },
       batching: {
         sendTimeout: 1000,
