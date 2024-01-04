@@ -263,7 +263,7 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 
 	// add "shared with me" folder on the 1st page
 	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		children = append(children, &folder.SharedWithMeFolder)
+		children = append([]*folder.Folder{&folder.SharedWithMeFolder}, children...)
 	}
 
 	return children, nil
