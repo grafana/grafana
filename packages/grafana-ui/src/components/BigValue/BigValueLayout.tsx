@@ -136,6 +136,7 @@ export abstract class BigValueLayout {
 
     if (valueContainerStyles.flexDirection === 'row') {
       containerStyles.alignItems = 'baseline';
+      containerStyles.marginLeft = 10;
 
       // Center the percent change vertically relative to the value
       // This approach seems to work the best for all edge cases
@@ -172,6 +173,23 @@ export abstract class BigValueLayout {
     const styles: CSSProperties = {
       display: 'flex',
       flexWrap: 'wrap',
+    };
+
+    if (this.justifyCenter) {
+      styles.alignItems = 'center';
+      styles.justifyContent = 'center';
+      styles.flexGrow = 1;
+      styles.gap = '0.75ch';
+    }
+
+    return styles;
+  }
+
+  getValueAndPercentChangeContainerStyles() {
+    const styles: CSSProperties = {
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
     };
 
     if (this.justifyCenter) {
