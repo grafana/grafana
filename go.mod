@@ -31,7 +31,7 @@ require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/backend-platform
-	github.com/Azure/go-autorest/autorest v0.11.29 // @grafana/backend-platform
+	github.com/Azure/go-autorest/autorest v0.11.29 // @grafana/grafana-operator-experience-squad
 	github.com/BurntSushi/toml v1.3.2 // @grafana/grafana-authnz-team
 	github.com/Masterminds/semver v1.5.0 // @grafana/backend-platform
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/backend-platform
@@ -222,11 +222,11 @@ require (
 )
 
 require (
-	cloud.google.com/go/kms v1.15.2 // @grafana/backend-platform
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0 // @grafana/backend-platform
-	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana/backend-platform
+	cloud.google.com/go/kms v1.15.2 // @grafana/grafana-operator-experience-squad
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0 // @grafana/grafana-operator-experience-squad
+	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana/grafana-operator-experience-squad
 	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/backend-platform
-	github.com/Azure/go-autorest/autorest/adal v0.9.23 // @grafana/backend-platform
+	github.com/Azure/go-autorest/autorest/adal v0.9.23 // @grafana/grafana-operator-experience-squad
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/blugelabs/bluge v0.1.9 // @grafana/backend-platform
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/backend-platform
