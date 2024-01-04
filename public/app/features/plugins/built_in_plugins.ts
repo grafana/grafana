@@ -32,7 +32,7 @@ const testDataDSPlugin = async () =>
 const cloudMonitoringPlugin = async () =>
   await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
 const azureMonitorPlugin = async () =>
-  await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/azuremonitor/module');
+  await import(/* webpackChunkName: "azureMonitorPlugin" */ '@grafana-plugins/grafana-azure-monitor-datasource/module');
 const tempoPlugin = async () => await import(/* webpackChunkName: "tempoPlugin" */ '@grafana-plugins/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');

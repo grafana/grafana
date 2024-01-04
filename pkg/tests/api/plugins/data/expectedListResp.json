@@ -156,12 +156,12 @@
           "path": "/public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "1.0.0",
+      "version": "",
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "5.2.x",
+      "grafanaDependency": ">=10.3.0",
+      "grafanaVersion": "*",
       "plugins": []
     },
     "latestVersion": "",
