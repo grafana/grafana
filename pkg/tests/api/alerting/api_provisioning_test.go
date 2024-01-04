@@ -587,7 +587,7 @@ func TestMuteTimings(t *testing.T) {
 		requireStatusCode(t, http.StatusNotFound, status, body)
 	})
 
-	t.Run("should get BadRequest if deletes used mute-timing", func(t *testing.T) {
+	t.Run("should get 409 Conflict if deletes used mute-timing", func(t *testing.T) {
 		route, status, response := apiClient.GetRouteWithStatus(t)
 		requireStatusCode(t, http.StatusOK, status, response)
 		route.Routes = append(route.Routes, &definitions.Route{
@@ -604,7 +604,7 @@ func TestMuteTimings(t *testing.T) {
 		requireStatusCode(t, http.StatusAccepted, status, response)
 
 		status, response = apiClient.DeleteMuteTimingWithStatus(t, anotherMuteTiming.Name)
-		requireStatusCode(t, http.StatusBadRequest, status, response)
+		requireStatusCode(t, http.StatusConflict, status, response)
 		var validationError errutil.PublicError
 		assert.NoError(t, json.Unmarshal([]byte(response), &validationError))
 		assert.NotEmpty(t, validationError, validationError.Message)

@@ -2785,6 +2785,10 @@
         "responses": {
           "204": {
             "description": " The mute timing was deleted successfully."
+          },
+          "409": {
+            "description": " The mute timing is in use",
+            "$ref": "#/responses/GenericError"
           }
         }
       }
