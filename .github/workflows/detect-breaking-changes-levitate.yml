@@ -322,7 +322,7 @@ jobs:
           env:
             PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
           with:
-            github-token: ${{ steps.generate_token.outputs.token }}
+            github-token: ${{ secrets.GITHUB_TOKEN }}
             script: |
               await github.rest.pulls.removeRequestedReviewers({
                 pull_number: process.env.PR_NUMBER,
