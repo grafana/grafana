@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { QueryEditorProps, toOption } from '@grafana/data';
+import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 import { ConfirmModal } from '@grafana/ui';
 
@@ -19,7 +19,7 @@ import { MetricQueryEditor, SLOQueryEditor } from './';
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
 export const QueryEditor = (props: Props) => {
-  const { datasource, query: oldQ, onRunQuery, onChange } = props;
+  const { datasource, query: oldQ, onRunQuery, onChange, range } = props;
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   // Migrate query if needed
   const [migrated, setMigrated] = useState(false);
@@ -130,6 +130,7 @@ export const QueryEditor = (props: Props) => {
           onRunQuery={onRunQuery}
           datasource={datasource}
           query={query}
+          range={range || getDefaultTimeRange()}
         />
       )}
 
