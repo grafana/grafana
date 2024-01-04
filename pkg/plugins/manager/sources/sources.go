@@ -35,26 +35,26 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 		return sources
 	}
 
-	pluginPath := filepath.Join(s.cfg.PluginsPath)
-	d, err := os.Open(pluginPath)
+	pluginsPath := s.cfg.PluginsPath
+	d, err := os.Open(pluginsPath)
 	if err != nil {
-		s.log.Error("Failed to open plugins path", "path", pluginPath, "error", err)
+		s.log.Error("Failed to open plugins path", "path", pluginsPath, "error", err)
 		return sources
 	}
 	defer func() {
 		err = d.Close()
 		if err != nil {
-			s.log.Error("Failed to close plugins path", "path", pluginPath, "error", err)
+			s.log.Error("Failed to close plugins path", "path", pluginsPath, "error", err)
 		}
 	}()
 
 	pluginDirs, err := d.Readdirnames(-1)
 	if err != nil {
-		s.log.Error("Failed to read directory names in plugins path", "path", pluginPath, "error", err)
+		s.log.Error("Failed to read directory names in plugins path", "path", pluginsPath, "error", err)
 	}
 
 	for _, dir := range pluginDirs {
-		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{filepath.Join(pluginPath, dir)}))
+		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{filepath.Join(pluginsPath, dir)}))
 	}
 	return sources
 }
