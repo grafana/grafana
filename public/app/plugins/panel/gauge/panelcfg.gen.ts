@@ -19,8 +19,8 @@ export interface Options extends common.SingleStatBaseOptions {
 }
 
 export const defaultOptions: Partial<Options> = {
-  minVizHeight: 200,
-  minVizWidth: 200,
+  minVizHeight: 75,
+  minVizWidth: 75,
   showThresholdLabels: false,
   showThresholdMarkers: true,
   sizing: common.BarGaugeSizing.Auto,

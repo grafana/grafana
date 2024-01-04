@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import * as ui from '@grafana/ui';
 
@@ -9,6 +8,7 @@ import { invalidNamespaceError } from '../../__mocks__/errors';
 import createMockQuery from '../../__mocks__/query';
 import { selectors } from '../../e2e/selectors';
 import { AzureQueryType } from '../../types';
+import { selectOptionInTest } from '../../utils/testUtils';
 
 import QueryEditor from './QueryEditor';
 
