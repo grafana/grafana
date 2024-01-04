@@ -6,7 +6,7 @@ import uPlot from 'uplot';
 
 import { colorManipulator, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 
@@ -114,7 +114,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
         let vals = getValsWithNew(frame, newRangeRef.current);
 
         for (let i = 0; i < vals.time.length; i++) {
-          let color = getColorByName(vals.color?.[i]);
+          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
 
           let x0 = u.valToPos(vals.time[i], 'x', true);
           renderLine(ctx, y0, y1, x0, color);
@@ -157,7 +157,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
       let markers: React.ReactNode[] = [];
 
       for (let i = 0; i < vals.time.length; i++) {
-        let color = getColorByName(vals.color?.[i]);
+        let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
         let left = plot.valToPos(vals.time[i], 'x');
         let style: React.CSSProperties | null = null;
         let className = '';
