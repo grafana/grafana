@@ -91,7 +91,7 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 
 {{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" caption="Canvas pan zoom control" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
 
 <!-- TODO: Update this video to be canvas pan zoom enablement video -->
 
