@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { Auth, AuthMethod, ConnectionSettings, convertLegacyAuthProps } from '@grafana/experimental';
@@ -7,18 +7,16 @@ import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 import { PromOptions } from '../types';
 
 import { docsTip, overhaulStyles } from './ConfigEditor';
-import { CustomMethod } from './overhaul/types';
 
 type Props = {
   options: DataSourceSettings<PromOptions, {}>;
   onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void;
-  sigV4AuthToggleEnabled: boolean | undefined;
   renderSigV4Editor: React.ReactNode;
   secureSocksDSProxyEnabled: boolean;
 };
 
 export const DataSourcehttpSettingsOverhaul = (props: Props) => {
-  const { options, onOptionsChange, sigV4AuthToggleEnabled, renderSigV4Editor, secureSocksDSProxyEnabled } = props;
+  const { options, onOptionsChange, secureSocksDSProxyEnabled } = props;
 
   const newAuthProps = convertLegacyAuthProps({
     config: options,
@@ -28,29 +26,7 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
 
-  // for custom auth methods sigV4
-  let customMethods: CustomMethod[] = [];
-
-  const [sigV4Selected, setSigV4Selected] = useState<boolean>(options.jsonData.sigV4Auth || false);
-
-  const sigV4Id = 'custom-sigV4Id';
-
-  const sigV4Option: CustomMethod = {
-    id: sigV4Id,
-    label: 'SigV4 auth',
-    description: 'This is SigV4 auth description',
-    component: <>{renderSigV4Editor}</>,
-  };
-
-  if (sigV4AuthToggleEnabled) {
-    customMethods.push(sigV4Option);
-  }
-
   function returnSelectedMethod() {
-    if (sigV4Selected) {
-      return sigV4Id;
-    }
-
     return newAuthProps.selectedMethod;
   }
 
@@ -91,26 +67,17 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
       <Auth
         // Reshaped legacy props
         {...newAuthProps}
-        // Your custom auth methods
-        customMethods={customMethods}
         // Still need to call `onAuthMethodSelect` function from
         // `newAuthProps` to store the legacy data correctly.
         // Also make sure to store the data about your component
         // being selected/unselected.
         onAuthMethodSelect={(method) => {
-          // handle selecting of custom methods
-          // sigV4Id
-          if (sigV4AuthToggleEnabled) {
-            setSigV4Selected(method === sigV4Id);
-          }
-
           onOptionsChange({
             ...options,
             basicAuth: method === AuthMethod.BasicAuth,
             withCredentials: method === AuthMethod.CrossSiteCredentials,
             jsonData: {
               ...options.jsonData,
-              sigV4Auth: method === sigV4Id,
               oauthPassThru: method === AuthMethod.OAuthForward,
             },
           });
