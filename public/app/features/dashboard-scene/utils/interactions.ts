@@ -153,8 +153,8 @@ const reportDashboardInteraction: typeof reportInteraction = (name, properties) 
   const meta = isScenesContextSet ? { scenesView: true } : undefined;
 
   if (properties) {
-    reportInteraction(`dashboards_${name}`, properties, meta);
+    reportInteraction(`dashboards_${name}`, { ...properties, ...meta });
   } else {
-    reportInteraction(`dashboards_${name}`, undefined, meta);
+    reportInteraction(`dashboards_${name}`, undefined);
   }
 };
