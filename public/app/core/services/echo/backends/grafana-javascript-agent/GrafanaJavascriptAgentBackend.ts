@@ -29,16 +29,15 @@ export class GrafanaJavascriptAgentBackend
 {
   supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
   private faroInstance;
-  transports: BaseTransport[];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
     // configure instrumentations.
     const instrumentations: Instrumentation[] = [];
 
-    this.transports = [];
+    const transports: BaseTransport[] = [new EchoSrvTransport()];
 
     if (options.customEndpoint) {
-      this.transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
+      transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
     }
 
     if (options.errorInstrumentalizationEnabled) {
@@ -63,7 +62,7 @@ export class GrafanaJavascriptAgentBackend
         environment: options.buildInfo.env,
       },
       instrumentations,
-      transports: [new EchoSrvTransport()],
+      transports,
       ignoreErrors: [
         'ResizeObserver loop limit exceeded',
         'ResizeObserver loop completed',
@@ -92,7 +91,7 @@ export class GrafanaJavascriptAgentBackend
   }
 
   addEvent = (e: EchoEvent) => {
-    this.transports.forEach((t) => t.send(e.payload));
+    this.faroInstance.transports.transports.forEach((t) => t.send(e.payload));
   };
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be
