@@ -21,15 +21,10 @@ export interface DashboardUrlOptions {
   absolute?: boolean;
   // Add tz to query params
   timeZone?: string;
-
-  // Add tz to query params
-  useExperimentalURL?: boolean;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
-  let path = options.useExperimentalURL
-    ? `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`
-    : `/d/${options.uid}${options.subPath ?? ''}`;
+  let path = `/d/${options.uid}${options.subPath ?? ''}`;
 
   if (options.soloRoute) {
     path = `/d-solo/${options.uid}${options.subPath ?? ''}`;
