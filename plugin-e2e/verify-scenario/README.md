@@ -5,4 +5,4 @@ The purpose of the E2E tests in this directory is not to test the plugins per se
 - you have changed a value of a selector defined in @grafana/e2e-selector
 - you have made structural changes to the UI
 
-For information on how to address this, follow the instructions in the [contributing guidelines](https://github.com/grafana/plugin-tools/blob/main/packages/plugin-e2e/CONTRIBUTING.md?plain=1#L96) for the @grafana/plugin-e2e package in the plugin-tools repository.
+For information on how to address this, follow the instructions in the [contributing guidelines](https://github.com/grafana/plugin-tools/blob/main/packages/plugin-e2e/CONTRIBUTING.md#fix-broken-e2e-selectors) for the @grafana/plugin-e2e package in the plugin-tools repository.
