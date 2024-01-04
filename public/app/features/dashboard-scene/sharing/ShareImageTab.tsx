@@ -235,6 +235,7 @@ function ShareImageTabRenderer({ model }: SceneComponentProps<ShareImageTab>) {
                   <Field label={t('share-modal.image.width', `Image width`)}>
                     <Input
                       id="image-width-input"
+                      data-testid="image-width-input"
                       type="number"
                       width={15}
                       value={width}
@@ -242,7 +243,13 @@ function ShareImageTabRenderer({ model }: SceneComponentProps<ShareImageTab>) {
                     />
                   </Field>
                   <Field label={t('share-modal.image.height', `Image height`)}>
-                    <Input id="image-height-input" width={15} value={height} onChange={model.onHeightChange} />
+                    <Input
+                      id="image-height-input"
+                      data-testid="image-height-input"
+                      width={15}
+                      value={height}
+                      onChange={model.onHeightChange}
+                    />
                   </Field>
                 </>
               )}

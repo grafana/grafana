@@ -97,3 +97,7 @@ export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
 export const isPublicDashboardsEnabled = () => {
   return Boolean(config.featureToggles.publicDashboards) && config.publicDashboardsEnabled;
 };
+
+export const isImageShareTabEnabled = () => {
+  return Boolean(config.featureToggles.sharePanelImageExportTab);
+};

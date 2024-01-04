@@ -57,6 +57,7 @@ export interface FeatureToggles {
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
+  sharePanelImageExportTab?: boolean;
   alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;

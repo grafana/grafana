@@ -38,6 +38,7 @@ emptyDashboardPage,GA,@grafana/dashboards-squad,2023-03-28,false,false,false,tru
 disablePrometheusExemplarSampling,GA,@grafana/observability-metrics,2022-12-19,false,false,false,false
 alertingBacktesting,experimental,@grafana/alerting-squad,2022-10-20,false,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/grafana-bi-squad,2022-12-20,false,false,false,true
+sharePanelImageExportTab,experimental,@grafana/grafana-bi-squad,2024-01-20,false,false,false,true
 alertingNoNormalState,preview,@grafana/alerting-squad,2023-01-14,false,false,false,false
 logsContextDatasourceUi,GA,@grafana/observability-logs,2023-01-27,false,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,2023-02-09,false,false,false,true

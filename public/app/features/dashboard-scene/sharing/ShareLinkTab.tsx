@@ -13,7 +13,7 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel, getRenderTimeZone } from '../utils/utils';
+import { getRenderTimeZone } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
@@ -82,11 +82,6 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
     if (useShortUrl) {
       shareUrl = await createShortLink(shareUrl);
-    }
-
-    if (panel) {
-      delete urlParamsUpdate.viewPanel;
-      urlParamsUpdate.panelId = getPanelIdForVizPanel(panel);
     }
 
     const imageUrl = getDashboardUrl({

@@ -163,6 +163,10 @@ const (
 	// Enables drag and drop for CSV and Excel files
 	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
 
+	// FlagSharePanelImageExportTab
+	// Enables panel exports as images from the share modal
+	FlagSharePanelImageExportTab = "sharePanelImageExportTab"
+
 	// FlagAlertingNoNormalState
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"

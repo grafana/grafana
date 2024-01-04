@@ -339,6 +339,14 @@ var (
 			Created:      time.Date(2022, time.December, 20, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "sharePanelImageExportTab",
+			Description:  "Enables panel exports as images from the share modal",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+			Created:      time.Date(2024, time.January, 20, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:              "alertingNoNormalState",
 			Description:       "Stop maintaining state of alerts that are not firing",
 			Stage:             FeatureStagePublicPreview,
