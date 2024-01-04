@@ -153,6 +153,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
