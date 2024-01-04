@@ -10,6 +10,7 @@ import {
   SceneTimePicker,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { newLink } from 'app/features/dashboard/components/LinksSettings';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
@@ -27,6 +28,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.editable).toBe(false);
     expect(wrapper.graphTooltip).toBe(DashboardCursorSync.Off);
     expect(wrapper.tags).toEqual(['hello-tag']);
+    expect(wrapper.links).toEqual([newLink]);
     expect(wrapper.time.from).toBe('now-6h');
     expect(wrapper.timezone).toBe('America/New_York');
     expect(wrapper.weekStart).toBe('friday');
@@ -88,6 +90,7 @@ function setup() {
     title: 'hello',
     description: 'hello description',
     tags: ['hello-tag'],
+    links: [newLink],
     uid: 'dash-1',
     editable: false,
     $timeRange: new SceneTimeRange({
