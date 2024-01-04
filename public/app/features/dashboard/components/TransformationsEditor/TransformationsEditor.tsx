@@ -44,8 +44,13 @@ const VIEW_ALL_VALUE = 'viewAll';
 export type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 
+export interface TransformationData {
+  series: DataFrame[];
+  annotations?: DataFrame[];
+}
+
 interface State {
-  data: DataFrame[];
+  data: TransformationData;
   transformations: TransformationsEditorTransformation[];
   search: string;
   showPicker?: boolean;
@@ -68,7 +73,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         transformation: t,
         id: ids[i],
       })),
-      data: [],
+      data: {
+        series: [],
+      },
       search: '',
       selectedFilter: VIEW_ALL_VALUE,
       showIllustrations: true,
@@ -120,7 +127,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       .getQueryRunner()
       .getData({ withTransforms: false, withFieldConfig: false })
       .subscribe({
-        next: (panelData: PanelData) => this.setState({ data: panelData.series }),
+        next: (panelData: PanelData) => this.setState({ data: panelData }),
       });
   }
 
@@ -384,7 +391,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           onSearchChange={this.onSearchChange}
           onSearchKeyDown={this.onSearchKeyDown}
           onTransformationAdd={this.onTransformationAdd}
-          data={this.state.data}
+          data={this.state.data.series}
           selectedFilter={this.state.selectedFilter}
           showIllustrations={this.state.showIllustrations}
         />
