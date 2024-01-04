@@ -68,7 +68,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 14,
+        "h": 11,
         "w": 7,
         "x": 0,
         "y": 0
@@ -157,7 +157,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 14,
+        "h": 11,
         "w": 7,
         "x": 7,
         "y": 0
@@ -246,7 +246,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 14,
+        "h": 11,
         "w": 7,
         "x": 14,
         "y": 0
@@ -335,10 +335,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 14,
+        "h": 12,
         "w": 7,
         "x": 0,
-        "y": 14
+        "y": 11
       },
       "id": 5,
       "options": {
@@ -431,10 +431,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 14,
+        "h": 12,
         "w": 7,
         "x": 7,
-        "y": 14
+        "y": 11
       },
       "id": 6,
       "options": {
@@ -527,10 +527,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 14,
+        "h": 12,
         "w": 7,
         "x": 14,
-        "y": 14
+        "y": 11
       },
       "id": 7,
       "options": {
@@ -574,6 +574,97 @@
         }
       ],
       "title": "Standard options: Classic palette + Mapping: Fixed color",
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "pointSize": {
+              "fixed": 50
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 7,
+        "x": 0,
+        "y": 23
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "series": [
+          {
+            "pointColor": {
+              "field": "c",
+              "fixed": "dark-green"
+            },
+            "x": "x",
+            "y": "y"
+          }
+        ],
+        "seriesMapping": "manual",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "x,y,c\n0,0,0\n50,50,25\n100,100,50",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Panel Title",
       "type": "xychart"
     }
   ],

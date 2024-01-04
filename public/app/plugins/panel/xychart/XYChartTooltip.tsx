@@ -46,22 +46,35 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     if (options.seriesMapping === 'manual') {
       label = options.series?.[hoveredPointIndex]?.name ?? `Series ${hoveredPointIndex + 1}`;
     }
+
+    let colorThing = series.pointColor(frame);
+
+    if (Array.isArray(colorThing)) {
+      colorThing = colorThing[rowIndex];
+    }
+
     return {
       label,
       value: null,
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      color: alpha(series.pointColor(frame) as string, 0.5),
+      color: alpha(colorThing as string, 0.5),
       colorIndicator: ColorIndicator.marker_md,
     };
   };
 
   const getContentLabel = (): LabelValue[] => {
+    let colorThing = series.pointColor(frame);
+
+    if (Array.isArray(colorThing)) {
+      colorThing = colorThing[rowIndex];
+    }
+
     const yValue: YValue = {
       name: getFieldDisplayName(yField, frame),
       val: yField.values[rowIndex],
       field: yField,
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      color: alpha(series.pointColor(frame) as string, 0.5),
+      color: alpha(colorThing as string, 0.5),
     };
 
     const content: LabelValue[] = [
