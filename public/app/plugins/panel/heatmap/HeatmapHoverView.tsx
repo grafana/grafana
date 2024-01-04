@@ -4,16 +4,16 @@ import uPlot from 'uplot';
 
 import {
   DataFrameType,
-  formattedValueToString,
-  getFieldDisplayName,
-  GrafanaTheme2,
-  getLinksSupplier,
-  InterpolateFunction,
-  ScopedVars,
-  PanelData,
-  LinkModel,
   Field,
   FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  getLinksSupplier,
+  GrafanaTheme2,
+  InterpolateFunction,
+  LinkModel,
+  PanelData,
+  ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -28,7 +28,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
-import { getSparseCellMinMax, getFieldFromData, getHoverCellColor, formatMilliseconds } from './tooltip/utils';
+import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './tooltip/utils';
 
 interface Props {
   dataIdxs: Array<number | null>;

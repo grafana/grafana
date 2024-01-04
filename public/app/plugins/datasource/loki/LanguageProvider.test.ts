@@ -371,6 +371,7 @@ describe('Query imports', () => {
     const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
     const extractedLabelKeys = ['extracted', 'label'];
     const structuredMetadataKeys = ['structured', 'metadata'];
+    const parsedKeys = ['parsed', 'label'];
     const unwrapLabelKeys = ['unwrap', 'labels'];
 
     beforeEach(() => {
@@ -379,8 +380,12 @@ describe('Query imports', () => {
       jest.mocked(extractLabelKeysFromDataFrame).mockImplementation((_, type) => {
         if (type === LabelType.Indexed || !type) {
           return extractedLabelKeys;
-        } else {
+        } else if (type === LabelType.StructuredMetadata) {
           return structuredMetadataKeys;
+        } else if (type === LabelType.Parsed) {
+          return parsedKeys;
+        } else {
+          return [];
         }
       });
       jest.mocked(extractUnwrapLabelKeysFromDataFrame).mockReturnValue(unwrapLabelKeys);
@@ -391,7 +396,7 @@ describe('Query imports', () => {
       extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true, hasPack: false });
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys,
+        extractedLabelKeys: [...extractedLabelKeys, ...parsedKeys],
         unwrapLabelKeys,
         structuredMetadataKeys,
         hasJSON: true,
@@ -405,7 +410,7 @@ describe('Query imports', () => {
       extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false, hasPack: false });
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys,
+        extractedLabelKeys: [...extractedLabelKeys, ...parsedKeys],
         unwrapLabelKeys,
         structuredMetadataKeys,
         hasJSON: false,

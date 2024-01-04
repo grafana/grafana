@@ -151,7 +151,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       {isOpen && (
         <div data-testid={selectors.components.TimePicker.overlayContent}>
           <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
-          <FocusScope contain autoFocus>
+          <FocusScope contain autoFocus restoreFocus>
             <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
               <TimePickerContent
                 timeZone={timeZone}

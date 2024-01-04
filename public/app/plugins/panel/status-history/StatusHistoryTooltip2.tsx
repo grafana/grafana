@@ -52,10 +52,9 @@ export const StatusHistoryTooltip2 = ({
 }: StatusHistoryTooltipProps) => {
   const styles = useStyles2(getStyles);
 
-  // @todo: check other dataIdx, it can be undefined or null in array
-  const datapointIdx = dataIdxs.find((idx) => idx !== undefined);
+  const datapointIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
 
-  if (!data || datapointIdx == null) {
+  if (datapointIdx == null || seriesIdx == null) {
     return null;
   }
 
