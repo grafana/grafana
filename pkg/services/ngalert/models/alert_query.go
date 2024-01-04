@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr"
 )
 
@@ -114,6 +116,28 @@ func (aq *AlertQuery) setModelProps() error {
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
 	return expr.NodeTypeFromDatasourceUID(aq.DatasourceUID) == expr.TypeCMDNode, nil
+}
+
+// IsHysteresisExpression returns true if the model describes a hysteresis command expression. Returns error if the Model is not a valid JSON
+func (aq *AlertQuery) IsHysteresisExpression() (bool, error) {
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return false, err
+		}
+	}
+	return expr.IsHysteresisExpression(aq.modelProps), nil
+}
+
+// PatchHysteresisExpression updates the AlertQuery to include loaded metrics into hysteresis
+func (aq *AlertQuery) PatchHysteresisExpression(loadedMetrics map[data.Fingerprint]struct{}) error {
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return err
+		}
+	}
+	return expr.SetLoadedDimensionsToHysteresisCommand(aq.modelProps, loadedMetrics)
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid

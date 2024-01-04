@@ -297,7 +297,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
 
     return {
-      extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]),
+      extractedLabelKeys: [
+        ...extractLabelKeysFromDataFrame(series[0], LabelType.Indexed),
+        ...extractLabelKeysFromDataFrame(series[0], LabelType.Parsed),
+      ],
       structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.StructuredMetadata),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,
