@@ -5,9 +5,6 @@ on:
     workflows: ["Levitate / Detect breaking changes"]
     types: [completed]
 
-permissions:
-  pull-requests: write
-
 jobs:
   notify:
     name: Report
@@ -22,6 +19,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: "Generate token"
+      id: generate_token
+      uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+      with:
+        app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+        private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+
 
     # Download artifact (as a .zip archive)
     - name: 'Download artifact'
@@ -119,12 +124,14 @@ jobs:
       with:
         number: ${{ steps.levitate-run.outputs.pr_number }}
         message: |
+          CHANGED!
           ⚠️ &nbsp;&nbsp;**Possible breaking changes (md version)**
 
           ${{ steps.levitate-markdown.outputs.levitate_markdown }}
 
           [Console output](${{ steps.levitate-run.outputs.job_link }})
           [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
+        GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
     # Remove comment from the PR (no more breaking changes)
     - name: Remove comment from PR
@@ -133,6 +140,7 @@ jobs:
       with:
         number: ${{ steps.levitate-run.outputs.pr_number }}
         delete: true
+        GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
     # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
     - name: Post to Slack
@@ -159,7 +167,7 @@ jobs:
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ steps.generate_token.outputs.token }}
         script: |
           await github.rest.issues.addLabels({
             issue_number: process.env.PR_NUMBER,
@@ -175,7 +183,7 @@ jobs:
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ steps.generate_token.outputs.token }}
         script: |
           await github.rest.issues.removeLabel({
             issue_number: process.env.PR_NUMBER,
@@ -193,7 +201,7 @@ jobs:
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ steps.generate_token.outputs.token }}
         script: |
           await github.rest.pulls.requestReviewers({
             pull_number: process.env.PR_NUMBER,
@@ -210,7 +218,7 @@ jobs:
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ steps.generate_token.outputs.token }}
         script: |
           await github.rest.pulls.removeRequestedReviewers({
             pull_number: process.env.PR_NUMBER,
