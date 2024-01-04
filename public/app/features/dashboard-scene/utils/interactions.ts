@@ -155,6 +155,6 @@ const reportDashboardInteraction: typeof reportInteraction = (name, properties) 
   if (properties) {
     reportInteraction(`dashboards_${name}`, { ...properties, ...meta });
   } else {
-    reportInteraction(`dashboards_${name}`, undefined);
+    reportInteraction(`dashboards_${name}`);
   }
 };
