@@ -27,7 +27,7 @@ make lint-go
 
 We value clean and readable code, that is loosely coupled and covered by unit tests. This makes it easier to collaborate and maintain the code.
 
-Tests must use the standard library, `testing`. For assertions, we prefer using [testify](https://github.com/stretchr/testify).
+Tests must use the standard library, `testing`. For assertions, prefer using [testify](https://github.com/stretchr/testify).
 
 ### Integration Tests
 
