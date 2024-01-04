@@ -1,6 +1,6 @@
 import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { BaseTransport, Instrumentation, InternalLoggerLevel } from '@grafana/faro-core';
+import { BaseTransport, Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { FetchTransport, initializeFaro } from '@grafana/faro-web-sdk';
 import { EchoEventType, EchoMeta } from '@grafana/runtime';
