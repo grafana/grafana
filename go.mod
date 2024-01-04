@@ -223,10 +223,10 @@ require (
 
 require (
 	cloud.google.com/go/kms v1.15.2 // @grafana/backend-platform
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0 // @grafana/partner-datasources
-	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana/partner-datasources
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0 // @grafana/backend-platform
+	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana/backend-platform
 	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/backend-platform
-	github.com/Azure/go-autorest/autorest/adal v0.9.23 // @grafana/partner-datasources
+	github.com/Azure/go-autorest/autorest/adal v0.9.23 // @grafana/backend-platform
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/blugelabs/bluge v0.1.9 // @grafana/backend-platform
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/backend-platform
