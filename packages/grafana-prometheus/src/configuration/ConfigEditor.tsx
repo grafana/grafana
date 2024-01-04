@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
@@ -37,8 +36,6 @@ export const ConfigEditor = (props: Props) => {
       <DataSourcehttpSettingsOverhaul
         options={options}
         onOptionsChange={onOptionsChange}
-        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
       <hr />
