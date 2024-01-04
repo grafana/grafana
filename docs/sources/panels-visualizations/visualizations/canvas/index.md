@@ -95,7 +95,7 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 
 <!-- TODO: Update this video to be canvas pan zoom enablement video -->
 
-{{< video-embed src="/media/docs/grafana/screen-recording-grafana-10-3-canvas-pan-zoom-placeholder-video.mp4" max-width="750px" caption="Pan and zoom demo" >}}
+{{< video-embed src="/media/docs/grafana/screen-recording-grafana-10-3-canvas-pan-zoom-placeholder-video.mp4" max-width="750px" alt="Pan and zoom demo" >}}
 
 ### Context menu
 
