@@ -24,10 +24,13 @@ func ProvideService(cfg *setting.Cfg) *Service {
 }
 
 func (s *Service) List(_ context.Context) []plugins.PluginSource {
-	return append([]plugins.PluginSource{
+	r := []plugins.PluginSource{
 		NewLocalSource(plugins.ClassCore, corePluginPaths(s.cfg.StaticRootPath)),
 		NewLocalSource(plugins.ClassBundled, []string{s.cfg.BundledPluginsPath}),
-	}, append(s.externalPluginSources(), s.pluginSettingSources()...)...)
+	}
+	r = append(r, s.externalPluginSources()...)
+	r = append(r, s.pluginSettingSources()...)
+	return r
 }
 
 func (s *Service) externalPluginSources() []plugins.PluginSource {
@@ -40,26 +43,22 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
 	// variable.
 	// nolint:gosec
-	d, err := os.Open(pluginsPath)
+	d, err := os.ReadDir(pluginsPath)
 	if err != nil {
 		s.log.Error("Failed to open plugins path", "path", pluginsPath, "error", err)
 		return sources
 	}
-	defer func() {
-		err = d.Close()
-		if err != nil {
-			s.log.Error("Failed to close plugins path", "path", pluginsPath, "error", err)
-		}
-	}()
 
-	pluginDirs, err := d.Readdirnames(-1)
-	if err != nil {
-		s.log.Error("Failed to read directory names in plugins path", "path", pluginsPath, "error", err)
+	var pluginDirs []string
+	for _, dir := range d {
+		if dir.IsDir() {
+			pluginDirs = append(pluginDirs, filepath.Join(pluginsPath, dir.Name()))
+		}
 	}
 	slices.Sort(pluginDirs)
 
 	for _, dir := range pluginDirs {
-		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{filepath.Join(pluginsPath, dir)}))
+		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{dir}))
 	}
 	return sources
 }
