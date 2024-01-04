@@ -236,7 +236,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               });
             }}
           >
-            Copy to TraceQL
+            Edit in TraceQL
           </Button>
         </div>
         <TempoQueryBuilderOptions onChange={onChange} query={query} />
