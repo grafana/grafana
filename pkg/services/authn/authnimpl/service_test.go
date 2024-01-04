@@ -13,10 +13,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -295,6 +299,95 @@ func TestService_RedirectURL(t *testing.T) {
 
 			_, err := service.RedirectURL(context.Background(), tt.client, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestService_Logout(t *testing.T) {
+	type TestCase struct {
+		desc string
+
+		identity     *authn.Identity
+		sessionToken *usertoken.UserToken
+		info         *login.UserAuth
+
+		client authn.Client
+
+		expectedErr          error
+		expectedTokenRevoked bool
+		expectedRedirect     *authn.Redirect
+	}
+
+	tests := []TestCase{
+		{
+			desc:             "should redirect to default redirect url when identity is not a user",
+			identity:         &authn.Identity{ID: authn.NamespacedID(authn.NamespaceServiceAccount, 1)},
+			expectedRedirect: &authn.Redirect{URL: "http://localhost:3000/login"},
+		},
+		{
+			desc:                 "should redirect to default redirect url when no external provider was used to authenticate",
+			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
+			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
+			expectedTokenRevoked: true,
+		},
+		{
+			desc:                 "should redirect to default redirect url when client is not found",
+			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
+			info:                 &login.UserAuth{AuthModule: "notFound"},
+			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
+			expectedTokenRevoked: true,
+		},
+		{
+			desc:                 "should redirect to default redirect url when client do not implement logout extension",
+			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
+			info:                 &login.UserAuth{AuthModule: "azuread"},
+			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
+			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
+			expectedTokenRevoked: true,
+		},
+		{
+			desc:             "should redirect to client specific url",
+			identity:         &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
+			info:             &login.UserAuth{AuthModule: "azuread"},
+			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
+			client: &authntest.MockClient{
+				NameFunc: func() string { return "auth.client.azuread" },
+				LogoutFunc: func(ctx context.Context, _ identity.Requester, _ *login.UserAuth) (*authn.Redirect, bool) {
+					return &authn.Redirect{URL: "http://idp.com/logout"}, true
+				},
+			},
+			expectedTokenRevoked: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var tokenRevoked bool
+
+			s := setupTests(t, func(svc *Service) {
+				if tt.client != nil {
+					svc.RegisterClient(tt.client)
+				}
+				svc.cfg.AppSubURL = "http://localhost:3000"
+				svc.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: tt.info,
+				}
+
+				svc.sessionService = &authtest.FakeUserAuthTokenService{
+					RevokeTokenProvider: func(_ context.Context, sessionToken *auth.UserToken, soft bool) error {
+						tokenRevoked = true
+						assert.EqualValues(t, tt.sessionToken, sessionToken)
+						assert.False(t, soft)
+						return nil
+					},
+				}
+			})
+
+			redirect, err := s.Logout(context.Background(), tt.identity, tt.sessionToken)
+
+			assert.ErrorIs(t, err, tt.expectedErr)
+			assert.EqualValues(t, tt.expectedRedirect, redirect)
+			assert.Equal(t, tt.expectedTokenRevoked, tokenRevoked)
 		})
 	}
 }
