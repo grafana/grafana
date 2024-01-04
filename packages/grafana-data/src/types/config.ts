@@ -135,7 +135,7 @@ export interface BootData {
   user: CurrentUserDTO;
   settings: GrafanaConfig;
   navTree: NavLinkDTO[];
-  themePaths: {
+  assets: {
     light: string;
     dark: string;
   };
@@ -148,6 +148,7 @@ export interface BootData {
  */
 export interface GrafanaConfig {
   publicDashboardAccessToken?: string;
+  publicDashboardsEnabled: boolean;
   snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };

@@ -1239,7 +1239,7 @@ describe('LokiDatasource', () => {
 
     it('creates provider for logs query', () => {
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{label=value}', refId: 'A', queryType: LokiQueryType.Range }],
+        targets: [{ expr: '{label="value"}', refId: 'A', queryType: LokiQueryType.Range }],
       });
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
@@ -1247,7 +1247,7 @@ describe('LokiDatasource', () => {
 
     it('does not create provider for metrics query', () => {
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'rate({label=value}[1m])', refId: 'A' }],
+        targets: [{ expr: 'rate({label="value"}[1m])', refId: 'A' }],
       });
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
@@ -1256,8 +1256,8 @@ describe('LokiDatasource', () => {
     it('creates provider if at least one query is a logs query', () => {
       const options = getQueryOptions<LokiQuery>({
         targets: [
-          { expr: 'rate({label=value}[1m])', queryType: LokiQueryType.Range, refId: 'A' },
-          { expr: '{label=value}', queryType: LokiQueryType.Range, refId: 'B' },
+          { expr: 'rate({label="value"}[1m])', queryType: LokiQueryType.Range, refId: 'A' },
+          { expr: '{label="value"}', queryType: LokiQueryType.Range, refId: 'B' },
         ],
       });
 
@@ -1266,7 +1266,7 @@ describe('LokiDatasource', () => {
 
     it('does not create provider if there is only an instant logs query', () => {
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{label=value', refId: 'A', queryType: LokiQueryType.Instant }],
+        targets: [{ expr: '{label="value"', refId: 'A', queryType: LokiQueryType.Instant }],
       });
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
@@ -1281,7 +1281,7 @@ describe('LokiDatasource', () => {
 
     it('creates provider for metrics query', () => {
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'rate({label=value}[5m])', refId: 'A' }],
+        targets: [{ expr: 'rate({label="value"}[5m])', refId: 'A' }],
       });
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
@@ -1289,7 +1289,7 @@ describe('LokiDatasource', () => {
 
     it('does not create provider for log query', () => {
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{label=value}', refId: 'A' }],
+        targets: [{ expr: '{label="value"}', refId: 'A' }],
       });
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
@@ -1298,8 +1298,8 @@ describe('LokiDatasource', () => {
     it('creates provider if at least one query is a metric query', () => {
       const options = getQueryOptions<LokiQuery>({
         targets: [
-          { expr: 'rate({label=value}[1m])', refId: 'A' },
-          { expr: '{label=value}', refId: 'B' },
+          { expr: 'rate({label="value"}[1m])', refId: 'A' },
+          { expr: '{label="value"}', refId: 'B' },
         ],
       });
 
@@ -1320,12 +1320,12 @@ describe('LokiDatasource', () => {
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsVolume },
             {
-              expr: '{label=value}',
+              expr: '{label="value"}',
               refId: 'A',
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label=value}[$__auto]))',
+          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
@@ -1337,13 +1337,13 @@ describe('LokiDatasource', () => {
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsVolume },
             {
-              expr: '{label=value}',
+              expr: '{label="value"}',
               queryType: LokiQueryType.Range,
               refId: 'A',
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label=value}[$__auto]))',
+          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
@@ -1355,7 +1355,7 @@ describe('LokiDatasource', () => {
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsVolume },
             {
-              expr: '{label=value}',
+              expr: '{label="value"}',
               queryType: LokiQueryType.Instant,
               refId: 'A',
             }
@@ -1368,7 +1368,7 @@ describe('LokiDatasource', () => {
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsVolume },
             {
-              expr: 'rate({label=value}[5m]',
+              expr: 'rate({label="value"}[5m]',
               queryType: LokiQueryType.Range,
               refId: 'A',
             }
@@ -1383,13 +1383,13 @@ describe('LokiDatasource', () => {
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsSample },
             {
-              expr: 'rate({label=value}[5m]',
+              expr: 'rate({label="value"}[5m]',
               queryType: LokiQueryType.Range,
               refId: 'A',
             }
           )
         ).toEqual({
-          expr: '{label=value}',
+          expr: '{label="value"}',
           queryType: 'range',
           refId: 'log-sample-A',
           maxLines: 20,
@@ -1401,13 +1401,13 @@ describe('LokiDatasource', () => {
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsSample },
             {
-              expr: 'rate({label=value}[5m]',
+              expr: 'rate({label="value"}[5m]',
               queryType: LokiQueryType.Instant,
               refId: 'A',
             }
           )
         ).toEqual({
-          expr: '{label=value}',
+          expr: '{label="value"}',
           queryType: LokiQueryType.Range,
           refId: 'log-sample-A',
           maxLines: 20,
@@ -1419,13 +1419,13 @@ describe('LokiDatasource', () => {
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsSample, limit: 5 },
             {
-              expr: 'rate({label=value}[5m]',
+              expr: 'rate({label="value"}[5m]',
               queryType: LokiQueryType.Instant,
               refId: 'A',
             }
           )
         ).toEqual({
-          expr: '{label=value}',
+          expr: '{label="value"}',
           queryType: LokiQueryType.Range,
           refId: 'log-sample-A',
           maxLines: 5,
@@ -1437,7 +1437,7 @@ describe('LokiDatasource', () => {
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsSample },
             {
-              expr: '{label=value}',
+              expr: '{label="value"}',
               queryType: LokiQueryType.Range,
               refId: 'A',
             }

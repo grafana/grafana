@@ -412,6 +412,9 @@
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
     }
   },
+  "drawer": {
+    "close": "Cľőşę Đřäŵęř"
+  },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "rich-history": {
@@ -970,6 +973,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": "Cľőşę Đřäŵęř"
+    },
     "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
   "notifications": {
