@@ -52,7 +52,7 @@ import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/expl
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
-import { visualisationTypeKey } from '../Logs/Logs';
+import { visualisationTypeKey } from '../Logs/utils/logs';
 import { decorateData } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
