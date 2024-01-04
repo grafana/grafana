@@ -110,11 +110,7 @@ it('creates new visualization when clicked on menu item Visualization', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Visualization' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith(
-    'dashboards_toolbar_add_clicked',
-    { item: 'add_visualization' },
-    undefined
-  );
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_toolbar_add_clicked', { item: 'add_visualization' });
   expect(locationService.partial).toHaveBeenCalled();
   expect(onCreateNewPanel).toHaveBeenCalled();
 });
@@ -126,7 +122,7 @@ it('creates new row when clicked on menu item Row', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Row' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith('dashboards_toolbar_add_clicked', { item: 'add_row' }, undefined);
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_toolbar_add_clicked', { item: 'add_row' });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onCreateNewRow).toHaveBeenCalled();
 });
@@ -138,11 +134,7 @@ it('adds a library panel when clicked on menu item Import from library', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Import from library' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith(
-    'dashboards_toolbar_add_clicked',
-    { item: 'import_from_library' },
-    undefined
-  );
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_toolbar_add_clicked', { item: 'import_from_library' });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onAddLibraryPanel).toHaveBeenCalled();
 });

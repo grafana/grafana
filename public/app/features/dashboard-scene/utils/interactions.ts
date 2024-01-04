@@ -150,7 +150,7 @@ export const DashboardInteractions = {
 };
 
 const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {
-  const meta = isScenesContextSet ? { scenesView: true } : undefined;
+  const meta = isScenesContextSet ? { scenesView: true } : {};
 
   if (properties) {
     reportInteraction(`dashboards_${name}`, { ...properties, ...meta });

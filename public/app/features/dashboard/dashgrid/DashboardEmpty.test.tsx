@@ -75,11 +75,7 @@ it('creates new visualization when clicked Add visualization', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add visualization' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith(
-    'dashboards_emptydashboard_clicked',
-    { item: 'add_visualization' },
-    undefined
-  );
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
   expect(locationService.partial).toHaveBeenCalled();
   expect(onCreateNewPanel).toHaveBeenCalled();
 });
@@ -91,11 +87,7 @@ it('open import dashboard when clicked Import dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Import dashboard' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith(
-    'dashboards_emptydashboard_clicked',
-    { item: 'import_dashboard' },
-    undefined
-  );
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'import_dashboard' });
   expect(onImportDashboard).toHaveBeenCalled();
 });
 
@@ -106,11 +98,7 @@ it('adds a library panel when clicked Add library panel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add library panel' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith(
-    'dashboards_emptydashboard_clicked',
-    { item: 'import_from_library' },
-    undefined
-  );
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onAddLibraryPanel).toHaveBeenCalled();
 });
