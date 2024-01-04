@@ -19,6 +19,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/core/store', () => {
   return {
     set() {},
+    get() {},
     getBool(key: string, defaultValue?: boolean) {
       const item = window.localStorage.getItem(key);
       if (item === null) {

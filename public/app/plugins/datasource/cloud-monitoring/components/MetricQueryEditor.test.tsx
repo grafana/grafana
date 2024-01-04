@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
+import { getDefaultTimeRange } from '@grafana/data';
+
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
 import { QueryType } from '../types/query';
@@ -22,6 +24,7 @@ const defaultProps = {
   onRunQuery: jest.fn(),
   query: createMockQuery(),
   datasource: createMockDatasource(),
+  range: getDefaultTimeRange(),
 };
 
 describe('MetricQueryEditor', () => {
