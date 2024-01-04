@@ -122,6 +122,7 @@ jobs:
       if: steps.levitate-run.outputs.exit_code == 1 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: marocchino/sticky-pull-request-comment@v2
       with:
+        header: levitate-breaking-change
         number: ${{ steps.levitate-run.outputs.pr_number }}
         message: |
           CHANGED!
@@ -138,6 +139,7 @@ jobs:
       if: steps.levitate-run.outputs.exit_code == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: marocchino/sticky-pull-request-comment@v2
       with:
+        header: levitate-breaking-change
         number: ${{ steps.levitate-run.outputs.pr_number }}
         delete: true
         GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
