@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 
-import { useContentOutlineContext, ContentOutlineItemContextProps } from './ContentOutlineContext';
+import { useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
 const getStyles = (theme: GrafanaTheme2) => {
