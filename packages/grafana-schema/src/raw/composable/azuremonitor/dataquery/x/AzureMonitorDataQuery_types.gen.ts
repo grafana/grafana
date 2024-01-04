@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "1.0.0";
+export const pluginVersion = "%VERSION%";
 
 export interface AzureMonitorQuery extends common.DataQuery {
   /**

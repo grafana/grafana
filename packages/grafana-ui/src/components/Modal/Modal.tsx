@@ -88,7 +88,7 @@ export function Modal(props: PropsWithChildren<Props>) {
                 name="times"
                 size="xl"
                 onClick={onDismiss}
-                tooltip={t('grafana-ui.modal.close-tooltip', 'Close')}
+                aria-label={t('grafana-ui.modal.close-tooltip', 'Close')}
               />
             </div>
           </div>

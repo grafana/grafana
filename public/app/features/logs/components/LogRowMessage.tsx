@@ -17,7 +17,11 @@ interface Props {
   app?: CoreApp;
   showContextToggle?: (row: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
-  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;

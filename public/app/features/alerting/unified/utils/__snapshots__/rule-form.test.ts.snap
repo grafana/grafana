@@ -10,6 +10,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
   "for": "5m",
   "grafana_alert": {
     "condition": "A",
+    "contactPoints": undefined,
     "data": [],
     "exec_err_state": "Error",
     "is_paused": false,
@@ -32,6 +33,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range 
   "for": "5m",
   "grafana_alert": {
     "condition": "A",
+    "contactPoints": undefined,
     "data": [
       {
         "datasourceUid": "dsuid",
