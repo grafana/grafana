@@ -17,7 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/api"
 	"github.com/grafana/grafana/pkg/services/authn"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -167,6 +169,46 @@ func (a *AnonDeviceService) CountDevices(ctx context.Context, from time.Time, to
 	}
 
 	return a.anonStore.CountDevices(ctx, from, to)
+}
+
+func (a *AnonDeviceService) SearchDevices(c *contextmodel.ReqContext) (*anonstore.SearchDeviceQueryResult, error) {
+	if !a.cfg.AnonymousEnabled {
+		return nil, nil
+	}
+
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	searchQuery := c.Query("query")
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return nil, err
+	}
+
+	query := &anonstore.SearchDeviceQuery{
+		// added SignedInUser to the query, as to only list the users that the user has permission to read
+		SignedInUser: c.SignedInUser,
+		Query:        searchQuery,
+		Page:         page,
+		Limit:        perPage,
+		SortOpts:     sortOpts,
+	}
+	res, err := a.anonStore.SearchDevices(c.Req.Context(), query)
+	if err != nil {
+		return nil, err
+	}
+
+	res.Page = page
+	res.PerPage = perPage
+
+	return res, nil
 }
 
 func (a *AnonDeviceService) Run(ctx context.Context) error {

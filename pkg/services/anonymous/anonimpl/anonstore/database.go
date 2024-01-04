@@ -8,8 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const cacheKeyPrefix = "anon-device"
@@ -32,6 +34,20 @@ type Device struct {
 	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at" db:"updated_at"`
 }
 
+type SearchDeviceQueryResult struct {
+	TotalCount int64     `json:"totalCount"`
+	Devices    []*Device `json:"devices"`
+	Page       int       `json:"page"`
+	PerPage    int       `json:"perPage"`
+}
+type SearchDeviceQuery struct {
+	SignedInUser *user.SignedInUser
+	Query        string
+	Page         int
+	Limit        int `json:"page"`
+	SortOpts     []model.SortOption
+}
+
 func (a *Device) CacheKey() string {
 	return strings.Join([]string{cacheKeyPrefix, a.DeviceID}, ":")
 }
@@ -47,6 +63,8 @@ type AnonStore interface {
 	DeleteDevice(ctx context.Context, deviceID string) error
 	// DeleteDevicesOlderThan deletes all devices that have no been updated since the given time.
 	DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error
+	// SearchDevices searches for devices.
+	SearchDevices(ctx context.Context, query *SearchDeviceQuery) (*SearchDeviceQueryResult, error)
 }
 
 func ProvideAnonDBStore(sqlStore db.DB, deviceLimit int64) *AnonDBStore {
@@ -182,4 +200,39 @@ func (s *AnonDBStore) DeleteDevicesOlderThan(ctx context.Context, olderThan time
 	})
 
 	return err
+}
+
+func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuery) (*SearchDeviceQueryResult, error) {
+	result := SearchDeviceQueryResult{
+		Devices: make([]*Device, 0),
+	}
+	err := s.sqlStore.WithDbSession(ctx, func(dbSess *db.Session) error {
+		sess := dbSess.Table("devices").Alias("d")
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
+		}
+		sess.Cols("d.id", "d.client_ip", "d.user_agent", "d.updated_at")
+
+		if len(query.SortOpts) > 0 {
+			for i := range query.SortOpts {
+				for j := range query.SortOpts[i].Filter {
+					sess.OrderBy(query.SortOpts[i].Filter[j].OrderBy())
+				}
+			}
+		} else {
+			sess.Asc("d.user_agent")
+		}
+		// get total
+		device := Device{}
+		countSess := dbSess.Table("devices").Alias("d")
+
+		count, err := countSess.Count(&device)
+		result.TotalCount = count
+		if err := sess.Find(&result.Devices); err != nil {
+			return err
+		}
+		return err
+	})
+	return &result, err
 }
