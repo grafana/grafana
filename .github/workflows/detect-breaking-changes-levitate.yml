@@ -1,5 +1,4 @@
 # Only runs if anything under the packages/ directory changes.
-# (Otherwise detect-breaking-changes-build-skip.yml takes over)
 
 name: Levitate / Detect breaking changes in PR
 
