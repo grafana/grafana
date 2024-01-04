@@ -1,7 +1,7 @@
 # Only runs if anything under the packages/ directory changes.
 # (Otherwise detect-breaking-changes-build-skip.yml takes over)
 
-name: Levitate / Detect breaking changes
+name: Levitate / Detect breaking changes in PR
 
 on:
   pull_request:
@@ -25,6 +25,7 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 20.9.0
+
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
@@ -158,6 +159,27 @@ jobs:
           name: levitate
           path: levitate/
 
-      - name: Exit
-        run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
-        shell: bash
+  Report:
+    name: Report
+    runs-on: ubuntu-latest
+    needs: ['Detect']
+
+    steps:
+        - name: "Generate token"
+          id: generate_token
+          uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+          with:
+            app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+            private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+
+        - name: 'Download artifact'
+          uses: actions/download-artifact@v3
+          with:
+            name: levitate
+        - name: Display structure of downloaded files
+          run: ls -R
+
+      # TODO - FAIL
+      # - name: Exit
+      #   run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
+      #   shell: bash
