@@ -39,7 +39,7 @@ the specified `GroupVersion` therein.
   go run ./pkg/cmd/grafana apiserver example.grafana.app \
     --kubeconfig $PWD/data/grafana-aggregator/aggregator.kubeconfig \
     --secure-port 7443 \
-   --client-ca-file=$PWD/data/grafana-aggregator/ca.crt
+    --client-ca-file=$PWD/data/grafana-aggregator/ca.crt
   ```
 5. Check `APIService` again:
   ```shell
