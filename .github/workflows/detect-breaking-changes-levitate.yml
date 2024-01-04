@@ -5,8 +5,8 @@ name: Levitate / Detect breaking changes in PR
 
 on:
   pull_request:
-    paths:
-      - 'packages/**'
+    # paths:
+    #   - 'packages/**'
     branches:
       - 'main'
 
