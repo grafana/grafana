@@ -1,6 +1,9 @@
+import { d } from 'msw/lib/glossary-de6278a9';
 import React, { useMemo } from 'react';
 
 import { Avatar, CellProps, Column, InteractiveTable, Stack, Badge, Tooltip } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
 import { UserAnonymousDeviceDTO } from 'app/types';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
@@ -86,6 +89,11 @@ export const AnonUsersDevicesTable = ({ devices }: AnonUsersTableProps) => {
   return (
     <Stack direction={'column'} gap={2}>
       <InteractiveTable columns={columns} data={devices} getRowId={(user) => user.deviceId} />
+      {devices.length === 0 && (
+        <EmptyArea>
+          <span>No anonymous users found.</span>
+        </EmptyArea>
+      )}
     </Stack>
   );
 };
