@@ -217,29 +217,27 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
         </div>
         <div className={styles.rawQueryContainer}>
           <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
-          {query.queryType === 'traceqlSearch' && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                reportInteraction('grafana_traces_copy_to_traceql_clicked', {
-                  app: app ?? '',
-                  grafana_version: config.buildInfo.version,
-                  location: 'search_tab',
-                });
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              reportInteraction('grafana_traces_copy_to_traceql_clicked', {
+                app: app ?? '',
+                grafana_version: config.buildInfo.version,
+                location: 'search_tab',
+              });
 
-                onClearResults();
-                const traceQlQuery = generateQueryFromFilters(query.filters || []);
-                onChange({
-                  ...query,
-                  query: traceQlQuery,
-                  queryType: 'traceql',
-                });
-              }}
-            >
-              Copy to TraceQL
-            </Button>
-          )}
+              onClearResults();
+              const traceQlQuery = generateQueryFromFilters(query.filters || []);
+              onChange({
+                ...query,
+                query: traceQlQuery,
+                queryType: 'traceql',
+              });
+            }}
+          >
+            Copy to TraceQL
+          </Button>
         </div>
         <TempoQueryBuilderOptions onChange={onChange} query={query} />
       </div>
