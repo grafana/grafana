@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { UserEvent } from '@testing-library/user-event/dist/types/setup/setup';
 import React from 'react';
 import { of } from 'rxjs';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { CoreApp } from '@grafana/data';
 
@@ -12,6 +11,7 @@ import createMockQuery from '../../__mocks__/query';
 import { AzureQueryType } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { AzureMonitorQuery } from '../../types';
+import { selectOptionInTest } from '../../utils/testUtils';
 
 import Filters from './Filters';
 import { setFilters } from './setQueryValue';
