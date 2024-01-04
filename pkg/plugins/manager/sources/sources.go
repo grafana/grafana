@@ -2,6 +2,7 @@ package sources
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -35,13 +36,25 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 	}
 
 	pluginPath := filepath.Join(s.cfg.PluginsPath)
-	extPluginDirs, err := filepath.Glob(filepath.Join(pluginPath, "*"))
+	d, err := os.Open(pluginPath)
 	if err != nil {
-		s.log.Error("Failed to get datasource paths", "error", err)
+		s.log.Error("Failed to open plugins path", "path", pluginPath, "error", err)
+		return sources
+	}
+	defer func() {
+		err = d.Close()
+		if err != nil {
+			s.log.Error("Failed to close plugins path", "path", pluginPath, "error", err)
+		}
+	}()
+
+	pluginDirs, err := d.Readdirnames(-1)
+	if err != nil {
+		s.log.Error("Failed to read directory names in plugins path", "path", pluginPath, "error", err)
 	}
 
-	for _, dir := range extPluginDirs {
-		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{dir}))
+	for _, dir := range pluginDirs {
+		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{filepath.Join(pluginPath, dir)}))
 	}
 	return sources
 }
