@@ -11,7 +11,6 @@ import { docsTip, overhaulStyles } from './ConfigEditor';
 type Props = {
   options: DataSourceSettings<PromOptions, {}>;
   onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void;
-  renderSigV4Editor: React.ReactNode;
   secureSocksDSProxyEnabled: boolean;
 };
 
