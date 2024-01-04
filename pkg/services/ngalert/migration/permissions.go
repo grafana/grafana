@@ -85,8 +85,7 @@ func (sync *sync) migratedFolder(ctx context.Context, l log.Logger, dashboardUID
 		du.warning = "dashboard alerts moved to general alerting folder during upgrade: original folder not found"
 	} else if folderID <= 0 && strings.HasPrefix(migratedFolder.Title, generalAlertingFolderTitle) {
 		du.warning = "dashboard alerts moved to general alerting folder during upgrade: general folder not supported"
-		// nolint:staticcheck
-	} else if migratedFolder.ID != folderID {
+	} else if migratedFolder.ID != folderID { // nolint:staticcheck
 		du.warning = "dashboard alerts moved to new folder during upgrade: folder permission changes were needed"
 	}
 

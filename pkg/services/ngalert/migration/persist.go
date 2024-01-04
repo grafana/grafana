@@ -199,7 +199,6 @@ func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgM
 		if err != nil {
 			return fmt.Errorf("insert alert rules: %w", err)
 		}
-
 	}
 	return nil
 }

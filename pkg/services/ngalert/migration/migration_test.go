@@ -749,7 +749,6 @@ func TestDashAlertMigration(t *testing.T) {
 			}
 		}
 	})
-
 }
 
 // TestDashAlertQueryMigration tests the execution of the migration specifically for alert rule queries.
