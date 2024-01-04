@@ -37,7 +37,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const [expanded, toggleExpanded] = useToggle(false);
   const [activeItemId, setActiveItemId] = useState<string | undefined>(outlineItems[0]?.id);
   const styles = useStyles2((theme) => getStyles(theme));
-  const scrollerRef = useRef(scroller as HTMLElement);
+  const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
 
   const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
@@ -106,9 +106,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 title={expanded ? item.title : undefined}
                 className={styles.buttonStyles}
                 icon={item.icon}
-                onClick={() => {
-                  scrollIntoView(item.ref, item.title);
-                }}
+                onClick={() => scrollIntoView(item.ref, item.title)}
                 tooltip={!expanded ? item.title : undefined}
                 isActive={activeItemId === item.id}
               />
