@@ -41,7 +41,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFo
   });
 
   const isUpdatingAnnotation = annoVals.id?.[annoIdx] != null;
-  const isRegionAnnotation = annoVals.isRegion[annoIdx];
+  const isRegionAnnotation = annoVals.isRegion?.[annoIdx];
   const operation = isUpdatingAnnotation ? updateAnnotation : createAnnotation;
   const stateIndicator = isUpdatingAnnotation ? updateAnnotationState : createAnnotationState;
   const time = isRegionAnnotation
@@ -54,7 +54,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFo
       tags,
       description,
       from: Math.round(annoVals.time[annoIdx]!),
-      to: Math.round(annoVals.timeEnd[annoIdx]!),
+      to: Math.round(annoVals.timeEnd?.[annoIdx] ?? annoVals.time[annoIdx]!),
     });
   };
 

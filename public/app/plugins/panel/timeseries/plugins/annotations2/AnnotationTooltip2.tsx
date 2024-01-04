@@ -29,7 +29,7 @@ export const AnnotationTooltip2 = ({
   let time = timeFormatter(annoVals.time[annoIdx]);
   let text = annoVals.text[annoIdx];
 
-  if (annoVals.isRegion[annoIdx]) {
+  if (annoVals.isRegion?.[annoIdx]) {
     time += ' - ' + timeFormatter(annoVals.timeEnd[annoIdx]);
   }
 

@@ -114,12 +114,12 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
         let vals = getValsWithNew(frame, newRangeRef.current);
 
         for (let i = 0; i < vals.time.length; i++) {
-          let color = getColorByName(vals.color[i]);
+          let color = getColorByName(vals.color?.[i]);
 
           let x0 = u.valToPos(vals.time[i], 'x', true);
           renderLine(ctx, y0, y1, x0, color);
 
-          if (!vals.isRegion[i]) {
+          if (!vals.isRegion?.[i]) {
             // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
           } else {
             let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
@@ -157,14 +157,13 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
       let markers: React.ReactNode[] = [];
 
       for (let i = 0; i < vals.time.length; i++) {
-        let color = getColorByName(vals.color[i]);
-
+        let color = getColorByName(vals.color?.[i]);
         let left = plot.valToPos(vals.time[i], 'x');
         let style: React.CSSProperties | null = null;
         let className = '';
         let isVisible = true;
 
-        if (vals.isRegion[i]) {
+        if (vals.isRegion?.[i]) {
           let right = plot.valToPos(vals.timeEnd[i], 'x');
 
           isVisible = left < plot.rect.width && right > 0;
