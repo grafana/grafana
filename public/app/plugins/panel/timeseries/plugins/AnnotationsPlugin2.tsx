@@ -185,6 +185,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
           }
         }
 
+        // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
           markers.push(
             <AnnotationMarker2
@@ -194,7 +195,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
               style={style}
               timezone={timeZone}
               key={i}
-              // isWip={newRangeRef.current != null}
+              isWip={newRange != null && i === vals.time.length - 1}
             />
           );
         }
