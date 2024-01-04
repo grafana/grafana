@@ -1298,6 +1298,7 @@ var (
 			FrontendOnly:    false,
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
 		},
