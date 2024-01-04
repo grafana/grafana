@@ -135,7 +135,7 @@ export interface BootData {
   user: CurrentUserDTO;
   settings: GrafanaConfig;
   navTree: NavLinkDTO[];
-  themePaths: {
+  assets: {
     light: string;
     dark: string;
   };
