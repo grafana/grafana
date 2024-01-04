@@ -14,9 +14,9 @@ import { PromSettings } from './PromSettings';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
 
-export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
+export type PrometheusConfigProps = DataSourcePluginOptionsEditorProps<PromOptions>;
 
-export const ConfigEditor = (props: Props) => {
+export const ConfigEditor = (props: PrometheusConfigProps) => {
   const { options, onOptionsChange } = props;
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
