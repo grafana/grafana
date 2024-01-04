@@ -159,6 +159,10 @@ jobs:
           name: levitate
           path: levitate/
 
+      - name: Exit
+        run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
+        shell: bash
+
   Report:
     name: Report breaking changes in PR
     runs-on: ubuntu-latest
@@ -331,9 +335,3 @@ jobs:
                 reviewers: [],
                 team_reviewers: ['plugins-platform-frontend']
               });
-
-
-      # TODO - FAIL
-      # - name: Exit
-      #   run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
-      #   shell: bash
