@@ -15,6 +15,7 @@ labels:
 menuTitle: Annotate visualizations
 title: Annotate visualizations
 weight: 600
+description: Annotate dashboard visualizations to mark points with rich events
 ---
 
 # Annotate visualizations
@@ -118,6 +119,8 @@ To add a new annotation query to a dashboard, take the following steps:
 ## Built-in query
 
 After you add an annotation, they will still be visible. This is due to the built-in annotation query that exists on all dashboards. This annotation query will fetch all annotation events that originate from the current dashboard, which are stored in Grafana, and show them on the panel where they were created. This includes alert state history annotations.
+
+By default, the built-in annotation query uses the `-- Grafana --` special data source, and manual annotations are only supported using this data source. You can use another data source in the built-in annotation query, but you'll only be able to create automated annotations using the query editor for that data source.
 
 To add annotations directly to the dashboard, this query must be enabled.
 

@@ -42,7 +42,7 @@ func ParseKey(key string) (*Key, error) {
 }
 
 func (k *Key) String() string {
-	s := k.Group + "/" + k.Resource + "/" + k.Namespace
+	s := "/" + k.Group + "/" + k.Resource + "/" + k.Namespace
 	if len(k.Name) > 0 {
 		s += "/" + k.Name
 		if len(k.Subresource) > 0 {

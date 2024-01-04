@@ -39,6 +39,7 @@ import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
+import { routeTimingsFields } from './routeTimingsFields';
 
 export interface AmRoutesExpandedFormProps {
   receivers: AmRouteReceiver[];
@@ -250,35 +251,35 @@ export const AmRoutesExpandedForm = ({
           {watch().overrideTimings && (
             <>
               <Field
-                label="Group wait"
-                description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
+                label={routeTimingsFields.groupWait.label}
+                description={routeTimingsFields.groupWait.description}
                 invalid={!!errors.groupWaitValue}
                 error={errors.groupWaitValue?.message}
               >
                 <PromDurationInput
                   {...register('groupWaitValue', { validate: promDurationValidator })}
-                  aria-label="Group wait value"
+                  aria-label={routeTimingsFields.groupWait.ariaLabel}
                   className={formStyles.promDurationInput}
                   disabled={isReadOnly}
                 />
               </Field>
               <Field
-                label="Group interval"
-                description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
+                label={routeTimingsFields.groupInterval.label}
+                description={routeTimingsFields.groupInterval.description}
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
                 disabled={isReadOnly}
               >
                 <PromDurationInput
                   {...register('groupIntervalValue', { validate: promDurationValidator })}
-                  aria-label="Group interval value"
+                  aria-label={routeTimingsFields.groupInterval.ariaLabel}
                   className={formStyles.promDurationInput}
                   disabled={isReadOnly}
                 />
               </Field>
               <Field
-                label="Repeat interval"
-                description="The waiting time to resend an alert after they have successfully been sent."
+                label={routeTimingsFields.repeatInterval.label}
+                description={routeTimingsFields.repeatInterval.description}
                 invalid={!!errors.repeatIntervalValue}
                 error={errors.repeatIntervalValue?.message}
               >
@@ -289,7 +290,7 @@ export const AmRoutesExpandedForm = ({
                       return repeatIntervalValidator(value, groupInterval);
                     },
                   })}
-                  aria-label="Repeat interval value"
+                  aria-label={routeTimingsFields.repeatInterval.ariaLabel}
                   className={formStyles.promDurationInput}
                   disabled={isReadOnly}
                 />

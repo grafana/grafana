@@ -3,11 +3,12 @@ package ssosettingsimpl
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -95,12 +96,12 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 		settings := getSettingsByProvider(provider, storedSettings)
 		if len(settings) == 0 {
 			// If there is no data in the DB then we need to load the settings using the fallback strategy
-			setting, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+			fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 			if err != nil {
 				return nil, err
 			}
 
-			settings = append(settings, setting)
+			settings = append(settings, fallbackSettings)
 		}
 		result = append(result, settings...)
 	}
@@ -109,21 +110,45 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
-	// TODO: also check whether the provider is configurable
-	// Get the connector for the provider (from the reloadables) and call Validate
-
-	if isOAuthProvider(settings.Provider) {
-		encryptedClientSecret, err := s.secrets.Encrypt(ctx, []byte(settings.OAuthSettings.ClientSecret), secrets.WithoutScope())
-		if err != nil {
-			return err
-		}
-		settings.OAuthSettings.ClientSecret = string(encryptedClientSecret)
+	if !isProviderConfigurable(settings.Provider) {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", settings.Provider)
 	}
 
-	err := s.store.Upsert(ctx, settings)
+	social, ok := s.reloadables[settings.Provider]
+	if !ok {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
+	}
+
+	err := social.Validate(ctx, settings)
 	if err != nil {
 		return err
 	}
+
+	systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, settings.Provider)
+	if err != nil {
+		return err
+	}
+
+	// add the SSO settings from system that are not available in the user input
+	// in order to have a complete set of SSO settings for every provider in the database
+	settings.Settings = mergeSettings(settings.Settings, systemSettings.Settings)
+
+	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
+	if err != nil {
+		return err
+	}
+
+	err = s.store.Upsert(ctx, settings)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err = social.Reload(context.Background(), settings)
+		if err != nil {
+			s.log.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
+		}
+	}()
 
 	return nil
 }
@@ -162,16 +187,11 @@ func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Conte
 		return nil, err
 	}
 
-	switch settingsFromSystem := settingsFromSystem.(type) {
-	case *social.OAuthInfo:
-		return &models.SSOSettings{
-			Provider:      provider,
-			Source:        models.System,
-			OAuthSettings: settingsFromSystem,
-		}, nil
-	default:
-		return nil, errors.New("could not parse settings from system")
-	}
+	return &models.SSOSettings{
+		Provider: provider,
+		Source:   models.System,
+		Settings: settingsFromSystem,
+	}, nil
 }
 
 func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*models.SSOSettings {
@@ -193,9 +213,58 @@ func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosetting
 	return nil, false
 }
 
-func isOAuthProvider(provider string) bool {
-	for _, oAuthProvider := range ssosettings.AllOAuthProviders {
-		if oAuthProvider == provider {
+func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
+	result := make(map[string]any)
+	for k, v := range settings {
+		if isSecret(k) {
+			strValue, ok := v.(string)
+			if !ok {
+				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
+			}
+
+			encryptedSecret, err := s.secrets.Encrypt(ctx, []byte(strValue), secrets.WithoutScope())
+			if err != nil {
+				return result, err
+			}
+			result[k] = string(encryptedSecret)
+		} else {
+			result[k] = v
+		}
+	}
+
+	return result, nil
+}
+
+func isSecret(fieldName string) bool {
+	secretFieldPatterns := []string{"secret"}
+
+	for _, v := range secretFieldPatterns {
+		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+			return true
+		}
+	}
+	return false
+}
+
+func mergeSettings(apiSettings, systemSettings map[string]any) map[string]any {
+	settings := make(map[string]any)
+
+	for k, v := range apiSettings {
+		settings[k] = v
+	}
+
+	for k, v := range systemSettings {
+		if _, ok := settings[k]; !ok {
+			settings[k] = v
+		}
+	}
+
+	return settings
+}
+
+func isProviderConfigurable(provider string) bool {
+	for _, configurable := range ssosettings.ConfigurableOAuthProviders {
+		if provider == configurable {
 			return true
 		}
 	}
