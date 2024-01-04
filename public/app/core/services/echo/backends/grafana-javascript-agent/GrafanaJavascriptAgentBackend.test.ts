@@ -45,14 +45,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
     // arrange
-    // jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
-    //   ...faroWebSdkModule.faro,
-    //   api: {
-    //     ...faroWebSdkModule.faro.api,
-    //     setUser: jest.fn(),
-    //   },
-    // });
-
     const constructorSpy = jest.spyOn(faroWebSdkModule, 'FetchTransport');
 
     //act
