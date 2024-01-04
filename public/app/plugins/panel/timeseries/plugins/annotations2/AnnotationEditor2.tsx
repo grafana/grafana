@@ -50,7 +50,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFo
 
   const onSubmit = ({ tags, description }: AnnotationEditFormDTO) => {
     operation({
-      id: annoVals.id[annoIdx],
+      id: annoVals.id?.[annoIdx] ?? undefined,
       tags,
       description,
       from: Math.round(annoVals.time[annoIdx]!),
