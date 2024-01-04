@@ -1,8 +1,8 @@
-import { PanelBuilders, SceneQueryRunner, VizPanelBuilder } from '@grafana/scenes';
+import { PanelBuilders, VizPanelBuilder } from '@grafana/scenes';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { HeatmapColorMode } from 'app/plugins/panel/heatmap/types';
 
-import { KEY_SQR_METRIC_VIZ_QUERY, trailDS, VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../shared';
+import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../shared';
 
 export interface AutoQueryDef {
   variant: string;
@@ -154,30 +154,13 @@ function getQueriesForBucketMetric(metric: string): AutoQueryInfo {
 function simpleGraphBuilder(def: AutoQueryDef) {
   return PanelBuilders.timeseries()
     .setTitle(def.title)
-    .setData(
-      new SceneQueryRunner({
-        datasource: trailDS,
-        maxDataPoints: 200,
-        queries: def.queries,
-      })
-    )
     .setUnit(def.unit)
     .setOption('legend', { showLegend: false })
     .setCustomFieldConfig('fillOpacity', 9);
 }
 
 function percentilesGraphBuilder(def: AutoQueryDef) {
-  return PanelBuilders.timeseries()
-    .setTitle(def.title)
-    .setData(
-      new SceneQueryRunner({
-        datasource: trailDS,
-        maxDataPoints: 200,
-        queries: def.queries,
-      })
-    )
-    .setUnit(def.unit)
-    .setCustomFieldConfig('fillOpacity', 9);
+  return PanelBuilders.timeseries().setTitle(def.title).setUnit(def.unit).setCustomFieldConfig('fillOpacity', 9);
 }
 
 function heatmapGraphBuilder(def: AutoQueryDef) {
@@ -191,12 +174,5 @@ function heatmapGraphBuilder(def: AutoQueryDef) {
       scheme: 'Spectral',
       steps: 32,
       reverse: false,
-    })
-    .setData(
-      new SceneQueryRunner({
-        key: KEY_SQR_METRIC_VIZ_QUERY,
-        datasource: trailDS,
-        queries: def.queries,
-      })
-    );
+    });
 }

@@ -102,7 +102,7 @@ func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.R
 	// FIXME(kalleep): we should probably lazy load this
 	token, err := s.SignIdentity(ctx, identity)
 	if err != nil {
-		namespace, id := identity.NamespacedID()
+		namespace, id := identity.GetNamespacedID()
 		s.logger.Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
 		// for now don't return error so we don't break authentication from this hook
 		return nil

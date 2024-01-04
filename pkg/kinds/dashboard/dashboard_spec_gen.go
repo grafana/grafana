@@ -26,6 +26,13 @@ const (
 	LinkTypeLink       LinkType = "link"
 )
 
+// Defines values for DataTransformerConfigTopic.
+const (
+	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
+	DataTransformerConfigTopicAnnotations DataTransformerConfigTopic = "annotations"
+	DataTransformerConfigTopicSeries      DataTransformerConfigTopic = "series"
+)
+
 // Defines values for FieldColorModeId.
 const (
 	FieldColorModeIdContinuousBlPu       FieldColorModeId = "continuous-BlPu"
@@ -294,7 +301,13 @@ type DataTransformerConfig struct {
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	Options any `json:"options"`
+
+	// Where to pull DataFrames from as input to transformation
+	Topic *DataTransformerConfigTopic `json:"topic,omitempty"`
 }
+
+// Where to pull DataFrames from as input to transformation
+type DataTransformerConfigTopic string
 
 // DynamicConfigValue defines model for DynamicConfigValue.
 type DynamicConfigValue struct {

@@ -5,6 +5,7 @@ import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { SharePublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
+import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
@@ -56,7 +57,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
     tabs.push(...customDashboardTabs);
   }
 
-  if (Boolean(config.featureToggles['publicDashboards'])) {
+  if (isPublicDashboardsEnabled()) {
     tabs.push({
       label: 'Public dashboard',
       value: shareDashboardType.publicDashboard,
