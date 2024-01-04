@@ -45,11 +45,19 @@ func ProvideApi(
 }
 
 // generateFNVETag computes a FNV hash-based ETag the SSOSettings struct
-func generateFNVETag(SSOSettings *models.SSOSettings) string {
+func generateFNVETag(SSOSettings *models.SSOSettings) (string, error) {
 	hasher := fnv.New64()
-	data, _ := json.Marshal(SSOSettings)
-	hasher.Write(data)
-	return fmt.Sprintf("%x", hasher.Sum(nil))
+	data, err := json.Marshal(SSOSettings)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = hasher.Write(data)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
 }
 
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router
@@ -140,7 +148,10 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		provider.Settings["ClientSecret"] = "*********"
 	}
 
-	etag := generateFNVETag(provider)
+	etag, err := generateFNVETag(provider)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get provider settings", err)
+	}
 
 	return response.JSON(http.StatusOK, provider).SetHeader("ETag", etag)
 }
