@@ -1,8 +1,6 @@
-import { d } from 'msw/lib/glossary-de6278a9';
 import React, { useMemo } from 'react';
 
 import { Avatar, CellProps, Column, InteractiveTable, Stack, Badge, Tooltip } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
 import { UserAnonymousDeviceDTO } from 'app/types';
 
