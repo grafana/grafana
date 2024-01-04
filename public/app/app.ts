@@ -56,6 +56,7 @@ import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
+import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
@@ -218,6 +219,8 @@ export class GrafanaApp {
       const queryParams = locationService.getSearchObject();
       const chromeService = new AppChromeService();
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
+      const newAssetsChecker = new NewFrontendAssetsChecker();
+      newAssetsChecker.start();
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);
@@ -234,6 +237,7 @@ export class GrafanaApp {
         location: locationService,
         chrome: chromeService,
         keybindings: keybindingsService,
+        newAssetsChecker,
         config,
       };
 
