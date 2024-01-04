@@ -524,6 +524,59 @@ func TestValidate(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:  "fail if hysteresis command is not the condition",
+			error: true,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
+				})
+
+				return models.Condition{
+					Condition: "C",
+					Data: []models.AlertQuery{
+						dsQuery,
+						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+						models.CreateClassicConditionExpression("C", "B", "last", "gt", rand.Int()),
+					},
+				}
+			},
+		},
+		{
+			name:  "pass if hysteresis command and it is the condition",
+			error: false,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
+				})
+
+				return models.Condition{
+					Condition: "B",
+					Data: []models.AlertQuery{
+						dsQuery,
+						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+					},
+				}
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -545,6 +598,133 @@ func TestValidate(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestCreate_HysteresisCommand(t *testing.T) {
+	type services struct {
+		cache        *fakes.FakeCacheService
+		pluginsStore *pluginstore.FakePluginStore
+	}
+
+	testCases := []struct {
+		name      string
+		reader    AlertingResultsReader
+		condition func(services services) models.Condition
+		error     bool
+	}{
+		{
+			name:  "fail if hysteresis command is not the condition",
+			error: true,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
+				})
+
+				return models.Condition{
+					Condition: "C",
+					Data: []models.AlertQuery{
+						dsQuery,
+						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+						models.CreateClassicConditionExpression("C", "B", "last", "gt", rand.Int()),
+					},
+				}
+			},
+		},
+		{
+			name:   "populate with loaded metrics",
+			error:  false,
+			reader: FakeLoadedMetricsReader{fingerprints: map[data.Fingerprint]struct{}{1: {}, 2: {}, 3: {}}},
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
+				})
+
+				return models.Condition{
+					Condition: "B",
+					Data: []models.AlertQuery{
+						dsQuery,
+						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+					},
+				}
+			},
+		},
+		{
+			name:   "do nothing if reader is not specified",
+			error:  false,
+			reader: nil,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					UID:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
+				})
+
+				return models.Condition{
+					Condition: "B",
+					Data: []models.AlertQuery{
+						dsQuery,
+						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+					},
+				}
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		u := &user.SignedInUser{}
+
+		t.Run(testCase.name, func(t *testing.T) {
+			cacheService := &fakes.FakeCacheService{}
+			store := &pluginstore.FakePluginStore{}
+			condition := testCase.condition(services{
+				cache:        cacheService,
+				pluginsStore: store,
+			})
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()), store)
+			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
+
+			eval, err := evaluator.Create(evalCtx, condition)
+			if testCase.error {
+				require.Error(t, err)
+				return
+			}
+			require.IsType(t, &conditionEvaluator{}, eval)
+			ce := eval.(*conditionEvaluator)
+
+			cmds := expr.GetCommandsFromPipeline[*expr.HysteresisCommand](ce.pipeline)
+			require.Len(t, cmds, 1)
+			if testCase.reader == nil {
+				require.Empty(t, cmds[0].LoadedDimensions)
+			} else {
+				require.EqualValues(t, testCase.reader.Read(), cmds[0].LoadedDimensions)
 			}
 		})
 	}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, TimeRange } from '@grafana/data';
 import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';
 
 import { ProfileTypesCascader, useProfileTypes } from './QueryEditor/ProfileTypesCascader';
@@ -15,7 +15,7 @@ export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource,
           label="Query type"
           labelWidth={20}
           tooltip={
-            <div>The Prometheus data source plugin provides the following query types for template variables</div>
+            <div>The Pyroscope data source plugin provides the following query types for template variables</div>
           }
         >
           <Select
@@ -65,6 +65,7 @@ export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource,
               props.onChange({ ...props.query, profileTypeId: val });
             }
           }}
+          range={props.range}
         />
       )}
 
@@ -131,8 +132,9 @@ function ProfileTypeRow(props: {
   datasource: PyroscopeDataSource;
   onChange: (val: string) => void;
   initialValue?: string;
+  range?: TimeRange;
 }) {
-  const profileTypes = useProfileTypes(props.datasource);
+  const profileTypes = useProfileTypes(props.datasource, props.range);
   return (
     <InlineFieldRow>
       <InlineField
