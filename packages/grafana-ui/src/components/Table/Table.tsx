@@ -129,8 +129,11 @@ export const Table = memo((props: Props) => {
     },
   });
 
-  const options: any = useMemo(
-    () => ({
+  const uniqueField = data.fields.find((c) => c.config.custom?.unique);
+
+  const options: any = useMemo(() => {
+    // Bit hard to type with the react-table types here, the reducer does not actually match with the TableOptions
+    const options: any = {
       columns: memoizedColumns,
       data: memoizedData,
       disableResizing: !resizable,
@@ -142,9 +145,14 @@ export const Table = memo((props: Props) => {
         number: sortNumber, // the builtin number type on react-table does not handle NaN values
         'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
       },
-    }),
-    [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
-  );
+    };
+    if (uniqueField) {
+      // row here is just always 0 because here we don't use real data but just a dummy array filled with 0.
+      // See memoizedData variable above.
+      options.getRowId = (row: Record<string, unknown>, relativeIndex: number) => uniqueField.values[relativeIndex];
+    }
+    return options;
+  }, [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer, uniqueField]);
 
   const {
     getTableProps,
@@ -262,6 +270,7 @@ export const Table = memo((props: Props) => {
     );
   }
 
+  console.log(state.expanded);
   return (
     <div
       {...getTableProps()}

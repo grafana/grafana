@@ -653,6 +653,7 @@ export function createTableFrameFromTraceQlQuery(
           displayNameFromDS: 'Trace ID',
           custom: {
             width: 200,
+            unique: true,
           },
           links: [
             {
