@@ -89,7 +89,7 @@ You can edit your canvas inline while in the context of dashboard mode.
 
 You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
 
-{{< docs/public-preview product="Canvas pan and zoom" featureFlag="canvasPanelPanZoom" >}}
+{{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" caption="Canvas pan zoom control" >}}
 
