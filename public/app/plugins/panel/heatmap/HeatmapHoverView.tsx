@@ -66,11 +66,9 @@ const HeatmapHoverCell = ({
   showHistogram,
   isPinned,
   canAnnotate,
-  panelData,
   showColorScale = false,
   scopedVars,
   replaceVars,
-  dismiss,
   mode,
 }: Props) => {
   const index = dataIdxs[1]!;
@@ -83,23 +81,6 @@ const HeatmapHoverCell = ({
   const xField = getFieldFromData(data.heatmap!, 'x', isSparse)!;
   const yField = getFieldFromData(data.heatmap!, 'y', isSparse)!;
   const countField = getFieldFromData(data.heatmap!, 'count', isSparse)!;
-
-  if (mode === TooltipDisplayMode.Multi) {
-    let xVal = xField.values[index];
-    let fromIdx = index;
-    let toIdx = index;
-
-    while (xField.values[fromIdx - 1] === xVal) {
-      fromIdx--;
-    }
-
-    while (xField.values[toIdx + 1] === xVal) {
-      toIdx++;
-    }
-
-    // this index range represents a single vertical slice through the heatmap, containing each bucket for this timestamp
-    console.log(fromIdx, toIdx);
-  }
 
   const xDisp = (v: number) => {
     if (xField?.display) {
@@ -121,8 +102,6 @@ const HeatmapHoverCell = ({
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
   const yDisp = yField?.display ? (v: string) => formattedValueToString(yField.display!(v)) : (v: string) => `${v}`;
 
-  const yValueIdx = index % data.yBucketCount! ?? 0;
-
   let interval = xField?.config.interval;
 
   let yBucketMin: string;
@@ -133,9 +112,15 @@ const HeatmapHoverCell = ({
 
   let nonNumericOrdinalDisplay: string | undefined = undefined;
 
-  if (isSparse) {
-    ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, index));
-  } else {
+  let contentLabelValue: LabelValue[] = [];
+
+  const getYValueIndex = (idx: number) => {
+    return idx % data.yBucketCount! ?? 0;
+  };
+
+  let yValueIdx = getYValueIndex(index);
+
+  const getData = (idx: number = index) => {
     if (meta.yOrdinalDisplay) {
       const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
       const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
@@ -173,15 +158,130 @@ const HeatmapHoverCell = ({
     }
 
     if (data.xLayout === HeatmapCellLayout.le) {
-      xBucketMax = xVals[index];
+      xBucketMax = xVals[idx];
       xBucketMin = xBucketMax - data.xBucketSize!;
     } else {
-      xBucketMin = xVals[index];
+      xBucketMin = xVals[idx];
       xBucketMax = xBucketMin + data.xBucketSize!;
     }
+  };
+
+  if (isSparse) {
+    ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, index));
+  } else {
+    getData();
   }
 
-  const count = countVals?.[index];
+  const { cellColor, colorPalette } = getHoverCellColor(data, index);
+
+  const getDisplayData = (fromIdx: number, toIdx: number) => {
+    let vals = [];
+    for (let idx = fromIdx; idx <= toIdx; idx++) {
+      if (!countVals?.[idx]) {
+        continue;
+      }
+
+      const color = getHoverCellColor(data, idx).cellColor;
+      count = getCountValue(idx);
+
+      if (isSparse) {
+        ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, idx));
+      } else {
+        yValueIdx = getYValueIndex(idx);
+        getData(idx);
+      }
+
+      const { label, value } = getContentLabels()[0];
+
+      vals.push({
+        label,
+        value,
+        color: color ?? '#FFF',
+        isActive: index === idx,
+      });
+    }
+
+    return vals;
+  };
+
+  const getContentLabels = (): LabelValue[] => {
+    const isMulti = mode === TooltipDisplayMode.Multi && !isPinned;
+
+    if (nonNumericOrdinalDisplay) {
+      return isMulti
+        ? [{ label: `Name ${nonNumericOrdinalDisplay}`, value: data.display!(count) }]
+        : [{ label: 'Name', value: nonNumericOrdinalDisplay }];
+    }
+
+    switch (data.yLayout) {
+      case HeatmapCellLayout.unknown:
+        return isMulti
+          ? [{ label: yDisp(yBucketMin), value: data.display!(count) }]
+          : [{ label: '', value: yDisp(yBucketMin) }];
+    }
+
+    return isMulti
+      ? [
+          {
+            label: `Bucket ${yDisp(yBucketMin)}` + '-' + `${yDisp(yBucketMax)}`,
+            value: data.display!(count),
+          },
+        ]
+      : [
+          {
+            label: 'Bucket',
+            value: `${yDisp(yBucketMin)}` + '-' + `${yDisp(yBucketMax)}`,
+          },
+        ];
+  };
+
+  const getCountValue = (idx: number) => {
+    return countVals?.[idx];
+  };
+
+  let count = getCountValue(index);
+
+  if (mode === TooltipDisplayMode.Single || isPinned) {
+    const fromToInt: LabelValue[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
+
+    contentLabelValue = [
+      {
+        label: getFieldDisplayName(countField, data.heatmap),
+        value: data.display!(count),
+        color: cellColor ?? '#FFF',
+        colorPlacement: ColorPlacement.trailing,
+        colorIndicator: ColorIndicator.value,
+      },
+      ...getContentLabels(),
+      ...fromToInt,
+    ];
+  }
+
+  if (mode === TooltipDisplayMode.Multi && !isPinned) {
+    let xVal = xField.values[index];
+    let fromIdx = index;
+    let toIdx = index;
+
+    while (xField.values[fromIdx - 1] === xVal) {
+      fromIdx--;
+    }
+
+    while (xField.values[toIdx + 1] === xVal) {
+      toIdx++;
+    }
+
+    const vals: LabelValue[] = getDisplayData(fromIdx, toIdx);
+    vals.forEach((val) => {
+      contentLabelValue.push({
+        label: val.label,
+        value: val.value,
+        color: val.color ?? '#FFF',
+        colorIndicator: ColorIndicator.value,
+        colorPlacement: ColorPlacement.trailing,
+        isActive: val.isActive,
+      });
+    });
+  }
 
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const links: Array<LinkModel<Field>> = [];
@@ -222,33 +322,13 @@ const HeatmapHoverCell = ({
 
   useEffect(
     () => {
-      if (showHistogram && xVals != null && countVals != null) {
+      if (showHistogram && xVals != null && countVals != null && mode === TooltipDisplayMode.Single) {
         renderHistogram(can, histCanWidth, histCanHeight, xVals, countVals, index, data.yBucketCount!);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [index]
   );
-
-  const { cellColor, colorPalette } = getHoverCellColor(data, index);
-
-  const getContentLabels = (): LabelValue[] => {
-    if (nonNumericOrdinalDisplay) {
-      return [{ label: 'Name', value: nonNumericOrdinalDisplay }];
-    }
-
-    switch (data.yLayout) {
-      case HeatmapCellLayout.unknown:
-        return [{ label: '', value: yDisp(yBucketMin) }];
-    }
-
-    return [
-      {
-        label: 'Bucket',
-        value: `${yDisp(yBucketMin)}` + '-' + `${yDisp(yBucketMax)}`,
-      },
-    ];
-  };
 
   const getHeaderLabel = (): LabelValue => {
     return {
@@ -258,23 +338,15 @@ const HeatmapHoverCell = ({
   };
 
   const getContentLabelValue = (): LabelValue[] => {
-    const fromToInt: LabelValue[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
-
-    return [
-      {
-        label: getFieldDisplayName(countField, data.heatmap),
-        value: data.display!(count),
-        color: cellColor ?? '#FFF',
-        colorPlacement: ColorPlacement.trailing,
-        colorIndicator: ColorIndicator.value,
-      },
-      ...getContentLabels(),
-      ...fromToInt,
-    ];
+    return contentLabelValue;
   };
 
   const getCustomContent = () => {
     let content: ReactElement[] = [];
+    if (mode !== TooltipDisplayMode.Single) {
+      return content;
+    }
+
     // Histogram
     if (showHistogram) {
       content.push(
