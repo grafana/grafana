@@ -66,9 +66,8 @@ Use [`t.Cleanup`](https://golang.org/pkg/testing/#T.Cleanup) to clean up resourc
 
 ### Mock
 
-Optionally, we use [`mock.Mock`](https://github.com/stretchr/testify#mock-package) package to write mocks. This is
-useful when you expect different behaviours of the same function.
-
+Optionally, we use [`mock.Mock`](https://github.com/stretchr/testify#mock-package) package to write mocks. 
+This is useful when you expect different behaviors of the same function.
 
 #### Tips
 
