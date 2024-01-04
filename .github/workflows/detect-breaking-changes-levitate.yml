@@ -312,7 +312,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 reviewers: [],
-                team_reviewers: ['grafana/plugins-platform-frontend']
+                team_reviewers: ['plugins-platform-frontend']
               });
 
         # Remove reviewers (no more breaking changes)
@@ -322,14 +322,14 @@ jobs:
           env:
             PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
           with:
-            github-token: ${{ secrets.GITHUB_TOKEN }}
+            github-token: ${{ steps.generate_token.outputs.token }}
             script: |
               await github.rest.pulls.removeRequestedReviewers({
                 pull_number: process.env.PR_NUMBER,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 reviewers: [],
-                team_reviewers: ['grafana/plugins-platform-frontend']
+                team_reviewers: ['plugins-platform-frontend']
               });
 
 
