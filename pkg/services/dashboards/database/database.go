@@ -986,25 +986,42 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 			results, err := d.findDashboards(derivedCtx, query)
 			if err != nil {
 				d.log.Info("Alternative search query failed", "error", err)
-			} else {
-				d.log.Info("Alternative search query", "time", time.Since(start), "results", len(res))
+				return
 			}
+			d.log.Info("Alternative search query", "time", time.Since(start), "results", len(results))
 
 			expected := <-resc
-			if len(results) != len(expected) {
-				d.log.Info("Alternative search query got different results", "expected", len(expected), "got", len(results))
+
+			expectedUIDs, resultUIDs, n, m := map[string]struct{}{}, map[string]struct{}{}, 0, 0
+			for _, hit := range expected {
+				expectedUIDs[hit.UID] = struct{}{}
+			}
+			for _, hit := range results {
+				resultUIDs[hit.UID] = struct{}{}
+				if _, ok := expectedUIDs[hit.UID]; !ok {
+					d.log.Info("Alternative search query mismatch", "unexpected", hit.Title, "uid", hit.UID)
+					n++
+				}
+			}
+			for _, hit := range expected {
+				if _, ok := resultUIDs[hit.UID]; !ok {
+					d.log.Info("Alternative search query mismatch", "missed", hit.Title, "uid", hit.UID)
+					m++
+				}
+			}
+			if n+m > 0 {
+				d.log.Info("Alternative search query got different results", "matched", (len(expected)+len(results)-n-m)/2, "unexpected", n, "missed", m)
 			}
 		}()
 	}
 
+	start := time.Now()
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		start := time.Now()
-		defer func() {
-			d.log.Info("Original search query", "time", time.Since(start), "results", len(res))
-		}()
 		return sess.SQL(sql, params...).Find(&res)
 	})
-
+	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) {
+		d.log.Info("Original search query", "time", time.Since(start), "results", len(res))
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1075,44 +1092,45 @@ UNION ALL
 SELECT org_id, 'folder' as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title {{ .Dialect.LikeStr }} {{ .Arg .Text }} AND is_folder
 {{ end }}
 
-SELECT DISTINCT
-	entity.org_id, entity.kind, entity.uid, entity.id, entity.title,
-	dashboard_tag.term as term, f1.uid as folder_uid, f1.title as folder_title FROM (
-	{{- template "text-search-legacy" . -}}
-) AS entity
-LEFT JOIN folder f1 ON (entity.parent_uid = f1.uid AND entity.org_id = f1.org_id)
-{{ if ne .UserID 0 }}   {{- /* If a user is not admin: need to filter by permissions */ -}}
-LEFT JOIN folder f2 ON (f1.parent_uid     = f2.uid AND f1.org_id     = f2.org_id)
-LEFT JOIN folder f3 ON (f2.parent_uid     = f3.uid AND f2.org_id     = f3.org_id)
-LEFT JOIN folder f4 ON (f3.parent_uid     = f4.uid AND f3.org_id     = f4.org_id)
-INNER JOIN permission p ON 
-p.role_id IN (
-	SELECT ur.role_id FROM user_role AS ur    WHERE ur.user_id = {{ .Arg .UserID }} AND (ur.org_id = {{ .Arg .OrgID }} OR ur.org_id = 0)
-	UNION
-	SELECT tr.role_id FROM team_role AS tr    WHERE tr.team_id IN (
-		{{- range $i, $el := .TeamIDs -}}
-		{{- if $i -}},{{- end -}}
-		{{- $.Arg $el -}}
-		{{- end -}}
-	) AND tr.org_id = {{ .Arg .OrgID }}
-	UNION
-	SELECT br.role_id FROM builtin_role AS br WHERE br.role IN ({{ .Arg .Role }}) AND (br.org_id = {{ .Arg .OrgID }} OR br.org_id = 0)
-) AND (
-	{{- /* This permission check relies on the optimised (indexed) split scope columns in the permission table */ -}}
-	(
-		p.kind = 'dashboards' AND
-		p.action = 'dashboards:read' AND
-		p.identifier = entity.uid
-	) OR (
-		p.kind = 'folders' AND
-		p.action = 'folders:read' AND
-		p.identifier IN (f4.uid, f3.uid, f2.uid, f1.uid, entity.uid)
+SELECT org_id, kind, uid, entity.id, title, dashboard_tag.term as term, folder_uid, folder_title FROM (
+	SELECT DISTINCT
+		entity.org_id, entity.kind, entity.uid, entity.id, entity.title, f1.uid as folder_uid, f1.title as folder_title FROM (
+		{{- template "text-search-legacy" . -}}
+	) AS entity
+	LEFT JOIN folder f1 ON (entity.parent_uid = f1.uid AND entity.org_id = f1.org_id)
+	{{ if ne .UserID 0 }}   {{- /* If a user is not admin: need to filter by permissions */ -}}
+	LEFT JOIN folder f2 ON (f1.parent_uid     = f2.uid AND f1.org_id     = f2.org_id)
+	LEFT JOIN folder f3 ON (f2.parent_uid     = f3.uid AND f2.org_id     = f3.org_id)
+	LEFT JOIN folder f4 ON (f3.parent_uid     = f4.uid AND f3.org_id     = f4.org_id)
+	INNER JOIN permission p ON 
+	p.role_id IN (
+		SELECT ur.role_id FROM user_role AS ur    WHERE ur.user_id = {{ .Arg .UserID }} AND (ur.org_id = {{ .Arg .OrgID }} OR ur.org_id = 0)
+		UNION
+		SELECT tr.role_id FROM team_role AS tr    WHERE tr.team_id IN (
+			{{- range $i, $el := .TeamIDs -}}
+			{{- if $i -}},{{- end -}}
+			{{- $.Arg $el -}}
+			{{- end -}}
+		) AND tr.org_id = {{ .Arg .OrgID }}
+		UNION
+		SELECT br.role_id FROM builtin_role AS br WHERE br.role IN ({{ .Arg .Role }}) AND (br.org_id = {{ .Arg .OrgID }} OR br.org_id = 0)
+	) AND (
+		{{- /* This permission check relies on the optimised (indexed) split scope columns in the permission table */ -}}
+		(
+			p.kind = 'dashboards' AND
+			p.action = 'dashboards:read' AND
+			(p.identifier = entity.uid OR p.identifier IN (f4.uid, f3.uid, f2.uid, f1.uid))
+		) OR (
+			p.kind = 'folders' AND
+			p.action = 'folders:read' AND
+			p.identifier IN (f4.uid, f3.uid, f2.uid, f1.uid, entity.uid)
+		)
 	)
-)
-{{ end }}
+	{{ end }}
+	ORDER BY entity.title ASC
+	LIMIT {{ .Arg .Limit }}
+) AS entity
 LEFT JOIN dashboard_tag ON dashboard_tag.dashboard_id = entity.id
-ORDER BY entity.title ASC
-LIMIT {{ .Arg .Limit }}
 `))
 
 func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
@@ -1166,19 +1184,12 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 
 	hits := []searchHit{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		start := time.Now()
-		defer func() {
-			d.log.Info("Modified search query", "time", time.Since(start), "results", len(hits))
-		}()
-		if err := sess.SQL(sql.String(), data.Params...).Find(&hits); err != nil {
-			return err
-		}
-		return nil
+		return sess.SQL(sql.String(), data.Params...).Find(&hits)
 	})
 
 	results := make([]dashboards.DashboardSearchProjection, len(hits))
 	for i, hit := range hits {
-		d.log.Debug("Search hit", "org_id", hit.OrgID, "kind", hit.Kind, "uid", hit.UID, "title", hit.Title, "folder_uid", hit.FolderUID, "folder", hit.FolderTitle, "term", hit.Term)
+		d.log.Debug("Alternative search hit", "org_id", hit.OrgID, "kind", hit.Kind, "uid", hit.UID, "title", hit.Title, "folder_uid", hit.FolderUID, "folder", hit.FolderTitle, "term", hit.Term)
 		results[i] = dashboards.DashboardSearchProjection{
 			ID:          hit.ID,
 			UID:         hit.UID,
