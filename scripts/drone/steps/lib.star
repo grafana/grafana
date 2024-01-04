@@ -356,6 +356,36 @@ def e2e_tests_artifacts():
         ],
     }
 
+def playwright_e2e_report_upload():
+    return {
+        "name": "playwright-e2e-report-upload",
+        "image": images["cloudsdk"],
+        "depends_on": [
+            "playwright-plugin-e2e",
+        ],
+        "failure": "ignore",
+        "when": {
+            "status": [
+                "success",
+                "failure",
+            ],
+        },
+        "environment": {
+            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_upload_artifacts_key),
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
+            "apt-get update",
+            "apt-get install -yq zip",
+            "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
+            "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
+            "gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report",
+            "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
+            "echo \"\\e]8;;$E2E_PLAYWRIGHT_REPORT_URL\\e\\Click here to view the Playwright report\\e]8;;\\e\\\"",
+            'echo "E2E Playwright report uploaded to: $${E2E_PLAYWRIGHT_REPORT}"',
+        ],
+    }
+
 def upload_cdn_step(ver_mode, trigger = None):
     """Uploads CDN assets using the Grafana build tool.
 
@@ -794,7 +824,7 @@ def playwright_e2e_tests_step():
         "depends_on": [
             "grafana-server",
         ],
-        "commands": ["yarn e2e:plugin"],
+        "commands": ["yarn e2e:playwright"],
     }
 
 def build_docs_website_step():

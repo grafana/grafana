@@ -641,7 +641,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - yarn e2e:plugin
+  - yarn e2e:playwright
   depends_on:
   - grafana-server
   environment:
@@ -650,6 +650,29 @@ steps:
   failure: ignore
   image: mcr.microsoft.com/playwright:v1.40.0-jammy
   name: playwright-plugin-e2e
+- commands:
+  - apt-get update
+  - apt-get install -yq zip
+  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
+  - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
+  - echo "\e]8;;$E2E_PLAYWRIGHT_REPORT_URL\e\Click here to view the Playwright report\e]8;;\e\"
+  - 'echo "E2E Playwright report uploaded to: $${E2E_PLAYWRIGHT_REPORT}"'
+  depends_on:
+  - playwright-plugin-e2e
+  environment:
+    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
+      from_secret: gcp_upload_artifacts_key
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: google/cloud-sdk:431.0.0
+  name: playwright-e2e-report-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -1903,7 +1926,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - yarn e2e:plugin
+  - yarn e2e:playwright
   depends_on:
   - grafana-server
   environment:
@@ -1912,6 +1935,29 @@ steps:
   failure: ignore
   image: mcr.microsoft.com/playwright:v1.40.0-jammy
   name: playwright-plugin-e2e
+- commands:
+  - apt-get update
+  - apt-get install -yq zip
+  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
+  - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
+  - echo "\e]8;;$E2E_PLAYWRIGHT_REPORT_URL\e\Click here to view the Playwright report\e]8;;\e\"
+  - 'echo "E2E Playwright report uploaded to: $${E2E_PLAYWRIGHT_REPORT}"'
+  depends_on:
+  - playwright-plugin-e2e
+  environment:
+    GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
+      from_secret: gcp_upload_artifacts_key
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: google/cloud-sdk:431.0.0
+  name: playwright-e2e-report-upload
+  when:
+    status:
+    - success
+    - failure
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -4649,6 +4695,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d15eb3abe4231e54bb6e80f6e17dda71405bb63b83145601c2a3f024dd5fef6a
+hmac: 822a212d0b3ed35d15dd3b1e5ffce02dc83bdd0edbdd417ae33cc8fc9392d7a0
 
 ...
