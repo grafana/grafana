@@ -253,12 +253,12 @@ export const fieldMap: Record<string, FieldData> = {
   usePkce: {
     label: 'Use Pkce',
     description: 'If enabled, it will automatically sync the Grafana server administrator role',
-    type: 'switch',
+    type: 'checkbox',
   },
   useRefreshToken: {
     label: 'Use Refresh Token',
     description: 'If enabled, it will automatically sync the Grafana server administrator role',
-    type: 'switch',
+    type: 'checkbox',
   },
   configureTLS: {
     label: 'Configure TLS',

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
-import { Field, Input, InputControl, SecretInput, Select, Switch } from '@grafana/ui';
+import { Checkbox, Field, Input, InputControl, SecretInput, Select, Switch } from '@grafana/ui';
 
 import { fieldMap } from './fields';
 import { SSOProviderDTO, SSOSettingsField } from './types';
@@ -131,7 +131,14 @@ export const FieldRenderer = ({
           <Switch {...register(name)} id={name} />
         </Field>
       );
+    case 'checkbox':
+      return (
+        <Field {...fieldProps}>
+          <Checkbox {...register(name)} id={name} />
+        </Field>
+      );
     default:
-      throw new Error(`Unknown field type: ${fieldData.type}`);
+      console.error(`Unknown field type: ${fieldData.type}`);
+      return null;
   }
 };
