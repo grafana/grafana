@@ -641,6 +641,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
               datasourceType: datasourceInstance.type,
               visualisationType:
                 exploreState?.panelsState?.logs?.visualisationType ?? store.get(visualisationTypeKey) ?? 'N/A',
+              length: data.logsResult.rows.length,
             });
           }
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
