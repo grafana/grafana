@@ -1105,6 +1105,7 @@ SELECT org_id, kind, uid, entity.id, title, dashboard_tag.term as term, folder_u
 	INNER JOIN permission p ON 
 	p.role_id IN (
 		SELECT ur.role_id FROM user_role AS ur    WHERE ur.user_id = {{ .Arg .UserID }} AND (ur.org_id = {{ .Arg .OrgID }} OR ur.org_id = 0)
+		{{ if .TeamIDs }}
 		UNION
 		SELECT tr.role_id FROM team_role AS tr    WHERE tr.team_id IN (
 			{{- range $i, $el := .TeamIDs -}}
@@ -1112,6 +1113,7 @@ SELECT org_id, kind, uid, entity.id, title, dashboard_tag.term as term, folder_u
 			{{- $.Arg $el -}}
 			{{- end -}}
 		) AND tr.org_id = {{ .Arg .OrgID }}
+		{{ end }}
 		UNION
 		SELECT br.role_id FROM builtin_role AS br WHERE br.role IN ({{ .Arg .Role }}) AND (br.org_id = {{ .Arg .OrgID }} OR br.org_id = 0)
 	) AND (
