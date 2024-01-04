@@ -63,7 +63,7 @@ function getValsWithNew(frame: DataFrame, newRange: TimeRange2 | null) {
       } else if (name === 'isRegion') {
         d.push(isRegion);
       } else if (name === 'color') {
-        d.push('rgba(0, 211, 255, 1)');
+        d.push(DEFAULT_ANNOTATION_COLOR);
       } else {
         d.push(null);
       }
@@ -164,7 +164,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
         let isVisible = true;
 
         if (vals.isRegion?.[i]) {
-          let right = plot.valToPos(vals.timeEnd[i], 'x');
+          let right = plot.valToPos(vals.timeEnd?.[i], 'x');
 
           isVisible = left < plot.rect.width && right > 0;
 
