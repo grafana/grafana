@@ -1292,5 +1292,12 @@ var (
 			AllowSelfServe: false,
 			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:        "enableMultiLogs",
+			Description: "Enable multi-line logs",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaGrowthEnvs,
+			Created:     time.Date(2024, time.January, 4, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )
