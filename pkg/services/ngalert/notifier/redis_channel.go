@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	alertingCluster "github.com/grafana/alerting/cluster"
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 )
 
 type RedisChannel struct {
@@ -16,7 +16,7 @@ type RedisChannel struct {
 	msgc    chan []byte
 }
 
-func newRedisChannel(p *redisPeer, key, channel, msgType string) cluster.ClusterChannel {
+func newRedisChannel(p *redisPeer, key, channel, msgType string) alertingCluster.ClusterChannel {
 	redisChannel := &RedisChannel{
 		p:       p,
 		key:     key,
@@ -50,7 +50,7 @@ func (c *RedisChannel) handleMessages() {
 }
 
 func (c *RedisChannel) Broadcast(b []byte) {
-	b, err := proto.Marshal(&clusterpb.Part{Key: c.key, Data: b})
+	b, err := proto.Marshal(&alertingClusterPB.Part{Key: c.key, Data: b})
 	if err != nil {
 		c.p.logger.Error("Error marshalling broadcast into proto", "err", err, "channel", c.channel)
 		return

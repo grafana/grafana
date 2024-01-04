@@ -20,15 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
-var (
-	truePtr  = boolPtr(true)
-	falsePtr = boolPtr(false)
-)
-
 func TestGetFeatureToggles(t *testing.T) {
 	readPermissions := []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementRead}}
 
@@ -118,19 +109,19 @@ func TestGetFeatureToggles(t *testing.T) {
 			}, {
 				Name:           "toggle4",
 				Stage:          featuremgmt.FeatureStagePublicPreview,
-				AllowSelfServe: truePtr,
+				AllowSelfServe: true,
 			}, {
 				Name:           "toggle5",
 				Stage:          featuremgmt.FeatureStageGeneralAvailability,
-				AllowSelfServe: truePtr,
+				AllowSelfServe: true,
 			}, {
 				Name:           "toggle6",
 				Stage:          featuremgmt.FeatureStageDeprecated,
-				AllowSelfServe: truePtr,
+				AllowSelfServe: true,
 			}, {
 				Name:           "toggle7",
 				Stage:          featuremgmt.FeatureStageGeneralAvailability,
-				AllowSelfServe: falsePtr,
+				AllowSelfServe: false,
 			},
 		}
 
@@ -324,12 +315,12 @@ func TestSetFeatureToggles(t *testing.T) {
 				Name:           "toggle4",
 				Enabled:        false,
 				Stage:          featuremgmt.FeatureStageGeneralAvailability,
-				AllowSelfServe: truePtr,
+				AllowSelfServe: true,
 			}, {
 				Name:           "toggle5",
 				Enabled:        false,
 				Stage:          featuremgmt.FeatureStageDeprecated,
-				AllowSelfServe: truePtr,
+				AllowSelfServe: true,
 			},
 		}
 
