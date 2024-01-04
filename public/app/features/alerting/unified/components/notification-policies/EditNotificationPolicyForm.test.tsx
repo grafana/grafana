@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 import React from 'react';
-import { byRole } from 'testing-library-selector';
+import { byRole, byTestId } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
 
@@ -17,7 +17,7 @@ import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 
 const ui = {
   error: byRole('alert'),
-  overrideTimingsCheckbox: byRole('checkbox', { name: /Override general timings/ }),
+  overrideTimingsCheckbox: byTestId('override-timings-toggle'),
   submitBtn: byRole('button', { name: /Update default policy/ }),
   groupWaitInput: byRole('textbox', { name: /Group wait/ }),
   groupIntervalInput: byRole('textbox', { name: /Group interval/ }),

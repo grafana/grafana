@@ -241,7 +241,7 @@ export const AmRoutesExpandedForm = ({
           <Field label="Override general timings">
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
-                <Switch id="override-timings-toggle" {...field} disabled={isReadOnly} onChange={onChange} />
+                <Switch data-testid="override-timings-toggle" {...field} disabled={isReadOnly} onChange={onChange} />
               )}
               control={control}
               name="overrideTimings"
