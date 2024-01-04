@@ -62,7 +62,6 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
         const annotations = getAnnotationsByPanelId(result.annotations, panelId);
         const alertState = result.alertStates.find((res) => Boolean(panelId) && res.panelId === panelId);
         const thresholdsByRefId = panelId ? result.thresholdsByPanelId?.[panelId] : undefined;
-
         return { annotations: dedupAnnotations(annotations), alertState, thresholdsByRefId };
       })
     );
@@ -84,6 +83,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
         // choosing reduce to minimize re-renders
         acc.annotations = acc.annotations.concat(value.annotations);
         acc.alertStates = acc.alertStates.concat(value.alertStates);
+        acc.thresholdsByPanelId = value.thresholdsByPanelId ?? acc.thresholdsByPanelId;
         return acc;
       }),
       finalize(() => {
