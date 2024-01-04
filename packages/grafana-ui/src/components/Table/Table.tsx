@@ -150,6 +150,10 @@ export const Table = memo((props: Props) => {
       // row here is just always 0 because here we don't use real data but just a dummy array filled with 0.
       // See memoizedData variable above.
       options.getRowId = (row: Record<string, unknown>, relativeIndex: number) => uniqueField.values[relativeIndex];
+
+      // If we have unique field we assume we can count on it as being globally unique and we don't need to reset when
+      // data changes.
+      options.autoResetExpanded = false;
     }
     return options;
   }, [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer, uniqueField]);
