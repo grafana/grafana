@@ -46,9 +46,9 @@ export function prepScatter(
   options: Options,
   getData: () => DataFrame[],
   theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
+  ttip: null | ScatterHoverCallback,
   onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
+  isToolTipOpen: null | MutableRefObject<boolean>
 ): ScatterPanelInfo {
   let series: ScatterSeries[];
   let builder: UPlotConfigBuilder;
@@ -298,9 +298,9 @@ const prepConfig = (
   getData: () => DataFrame[],
   scatterSeries: ScatterSeries[],
   theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
+  ttip: null | ScatterHoverCallback,
   onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
+  isToolTipOpen: null | MutableRefObject<boolean>
 ) => {
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -521,8 +521,10 @@ const prepConfig = (
   });
 
   const clearPopupIfOpened = () => {
-    if (isToolTipOpen.current) {
-      ttip(undefined);
+    if (isToolTipOpen?.current) {
+      if (ttip) {
+        ttip(undefined);
+      }
       if (onUPlotClick) {
         onUPlotClick();
       }
@@ -557,26 +559,28 @@ const prepConfig = (
     rect = r;
   });
 
-  builder.addHook('setLegend', (u) => {
-    if (u.cursor.idxs != null) {
-      for (let i = 0; i < u.cursor.idxs.length; i++) {
-        const sel = u.cursor.idxs[i];
-        if (sel != null && !isToolTipOpen.current) {
-          ttip({
-            scatterIndex: i - 1,
-            xIndex: sel,
-            pageX: rect.left + u.cursor.left!,
-            pageY: rect.top + u.cursor.top!,
-          });
-          return; // only show the first one
+  if (ttip) {
+    builder.addHook('setLegend', (u) => {
+      if (u.cursor.idxs != null) {
+        for (let i = 0; i < u.cursor.idxs.length; i++) {
+          const sel = u.cursor.idxs[i];
+          if (sel != null && !isToolTipOpen?.current) {
+            ttip({
+              scatterIndex: i - 1,
+              xIndex: sel,
+              pageX: rect.left + u.cursor.left!,
+              pageY: rect.top + u.cursor.top!,
+            });
+            return; // only show the first one
+          }
         }
       }
-    }
 
-    if (!isToolTipOpen.current) {
-      ttip(undefined);
-    }
-  });
+      if (!isToolTipOpen?.current) {
+        ttip(undefined);
+      }
+    });
+  }
 
   builder.addHook('drawClear', (u) => {
     clearPopupIfOpened();

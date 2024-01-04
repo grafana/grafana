@@ -44,6 +44,7 @@ export const XYChartPanel = (props: Props) => {
   const [facets, setFacets] = useState<FacetedData | undefined>();
   const [hover, setHover] = useState<ScatterHoverEvent | undefined>();
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   const isToolTipOpen = useRef<boolean>(false);
   const oldOptions = usePrevious(props.options);
@@ -72,9 +73,9 @@ export const XYChartPanel = (props: Props) => {
       props.options,
       getData,
       config.theme2,
-      scatterHoverCallback,
-      onUPlotClick,
-      isToolTipOpen
+      showNewVizTooltips ? null : scatterHoverCallback,
+      showNewVizTooltips ? null : onUPlotClick,
+      showNewVizTooltips ? null : isToolTipOpen
     );
 
     if (info.error) {
@@ -85,7 +86,7 @@ export const XYChartPanel = (props: Props) => {
       setFacets(() => prepData(info, props.data.series));
       setError(undefined);
     }
-  }, [props.data.series, props.options]);
+  }, [props.data.series, props.options, showNewVizTooltips]);
 
   const initFacets = useCallback(() => {
     setFacets(() => prepData({ error, series }, props.data.series));
