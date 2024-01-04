@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
+import { DashboardCursorSync, Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { TooltipPlugin, TooltipPlugin2, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
@@ -229,6 +229,7 @@ export const CandlestickPanel = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
 
   return (
     <TimeSeries
@@ -257,7 +258,7 @@ export const CandlestickPanel = ({
 
         return (
           <>
-            {config.featureToggles.newVizTooltips ? (
+            {showNewVizTooltips ? (
               <TooltipPlugin2
                 config={uplotConfig}
                 hoverMode={TooltipHoverMode.xAll}
@@ -293,7 +294,7 @@ export const CandlestickPanel = ({
               <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
-            {!config.featureToggles.newVizTooltips ? (
+            {!showNewVizTooltips ? (
               enableAnnotationCreation ? (
                 <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={uplotConfig}>
                   {({ startAnnotating }) => {
