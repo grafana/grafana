@@ -4,19 +4,19 @@ import uPlot from 'uplot';
 
 import {
   DataFrameType,
-  formattedValueToString,
-  getFieldDisplayName,
-  GrafanaTheme2,
-  getLinksSupplier,
-  InterpolateFunction,
-  ScopedVars,
-  PanelData,
-  LinkModel,
   Field,
   FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  getLinksSupplier,
+  GrafanaTheme2,
+  InterpolateFunction,
+  LinkModel,
+  PanelData,
+  ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useStyles2, } from '@grafana/ui';
+import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
@@ -28,7 +28,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
-import { getSparseCellMinMax, getFieldFromData, getHoverCellColor, formatMilliseconds } from './tooltip/utils';
+import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './tooltip/utils';
 
 interface Props {
   mode: TooltipDisplayMode;

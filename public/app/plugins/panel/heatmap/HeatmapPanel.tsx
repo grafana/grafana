@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
+  DashboardCursorSync,
   DataFrame,
   DataFrameType,
   Field,
@@ -157,6 +158,7 @@ export const HeatmapPanel = ({
   // ugh
   const dataRef = useRef(info);
   dataRef.current = info;
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
 
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
@@ -165,8 +167,8 @@ export const HeatmapPanel = ({
       dataRef,
       theme,
       eventBus,
-      onhover: onhover,
-      onclick: options.tooltip.mode !== TooltipDisplayMode.None ? onclick : null,
+      onhover: !showNewVizTooltips ? onhover : null,
+      onclick: !showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None ? onclick : null,
       isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
@@ -224,16 +226,14 @@ export const HeatmapPanel = ({
     );
   }
 
-  const newVizTooltips = config.featureToggles.newVizTooltips ?? false;
-
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
-            {!newVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
-            {newVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None && (
+            {!showNewVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
+            {showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={builder}
                 hoverMode={TooltipHoverMode.xyOne}
@@ -269,7 +269,7 @@ export const HeatmapPanel = ({
           </UPlotChart>
         )}
       </VizLayout>
-      {!newVizTooltips && (
+      {!showNewVizTooltips && (
         <Portal>
           {hover && options.tooltip.mode !== TooltipDisplayMode.None && (
             <VizTooltipContainer
