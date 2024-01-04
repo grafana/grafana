@@ -176,7 +176,7 @@ func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]str
 		return []string{}, err
 	}
 
-	if err = walk(path, true, true,
+	if err = walk(path, true, true, followDistFolder,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
@@ -192,10 +192,6 @@ func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]str
 			}
 
 			if fi.Name() == "node_modules" {
-				return util.ErrWalkSkipDir
-			}
-
-			if fi.Name() == "dist" && !followDistFolder {
 				return util.ErrWalkSkipDir
 			}
 
