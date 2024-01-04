@@ -311,7 +311,7 @@ func TestFinder_Find(t *testing.T) {
 func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, os.ErrNotExist)
 		}
 		t.Cleanup(func() {
@@ -326,7 +326,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 
 	t.Run("When scanning a folder that lacks permission shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, os.ErrPermission)
 		}
 		t.Cleanup(func() {
@@ -341,7 +341,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 
 	t.Run("When scanning a folder that returns a non-handled error should return that error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, errors.New("random error"))
 		}
 		t.Cleanup(func() {
@@ -354,26 +354,6 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		require.Empty(t, paths)
 	})
 
-	t.Run("should forward if the dist folder should be evaluated", func(t *testing.T) {
-		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
-			if followDistFolder {
-				return walkFn(path, nil, errors.New("unexpected followDistFolder"))
-			}
-			return walkFn(path, nil, filepath.SkipDir)
-		}
-		t.Cleanup(func() {
-			walk = origWalk
-		})
-
-		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
-		paths, err := finder.getAbsPluginJSONPaths("test", false)
-		require.ErrorIs(t, err, filepath.SkipDir)
-		require.Empty(t, paths)
-	})
-}
-
-func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
 	t.Run("When a dist folder exists as a direct child of the plugins path, it will always be resolved", func(t *testing.T) {
 		dir, err := filepath.Abs("../../testdata/pluginRootWithDist")
 		require.NoError(t, err)

@@ -176,7 +176,7 @@ func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]str
 		return []string{}, err
 	}
 
-	if err = walk(path, true, true, followDistFolder,
+	if err = walk(path, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
