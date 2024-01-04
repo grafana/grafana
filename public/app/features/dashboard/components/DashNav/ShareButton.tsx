@@ -3,6 +3,7 @@ import React, { useContext, useEffect } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { ModalsContext, Button } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
@@ -38,9 +39,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
         });
       }}
     >
-      {/*TODO: this key is being use by scenes tooltip, check with them if we can change it to Share instead of Share dashboard*/}
-      {/*<Trans i18nKey="dashboard.toolbar.share">Share</Trans>*/}
-      Share
+      <Trans i18nKey="dashboard.toolbar.share-button">Share</Trans>
     </Button>
   );
 };
