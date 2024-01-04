@@ -59,7 +59,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
 
   const CardActions = useMemo(() => (isMobile ? Card.Actions : Card.SecondaryActions), [isMobile]);
   const translatedPauseSharingText = t(
-    'public-dashboard-list-table.public-dashboard.pause-sharing-text',
+    'public-dashboard-list.toggle.pause-sharing-toggle-text',
     'Pause sharing'
   );
 
@@ -68,20 +68,20 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
       <Card.Heading className={styles.heading}>
         {!isOrphaned ? (
           <span>
-            <Trans i18nKey="public-dashboard-list-table.public-dashboard.not-orphaned-title">
+            <Trans i18nKey="public-dashboard-list.dashboard-title.not-orphaned-title">
               {{ title: pd.title }}
             </Trans>
           </span>
         ) : (
           <Tooltip
             content={t(
-              'public-dashboard-list-table.public-dashboard.orphaned-tooltip',
+              'public-dashboard-list.dashboard-title.orphaned-tooltip',
               'The linked dashboard has already been deleted'
             )}
             placement="top"
           >
             <div className={styles.orphanedTitle}>
-              <Trans i18nKey="public-dashboard-list-table.public-dashboard.orphaned-title">
+              <Trans i18nKey="public-dashboard-list.dashboard-title.orphaned-title">
                 <span>Orphaned public dashboard</span>
               </Trans>
               <Icon name="info-circle" />
@@ -114,7 +114,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
           color={theme.colors.warning.text}
           href={generatePublicDashboardUrl(pd.accessToken)}
           key="public-dashboard-url"
-          tooltip={t('public-dashboard-list-table.public-dashboard.view-tooltip', 'View public dashboard')}
+          tooltip={t('public-dashboard-list.button.view-button-tooltip', 'View public dashboard')}
           data-testid={selectors.ListItem.linkButton}
         />
         <LinkButton
@@ -125,7 +125,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
           color={theme.colors.warning.text}
           href={generatePublicDashboardConfigUrl(pd.dashboardUid, pd.slug)}
           key="public-dashboard-config-url"
-          tooltip={t('public-dashboard-list-table.public-dashboard.config-tooltip', 'Configure public dashboard')}
+          tooltip={t('public-dashboard-list.button.config-button-tooltip', 'Configure public dashboard')}
           data-testid={selectors.ListItem.configButton}
         />
         {hasWritePermissions && (
@@ -134,7 +134,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
             icon="trash-alt"
             variant="secondary"
             publicDashboard={pd}
-            tooltip={t('public-dashboard-list-table.public-dashboard.revoke-tooltip', 'Revoke public dashboard URL')}
+            tooltip={t('public-dashboard-list.button.revoke-button-tooltip', 'Revoke public dashboard URL')}
             loader={<Spinner />}
             data-testid={selectors.ListItem.trashcanButton}
           />

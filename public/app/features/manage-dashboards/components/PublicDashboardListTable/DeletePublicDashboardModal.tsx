@@ -12,11 +12,11 @@ const Body = ({ title }: { title?: string }) => {
     <p className={styles.description}>
       {title
         ? t(
-            'delete-public-dashboard-modal.public-dashboard.ask-for-revoke-nonorphaned',
+            'public-dashboard.delete-modal.revoke-nonorphaned-body-text',
             'Are you sure you want to revoke this URL? The dashboard will no longer be public.'
           )
         : t(
-            'delete-public-dashboard-modal.public-dashboard.ask-for-revoke-orphaned',
+            'public-dashboard.delete-modal.revoke-orphaned-body-text',
             'Orphaned public dashboard will no longer be public.'
           )}
     </p>
@@ -33,7 +33,7 @@ export const DeletePublicDashboardModal = ({
   onDismiss: () => void;
 }) => {
   const translatedRevocationModalText = t(
-    'delete-public-dashboard-modal.public-dashboard.confirm-revocation-text',
+    'public-dashboard.delete-modal.revoke-title',
     'Revoke public URL'
   );
   return (

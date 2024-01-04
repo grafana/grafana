@@ -20,21 +20,21 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
   return (
     <Modal className={styles.modal} isOpen title="Revoke access" onDismiss={hideModal}>
       <p className={styles.description}>
-        <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-modal-desc-line1">
+        <Trans i18nKey="public-dashboard-users-access-list.delete-user-modal.revoke-user-access-modal-desc-line1">
           Are you sure you want to revoke access for {{ email: user.email }}?
         </Trans>
       </p>
       <p className={styles.description}>
-        <Trans i18nKey="delete-user-modal-button.public-dashboard.revoke-user-access-modal-desc-line2" shouldUnescape>
+        <Trans i18nKey="public-dashboard-users-access-list.delete-user-modal.revoke-user-access-modal-desc-line2" shouldUnescape>
           This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
         </Trans>
       </p>
       <Modal.ButtonRow>
         <Button type="button" variant="secondary" onClick={hideModal} fill="outline">
-          <Trans i18nKey="delete-user-modal-button.public-dashboard.delete-user-cancel-button">Cancel</Trans>
+          <Trans i18nKey="public-dashboard-users-access-list.delete-user-modal.delete-user-cancel-button">Cancel</Trans>
         </Button>
         <Button type="button" variant="destructive" onClick={onRevokeAccessClick}>
-          <Trans i18nKey="delete-user-modal-button.public-dashboard.delete-user-revoke-access-button">
+          <Trans i18nKey="public-dashboard-users-access-list.delete-user-modal.delete-user-revoke-access-button">
             Revoke access
           </Trans>
         </Button>
@@ -44,7 +44,7 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
 };
 
 export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => {
-  const translatedDeleteUserText = t('delete-user-modal-button.public-dashboard.delete-user-text', 'Delete user');
+  const translatedDeleteUserText = t('public-dashboard-users-access-list.delete-user-modal.delete-user-button-text', 'Delete user');
   return (
     <ModalsController>
       {({ showModal, hideModal }) => (

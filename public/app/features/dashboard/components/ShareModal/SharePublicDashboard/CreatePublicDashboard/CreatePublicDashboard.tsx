@@ -56,10 +56,10 @@ export const CreatePublicDashboardBase = ({
     <div className={styles.container}>
       <div>
         <p className={styles.title}>
-          <Trans i18nKey="share-modal.public-dashboard.welcome-title">Welcome to public dashboards!</Trans>
+          <Trans i18nKey="public-dashboard.create-page.welcome-title">Welcome to public dashboards!</Trans>
         </p>
         <p className={styles.description}>
-          <Trans i18nKey="share-modal.public-dashboard.unsupported-features-description">
+          <Trans i18nKey="public-dashboard.create-page.unsupported-features-desc">
             Currently, we don’t support template variables or frontend data sources
           </Trans>
         </p>
@@ -87,7 +87,7 @@ export const CreatePublicDashboardBase = ({
             </div>
             <div className={styles.buttonContainer}>
               <Button type="submit" disabled={disableInputs || !isValid} data-testid={selectors.CreateButton}>
-                <Trans i18nKey="share-modal.public-dashboard.generate-public-url-button">Generate public URL</Trans>
+                <Trans i18nKey="public-dashboard.create-page.generate-public-url-button">Generate public URL</Trans>
                 {isLoading && <Spinner className={styles.loadingSpinner} />}
               </Button>
             </div>

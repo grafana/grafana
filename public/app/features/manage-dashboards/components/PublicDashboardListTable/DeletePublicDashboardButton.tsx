@@ -42,7 +42,7 @@ export const DeletePublicDashboardButton = ({
     <ModalsController>
       {({ showModal, hideModal }) => {
         const translatedRevocationButtonText = t(
-          'delete-public-dashboard-button.public-dashboard.revoke-button-text',
+          'public-dashboard-list.button.revoke-button-text',
           'Revoke public URL'
         );
         return (

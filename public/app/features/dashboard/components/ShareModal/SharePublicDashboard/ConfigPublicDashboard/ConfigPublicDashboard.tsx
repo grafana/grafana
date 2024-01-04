@@ -127,7 +127,7 @@ export function ConfigPublicDashboardBase({
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
 
       <Field
-        label={t('config-public-dashboard.public-dashboard.dashboard-url-field-label', 'Dashboard URL')}
+        label={t('public-dashboard.config.dashboard-url-field-label', 'Dashboard URL')}
         className={styles.fieldSpace}
       >
         <Input
@@ -143,7 +143,7 @@ export function ConfigPublicDashboardBase({
               getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
               onClipboardCopy={onCopyURL}
             >
-              <Trans i18nKey="config-public-dashboard.public-dashboard.copy-button">Copy</Trans>
+              <Trans i18nKey="public-dashboard.config.copy-button">Copy</Trans>
             </ClipboardButton>
           }
         />
@@ -167,7 +167,7 @@ export function ConfigPublicDashboardBase({
               margin-bottom: 0;
             `}
           >
-            <Trans i18nKey="config-public-dashboard.public-dashboard.pause-sharing-dashboard-label">
+            <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">
               Pause sharing dashboard
             </Trans>
           </Label>
@@ -176,7 +176,7 @@ export function ConfigPublicDashboardBase({
 
       <Field className={styles.fieldSpace}>
         <SettingsBar
-          title={t('config-public-dashboard.public-dashboard.settings-title', 'Settings')}
+          title={t('public-dashboard.config.settings-title', 'Settings')}
           headerElement={({ className }) => (
             <SettingsSummary
               className={className}
@@ -199,7 +199,7 @@ export function ConfigPublicDashboardBase({
       >
         <HorizontalGroup justify="flex-end">
           <Button
-            title={t('config-public-dashboard.public-dashboard.revoke-public-URL-button-title', 'Revoke public URL')}
+            title={t('public-dashboard.config.revoke-public-URL-button-title', 'Revoke public URL')}
             onClick={onRevoke}
             type="button"
             disabled={disableInputs}
@@ -207,7 +207,7 @@ export function ConfigPublicDashboardBase({
             variant="destructive"
             fill="outline"
           >
-            <Trans i18nKey="config-public-dashboard.public-dashboard.revoke-public-URL-button">Revoke public URL</Trans>
+            <Trans i18nKey="public-dashboard.config.revoke-public-URL-button">Revoke public URL</Trans>
           </Button>
         </HorizontalGroup>
       </Layout>

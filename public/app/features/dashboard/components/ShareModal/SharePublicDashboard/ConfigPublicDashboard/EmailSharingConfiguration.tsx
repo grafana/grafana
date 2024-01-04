@@ -74,25 +74,25 @@ const EmailList = ({
                   type="button"
                   variant="destructive"
                   fill="text"
-                  title={t('email-sharing-configuration.public-dashboard.revoke-button-title', 'Revoke')}
+                  title={t('public-dashboard.email-sharing.revoke-button-title', 'Revoke')}
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                   data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
-                  <Trans i18nKey="email-sharing-configuration.public-dashboard.revoke-button">Revoke</Trans>
+                  <Trans i18nKey="public-dashboard.email-sharing.revoke-button">Revoke</Trans>
                 </Button>
                 <Button
                   type="button"
                   variant="primary"
                   fill="text"
-                  title={t('email-sharing-configuration.public-dashboard.resend-button-title', 'Resend')}
+                  title={t('public-dashboard.email-sharing.resend-button-title', 'Resend')}
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onReshare(recipient.uid)}
                   data-testid={`${selectors.ReshareLink}-${idx}`}
                 >
-                  <Trans i18nKey="email-sharing-configuration.public-dashboard.resend-button">Resend</Trans>
+                  <Trans i18nKey="public-dashboard.email-sharing.resend-button">Resend</Trans>
                 </Button>
               </ButtonGroup>
             </td>
@@ -153,7 +153,7 @@ export const EmailSharingConfiguration = () => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <FieldSet disabled={!hasWritePermissions} data-testid={selectors.Container} className={styles.container}>
         <Field
-          label={t('email-sharing-configuration.public-dashboard.can-view-dashboard-label', 'Can view dashboard')}
+          label={t('public-dashboard.config.can-view-dashboard-radio-button-label', 'Can view dashboard')}
           className={styles.field}
         >
           <InputControl
@@ -163,11 +163,11 @@ export const EmailSharingConfiguration = () => {
               const { ref, ...rest } = field;
               const options: Array<SelectableValue<PublicDashboardShareType>> = [
                 {
-                  label: t('email-sharing-configuration.public-dashboard.public-share-type-label', 'Anyone with a link'),
+                  label: t('public-dashboard.config.public-share-type-option-label', 'Anyone with a link'),
                   value: PublicDashboardShareType.PUBLIC,
                 },
                 {
-                  label: t('email-sharing-configuration.public-dashboard.email-share-type-label', 'Only specified people'),
+                  label: t('public-dashboard.config.email-share-type-option-label', 'Only specified people'),
                   value: PublicDashboardShareType.EMAIL,
                 },
               ];
@@ -191,8 +191,8 @@ export const EmailSharingConfiguration = () => {
         {watch('shareType') === PublicDashboardShareType.EMAIL && (
           <>
             <Field
-              label={t('email-sharing-configuration.public-dashboard.invite-label', 'Invite')}
-              description={t('email-sharing-configuration.public-dashboard.invite-desc', 'Invite people by email')}
+              label={t('public-dashboard.email-sharing.invite-field-label', 'Invite')}
+              description={t('public-dashboard.email-sharing.invite-field-desc', 'Invite people by email')}
               error={errors.email?.message}
               invalid={!!errors.email?.message || undefined}
               className={styles.field}
@@ -203,10 +203,10 @@ export const EmailSharingConfiguration = () => {
                   placeholder="email"
                   autoCapitalize="none"
                   {...register('email', {
-                    required: t('email-sharing-configuration.public-dashboard.input-required-email-text', 'Email is required'),
+                    required: t('share-modal.public-dashboard-email-sharing.input-required-email-text', 'Email is required'),
                     pattern: {
                       value: validEmailRegex,
-                      message: t('email-sharing-configuration.public-dashboard.input-invalid-email-text', 'Invalid email'),
+                      message: t('share-modal.public-dashboard-email-sharing.input-invalid-email-text', 'Invalid email'),
                     },
                   })}
                   data-testid={selectors.EmailSharingInput}
@@ -217,7 +217,7 @@ export const EmailSharingConfiguration = () => {
                   disabled={isAddEmailLoading}
                   data-testid={selectors.EmailSharingInviteButton}
                 >
-                  <Trans i18nKey="email-sharing-configuration.public-dashboard.invite-button">Invite</Trans>
+                  <Trans i18nKey="share-modal.public-dashboard-email-sharing.invite-button">Invite</Trans>
                   {isAddEmailLoading && <Spinner />}
                 </Button>
               </div>

@@ -10,14 +10,14 @@ export const NoUpsertPermissionsAlert = ({ mode }: { mode: 'create' | 'edit' }) 
   <Alert
     severity="info"
     title={t(
-      'share-modal.public-dashboard.no-upsert-perm-alert-title',
+      'public-dashboard.modal-alerts.no-upsert-perm-alert-title',
       'You don’t have permission to {{ mode }} a public dashboard',
       { mode }
     )}
     data-testid={selectors.NoUpsertPermissionsWarningAlert}
     bottomSpacing={0}
   >
-    <Trans i18nKey="share-modal.public-dashboard.no-upsert-perm-alert-desc">
+    <Trans i18nKey="public-dashboard.modal-alerts.no-upsert-perm-alert-desc">
       Contact your admin to get permission to {{ mode }} public dashboards
     </Trans>
   </Alert>

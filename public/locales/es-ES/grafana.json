@@ -130,26 +130,6 @@
     },
     "save": "Guardar"
   },
-  "config-public-dashboard": {
-    "public-dashboard": {
-      "copy-button": "",
-      "dashboard-url-field-label": "",
-      "pause-sharing-dashboard-label": "",
-      "revoke-public-URL-button": "",
-      "revoke-public-URL-button-title": "",
-      "settings-title": ""
-    }
-  },
-  "configuration": {
-    "public-dashboard": {
-      "default-time-range-label": "",
-      "default-time-range-label-desc": "",
-      "show-annotations-label": "",
-      "show-annotations-label-desc": "",
-      "time-range-picker-label": "",
-      "time-range-picker-label-desc": ""
-    }
-  },
   "connections": {
     "connect-data": {
       "category-header-label": "Orígenes de datos"
@@ -415,16 +395,6 @@
       "title": "Versiones"
     }
   },
-  "dashboards-list-modal-button": {
-    "public-dashboard": {
-      "dashboard-title": "",
-      "loading-text": "",
-      "modal-title": "",
-      "open-dashboard-list-text": "",
-      "public-dashboard-link": "",
-      "public-dashboard-setting": ""
-    }
-  },
   "data-source-picker": {
     "add-new-data-source": "Configurar una nueva fuente de datos",
     "built-in-list": {
@@ -445,43 +415,6 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Añadir nueva fuente de datos"
-    }
-  },
-  "delete-public-dashboard-button": {
-    "public-dashboard": {
-      "revoke-button-text": ""
-    }
-  },
-  "delete-public-dashboard-modal": {
-    "public-dashboard": {
-      "ask-for-revoke-nonorphaned": "",
-      "ask-for-revoke-orphaned": "",
-      "confirm-revocation-text": ""
-    }
-  },
-  "delete-user-modal-button": {
-    "public-dashboard": {
-      "delete-user-cancel-button": "",
-      "delete-user-revoke-access-button": "",
-      "delete-user-text": "",
-      "revoke-user-access-modal-desc-line1": "",
-      "revoke-user-access-modal-desc-line2": ""
-    }
-  },
-  "email-sharing-configuration": {
-    "public-dashboard": {
-      "can-view-dashboard-label": "",
-      "email-share-type-label": "",
-      "input-invalid-email-text": "",
-      "input-required-email-text": "",
-      "invite-button": "",
-      "invite-desc": "",
-      "invite-label": "",
-      "public-share-type-label": "",
-      "resend-button": "",
-      "resend-button-title": "",
-      "revoke-button": "",
-      "revoke-button-title": ""
     }
   },
   "explore": {
@@ -1131,15 +1064,115 @@
       "passwords-must-match": "Las contraseñas deben coincidir"
     }
   },
-  "public-dashboard-list-table": {
-    "public-dashboard": {
-      "config-tooltip": "",
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "usage-ack-desc": "",
+      "usage-ack-desc-tooltip": ""
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "",
+      "copy-button": "",
+      "dashboard-url-field-label": "",
+      "email-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "",
+      "public-share-type-option-label": "",
+      "revoke-public-URL-button": "",
+      "revoke-public-URL-button-title": "",
+      "settings-title": ""
+    },
+    "create-page": {
+      "generate-public-url-button": "",
+      "unsupported-features-desc": "",
+      "welcome-title": ""
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "",
+      "revoke-orphaned-body-text": "",
+      "revoke-title": ""
+    },
+    "email-sharing": {
+      "invite-field-desc": "",
+      "invite-field-label": "",
+      "resend-button": "",
+      "resend-button-title": "",
+      "revoke-button": "",
+      "revoke-button-title": ""
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "save-dashboard-changes-alert-title": "",
+      "unsupport-data-source-alert-readmore-link": "",
+      "unsupported-data-source-alert-desc": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert-desc": "",
+      "unsupported-template-variable-alert-title": ""
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "",
+      "expand-settings-tooltip": ""
+    },
+    "settings-configuration": {
+      "default-time-range-label": "",
+      "default-time-range-label-desc": "",
+      "show-annotations-label": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-label": "",
+      "time-range-picker-label-desc": ""
+    },
+    "settings-summary": {
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "dashboard-title": {
       "not-orphaned-title": "",
       "orphaned-title": "",
-      "orphaned-tooltip": "",
-      "pause-sharing-text": "",
-      "revoke-tooltip": "",
-      "view-tooltip": ""
+      "orphaned-tooltip": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "",
+      "open-dashboard-list-text": "",
+      "public-dashboard-link": "",
+      "public-dashboard-setting": ""
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "",
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
+    },
+    "modal": {
+      "dashboard-modal-title": ""
+    },
+    "table-header": {
+      "activated-label": "",
+      "activated-tooltip": "",
+      "email-label": "",
+      "last-active-label": "",
+      "origin-label": "",
+      "role-label": ""
     }
   },
   "query-operation": {
@@ -1177,11 +1210,6 @@
       "turned-off": "Actualización automática desactivada"
     }
   },
-  "save-dashboard-changes-alert": {
-    "public-dashboard": {
-      "alert-title": ""
-    }
-  },
   "search": {
     "actions": {
       "include-panels": "Incluir paneles",
@@ -1209,21 +1237,6 @@
     "search-input": {
       "include-panels-placeholder": "Buscar paneles de control y paneles",
       "placeholder": "Buscar paneles de control"
-    }
-  },
-  "settings-bar-header": {
-    "public-dashboard": {
-      "collapse-settings-tooltip": "",
-      "expand-settings-tooltip": ""
-    }
-  },
-  "settings-summary": {
-    "public-dashboard": {
-      "annotations-hide-text": "",
-      "annotations-show-text": "",
-      "time-range-picker-disabled-text": "",
-      "time-range-picker-enabled-text": "",
-      "time-range-text": ""
     }
   },
   "share-modal": {
@@ -1265,24 +1278,10 @@
     "panel": {
       "title": "Compartir panel"
     },
-    "public-dashboard": {
-      "ack-title": "",
-      "data-src-ack-desc": "",
-      "data-src-ack-tooltip": "",
-      "generate-public-url-button": "",
-      "no-upsert-perm-alert-desc": "",
-      "no-upsert-perm-alert-title": "",
-      "public-ack-desc": "",
-      "public-ack-tooltip": "",
-      "unsupport-data-source-alert-readmore-link": "",
-      "unsupported-data-source-alert-desc": "",
-      "unsupported-data-source-alert-title": "",
-      "unsupported-features-description": "",
-      "unsupported-template-variable-alert-desc": "",
-      "unsupported-template-variable-alert-title": "",
-      "usage-ack-desc": "",
-      "usage-ack-tooltip": "",
-      "welcome-title": ""
+    "public-dashboard-email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": ""
     },
     "snapshot": {
       "cancel-button": "Cancelar",
@@ -1430,21 +1429,6 @@
       "add-transformation-header": ""
     }
   },
-  "user-list-page": {
-    "tab-title": {
-      "public-dashboard-users": ""
-    }
-  },
-  "user-list-public-dashboard-page": {
-    "public-dashboard": {
-      "activated-header": "",
-      "earliest-active-user-time-tooltip-desc": "",
-      "email-header": "",
-      "last-active-header": "",
-      "origin-header": "",
-      "role-header": ""
-    }
-  },
   "user-orgs": {
     "current-org-button": "Actual",
     "name-column": "Nombre",
@@ -1473,6 +1457,11 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": ""
+    }
   },
   "variable": {
     "adhoc": {

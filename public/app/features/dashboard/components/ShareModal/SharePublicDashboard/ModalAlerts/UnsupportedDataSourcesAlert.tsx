@@ -15,12 +15,12 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
   return (
     <Alert
       severity="warning"
-      title={t('share-modal.public-dashboard.unsupported-data-source-alert-title', 'Unsupported data sources')}
+      title={t('public-dashboard.modal-alerts.unsupported-data-source-alert-title', 'Unsupported data sources')}
       data-testid={selectors.UnsupportedDataSourcesWarningAlert}
       bottomSpacing={0}
     >
       <p className={styles.unsupportedDataSourceDescription}>
-        <Trans i18nKey="share-modal.public-dashboard.unsupported-data-source-alert-desc">
+        <Trans i18nKey="public-dashboard.modal-alerts.unsupported-data-source-alert-desc">
           There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these
           data sources may not function properly: {{ unsupportedDataSources }}.
         </Trans>
@@ -29,7 +29,7 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
         href="https://grafana.com/docs/grafana/next/dashboards/dashboard-public/"
         className={cx('text-link', styles.unsupportedDataSourceDescription)}
       >
-        <Trans i18nKey="share-modal.public-dashboard.unsupport-data-source-alert-readmore-link">
+        <Trans i18nKey="public-dashboard.modal-alerts.unsupport-data-source-alert-readmore-link">
           Read more about supported data sources
         </Trans>
       </a>

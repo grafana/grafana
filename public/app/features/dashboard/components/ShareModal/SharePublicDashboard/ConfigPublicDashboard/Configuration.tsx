@@ -30,11 +30,11 @@ export const Configuration = ({
           <Layout orientation={1} spacing="xs" justify="space-between">
             <Label
               description={t(
-                'configuration.public-dashboard.default-time-range-label-desc',
+                'public-dashboard.settings-configuration.default-time-range-label-desc',
                 'The public dashboard uses the default time range settings of the dashboard'
               )}
             >
-              <Trans i18nKey="configuration.public-dashboard.default-time-range-label">Default time range</Trans>
+              <Trans i18nKey="public-dashboard.settings-configuration.default-time-range-label">Default time range</Trans>
             </Label>
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
           </Layout>
@@ -51,11 +51,11 @@ export const Configuration = ({
             />
             <Label
               description={t(
-                'configuration.public-dashboard.time-range-picker-label-desc',
+                'public-dashboard.settings-configuration.time-range-picker-label-desc',
                 'Allow viewers to change time range'
               )}
             >
-              <Trans i18nKey="configuration.public-dashboard.time-range-picker-label">
+              <Trans i18nKey="public-dashboard.settings-configuration.time-range-picker-label">
                 Time range picker enabled
               </Trans>
             </Label>
@@ -73,11 +73,11 @@ export const Configuration = ({
             />
             <Label
               description={t(
-                'configuration.public-dashboard.show-annotations-label-desc',
+                'public-dashboard.settings-configuration.show-annotations-label-desc',
                 'Show annotations on public dashboard'
               )}
             >
-              <Trans i18nKey="configuration.public-dashboard.show-annotations-label">Show annotations</Trans>
+              <Trans i18nKey="public-dashboard.settings-configuration.show-annotations-label">Show annotations</Trans>
             </Label>
           </Layout>
         </VerticalGroup>

@@ -6,7 +6,7 @@ import { t } from 'app/core/internationalization';
 export const SaveDashboardChangesAlert = () => (
   <Alert
     title={t(
-      'save-dashboard-changes-alert.public-dashboard.alert-title',
+      'public-dashboard.modal-alerts.save-dashboard-changes-alert-title',
       'Please save your dashboard changes before updating the public configuration'
     )}
     severity="warning"

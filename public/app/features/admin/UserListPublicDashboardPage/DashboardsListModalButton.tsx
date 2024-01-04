@@ -22,21 +22,17 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
     <Modal
       className={styles.modal}
       isOpen
-      title={t('dashboards-list-modal-button.public-dashboard.modal-title', 'Public dashboards')}
+      title={t('public-dashboard-users-access-list.modal.dashboard-modal-title', 'Public dashboards')}
       onDismiss={onDismiss}
     >
       {isLoading ? (
         <div className={styles.loading}>
-          <LoadingPlaceholder text={t('dashboards-list-modal-button.public-dashboard.loading-text', 'Loading...')} />
+          <LoadingPlaceholder text={t('public-dashboard-users-access-list.dashboard-modal.loading-text', 'Loading...')} />
         </div>
       ) : (
         dashboards?.map((dash) => (
           <div key={dash.dashboardUid} className={styles.listItem} data-testid={selectors.listItem(dash.dashboardUid)}>
-            <p className={styles.dashboardTitle}>
-              <Trans i18nKey="dashboards-list-modal-button.public-dashboard.dashboard-title">
-                {{ dashboardTitle: dash.dashboardTitle }}
-              </Trans>
-            </p>
+            <p className={styles.dashboardTitle}>{dash.dashboardTitle}</p>
             <div className={styles.urlsContainer}>
               <a
                 rel="noreferrer"
@@ -45,7 +41,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 href={generatePublicDashboardUrl(dash.publicDashboardAccessToken)}
                 onClick={onDismiss}
               >
-                <Trans i18nKey="dashboards-list-modal-button.public-dashboard.public-dashboard-link">
+                <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-link">
                   Public dashboard URL
                 </Trans>
               </a>
@@ -55,7 +51,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 href={generatePublicDashboardConfigUrl(dash.dashboardUid, dash.slug)}
                 onClick={onDismiss}
               >
-                <Trans i18nKey="dashboards-list-modal-button.public-dashboard.public-dashboard-setting">
+                <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-setting">
                   Public dashboard settings
                 </Trans>
               </a>
@@ -70,7 +66,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
 
 export const DashboardsListModalButton = ({ email }: { email: string }) => {
   const translatedDashboardListModalButtonText = t(
-    'dashboards-list-modal-button.public-dashboard.open-dashboard-list-text',
+    'public-dashboard-users-access-list.dashboard-modal.open-dashboard-list-text',
     'Open dashboards list'
   );
   return (

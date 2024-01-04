@@ -25,8 +25,8 @@ export function SettingsBarHeader({ headerElement, isContentVisible = false, onR
           name={isContentVisible ? 'angle-down' : 'angle-right'}
           tooltip={
             isContentVisible
-              ? t('settings-bar-header.public-dashboard.collapse-settings-tooltip', 'Collapse settings')
-              : t('settings-bar-header.public-dashboard.expand-settings-tooltip', 'Expand settings')
+              ? t('public-dashboard.settings-bar-header.collapse-settings-tooltip', 'Collapse settings')
+              : t('public-dashboard.settings-bar-header.expand-settings-tooltip', 'Expand settings')
           }
           className={styles.collapseIcon}
           onClick={onRowToggle}

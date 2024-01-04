@@ -9,6 +9,15 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { SharePublicDashboardAcknowledgmentInputs } from './CreatePublicDashboard';
 
+type Acknowledge = {
+  type: keyof SharePublicDashboardAcknowledgmentInputs;
+  description: string;
+  testId: string;
+  info: {
+    href: string;
+    tooltip: string;
+  };
+};
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 export const AcknowledgeCheckboxes = ({
@@ -19,70 +28,63 @@ export const AcknowledgeCheckboxes = ({
   register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
 }) => {
   const styles = useStyles2(getStyles);
+  const ACKNOWLEDGES: Acknowledge[] = [
+    {
+      type: 'publicAcknowledgment',
+      description: t('public-dashboard.acknowledgment-checkboxes.public-ack-desc', 'Your entire dashboard will be public*'),
+      testId: selectors.WillBePublicCheckbox,
+      info: {
+        href: 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/',
+        tooltip: t('public-dashboard.acknowledgment-checkboxes.public-ack-tooltip', 'Learn more about public dashboards'),
+      },
+    },
+    {
+      type: 'dataSourcesAcknowledgment',
+      description: t('public-dashboard.acknowledgment-checkboxes.data-src-ack-desc', 'Publishing currently only works with a subset of data sources*'),
+      testId: selectors.LimitedDSCheckbox,
+      info: {
+        href: 'https://grafana.com/docs/grafana/latest/datasources/',
+        tooltip: t('public-dashboard.acknowledgment-checkboxes.data-src-ack-tooltip', 'Learn more about public datasources'),
+      },
+    },
+    {
+      type: 'usageAcknowledgment',
+      description: t('public-dashboard.acknowledgment-checkboxes.usage-ack-desc', 'Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*'),
+      testId: selectors.CostIncreaseCheckbox,
+      info: {
+        href: 'https://grafana.com/docs/grafana/latest/enterprise/query-caching/',
+        tooltip: t('public-dashboard.acknowledgment-checkboxes.usage-ack-desc-tooltip','Learn more about query caching'),
+      },
+    },
+  ];
 
   return (
     <>
       <p className={styles.title}>
-        <Trans i18nKey="share-modal.public-dashboard.ack-title">
+        <Trans i18nKey="public-dashboard.acknowledgment-checkboxes.ack-title">
           Before you make the dashboard public, acknowledge the following:
         </Trans>
       </p>
       <FieldSet disabled={disabled}>
         <VerticalGroup spacing="md">
-          <HorizontalGroup key="publicAcknowledgment" spacing="none" align="center">
-            <Checkbox
-              {...register('publicAcknowledgment', { required: true })}
-              label={t('share-modal.public-dashboard.public-ack-desc', 'Your entire dashboard will be public*')}
-              data-testid={selectors.WillBePublicCheckbox}
-            />
-            <LinkButton
-              variant="primary"
-              href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"
-              target="_blank"
-              fill="text"
-              icon="info-circle"
-              rel="noopener noreferrer"
-              tooltip={t('share-modal.public-dashboard.public-ack-tooltip', 'Learn more about public dashboards')}
-            />
-          </HorizontalGroup>
-          <HorizontalGroup key="dataSourcesAcknowledgment" spacing="none" align="center">
-            <Checkbox
-              {...register('dataSourcesAcknowledgment', { required: true })}
-              label={t(
-                'share-modal.public-dashboard.data-src-ack-desc',
-                'Publishing currently only works with a subset of data sources*'
-              )}
-              data-testid={selectors.LimitedDSCheckbox}
-            />
-            <LinkButton
-              variant="primary"
-              href="https://grafana.com/docs/grafana/latest/datasources/"
-              target="_blank"
-              fill="text"
-              icon="info-circle"
-              rel="noopener noreferrer"
-              tooltip={t('share-modal.public-dashboard.data-src-ack-tooltip', 'Learn more about public datasources')}
-            />
-          </HorizontalGroup>
-          <HorizontalGroup key="usageAcknowledgment" spacing="none" align="center">
-            <Checkbox
-              {...register('usageAcknowledgment', { required: true })}
-              label={t(
-                'share-modal.public-dashboard.usage-ack-desc',
-                'Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*'
-              )}
-              data-testid={selectors.CostIncreaseCheckbox}
-            />
-            <LinkButton
-              variant="primary"
-              href="https://grafana.com/docs/grafana/latest/enterprise/query-caching/"
-              target="_blank"
-              fill="text"
-              icon="info-circle"
-              rel="noopener noreferrer"
-              tooltip={t('share-modal.public-dashboard.usage-ack-tooltip', 'Learn more about query caching')}
-            />
-          </HorizontalGroup>
+          {ACKNOWLEDGES.map((acknowledge) => (
+            <HorizontalGroup key={acknowledge.type} spacing="none" align="center">
+              <Checkbox
+                {...register(acknowledge.type, { required: true })}
+                label={acknowledge.description}
+                data-testid={acknowledge.testId}
+              />
+              <LinkButton
+                variant="primary"
+                href={acknowledge.info.href}
+                target="_blank"
+                fill="text"
+                icon="info-circle"
+                rel="noopener noreferrer"
+                tooltip={acknowledge.info.tooltip}
+              />
+            </HorizontalGroup>
+          ))}
         </VerticalGroup>
       </FieldSet>
     </>
