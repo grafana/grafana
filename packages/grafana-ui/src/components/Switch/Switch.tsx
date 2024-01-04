@@ -102,7 +102,6 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       '&:disabled + label': {
         background: theme.colors.action.disabledBackground,
         borderColor: theme.colors.border.weak,
-        color: theme.colors.text.disabled,
         cursor: 'not-allowed',
 
         '&:hover': {
@@ -112,7 +111,6 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
 
       '&:disabled:checked + label': {
         '&::after': {
-          transform: 'translate3d(18px, -50%, 0)',
           background: theme.colors.text.disabled,
         },
       },
