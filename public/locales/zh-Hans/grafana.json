@@ -665,6 +665,9 @@
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
     },
+    "alert-list-legacy": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
       "title": "警报"

@@ -1,3 +1,5 @@
+import { Validate } from 'react-hook-form';
+
 import { IconName, SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
 
@@ -25,7 +27,7 @@ export type SSOProviderSettingsBase = {
   emailAttributePath?: string;
   emptyScopes?: boolean;
   enabled: boolean;
-  extra?: Record<string, unknown>;
+  extra?: Record<string, string>;
   groupsAttributePath?: string;
   hostedDomain?: string;
   icon?: IconName;
@@ -104,7 +106,7 @@ export type FieldData = {
   validation?: {
     required?: boolean;
     message?: string;
-    validate?: (value: string | Array<SelectableValue<string>>) => boolean | string | Promise<boolean | string>;
+    validate?: Validate<SSOProviderDTO[keyof SSOProviderDTO], SSOProviderDTO>;
   };
   multi?: boolean;
   allowCustomValue?: boolean;
