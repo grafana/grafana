@@ -281,6 +281,10 @@ class PanelCompatibilityWrapper {
     }
 
     if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
+      if (this._vizPanel.state.$data.state.$data instanceof ShareQueryDataProvider) {
+        return { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' };
+      }
+
       return (this._vizPanel.state.$data.state.$data as SceneQueryRunner).state.datasource ?? null;
     }
 
