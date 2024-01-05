@@ -1164,7 +1164,7 @@ var (
 		{
 			Name:         "pdfTables",
 			Description:  "Enables generating table data as PDF in reporting",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
 			Created:      time.Date(2023, time.November, 6, 12, 0, 0, 0, time.UTC),

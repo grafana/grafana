@@ -82,6 +82,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `transformationsVariableSupport`       | Allows using variables in transformations                                                                                                                                                    |
 | `cloudWatchBatchQueries`               | Runs CloudWatch metrics queries as separate batches                                                                                                                                          |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                                                         |
+| `pdfTables`                            | Enables generating table data as PDF in reporting                                                                                                                                            |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
 
 ## Experimental feature toggles
