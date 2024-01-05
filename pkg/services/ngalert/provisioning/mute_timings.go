@@ -12,7 +12,7 @@ import (
 )
 
 type MuteTimingService struct {
-	configStore     *alertmanagerConfigStoreImpl
+	configStore     alertmanagerConfigStore
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
 	log             log.Logger

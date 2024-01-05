@@ -49,6 +49,11 @@ func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore)
 	}, nil
 }
 
+type alertmanagerConfigStore interface {
+	Get(ctx context.Context, orgID int64) (*cfgRevision, error)
+	Save(ctx context.Context, revision *cfgRevision, orgID int64) error
+}
+
 type alertmanagerConfigStoreImpl struct {
 	store AMConfigStore
 }
