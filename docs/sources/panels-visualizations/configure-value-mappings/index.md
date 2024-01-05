@@ -39,9 +39,15 @@ The new value mappings are not compatible with some visualizations, such as Grap
 Grafana supports the following value mappings:
 
 - **Value:** Maps text values to a color or different display text. For example, you can configure a value mapping so that all instances of the value `10` appear as **Perfection!** rather than the number. Map a value when you want to format a single value.
+  ![Map a value](/static/img/docs/value-mappings/map-value-8-0.png)
+
 - **Range:** Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display **Low** or **High** rather than the number. Map a range of values when you want to format multiple, continuous values.
+  ![Map a range](/static/img/docs/value-mappings/map-range-8-0.png)
+
 - **Regex:** Maps regular expressions to replacement text and a color. For example, if a value is `www.example.com`, you can configure a regex value mapping so that Grafana displays **www** and truncates the domain. Map a regular expression when you want to format the text and color of a regular expression value.
+
 - **Special** Maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to a display text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Map a special value when you want to format uncommon, boolean, or empty values.
+  ![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)
 
 You can also use the dots on the left to drag and reorder value mappings in the list.
 
@@ -87,10 +93,6 @@ The following image shows a table visualization with value mappings. If you want
 1. (Optional) Enter display text.
 1. (Optional) Set the color.
 1. Click **Update** to save the value mapping.
-
-![Map a value](/static/img/docs/value-mappings/map-value-8-0.png)
-![Map a range](/static/img/docs/value-mappings/map-range-8-0.png)
-![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)
 
 ## Edit a value mapping
 
