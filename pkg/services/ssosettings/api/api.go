@@ -44,7 +44,7 @@ func ProvideApi(
 	return api
 }
 
-// generateFNVETag computes a FNV hash-based ETag the SSOSettings struct
+// generateFNVETag computes a FNV hash-based ETag for the SSOSettings struct
 func generateFNVETag(SSOSettings *models.SSOSettings) (string, error) {
 	hasher := fnv.New64()
 	data, err := json.Marshal(SSOSettings)
