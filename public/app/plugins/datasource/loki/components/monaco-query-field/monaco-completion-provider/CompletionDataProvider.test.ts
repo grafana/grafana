@@ -183,7 +183,7 @@ describe('CompletionDataProvider', () => {
     expect(await completionProvider.getSeriesLabels([])).toEqual(seriesLabels);
   });
 
-  test('Escapes regex characters when building stream selector in getSeriesLabels', async () => {
+  test('Escapes correct characters when building stream selector in getSeriesLabels', async () => {
     completionProvider.getSeriesLabels([{ name: 'job', op: '=', value: '"a\\b\n' }]);
     expect(languageProvider.fetchSeriesLabels).toHaveBeenCalledWith('{job="\\"a\\\\b\\n"}', {
       timeRange: mockTimeRange,
