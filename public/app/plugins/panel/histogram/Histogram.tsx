@@ -287,7 +287,9 @@ export class Histogram extends React.Component<HistogramProps, State> {
   }
 
   prepState(props: HistogramProps, withConfig = true) {
-    let state: State = null as any;
+    let state: State = {
+      alignedData: [],
+    };
 
     const { alignedFrame } = props;
     if (alignedFrame) {

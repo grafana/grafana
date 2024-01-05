@@ -154,6 +154,6 @@ export async function initLayer(
   return state;
 }
 
-export const getMapLayerState = (l: any) => {
-  return l?.__state as MapLayerState;
+export const getMapLayerState = (l: any): MapLayerState => {
+  return l?.__state;
 };
