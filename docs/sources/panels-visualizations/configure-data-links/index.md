@@ -128,20 +128,6 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 1. Click **Save** to save changes and close the window.
 1. Click **Save** in the upper right to save your changes to the dashboard.
 
-### Update a data link
-
-1. Scroll down to the Data links section, expand it, and find the link that you want to make changes to.
-1. Click the Edit (pencil) icon to open the Edit link window.
-1. Make any necessary changes.
-1. Click **Save** to save changes and close the window.
-1. Click **Save** in the upper right to save your changes to the dashboard.
-
-### Delete a data link
-
-1. Scroll down to the Data links section, expand it, and find the link that you want to delete.
-1. Click the **X** icon next to the link you want to delete.
-1. Click **Save** in the upper right to save your changes to the dashboard.
-
 {{% docs/reference %}}
 [Cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
 [Cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
