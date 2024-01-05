@@ -436,7 +436,7 @@ func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 				return err
 			}
 			if err := ms.DeleteFolders(ctx, orgID, state.CreatedFolders...); err != nil {
-				ms.log.Warn("Failed to delete migrated folders", "orgID", orgID, "err", err)
+				ms.log.Warn("Failed to delete migrated folders", "orgId", orgID, "err", err)
 			}
 
 			if _, err := sess.Exec("DELETE FROM alert_configuration WHERE org_id = ?", orgID); err != nil {
@@ -498,7 +498,7 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 					return err
 				}
 				if err := ms.DeleteFolders(ctx, o.ID, state.CreatedFolders...); err != nil {
-					ms.log.Warn("Failed to delete migrated folders", "orgID", o.ID, "err", err)
+					ms.log.Warn("Failed to delete migrated folders", "orgId", o.ID, "err", err)
 					continue
 				}
 			}

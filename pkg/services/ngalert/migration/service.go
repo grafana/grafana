@@ -120,7 +120,7 @@ func (ms *migrationService) MigrateChannel(ctx context.Context, orgID int64, cha
 		var delta StateDelta
 		if err != nil && errors.Is(err, migrationStore.ErrNotFound) {
 			// Notification channel no longer exists, delete this record from the state as well as delete any contacts points and routes.
-			om.log.Debug("Notification channel no longer exists", "channelID", channelID)
+			om.log.Debug("Notification channel no longer exists", "channelId", channelID)
 			summary.Removed = true
 			pair, ok := oldState.MigratedChannels[channelID]
 			if !ok {
@@ -200,7 +200,7 @@ func (ms *migrationService) MigrateAlert(ctx context.Context, orgID int64, dashb
 
 		if err != nil && errors.Is(err, migrationStore.ErrNotFound) {
 			// Legacy alert no longer exists, delete this record from the state.
-			om.log.Debug("Alert no longer exists", "dashboardID", dashboardID, "panelID", panelID)
+			om.log.Debug("Alert no longer exists", "dashboardId", dashboardID, "panelId", panelID)
 			summary.Removed = true
 		} else {
 			newDu := om.migrateDashboard(ctx, dashboardID, []*legacymodels.Alert{alert})
@@ -275,7 +275,7 @@ func (ms *migrationService) MigrateAllDashboardAlerts(ctx context.Context, orgID
 func (ms *migrationService) MigrateOrg(ctx context.Context, orgID int64, skipExisting bool) (definitions.OrgMigrationSummary, error) {
 	return ms.try(ctx, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		summary := definitions.OrgMigrationSummary{}
-		ms.log.Info("Starting legacy migration for org", "orgID", orgID, "skipExisting", skipExisting)
+		ms.log.Info("Starting legacy migration for org", "orgId", orgID, "skipExisting", skipExisting)
 		om := ms.newOrgMigration(orgID)
 		dashboardUpgrades, pairs, err := om.migrateOrg(ctx)
 		if err != nil {
@@ -512,7 +512,7 @@ func (ms *migrationService) RevertOrg(ctx context.Context, orgID int64) error {
 		return ErrUpgradeInProgress
 	}
 	defer ms.sem.Release(1)
-	ms.log.Info("Reverting legacy migration for org", "orgID", orgID)
+	ms.log.Info("Reverting legacy migration for org", "orgId", orgID)
 	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
 		return ms.migrationStore.RevertOrg(ctx, orgID)
 	})
@@ -547,12 +547,12 @@ func (ms *migrationService) verifyMigrated(ctx context.Context, orgID int64) err
 // from the database for the current state of dashboards, alerts, and rules.
 func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int64, migratedDashboards map[int64]*migrationStore.DashboardUpgrade, amConfig *migmodels.Alertmanager) ([]*definitions.DashboardUpgrade, error) {
 	// We preload information in bulk for performance reasons.
-	mappedRules, err := ms.migrationStore.GetSlimAlertRules(ctx, orgID)
+	alertRules, err := ms.migrationStore.GetSlimAlertRules(ctx, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("get all alert rules: %w", err)
 	}
 
-	mappedDashboardAlerts, err := ms.migrationStore.GetSlimOrgDashboardAlerts(ctx, orgID)
+	dashboardAlerts, err := ms.migrationStore.GetSlimOrgDashboardAlerts(ctx, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("get dashboard alerts: %w", err)
 	}
@@ -566,9 +566,9 @@ func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int
 		dashUIDInfo[info.UID] = info
 	}
 
-	res := make([]*definitions.DashboardUpgrade, 0, len(mappedDashboardAlerts))
+	res := make([]*definitions.DashboardUpgrade, 0, len(dashboardAlerts))
 	existingDashboards := make(map[int64]struct{})
-	for dashboardID, alerts := range mappedDashboardAlerts {
+	for dashboardID, alerts := range dashboardAlerts {
 		existingDashboards[dashboardID] = struct{}{}
 		mDu := &definitions.DashboardUpgrade{
 			MigratedAlerts: make([]*definitions.AlertPair, 0),
@@ -613,7 +613,7 @@ func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int
 			if p, ok := du.MigratedAlerts[a.PanelID]; ok {
 				pair.Error = p.Error
 				if p.NewRuleUID != "" {
-					if rule, ok := mappedRules[p.NewRuleUID]; ok {
+					if rule, ok := alertRules[p.NewRuleUID]; ok {
 						var sendTo = make([]string, 0)
 						for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
 							sendTo = append(sendTo, m.RouteOpts.Receiver)
@@ -622,7 +622,7 @@ func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int
 					} else {
 						// We could potentially set an error here, but it's not really an error. It just means that the
 						// user deleted the migrated rule after the migration. This could just as easily be intentional.
-						ms.log.Info("Could not find rule for migrated alert", "alertID", a.ID, "ruleUID", p.NewRuleUID)
+						ms.log.Info("Could not find rule for migrated alert", "alertId", a.ID, "ruleUid", p.NewRuleUID)
 					}
 				}
 			}
@@ -638,7 +638,7 @@ func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int
 					Error:       "alert no longer exists",
 				}
 				if p.NewRuleUID != "" {
-					if rule, ok := mappedRules[p.NewRuleUID]; ok {
+					if rule, ok := alertRules[p.NewRuleUID]; ok {
 						var sendTo = make([]string, 0)
 						for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
 							sendTo = append(sendTo, m.RouteOpts.Receiver)
@@ -675,7 +675,7 @@ func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int
 					Error:       "dashboard no longer exists",
 				}
 				if p.NewRuleUID != "" {
-					if rule, ok := mappedRules[p.NewRuleUID]; ok {
+					if rule, ok := alertRules[p.NewRuleUID]; ok {
 						var sendTo = make([]string, 0)
 						for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
 							sendTo = append(sendTo, m.RouteOpts.Receiver)
