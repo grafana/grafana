@@ -35,7 +35,7 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 
 <!--screenshot here -->
 
-You can use data link variables or data links to create links between panels. You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables](#data-link-variables).
+You can use data link variables or data links to create links between panels. Additionally, you can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables](#data-link-variables).
 
 <!--see what of this paragraph belongs in the next section, or maybe just repeat it? -->
 
