@@ -1,8 +1,16 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { AbsoluteTimeRange, dateTimeForTimeZone, LoadingState, RawTimeRange, TimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  AppEvents,
+  dateTimeForTimeZone,
+  LoadingState,
+  RawTimeRange,
+  TimeRange,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -158,6 +166,19 @@ export function zoomOut(scale: number): ThunkResult<void> {
     const zoomedRange = getZoomedTimeRange(range, scale);
     dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
   });
+}
+
+export function copyTimeRangeToClipboard(): ThunkResult<void> {
+  return () => {
+    console.log('copy time range to clipboard');
+    const range = getTimeRange('utc', { from: 'now-6h', to: 'now' }, 1);
+    console.log(range);
+    navigator.clipboard.writeText(JSON.stringify(range));
+    // navigator.clipboard.readText().then((clipText) => {
+    //   window.alert(clipText);
+    // });
+    appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
+  };
 }
 
 /**

@@ -4,9 +4,9 @@ import { Unsubscribable } from 'rxjs';
 import { getAppEvents } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useDispatch } from 'app/types';
-import { AbsoluteTimeEvent, ShiftTimeEvent, ZoomOutEvent } from 'app/types/events';
+import { AbsoluteTimeEvent, CopyTimeEvent, ShiftTimeEvent, ZoomOutEvent } from 'app/types/events';
 
-import { makeAbsoluteTime, shiftTime, zoomOut } from '../state/time';
+import { copyTimeRangeToClipboard, makeAbsoluteTime, shiftTime, zoomOut } from '../state/time';
 
 export function useKeyboardShortcuts() {
   const { keybindings } = useGrafana();
@@ -32,6 +32,12 @@ export function useKeyboardShortcuts() {
     tearDown.push(
       getAppEvents().subscribe(ZoomOutEvent, (event) => {
         dispatch(zoomOut(event.payload.scale));
+      })
+    );
+
+    tearDown.push(
+      getAppEvents().subscribe(CopyTimeEvent, () => {
+        dispatch(copyTimeRangeToClipboard());
       })
     );
 

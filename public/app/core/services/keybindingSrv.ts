@@ -18,6 +18,7 @@ import {
   ShowModalReactEvent,
   ZoomOutEvent,
   AbsoluteTimeEvent,
+  CopyTimeEvent,
 } from '../../types/events';
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
@@ -202,6 +203,11 @@ export class KeybindingSrv {
 
     this.bind('t right', () => {
       appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
+    });
+
+    this.bind('t c', () => {
+      console.log('copy time range binding');
+      appEvents.publish(new CopyTimeEvent());
     });
   }
 
