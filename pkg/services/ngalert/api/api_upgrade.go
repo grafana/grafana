@@ -32,11 +32,6 @@ func NewUpgradeSrc(
 }
 
 func (srv *UpgradeSrv) RoutePostUpgradeOrg(c *contextmodel.ReqContext) response.Response {
-	// If UA is enabled, we don't want to allow the user to use this endpoint to upgrade anymore.
-	if srv.cfg.UnifiedAlerting.IsEnabled() {
-		return response.Error(http.StatusForbidden, "This endpoint is not available with UA enabled.", nil)
-	}
-
 	summary, err := srv.upgradeService.MigrateOrg(c.Req.Context(), c.OrgID, c.QueryBool("skipExisting"))
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
@@ -44,16 +39,10 @@ func (srv *UpgradeSrv) RoutePostUpgradeOrg(c *contextmodel.ReqContext) response.
 		}
 		return response.Error(http.StatusInternalServerError, "Server error", err)
 	}
-	//return response.JSON(http.StatusOK, util.DynMap{"message": "Grafana Alerting resources created based on existing alerts and notification channels."})
 	return response.JSON(http.StatusOK, summary)
 }
 
 func (srv *UpgradeSrv) RouteGetOrgUpgrade(c *contextmodel.ReqContext) response.Response {
-	// If UA is enabled, we don't want to allow the user to use this endpoint to upgrade anymore.
-	if srv.cfg.UnifiedAlerting.IsEnabled() {
-		return response.Error(http.StatusForbidden, "This endpoint is not available with UA enabled.", nil)
-	}
-
 	state, err := srv.upgradeService.GetOrgMigrationState(c.Req.Context(), c.OrgID)
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
@@ -65,11 +54,6 @@ func (srv *UpgradeSrv) RouteGetOrgUpgrade(c *contextmodel.ReqContext) response.R
 }
 
 func (srv *UpgradeSrv) RouteDeleteOrgUpgrade(c *contextmodel.ReqContext) response.Response {
-	// If UA is enabled, we don't want to allow the user to use this endpoint to upgrade anymore.
-	if srv.cfg.UnifiedAlerting.IsEnabled() {
-		return response.Error(http.StatusForbidden, "This endpoint is not available with UA enabled.", nil)
-	}
-
 	err := srv.upgradeService.RevertOrg(c.Req.Context(), c.OrgID)
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
@@ -81,11 +65,6 @@ func (srv *UpgradeSrv) RouteDeleteOrgUpgrade(c *contextmodel.ReqContext) respons
 }
 
 func (srv *UpgradeSrv) RoutePostUpgradeAlert(c *contextmodel.ReqContext, dashboardIdParam string, panelIdParam string) response.Response {
-	// If UA is enabled, we don't want to allow the user to use this endpoint to upgrade anymore.
-	if srv.cfg.UnifiedAlerting.IsEnabled() {
-		return response.Error(http.StatusForbidden, "This endpoint is not available with UA enabled.", nil)
-	}
-
 	dashboardId, err := strconv.ParseInt(dashboardIdParam, 10, 64)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "failed to parse dashboardId")
@@ -107,11 +86,6 @@ func (srv *UpgradeSrv) RoutePostUpgradeAlert(c *contextmodel.ReqContext, dashboa
 }
 
 func (srv *UpgradeSrv) RoutePostUpgradeDashboard(c *contextmodel.ReqContext, dashboardIdParam string) response.Response {
-	// If UA is enabled, we don't want to allow the user to use this endpoint to upgrade anymore.
-	if srv.cfg.UnifiedAlerting.IsEnabled() {
-		return response.Error(http.StatusForbidden, "This endpoint is not available with UA enabled.", nil)
-	}
-
 	dashboardId, err := strconv.ParseInt(dashboardIdParam, 10, 64)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "failed to parse dashboardId")
@@ -128,11 +102,6 @@ func (srv *UpgradeSrv) RoutePostUpgradeDashboard(c *contextmodel.ReqContext, das
 }
 
 func (srv *UpgradeSrv) RoutePostUpgradeAllDashboards(c *contextmodel.ReqContext) response.Response {
-	// If UA is enabled, we don't want to allow the user to use this endpoint to upgrade anymore.
-	if srv.cfg.UnifiedAlerting.IsEnabled() {
-		return response.Error(http.StatusForbidden, "This endpoint is not available with UA enabled.", nil)
-	}
-
 	summary, err := srv.upgradeService.MigrateAllDashboardAlerts(c.Req.Context(), c.OrgID, c.QueryBool("skipExisting"))
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {
@@ -144,11 +113,6 @@ func (srv *UpgradeSrv) RoutePostUpgradeAllDashboards(c *contextmodel.ReqContext)
 }
 
 func (srv *UpgradeSrv) RoutePostUpgradeChannel(c *contextmodel.ReqContext, channelIdParam string) response.Response {
-	// If UA is enabled, we don't want to allow the user to use this endpoint to upgrade anymore.
-	if srv.cfg.UnifiedAlerting.IsEnabled() {
-		return response.Error(http.StatusForbidden, "This endpoint is not available with UA enabled.", nil)
-	}
-
 	channelId, err := strconv.ParseInt(channelIdParam, 10, 64)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "failed to parse channelId")
@@ -165,11 +129,6 @@ func (srv *UpgradeSrv) RoutePostUpgradeChannel(c *contextmodel.ReqContext, chann
 }
 
 func (srv *UpgradeSrv) RoutePostUpgradeAllChannels(c *contextmodel.ReqContext) response.Response {
-	// If UA is enabled, we don't want to allow the user to use this endpoint to upgrade anymore.
-	if srv.cfg.UnifiedAlerting.IsEnabled() {
-		return response.Error(http.StatusForbidden, "This endpoint is not available with UA enabled.", nil)
-	}
-
 	summary, err := srv.upgradeService.MigrateAllChannels(c.Req.Context(), c.OrgID, c.QueryBool("skipExisting"))
 	if err != nil {
 		if errors.Is(err, migration.ErrUpgradeInProgress) {

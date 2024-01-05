@@ -152,9 +152,12 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		hist:   api.Historian,
 	}), m)
 
-	api.RegisterUpgradeApiEndpoints(NewUpgradeApi(NewUpgradeSrc(
-		logger,
-		api.UpgradeService,
-		api.Cfg,
-	)), m)
+	// Inject upgrade endpoints if legacy alerting is enabled and the feature flag is enabled.
+	if !api.Cfg.UnifiedAlerting.IsEnabled() && api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
+		api.RegisterUpgradeApiEndpoints(NewUpgradeApi(NewUpgradeSrc(
+			logger,
+			api.UpgradeService,
+			api.Cfg,
+		)), m)
+	}
 }
