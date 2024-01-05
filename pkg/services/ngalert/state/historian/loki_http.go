@@ -14,13 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/weaveworks/common/http/client"
 )
 
 const defaultPageSize = 1000
 const maximumPageSize = 5000
 
-func NewRequester() client.Requester {
+func NewRequester() Requester {
 	return &http.Client{}
 }
 
@@ -80,7 +79,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 }
 
 type HttpLokiClient struct {
-	client  client.Requester
+	client  Requester
 	encoder encoder
 	cfg     LokiConfig
 	metrics *metrics.Historian
@@ -101,8 +100,8 @@ const (
 	NeqRegEx Operator = "!~"
 )
 
-func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *HttpLokiClient {
-	tc := client.NewTimedClient(req, metrics.WriteDuration)
+func NewLokiClient(cfg LokiConfig, req Requester, metrics *metrics.Historian, logger log.Logger) *HttpLokiClient {
+	tc := NewTimedClient(req, metrics.WriteDuration)
 	return &HttpLokiClient{
 		client:  tc,
 		encoder: cfg.Encoder,

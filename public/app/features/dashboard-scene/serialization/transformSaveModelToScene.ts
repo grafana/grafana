@@ -68,10 +68,7 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
     autoMigrateOldPanels: false,
   });
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel);
-  scene.state.$behaviors?.push(registerDashboardSceneTracking(oldModel, rsp.dashboard.version));
-
-  return scene;
+  return createDashboardSceneFromDashboardModel(oldModel);
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -261,6 +258,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
     ],
     $data:
@@ -484,11 +482,11 @@ const getLimitedDescriptionReporter = () => {
   };
 };
 
-function registerDashboardSceneTracking(model: DashboardModel, version?: number) {
+function registerDashboardSceneTracking(model: DashboardModel) {
   return () => {
     const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
 
-    trackDashboardLoaded(model, version);
+    trackDashboardLoaded(model, model.version);
 
     return () => {
       unsetDashboardInteractionsScenesContext();

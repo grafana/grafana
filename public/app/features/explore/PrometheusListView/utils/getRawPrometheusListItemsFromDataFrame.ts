@@ -1,6 +1,6 @@
-import { DataFrame, formattedValueToString } from '@grafana/data/src';
+import { DataFrame, formattedValueToString } from '@grafana/data';
 
-import { instantQueryRawVirtualizedListData } from '../PrometheusListView/RawListContainer';
+import { instantQueryRawVirtualizedListData } from '../RawListContainer';
 
 type instantQueryMetricList = { [index: string]: { [index: string]: instantQueryRawVirtualizedListData } };
 
