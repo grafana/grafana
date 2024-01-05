@@ -710,6 +710,10 @@
       "subtitle": "Stop notifications from one or more alerting rules",
       "title": "Silences"
     },
+    "alerting-upgrade": {
+      "subtitle": "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
+      "title": "Alerting upgrade"
+    },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
       "title": "Alerts & IRM"

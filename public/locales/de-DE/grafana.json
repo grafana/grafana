@@ -710,6 +710,10 @@
       "subtitle": "Schalte Benachrichtigungen von einer oder mehrerer Warnregeln aus",
       "title": "Stummschalten"
     },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
       "title": "Warnungen und IRM"
