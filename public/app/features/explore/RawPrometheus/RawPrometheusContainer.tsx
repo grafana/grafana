@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, TimeZone } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen } from '@grafana/data';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';

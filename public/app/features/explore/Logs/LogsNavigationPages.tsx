@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { dateTimeFormat, systemDateFormats, TimeZone, GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormat, systemDateFormats, GrafanaTheme2 } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
 import { CustomScrollbar, Spinner, useTheme2, clearButtonStyles } from '@grafana/ui';
 
 import { LogsPage } from './LogsNavigation';
