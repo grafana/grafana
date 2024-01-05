@@ -1090,6 +1090,9 @@
       "revoke-title": "Revoke public URL"
     },
     "email-sharing": {
+      "input-invalid-email-text": "Invalid email",
+      "input-required-email-text": "Email is required",
+      "invite-button": "Invite",
       "invite-field-desc": "Invite people by email",
       "invite-field-label": "Invite",
       "resend-button": "Resend",
@@ -1271,11 +1274,6 @@
     },
     "panel": {
       "title": "Share Panel"
-    },
-    "public-dashboard-email-sharing": {
-      "input-invalid-email-text": "Invalid email",
-      "input-required-email-text": "Email is required",
-      "invite-button": "Invite"
     },
     "snapshot": {
       "cancel-button": "Cancel",

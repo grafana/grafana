@@ -31,29 +31,47 @@ export const AcknowledgeCheckboxes = ({
   const ACKNOWLEDGES: Acknowledge[] = [
     {
       type: 'publicAcknowledgment',
-      description: t('public-dashboard.acknowledgment-checkboxes.public-ack-desc', 'Your entire dashboard will be public*'),
+      description: t(
+        'public-dashboard.acknowledgment-checkboxes.public-ack-desc',
+        'Your entire dashboard will be public*'
+      ),
       testId: selectors.WillBePublicCheckbox,
       info: {
         href: 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/',
-        tooltip: t('public-dashboard.acknowledgment-checkboxes.public-ack-tooltip', 'Learn more about public dashboards'),
+        tooltip: t(
+          'public-dashboard.acknowledgment-checkboxes.public-ack-tooltip',
+          'Learn more about public dashboards'
+        ),
       },
     },
     {
       type: 'dataSourcesAcknowledgment',
-      description: t('public-dashboard.acknowledgment-checkboxes.data-src-ack-desc', 'Publishing currently only works with a subset of data sources*'),
+      description: t(
+        'public-dashboard.acknowledgment-checkboxes.data-src-ack-desc',
+        'Publishing currently only works with a subset of data sources*'
+      ),
       testId: selectors.LimitedDSCheckbox,
       info: {
         href: 'https://grafana.com/docs/grafana/latest/datasources/',
-        tooltip: t('public-dashboard.acknowledgment-checkboxes.data-src-ack-tooltip', 'Learn more about public datasources'),
+        tooltip: t(
+          'public-dashboard.acknowledgment-checkboxes.data-src-ack-tooltip',
+          'Learn more about public datasources'
+        ),
       },
     },
     {
       type: 'usageAcknowledgment',
-      description: t('public-dashboard.acknowledgment-checkboxes.usage-ack-desc', 'Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*'),
+      description: t(
+        'public-dashboard.acknowledgment-checkboxes.usage-ack-desc',
+        'Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*'
+      ),
       testId: selectors.CostIncreaseCheckbox,
       info: {
         href: 'https://grafana.com/docs/grafana/latest/enterprise/query-caching/',
-        tooltip: t('public-dashboard.acknowledgment-checkboxes.usage-ack-desc-tooltip','Learn more about query caching'),
+        tooltip: t(
+          'public-dashboard.acknowledgment-checkboxes.usage-ack-desc-tooltip',
+          'Learn more about query caching'
+        ),
       },
     },
   ];

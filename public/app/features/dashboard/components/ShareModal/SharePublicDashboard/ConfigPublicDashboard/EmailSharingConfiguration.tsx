@@ -203,10 +203,10 @@ export const EmailSharingConfiguration = () => {
                   placeholder="email"
                   autoCapitalize="none"
                   {...register('email', {
-                    required: t('share-modal.public-dashboard-email-sharing.input-required-email-text', 'Email is required'),
+                    required: t('public-dashboard.email-sharing.input-required-email-text', 'Email is required'),
                     pattern: {
                       value: validEmailRegex,
-                      message: t('share-modal.public-dashboard-email-sharing.input-invalid-email-text', 'Invalid email'),
+                      message: t('public-dashboard.email-sharing.input-invalid-email-text', 'Invalid email'),
                     },
                   })}
                   data-testid={selectors.EmailSharingInput}
@@ -217,7 +217,7 @@ export const EmailSharingConfiguration = () => {
                   disabled={isAddEmailLoading}
                   data-testid={selectors.EmailSharingInviteButton}
                 >
-                  <Trans i18nKey="share-modal.public-dashboard-email-sharing.invite-button">Invite</Trans>
+                  <Trans i18nKey="public-dashboard.email-sharing.invite-button">Invite</Trans>
                   {isAddEmailLoading && <Spinner />}
                 </Button>
               </div>

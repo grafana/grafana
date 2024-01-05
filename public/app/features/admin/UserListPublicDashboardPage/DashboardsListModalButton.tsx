@@ -27,7 +27,9 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
     >
       {isLoading ? (
         <div className={styles.loading}>
-          <LoadingPlaceholder text={t('public-dashboard-users-access-list.dashboard-modal.loading-text', 'Loading...')} />
+          <LoadingPlaceholder
+            text={t('public-dashboard-users-access-list.dashboard-modal.loading-text', 'Loading...')}
+          />
         </div>
       ) : (
         dashboards?.map((dash) => (

@@ -1090,6 +1090,9 @@
       "revoke-title": "Ŗęvőĸę pūþľįč ŮŖĿ"
     },
     "email-sharing": {
+      "input-invalid-email-text": "Ĩŉväľįđ ęmäįľ",
+      "input-required-email-text": "Ēmäįľ įş řęqūįřęđ",
+      "invite-button": "Ĩŉvįŧę",
       "invite-field-desc": "Ĩŉvįŧę pęőpľę þy ęmäįľ",
       "invite-field-label": "Ĩŉvįŧę",
       "resend-button": "Ŗęşęŉđ",
@@ -1271,11 +1274,6 @@
     },
     "panel": {
       "title": "Ŝĥäřę Päŉęľ"
-    },
-    "public-dashboard-email-sharing": {
-      "input-invalid-email-text": "Ĩŉväľįđ ęmäįľ",
-      "input-required-email-text": "Ēmäįľ įş řęqūįřęđ",
-      "invite-button": "Ĩŉvįŧę"
     },
     "snapshot": {
       "cancel-button": "Cäŉčęľ",

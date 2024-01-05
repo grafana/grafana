@@ -25,7 +25,10 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
         </Trans>
       </p>
       <p className={styles.description}>
-        <Trans i18nKey="public-dashboard-users-access-list.delete-user-modal.revoke-user-access-modal-desc-line2" shouldUnescape>
+        <Trans
+          i18nKey="public-dashboard-users-access-list.delete-user-modal.revoke-user-access-modal-desc-line2"
+          shouldUnescape
+        >
           This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
         </Trans>
       </p>
@@ -44,7 +47,10 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
 };
 
 export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => {
-  const translatedDeleteUserText = t('public-dashboard-users-access-list.delete-user-modal.delete-user-button-text', 'Delete user');
+  const translatedDeleteUserText = t(
+    'public-dashboard-users-access-list.delete-user-modal.delete-user-button-text',
+    'Delete user'
+  );
   return (
     <ModalsController>
       {({ showModal, hideModal }) => (

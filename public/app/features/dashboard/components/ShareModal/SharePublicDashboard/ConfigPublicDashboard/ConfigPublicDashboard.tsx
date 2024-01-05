@@ -167,9 +167,7 @@ export function ConfigPublicDashboardBase({
               margin-bottom: 0;
             `}
           >
-            <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">
-              Pause sharing dashboard
-            </Trans>
+            <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">Pause sharing dashboard</Trans>
           </Label>
         </Layout>
       </Field>

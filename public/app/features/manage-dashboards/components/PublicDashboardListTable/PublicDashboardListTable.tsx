@@ -58,19 +58,14 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
   };
 
   const CardActions = useMemo(() => (isMobile ? Card.Actions : Card.SecondaryActions), [isMobile]);
-  const translatedPauseSharingText = t(
-    'public-dashboard-list.toggle.pause-sharing-toggle-text',
-    'Pause sharing'
-  );
+  const translatedPauseSharingText = t('public-dashboard-list.toggle.pause-sharing-toggle-text', 'Pause sharing');
 
   return (
     <Card className={styles.card} href={!isOrphaned ? `/d/${pd.dashboardUid}` : undefined}>
       <Card.Heading className={styles.heading}>
         {!isOrphaned ? (
           <span>
-            <Trans i18nKey="public-dashboard-list.dashboard-title.not-orphaned-title">
-              {{ title: pd.title }}
-            </Trans>
+            <Trans i18nKey="public-dashboard-list.dashboard-title.not-orphaned-title">{{ title: pd.title }}</Trans>
           </span>
         ) : (
           <Tooltip

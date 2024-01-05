@@ -1090,6 +1090,9 @@
       "revoke-title": ""
     },
     "email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": "",
       "invite-field-desc": "",
       "invite-field-label": "",
       "resend-button": "",
@@ -1271,11 +1274,6 @@
     },
     "panel": {
       "title": "Panel teilen"
-    },
-    "public-dashboard-email-sharing": {
-      "input-invalid-email-text": "",
-      "input-required-email-text": "",
-      "invite-button": ""
     },
     "snapshot": {
       "cancel-button": "Abbrechen",
