@@ -1,13 +1,11 @@
 import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { BaseTransport, Instrumentation } from '@grafana/faro-core';
+import { Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { FetchTransport, initializeFaro } from '@grafana/faro-web-sdk';
-import { EchoEventType, EchoMeta } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
-import { GrafanaJavascriptAgentEchoEvent } from './types';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   beforeEach(() => {
