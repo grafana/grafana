@@ -5,9 +5,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"strings"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -137,10 +135,6 @@ func (f *fakeProvisioningStore) DeleteProvenance(ctx context.Context, o models.P
 	return nil
 }
 
-func assertInTransaction(t *testing.T, ctx context.Context) {
-	assert.Truef(t, ctx.Value(NopTransactionManager{}) != nil, "Expected to be executed in transaction but there is none")
-}
-
 type NopTransactionManager struct{}
 
 func newNopTransactionManager() *NopTransactionManager {
@@ -148,7 +142,7 @@ func newNopTransactionManager() *NopTransactionManager {
 }
 
 func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
-	return work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
+	return work(ctx)
 }
 
 func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
