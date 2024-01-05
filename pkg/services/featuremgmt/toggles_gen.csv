@@ -113,7 +113,7 @@ cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,2023-09-27,false,f
 externalServiceAccounts,privatePreview,@grafana/identity-access-team,2023-09-28,false,false,false,false
 panelMonitoring,experimental,@grafana/dataviz-squad,2023-10-08,false,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,2023-10-03,false,false,false,false
-formatString,privatePreview,@grafana/grafana-bi-squad,2023-10-13,false,false,false,true
+formatString,preview,@grafana/grafana-bi-squad,2023-10-13,false,false,false,true
 transformationsVariableSupport,preview,@grafana/grafana-bi-squad,2023-10-04,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,2023-11-08,false,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,2023-12-04,false,false,true,false
@@ -128,7 +128,7 @@ pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backen
 costManagementUi,experimental,@grafana/databases-frontend,2023-10-17,false,false,false,false
 managedPluginsInstall,experimental,@grafana/plugins-platform-backend,2023-10-18,false,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,2023-10-19,false,false,false,true
-addFieldFromCalculationStatFunctions,privatePreview,@grafana/grafana-bi-squad,2023-11-03,false,false,false,true
+addFieldFromCalculationStatFunctions,preview,@grafana/grafana-bi-squad,2023-11-03,false,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,2023-10-30,false,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,2023-10-30,false,false,false,false
 alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,2023-10-30,false,false,false,false
@@ -148,7 +148,7 @@ alertingSimplifiedRouting,experimental,@grafana/alerting-squad,2023-11-10,false,
 logRowsPopoverMenu,experimental,@grafana/observability-logs,2023-11-16,false,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,2023-11-15,false,false,false,false
 tableSharedCrosshair,experimental,@grafana/grafana-bi-squad,2023-12-12,false,false,false,true
-regressionTransformation,privatePreview,@grafana/grafana-bi-squad,2023-11-24,false,false,false,true
+regressionTransformation,preview,@grafana/grafana-bi-squad,2023-11-24,false,false,false,true
 displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,false,true
 alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-11-30,false,false,true,false
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,false,true
