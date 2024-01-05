@@ -70,7 +70,7 @@ func TestNewAlertmanager(t *testing.T) {
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
 			}
-			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 			am, err := NewAlertmanager(cfg, nil, m)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
@@ -109,7 +109,7 @@ func TestApplyConfig(t *testing.T) {
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, "test"))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, "test"))
 
-	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, fstore, m)
 	require.NoError(t, err)
 
@@ -179,7 +179,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	require.NoError(t, err)
 	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
 
-	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, fstore, m)
 	require.NoError(t, err)
 
@@ -264,7 +264,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
-	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, nil, m)
 	require.NoError(t, err)
 
@@ -345,7 +345,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
-	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, nil, m)
 	require.NoError(t, err)
 
@@ -412,7 +412,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		BasicAuthPassword: password,
 	}
 
-	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, nil, m)
 	require.NoError(t, err)
 

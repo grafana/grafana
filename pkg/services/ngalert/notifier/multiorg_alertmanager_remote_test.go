@@ -64,7 +64,8 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			}
 			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
 			stateStore := notifier.NewFileStore(orgID, kvStore, "")
-			remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore)
+			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+			remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore, m)
 			require.NoError(t, err)
 
 			// Use both Alertmanager implementations in the forked Alertmanager.

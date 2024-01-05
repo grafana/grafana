@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -103,7 +102,6 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 
 	resp, err := mc.client.Do(r)
 	if err != nil {
-		mc.metrics.HTTPRequestsFailed.WithLabelValues(r.Method, endpoint.Path).Inc()
 		msg := "Unable to fulfill request to the Mimir API"
 		mc.logger.Error(msg, "err", err, "url", r.URL.String(), "method", r.Method)
 		return nil, fmt.Errorf("%s: %w", msg, err)
@@ -113,7 +111,6 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 			mc.logger.Error("Error closing HTTP body", "err", err, "url", r.URL.String(), "method", r.Method)
 		}
 	}()
-	mc.metrics.HTTPRequestsTotal.WithLabelValues(method, endpoint.Path, strconv.Itoa(resp.StatusCode)).Inc()
 
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ct, "application/json") {
