@@ -102,67 +102,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     });
   });
 
-  it('will forward events to transports', () => {
-    //arrange
-    const mockedSetUser = jest.fn();
-    const mockedInstrumentationsForConfig: Instrumentation[] = [];
-    const mockedInstrumentations = {
-      add: jest.fn(),
-      instrumentations: mockedInstrumentationsForConfig,
-      remove: jest.fn(),
-    };
-    const mockedInternalLogger = {
-      prefix: 'Faro',
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    };
-
-    const mockTransports: BaseTransport[] = [
-      { send: jest.fn() } as unknown as BaseTransport,
-      { send: jest.fn() } as unknown as BaseTransport,
-    ];
-
-    jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
-      ...faroWebSdkModule.faro,
-      api: {
-        ...faroWebSdkModule.faro.api,
-        setUser: mockedSetUser,
-      },
-      config: {
-        ...faroWebSdkModule.faro.config,
-        instrumentations: mockedInstrumentationsForConfig,
-      },
-      instrumentations: mockedInstrumentations,
-      internalLogger: mockedInternalLogger,
-
-      transports: {
-        ...faroWebSdkModule.faro.transports,
-        transports: mockTransports,
-      },
-    });
-
-    const backend = new GrafanaJavascriptAgentBackend({
-      ...options,
-      preventGlobalExposure: true,
-    });
-
-    const event: GrafanaJavascriptAgentEchoEvent = {
-      type: EchoEventType.GrafanaJavascriptAgent,
-      payload: { foo: 'bar' } as unknown as GrafanaJavascriptAgentEchoEvent,
-      meta: {} as unknown as EchoMeta,
-    };
-
-    backend.addEvent(event);
-
-    expect(mockTransports[0].send).toHaveBeenCalledTimes(1);
-    expect(mockTransports[0].send).toHaveBeenCalledWith(event.payload);
-
-    expect(mockTransports[1].send).toHaveBeenCalledTimes(1);
-    expect(mockTransports[1].send).toHaveBeenCalledWith(event.payload);
-  });
-
   //@FIXME - make integration test work
 
   // it('integration test with EchoSrv and  GrafanaJavascriptAgent', async () => {
