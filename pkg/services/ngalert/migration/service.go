@@ -303,44 +303,33 @@ func (ms *migrationService) GetOrgMigrationState(ctx context.Context, orgID int6
 	if migrated, err := ms.migrationStore.IsMigrated(ctx, orgID); err != nil || !migrated {
 		return &definitions.OrgMigrationState{OrgID: orgID}, err
 	}
-	var resState *definitions.OrgMigrationState
-	err := ms.store.InTransaction(ctx, func(ctx context.Context) error {
-		var err error
-		dState, err := ms.migrationStore.GetOrgMigrationState(ctx, orgID)
-		if err != nil {
-			return err
-		}
-
-		cfg, err := ms.migrationStore.GetAlertmanagerConfig(ctx, orgID)
-		if err != nil {
-			return fmt.Errorf("get alertmanager config: %w", err)
-		}
-		amConfig := migmodels.FromPostableUserConfig(cfg)
-
-		// Hydrate the slim database model.
-		migratedChannels, err := ms.fromContactPairs(ctx, orgID, dState.MigratedChannels, amConfig)
-		if err != nil {
-			return fmt.Errorf("rehydrate channels: %w", err)
-		}
-
-		migratedDashboards, err := ms.fromDashboardUpgrades(ctx, orgID, dState.MigratedDashboards, amConfig)
-		if err != nil {
-			return fmt.Errorf("rehydrate alerts: %w", err)
-		}
-
-		resState = &definitions.OrgMigrationState{
-			OrgID:              dState.OrgID,
-			MigratedDashboards: migratedDashboards,
-			MigratedChannels:   migratedChannels,
-		}
-
-		return nil
-	})
+	dState, err := ms.migrationStore.GetOrgMigrationState(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return resState, nil
+	cfg, err := ms.migrationStore.GetAlertmanagerConfig(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("get alertmanager config: %w", err)
+	}
+	amConfig := migmodels.FromPostableUserConfig(cfg)
+
+	// Hydrate the slim database model.
+	migratedChannels, err := ms.fromContactPairs(ctx, orgID, dState.MigratedChannels, amConfig)
+	if err != nil {
+		return nil, fmt.Errorf("rehydrate channels: %w", err)
+	}
+
+	migratedDashboards, err := ms.fromDashboardUpgrades(ctx, orgID, dState.MigratedDashboards, amConfig)
+	if err != nil {
+		return nil, fmt.Errorf("rehydrate alerts: %w", err)
+	}
+
+	return &definitions.OrgMigrationState{
+		OrgID:              dState.OrgID,
+		MigratedDashboards: migratedDashboards,
+		MigratedChannels:   migratedChannels,
+	}, nil
 }
 
 // Run starts the migration to transition between legacy alerting and unified alerting based on the current and desired
