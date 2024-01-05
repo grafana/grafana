@@ -182,4 +182,11 @@ describe('CompletionDataProvider', () => {
   test('Returns the expected series labels', async () => {
     expect(await completionProvider.getSeriesLabels([])).toEqual(seriesLabels);
   });
+
+  test('Escapes correct characters when building stream selector in getSeriesLabels', async () => {
+    completionProvider.getSeriesLabels([{ name: 'job', op: '=', value: '"a\\b\n' }]);
+    expect(languageProvider.fetchSeriesLabels).toHaveBeenCalledWith('{job="\\"a\\\\b\\n"}', {
+      timeRange: mockTimeRange,
+    });
+  });
 });
