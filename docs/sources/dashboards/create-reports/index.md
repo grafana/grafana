@@ -137,12 +137,14 @@ A background job runs every 10 minutes and removes temporary CSV files. You can 
 
 ### Table data in PDF
 
-> **Note:** Available in public preview (behind the `pdfTables` feature toggle) in [Grafana Enterprise][] 10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+{{% admonition type="note" %}}
+Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise][] v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+{{% /admonition %}}
 
-When there is more data in your table panels than what can be shown in the dashboard PDF, you can select one of these two options to access all table panels data as PDF in your reports:
+When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
 
-- **Include table data as PDF appendix** adds an appendix to the main dashboard PDF.
-- **Attach a separate PDF of table data** generates a separate PDF file.
+- **Include table data as PDF appendix** - Adds an appendix to the main dashboard PDF.
+- **Attach a separate PDF of table data** - Generates a separate PDF file.
 
 This feature relies on the same plugin that supports the [image rendering][] features.
 
