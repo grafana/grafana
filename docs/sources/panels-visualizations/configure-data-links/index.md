@@ -123,21 +123,20 @@ If you want to add all of the current dashboard's variables to the URL, then use
 
 ## Add a data link
 
-1. Hover over any part of the panel you want to which you want to add the data link to display the actions menu on the top right corner.
-1. Click the menu and select **Edit**.
-
-   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
-
-1. Scroll down to the Data links section and expand it.
+1. Navigate to the panel to which you want to add the data link.
+1. Hover over any part of the panel to display the menu icon in the upper-right corner.
+1. Click the menu icon and select **Edit** to open the panel editor.
+1. In the panel edit pane, scroll down to the **Data links** section and expand it.
 1. Click **Add link**.
-1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
-1. Enter the **URL** you want to link to.
+1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
+1. Enter the **URL** or variable to which you want to link.
 
-   You can even add one of the template variables defined in the dashboard. Click in the **URL** field and then type `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [Data link variables](#data-link-variables).
+   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
-1. If you want the link to open in a new tab, then select **Open in a new tab**.
-1. Click **Save** to save changes and close the window.
-1. Click **Save** in the upper right to save your changes to the dashboard.
+1. If you want the link to open in a new tab, then toggle the **Open in a new tab** switch.
+1. Click **Save** to save changes and close the dialog box.
+1. Click **Apply** to see your changes in the dashboard.
+1. Click the **Save dashboard** icon to save your changes to the dashboard.
 
 {{% docs/reference %}}
 [Cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
