@@ -3551,7 +3551,7 @@ __metadata:
     react-dom: "npm:18.2.0"
     react-dropzone: "npm:14.2.3"
     react-highlight-words: "npm:0.20.0"
-    react-hook-form: "npm:7.5.3"
+    react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^12.0.0"
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.3.1"
@@ -17664,7 +17664,7 @@ __metadata:
     react-dropzone: "npm:^14.2.3"
     react-grid-layout: "npm:1.4.2"
     react-highlight-words: "npm:0.20.0"
-    react-hook-form: "npm:7.5.3"
+    react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^12.0.0"
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.3.1"
@@ -25683,12 +25683,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-hook-form@npm:7.5.3":
-  version: 7.5.3
-  resolution: "react-hook-form@npm:7.5.3"
+"react-hook-form@npm:^7.49.2":
+  version: 7.49.2
+  resolution: "react-hook-form@npm:7.49.2"
   peerDependencies:
-    react: ^16.8.0 || ^17
-  checksum: ee359714c538ee8f328e147732aba629269849e159a88f96662c2e2d8ca175a6015e5364304bb8bada0249de0c335bafa64835abe09b5db895b702bce9159912
+    react: ^16.8.0 || ^17 || ^18
+  checksum: 7895d65b8458c42d46eb338803bb0fd1aab42fc69ecf80b47846eace9493a10cac5b05c9b744a5f9f1f7969a3e2703fc2118cdab97e49a7798a72d09f106383f
   languageName: node
   linkType: hard
 

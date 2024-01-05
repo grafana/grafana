@@ -1,6 +1,6 @@
 import { partial } from 'lodash';
 import React, { type ReactElement, useEffect, useState } from 'react';
-import { DeepMap, FieldError, useForm } from 'react-hook-form';
+import { DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -34,7 +34,7 @@ interface SaveToExistingDashboard extends SaveTargetDTO {
 type FormDTO = SaveToNewDashboardDTO | SaveToExistingDashboard;
 
 function assertIsSaveToExistingDashboardError(
-  errors: DeepMap<FormDTO, FieldError>
+  errors: FieldErrors<FormDTO>
 ): asserts errors is DeepMap<SaveToExistingDashboard, FieldError> {
   // the shape of the errors object is always compatible with the type above, but we need to
   // explicitly assert its type so that TS can narrow down FormDTO to SaveToExistingDashboard
