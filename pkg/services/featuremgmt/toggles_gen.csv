@@ -152,3 +152,4 @@ regressionTransformation,privatePreview,@grafana/grafana-bi-squad,2023-11-24,fal
 displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,false,true
 alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-11-30,false,false,true,false
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,false,true
+alertingPreviewUpgrade,experimental,@grafana/alerting-squad,2024-01-03,false,false,true,false
