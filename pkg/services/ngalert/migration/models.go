@@ -21,9 +21,8 @@ type OrgMigration struct {
 	migrationStore    migrationStore.Store
 	encryptionService secrets.Service
 
-	orgID       int64
-	failOnError bool
-	silences    []*pb.MeshSilence
+	orgID    int64
+	silences []*pb.MeshSilence
 }
 
 // newOrgMigration creates a new OrgMigration for the given orgID.
@@ -35,11 +34,8 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 		migrationStore:    ms.migrationStore,
 		encryptionService: ms.encryptionService,
 
-		orgID: orgID,
-		// failOnError is true if an org migration should fail as soon as an error occurs.
-		// This is mainly for use with the automatic on-startup migration.
-		failOnError: false,
-		silences:    make([]*pb.MeshSilence, 0),
+		orgID:    orgID,
+		silences: make([]*pb.MeshSilence, 0),
 	}
 }
 

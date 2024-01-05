@@ -26,11 +26,17 @@ func NewAlertmanager() *Alertmanager {
 
 // AddRoute adds a route to the alertmanager config.
 func (am *Alertmanager) AddRoute(route *apiModels.Route) {
+	if route == nil {
+		return
+	}
 	am.legacyRoute.Routes = append(am.legacyRoute.Routes, route)
 }
 
 // AddReceiver adds a receiver to the alertmanager config.
 func (am *Alertmanager) AddReceiver(recv *apiModels.PostableGrafanaReceiver) {
+	if recv == nil {
+		return
+	}
 	am.Config.AlertmanagerConfig.Receivers = append(am.Config.AlertmanagerConfig.Receivers, &apiModels.PostableApiReceiver{
 		Receiver: config.Receiver{
 			Name: recv.Name, // Channel name is unique within an Org.

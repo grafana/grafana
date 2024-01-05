@@ -2,12 +2,14 @@ package migration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -171,11 +173,28 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 			continue
 		}
 
-		// The automatic on-startup migration will fail if any error occurs.
-		om.failOnError = true
 		dashboardUpgrades, contactPairs, err := om.migrateOrg(ctx)
 		if err != nil {
 			return fmt.Errorf("migrate org %d: %w", o.ID, err)
+		}
+
+		// Check for errors, if any exist log and fail the migration.
+		errs := migmodels.ExtractErrors(dashboardUpgrades, contactPairs)
+		var migrationErr error
+		for _, e := range errs {
+			// Skip certain errors as historically they are not fatal to the migration. We can revisit these if necessary.
+			if errors.Is(e, ErrDiscontinued) {
+				// Discontinued notification type.
+				continue
+			}
+			if errors.Is(e, ErrOrphanedAlert) {
+				// Orphaned alerts.
+				continue
+			}
+			migrationErr = errors.Join(migrationErr, e)
+		}
+		if migrationErr != nil {
+			return fmt.Errorf("migrate org %d: %w", o.ID, migrationErr)
 		}
 
 		err = ms.newSync(o.ID).syncAndSaveState(ctx, dashboardUpgrades, contactPairs)

@@ -36,12 +36,8 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 		}
 		receiver, err := om.createReceiver(c)
 		if err != nil {
-			if om.failOnError && !errors.Is(err, ErrDiscontinued) {
-				// We don't fail on discontinued channels.
-				return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
-			}
 			om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
-			pair.Error = err.Error()
+			pair.Error = err
 			pairs = append(pairs, pair)
 			continue
 		}
@@ -49,11 +45,8 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 
 		route, err := createRoute(c, receiver.Name)
 		if err != nil {
-			if om.failOnError {
-				return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
-			}
 			om.log.Warn("Failed to create route", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
-			pair.Error = err.Error()
+			pair.Error = err
 			pairs = append(pairs, pair)
 			continue
 		}

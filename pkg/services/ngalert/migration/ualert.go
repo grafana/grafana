@@ -11,16 +11,16 @@ import (
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 )
 
-func (om *OrgMigration) migrateAlerts(ctx context.Context, l log.Logger, alerts []*legacymodels.Alert, dashboard *dashboards.Dashboard) ([]*migmodels.AlertPair, error) {
+// ErrOrphanedAlert is used for legacy alerts that are missing their dashboard.
+var ErrOrphanedAlert = errors.New("orphaned")
+
+func (om *OrgMigration) migrateAlerts(ctx context.Context, l log.Logger, alerts []*legacymodels.Alert, dashboard *dashboards.Dashboard) []*migmodels.AlertPair {
 	pairs := make([]*migmodels.AlertPair, 0, len(alerts))
 	for _, da := range alerts {
 		al := l.New("ruleId", da.ID, "ruleName", da.Name)
 
 		alertRule, err := om.migrateAlert(ctx, al, da, dashboard)
 		if err != nil {
-			if om.failOnError {
-				return nil, fmt.Errorf("migrate alert '%s': %w", da.Name, err)
-			}
 			al.Warn("Failed to migrate alert", "error", err)
 			pairs = append(pairs, migmodels.NewAlertPair(da, err))
 			continue
@@ -31,20 +31,18 @@ func (om *OrgMigration) migrateAlerts(ctx context.Context, l log.Logger, alerts 
 		pairs = append(pairs, pair)
 	}
 
-	return pairs, nil
+	return pairs
 }
 
-func (om *OrgMigration) migrateDashboard(ctx context.Context, dashID int64, alerts []*legacymodels.Alert) (*migmodels.DashboardUpgrade, error) {
+func (om *OrgMigration) migrateDashboard(ctx context.Context, dashID int64, alerts []*legacymodels.Alert) *migmodels.DashboardUpgrade {
 	dashboard, err := om.migrationStore.GetDashboard(ctx, om.orgID, dashID)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
-			// Historically, orphaned alerts are an exception to failOnError. We can revisit this if necessary.
-			om.log.Warn("Dashboard not found, alerts are orphaned", "dashboardId", dashID, "alertCount", len(alerts))
-			du := migmodels.NewDashboardUpgrade(dashID)
-			du.AddAlertErrors(dashboards.ErrDashboardNotFound, alerts...)
-			return du, nil
+			err = fmt.Errorf("%w: missing dashboard", ErrOrphanedAlert)
 		}
-		return nil, fmt.Errorf("get dashboard '%d': %w", dashID, err)
+		du := migmodels.NewDashboardUpgrade(dashID)
+		du.AddAlertErrors(err, alerts...)
+		return du
 	}
 	l := om.log.New(
 		"dashboardTitle", dashboard.Title,
@@ -58,20 +56,11 @@ func (om *OrgMigration) migrateDashboard(ctx context.Context, dashID int64, aler
 	// nolint:staticcheck
 	du.FolderID = dashboard.FolderID
 
-	pairs, err := om.migrateAlerts(ctx, l, alerts, dashboard)
-	if err != nil {
-		if om.failOnError {
-			return nil, err
-		}
-		l.Warn("Failed to migrate dashboard alerts", "alertCount", len(alerts), "error", err)
-		du.AddAlertErrors(err, alerts...)
-		return du, nil
-	}
-
+	pairs := om.migrateAlerts(ctx, l, alerts, dashboard)
 	for _, pair := range pairs {
 		du.MigratedAlerts[pair.LegacyRule.PanelID] = pair
 	}
-	return du, nil
+	return du
 }
 
 func (om *OrgMigration) migrateOrgAlerts(ctx context.Context) ([]*migmodels.DashboardUpgrade, error) {
@@ -83,10 +72,7 @@ func (om *OrgMigration) migrateOrgAlerts(ctx context.Context) ([]*migmodels.Dash
 
 	dashboardUpgrades := make([]*migmodels.DashboardUpgrade, 0, len(mappedAlerts))
 	for dashID, alerts := range mappedAlerts {
-		du, err := om.migrateDashboard(ctx, dashID, alerts)
-		if err != nil && om.failOnError {
-			return nil, fmt.Errorf("migrate dashboard '%d': %w", dashID, err)
-		}
+		du := om.migrateDashboard(ctx, dashID, alerts)
 		dashboardUpgrades = append(dashboardUpgrades, du)
 	}
 	return dashboardUpgrades, nil

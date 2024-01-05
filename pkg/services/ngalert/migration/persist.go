@@ -59,11 +59,7 @@ func (sync *sync) syncAndSaveState(
 	dashboardUpgrades []*migmodels.DashboardUpgrade,
 	contactPairs []*migmodels.ContactPair,
 ) error {
-	delta, err := createDelta(dashboardUpgrades, contactPairs)
-	if err != nil {
-		return fmt.Errorf("state delta: %w", err)
-	}
-
+	delta := createDelta(dashboardUpgrades, contactPairs)
 	state, err := sync.syncDelta(ctx, delta)
 	if err != nil {
 		return fmt.Errorf("sync state: %w", err)
@@ -88,11 +84,11 @@ type StateDelta struct {
 func createDelta(
 	dashboardUpgrades []*migmodels.DashboardUpgrade,
 	contactPairs []*migmodels.ContactPair,
-) (StateDelta, error) {
+) StateDelta {
 	return StateDelta{
 		DashboardsToAdd: dashboardUpgrades,
 		ChannelsToAdd:   contactPairs,
-	}, nil
+	}
 }
 
 // syncDelta persists the given delta to the state and database.
@@ -124,10 +120,8 @@ func (sync *sync) handleAlertmanager(ctx context.Context, delta StateDelta) (*mi
 	}
 
 	for _, pair := range delta.ChannelsToAdd {
-		if pair.ContactPoint != nil && pair.Route != nil {
-			amConfig.AddReceiver(pair.ContactPoint)
-			amConfig.AddRoute(pair.Route)
-		}
+		amConfig.AddReceiver(pair.ContactPoint)
+		amConfig.AddRoute(pair.Route)
 	}
 
 	// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
@@ -148,32 +142,30 @@ func (sync *sync) handleAlertmanager(ctx context.Context, delta StateDelta) (*mi
 func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgMigrationState, delta StateDelta, amConfig *migmodels.Alertmanager) error {
 	pairs := make([]*migmodels.AlertPair, 0)
 	createdFolderUIDs := make(map[string]struct{})
-	if len(delta.DashboardsToAdd) > 0 {
-		for _, duToAdd := range delta.DashboardsToAdd {
-			pairsWithRules := make([]*migmodels.AlertPair, 0, len(duToAdd.MigratedAlerts))
-			for _, pair := range duToAdd.MigratedAlerts {
-				if pair.Rule != nil {
-					pairsWithRules = append(pairsWithRules, pair)
-				}
+	for _, duToAdd := range delta.DashboardsToAdd {
+		pairsWithRules := make([]*migmodels.AlertPair, 0, len(duToAdd.MigratedAlerts))
+		for _, pair := range duToAdd.MigratedAlerts {
+			if pair.Rule != nil {
+				pairsWithRules = append(pairsWithRules, pair)
+			}
+		}
+
+		if len(pairsWithRules) > 0 {
+			l := sync.log.New("dashboardTitle", duToAdd.Title, "dashboardUid", duToAdd.UID)
+			migratedFolder, err := sync.migratedFolder(ctx, l, duToAdd.UID, duToAdd.FolderID)
+			if err != nil {
+				return err
 			}
 
-			if len(pairsWithRules) > 0 {
-				l := sync.log.New("dashboardTitle", duToAdd.Title, "dashboardUid", duToAdd.UID)
-				migratedFolder, err := sync.migratedFolder(ctx, l, duToAdd.UID, duToAdd.FolderID)
-				if err != nil {
-					return err
-				}
+			// Keep track of folders created by the migration.
+			if _, exists := createdFolderUIDs[migratedFolder.uid]; migratedFolder.created && !exists {
+				createdFolderUIDs[migratedFolder.uid] = struct{}{}
+				state.CreatedFolders = append(state.CreatedFolders, migratedFolder.uid)
+			}
 
-				// Keep track of folders created by the migration.
-				if _, exists := createdFolderUIDs[migratedFolder.uid]; migratedFolder.created && !exists {
-					createdFolderUIDs[migratedFolder.uid] = struct{}{}
-					state.CreatedFolders = append(state.CreatedFolders, migratedFolder.uid)
-				}
-
-				for _, pair := range pairsWithRules {
-					pair.Rule.NamespaceUID = migratedFolder.uid
-					pairs = append(pairs, pair)
-				}
+			for _, pair := range pairsWithRules {
+				pair.Rule.NamespaceUID = migratedFolder.uid
+				pairs = append(pairs, pair)
 			}
 		}
 	}
@@ -253,10 +245,8 @@ func (sync *sync) attachContactPointLabels(ctx context.Context, pairs []*migmode
 			return nil, fmt.Errorf("extract channel IDs: %w", err)
 		}
 
-		if len(alertChannels) > 0 {
-			for _, c := range alertChannels {
-				pair.Rule.Labels[contactLabel(c.Name)] = "true"
-			}
+		for _, c := range alertChannels {
+			pair.Rule.Labels[contactLabel(c.Name)] = "true"
 		}
 
 		rules = append(rules, *pair.Rule)
@@ -281,6 +271,10 @@ func (sync *sync) extractChannels(ctx context.Context, alert *legacymodels.Alert
 	channels := make([]*legacymodels.AlertNotification, 0, len(parsedSettings.Notifications))
 	for _, key := range parsedSettings.Notifications {
 		// Either id or uid can be defined in the dashboard alert notification settings. See alerting.NewRuleFromDBAlert.
+		if key.ID == 0 && key.UID == "" {
+			l.Warn("Alert notification has no ID or UID, skipping", "notificationKey", key)
+			continue
+		}
 		if c, err := sync.channelCache.Get(ctx, key); err != nil {
 			return nil, fmt.Errorf("get alert notification: %w", err)
 		} else if c != nil {

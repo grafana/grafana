@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apiModels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -12,32 +14,26 @@ type DashboardUpgrade struct {
 	Title          string
 	FolderID       int64
 	MigratedAlerts map[int64]*AlertPair
-	NewFolderUID   string
-	CreatedFolder  bool
-	Warning        string
 }
 
 type AlertPair struct {
 	LegacyRule *legacymodels.Alert
 	Rule       *ngmodels.AlertRule
-	Error      string
+	Error      error
 }
 
 type ContactPair struct {
 	Channel      *legacymodels.AlertNotification
 	ContactPoint *apiModels.PostableGrafanaReceiver
 	Route        *apiModels.Route
-	Error        string
+	Error        error
 }
 
 func NewAlertPair(da *legacymodels.Alert, err error) *AlertPair {
-	pair := &AlertPair{
+	return &AlertPair{
 		LegacyRule: da,
+		Error:      err,
 	}
-	if err != nil {
-		pair.Error = err.Error()
-	}
-	return pair
 }
 
 func NewDashboardUpgrade(id int64) *DashboardUpgrade {
@@ -52,4 +48,22 @@ func (du *DashboardUpgrade) AddAlertErrors(err error, alerts ...*legacymodels.Al
 		pair := NewAlertPair(da, err)
 		du.MigratedAlerts[da.PanelID] = pair
 	}
+}
+
+// ExtractErrors extracts errors from migrated dashboards and channels.
+func ExtractErrors(dus []*DashboardUpgrade, contactPairs []*ContactPair) []error {
+	errs := make([]error, 0)
+	for _, du := range dus {
+		for _, pair := range du.MigratedAlerts {
+			if pair.Error != nil {
+				errs = append(errs, fmt.Errorf("migrate alert '%s': %w", pair.LegacyRule.Name, pair.Error))
+			}
+		}
+	}
+	for _, pair := range contactPairs {
+		if pair.Error != nil {
+			errs = append(errs, fmt.Errorf("migrate channel '%s': %w", pair.Channel.Name, pair.Error))
+		}
+	}
+	return errs
 }
