@@ -1013,11 +1013,12 @@ var (
 		{
 			Name:            "recoveryThreshold",
 			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2023, time.October, 10, 12, 0, 0, 0, time.UTC),
+			Expression:      "true",
 		},
 		{
 			Name:         "lokiStructuredMetadata",
