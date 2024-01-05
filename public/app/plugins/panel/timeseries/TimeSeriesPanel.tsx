@@ -11,7 +11,7 @@ import { config } from 'app/core/config';
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
-import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
+// import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';

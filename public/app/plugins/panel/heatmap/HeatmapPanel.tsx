@@ -18,6 +18,7 @@ import {
   Portal,
   ScaleDistribution,
   TooltipPlugin2,
+  TooltipDisplayMode,
   ZoomPlugin,
   UPlotChart,
   usePanelContext,
@@ -57,9 +58,9 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync, canAddAnnotations } = usePanelContext();
+  const { sync } = usePanelContext();
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  // const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   //  necessary for enabling datalinks in hover view
   let scopedVarsFromRawData: ScopedVars[] = [];
@@ -167,7 +168,7 @@ export const HeatmapPanel = ({
       theme,
       eventBus,
       onhover: !showNewVizTooltips ? onhover : null,
-      onclick: !showNewVizTooltips && options.tooltip.show ? onclick : null,
+      onclick: !showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None ? onclick : null,
       isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
@@ -232,7 +233,7 @@ export const HeatmapPanel = ({
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
             {!showNewVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
-            {showNewVizTooltips && options.tooltip.show && (
+            {showNewVizTooltips && options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={builder}
                 hoverMode={TooltipHoverMode.xyOne}
@@ -240,6 +241,7 @@ export const HeatmapPanel = ({
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                   return (
                     <HeatmapHoverView
+                      mode={options.tooltip.mode}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       dataRef={dataRef}
@@ -247,7 +249,6 @@ export const HeatmapPanel = ({
                       dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}
                       showColorScale={options.tooltip.showColorScale}
-                      canAnnotate={enableAnnotationCreation}
                       panelData={data}
                       replaceVars={replaceVariables}
                       scopedVars={scopedVarsFromRawData}
@@ -269,7 +270,7 @@ export const HeatmapPanel = ({
       </VizLayout>
       {!showNewVizTooltips && (
         <Portal>
-          {hover && options.tooltip.show && (
+          {hover && options.tooltip.mode !== TooltipDisplayMode.None && (
             <VizTooltipContainer
               position={{ x: hover.pageX, y: hover.pageY }}
               offset={{ x: 10, y: 10 }}

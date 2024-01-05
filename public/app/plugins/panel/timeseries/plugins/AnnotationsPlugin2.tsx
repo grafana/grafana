@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import useDebounce from 'react-use/lib/useDebounce';
 import uPlot from 'uplot';
 
-import { DataFrame, GrafanaTheme2, TimeRange, colorManipulator } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 

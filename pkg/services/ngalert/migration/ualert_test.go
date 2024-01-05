@@ -66,7 +66,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 
 			config := configFromReceivers(t, tt.receivers)
 			require.NoError(t, encryptSecureSettings(config, mg)) // make sure we encrypt the settings
-			err := mg.validateAlertmanagerConfig(config)
+			err := service.newSync(1).validateAlertmanagerConfig(config)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())
