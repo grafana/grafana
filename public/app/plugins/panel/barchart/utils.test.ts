@@ -229,7 +229,7 @@ describe('BarChart utils', () => {
       `);
 
       const displayLegendValuesAsc = assertIsDefined('legend' in result ? result : null).legend;
-      const legendField = displayLegendValuesAsc.fields[0];
+      const legendField = displayLegendValuesAsc.fields[1];
 
       expect(legendField.values).toMatchInlineSnapshot(`
       [
