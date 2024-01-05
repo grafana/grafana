@@ -93,11 +93,3 @@ The following image shows a table visualization with value mappings. If you want
 1. (Optional) Enter display text.
 1. (Optional) Set the color.
 1. Click **Update** to save the value mapping.
-
-## Edit a value mapping
-
-You can edit a value mapping at any time.
-
-1. Edit the panel that contains the value mapping you want to edit.
-1. In the panel display options, in the **Value mappings** section, click **Edit value mappings**.
-1. Make the changes and click **Update**.
