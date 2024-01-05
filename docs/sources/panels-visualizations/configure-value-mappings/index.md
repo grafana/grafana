@@ -30,6 +30,8 @@ Values mapped using value mappings bypass the unit formatting. This means that a
 
 If value mappings are present in a panel, then Grafana displays a summary in the side pane of the panel editor.
 
+You can also use the dots on the left to drag and reorder value mappings in the list.
+
 ## Types of value mappings
 
 {{% admonition type="note" %}}
@@ -48,8 +50,6 @@ Grafana supports the following value mappings:
 
 - **Special** Maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to a display text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Map a special value when you want to format uncommon, boolean, or empty values.
   ![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)
-
-You can also use the dots on the left to drag and reorder value mappings in the list.
 
 ## Examples
 
