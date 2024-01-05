@@ -108,7 +108,7 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 
 {{< figure src="/static/img/docs/data_link_typeahead.png"  max-width= "800px" alt="Drop-down list with variable suggestions open from the URL field" >}}
 
-### Add a data link
+## Add a data link
 
 1. Hover over any part of the panel you want to which you want to add the data link to display the actions menu on the top right corner.
 1. Click the menu and select **Edit**.
