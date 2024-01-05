@@ -50,7 +50,7 @@ type QueryData struct {
 
 func New(
 	httpClient *http.Client,
-	features featuremgmt.FeatureToggles,
+	features backend.FeatureToggles,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
 ) (*QueryData, error) {
@@ -74,7 +74,7 @@ func New(
 	// standard deviation sampler is the default for backwards compatibility
 	exemplarSampler := exemplar.NewStandardDeviationSampler
 
-	if features.IsEnabledGlobally(featuremgmt.FlagDisablePrometheusExemplarSampling) {
+	if features.IsEnabled(featuremgmt.FlagDisablePrometheusExemplarSampling) {
 		exemplarSampler = exemplar.NewNoOpSampler
 	}
 
@@ -86,7 +86,7 @@ func New(
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
-		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
+		enableDataplane:    features.IsEnabled(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
 	}, nil
 }
