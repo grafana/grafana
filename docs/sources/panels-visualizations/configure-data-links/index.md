@@ -28,10 +28,16 @@ weight: 80
 
 Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization showed four servers, you could add a data link to one or two of them.
 
+<!-- what we do mean by the "value under the cursor" and when you're linking to using a variable, where is that link going to??? an code snippet representing the example above would be great for explaining this concept-->
+
 The link itself is accessible in different ways depending on the visualization. For the Graph you need to click on a data point or line, for a panel like
 Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open the context menu.
 
+<!--screenshot here -->
+
 You can use data link variables or data links to create links between panels. You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables](#data-link-variables).
+
+<!--see what of this paragraph belongs in the next section, or maybe just repeat it? -->
 
 ## Data link variables
 
@@ -46,6 +52,9 @@ These variables changed in 6.4 so if you have an older version of Grafana, then 
 Azure Monitor, [CloudWatch][], and [Google Cloud Monitoring][] have pre-configured data links called _deep links_.
 
 You can also use template variables in your data links URLs, refer to [Templates and variables][] for more information on template variables.
+
+<!--would be good to have examples below to show how you format this stuff--assumes a lot of knowledge of how to format these variables-->
+<!--What the variables look like in the drop-down vs in the docs is a bit confusing-->
 
 ### Time range panel variables
 
