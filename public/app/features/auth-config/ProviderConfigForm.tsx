@@ -35,7 +35,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const [isSaving, setIsSaving] = useState(false);
   const providerFields = fields[provider];
   const [submitError, setSubmitError] = useState(false);
-  const dataSubmitted = isSubmitted && !submitError;
+  const dataSubmitted = isSubmitted && !submitError && !Object.keys(errors).length;
   const sections = sectionFields[provider];
 
   useEffect(() => {
