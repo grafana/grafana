@@ -348,7 +348,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     dataObj.runQueries();
   }
 
-  public changeQueries(queries: DataQuery[]) {
+  public changeQueries<T extends DataQuery>(queries: T[]) {
     const dataObj = this.state.panel.state.$data;
     const runner = this.queryRunner;
 
