@@ -88,7 +88,10 @@ export class GrafanaJavascriptAgentBackend
   }
 
   addEvent = (e: EchoEvent) => {
-    this.faroInstance.transports.transports.forEach((t) => t.send(e.payload));
+    this.faroInstance.transports.transports
+      // don't call 'EchoSrvTransport' because it already calls addEvent() internally.
+      .filter((t) => t.name !== EchoSrvTransport.name)
+      .forEach((t) => t.send(e.payload));
   };
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be
