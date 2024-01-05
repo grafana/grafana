@@ -85,22 +85,10 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 }
 
 func (s *SSOSettingsService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	storeSettings, err := s.store.Get(ctx, provider)
-
-	if errors.Is(err, ssosettings.ErrNotFound) {
-		settings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
-		if err != nil {
-			return nil, err
-		}
-
-		return settings, nil
-	}
-
+	storeSettings, err := s.GetForProvider(ctx, provider)
 	if err != nil {
 		return nil, err
 	}
-
-	storeSettings.Source = models.DB
 
 	for k, v := range storeSettings.Settings {
 		if isSecret(k) && v != "" {
