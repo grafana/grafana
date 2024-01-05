@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"golang.org/x/sync/semaphore"
-
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -23,7 +21,6 @@ func NewTestMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *set
 	}
 	return &migrationService{
 		lock:              serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
-		sem:               semaphore.NewWeighted(1),
 		log:               &logtest.Fake{},
 		cfg:               cfg,
 		store:             sqlStore,

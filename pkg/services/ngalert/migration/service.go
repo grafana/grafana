@@ -9,7 +9,6 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/common/model"
-	"golang.org/x/sync/semaphore"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -42,7 +41,6 @@ type UpgradeService interface {
 
 type migrationService struct {
 	lock           *serverlock.ServerLockService
-	sem            *semaphore.Weighted
 	cfg            *setting.Cfg
 	log            log.Logger
 	store          db.DB
@@ -60,7 +58,6 @@ func ProvideService(
 ) (UpgradeService, error) {
 	return &migrationService{
 		lock:              lock,
-		sem:               semaphore.NewWeighted(1),
 		log:               log.New("ngalert.migration"),
 		cfg:               cfg,
 		store:             store,
@@ -82,21 +79,25 @@ func (ms *migrationService) verifyTry(ctx context.Context, orgID int64, op opera
 
 // try attempts to execute the operation. If another operation is already in progress, ErrUpgradeInProgress will be returned.
 func (ms *migrationService) try(ctx context.Context, op operation) (definitions.OrgMigrationSummary, error) {
-	if !ms.sem.TryAcquire(1) {
+	var summary definitions.OrgMigrationSummary
+	var errOp error
+	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(ctx context.Context) {
+		errOp = ms.store.InTransaction(ctx, func(ctx context.Context) error {
+			s, err := op(ctx)
+			if err != nil {
+				return err
+			}
+			if s != nil {
+				summary.Add(*s)
+			}
+			return nil
+		})
+	})
+	if errLock != nil {
 		return definitions.OrgMigrationSummary{}, ErrUpgradeInProgress
 	}
-	defer ms.sem.Release(1)
-	var summary definitions.OrgMigrationSummary
-	err := ms.store.InTransaction(ctx, func(ctx context.Context) error {
-		s, err := op(ctx)
-		if err != nil {
-			return err
-		}
-		summary.Add(*s)
-		return nil
-	})
-	if err != nil {
-		return definitions.OrgMigrationSummary{}, err
+	if errOp != nil {
+		return definitions.OrgMigrationSummary{}, errOp
 	}
 
 	return summary, nil
@@ -335,10 +336,6 @@ func (ms *migrationService) GetOrgMigrationState(ctx context.Context, orgID int6
 // Run starts the migration to transition between legacy alerting and unified alerting based on the current and desired
 // alerting type as determined by the kvstore and configuration, respectively.
 func (ms *migrationService) Run(ctx context.Context) error {
-	if !ms.sem.TryAcquire(1) {
-		return ErrUpgradeInProgress
-	}
-	defer ms.sem.Release(1)
 	var errMigration error
 	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(ctx context.Context) {
 		ms.log.Info("Starting")
@@ -508,27 +505,21 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 // configurations, and silence files for a single organization.
 // In addition, it will delete all folders and permissions originally created by this migration.
 func (ms *migrationService) RevertOrg(ctx context.Context, orgID int64) error {
-	if !ms.sem.TryAcquire(1) {
-		return ErrUpgradeInProgress
-	}
-	defer ms.sem.Release(1)
 	ms.log.Info("Reverting legacy migration for org", "orgId", orgID)
-	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
-		return ms.migrationStore.RevertOrg(ctx, orgID)
+	_, err := ms.try(ctx, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+		return nil, ms.migrationStore.RevertOrg(ctx, orgID)
 	})
+	return err
 }
 
 // RevertAllOrgs reverts the migration for all orgs, deleting all unified alerting resources such as alert rules, alertmanager configurations, and silence files.
 // In addition, it will delete all folders and permissions originally created by this migration.
 func (ms *migrationService) RevertAllOrgs(ctx context.Context) error {
-	if !ms.sem.TryAcquire(1) {
-		return ErrUpgradeInProgress
-	}
-	defer ms.sem.Release(1)
 	ms.log.Info("Reverting legacy migration for all orgs")
-	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
-		return ms.migrationStore.RevertAllOrgs(ctx)
+	_, err := ms.try(ctx, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+		return nil, ms.migrationStore.RevertAllOrgs(ctx)
 	})
+	return err
 }
 
 // verifyMigrated returns an error if the org has not been migrated.
