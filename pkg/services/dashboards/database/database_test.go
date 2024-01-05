@@ -482,14 +482,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		count, err := dashboardStore.CountDashboardsInFolder(
 			context.Background(),
 			// nolint:staticcheck
-			&dashboards.CountDashboardsInFolderRequest{FolderID: 0, OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUID: "myDashboard", OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
 		count, err = dashboardStore.CountDashboardsInFolder(
 			context.Background(),
 			// nolint:staticcheck
-			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.ID, OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUID: savedFolder.UID, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
 	})
