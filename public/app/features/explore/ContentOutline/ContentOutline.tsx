@@ -100,6 +100,12 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
   };
 
+  console.log('outlineItems', outlineItems);
+
+  const outlineItemsHaveChildren = outlineItems.some((item) => item.children);
+
+  console.log('outlineItemsHaveChildren', outlineItemsHaveChildren);
+
   // TODO: fix indenting for buttons that are not in a section
   // figure out why ellipsis is not working
 
@@ -117,11 +123,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
           />
 
           {outlineItems.map((item) => (
-            <>
+            <React.Fragment key={item.id}>
               <div className={styles.sectionWrapper}>
-                {item.children && (
+                {item.children && item.children.length > 0 && contentOutlineExpanded && (
                   <ContentOutlineItemButton
-                    key={item.id}
                     icon={sectionExpanded ? 'angle-down' : 'angle-right'}
                     className={styles.iconButton}
                     onClick={toggleSection}
@@ -134,6 +139,14 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   icon={item.icon}
                   onClick={() => scrollIntoView(item.ref, item.panelId)}
                   tooltip={!contentOutlineExpanded ? item.title : undefined}
+                  topLeftIcon={
+                    item.children && item.children.length > 0 && !contentOutlineExpanded
+                      ? sectionExpanded
+                        ? 'angle-down'
+                        : 'angle-right'
+                      : undefined
+                  }
+                  onTopLeftIconClick={() => toggleSection()}
                 />
               </div>
               {item.children &&
@@ -142,12 +155,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   <ContentOutlineItemButton
                     key={child.id}
                     title={contentOutlineExpanded ? child.title : undefined}
-                    className={styles.indent}
+                    icon={contentOutlineExpanded ? undefined : item.icon}
+                    className={contentOutlineExpanded ? styles.indent : styles.buttonStyles}
                     onClick={() => scrollIntoView(child.ref, child.panelId)}
                     tooltip={!contentOutlineExpanded ? child.title : undefined}
                   />
                 ))}
-            </>
+            </React.Fragment>
           ))}
         </div>
       </CustomScrollbar>

@@ -29,7 +29,7 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
       const matchIndex = prevItems.findIndex((item) => item.panelId === panelId);
       const match = prevItems[matchIndex];
 
-      const matchIsParent = match && match.children && match.children.length > 0;
+      const matchIsParent = match && match.children;
 
       let updatedItems = [...prevItems];
 
@@ -39,7 +39,7 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
       } else if (match) {
         const parent = {
           ...match,
-          id: uniqueId(`section-${panelId}-${title}-${icon}_`),
+          id: `section-${id}_`,
           title: panelId,
           children: [match, { id, panelId, title, icon, ref }],
         };
@@ -57,15 +57,19 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
   }, []);
 
   const unregister = useCallback((id: string) => {
-    setOutlineItems((prevItems) =>
-      prevItems
-        .filter((item) => item.id !== id)
-        .map((item) => {
-          if (item.children) {
-            item.children = item.children.filter((child) => child.id !== id);
-          }
-          return item;
-        })
+    setOutlineItems(
+      (prevItems) =>
+        prevItems
+          .filter((item) => item.id !== id)
+          .map((item) => {
+            if (item.children) {
+              item.children = item.children.filter((child) => child.id !== id);
+            }
+            return item;
+          })
+
+      //TODO: need logic here to remove section if it only has one child
+      // 1 child logic would work for queries, but not for logs because of pinned items and errors
     );
   }, []);
 

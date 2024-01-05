@@ -2,27 +2,44 @@ import { cx, css } from '@emotion/css';
 import React, { ButtonHTMLAttributes } from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2, Tooltip } from '@grafana/ui';
+import { Icon, useStyles2, Tooltip, IconSize } from '@grafana/ui';
 
 type CommonProps = {
   title?: string;
   icon?: string;
   tooltip?: string;
   className?: string;
+  topLeftIcon?: string;
+  onTopLeftIconClick?: () => void;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export function ContentOutlineItemButton({ title, icon, tooltip, className, ...rest }: ContentOutlineItemButtonProps) {
+export function ContentOutlineItemButton({
+  title,
+  icon,
+  tooltip,
+  className,
+  topLeftIcon,
+  onTopLeftIconClick,
+  ...rest
+}: ContentOutlineItemButtonProps) {
   const styles = useStyles2(getStyles);
 
   const buttonStyles = cx(styles.button, className);
 
   const body = (
-    <button className={buttonStyles} aria-label={tooltip} {...rest}>
-      {renderIcon(icon)}
-      {title}
-    </button>
+    <div className={styles.buttonContainer}>
+      {topLeftIcon && (
+        <button className={styles.topLeftIcon} onClick={onTopLeftIconClick}>
+          {renderIcon(topLeftIcon, 'lg')}
+        </button>
+      )}
+      <button className={buttonStyles} aria-label={tooltip} {...rest}>
+        {renderIcon(icon)}
+        {title && <span className={styles.textContainer}>{title}</span>}
+      </button>
+    </div>
   );
 
   return tooltip ? (
@@ -34,13 +51,13 @@ export function ContentOutlineItemButton({ title, icon, tooltip, className, ...r
   );
 }
 
-function renderIcon(icon: IconName | React.ReactNode) {
+function renderIcon(icon: IconName | React.ReactNode, size: IconSize = 'lg') {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={'lg'} />;
+    return <Icon name={icon} size={size} />;
   }
 
   return icon;
@@ -48,6 +65,9 @@ function renderIcon(icon: IconName | React.ReactNode) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    buttonContainer: css({
+      position: 'relative',
+    }),
     button: css({
       label: 'content-outline-item-button',
       display: 'flex',
@@ -59,10 +79,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: 'none',
+      maxWidth: '155px',
+    }),
+    textContainer: css({
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxWidth: '160px',
+    }),
+    topLeftIcon: css({
+      position: 'absolute',
+      top: '1px',
+      left: 0,
+      cursor: 'pointer',
+      background: 'transparent',
+      border: 'none',
+      padding: 0,
+      margin: 0,
     }),
   };
 };
