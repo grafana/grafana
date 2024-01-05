@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -38,12 +38,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const dataSubmitted = isSubmitted && !submitError && !Object.keys(errors).length;
   const sections = sectionFields[provider];
 
-  useEffect(() => {
-    if (dataSubmitted) {
-      locationService.push(`/admin/authentication`);
-    }
-  }, [dataSubmitted]);
-
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
     setSubmitError(false);
@@ -58,6 +52,8 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         type: AppEvents.alertSuccess.name,
         payload: ['Settings saved'],
       });
+      reset();
+      locationService.push(`/admin/authentication`);
     } catch (error) {
       let message = '';
       if (isFetchError(error)) {
