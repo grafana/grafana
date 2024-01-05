@@ -55,7 +55,7 @@ interface ShareOptions {
   error: string | null;
 }
 
-const ERROR_MSG = "Couldn't render image";
+const ERROR_MSG = t('share-modal.image.error_render', "Couldn't render image");
 
 export class ShareImageTab extends SceneObjectBase<ShareImageTabState> {
   public tabId = shareDashboardType.image;

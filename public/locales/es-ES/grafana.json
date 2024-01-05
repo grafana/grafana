@@ -1157,6 +1157,7 @@
     "image": {
       "download-button-label": "",
       "error": "",
+      "error_render": "",
       "format": "",
       "height": "",
       "info-text": "",

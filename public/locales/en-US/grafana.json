@@ -1151,6 +1151,7 @@
     "image": {
       "download-button-label": "Download image",
       "error": "Error",
+      "error_render": "Couldn't render image",
       "format": "Image format",
       "height": "Image height",
       "info-text": "Download a snapshot of the panel as an image.",
