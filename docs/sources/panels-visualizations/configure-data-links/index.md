@@ -49,27 +49,27 @@ Azure Monitor, [CloudWatch][], and [Google Cloud Monitoring][] have pre-configur
 
 You can also use template variables in your data links URLs, refer to [Templates and variables][] for more information on template variables.
 
-## Time range panel variables
+### Time range panel variables
 
 These variables allow you to include the current time range in the data link URL.
 
 - `__url_time_range` - current dashboard's time range (i.e. `?from=now-6h&to=now`)
 - `$__from and $__to` - For more information, refer to [Global variables][].
 
-## Series variables
+### Series variables
 
 Series-specific variables are available under `__series` namespace:
 
 - `__series.name` - series name to the URL
 
-## Field variables
+### Field variables
 
 Field-specific variables are available under `__field` namespace:
 
 - `__field.name` - the name of the field
 - `__field.labels.<LABEL>` - label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax.
 
-## Value variables
+### Value variables
 
 Value-specific variables are available under `__value` namespace:
 
@@ -81,7 +81,7 @@ Value-specific variables are available under `__value` namespace:
 
 Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
 
-## Data variables
+### Data variables
 
 To access values and labels from other fields use:
 
@@ -90,7 +90,7 @@ To access values and labels from other fields use:
 - `${__data.fields["NameOfField"]}` - value of field using name instead of index
 - `${__data.fields[1].labels.cluster}` - access labels of another field
 
-## Template variables
+### Template variables
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
 
