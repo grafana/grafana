@@ -122,25 +122,25 @@ export class PanelQueryRunner {
     }
 
     return combineLatest([this.subject, dashData]).pipe(
-      mergeMap(([panel, dashData]) => {
+      mergeMap(([panelData, dashData]) => {
         let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
         let transformations = this.dataConfigSource.getTransformations();
 
         if (
-          panel.series === lastRawFrames &&
+          panelData.series === lastRawFrames &&
           lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig &&
           lastTransformations === transformations
         ) {
-          return of({ ...panel, structureRev, series: lastProcessedFrames });
+          return of({ ...panelData, structureRev, series: lastProcessedFrames });
         }
 
         lastFieldConfig = fieldConfig;
         lastTransformations = transformations;
-        lastRawFrames = panel.series;
-        let dataWithTransforms = of(panel);
+        lastRawFrames = panelData.series;
+        let dataWithTransforms = of(panelData);
 
         if (withTransforms) {
-          dataWithTransforms = this.applyTransformations(panel);
+          dataWithTransforms = this.applyTransformations(panelData);
         }
 
         return dataWithTransforms.pipe(
