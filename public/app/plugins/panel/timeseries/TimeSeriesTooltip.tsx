@@ -150,7 +150,7 @@ export const TimeSeriesTooltip = ({
       <div className={styles.wrapper}>
         <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
         <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
-        {isPinned && <VizTooltipFooter dataLinks={links} />}
+        {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
       </div>
     </div>
   );
