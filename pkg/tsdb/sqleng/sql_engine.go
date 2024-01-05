@@ -13,12 +13,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-stack/stack"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	corelog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -220,6 +220,12 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 	return result, nil
 }
 
+func stackTrace(skip int) string {
+	call := stack.Caller(skip)
+	s := stack.Trace().TrimBelow(call).TrimRuntime()
+	return s.String()
+}
+
 func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
 	ch chan DBDataResponse, queryJson QueryJson) {
 	defer wg.Done()
@@ -232,7 +238,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("ExecuteQuery panic", "error", r, "stack", corelog.Stack(1))
+			logger.Error("ExecuteQuery panic", "error", r, "stack", stackTrace(1))
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
 			} else if theErrString, ok := r.(string); ok {
