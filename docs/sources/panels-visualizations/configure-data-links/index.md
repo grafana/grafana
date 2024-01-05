@@ -102,12 +102,6 @@ When linking to another dashboard that uses template variables, select variable 
 
 If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
 
-### Typeahead suggestions
-
-When creating or updating a data link, press Cmd+Space or Ctrl+Space on your keyboard to open the typeahead suggestions to more easily add variables to your URL.
-
-{{< figure src="/static/img/docs/data_link_typeahead.png"  max-width= "800px" alt="Drop-down list with variable suggestions open from the URL field" >}}
-
 ## Add a data link
 
 1. Hover over any part of the panel you want to which you want to add the data link to display the actions menu on the top right corner.
