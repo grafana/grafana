@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { createMonitoringLogger, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { ExploreItemState } from 'app/types';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
@@ -108,3 +108,5 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
       : '';
   });
 };
+
+export const correlationsLogger = createMonitoringLogger('features.correlations');

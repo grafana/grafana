@@ -15,7 +15,7 @@ export {
 } from './utils/plugin';
 export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
-export { logInfo, logDebug, logWarning, logError } from './utils/logging';
+export { logInfo, logDebug, logWarning, logError, createMonitoringLogger } from './utils/logging';
 export {
   DataSourceWithBackend,
   HealthCheckError,

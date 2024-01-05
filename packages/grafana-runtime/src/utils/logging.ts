@@ -1,4 +1,5 @@
-import { faro, LogLevel, LogContext } from '@grafana/faro-web-sdk';
+import { faro, LogContext, LogLevel } from '@grafana/faro-web-sdk';
+import { attachDebugger, createLogger } from '@grafana/ui';
 
 import { config } from '../config';
 
@@ -56,4 +57,35 @@ export function logError(err: Error, contexts?: LogContext) {
       context: contexts,
     });
   }
+}
+
+const debuggingLogger = createLogger('monitoring');
+
+/**
+ * Creates a scoped logger for frontend monitoring. Provided source is included in the config.
+ */
+export function createMonitoringLogger(source: string, defaultContext?: LogContext) {
+  attachDebugger(`monitoring.${source}`, undefined, debuggingLogger);
+  const createFullContext = (contexts?: LogContext) => ({
+    source: source,
+    ...defaultContext,
+    ...contexts,
+  });
+
+  const forwardMessage = (fn: typeof logInfo, level: LogLevel, message: string, contexts?: LogContext) => {
+    const ctx = createFullContext(contexts);
+    fn(message, ctx);
+    debuggingLogger.logger(source, false, level, message, ctx);
+  };
+
+  return {
+    logDebug: (message: string, contexts?: LogContext) => forwardMessage(logDebug, LogLevel.DEBUG, message, contexts),
+    logInfo: (message: string, contexts?: LogContext) => forwardMessage(logDebug, LogLevel.INFO, message, contexts),
+    logWarning: (message: string, contexts?: LogContext) => forwardMessage(logDebug, LogLevel.WARN, message, contexts),
+    logError: (error: Error, contexts?: LogContext) => {
+      const ctx = createFullContext(contexts);
+      logError(error, ctx);
+      debuggingLogger.logger(source, false, LogLevel.ERROR, error, ctx);
+    },
+  };
 }
