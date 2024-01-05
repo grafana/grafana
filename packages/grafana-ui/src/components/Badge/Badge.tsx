@@ -18,25 +18,28 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   color: BadgeColor;
   icon?: IconName;
   tooltip?: string;
+  interactive?: boolean;
 }
 
-const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const styles = useStyles2(getStyles, color);
-  const badge = (
-    <div className={cx(styles.wrapper, className)} {...otherProps}>
-      {icon && <Icon name={icon} size="sm" />}
-      {text}
-    </div>
-  );
+const BadgeComponent = React.memo<BadgeProps>(
+  ({ icon, color, text, tooltip, interactive, className, ...otherProps }) => {
+    const styles = useStyles2(getStyles, color);
+    const badge = (
+      <div className={cx(styles.wrapper, className)} {...otherProps}>
+        {icon && <Icon name={icon} size="sm" />}
+        {text}
+      </div>
+    );
 
-  return tooltip ? (
-    <Tooltip content={tooltip} placement="auto">
-      {badge}
-    </Tooltip>
-  ) : (
-    badge
-  );
-});
+    return tooltip ? (
+      <Tooltip content={tooltip} placement="auto" interactive={interactive}>
+        {badge}
+      </Tooltip>
+    ) : (
+      badge
+    );
+  }
+);
 BadgeComponent.displayName = 'Badge';
 
 const BadgeSkeleton: SkeletonComponent = ({ rootProps }) => {

@@ -17,16 +17,27 @@ export const ExpressionStatusIndicator = ({ error, warning, isCondition, onSetCo
   const elements: JSX.Element[] = [];
 
   if (error && isCondition) {
-    return <Badge color="red" icon="exclamation-circle" text="Alert condition" tooltip={error.message} />;
+    return <Badge color="red" icon="exclamation-circle" text="Alert condition" tooltip={error.message} interactive />;
   } else if (error) {
-    elements.push(<Badge key="error" color="red" icon="exclamation-circle" text="Error" tooltip={error.message} />);
+    elements.push(
+      <Badge key="error" color="red" icon="exclamation-circle" text="Error" tooltip={error.message} interactive />
+    );
   }
 
   if (warning && isCondition) {
-    return <Badge color="orange" icon="exclamation-triangle" text="Alert condition" tooltip={warning.message} />;
+    return (
+      <Badge color="orange" icon="exclamation-triangle" text="Alert condition" tooltip={warning.message} interactive />
+    );
   } else if (warning) {
     elements.push(
-      <Badge key="warning" color="orange" icon="exclamation-triangle" text="Warning" tooltip={warning.message} />
+      <Badge
+        key="warning"
+        color="orange"
+        icon="exclamation-triangle"
+        text="Warning"
+        tooltip={warning.message}
+        interactive
+      />
     );
   }
 
