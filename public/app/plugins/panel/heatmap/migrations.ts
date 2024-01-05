@@ -21,10 +21,15 @@ export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => 
 
   // multi tooltip mode in 10.3+
   let showTooltip = panel.options?.tooltip?.show;
-  if (showTooltip === true) {
-    panel.options.tooltip.mode = TooltipDisplayMode.Single;
-  } else if (showTooltip === false) {
-    panel.options.tooltip.mode = TooltipDisplayMode.None;
+  if (showTooltip !== undefined) {
+    if (showTooltip === true) {
+      panel.options.tooltip.mode = TooltipDisplayMode.Single;
+    } else if (showTooltip === false) {
+      panel.options.tooltip.mode = TooltipDisplayMode.None;
+    }
+
+    // Remove old tooltip option
+    delete panel.options.tooltip?.show;
   }
 
   return panel.options;
