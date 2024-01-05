@@ -11,6 +11,7 @@ import { config } from 'app/core/config';
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
@@ -106,7 +107,7 @@ export const TimeSeriesPanel = ({
 
         return (
           <>
-            <KeyboardPlugin config={uplotConfig} />
+            {!showNewVizTooltips && <KeyboardPlugin config={uplotConfig} />}
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <>
                 {showNewVizTooltips ? (
@@ -162,15 +163,19 @@ export const TimeSeriesPanel = ({
               </>
             )}
             {/* Renders annotation markers*/}
-            {data.annotations && (
-              // <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+            {showNewVizTooltips ? (
               <AnnotationsPlugin2
-                annotations={data.annotations}
+                annotations={data.annotations ?? []}
                 config={uplotConfig}
                 timeZone={timeZone}
                 newRange={newAnnotationRange}
               />
+            ) : (
+              data.annotations && (
+                <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+              )
             )}
+
             {/*Enables annotations creation*/}
             {!showNewVizTooltips ? (
               enableAnnotationCreation ? (
