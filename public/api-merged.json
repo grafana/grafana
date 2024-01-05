@@ -710,7 +710,7 @@
       }
     },
     "/access-control/{resource}/description": {
-      "post": {
+      "get": {
         "tags": [
           "access_control"
         ],
@@ -738,6 +738,38 @@
       }
     },
     "/access-control/{resource}/{resourceID}": {
+      "get": {
+        "tags": [
+          "access_control"
+        ],
+        "summary": "Get permissions for a resource.",
+        "operationId": "getResourcePermissions",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "resource",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "resourceID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getResourcePermissionsResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "description": "Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to one or many\nassignment types. Allowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.\nRefer to the `/access-control/{resource}/description` endpoint for allowed Permissions.",
         "tags": [
