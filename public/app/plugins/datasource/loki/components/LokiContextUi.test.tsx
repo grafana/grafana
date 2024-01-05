@@ -16,22 +16,6 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: () => null,
 }));
 
-jest.mock('app/core/store', () => {
-  return {
-    set() {},
-    get() {},
-    getBool(key: string, defaultValue?: boolean) {
-      const item = window.localStorage.getItem(key);
-      if (item === null) {
-        return defaultValue;
-      } else {
-        return item === 'true';
-      }
-    },
-    delete() {},
-  };
-});
-
 const setupProps = (): LokiContextUiProps => {
   const defaults: LokiContextUiProps = {
     logContextProvider: Object.assign({}, mockLogContextProvider) as unknown as LogContextProvider,

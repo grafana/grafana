@@ -19,7 +19,6 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import {
@@ -123,9 +122,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(store.getBool(IS_LOKI_LOG_CONTEXT_UI_OPEN, false));
+  const [isOpen, setIsOpen] = useState(window.localStorage.getItem(IS_LOKI_LOG_CONTEXT_UI_OPEN) === 'true');
   const [includePipelineOperations, setIncludePipelineOperations] = useState(
-    store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)
+    window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true'
   );
 
   const timerHandle = React.useRef<number>();
@@ -188,7 +187,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
         }
       });
 
-      store.set(LOKI_LOG_CONTEXT_PRESERVED_LABELS, JSON.stringify(preservedLabels));
+      window.localStorage.setItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS, JSON.stringify(preservedLabels));
       setLoading(false);
     }, 1500);
 
@@ -290,8 +289,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 }));
               });
               // We are removing the preserved labels from local storage so we can preselect the labels in the UI
-              store.delete(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
-              store.delete(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
+              window.localStorage.removeItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+              window.localStorage.removeItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
               setIncludePipelineOperations(false);
             }}
           />
@@ -302,7 +301,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
         collapsible={true}
         isOpen={isOpen}
         onToggle={() => {
-          store.set(IS_LOKI_LOG_CONTEXT_UI_OPEN, !isOpen);
+          window.localStorage.setItem(IS_LOKI_LOG_CONTEXT_UI_OPEN, (!isOpen).toString());
           setIsOpen((isOpen) => !isOpen);
           reportInteraction('grafana_explore_logs_loki_log_context_toggled', {
             logRowUid: row.uid,
@@ -429,7 +428,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                       logRowUid: row.uid,
                       action: e.currentTarget.checked ? 'enable' : 'disable',
                     });
-                    store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
+                    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked.toString());
                     setIncludePipelineOperations(e.currentTarget.checked);
                     if (runContextQuery) {
                       runContextQuery();
