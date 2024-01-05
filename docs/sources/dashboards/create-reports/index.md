@@ -116,8 +116,6 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ### Layout and orientation
 
-> We're actively developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=design-process&value=reporting) to get involved in the design process.
-
 | Layout | Orientation | Support | Description                                                                                               | Preview                                                                                                                                                                             |
 | ------ | ----------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Simple | Portrait    | v6.4+   | Generates an A4 page in portrait mode with three panels per page.                                         | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" alt="Simple layout in portrait" >}}    |
@@ -136,6 +134,16 @@ This feature relies on the same plugin that supports the [image rendering][] fea
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 
 A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime][] setting. This setting also affects how long a renderer PNG file should be stored.
+
+### Table data in PDF
+
+> **Note:** Available in public preview (behind the `pdfTables` feature toggle) in [Grafana Enterprise][] 10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+
+When there is more data in your table panels than what can be shown in the dashboard PDF, you can select one of these two options to access all table panels data as PDF in your reports:
+- **Include table data as PDF appendix** adds an appendix to the main dashboard PDF.
+- **Attach a separate PDF of table data** generates a separate PDF file. 
+
+This feature relies on the same plugin that supports the [image rendering][] features.
 
 ### Scheduling
 
