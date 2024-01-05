@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import { LoadingState, PanelData } from '@grafana/data';
+import { parseKeyValue } from '@grafana/data/src/utils/url';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Stack } from '@grafana/ui';
@@ -19,6 +20,7 @@ interface ExecutedQueryInfo {
 }
 
 interface Props {
+  instanceId?: string; // Must match the prefix of the requestId of the query being inspected. For updating only one instance of the inspector in case of multiple instances, ie Explore split view
   data: PanelData;
   onRefreshQuery: () => void;
 }
@@ -47,9 +49,21 @@ export class QueryInspector extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
+    const { instanceId } = this.props;
     this.subs.add(
       backendSrv.getInspectorStream().subscribe({
-        next: (response) => this.onDataSourceResponse(response),
+        next: (response) => {
+          let update = true;
+          if (instanceId && response?.config?.url) {
+            const urlParams = parseKeyValue(response.config.url);
+            if (urlParams.requestId) {
+              update = urlParams.requestId.startsWith(instanceId);
+            }
+          }
+          if (update) {
+            return this.onDataSourceResponse(response);
+          }
+        },
       })
     );
   }

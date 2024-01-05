@@ -5,6 +5,7 @@ import { CoreApp, LoadingState, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
 import { defaultTimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
@@ -25,7 +26,7 @@ interface DispatchProps {
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { width, onClose, queryResponse, timeZone } = props;
+  const { width, onClose, queryResponse, timeZone, exploreId } = props;
   const dataFrames = queryResponse?.series || [];
   let errors = queryResponse?.errors;
   if (!errors?.length && queryResponse?.error) {
@@ -71,7 +72,11 @@ export function ExploreQueryInspector(props: Props) {
     value: 'query',
     icon: 'info-circle',
     content: (
-      <QueryInspector data={queryResponse} onRefreshQuery={() => props.runQueries({ exploreId: props.exploreId })} />
+      <QueryInspector
+        instanceId={requestIdGenerator(exploreId)}
+        data={queryResponse}
+        onRefreshQuery={() => props.runQueries({ exploreId })}
+      />
     ),
   };
 
