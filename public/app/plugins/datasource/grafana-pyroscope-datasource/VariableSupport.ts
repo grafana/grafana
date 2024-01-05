@@ -9,7 +9,7 @@ import { PyroscopeDataSource } from './datasource';
 import { ProfileTypeMessage, VariableQuery } from './types';
 
 export interface DataAPI {
-  getProfileTypes(): Promise<ProfileTypeMessage[]>;
+  getProfileTypes(start: number, end: number): Promise<ProfileTypeMessage[]>;
   getLabelNames(query: string, start: number, end: number): Promise<string[]>;
   getLabelValues(query: string, label: string, start: number, end: number): Promise<string[]>;
 }
@@ -26,7 +26,9 @@ export class VariableSupport extends CustomVariableSupport<PyroscopeDataSource> 
 
   query(request: DataQueryRequest<VariableQuery>): Observable<DataQueryResponse> {
     if (request.targets[0].type === 'profileType') {
-      return from(this.dataAPI.getProfileTypes()).pipe(
+      return from(
+        this.dataAPI.getProfileTypes(this.timeSrv.timeRange().from.valueOf(), this.timeSrv.timeRange().to.valueOf())
+      ).pipe(
         map((values) => {
           return { data: values.map<MetricFindValue>((v) => ({ text: v.label, value: v.id })) };
         })

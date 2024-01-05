@@ -413,7 +413,6 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
 /public/app/features/sandbox/ @grafana/grafana-frontend-platform
-/public/app/features/scenes/ @grafana/dashboards-squad
 /public/app/features/browse-dashboards/ @grafana/grafana-frontend-platform
 /public/app/features/search/ @grafana/grafana-frontend-platform
 /public/app/features/serviceaccounts/ @grafana/identity-access-team

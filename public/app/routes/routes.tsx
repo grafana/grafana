@@ -39,6 +39,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/d/:uid/panel-edit/:panelId',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
+      ),
+    },
+    {
       path: '/d/:uid/:slug?',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
@@ -488,7 +494,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
     },
-    ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),
@@ -520,41 +525,6 @@ export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SupportBundlesCreate" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),
-    },
-  ];
-}
-
-export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.scenes) {
-    return [];
-  }
-  return [
-    {
-      path: '/scenes',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneListPage')),
-    },
-    {
-      path: '/scenes/dashboard/:uid',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/DashboardScenePage')
-      ),
-    },
-    {
-      path: '/scenes/dashboard/:uid/panel-edit/:panelId',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
-      ),
-    },
-    {
-      path: '/scenes/grafana-monitoring',
-      exact: false,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/apps/GrafanaMonitoringApp')
-      ),
-    },
-    {
-      path: '/scenes/:name',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
     },
   ];
 }
