@@ -111,8 +111,8 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 	q := annotations.ItemQuery{
 		AlertID:      rule.ID,
 		OrgID:        query.OrgID,
-		From:         query.From.Unix(),
-		To:           query.To.Unix(),
+		From:         query.From.UnixMilli(),
+		To:           query.To.UnixMilli(),
 		SignedInUser: query.SignedInUser,
 	}
 	items, err := h.store.Find(ctx, &q)

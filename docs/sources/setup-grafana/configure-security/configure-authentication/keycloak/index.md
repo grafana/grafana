@@ -143,8 +143,9 @@ signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protoc
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,
 `<REALM_NAME>` can be `grafana` and `<GRAFANA_DOMAIN>` can be `play.grafana.org`.
 
-> **Note**: Grafana does not support `id_token_hints`. From keycloak 18, it is necessary to disable `id_token_hints` enforcement in keycloak for
-> single logout to work. [Documentation reference](https://www.keycloak.org/2022/04/keycloak-1800-released#_openid_connect_logout).
+{{% admonition type="note" %}}
+Grafana supports ID token hints for single logout. Grafana automatically adds the `id_token_hint` parameter to the logout request if it detects OAuth as the authentication method.
+{{% /admonition %}}
 
 ## Allow assigning Grafana Admin
 

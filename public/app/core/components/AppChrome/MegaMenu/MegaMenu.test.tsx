@@ -52,6 +52,7 @@ describe('MegaMenu', () => {
   it('should filter out profile', async () => {
     setup();
 
+    expect(await screen.findByTestId(selectors.components.NavMenu.Menu)).toBeInTheDocument();
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
   });
 });
