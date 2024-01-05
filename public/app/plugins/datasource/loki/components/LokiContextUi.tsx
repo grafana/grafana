@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import { dateTime, GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
+  Alert,
   Button,
   Collapse,
   Icon,
@@ -80,6 +81,12 @@ function getStyles(theme: GrafanaTheme2) {
       background-color: ${theme.colors.background.secondary};
       padding: ${theme.spacing(2)};
     `,
+    notification: css({
+      position: 'absolute',
+      zIndex: theme.zIndex.portal,
+      top: 0,
+      right: 0,
+    }),
     rawQuery: css`
       display: inline;
     `,
@@ -111,6 +118,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
+  const [showPreservedFiltersAppliedNotification, setShowPreservedFiltersAppliedNotification] = useState(false);
 
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -203,11 +211,20 @@ export function LokiContextUi(props: LokiContextUiProps) {
       to: dateTime(row.timeEpochMs),
       raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
     });
-    setContextFilters(initContextFilters);
-
+    setContextFilters(initContextFilters.contextFilters);
+    setShowPreservedFiltersAppliedNotification(initContextFilters.preservedFiltersApplied);
     setInitialized(true);
     setLoading(false);
   });
+
+  // To hide previousContextFiltersApplied notification after 2 seconds
+  useEffect(() => {
+    if (showPreservedFiltersAppliedNotification) {
+      setTimeout(() => {
+        setShowPreservedFiltersAppliedNotification(false);
+      }, 2000);
+    }
+  }, [showPreservedFiltersAppliedNotification]);
 
   useEffect(() => {
     reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
@@ -245,6 +262,14 @@ export function LokiContextUi(props: LokiContextUiProps) {
   );
   return (
     <div className={styles.wrapper}>
+      {showPreservedFiltersAppliedNotification && (
+        <Alert
+          className={styles.notification}
+          title="Previously used filters have been applied."
+          severity="info"
+          elevated={true}
+        ></Alert>
+      )}
       <Tooltip content={'Revert to initial log context query.'}>
         <div className={styles.iconButton}>
           <Button

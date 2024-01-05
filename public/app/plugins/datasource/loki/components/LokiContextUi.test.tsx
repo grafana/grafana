@@ -41,10 +41,13 @@ const setupProps = (): LokiContextUiProps => {
 
 const mockLogContextProvider = {
   getInitContextFilters: jest.fn().mockImplementation(() =>
-    Promise.resolve([
-      { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
-      { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
-    ])
+    Promise.resolve({
+      contextFilters: [
+        { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
+        { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
+      ],
+      preservedFiltersApplied: false,
+    })
   ),
   processContextFiltersToExpr: jest.fn().mockImplementation(
     (contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
@@ -325,6 +328,37 @@ describe('LokiContextUi', () => {
     await userEvent.click(revertButton);
     await waitFor(() => {
       expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
+    });
+  });
+  it('shows if preserved filters are applied', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      logContextProvider: {
+        ...props.logContextProvider,
+        getInitContextFilters: jest.fn().mockImplementation(() =>
+          Promise.resolve({
+            contextFilters: [
+              { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
+              { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
+            ],
+            preservedFiltersApplied: true,
+          })
+        ),
+      },
+    } as unknown as LokiContextUiProps;
+
+    render(<LokiContextUi {...newProps} />);
+    expect(await screen.findByText('Previously used filters have been applied.')).toBeInTheDocument();
+  });
+
+  it('does not shows if preserved filters are not applied', async () => {
+    // setupProps() already has preservedFiltersApplied: false
+    const props = setupProps();
+
+    render(<LokiContextUi {...props} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Previously used filters have been applied.')).not.toBeInTheDocument();
     });
   });
 });
