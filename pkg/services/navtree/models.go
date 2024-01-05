@@ -201,23 +201,33 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 		}
 
 		costManagementNode := root.FindById("plugin-page-grafana-costmanagementui-app")
+		adaptiveMetricsNode := root.FindById("plugin-page-grafana-adaptive-metrics-app")
+		logVolumeExplorerNode := root.FindById("plugin-page-grafana-logvolumeexplorer-app")
 
 		if costManagementNode != nil {
 			adminNodeLinks = append(adminNodeLinks, costManagementNode)
-		}
+			costManagementMetricsNode := root.FindByURL("/a/grafana-costmanagementui-app/metrics")
 
-		costManagementMetricsNode := root.FindByURL("/a/grafana-costmanagementui-app/metrics")
-		adaptiveMetricsNode := root.FindById("plugin-page-grafana-adaptive-metrics-app")
+			if costManagementMetricsNode != nil && adaptiveMetricsNode != nil {
+				costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsNode)
+			}
+			costManagementLogsNode := root.FindByURL("/a/grafana-costmanagementui-app/logs")
 
-		if costManagementMetricsNode != nil && adaptiveMetricsNode != nil {
-			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsNode)
-		}
+			if costManagementLogsNode != nil && logVolumeExplorerNode != nil {
+				costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerNode)
+			}
+		} else {
+			// fallback to adding adaptive metrics and log volume explorer to apps if cost management not present
+			appsNode := root.FindById(NavIDApps)
 
-		costManagementLogsNode := root.FindByURL("/a/grafana-costmanagementui-app/logs")
-		logVolumeExplorerNode := root.FindById("plugin-page-grafana-logvolumeexplorer-app")
-
-		if costManagementLogsNode != nil && logVolumeExplorerNode != nil {
-			costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerNode)
+			if appsNode != nil {
+				if adaptiveMetricsNode != nil {
+					appsNode.Children = append(appsNode.Children, adaptiveMetricsNode)
+				}
+				if logVolumeExplorerNode != nil {
+					appsNode.Children = append(appsNode.Children, logVolumeExplorerNode)
+				}
+			}
 		}
 
 		if len(adminNodeLinks) > 0 {
