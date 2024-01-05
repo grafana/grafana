@@ -40,6 +40,8 @@ The new value mappings are not compatible with some visualizations, such as Grap
 
 Grafana supports the following value mappings:
 
+<!--Update images to match examples -->
+
 - **Value:** Maps text values to a color or different display text. For example, you can configure a value mapping so that all instances of the value `10` appear as **Perfection!** rather than the number. Map a value when you want to format a single value.
   ![Map a value](/static/img/docs/value-mappings/map-value-8-0.png)
 
@@ -47,6 +49,7 @@ Grafana supports the following value mappings:
   ![Map a range](/static/img/docs/value-mappings/map-range-8-0.png)
 
 - **Regex:** Maps regular expressions to replacement text and a color. For example, if a value is `www.example.com`, you can configure a regex value mapping so that Grafana displays **www** and truncates the domain. Map a regular expression when you want to format the text and color of a regular expression value.
+  <!--Add an image here-->
 
 - **Special** Maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to a display text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Map a special value when you want to format uncommon, boolean, or empty values.
   ![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)
