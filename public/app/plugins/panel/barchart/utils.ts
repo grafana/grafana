@@ -505,8 +505,9 @@ export function prepareBarChartDisplayValues(
     });
   }
 
-  // String field is first
+  // String field is first, make sure fields / legend fields indexes match
   fields.unshift(firstField);
+  legendFields.unshift(firstField);
 
   return {
     aligned: frame,
