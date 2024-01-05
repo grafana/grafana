@@ -727,7 +727,7 @@ const UpgradeTabContent = <T extends object>({
 
   const TableComponent = showGuidelines ? DynamicTableWithGuidelines : DynamicTable;
 
-  const pagination = useMemo(() => ({ itemsPerPage: 10 }), []);
+  const pagination = useMemo(() => ({ itemsPerPage: 50 }), []);
 
   return (
     <>
@@ -1458,7 +1458,6 @@ const AlertTable = ({
         return (
           <Stack gap={0.5} alignItems="center">
             <ActionIcon
-              // className={styles.destructiveActionIcon}
               aria-label="re-upgrade legacy alert"
               key="upgrade-alert"
               icon="sync"
@@ -1488,10 +1487,8 @@ const AlertTable = ({
     <div className={wrapperClass} data-testid="rules-table">
       <TableComponent
         cols={columns}
-        // isExpandable={true}
         items={items}
-        // renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
-        pagination={{ itemsPerPage: 10 }}
+        pagination={{ itemsPerPage: 50 }}
         paginationStyles={styles.pagination}
       />
     </div>
