@@ -975,7 +975,7 @@ var (
 		{
 			Name:         "formatString",
 			Description:  "Enable format string transformer",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.October, 13, 12, 0, 0, 0, time.UTC),
@@ -1014,11 +1014,12 @@ var (
 		{
 			Name:            "recoveryThreshold",
 			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2023, time.October, 10, 12, 0, 0, 0, time.UTC),
+			Expression:      "true",
 		},
 		{
 			Name:         "lokiStructuredMetadata",
@@ -1095,7 +1096,7 @@ var (
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.November, 3, 12, 0, 0, 0, time.UTC),
@@ -1165,7 +1166,7 @@ var (
 		{
 			Name:         "pdfTables",
 			Description:  "Enables generating table data as PDF in reporting",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
 			Created:      time.Date(2023, time.November, 6, 12, 0, 0, 0, time.UTC),
@@ -1257,7 +1258,7 @@ var (
 		{
 			Name:         "regressionTransformation",
 			Description:  "Enables regression analysis transformation",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.November, 24, 12, 0, 0, 0, time.UTC),
@@ -1292,6 +1293,16 @@ var (
 			Owner:          grafanaObservabilityLogsSquad,
 			AllowSelfServe: false,
 			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "alertingPreviewUpgrade",
+			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
+			FrontendOnly:    false,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

@@ -21,50 +21,63 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Store is the database abstraction for migration persistence.
 type Store interface {
-	InsertAlertRules(ctx context.Context, rules ...models.AlertRule) error
+	ReadStore
+	WriteStore
+}
 
-	SaveAlertmanagerConfiguration(ctx context.Context, orgID int64, amConfig *apimodels.PostableUserConfig) error
-
+// ReadStore is the database abstraction for read-only migration persistence.
+type ReadStore interface {
 	GetAllOrgs(ctx context.Context) ([]*org.OrgDTO, error)
 
 	GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester) (*datasources.DataSource, error)
 
 	GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error)
+	GetNotificationChannel(ctx context.Context, q GetNotificationChannelQuery) (*legacymodels.AlertNotification, error)
 
 	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error)
 
 	GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
 	GetFolderPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
-	SetDashboardPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error)
-	SetFolderPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error)
 	MapActions(permission accesscontrol.ResourcePermission) string
 
 	GetDashboard(ctx context.Context, orgID int64, id int64) (*dashboards.Dashboard, error)
 	GetFolder(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error)
-	CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error)
 
 	IsMigrated(ctx context.Context, orgID int64) (bool, error)
-	SetMigrated(ctx context.Context, orgID int64, migrated bool) error
 	GetCurrentAlertingType(ctx context.Context) (AlertingType, error)
-	SetCurrentAlertingType(ctx context.Context, t AlertingType) error
-	GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error)
-	SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error
+	GetOrgMigrationState(ctx context.Context, orgID int64) (*OrgMigrationState, error)
 
-	RevertAllOrgs(ctx context.Context) error
+	GetAlertRuleTitles(ctx context.Context, orgID int64, namespaceUIDs ...string) (map[string][]string, error) // NamespaceUID -> Titles
 
 	CaseInsensitive() bool
+}
+
+// WriteStore is the database abstraction for write migration persistence.
+type WriteStore interface {
+	InsertAlertRules(ctx context.Context, rules ...models.AlertRule) error
+
+	SaveAlertmanagerConfiguration(ctx context.Context, orgID int64, amConfig *apimodels.PostableUserConfig) error
+
+	SetDashboardPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error)
+	SetFolderPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error)
+
+	CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error)
+
+	SetMigrated(ctx context.Context, orgID int64, migrated bool) error
+	SetCurrentAlertingType(ctx context.Context, t AlertingType) error
+	SetOrgMigrationState(ctx context.Context, orgID int64, summary *OrgMigrationState) error
+
+	RevertAllOrgs(ctx context.Context) error
 }
 
 type migrationStore struct {
@@ -197,8 +210,8 @@ func (ms *migrationStore) SetCurrentAlertingType(ctx context.Context, t Alerting
 	return kv.Set(ctx, typeKey, string(t))
 }
 
-// GetOrgMigrationState returns a summary of a previous migration.
-func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error) {
+// GetOrgMigrationState returns the state of the previous migration.
+func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64) (*OrgMigrationState, error) {
 	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
 	content, exists, err := kv.Get(ctx, stateKey)
 	if err != nil {
@@ -206,22 +219,23 @@ func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64)
 	}
 
 	if !exists {
-		return &migmodels.OrgMigrationState{OrgID: orgID}, nil
+		return &OrgMigrationState{OrgID: orgID}, nil
 	}
 
-	var summary migmodels.OrgMigrationState
-	err = json.Unmarshal([]byte(content), &summary)
+	var state OrgMigrationState
+	err = json.Unmarshal([]byte(content), &state)
 	if err != nil {
 		return nil, err
 	}
 
-	return &summary, nil
+	return &state, nil
 }
 
 // SetOrgMigrationState sets the summary of a previous migration.
-func (ms *migrationStore) SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error {
+func (ms *migrationStore) SetOrgMigrationState(ctx context.Context, orgID int64, state *OrgMigrationState) error {
 	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
-	raw, err := json.Marshal(summary)
+
+	raw, err := json.Marshal(state)
 	if err != nil {
 		return err
 	}
@@ -229,27 +243,55 @@ func (ms *migrationStore) SetOrgMigrationState(ctx context.Context, orgID int64,
 	return kv.Set(ctx, stateKey, string(raw))
 }
 
-func (ms *migrationStore) InsertAlertRules(ctx context.Context, rules ...models.AlertRule) error {
-	if ms.store.GetDialect().DriverName() == migrator.Postgres {
-		// Postgresql which will automatically rollback the whole transaction on constraint violation.
-		// So, for postgresql, insertions will execute in a subtransaction.
-		err := ms.store.InTransaction(ctx, func(subCtx context.Context) error {
-			_, err := ms.alertingStore.InsertAlertRules(subCtx, rules)
-			if err != nil {
-				return err
-			}
-			return nil
-		})
+// GetAlertRuleTitles returns a map of namespaceUID -> title for all alert rules in the given org and namespace uids.
+func (ms *migrationStore) GetAlertRuleTitles(ctx context.Context, orgID int64, namespaceUIDs ...string) (map[string][]string, error) {
+	res := make(map[string][]string)
+	err := ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		type title struct {
+			NamespaceUID string `xorm:"namespace_uid"`
+			Title        string
+		}
+		titles := make([]title, 0)
+		s := sess.Table("alert_rule").Cols("namespace_uid", "title").Where("org_id = ?", orgID)
+		if len(namespaceUIDs) > 0 {
+			s = s.In("namespace_uid", namespaceUIDs)
+		}
+		err := s.Find(&titles)
 		if err != nil {
 			return err
 		}
-	} else {
-		_, err := ms.alertingStore.InsertAlertRules(ctx, rules)
+
+		for _, t := range titles {
+			if _, ok := res[t.NamespaceUID]; !ok {
+				res[t.NamespaceUID] = make([]string, 0)
+			}
+			res[t.NamespaceUID] = append(res[t.NamespaceUID], t.Title)
+		}
+		return nil
+	})
+	return res, err
+}
+
+// BATCHSIZE is a reasonable SQL batch size to prevent hitting placeholder limits (such as Error 1390 in MySQL) or packet size limits.
+const BATCHSIZE = 1000
+
+// batchBy batches a given slice in a way as to minimize allocations, see https://github.com/golang/go/wiki/SliceTricks#batching-with-minimal-allocation.
+func batchBy[T any](items []T, batchSize int) (batches [][]T) {
+	for batchSize < len(items) {
+		items, batches = items[batchSize:], append(batches, items[0:batchSize:batchSize])
+	}
+	return append(batches, items)
+}
+
+// InsertAlertRules inserts alert rules.
+func (ms *migrationStore) InsertAlertRules(ctx context.Context, rules ...models.AlertRule) error {
+	batches := batchBy(rules, BATCHSIZE)
+	for _, batch := range batches {
+		_, err := ms.alertingStore.InsertAlertRules(ctx, batch)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -295,7 +337,11 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 				return fmt.Errorf("get orgs: %w", err)
 			}
 			for _, o := range orgs {
-				if err := ms.DeleteMigratedFolders(ctx, o.ID); err != nil {
+				state, err := ms.GetOrgMigrationState(ctx, o.ID)
+				if err != nil {
+					return err
+				}
+				if err := ms.DeleteFolders(ctx, o.ID, state.CreatedFolders...); err != nil {
 					ms.log.Warn("Failed to delete migrated folders", "orgID", o.ID, "err", err)
 					continue
 				}
@@ -334,16 +380,6 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 			return nil
 		})
 	})
-}
-
-// DeleteMigratedFolders deletes all folders created by the previous migration run for the given org. This includes all folder permissions.
-// If the folder is not empty of all descendants the operation will fail and return an error.
-func (ms *migrationStore) DeleteMigratedFolders(ctx context.Context, orgID int64) error {
-	summary, err := ms.GetOrgMigrationState(ctx, orgID)
-	if err != nil {
-		return err
-	}
-	return ms.DeleteFolders(ctx, orgID, summary.CreatedFolders...)
 }
 
 var ErrFolderNotDeleted = fmt.Errorf("folder not deleted")
@@ -431,11 +467,48 @@ func (ms *migrationStore) GetNotificationChannels(ctx context.Context, orgID int
 	})
 }
 
+type GetNotificationChannelQuery struct {
+	OrgID int64
+	ID    int64
+	UID   string
+}
+
+var ErrNotFound = errors.New("not found")
+
+// GetNotificationChannel returns a single channel for this org by id or uid.
+func (ms *migrationStore) GetNotificationChannel(ctx context.Context, q GetNotificationChannelQuery) (*legacymodels.AlertNotification, error) {
+	if q.OrgID == 0 {
+		return nil, fmt.Errorf("org id must be set")
+	}
+	if q.ID == 0 && q.UID == "" {
+		return nil, fmt.Errorf("id or uid must be set")
+	}
+	var res legacymodels.AlertNotification
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		var exists bool
+		var err error
+		s := sess.Table("alert_notification").Where("org_id = ?", q.OrgID)
+		if q.ID > 0 {
+			exists, err = s.Where("id = ?", q.ID).Get(&res)
+		} else if q.UID != "" {
+			exists, err = s.Where("uid = ?", q.UID).Get(&res)
+		}
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return ErrNotFound
+		}
+		return nil
+	})
+	return &res, err
+}
+
 // GetOrgDashboardAlerts loads all legacy dashboard alerts for the given org mapped by dashboard id.
 func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error) {
 	var dashAlerts []*legacymodels.Alert
 	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL("select * from alert WHERE org_id = ?  AND dashboard_id IN (SELECT id from dashboard)", orgID).Find(&dashAlerts)
+		return sess.SQL("select * from alert WHERE org_id = ?", orgID).Find(&dashAlerts)
 	})
 	if err != nil {
 		return nil, 0, err
