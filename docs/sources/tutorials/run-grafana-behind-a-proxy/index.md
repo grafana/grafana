@@ -39,7 +39,7 @@ You can also serve Grafana behind a _sub path_, such as `http://example.com/graf
 To serve Grafana behind a sub path:
 
 - Include the sub path at the end of the `root_url`.
-- Set `serve_from_sub_path` to `true`.
+- Set `serve_from_sub_path` to `true`, **OR** let proxy rewrite the path for you (see proxy config examples bellow).
 
 ```bash
 [server]
@@ -149,11 +149,18 @@ frontend http-in
   use_backend grafana_backend if { path /grafana } or { path_beg /grafana/ }
 
 backend grafana_backend
-  # Requires haproxy >= 1.6
-  http-request set-path %[path,regsub(^/grafana/?,/)]
+  server grafana localhost:3000
+```
 
-  # Works for haproxy < 1.6
-  # reqrep ^([^\ ]*\ /)grafana[/]?(.*) \1\2
+If your Grafana configuration does not set `server.serve_from_sub_path` to `true` then you need to add a rewrite rule to `backend grafana_backend` block:
+
+```diff
+backend grafana_backend
++  # Requires haproxy >= 1.6
++  http-request set-path %[path,regsub(^/grafana/?,/)]
+
++  # Works for haproxy < 1.6
++  # reqrep ^([^\ ]*\ /)grafana[/]?(.*) \1\2
 
   server grafana localhost:3000
 ```
