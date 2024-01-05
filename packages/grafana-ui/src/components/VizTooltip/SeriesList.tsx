@@ -7,10 +7,11 @@ import { ColorIndicator } from './types';
 
 export interface SeriesListProps {
   series: SingleSeriesProps[];
+  isPinned: boolean;
 }
 
 // Based on SeriesTable, with new styling
-export const SeriesList = ({ series }: SeriesListProps) => {
+export const SeriesList = ({ series, isPinned }: SeriesListProps) => {
   return (
     <>
       {series.map((series, index) => {
@@ -27,6 +28,7 @@ export const SeriesList = ({ series }: SeriesListProps) => {
             colorIndicator={ColorIndicator.series}
             isActive={series.isActive}
             justify={'space-between'}
+            isPinned={isPinned}
           />
         );
       })}

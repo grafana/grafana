@@ -96,6 +96,7 @@ export const TrendTooltip = ({
             value: display ? formattedValueToString(display) : null,
           },
         ]}
+        isPinned={isPinned}
       />
     );
   }
@@ -144,7 +145,7 @@ export const TrendTooltip = ({
       });
     }
 
-    tooltip = <SeriesList series={series} />;
+    tooltip = <SeriesList series={series} isPinned={isPinned} />;
   }
 
   const getHeaderLabel = (): LabelValue => {
@@ -157,7 +158,7 @@ export const TrendTooltip = ({
   return (
     <div>
       <div className={styles.wrapper}>
-        <VizTooltipHeader headerLabel={getHeaderLabel()} customValueDisplay={tooltip} />
+        <VizTooltipHeader headerLabel={getHeaderLabel()} customValueDisplay={tooltip} isPinned={isPinned} />
         {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
       </div>
     </div>

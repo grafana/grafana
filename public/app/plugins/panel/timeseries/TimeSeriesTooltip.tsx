@@ -145,8 +145,8 @@ export const TimeSeriesTooltip = ({
   return (
     <div>
       <div className={styles.wrapper}>
-        <VizTooltipHeader headerLabel={getHeaderLabel()} />
-        <VizTooltipContent contentLabelValue={getContentLabelValue()} />
+        <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
+        <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
         {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
       </div>
     </div>
