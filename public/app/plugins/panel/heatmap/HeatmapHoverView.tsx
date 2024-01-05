@@ -382,8 +382,12 @@ const HeatmapHoverCell = ({
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={getHeaderLabel()} />
-      <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
+      <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
+      <VizTooltipContent
+        contentLabelValue={getContentLabelValue()}
+        customContent={getCustomContent()}
+        isPinned={isPinned}
+      />
       {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} />}
     </div>
   );
