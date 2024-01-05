@@ -87,12 +87,8 @@ export class GrafanaJavascriptAgentBackend
     }
   }
 
-  addEvent = (e: EchoEvent) => {
-    this.faroInstance.transports.transports
-      // don't call 'EchoSrvTransport' because it already calls addEvent() internally.
-      .filter((t) => t.name !== EchoSrvTransport.name)
-      .forEach((t) => t.send(e.payload));
-  };
+  // noop because the EchoSrvTransport registered in Faro will already broadcast all signals emitted by the Faro API
+  addEvent = (e: EchoEvent) => {};
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be
   // ingested into Loki. Due to Loki limitations logs cannot be backdated,
