@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -79,6 +80,33 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 	}
 
 	storeSettings.Source = models.DB
+
+	return storeSettings, nil
+}
+
+func (s *SSOSettingsService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	storeSettings, err := s.store.Get(ctx, provider)
+
+	if errors.Is(err, ssosettings.ErrNotFound) {
+		settings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+		if err != nil {
+			return nil, err
+		}
+
+		return settings, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	storeSettings.Source = models.DB
+
+	for k, v := range storeSettings.Settings {
+		if isSecret(k) && v != "" {
+			storeSettings.Settings[k] = "*********"
+		}
+	}
 
 	return storeSettings, nil
 }
@@ -200,7 +228,6 @@ func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*m
 			result = append(result, item)
 		}
 	}
-
 	return result
 }
 
@@ -216,7 +243,7 @@ func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosetting
 func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if api.IsSecret(k) {
+		if isSecret(k) {
 			strValue, ok := v.(string)
 			if !ok {
 				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
@@ -233,6 +260,17 @@ func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[st
 	}
 
 	return result, nil
+}
+
+func isSecret(fieldName string) bool {
+	secretFieldPatterns := []string{"secret"}
+
+	for _, v := range secretFieldPatterns {
+		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+			return true
+		}
+	}
+	return false
 }
 
 func mergeSettings(apiSettings, systemSettings map[string]any) map[string]any {

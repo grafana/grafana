@@ -341,7 +341,7 @@ func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			service := ssosettingstests.NewMockService(t)
 			if tt.expectedServiceCall {
-				service.On("GetForProvider", mock.AnythingOfType("*context.valueCtx"), tt.key).Return(tt.expectedResult, tt.expectedError).Once()
+				service.On("GetForProviderWithRedactedSecrets", mock.AnythingOfType("*context.valueCtx"), tt.key).Return(tt.expectedResult, tt.expectedError).Once()
 			}
 			server := setupTests(t, service)
 

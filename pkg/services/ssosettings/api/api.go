@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -129,23 +128,13 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	provider, err := api.SSOSettingsService.GetForProvider(c.Req.Context(), key)
+	provider, err := api.SSOSettingsService.GetForProviderWithRedactedSecrets(c.Req.Context(), key)
 
 	if err != nil {
 		if errors.Is(err, ssosettings.ErrNotFound) {
 			return response.Error(http.StatusNotFound, "The provider was not found", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get provider settings", err)
-	}
-
-	for setting := range provider.Settings {
-		if IsSecret(setting) {
-			provider.Settings[setting] = "*********"
-		}
-	}
-
-	if clientSecret, ok := provider.Settings["ClientSecret"].(string); ok && len(clientSecret) > 0 {
-		provider.Settings["ClientSecret"] = "*********"
 	}
 
 	etag, err := generateFNVETag(provider)
@@ -245,15 +234,4 @@ type RemoveProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
-}
-
-func IsSecret(fieldName string) bool {
-	secretFieldPatterns := []string{"secret"}
-
-	for _, v := range secretFieldPatterns {
-		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
-			return true
-		}
-	}
-	return false
 }
