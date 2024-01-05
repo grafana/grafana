@@ -51,31 +51,39 @@ You can also use template variables in your data links URLs, refer to [Templates
 
 These variables allow you to include the current time range in the data link URL.
 
-- `__url_time_range` - current dashboard's time range (i.e. `?from=now-6h&to=now`)
-- `$__from and $__to` - For more information, refer to [Global variables][].
+| Variable            | Description                                                 |
+| ------------------- | ----------------------------------------------------------- |
+| `__url_time_range`  | Current dashboard's time range (i.e. `?from=now-6h&to=now`) |
+| `$__from and $__to` | For more information, refer to [Global variables][].        |
 
 ### Series variables
 
 Series-specific variables are available under `__series` namespace:
 
-- `__series.name` - series name to the URL
+| Variable        | Description            |
+| --------------- | ---------------------- |
+| `__series.name` | Series name to the URL |
 
 ### Field variables
 
 Field-specific variables are available under `__field` namespace:
 
-- `__field.name` - the name of the field
-- `__field.labels.<LABEL>` - label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax.
+| Variable                 | Description                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `__field.name`           | The name of the field                                                                               |
+| `__field.labels.<LABEL>` | Label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax. |
 
 ### Value variables
 
 Value-specific variables are available under `__value` namespace:
 
-- `__value.time` - value's timestamp (Unix ms epoch) to the URL (i.e. `?time=1560268814105`)
-- `__value.raw` - raw value
-- `__value.numeric` - numeric representation of a value
-- `__value.text` - text representation of a value
-- `__value.calc` - calculation name if the value is result of calculation
+| Variable          | Description                                                               |
+| ----------------- | ------------------------------------------------------------------------- |
+| `__value.time`    | Value's timestamp (Unix ms epoch) to the URL (i.e. `?time=1560268814105`) |
+| `__value.raw`     | Raw value                                                                 |
+| `__value.numeric` | Numeric representation of a value                                         |
+| `__value.text`    | Text representation of a value                                            |
+| `__value.calc`    | Calculation name if the value is result of calculation                    |
 
 Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
 
@@ -83,10 +91,12 @@ Using value-specific variables in data links can show different results dependin
 
 To access values and labels from other fields use:
 
-- `${__data.fields[i]}` - value of field `i` (on the same row)
-- `${__data.fields["NameOfField"]}` - value of field using name instead of index
-- `${__data.fields["NameOfField"]}` - value of field using name instead of index
-- `${__data.fields[1].labels.cluster}` - access labels of another field
+| Variable                             | Description                                |
+| ------------------------------------ | ------------------------------------------ |
+| `${__data.fields[i]}`                | Value of field `i` (on the same row)       |
+| `${__data.fields["NameOfField"]}`    | Value of field using name instead of index |
+| `${__data.fields["NameOfField"]}`    | Value of field using name instead of index |
+| `${__data.fields[1].labels.cluster}` | Access labels of another field             |
 
 ### Template variables
 
