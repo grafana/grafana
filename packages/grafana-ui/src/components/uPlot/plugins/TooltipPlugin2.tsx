@@ -193,9 +193,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering
-          ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss)
-          : null,
+        contents: _isHovering ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss) : null,
         dismiss,
       };
 

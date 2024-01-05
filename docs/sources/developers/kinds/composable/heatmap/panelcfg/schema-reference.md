@@ -126,7 +126,7 @@ Controls tooltip options
 
 | Property         | Type    | Required | Default | Description                                                    |
 |------------------|---------|----------|---------|----------------------------------------------------------------|
-| `mode`           | string  | **Yes**  |         | Controls how the tooltip is shown                              |
+| `mode`           | string  | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`.  |
 | `showColorScale` | boolean | No       |         | Controls if the tooltip shows a color scale in header          |
 | `yHistogram`     | boolean | No       |         | Controls if the tooltip shows a histogram of the y-axis values |
 
