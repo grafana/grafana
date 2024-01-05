@@ -127,7 +127,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       ...defaultTimePickerConfig,
       refresh_intervals,
       hidden: hideTimePicker,
-      nowDelay: timeRange.nowDelay,
+      nowDelay: timeRange.UNSAFE_nowDelay,
     },
     panels,
     annotations: {

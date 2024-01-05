@@ -128,7 +128,7 @@ export class GeneralSettingsEditView
     const timeRange = this.getTimeRange();
 
     timeRange?.setState({
-      nowDelay: value,
+      UNSAFE_nowDelay: value,
     });
   };
 
@@ -150,7 +150,7 @@ export class GeneralSettingsEditView
     const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
     const { title, description, tags, meta, editable, overlay } = model.getDashboard().useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
-    const { timeZone, weekStart, nowDelay } = model.getTimeRange().useState();
+    const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker()?.useState() || {};
     const { hideTimeControls } = model.getDashboardControls()?.useState() || {};
 
