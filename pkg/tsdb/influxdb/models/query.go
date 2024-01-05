@@ -110,7 +110,7 @@ func (query *Query) renderTags() []string {
 		var textValue string
 		switch tag.Operator {
 		case "=~", "!~":
-			textValue = tag.Value
+			textValue = fmt.Sprintf("/%s/", strings.ReplaceAll(strings.TrimRight(strings.TrimLeft(tag.Value, `/`), `/`), `/`, `\/`))
 		case "<", ">", ">=", "<=":
 			textValue = tag.Value
 		case "Is", "Is Not":
