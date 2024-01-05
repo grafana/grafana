@@ -133,7 +133,7 @@ export const TimeSeriesTooltip = ({
 
   const getHeaderLabel = (): LabelValue => {
     return {
-      label: '',
+      label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
       value: xVal,
     };
   };
