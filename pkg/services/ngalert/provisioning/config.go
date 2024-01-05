@@ -51,19 +51,18 @@ func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore)
 
 type alertmanagerConfigStore interface {
 	Get(ctx context.Context, orgID int64) (*cfgRevision, error)
-	Save(ctx context.Context, revision *cfgRevision, orgID int64, afterSave func(ctx context.Context) error) error
+	Save(ctx context.Context, revision *cfgRevision, orgID int64) error
 }
 
 type alertmanagerConfigStoreImpl struct {
 	store AMConfigStore
-	xact  TransactionManager
 }
 
 func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*cfgRevision, error) {
 	return getLastConfiguration(ctx, orgID, a.store)
 }
 
-func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *cfgRevision, orgID int64, afterSave func(ctx context.Context) error) error {
+func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *cfgRevision, orgID int64) error {
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
 		return err
@@ -75,15 +74,5 @@ func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *cfgRevi
 		Default:                   false,
 		OrgID:                     orgID,
 	}
-	return a.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = PersistConfig(ctx, a.store, &cmd)
-		if err != nil {
-			return err
-		}
-		err = afterSave(ctx)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	return PersistConfig(ctx, a.store, &cmd)
 }

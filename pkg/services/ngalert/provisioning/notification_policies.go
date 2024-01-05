@@ -11,8 +11,9 @@ import (
 )
 
 type NotificationPolicyService struct {
-	config          *alertmanagerConfigStoreImpl
+	configStore     *alertmanagerConfigStoreImpl
 	provenanceStore ProvisioningStore
+	xact            TransactionManager
 	log             log.Logger
 	settings        setting.UnifiedAlertingSettings
 }
@@ -20,22 +21,20 @@ type NotificationPolicyService struct {
 func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore,
 	xact TransactionManager, settings setting.UnifiedAlertingSettings, log log.Logger) *NotificationPolicyService {
 	return &NotificationPolicyService{
-		config: &alertmanagerConfigStoreImpl{
-			store: am,
-			xact:  xact,
-		},
+		configStore:     &alertmanagerConfigStoreImpl{store: am},
 		provenanceStore: prov,
+		xact:            xact,
 		log:             log,
 		settings:        settings,
 	}
 }
 
 func (nps *NotificationPolicyService) GetAMConfigStore() AMConfigStore {
-	return nps.config.store
+	return nps.configStore.store
 }
 
 func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	rev, err := nps.config.Get(ctx, orgID)
+	rev, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -61,7 +60,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	revision, err := nps.config.Get(ctx, orgID)
+	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -87,7 +86,10 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 
 	revision.cfg.AlertmanagerConfig.Config.Route = &tree
 
-	return nps.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
+	return nps.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
+		}
 		return nps.provenanceStore.SetProvenance(ctx, &tree, orgID, p)
 	})
 }
@@ -100,7 +102,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	}
 	route := defaultCfg.AlertmanagerConfig.Route
 
-	revision, err := nps.config.Get(ctx, orgID)
+	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -110,7 +112,10 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, err
 	}
 
-	err = nps.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
+	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
+		}
 		return nps.provenanceStore.DeleteProvenance(ctx, route, orgID)
 	})
 

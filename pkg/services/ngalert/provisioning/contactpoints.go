@@ -22,9 +22,10 @@ import (
 )
 
 type ContactPointService struct {
-	config            *alertmanagerConfigStoreImpl
+	configStore       *alertmanagerConfigStoreImpl
 	encryptionService secrets.Service
 	provenanceStore   ProvisioningStore
+	xact              TransactionManager
 	log               log.Logger
 	ac                accesscontrol.AccessControl
 }
@@ -32,12 +33,12 @@ type ContactPointService struct {
 func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
 	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger, ac accesscontrol.AccessControl) *ContactPointService {
 	return &ContactPointService{
-		config: &alertmanagerConfigStoreImpl{
+		configStore: &alertmanagerConfigStoreImpl{
 			store: store,
-			xact:  xact,
 		},
 		encryptionService: encryptionService,
 		provenanceStore:   provenanceStore,
+		xact:              xact,
 		log:               log,
 		ac:                ac,
 	}
@@ -68,7 +69,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	if q.Decrypt && !ecp.canDecryptSecrets(ctx, u) {
 		return nil, fmt.Errorf("%w: user requires Admin role or alert.provisioning.secrets:read permission to view decrypted secure settings", ErrPermissionDenied)
 	}
-	revision, err := ecp.config.Get(ctx, q.OrgID)
+	revision, err := ecp.configStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 // getContactPointDecrypted is an internal-only function that gets full contact point info, included encrypted fields.
 // nil is returned if no matching contact point exists.
 func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
-	revision, err := ecp.config.Get(ctx, orgID)
+	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -135,7 +136,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	revision, err := ecp.config.Get(ctx, orgID)
+	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -201,7 +202,10 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		})
 	}
 
-	err = ecp.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
+	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
+		}
 		return ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
 	})
 	if err != nil {
@@ -272,7 +276,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		SecureSettings:        extractedSecrets,
 	}
 	// save to store
-	revision, err := ecp.config.Get(ctx, orgID)
+	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -282,18 +286,20 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
 	}
 
-	err = ecp.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
+	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
+		}
 		return ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
 	})
 	if err != nil {
 		return err
 	}
-	contactPoint.Provenance = string(provenance) // TODO Can be removed because it mutates a struct passed by value
 	return nil
 }
 
 func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string) error {
-	revision, err := ecp.config.Get(ctx, orgID)
+	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -322,7 +328,10 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
 	}
 
-	return ecp.config.Save(ctx, revision, orgID, func(ctx context.Context) error {
+	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
+		}
 		target := &apimodels.EmbeddedContactPoint{
 			UID: uid,
 		}
@@ -376,8 +385,8 @@ func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 	return base64.StdEncoding.EncodeToString(encryptedData), nil
 }
 
-// stitchReceiver modifies a receiver, target, in an alertmanager config. It modifies the given config in-place.
-// Returns true if the config was altered in any way, and false otherwise.
+// stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
+// Returns true if the configStore was altered in any way, and false otherwise.
 func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) bool {
 	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.

@@ -20,10 +20,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 
 	t.Run("should read the latest config for giving organization", func(t *testing.T) {
 		storeMock := &MockAMConfigStore{}
-		store := &alertmanagerConfigStoreImpl{
-			store: storeMock,
-			xact:  newNopTransactionManager(),
-		}
+		store := &alertmanagerConfigStoreImpl{store: storeMock}
 
 		expected := models.AlertConfiguration{
 			ID:                        1,
@@ -53,10 +50,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 	t.Run("propagate errors", func(t *testing.T) {
 		t.Run("when underlying store fails", func(t *testing.T) {
 			storeMock := &MockAMConfigStore{}
-			store := &alertmanagerConfigStoreImpl{
-				store: storeMock,
-				xact:  newNopTransactionManager(),
-			}
+			store := &alertmanagerConfigStoreImpl{store: storeMock}
 			expectedErr := errors.New("test=err")
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil, expectedErr)
 
@@ -66,10 +60,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 
 		t.Run("return ErrNoAlertmanagerConfiguration config does not exist", func(t *testing.T) {
 			storeMock := &MockAMConfigStore{}
-			store := &alertmanagerConfigStoreImpl{
-				store: storeMock,
-				xact:  newNopTransactionManager(),
-			}
+			store := &alertmanagerConfigStoreImpl{store: storeMock}
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil, nil)
 
 			_, err := store.Get(context.Background(), orgID)
@@ -78,10 +69,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 
 		t.Run("when config cannot be unmarshalled", func(t *testing.T) {
 			storeMock := &MockAMConfigStore{}
-			store := &alertmanagerConfigStoreImpl{
-				store: storeMock,
-				xact:  newNopTransactionManager(),
-			}
+			store := &alertmanagerConfigStoreImpl{store: storeMock}
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&models.AlertConfiguration{
 				AlertmanagerConfiguration: "invalid-json",
 			}, nil)
@@ -108,13 +96,9 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 
 	t.Run("should save the config to store", func(t *testing.T) {
 		storeMock := &MockAMConfigStore{}
-		store := &alertmanagerConfigStoreImpl{
-			store: storeMock,
-			xact:  newNopTransactionManager(),
-		}
+		store := &alertmanagerConfigStoreImpl{store: storeMock}
 
 		storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-			assertInTransaction(t, ctx)
 			assert.Equal(t, string(expectedCfg), cmd.AlertmanagerConfiguration)
 			assert.Equal(t, orgID, cmd.OrgID)
 			assert.Equal(t, revision.version, cmd.ConfigurationVersion)
@@ -123,54 +107,21 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 			return nil
 		})
 
-		afterExecuted := false
-		err := store.Save(context.Background(), &revision, orgID, func(ctx context.Context) error {
-			assertInTransaction(t, ctx)
-			afterExecuted = true
-			return nil
-		})
+		err := store.Save(context.Background(), &revision, orgID)
 		require.NoError(t, err)
-		assert.Truef(t, afterExecuted, "callback was supposed to be executed but it was not")
 
 		storeMock.AssertCalled(t, "UpdateAlertmanagerConfiguration", mock.Anything, mock.Anything)
 	})
 
-	t.Run("propagates errors", func(t *testing.T) {
-		t.Run("when underlying storage returns error", func(t *testing.T) {
-			storeMock := &MockAMConfigStore{}
-			store := &alertmanagerConfigStoreImpl{
-				store: storeMock,
-				xact:  newNopTransactionManager(),
-			}
+	t.Run("propagates errors when underlying storage returns error", func(t *testing.T) {
+		storeMock := &MockAMConfigStore{}
+		store := &alertmanagerConfigStoreImpl{store: storeMock}
 
-			expectedErr := errors.New("test-err")
-			storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(expectedErr)
+		expectedErr := errors.New("test-err")
+		storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(expectedErr)
 
-			err := store.Save(context.Background(), &revision, orgID, func(ctx context.Context) error {
-				assert.Fail(t, "callback should not be executed")
-				return nil
-			})
+		err := store.Save(context.Background(), &revision, orgID)
 
-			require.ErrorIs(t, err, expectedErr)
-		})
-
-		t.Run("when callback returns error", func(t *testing.T) {
-			storeMock := &MockAMConfigStore{}
-			store := &alertmanagerConfigStoreImpl{
-				store: storeMock,
-				xact:  newNopTransactionManager(),
-			}
-
-			storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
-
-			expectedErr := errors.New("test-err")
-			err := store.Save(context.Background(), &revision, orgID, func(ctx context.Context) error {
-				return expectedErr
-			})
-
-			require.ErrorIs(t, err, expectedErr)
-
-			storeMock.AssertCalled(t, "UpdateAlertmanagerConfiguration", mock.Anything, mock.Anything) // assert that the callback executed after this method
-		})
+		require.ErrorIs(t, err, expectedErr)
 	})
 }
