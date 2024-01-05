@@ -9,7 +9,7 @@ import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 const AnnotationsStateHistory = lazy(() => import('../components/rules/state-history/StateHistory'));
 const LokiStateHistory = lazy(() => import('../components/rules/state-history/LokiStateHistory'));
 
-enum StateHistoryImplementation {
+export enum StateHistoryImplementation {
   Loki = 'loki',
   Annotations = 'annotations',
 }

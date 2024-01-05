@@ -1,4 +1,4 @@
-import { BaseVariableModel, CustomVariableModel, LoadingState, VariableHide } from '@grafana/data';
+import { BaseVariableModel, CustomVariableModel, LoadingState, VariableHide, VariableOption } from '@grafana/data';
 
 const initialVariableModelState: BaseVariableModel = {
   id: '00000000-0000-0000-0000-000000000000',
@@ -62,4 +62,15 @@ export const multiVariable: CustomVariableModel = {
   query: '',
   hide: VariableHide.dontHide,
   type: 'custom',
+};
+
+export const initialCustomVariableModelState: CustomVariableModel = {
+  ...initialVariableModelState,
+  type: 'custom',
+  multi: false,
+  includeAll: false,
+  allValue: null,
+  query: '',
+  options: [],
+  current: {} as VariableOption,
 };

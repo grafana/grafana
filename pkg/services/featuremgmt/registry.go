@@ -718,7 +718,8 @@ var (
 		{
 			Name:            "grafanaAPIServer",
 			Description:     "Enable Kubernetes API Server for Grafana resources",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
+			Expression:      "true", // enabled by default
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Created:         time.Date(2023, time.July, 14, 12, 0, 0, 0, time.UTC),
@@ -1012,11 +1013,12 @@ var (
 		{
 			Name:            "recoveryThreshold",
 			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2023, time.October, 10, 12, 0, 0, 0, time.UTC),
+			Expression:      "true",
 		},
 		{
 			Name:         "lokiStructuredMetadata",
@@ -1163,7 +1165,7 @@ var (
 		{
 			Name:         "pdfTables",
 			Description:  "Enables generating table data as PDF in reporting",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
 			Created:      time.Date(2023, time.November, 6, 12, 0, 0, 0, time.UTC),
@@ -1176,6 +1178,14 @@ var (
 			FrontendOnly:    false,
 			Owner:           identityAccessTeam,
 			Created:         time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "canvasPanelPanZoom",
+			Description:  "Allow pan and zoom in canvas panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2023, time.December, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "logsInfiniteScrolling",

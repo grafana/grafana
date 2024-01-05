@@ -197,6 +197,8 @@ Choose from several operators to display column values:
 - **Expression** - Evaluates a boolean expression. The character `v` represents the column value in the expression (for example, "v >= 10 && v <= 12").
 - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
 
+Click the check box above the **Ok** and **Cancel** buttons to add or remove all displayed values to/from the filter.
+
 ### Clear column filters
 
 Columns with filters applied have a blue funnel displayed next to the title.

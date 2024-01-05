@@ -417,6 +417,9 @@
       "label": "Ajouter une nouvelle source de données"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
     "rich-history": {
@@ -673,6 +676,9 @@
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
+    },
+    "alert-list-legacy": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
@@ -976,6 +982,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Dernières nouvelles sur le blog"
   },
   "notifications": {

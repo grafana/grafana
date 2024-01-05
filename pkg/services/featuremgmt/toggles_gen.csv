@@ -83,7 +83,7 @@ transformationsRedesign,GA,@grafana/observability-metrics,2023-07-12,false,false
 mlExpressions,experimental,@grafana/alerting-squad,2023-07-13,false,false,false,false
 traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,2023-07-26,false,false,false,true
 metricsSummary,experimental,@grafana/observability-traces-and-profiling,2023-08-28,false,false,false,true
-grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,2023-07-14,false,false,true,false
+grafanaAPIServer,GA,@grafana/grafana-app-platform-squad,2023-07-14,false,false,true,false
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,2023-10-06,true,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,2023-12-06,true,false,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,2023-07-18,false,false,true,false
@@ -118,7 +118,7 @@ transformationsVariableSupport,preview,@grafana/grafana-bi-squad,2023-10-04,fals
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,2023-11-08,false,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,2023-12-04,false,false,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,2023-10-20,false,false,false,false
-recoveryThreshold,experimental,@grafana/alerting-squad,2023-10-10,false,false,true,false
+recoveryThreshold,GA,@grafana/alerting-squad,2023-10-10,false,false,true,false
 lokiStructuredMetadata,experimental,@grafana/observability-logs,2023-11-16,false,false,false,false
 teamHttpHeaders,experimental,@grafana/identity-access-team,2023-10-17,false,false,false,false
 awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,2023-10-12,false,false,false,true
@@ -137,8 +137,9 @@ extractFieldsNameDeduplication,experimental,@grafana/grafana-bi-squad,2023-11-02
 dashboardSceneForViewers,experimental,@grafana/dashboards-squad,2023-11-02,false,false,false,true
 dashboardScene,experimental,@grafana/dashboards-squad,2023-11-13,false,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,2023-11-03,false,false,false,true
-pdfTables,privatePreview,@grafana/sharing-squad,2023-11-06,false,false,false,false
+pdfTables,preview,@grafana/sharing-squad,2023-11-06,false,false,false,false
 ssoSettingsApi,experimental,@grafana/identity-access-team,2023-11-08,true,false,false,false
+canvasPanelPanZoom,experimental,@grafana/dataviz-squad,2023-12-27,false,false,false,true
 logsInfiniteScrolling,experimental,@grafana/observability-logs,2023-11-09,false,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,2023-11-09,false,false,false,true
 alertingDetailsViewV2,experimental,@grafana/alerting-squad,2023-11-09,false,false,false,true
