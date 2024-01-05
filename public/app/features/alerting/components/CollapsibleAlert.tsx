@@ -8,7 +8,7 @@ import { getIconFromSeverity } from '@grafana/ui/src/components/Alert/Alert';
 
 type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
 
-interface CollapsableAlertProps extends HTMLAttributes<HTMLDivElement> {
+interface CollapsibleAlertProps extends HTMLAttributes<HTMLDivElement> {
   localStoreKey: string;
   startClosed?: boolean;
   severity?: AlertVariant;
@@ -19,7 +19,7 @@ interface CollapsableAlertProps extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-export const CollapsableAlert = ({
+export const CollapsibleAlert = ({
   localStoreKey,
   startClosed = false,
   severity = 'error',
@@ -28,7 +28,7 @@ export const CollapsableAlert = ({
   collapseJustify = 'flex-end',
   alertTitle,
   children,
-}: CollapsableAlertProps) => {
+}: CollapsibleAlertProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme, severity);
   const [closed, setClosed] = useLocalStorage(localStoreKey, startClosed);
