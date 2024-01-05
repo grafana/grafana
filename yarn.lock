@@ -3348,15 +3348,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:0.6.0":
-  version: 0.6.0
-  resolution: "@grafana/plugin-e2e@npm:0.6.0"
+"@grafana/plugin-e2e@npm:0.6.1-canary.644.c0a1312.0":
+  version: 0.6.1-canary.644.c0a1312.0
+  resolution: "@grafana/plugin-e2e@npm:0.6.1-canary.644.c0a1312.0"
   dependencies:
     semver: "npm:^7.5.4"
     uuid: "npm:^9.0.1"
   peerDependencies:
     "@playwright/test": ^1.39.0
-  checksum: 0280b43a3e38f136a2619975d91994c1240dcbc0ccefacb4b4ecac38e39438e85c0e912fcb6c3bed17f17a6b41d268ef06703ea6bad32dfde6d192dc11623c78
+  checksum: 3e5d05fc1b43da77d81c96146b7bc5d06bc6f6a974e19b12f87066a2e21f5caecd383fdec2e121fd6b1ab3f46dcfdeecdedb753aa07fe85bee22323f2523db6f
   languageName: node
   linkType: hard
 
@@ -17467,7 +17467,7 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/lezer-traceql": "npm:0.0.12"
     "@grafana/monaco-logql": "npm:^0.0.7"
-    "@grafana/plugin-e2e": "npm:0.6.0"
+    "@grafana/plugin-e2e": "npm:0.6.1-canary.644.c0a1312.0"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:1.28.5"
     "@grafana/schema": "workspace:*"
