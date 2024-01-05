@@ -1,9 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
 
+import { PluginOptions } from '@grafana/plugin-e2e';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
-export default defineConfig({
+export default defineConfig<PluginOptions>({
   testDir: './plugin-e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -26,6 +28,7 @@ export default defineConfig({
       username: 'admin',
       password: 'admin',
     },
+    provisioningRootDir: path.join(process.cwd(), 'conf/provisioning'),
   },
 
   /* Configure projects for major browsers */
