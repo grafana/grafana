@@ -77,13 +77,20 @@ type Dialect interface {
 
 	GetDBName(string) (string, error)
 
-	// InsertQuery accepts a table name and a map of column names to insert.
-	// The insert is executed as part of the provided session.
-	InsertQuery(ctx context.Context, tableName string, row map[string]any, tx *session.SessionTx) error
+	// InsertQuery accepts a table name and a map of column names to values to insert.
+	// It returns a query string and a slice of parameters that can be executed against the database.
+	InsertQuery(tableName string, row map[string]any) (string, []any, error)
 	// UpdateQuery accepts a table name, a map of column names to values to update, and a map of
 	// column names to values to use in the where clause.
+	// It returns a query string and a slice of parameters that can be executed against the database.
+	UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error)
+	// Insert accepts a table name and a map of column names to insert.
+	// The insert is executed as part of the provided session.
+	Insert(ctx context.Context, tableName string, row map[string]any, tx *session.SessionTx) error
+	// Update accepts a table name, a map of column names to values to update, and a map of
+	// column names to values to use in the where clause.
 	// The update is executed as part of the provided session.
-	UpdateQuery(ctx context.Context, tableName string, row map[string]any, where map[string]any, tx *session.SessionTx) error
+	Update(ctx context.Context, tableName string, row map[string]any, where map[string]any, tx *session.SessionTx) error
 }
 
 type LockCfg struct {
@@ -356,9 +363,9 @@ func (b *BaseDialect) GetDBName(_ string) (string, error) {
 	return "", nil
 }
 
-func (b *BaseDialect) InsertQuery(ctx context.Context, tableName string, row map[string]any, tx *session.SessionTx) error {
+func (b *BaseDialect) InsertQuery(tableName string, row map[string]any) (string, []any, error) {
 	if len(row) < 1 {
-		return fmt.Errorf("no columns provided")
+		return "", nil, fmt.Errorf("no columns provided")
 	}
 
 	// allocate slices
@@ -378,19 +385,16 @@ func (b *BaseDialect) InsertQuery(ctx context.Context, tableName string, row map
 		vals = append(vals, row[col])
 	}
 
-	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Repeat("?, ", len(row)-1)+"?")
-
-	_, err := tx.Exec(ctx, query, vals...)
-	return err
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Repeat("?, ", len(row)-1)+"?"), vals, nil
 }
 
-func (b *BaseDialect) UpdateQuery(ctx context.Context, tableName string, row map[string]any, where map[string]any, tx *session.SessionTx) error {
+func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error) {
 	if len(row) < 1 {
-		return fmt.Errorf("no columns provided")
+		return "", nil, fmt.Errorf("no columns provided")
 	}
 
 	if len(where) < 1 {
-		return fmt.Errorf("no where clause provided")
+		return "", nil, fmt.Errorf("no where clause provided")
 	}
 
 	// allocate slices
@@ -424,8 +428,25 @@ func (b *BaseDialect) UpdateQuery(ctx context.Context, tableName string, row map
 		vals = append(vals, where[col])
 	}
 
-	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Join(whereCols, " AND "))
+	return fmt.Sprintf("UPDATE %s SET %s WHERE %s", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Join(whereCols, " AND ")), vals, nil
+}
 
-	_, err := tx.Exec(ctx, query, vals...)
+func (b *BaseDialect) Insert(ctx context.Context, tableName string, row map[string]any, tx *session.SessionTx) error {
+	query, args, err := b.InsertQuery(tableName, row)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, query, args...)
+	return err
+}
+
+func (b *BaseDialect) Update(ctx context.Context, tableName string, row map[string]any, where map[string]any, tx *session.SessionTx) error {
+	query, args, err := b.UpdateQuery(tableName, row, where)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, query, args...)
 	return err
 }
