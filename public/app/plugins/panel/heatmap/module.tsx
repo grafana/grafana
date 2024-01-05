@@ -404,7 +404,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
           { value: TooltipDisplayMode.None, label: 'Hidden' },
         ],
       },
-    })
+    });
 
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
