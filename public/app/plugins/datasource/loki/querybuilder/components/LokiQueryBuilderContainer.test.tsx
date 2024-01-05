@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
-import { createLokiDatasource } from '../../mocks';
+import { createLokiDatasource } from '../../__mocks__/datasource';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 

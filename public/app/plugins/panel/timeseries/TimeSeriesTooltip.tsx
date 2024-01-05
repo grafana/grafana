@@ -136,7 +136,7 @@ export const TimeSeriesTooltip = ({
 
   const getHeaderLabel = (): LabelValue => {
     return {
-      label: '',
+      label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
       value: xVal,
     };
   };
@@ -148,9 +148,9 @@ export const TimeSeriesTooltip = ({
   return (
     <div>
       <div className={styles.wrapper}>
-        <VizTooltipHeader headerLabel={getHeaderLabel()} />
-        <VizTooltipContent contentLabelValue={getContentLabelValue()} />
-        {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
+        <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
+        <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
+        {isPinned && <VizTooltipFooter dataLinks={links} />}
       </div>
     </div>
   );
