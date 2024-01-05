@@ -38,6 +38,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | Line                    | `line`                    |
 | Microsoft Teams         | `teams`                   |
 | Opsgenie                | `opsgenie`                |
+| Jira Service Management | `jsm`                     |
 | Pagerduty               | `pagerduty`               |
 | Prometheus Alertmanager | `prometheus-alertmanager` |
 | Pushover                | `pushover`                |

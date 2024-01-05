@@ -146,6 +146,8 @@ export type AlertmanagerConfig = {
     pagerduty_url?: string;
     opsgenie_api_key?: string;
     opsgenie_api_url?: string;
+    jsm_api_key?: string;
+    jsm_api_url?: string;
     wechat_api_url?: string;
     wechat_api_secret?: string;
     wechat_api_corp_id?: string;

@@ -97,6 +97,7 @@ Grafana supports a wide range of contact points with varied support for images i
 | Line                    | No                                                         | No                                                       |
 | Microsoft Teams         | No                                                         | Yes                                                      |
 | Opsgenie                | No                                                         | Yes                                                      |
+| Jira Service Management | No                                                         | Yes                                                      |
 | Pagerduty               | No                                                         | Yes                                                      |
 | Prometheus Alertmanager | No                                                         | No                                                       |
 | Pushover                | Yes (Maximum of 1 per notification)                        | No                                                       |

@@ -123,6 +123,8 @@ export class AlertTabCtrl {
         return 'fa fa-bullhorn';
       case 'opsgenie':
         return 'bell';
+      case 'jsm':
+        return 'bell';
       case 'hipchat':
         return 'fa fa-mail-forward';
       case 'pushover':
