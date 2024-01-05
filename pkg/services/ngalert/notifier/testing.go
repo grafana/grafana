@@ -180,10 +180,10 @@ type FakeOrgStore struct {
 	orgs []int64
 }
 
-func NewFakeOrgStore(t *testing.T, orgs []int64) FakeOrgStore {
+func NewFakeOrgStore(t *testing.T, orgs []int64) *FakeOrgStore {
 	t.Helper()
 
-	return FakeOrgStore{
+	return &FakeOrgStore{
 		orgs: orgs,
 	}
 }

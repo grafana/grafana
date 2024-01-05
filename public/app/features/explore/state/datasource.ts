@@ -7,7 +7,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
-import { ExploreItemState, ThunkResult } from 'app/types';
+import { ExploreItemState, createAsyncThunk } from 'app/types';
 
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
@@ -39,12 +39,15 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(
-  exploreId: string,
-  datasource: string | DataSourceRef,
-  options?: { importQueries: boolean }
-): ThunkResult<Promise<void>> {
-  return async (dispatch, getState) => {
+
+interface ChangeDatasourcePayload {
+  exploreId: string;
+  datasource: string | DataSourceRef;
+  options?: { importQueries: boolean };
+}
+export const changeDatasource = createAsyncThunk(
+  'explore/changeDatasource',
+  async ({ datasource, exploreId, options }: ChangeDatasourcePayload, { getState, dispatch }) => {
     const orgId = getState().user.orgId;
     const { history, instance } = await loadAndInitDatasource(orgId, datasource);
     const currentDataSourceInstance = getState().explore.panes[exploreId]!.datasourceInstance;
@@ -80,8 +83,8 @@ export function changeDatasource(
     if (options?.importQueries) {
       dispatch(runQueries({ exploreId }));
     }
-  };
-}
+  }
+);
 
 //
 // Reducer

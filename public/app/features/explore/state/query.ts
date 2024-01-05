@@ -23,6 +23,7 @@ import {
 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import store from 'app/core/store';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -51,6 +52,7 @@ import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/expl
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
+import { visualisationTypeKey } from '../Logs/utils/logs';
 import { decorateData } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
@@ -633,17 +635,21 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
       newQuerySubscription = newQuerySource.subscribe({
         next(data) {
+          const exploreState = getState().explore.panes[exploreId];
           if (data.logsResult !== null && data.state === LoadingState.Done) {
             reportInteraction('grafana_explore_logs_result_displayed', {
               datasourceType: datasourceInstance.type,
+              visualisationType:
+                exploreState?.panelsState?.logs?.visualisationType ?? store.get(visualisationTypeKey) ?? 'N/A',
+              length: data.logsResult.rows.length,
             });
           }
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
           // Keep scanning for results if this was the last scanning transaction
-          if (getState().explore.panes[exploreId]!.scanning) {
+          if (exploreState!.scanning) {
             if (data.state === LoadingState.Done && data.series.length === 0) {
-              const range = getShiftedTimeRange(-1, getState().explore.panes[exploreId]!.range);
+              const range = getShiftedTimeRange(-1, exploreState!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
               dispatch(runQueries({ exploreId }));
             } else {

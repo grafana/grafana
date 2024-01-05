@@ -417,6 +417,9 @@
       "label": "Añadir nueva fuente de datos"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
     "rich-history": {
@@ -673,6 +676,9 @@
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
+    },
+    "alert-list-legacy": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -976,6 +982,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Últimas entradas del blog"
   },
   "notifications": {

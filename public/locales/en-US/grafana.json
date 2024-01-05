@@ -412,6 +412,9 @@
       "label": "Add new data source"
     }
   },
+  "drawer": {
+    "close": "Close Drawer"
+  },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "rich-history": {
@@ -667,6 +670,9 @@
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
+    },
+    "alert-list-legacy": {
+      "title": "Alert rules"
     },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
@@ -970,6 +976,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": "Close Drawer"
+    },
     "title": "Latest from the blog"
   },
   "notifications": {

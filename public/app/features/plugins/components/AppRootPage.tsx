@@ -13,7 +13,7 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { config, locationSearchToObject, logError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -21,6 +21,7 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
@@ -191,6 +192,9 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
         pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );
+    const error = err instanceof Error ? err : new Error(getMessageFromError(err));
+    logError(error);
+    console.error(error);
   }
 }
 

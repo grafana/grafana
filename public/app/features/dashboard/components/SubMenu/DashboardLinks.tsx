@@ -55,7 +55,7 @@ export const DashboardLinks = ({ dashboard, links }: Props) => {
         );
 
         return (
-          <div key={key} className="gf-form" data-testid={selectors.components.DashboardLinks.container}>
+          <div key={key} data-testid={selectors.components.DashboardLinks.container}>
             {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
           </div>
         );
