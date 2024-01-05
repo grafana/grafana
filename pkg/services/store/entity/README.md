@@ -131,7 +131,7 @@ u394j4d3-s63j-2d74-g8hf-958773jtybf2   Playlist with auto generated UID   5m    
 
 ### Use a separate database
 
-By default Unified Storage uses Sqlite. To run against a separate database, update custom.ini by adding the following section to it:
+By default Unified Storage uses the Grafana database. To run against a separate database, update `custom.ini` by adding the following section to it:
 
 ```
 [entity_api]
