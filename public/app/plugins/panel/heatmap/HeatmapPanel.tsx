@@ -58,9 +58,9 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync, canAddAnnotations } = usePanelContext();
+  const { sync } = usePanelContext();
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  // const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   //  necessary for enabling datalinks in hover view
   let scopedVarsFromRawData: ScopedVars[] = [];
@@ -249,7 +249,6 @@ export const HeatmapPanel = ({
                       dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}
                       showColorScale={options.tooltip.showColorScale}
-                      canAnnotate={enableAnnotationCreation}
                       panelData={data}
                       replaceVars={replaceVariables}
                       scopedVars={scopedVarsFromRawData}

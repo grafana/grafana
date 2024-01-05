@@ -39,7 +39,6 @@ interface Props {
   showColorScale?: boolean;
   isPinned: boolean;
   dismiss: () => void;
-  canAnnotate: boolean;
   panelData: PanelData;
   replaceVars: InterpolateFunction;
   scopedVars: ScopedVars[];
@@ -65,7 +64,6 @@ const HeatmapHoverCell = ({
   dataRef,
   showHistogram,
   isPinned,
-  canAnnotate,
   showColorScale = false,
   scopedVars,
   replaceVars,
@@ -374,9 +372,6 @@ const HeatmapHoverCell = ({
 
     return content;
   };
-
-  // @TODO remove this when adding annotations support
-  canAnnotate = false;
 
   const styles = useStyles2(getStyles);
 
