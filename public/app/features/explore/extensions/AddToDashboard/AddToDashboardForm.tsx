@@ -102,6 +102,8 @@ export function AddToDashboardForm(props: Props): ReactElement {
       queries: exploreItem.queries.length,
     });
 
+    const { from, to } = exploreItem.range.raw;
+
     try {
       await setDashboardInLocalStorage({
         dashboardUid,
@@ -109,6 +111,10 @@ export function AddToDashboardForm(props: Props): ReactElement {
         queries: exploreItem.queries,
         queryResponse: exploreItem.queryResponse,
         panelState: exploreItem?.panelsState,
+        time: {
+          from: typeof from === 'string' ? from : from.toISOString(),
+          to: typeof to === 'string' ? to : to.toISOString(),
+        },
       });
     } catch (error) {
       switch (error) {
