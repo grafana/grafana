@@ -24357,9 +24357,6 @@
           },
           "404": {
             "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
           }
         },
         "summary": "Get an SSO Settings entry by Key",
