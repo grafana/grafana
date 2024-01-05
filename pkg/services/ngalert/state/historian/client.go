@@ -52,7 +52,7 @@ func TimeRequest(ctx context.Context, operation string, coll instrument.Collecto
 	var response *http.Response
 	doRequest := func(_ context.Context) error {
 		var err error
-		response, err = client.Do(request)
+		response, err = client.Do(request) // nolint:bodyclose
 		return err
 	}
 	toStatusCode := func(err error) string {
