@@ -13,18 +13,6 @@ import { LabelType, LokiQueryType } from './types';
 
 jest.mock('./responseUtils');
 
-jest.mock('app/store/store', () => ({
-  store: {
-    getState: jest.fn().mockReturnValue({
-      explore: {
-        left: {
-          mode: 'Logs',
-        },
-      },
-    }),
-  },
-}));
-
 const mockTimeRange = {
   from: dateTime(1546372800000),
   to: dateTime(1546380000000),
