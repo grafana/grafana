@@ -426,6 +426,7 @@ type testOp struct {
 	expectedErrors    []string
 }
 
+//nolint:gocyclo
 func TestCommonServicePatterns(t *testing.T) {
 	sh := newServiceHelper(t)
 	f1 := sh.genFolder()
@@ -468,8 +469,10 @@ func TestCommonServicePatterns(t *testing.T) {
 		return newAlerts
 	}
 
+	modifiedSuffix := "-modified"
+
 	withModifiedName := func(alert *legacymodels.Alert) {
-		alert.Name = alert.Name + "-modified"
+		alert.Name = alert.Name + modifiedSuffix
 	}
 
 	withName := func(name string) func(alert *legacymodels.Alert) {
@@ -493,7 +496,7 @@ func TestCommonServicePatterns(t *testing.T) {
 	}
 
 	withModifiedTitle := func(pair *migmodels.AlertPair) {
-		pair.Rule.Title = pair.Rule.Title + "-modified"
+		pair.Rule.Title = pair.Rule.Title + modifiedSuffix
 	}
 
 	withTitle := func(name string) func(pair *migmodels.AlertPair) {
@@ -535,7 +538,7 @@ func TestCommonServicePatterns(t *testing.T) {
 	}
 
 	withModifiedChannelName := func(c *legacymodels.AlertNotification) {
-		c.Name = c.Name + "-modified"
+		c.Name = c.Name + modifiedSuffix
 	}
 
 	withType := func(t string) func(c *legacymodels.AlertNotification) {
@@ -670,6 +673,7 @@ func TestCommonServicePatterns(t *testing.T) {
 					description: "move dashboard d1 to folder f2",
 					operation: func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
 						d1Copy := *d1
+						//nolint:staticcheck
 						d1Copy.FolderID = f2.ID
 						_, err := x.ID(d1.ID).Update(d1Copy)
 						return err
@@ -757,7 +761,7 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation: migrateDashboardAlertsOp(true, d2.ID),
 					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, pairs2), func(state *uaState) {
 						for i := 0; i < 5; i++ {
-							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
 						}
 						state.serviceState.MigratedDashboards = append(state.serviceState.MigratedDashboards, &definitions.DashboardUpgrade{
 							DashboardID:    d3.ID,
@@ -781,7 +785,7 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation:   migrateAllDashboardAlertsOp(true),
 					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, pairs2, pairs3[:5:5]), func(state *uaState) {
 						for i := 0; i < 5; i++ {
-							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
 						}
 					}),
 				},
@@ -790,7 +794,7 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation:   migrateDashboardAlertsOp(false, d2.ID),
 					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, append(modifiedPairs(pairs2[:5:5], withModifiedTitle), pairs2[5:]...), pairs3[:5:5]), func(state *uaState) {
 						for i := 0; i < 5; i++ {
-							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
 						}
 					}),
 				},
@@ -805,8 +809,8 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation: migrateAlertOp(d3.ID, alerts3[5].PanelID),
 					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, append(modifiedPairs(pairs2[:5:5], withModifiedTitle), pairs2[5:]...), pairs3[:6:6]), func(state *uaState) {
 						for i := 0; i < 5; i++ {
-							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
-							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
+							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
 						}
 						for _, a := range alerts3[6:] {
 							state.serviceState.MigratedDashboards[2].MigratedAlerts = append(state.serviceState.MigratedDashboards[2].MigratedAlerts, &definitions.AlertPair{
@@ -821,8 +825,8 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation:   migrateAlertOp(d3.ID, alerts3[0].PanelID),
 					expectedUAState: modifiedState(sh.uaState(t, nil, pairs1, append(modifiedPairs(pairs2[:5:5], withModifiedTitle), pairs2[5:]...), append(modifiedPairs(pairs3[0:1:1], withModifiedTitle), pairs3[1:6:6]...)), func(state *uaState) {
 						for i := 0; i < 5; i++ {
-							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
-							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
+							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
 						}
 						for _, a := range alerts3[6:] {
 							state.serviceState.MigratedDashboards[2].MigratedAlerts = append(state.serviceState.MigratedDashboards[2].MigratedAlerts, &definitions.AlertPair{
@@ -840,11 +844,11 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation: migrateAllDashboardAlertsOp(false),
 					expectedUAState: modifiedState(sh.uaState(t, nil, modifiedPairs(pairs1, withModifiedTitle), append(modifiedPairs(pairs2[:5:5], withModifiedTitle), pairs2[5:]...), append(modifiedPairs(pairs3[0:5:5], withModifiedTitle), pairs3[5:]...)), func(state *uaState) {
 						for i := 0; i < 5; i++ {
-							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += "-modified"
-							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[1].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
+							state.serviceState.MigratedDashboards[2].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
 						}
 						for i := 0; i < 10; i++ {
-							state.serviceState.MigratedDashboards[0].MigratedAlerts[i].LegacyAlert.Name += "-modified"
+							state.serviceState.MigratedDashboards[0].MigratedAlerts[i].LegacyAlert.Name += modifiedSuffix
 						}
 					}),
 				},
@@ -861,7 +865,7 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation:         migrateAllChannelsOp(true),
 					expectedUAState: modifiedState(sh.uaState(t, channels1), func(state *uaState) {
 						for _, c := range state.serviceState.MigratedChannels {
-							c.LegacyChannel.Name += "-modified"
+							c.LegacyChannel.Name += modifiedSuffix
 						}
 					}),
 				},
@@ -946,7 +950,7 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation:         migrateChannelOp(channels1[9].ID),
 					expectedUAState: modifiedState(sh.uaState(t, append(channels1[0:9:9], modifiedChannels(channels1[9:], withModifiedChannelName)...)), func(state *uaState) {
 						for i := 0; i < 10; i++ {
-							state.serviceState.MigratedChannels[i].LegacyChannel.Name = channels1[i].Name + "-modified"
+							state.serviceState.MigratedChannels[i].LegacyChannel.Name = channels1[i].Name + modifiedSuffix
 						}
 					}),
 				},
@@ -1280,7 +1284,7 @@ func TestCommonServicePatterns(t *testing.T) {
 					), func(state *uaState) {
 						for i := range pairs1 {
 							// Service state knows the updated legacy channel names.
-							state.serviceState.MigratedChannels[i].LegacyChannel.Name = channels1[i].Name + "-modified"
+							state.serviceState.MigratedChannels[i].LegacyChannel.Name = channels1[i].Name + modifiedSuffix
 						}
 					}),
 				},
@@ -1310,9 +1314,9 @@ func TestCommonServicePatterns(t *testing.T) {
 			initialUAState: modifiedState(sh.uaState(t, channels1, modifiedPairs(pairs1, withNotifierLabels)), func(state *uaState) {
 				// Update all the contact points names. Done here so we simulate it being done post-migration.
 				for i := 0; i < 10; i++ {
-					state.amConfig.AlertmanagerConfig.Receivers[i+1].Name += "-modified"
-					state.amConfig.AlertmanagerConfig.Receivers[i+1].GrafanaManagedReceivers[0].Name += "-modified"
-					state.amConfig.AlertmanagerConfig.Route.Routes[0].Routes[i].Receiver += "-modified"
+					state.amConfig.AlertmanagerConfig.Receivers[i+1].Name += modifiedSuffix
+					state.amConfig.AlertmanagerConfig.Receivers[i+1].GrafanaManagedReceivers[0].Name += modifiedSuffix
+					state.amConfig.AlertmanagerConfig.Route.Routes[0].Routes[i].Receiver += modifiedSuffix
 				}
 			}),
 			operations: []testOp{
@@ -1321,13 +1325,13 @@ func TestCommonServicePatterns(t *testing.T) {
 					operation:   migrateAllDashboardAlertsOp(false),
 					expectedUAState: modifiedState(sh.uaState(t, channels1, modifiedPairs(pairs1, withNotifierLabels)), func(state *uaState) {
 						for i := range pairs1 {
-							state.serviceState.MigratedDashboards[0].MigratedAlerts[i].AlertRule.SendsTo = []string{channels1[i].Name + "-modified"}
-							state.serviceState.MigratedChannels[i].ContactPointUpgrade.Name += "-modified"
+							state.serviceState.MigratedDashboards[0].MigratedAlerts[i].AlertRule.SendsTo = []string{channels1[i].Name + modifiedSuffix}
+							state.serviceState.MigratedChannels[i].ContactPointUpgrade.Name += modifiedSuffix
 						}
 						for i := 0; i < 10; i++ {
-							state.amConfig.AlertmanagerConfig.Receivers[i+1].Name += "-modified"
-							state.amConfig.AlertmanagerConfig.Receivers[i+1].GrafanaManagedReceivers[0].Name += "-modified"
-							state.amConfig.AlertmanagerConfig.Route.Routes[0].Routes[i].Receiver += "-modified"
+							state.amConfig.AlertmanagerConfig.Receivers[i+1].Name += modifiedSuffix
+							state.amConfig.AlertmanagerConfig.Receivers[i+1].GrafanaManagedReceivers[0].Name += modifiedSuffix
+							state.amConfig.AlertmanagerConfig.Route.Routes[0].Routes[i].Receiver += modifiedSuffix
 						}
 					}),
 				},
@@ -1392,6 +1396,7 @@ func TestCommonServicePatterns(t *testing.T) {
 					description: "move dashboard d1 to folder f2",
 					operation: func(ctx context.Context, tt testcase, service *migrationService, x *xorm.Engine) error {
 						d1Copy := *d1
+						//nolint:staticcheck
 						d1Copy.FolderID = f2.ID
 						_, err := x.ID(d1.ID).Update(d1Copy)
 						return err
@@ -1421,7 +1426,6 @@ func TestCommonServicePatterns(t *testing.T) {
 								Error:         "channel not upgraded",
 							})
 						}
-
 					}),
 				},
 			},
@@ -1976,6 +1980,7 @@ func (h *serviceHelper) serviceState(channels []*legacymodels.AlertNotification,
 
 	for _, pairs := range dashPairs {
 		d := h.dashes[pairs[0].LegacyRule.DashboardID]
+		//nolint:staticcheck
 		f := h.folders[d.FolderID]
 		f2 := h.foldersByUID[pairs[0].Rule.NamespaceUID]
 		du := &definitions.DashboardUpgrade{

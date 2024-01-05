@@ -318,199 +318,22 @@ func (ms *migrationService) GetOrgMigrationState(ctx context.Context, orgID int6
 		amConfig := migmodels.FromPostableUserConfig(cfg)
 
 		// Hydrate the slim database model.
+		migratedChannels, err := ms.fromContactPairs(ctx, orgID, dState.MigratedChannels, amConfig)
+		if err != nil {
+			return fmt.Errorf("rehydrate channels: %w", err)
+		}
+
+		migratedDashboards, err := ms.fromDashboardUpgrades(ctx, orgID, dState.MigratedDashboards, amConfig)
+		if err != nil {
+			return fmt.Errorf("rehydrate alerts: %w", err)
+		}
+
 		resState = &definitions.OrgMigrationState{
 			OrgID:              dState.OrgID,
-			MigratedDashboards: make([]*definitions.DashboardUpgrade, 0, len(dState.MigratedDashboards)),
-			MigratedChannels:   make([]*definitions.ContactPair, 0, len(dState.MigratedChannels)),
+			MigratedDashboards: migratedDashboards,
+			MigratedChannels:   migratedChannels,
 		}
 
-		channels, err := ms.migrationStore.GetNotificationChannels(ctx, orgID)
-		if err != nil {
-			return fmt.Errorf("get notification channels: %w", err)
-		}
-
-		existingChannels := make(map[int64]struct{})
-		for _, channel := range channels {
-			existingChannels[channel.ID] = struct{}{}
-			pair := &definitions.ContactPair{
-				LegacyChannel: fromAlertNotification(channel),
-				Error:         "channel not upgraded",
-			}
-
-			if p, ok := dState.MigratedChannels[channel.ID]; ok {
-				if p.NewReceiverUID != "" {
-					if recv, ok := amConfig.GetReceiver(p.NewReceiverUID); ok {
-						if route, ok := amConfig.GetLegacyRoute(recv.Name); ok {
-							pair.ContactPointUpgrade = fromContactPointUpgrade(recv, route)
-						}
-					}
-				}
-				pair.Error = p.Error
-			}
-
-			resState.MigratedChannels = append(resState.MigratedChannels, pair)
-		}
-
-		// Now we check the inverse, for channels that were migrated but no longer exist.
-		for _, p := range dState.MigratedChannels {
-			if _, ok := existingChannels[p.LegacyID]; !ok {
-				pair := &definitions.ContactPair{
-					LegacyChannel: &definitions.LegacyChannel{ID: p.LegacyID},
-					Error:         "channel no longer exists",
-				}
-				if p.NewReceiverUID != "" {
-					if recv, ok := amConfig.GetReceiver(p.NewReceiverUID); ok {
-						if route, ok := amConfig.GetLegacyRoute(recv.Name); ok {
-							pair.ContactPointUpgrade = fromContactPointUpgrade(recv, route)
-						}
-					}
-				}
-				resState.MigratedChannels = append(resState.MigratedChannels, pair)
-			}
-		}
-
-		// We preload information in bulk for performance reasons.
-		mappedRules, err := ms.migrationStore.GetSlimAlertRules(ctx, orgID)
-		if err != nil {
-			return fmt.Errorf("get all alert rules: %w", err)
-		}
-
-		mappedDashboardAlerts, err := ms.migrationStore.GetSlimOrgDashboardAlerts(ctx, orgID)
-		if err != nil {
-			return fmt.Errorf("get dashboard alerts: %w", err)
-		}
-
-		dashIDInfo, err := ms.migrationStore.GetSlimDashboards(ctx, orgID)
-		if err != nil {
-			return fmt.Errorf("get dashboards: %w", err)
-		}
-		dashUIDInfo := make(map[string]migrationStore.SlimDashboard, len(dashIDInfo))
-		for _, info := range dashIDInfo {
-			dashUIDInfo[info.UID] = info
-		}
-
-		existingDashboards := make(map[int64]struct{})
-		for dashboardID, alerts := range mappedDashboardAlerts {
-			existingDashboards[dashboardID] = struct{}{}
-			mDu := &definitions.DashboardUpgrade{
-				MigratedAlerts: make([]*definitions.AlertPair, 0),
-				DashboardID:    dashboardID,
-			}
-
-			dashInfo, ok := dashIDInfo[dashboardID]
-			if ok {
-				folderInfo := dashIDInfo[dashInfo.FolderID]
-				mDu.DashboardUID = dashInfo.UID
-				mDu.DashboardName = dashInfo.Title
-				mDu.FolderUID = folderInfo.UID
-				mDu.FolderName = folderInfo.Title
-				mDu.Provisioned = dashInfo.Provisioned
-			}
-
-			du, ok := dState.MigratedDashboards[dashboardID]
-			if !ok {
-				mDu.Error = "dashboard not upgraded"
-				// Empty dashboard upgrade, to simplify logic below.
-				du = &migrationStore.DashboardUpgrade{
-					DashboardID:    dashboardID,
-					MigratedAlerts: make(map[int64]*migrationStore.AlertPair),
-				}
-			}
-			mDu.Warning = du.Warning
-
-			if du.AlertFolderUID != "" {
-				newFolderInfo := dashUIDInfo[du.AlertFolderUID]
-				mDu.NewFolderUID = du.AlertFolderUID
-				mDu.NewFolderName = newFolderInfo.Title
-			}
-
-			existingAlerts := make(map[int64]struct{})
-			for _, a := range alerts {
-				existingAlerts[a.ID] = struct{}{}
-				pair := &definitions.AlertPair{
-					LegacyAlert: fromSlimAlert(a),
-					Error:       "alert not upgraded",
-				}
-
-				if p, ok := du.MigratedAlerts[a.PanelID]; ok {
-					pair.Error = p.Error
-					if p.NewRuleUID != "" {
-						if rule, ok := mappedRules[p.NewRuleUID]; ok {
-							var sendTo = make([]string, 0)
-							for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
-								sendTo = append(sendTo, m.RouteOpts.Receiver)
-							}
-							pair.AlertRule = fromSlimAlertRule(rule, sendTo)
-						} else {
-							// We could potentially set an error here, but it's not really an error. It just means that the
-							// user deleted the migrated rule after the migration. This could just as easily be intentional.
-							ms.log.Info("Could not find rule for migrated alert", "alertID", a.ID, "ruleUID", p.NewRuleUID)
-						}
-					}
-				}
-
-				mDu.MigratedAlerts = append(mDu.MigratedAlerts, pair)
-			}
-
-			// Now we check the inverse, for alerts that were migrated but no longer exist.
-			for _, p := range du.MigratedAlerts {
-				if _, ok := existingAlerts[p.LegacyID]; !ok {
-					pair := &definitions.AlertPair{
-						LegacyAlert: &definitions.LegacyAlert{ID: p.LegacyID, PanelID: p.PanelID, DashboardID: du.DashboardID},
-						Error:       "alert no longer exists",
-					}
-					if p.NewRuleUID != "" {
-						if rule, ok := mappedRules[p.NewRuleUID]; ok {
-							var sendTo = make([]string, 0)
-							for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
-								sendTo = append(sendTo, m.RouteOpts.Receiver)
-							}
-							pair.AlertRule = fromSlimAlertRule(rule, sendTo)
-						}
-					}
-					mDu.MigratedAlerts = append(mDu.MigratedAlerts, pair)
-				}
-			}
-
-			resState.MigratedDashboards = append(resState.MigratedDashboards, mDu)
-		}
-
-		// Now we check the inverse, for dashboards that were migrated but no longer exist.
-		for dashboardId, du := range dState.MigratedDashboards {
-			if _, ok := existingDashboards[dashboardId]; !ok {
-				mDu := &definitions.DashboardUpgrade{
-					MigratedAlerts: make([]*definitions.AlertPair, 0),
-					DashboardID:    dashboardId,
-					Error:          "dashboard no longer exists",
-					Warning:        du.Warning,
-				}
-
-				if du.AlertFolderUID != "" {
-					newFolderInfo := dashUIDInfo[du.AlertFolderUID]
-					mDu.NewFolderUID = du.AlertFolderUID
-					mDu.NewFolderName = newFolderInfo.Title
-				}
-
-				for _, p := range du.MigratedAlerts {
-					pair := &definitions.AlertPair{
-						LegacyAlert: &definitions.LegacyAlert{ID: p.LegacyID, PanelID: p.PanelID, DashboardID: du.DashboardID},
-						Error:       "dashboard no longer exists",
-					}
-					if p.NewRuleUID != "" {
-						if rule, ok := mappedRules[p.NewRuleUID]; ok {
-							var sendTo = make([]string, 0)
-							for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
-								sendTo = append(sendTo, m.RouteOpts.Receiver)
-							}
-							pair.AlertRule = fromSlimAlertRule(rule, sendTo)
-						}
-					}
-					mDu.MigratedAlerts = append(mDu.MigratedAlerts, pair)
-				}
-
-				resState.MigratedDashboards = append(resState.MigratedDashboards, mDu)
-			}
-		}
 		return nil
 	})
 	if err != nil {
@@ -729,6 +552,208 @@ func (ms *migrationService) verifyMigrated(ctx context.Context, orgID int64) err
 		return fmt.Errorf("not migrated")
 	}
 	return nil
+}
+
+// fromDashboardUpgrades converts DashboardUpgrades to their api representation. This requires rehydrating information
+// from the database for the current state of dashboards, alerts, and rules.
+func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int64, migratedDashboards map[int64]*migrationStore.DashboardUpgrade, amConfig *migmodels.Alertmanager) ([]*definitions.DashboardUpgrade, error) {
+	// We preload information in bulk for performance reasons.
+	mappedRules, err := ms.migrationStore.GetSlimAlertRules(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("get all alert rules: %w", err)
+	}
+
+	mappedDashboardAlerts, err := ms.migrationStore.GetSlimOrgDashboardAlerts(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("get dashboard alerts: %w", err)
+	}
+
+	dashIDInfo, err := ms.migrationStore.GetSlimDashboards(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("get dashboards: %w", err)
+	}
+	dashUIDInfo := make(map[string]migrationStore.SlimDashboard, len(dashIDInfo))
+	for _, info := range dashIDInfo {
+		dashUIDInfo[info.UID] = info
+	}
+
+	res := make([]*definitions.DashboardUpgrade, 0, len(mappedDashboardAlerts))
+	existingDashboards := make(map[int64]struct{})
+	for dashboardID, alerts := range mappedDashboardAlerts {
+		existingDashboards[dashboardID] = struct{}{}
+		mDu := &definitions.DashboardUpgrade{
+			MigratedAlerts: make([]*definitions.AlertPair, 0),
+			DashboardID:    dashboardID,
+		}
+
+		dashInfo, ok := dashIDInfo[dashboardID]
+		if ok {
+			folderInfo := dashIDInfo[dashInfo.FolderID]
+			mDu.DashboardUID = dashInfo.UID
+			mDu.DashboardName = dashInfo.Title
+			mDu.FolderUID = folderInfo.UID
+			mDu.FolderName = folderInfo.Title
+			mDu.Provisioned = dashInfo.Provisioned
+		}
+
+		du, ok := migratedDashboards[dashboardID]
+		if !ok {
+			mDu.Error = "dashboard not upgraded"
+			// Empty dashboard upgrade, to simplify logic below.
+			du = &migrationStore.DashboardUpgrade{
+				DashboardID:    dashboardID,
+				MigratedAlerts: make(map[int64]*migrationStore.AlertPair),
+			}
+		}
+		mDu.Warning = du.Warning
+
+		if du.AlertFolderUID != "" {
+			newFolderInfo := dashUIDInfo[du.AlertFolderUID]
+			mDu.NewFolderUID = du.AlertFolderUID
+			mDu.NewFolderName = newFolderInfo.Title
+		}
+
+		existingAlerts := make(map[int64]struct{})
+		for _, a := range alerts {
+			existingAlerts[a.ID] = struct{}{}
+			pair := &definitions.AlertPair{
+				LegacyAlert: fromSlimAlert(a),
+				Error:       "alert not upgraded",
+			}
+
+			if p, ok := du.MigratedAlerts[a.PanelID]; ok {
+				pair.Error = p.Error
+				if p.NewRuleUID != "" {
+					if rule, ok := mappedRules[p.NewRuleUID]; ok {
+						var sendTo = make([]string, 0)
+						for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
+							sendTo = append(sendTo, m.RouteOpts.Receiver)
+						}
+						pair.AlertRule = fromSlimAlertRule(rule, sendTo)
+					} else {
+						// We could potentially set an error here, but it's not really an error. It just means that the
+						// user deleted the migrated rule after the migration. This could just as easily be intentional.
+						ms.log.Info("Could not find rule for migrated alert", "alertID", a.ID, "ruleUID", p.NewRuleUID)
+					}
+				}
+			}
+
+			mDu.MigratedAlerts = append(mDu.MigratedAlerts, pair)
+		}
+
+		// Now we check the inverse, for alerts that were migrated but no longer exist.
+		for _, p := range du.MigratedAlerts {
+			if _, ok := existingAlerts[p.LegacyID]; !ok {
+				pair := &definitions.AlertPair{
+					LegacyAlert: &definitions.LegacyAlert{ID: p.LegacyID, PanelID: p.PanelID, DashboardID: du.DashboardID},
+					Error:       "alert no longer exists",
+				}
+				if p.NewRuleUID != "" {
+					if rule, ok := mappedRules[p.NewRuleUID]; ok {
+						var sendTo = make([]string, 0)
+						for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
+							sendTo = append(sendTo, m.RouteOpts.Receiver)
+						}
+						pair.AlertRule = fromSlimAlertRule(rule, sendTo)
+					}
+				}
+				mDu.MigratedAlerts = append(mDu.MigratedAlerts, pair)
+			}
+		}
+
+		res = append(res, mDu)
+	}
+
+	// Now we check the inverse, for dashboards that were migrated but no longer exist.
+	for dashboardId, du := range migratedDashboards {
+		if _, ok := existingDashboards[dashboardId]; !ok {
+			mDu := &definitions.DashboardUpgrade{
+				MigratedAlerts: make([]*definitions.AlertPair, 0),
+				DashboardID:    dashboardId,
+				Error:          "dashboard no longer exists",
+				Warning:        du.Warning,
+			}
+
+			if du.AlertFolderUID != "" {
+				newFolderInfo := dashUIDInfo[du.AlertFolderUID]
+				mDu.NewFolderUID = du.AlertFolderUID
+				mDu.NewFolderName = newFolderInfo.Title
+			}
+
+			for _, p := range du.MigratedAlerts {
+				pair := &definitions.AlertPair{
+					LegacyAlert: &definitions.LegacyAlert{ID: p.LegacyID, PanelID: p.PanelID, DashboardID: du.DashboardID},
+					Error:       "dashboard no longer exists",
+				}
+				if p.NewRuleUID != "" {
+					if rule, ok := mappedRules[p.NewRuleUID]; ok {
+						var sendTo = make([]string, 0)
+						for _, m := range amConfig.Match(extractLabels(rule, mDu.NewFolderName)) {
+							sendTo = append(sendTo, m.RouteOpts.Receiver)
+						}
+						pair.AlertRule = fromSlimAlertRule(rule, sendTo)
+					}
+				}
+				mDu.MigratedAlerts = append(mDu.MigratedAlerts, pair)
+			}
+
+			res = append(res, mDu)
+		}
+	}
+
+	return res, nil
+}
+
+// fromContactPairs converts ContactPairs to their api representation. This requires rehydrating information
+// from the database for the current state of legacy channels and alertmanager configurations.
+func (ms *migrationService) fromContactPairs(ctx context.Context, orgID int64, migratedChannels map[int64]*migrationStore.ContactPair, amConfig *migmodels.Alertmanager) ([]*definitions.ContactPair, error) {
+	channels, err := ms.migrationStore.GetNotificationChannels(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("get notification channels: %w", err)
+	}
+
+	res := make([]*definitions.ContactPair, 0, len(channels))
+	existingChannels := make(map[int64]struct{})
+	for _, channel := range channels {
+		existingChannels[channel.ID] = struct{}{}
+		pair := &definitions.ContactPair{
+			LegacyChannel: fromAlertNotification(channel),
+			Error:         "channel not upgraded",
+		}
+
+		if p, ok := migratedChannels[channel.ID]; ok {
+			if p.NewReceiverUID != "" {
+				if recv, ok := amConfig.GetReceiver(p.NewReceiverUID); ok {
+					if route, ok := amConfig.GetLegacyRoute(recv.Name); ok {
+						pair.ContactPointUpgrade = fromContactPointUpgrade(recv, route)
+					}
+				}
+			}
+			pair.Error = p.Error
+		}
+
+		res = append(res, pair)
+	}
+
+	// Now we check the inverse, for channels that were migrated but no longer exist.
+	for _, p := range migratedChannels {
+		if _, ok := existingChannels[p.LegacyID]; !ok {
+			pair := &definitions.ContactPair{
+				LegacyChannel: &definitions.LegacyChannel{ID: p.LegacyID},
+				Error:         "channel no longer exists",
+			}
+			if p.NewReceiverUID != "" {
+				if recv, ok := amConfig.GetReceiver(p.NewReceiverUID); ok {
+					if route, ok := amConfig.GetLegacyRoute(recv.Name); ok {
+						pair.ContactPointUpgrade = fromContactPointUpgrade(recv, route)
+					}
+				}
+			}
+			res = append(res, pair)
+		}
+	}
+
+	return res, nil
 }
 
 // fromSlimAlert converts a slim alert to the api representation.
