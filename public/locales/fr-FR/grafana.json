@@ -716,6 +716,10 @@
       "subtitle": "Arrêter les notifications résultant d'une ou plusieurs règles d'alerte",
       "title": "Silences"
     },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerts-and-incidents": {
       "subtitle": "Applications de gestion des incidents et des alertes",
       "title": "Alertes et IRM"
