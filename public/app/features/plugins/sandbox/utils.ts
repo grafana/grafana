@@ -19,7 +19,7 @@ export function assertNever(x: never): never {
   throw new Error(`Unexpected object: ${x}. This should never happen.`);
 }
 
-const sandboxLogger = createMonitoringLogger('features.plugins.sandbox', { monitorOnly: String(monitorOnly) });
+const sandboxLogger = createMonitoringLogger('sandbox', { monitorOnly: String(monitorOnly) });
 
 export function isReactClassComponent(obj: unknown): obj is React.Component {
   return obj instanceof React.Component;
