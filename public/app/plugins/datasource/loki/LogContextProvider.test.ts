@@ -72,12 +72,10 @@ describe('LogContextProvider', () => {
 
   describe('getLogRowContext', () => {
     it('should call getInitContextFilters if no cachedContextFilters', async () => {
-      logContextProvider.getInitContextFilters = jest
-        .fn()
-        .mockResolvedValue({
-          contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
-          preservedFiltersApplied: false,
-        });
+      logContextProvider.getInitContextFilters = jest.fn().mockResolvedValue({
+        contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
+        preservedFiltersApplied: false,
+      });
 
       expect(logContextProvider.cachedContextFilters).toHaveLength(0);
       await logContextProvider.getLogRowContext(
@@ -124,12 +122,10 @@ describe('LogContextProvider', () => {
 
   describe('getLogRowContextQuery', () => {
     it('should call getInitContextFilters if no cachedContextFilters', async () => {
-      logContextProvider.getInitContextFilters = jest
-        .fn()
-        .mockResolvedValue({
-          contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
-          preservedFiltersApplied: false,
-        });
+      logContextProvider.getInitContextFilters = jest.fn().mockResolvedValue({
+        contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
+        preservedFiltersApplied: false,
+      });
 
       const query = await logContextProvider.getLogRowContextQuery(defaultLogRow, {
         limit: 10,
@@ -140,12 +136,10 @@ describe('LogContextProvider', () => {
     });
 
     it('should also call getInitContextFilters if cacheFilters is not set', async () => {
-      logContextProvider.getInitContextFilters = jest
-        .fn()
-        .mockResolvedValue({
-          contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
-          preservedFiltersApplied: false,
-        });
+      logContextProvider.getInitContextFilters = jest.fn().mockResolvedValue({
+        contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
+        preservedFiltersApplied: false,
+      });
       logContextProvider.cachedContextFilters = [
         { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
         { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
