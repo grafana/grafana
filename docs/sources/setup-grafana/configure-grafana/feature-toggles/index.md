@@ -80,6 +80,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
 | `transformationsVariableSupport` | Allows using variables in transformations                                                                                                                                                    |
 | `cloudWatchBatchQueries`         | Runs CloudWatch metrics queries as separate batches                                                                                                                                          |
+| `pdfTables`                      | Enables generating table data as PDF in reporting                                                                                                                                            |
 
 ## Experimental feature toggles
 
