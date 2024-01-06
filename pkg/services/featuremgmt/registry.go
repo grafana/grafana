@@ -155,10 +155,10 @@ var (
 		{
 			Name:           "newVizTooltips",
 			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStageGeneralAvailability,
+			Stage:          FeatureStagePublicPreview,
 			FrontendOnly:   true,
 			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: true,
+			AllowSelfServe: false,
 			Created:        time.Date(2023, time.November, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1183,7 +1183,7 @@ var (
 		{
 			Name:         "canvasPanelPanZoom",
 			Description:  "Allow pan and zoom in canvas panel",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2023, time.December, 27, 12, 0, 0, 0, time.UTC),
