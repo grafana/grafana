@@ -127,7 +127,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   annoInfo: css({
     background: theme.colors.background.secondary,
     minWidth: '300px',
-    maxWidth: '400px',
+    // maxWidth: '400px',
     position: 'absolute',
     top: '5px',
     left: '50%',

@@ -59,7 +59,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFo
   };
 
   // Annotation editor
-  const form = (
+  return (
     <div className={styles.editor} {...otherProps}>
       <div className={styles.header}>
         <HorizontalGroup justify={'space-between'} align={'center'}>
@@ -113,12 +113,6 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFo
         </Form>
       </div>
     </div>
-  );
-
-  return (
-    <>
-      <div>{form}</div>
-    </>
   );
 };
 
