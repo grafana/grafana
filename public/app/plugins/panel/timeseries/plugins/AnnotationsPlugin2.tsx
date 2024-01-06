@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import useDebounce from 'react-use/lib/useDebounce';
+import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
 import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, GrafanaTheme2 } from '@grafana/data';
@@ -42,33 +43,13 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
 //   ctx.fill();
 // }
 
-function getValsWithNew(frame: DataFrame, newRange: TimeRange2 | null) {
+const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
+
+function getVals(frame: DataFrame) {
   let vals: Record<string, any[]> = {};
   frame.fields.forEach((f) => {
-    vals[f.name] = newRange == null ? f.values : f.values.slice();
+    vals[f.name] = f.values;
   });
-
-  // append new WIP anno to render
-  if (newRange != null && !vals['isWip']) {
-    let isRegion = newRange.to > newRange.from;
-
-    // ...append new Marker, with newRange and isWip: true
-    for (let name in vals) {
-      let d = vals[name];
-
-      if (name === 'time') {
-        d.push(newRange.from);
-      } else if (name === 'timeEnd') {
-        d.push(isRegion ? newRange.to : null);
-      } else if (name === 'isRegion') {
-        d.push(isRegion);
-      } else if (name === 'color') {
-        d.push(DEFAULT_ANNOTATION_COLOR);
-      } else {
-        d.push(null);
-      }
-    }
-  }
 
   return vals;
 }
@@ -79,34 +60,42 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
   const styles = useStyles2(getStyles);
   const getColorByName = useTheme2().visualization.getColorByName;
 
-  const tempAnnotations = annotations.slice();
-  const annoRef = useRef(annotations);
-  annoRef.current = annotations;
+  const annos = useMemo(() => {
+    let annos = annotations.slice();
+
+    if (newRange) {
+      let isRegion = newRange.to > newRange.from;
+
+      const wipAnnoFrame = arrayToDataFrame([
+        {
+          time: newRange.from,
+          timeEnd: isRegion ? newRange.to : null,
+          isRegion: isRegion,
+          color: DEFAULT_ANNOTATION_COLOR_HEX8,
+          text: '',
+          tags: ['text', 'server'],
+        },
+      ]);
+
+      wipAnnoFrame.meta = {
+        dataTopic: DataTopic.Annotations,
+        custom: {
+          isWip: true
+        }
+      };
+
+      annos.push(wipAnnoFrame);
+    }
+
+    return annos;
+  }, [annotations, newRange]);
+
+  const annoRef = useRef(annos);
+  annoRef.current = annos;
   const newRangeRef = useRef(newRange);
   newRangeRef.current = newRange;
 
   const xAxisRef = useRef<HTMLDivElement>();
-
-  if (newRange) {
-    let isRegion = newRange.to > newRange.from;
-
-    const newAnnotationFrame = arrayToDataFrame([
-      {
-        time: newRange.from,
-        timeEnd: isRegion ? newRange.to : null,
-        isRegion: isRegion,
-        color: 'DEFAULT_ANNOTATION_COLOR',
-        text: '',
-        tags: ['text', 'server'],
-        isWip: true,
-      },
-    ]);
-    newAnnotationFrame.meta = {
-      dataTopic: DataTopic.Annotations,
-    };
-
-    tempAnnotations.push(newAnnotationFrame);
-  }
 
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
@@ -116,7 +105,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
     });
 
     config.addHook('draw', (u) => {
-      let annos = annoRef.current.length === 0 ? tempAnnotations : annoRef.current;
+      let annos = annoRef.current;
 
       const ctx = u.ctx;
 
@@ -133,10 +122,10 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
       ctx.setLineDash([5, 5]);
 
       annos.forEach((frame) => {
-        let vals = getValsWithNew(frame, newRangeRef.current);
+        let vals = getVals(frame);
 
         for (let i = 0; i < vals.time.length; i++) {
-          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
+          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
           let x0 = u.valToPos(vals.time[i], 'x', true);
           renderLine(ctx, y0, y1, x0, color);
@@ -159,7 +148,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
 
       ctx.restore();
     });
-  }, [config, getColorByName, tempAnnotations]);
+  }, [config, getColorByName]);
 
   // redraw slower-than-series anno queries, since they don't go through setData(), but are drawn in the redraw() hook
   useDebounce(
@@ -173,10 +162,8 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
   );
 
   if (plot) {
-    const annos = annoRef.current.length === 0 ? tempAnnotations : annoRef.current;
-
     let markers = annos.flatMap((frame) => {
-      let vals = getValsWithNew(frame, newRangeRef.current);
+      let vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];
 
@@ -218,7 +205,7 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
               style={style}
               timezone={timeZone}
               key={i}
-              isWip={newRange != null && i === vals.time.length - 1}
+              isWip={frame.meta?.custom?.isWip}
             />
           );
         }
