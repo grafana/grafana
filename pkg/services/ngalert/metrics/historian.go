@@ -1,9 +1,9 @@
 package metrics
 
 import (
+	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/weaveworks/common/instrument"
 )
 
 type Historian struct {

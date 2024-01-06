@@ -147,7 +147,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     watch,
   } = formApi;
 
-  const validateNameIsUnique: Validate<string> = (name: string) => {
+  const validateNameIsUnique: Validate<string, TemplateFormValues> = (name: string) => {
     return !config.template_files[name] || existing?.name === name
       ? true
       : 'Another template with this name already exists.';

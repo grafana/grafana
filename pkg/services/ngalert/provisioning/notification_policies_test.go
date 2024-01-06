@@ -28,7 +28,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("error if referenced mute time interval is not existing", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.amStore = &MockAMConfigStore{}
+		sut.configStore.store = &MockAMConfigStore{}
 		cfg := createTestAlertingConfig()
 		cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
 			{
@@ -37,9 +37,9 @@ func TestNotificationPolicyService(t *testing.T) {
 			},
 		}
 		data, _ := serializeAlertmanagerConfig(*cfg)
-		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+		sut.configStore.store.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		sut.amStore.(*MockAMConfigStore).EXPECT().
+		sut.configStore.store.(*MockAMConfigStore).EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
@@ -54,7 +54,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("pass if referenced mute time interval is existing", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.amStore = &MockAMConfigStore{}
+		sut.configStore.store = &MockAMConfigStore{}
 		cfg := createTestAlertingConfig()
 		cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
 			{
@@ -63,9 +63,9 @@ func TestNotificationPolicyService(t *testing.T) {
 			},
 		}
 		data, _ := serializeAlertmanagerConfig(*cfg)
-		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+		sut.configStore.store.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		sut.amStore.(*MockAMConfigStore).EXPECT().
+		sut.configStore.store.(*MockAMConfigStore).EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
@@ -105,12 +105,12 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("existing receiver reference will pass", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.amStore = &MockAMConfigStore{}
+		sut.configStore.store = &MockAMConfigStore{}
 		cfg := createTestAlertingConfig()
 		data, _ := serializeAlertmanagerConfig(*cfg)
-		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+		sut.configStore.store.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		sut.amStore.(*MockAMConfigStore).EXPECT().
+		sut.configStore.store.(*MockAMConfigStore).EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
@@ -183,7 +183,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("deleting route with missing default receiver restores receiver", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.amStore = &MockAMConfigStore{}
+		sut.configStore.store = &MockAMConfigStore{}
 		cfg := createTestAlertingConfig()
 		cfg.AlertmanagerConfig.Route = &definitions.Route{
 			Receiver: "a new receiver",
@@ -197,17 +197,17 @@ func TestNotificationPolicyService(t *testing.T) {
 			// No default receiver! Only our custom one.
 		}
 		data, _ := serializeAlertmanagerConfig(*cfg)
-		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+		sut.configStore.store.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
 		var interceptedSave = models.SaveAlertmanagerConfigurationCmd{}
-		sut.amStore.(*MockAMConfigStore).EXPECT().SaveSucceedsIntercept(&interceptedSave)
+		sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceedsIntercept(&interceptedSave)
 
 		tree, err := sut.ResetPolicyTree(context.Background(), 1)
 
 		require.NoError(t, err)
 		require.Equal(t, "grafana-default-email", tree.Receiver)
 		require.NotEmpty(t, interceptedSave.AlertmanagerConfiguration)
-		// Deserializing with no error asserts that the saved config is semantically valid.
+		// Deserializing with no error asserts that the saved configStore is semantically valid.
 		newCfg, err := deserializeAlertmanagerConfig([]byte(interceptedSave.AlertmanagerConfiguration))
 		require.NoError(t, err)
 		require.Len(t, newCfg.AlertmanagerConfig.Receivers, 2)
@@ -216,7 +216,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 func createNotificationPolicyServiceSut() *NotificationPolicyService {
 	return &NotificationPolicyService{
-		amStore:         newFakeAMConfigStore(defaultAlertmanagerConfigJSON),
+		configStore:     &alertmanagerConfigStoreImpl{store: newFakeAMConfigStore(defaultAlertmanagerConfigJSON)},
 		provenanceStore: NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
