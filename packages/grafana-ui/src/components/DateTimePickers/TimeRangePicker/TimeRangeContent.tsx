@@ -16,6 +16,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
+import { Alert } from '../../Alert/Alert';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
@@ -33,6 +34,8 @@ interface Props {
   fiscalYearStartMonth?: number;
   roundup?: boolean;
   isReversed?: boolean;
+  // callback for when the user pastes invalid JSON
+  onPasteError?: (clipboardContent: string) => void;
 }
 
 interface InputState {
@@ -47,13 +50,22 @@ const ERROR_MESSAGES = {
 };
 
 export const TimeRangeContent = (props: Props) => {
-  const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed, fiscalYearStartMonth } = props;
+  const {
+    value,
+    isFullscreen = false,
+    timeZone,
+    onApply: onApplyFromProps,
+    isReversed,
+    fiscalYearStartMonth,
+    onPasteError,
+  } = props;
   const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
   const style = useStyles2(getStyles);
 
   const [from, setFrom] = useState<InputState>(fromValue);
   const [to, setTo] = useState<InputState>(toValue);
   const [isOpen, setOpen] = useState(false);
+  const [pasteError, setPasteError] = useState(false);
 
   const fromFieldId = useId();
   const toFieldId = useId();
@@ -97,6 +109,30 @@ export const TimeRangeContent = (props: Props) => {
     if (event.key === 'Enter') {
       onApply();
     }
+  };
+
+  const onCopy = () => {
+    const raw: RawTimeRange = { from: from.value, to: to.value };
+    navigator.clipboard.writeText(JSON.stringify(raw));
+  };
+
+  const onPaste = async () => {
+    const raw = await navigator.clipboard.readText();
+    let parsed;
+
+    console.log('onPaste');
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch (error) {
+      if (onPasteError) {
+        onPasteError(raw);
+      }
+      return;
+    }
+
+    setPasteError(false);
+    onChange(parsed.from, parsed.to);
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
@@ -163,6 +199,28 @@ export const TimeRangeContent = (props: Props) => {
         <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
       </Button>
 
+      <div className={style.buttonsContainer}>
+        <Button
+          aria-label="Copy time range"
+          data-testid={selectors.components.TimePicker.copyTimeRange}
+          icon="file-blank"
+          variant="secondary"
+          tooltip="Copy time range to clipboard"
+          type="button"
+          onClick={onCopy}
+        />
+        <Button
+          aria-label="Paste time range"
+          data-testid={selectors.components.TimePicker.pasteTimeRange}
+          icon="copy"
+          variant="secondary"
+          tooltip="Paste time range"
+          type="button"
+          onClick={onPaste}
+        />
+        {pasteError && <Alert title="Paste error" severity={'error'} elevated />}
+      </div>
+
       <TimePickerCalendar
         isFullscreen={isFullscreen}
         isOpen={isOpen}
@@ -219,6 +277,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     fieldContainer: css({
       display: 'flex',
+    }),
+    buttonsContainer: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      marginTop: theme.spacing(1),
     }),
     tooltip: css({
       paddingLeft: theme.spacing(1),

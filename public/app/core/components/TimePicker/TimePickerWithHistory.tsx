@@ -1,8 +1,9 @@
 import { uniqBy } from 'lodash';
 import React from 'react';
 
-import { TimeRange, isDateTime, rangeUtil } from '@grafana/data';
+import { AppEvents, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
 import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 
 import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
 
@@ -34,6 +35,12 @@ export const TimePickerWithHistory = (props: Props) => {
               onAppendToHistory(value, values, onSaveToStore);
               props.onChange(value);
             }}
+            onPasteError={(clipboardContent: string) =>
+              appEvents.emit(AppEvents.alertError, [
+                'Invalid time range',
+                `"${clipboardContent}" is not a valid time range`,
+              ])
+            }
           />
         );
       }}

@@ -39,6 +39,7 @@ export interface TimeRangePickerProps {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
+  onPasteError?: (clipboardContent: string) => void;
   history?: TimeRange[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
@@ -58,6 +59,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onMoveBackward,
     onMoveForward,
     onZoom,
+    onPasteError,
     timeZone,
     fiscalYearStartMonth,
     timeSyncButton,
@@ -165,6 +167,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 onChangeTimeZone={onChangeTimeZone}
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 hideQuickRanges={hideQuickRanges}
+                onPasteError={onPasteError}
               />
             </section>
           </FocusScope>
