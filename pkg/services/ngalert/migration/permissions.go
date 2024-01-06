@@ -66,7 +66,7 @@ func (sync *sync) migratedFolder(ctx context.Context, l log.Logger, dashboardUID
 	dashFolder, err := sync.getFolder(ctx, folderID)
 	if err != nil {
 		// nolint:staticcheck
-		l.Warn("Failed to find folder for dashboard", "missing_folder_id", folderID, "error", err)
+		l.Warn("Failed to find folder for dashboard", "missingFolderId", folderID, "error", err)
 	}
 	if dashFolder != nil {
 		l = l.New("folderUid", dashFolder.UID, "folderName", dashFolder.Title)
