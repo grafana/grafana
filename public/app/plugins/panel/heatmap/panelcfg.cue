@@ -78,8 +78,8 @@ composableKinds: PanelCfg: lineage: {
 			} @cuetsy(kind="interface")
 			// Controls tooltip options
 			HeatmapTooltip: {
-				// Controls if the tooltip is shown
-				show: bool
+				// Controls how the tooltip is shown
+				mode: ui.TooltipDisplayMode
 				// Controls if the tooltip shows a histogram of the y-axis values
 				yHistogram?: bool
 				// Controls if the tooltip shows a color scale in header
@@ -145,7 +145,7 @@ composableKinds: PanelCfg: lineage: {
 				}
 				// Controls tooltip options
 				tooltip: HeatmapTooltip | *{
-					show:           true
+					mode:           ui.TooltipDisplayMode & (*"single" | _)
 					yHistogram:     false
 					showColorScale: false
 				}

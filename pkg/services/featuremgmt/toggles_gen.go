@@ -618,4 +618,8 @@ const (
 	// FlagLokiQueryHints
 	// Enables query hints for Loki
 	FlagLokiQueryHints = "lokiQueryHints"
+
+	// FlagAlertingPreviewUpgrade
+	// Show Unified Alerting preview and upgrade page in legacy alerting
+	FlagAlertingPreviewUpgrade = "alertingPreviewUpgrade"
 )

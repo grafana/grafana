@@ -8,7 +8,7 @@ type FormModel = { folderName: string };
 interface Props {
   onSubmit: SubmitHandler<FormModel>;
   onDismiss: () => void;
-  validate: Validate<string>;
+  validate: Validate<string, FormModel>;
 }
 
 const initialFormModel = { folderName: '' };
