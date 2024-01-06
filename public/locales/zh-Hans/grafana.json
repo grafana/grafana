@@ -704,6 +704,10 @@
       "subtitle": "停止来自一个或多个警报规则的通知",
       "title": "静默"
     },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerts-and-incidents": {
       "subtitle": "警报和事件管理应用",
       "title": "警报和 IRM"
