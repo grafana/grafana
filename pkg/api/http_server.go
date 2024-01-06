@@ -291,8 +291,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ShortURLService:              shortURLService,
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
-		Features:                     features,
-		featureManager:               features, // the manager implements both, but two variables encourages
+		Features:                     features, // a read only view of the managers state
+		featureManager:               features,
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
