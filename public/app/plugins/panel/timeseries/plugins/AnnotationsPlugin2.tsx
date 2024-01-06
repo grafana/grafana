@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
@@ -96,6 +96,10 @@ export const AnnotationsPlugin2 = ({
     return annos;
   }, [annotations, newRange]);
 
+  const exitWipEdit = useCallback(() => {
+    setNewRange(null);
+  }, [setNewRange]);
+
   const annoRef = useRef(annos);
   annoRef.current = annos;
   const newRangeRef = useRef(newRange);
@@ -164,7 +168,7 @@ export const AnnotationsPlugin2 = ({
   }, [annos, plot]);
 
   if (plot) {
-    let markers = annos.flatMap((frame) => {
+    let markers = annos.flatMap((frame, frameIdx) => {
       let vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];
@@ -199,6 +203,8 @@ export const AnnotationsPlugin2 = ({
 
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
+          let isWip = frame.meta?.custom?.isWip;
+
           markers.push(
             <AnnotationMarker2
               annoIdx={i}
@@ -206,8 +212,8 @@ export const AnnotationsPlugin2 = ({
               className={className}
               style={style}
               timezone={timeZone}
-              key={i}
-              isWip={frame.meta?.custom?.isWip}
+              key={`${frameIdx}:${i}`}
+              exitWipEdit={isWip ? exitWipEdit : null}
             />
           );
         }

@@ -14,11 +14,11 @@ interface AnnoBoxProps {
   annoIdx: number;
   style: React.CSSProperties | null;
   className: string;
-  isWip?: boolean;
   timezone: TimeZone;
+  exitWipEdit?: null | (() => void);
 }
 
-export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, isWip, timezone }: AnnoBoxProps) => {
+export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timezone }: AnnoBoxProps) => {
   const { canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
 
   const styles = useStyles2(getStyles);
@@ -29,7 +29,7 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, isWip, 
   const clickAwayRef = useRef(null);
 
   useClickAway(clickAwayRef, () => {
-    setIsEditing(false);
+    isEditing && setIsEditingWrap(false);
   });
 
   const domRef = React.createRef<HTMLDivElement>();
@@ -39,12 +39,14 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, isWip, 
     (isEditing: boolean) => {
       domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', isEditing);
       setIsEditing(isEditing);
+      if (!isEditing && exitWipEdit != null) {
+        exitWipEdit();
+      }
     },
-    [domRef]
+    [domRef, exitWipEdit]
   );
 
   const onAnnotationEdit = useCallback(() => {
-    setIsEditing(true);
     setIsHovered(false);
     setIsEditingWrap(true);
   }, [setIsEditingWrap]);
@@ -65,23 +67,26 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, isWip, 
     [timezone]
   );
 
-  // doesnt work to auto-activate edit mode? :(
   useLayoutEffect(
     () => {
-      isWip && setIsEditingWrap(true);
+      if (exitWipEdit != null) {
+        setIsEditingWrap(true);
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
   const renderAnnotationTooltip = useCallback(() => {
+    let dashboardUID = annoVals.dashboardUID?.[annoIdx];
+
     return (
       <AnnotationTooltip2
         timeFormatter={timeFormatter}
         onEdit={onAnnotationEdit}
         onDelete={onAnnotationDelete}
-        canEdit={canEditAnnotations ? canEditAnnotations(annoVals.dashboardUID?.[annoIdx]) : false}
-        canDelete={canDeleteAnnotations ? canDeleteAnnotations(annoVals.dashboardUID?.[annoIdx]) : false}
+        canEdit={canEditAnnotations ? canEditAnnotations(dashboardUID) : false}
+        canDelete={canDeleteAnnotations ? canDeleteAnnotations(dashboardUID) : false}
         annoIdx={annoIdx}
         annoVals={annoVals}
       />
@@ -99,14 +104,14 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, isWip, 
   const renderAnnotationEditor = useCallback(() => {
     return (
       <AnnotationEditor2
-        onDismiss={() => setIsEditing(false)}
-        onSave={() => setIsEditing(false)}
+        onDismiss={() => setIsEditingWrap(false)}
+        onSave={() => setIsEditingWrap(false)}
         timeFormatter={timeFormatter}
         annoIdx={annoIdx}
         annoVals={annoVals}
       />
     );
-  }, [annoIdx, annoVals, timeFormatter]);
+  }, [annoIdx, annoVals, timeFormatter, setIsEditingWrap]);
 
   return (
     <div

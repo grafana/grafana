@@ -213,10 +213,11 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
     };
 
     const dismiss = () => {
+      let prevIsPinned = _isPinned;
       _isPinned = false;
       _isHovering = false;
       _plot!.setCursor({ left: -10, top: -10 });
-      scheduleRender(true);
+      scheduleRender(prevIsPinned);
     };
 
     config.addHook('init', (u) => {
@@ -261,7 +262,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
               to: xVal,
             };
 
-            scheduleRender(true);
+            scheduleRender(false);
           }
           // only pinnable tooltip is visible *and* is within proximity to series/point
           else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
