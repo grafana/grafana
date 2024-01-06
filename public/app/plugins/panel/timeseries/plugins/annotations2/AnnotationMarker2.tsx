@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 
-import { dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, systemDateFormats } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';

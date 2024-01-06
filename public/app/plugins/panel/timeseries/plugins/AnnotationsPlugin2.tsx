@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import useDebounce from 'react-use/lib/useDebounce';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
@@ -22,6 +21,7 @@ interface AnnotationsPluginProps {
   annotations: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
+  setNewRange: (newRage: TimeRange2 | null) => void;
 }
 
 // TODO: batch by color, use Path2D objects
@@ -54,7 +54,13 @@ function getVals(frame: DataFrame) {
   return vals;
 }
 
-export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: AnnotationsPluginProps) => {
+export const AnnotationsPlugin2 = ({
+  annotations,
+  timeZone,
+  config,
+  newRange,
+  setNewRange,
+}: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
 
   const styles = useStyles2(getStyles);
@@ -80,8 +86,8 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
       wipAnnoFrame.meta = {
         dataTopic: DataTopic.Annotations,
         custom: {
-          isWip: true
-        }
+          isWip: true,
+        },
       };
 
       annos.push(wipAnnoFrame);
@@ -150,16 +156,12 @@ export const AnnotationsPlugin2 = ({ annotations, timeZone, config, newRange }: 
     });
   }, [config, getColorByName]);
 
-  // redraw slower-than-series anno queries, since they don't go through setData(), but are drawn in the redraw() hook
-  useDebounce(
-    () => {
-      if (plot) {
-        plot.redraw();
-      }
-    },
-    100,
-    annotations
-  );
+  // ensure annos are re-drawn whenever they change
+  useEffect(() => {
+    if (plot) {
+      plot.redraw();
+    }
+  }, [annos, plot]);
 
   if (plot) {
     let markers = annos.flatMap((frame) => {
