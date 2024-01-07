@@ -5,8 +5,8 @@ import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-// import { LayoutItemContext } from '../../../../../../public/app/features/dashboard/dashgrid/DashboardGrid';
 import { useStyles2 } from '../../../themes';
+import { LayoutItemContext } from '../../Layout/LayoutItemContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
@@ -31,8 +31,6 @@ interface TooltipPlugin2Props {
   queryZoom?: (range: { from: number; to: number }) => void;
   // y-only, via shiftKey
   clientZoom?: boolean;
-
-  incrPinnedCount: (count: number) => void;
 
   render: (
     u: uPlot,
@@ -93,8 +91,10 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom, incrPinnedCount }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
+
+  const { incrPinnedCount } = useContext(LayoutItemContext);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
 

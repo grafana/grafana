@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useLayoutEffect, useRef, useState } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 
 import { dateTimeFormat, GrafanaTheme2, systemDateFormats } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { LayoutItemContext, usePanelContext, useStyles2 } from '@grafana/ui';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
@@ -16,15 +16,16 @@ interface AnnoBoxProps {
   className: string;
   timezone: TimeZone;
   exitWipEdit?: null | (() => void);
-  incrPinnedCount: (count: number) => void;
 }
 
 const STATE_DEFAULT = 0;
 const STATE_EDITING = 1;
 const STATE_HOVERED = 2;
 
-export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timezone, incrPinnedCount }: AnnoBoxProps) => {
+export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timezone }: AnnoBoxProps) => {
   const { canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
+
+  const { incrPinnedCount } = useContext(LayoutItemContext);
 
   const styles = useStyles2(getStyles);
 
@@ -44,7 +45,7 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWip
   const setIsEditingWrap = useCallback(
     (isEditing: boolean) => {
       incrPinnedCount(isEditing ? 1 : -1);
-      setState(STATE_EDITING);
+      setState(isEditing ? STATE_EDITING : STATE_DEFAULT);
       if (!isEditing && exitWipEdit != null) {
         exitWipEdit();
       }

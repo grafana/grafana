@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -7,7 +7,6 @@ import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlu
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
-import { LayoutItemContext } from 'app/features/dashboard/dashgrid/DashboardGrid';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -43,10 +42,6 @@ export const TimeSeriesPanel = ({
 }: TimeSeriesPanelProps) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor } =
     usePanelContext();
-
-  let { incrPinnedCount } = useContext(LayoutItemContext);
-
-  // console.log(incrPinnedCount);
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -117,7 +112,6 @@ export const TimeSeriesPanel = ({
               <>
                 {showNewVizTooltips ? (
                   <TooltipPlugin2
-                    incrPinnedCount={incrPinnedCount}
                     config={uplotConfig}
                     hoverMode={
                       options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
@@ -171,7 +165,6 @@ export const TimeSeriesPanel = ({
             {/* Renders annotation markers*/}
             {showNewVizTooltips ? (
               <AnnotationsPlugin2
-                incrPinnedCount={incrPinnedCount}
                 annotations={data.annotations ?? []}
                 config={uplotConfig}
                 timeZone={timeZone}

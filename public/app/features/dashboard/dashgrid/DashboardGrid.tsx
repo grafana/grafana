@@ -1,10 +1,11 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties, createContext, useCallback, useRef, useState } from 'react';
+import React, { PureComponent, CSSProperties, useCallback, useRef, useState } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
+import { LayoutItemContext, LayoutItemContextProps } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -374,14 +375,6 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   windowWidth: number;
   children: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
-
-interface LayoutItemContextProps {
-  incrPinnedCount: (count: number) => void;
-}
-
-export const LayoutItemContext = createContext<LayoutItemContextProps>({
-  incrPinnedCount: () => {},
-});
 
 /**
  * A hacky way to intercept the react-layout-grid item dimensions and pass them to DashboardPanel
