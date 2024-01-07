@@ -1,15 +1,16 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useId, useState } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable, DraggableProvided } from 'react-beautiful-dnd';
 
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
+import { getOperationParamId } from '../operationUtils';
+
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
-import { getOperationParamId } from './operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -29,6 +30,7 @@ export interface Props {
   onRunQuery: () => void;
   flash?: boolean;
   highlight?: boolean;
+  timeRange?: TimeRange;
 }
 
 export function OperationEditor({
@@ -42,6 +44,7 @@ export function OperationEditor({
   datasource,
   flash,
   highlight,
+  timeRange,
 }: Props) {
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
@@ -106,6 +109,7 @@ export function OperationEditor({
               onRunQuery={onRunQuery}
               query={query}
               datasource={datasource}
+              timeRange={timeRange}
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button
@@ -141,6 +145,34 @@ export function OperationEditor({
     return isConflicting ? true : undefined;
   };
 
+  // We need to extract this into a component to prevent InlineField passing invalid to div which produces console error
+  const StyledOperationHeader = ({ provided }: { provided: DraggableProvided }) => (
+    <div
+      className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight, isConflicting && styles.cardError)}
+      ref={provided.innerRef}
+      {...provided.draggableProps}
+      data-testid={`operations.${index}.wrapper`}
+    >
+      <OperationHeader
+        operation={operation}
+        dragHandleProps={provided.dragHandleProps}
+        def={def}
+        index={index}
+        onChange={onChange}
+        onRemove={onRemove}
+        queryModeller={queryModeller}
+      />
+      <div className={styles.body}>{operationElements}</div>
+      {restParam}
+      {index < query.operations.length - 1 && (
+        <div className={styles.arrow}>
+          <div className={styles.arrowLine} />
+          <div className={styles.arrowArrow} />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided, snapshot) => (
@@ -149,34 +181,7 @@ export function OperationEditor({
           invalid={isInvalid(snapshot.isDragging)}
           className={cx(styles.error, styles.cardWrapper)}
         >
-          <div
-            className={cx(
-              styles.card,
-              (shouldFlash || highlight) && styles.cardHighlight,
-              isConflicting && styles.cardError
-            )}
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            data-testid={`operations.${index}.wrapper`}
-          >
-            <OperationHeader
-              operation={operation}
-              dragHandleProps={provided.dragHandleProps}
-              def={def}
-              index={index}
-              onChange={onChange}
-              onRemove={onRemove}
-              queryModeller={queryModeller}
-            />
-            <div className={styles.body}>{operationElements}</div>
-            {restParam}
-            {index < query.operations.length - 1 && (
-              <div className={styles.arrow}>
-                <div className={styles.arrowLine} />
-                <div className={styles.arrowArrow} />
-              </div>
-            )}
-          </div>
+          <StyledOperationHeader provided={provided} />
         </InlineField>
       )}
     </Draggable>
@@ -218,7 +223,7 @@ function renderAddRestParamButton(
       <Button
         size="sm"
         icon="plus"
-        title={`Add ${paramDef.name}`}
+        title={`Add ${paramDef.name}`.trimEnd()}
         variant="secondary"
         onClick={onAddRestParam}
         data-testid={`operations.${operationIndex}.add-rest-param`}

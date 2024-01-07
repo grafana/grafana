@@ -25,6 +25,9 @@
       "user": "Utilisateur"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Annuler",
@@ -414,6 +417,9 @@
       "label": "Ajouter une nouvelle source de données"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
     "rich-history": {
@@ -532,7 +538,13 @@
     },
     "toolbar": {
       "aria-label": "Explorer la barre d'outils",
+      "copy-link": "",
+      "copy-link-abs-time": "",
+      "copy-links-absolute-category": "",
+      "copy-links-normal-category": "",
       "copy-shortened-link": "Copier le lien raccourci",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Annuler",
       "refresh-picker-run": "Exécuter la requête",
       "split-close": "Fermer",
@@ -665,6 +677,9 @@
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
     },
+    "alert-list-legacy": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
       "title": "Alertes"
@@ -700,6 +715,10 @@
     "alerting-silences": {
       "subtitle": "Arrêter les notifications résultant d'une ou plusieurs règles d'alerte",
       "title": "Silences"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "Applications de gestion des incidents et des alertes",
@@ -779,6 +798,10 @@
       "title": "Explorer"
     },
     "frontend": {
+      "subtitle": "",
+      "title": "Frontend"
+    },
+    "frontend-app": {
       "title": "Frontend"
     },
     "global-orgs": {
@@ -806,7 +829,14 @@
       "title": "Incidents"
     },
     "infrastructure": {
+      "subtitle": "",
+      "title": ""
+    },
+    "integrations": {
       "title": "Intégrations"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -927,6 +957,10 @@
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",
       "title": "Équipes"
     },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
+    },
     "upgrading": {
       "title": "Statistiques et licence"
     },
@@ -952,6 +986,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Dernières nouvelles sur le blog"
   },
   "notifications": {
@@ -1239,6 +1276,7 @@
     "calendar": {
       "apply-button": "Appliquer la plage de temps",
       "cancel-button": "Annuler",
+      "close": "",
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {
@@ -1258,6 +1296,7 @@
       "default-error": "Entrez une date dans le passé ou « maintenant »",
       "fiscal-year": "Exercice fiscal",
       "from-input": "De",
+      "open-input-calendar": "",
       "range-error": "« De » ne peut pas être ultérieur à « À »",
       "to-input": "À"
     },
@@ -1280,6 +1319,12 @@
       "select-search-input": "Tapez pour rechercher (pays, ville, abréviation)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Actuel",
     "name-column": "Nom",
@@ -1294,6 +1339,9 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
+    },
+    "tabs": {
+      "general": "Général"
     }
   },
   "user-session": {

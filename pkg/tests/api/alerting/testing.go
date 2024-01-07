@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -593,4 +594,143 @@ func (a apiClient) DeleteDatasource(t *testing.T, uid string) {
 	if resp.StatusCode != 200 {
 		require.Failf(t, "failed to create data source", "API request to create a datasource failed. Status code: %d, response: %s", resp.StatusCode, string(b))
 	}
+}
+
+func (a apiClient) GetAllMuteTimingsWithStatus(t *testing.T) (apimodels.MuteTimings, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/mute-timings", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.MuteTimings](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetMuteTimingByNameWithStatus(t *testing.T, name string) (apimodels.MuteTimeInterval, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/mute-timings/%s", a.url, name), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.MuteTimeInterval](t, req, http.StatusOK)
+}
+
+func (a apiClient) CreateMuteTimingWithStatus(t *testing.T, interval apimodels.MuteTimeInterval) (apimodels.MuteTimeInterval, int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(interval)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v1/provisioning/mute-timings", a.url), &buf)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.MuteTimeInterval](t, req, http.StatusCreated)
+}
+
+func (a apiClient) UpdateMuteTimingWithStatus(t *testing.T, interval apimodels.MuteTimeInterval) (apimodels.MuteTimeInterval, int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(interval)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/mute-timings/%s", a.url, interval.Name), &buf)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.MuteTimeInterval](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) DeleteMuteTimingWithStatus(t *testing.T, name string) (int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/provisioning/mute-timings/%s", a.url, name), nil)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(body)
+}
+
+func (a apiClient) GetRouteWithStatus(t *testing.T) (apimodels.Route, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/policies", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.Route](t, req, http.StatusOK)
+}
+
+func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(route)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/policies", a.url), &buf)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(body)
+}
+
+func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.Frame, int, string) {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/rules/history", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("ruleUID", ruleUID)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	return sendRequest[data.Frame](t, req, http.StatusOK)
+}
+
+func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var result T
+
+	if resp.StatusCode != successStatusCode {
+		return result, resp.StatusCode, string(body)
+	}
+
+	err = json.Unmarshal(body, &result)
+	require.NoError(t, err)
+	return result, resp.StatusCode, string(body)
+}
+
+func requireStatusCode(t *testing.T, expected, actual int, response string) {
+	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
 }

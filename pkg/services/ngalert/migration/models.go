@@ -1,20 +1,16 @@
 package migration
 
 import (
-	"strings"
+	"context"
+	"errors"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/folder"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // OrgMigration is a helper struct for migrating alerts for a single org. It contains state, services, and caches.
@@ -25,19 +21,8 @@ type OrgMigration struct {
 	migrationStore    migrationStore.Store
 	encryptionService secrets.Service
 
-	orgID               int64
-	seenUIDs            Deduplicator
-	silences            []*pb.MeshSilence
-	alertRuleTitleDedup map[string]Deduplicator // Folder -> Deduplicator (Title).
-	alertRuleGroupDedup map[string]Deduplicator // Folder -> Deduplicator (Group).
-
-	// Migrated folder for a dashboard based on permissions. Parent Folder ID -> unique dashboard permission -> custom folder.
-	permissionsMap        map[int64]map[permissionHash]*folder.Folder
-	folderCache           map[int64]*folder.Folder                      // Folder ID -> Folder.
-	folderPermissionCache map[string][]accesscontrol.ResourcePermission // Folder UID -> Folder Permissions.
-	generalAlertingFolder *folder.Folder
-
-	state *migmodels.OrgMigrationState
+	orgID    int64
+	silences []*pb.MeshSilence
 }
 
 // newOrgMigration creates a new OrgMigration for the given orgID.
@@ -49,93 +34,60 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 		migrationStore:    ms.migrationStore,
 		encryptionService: ms.encryptionService,
 
-		orgID: orgID,
-		// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
-		seenUIDs:            Deduplicator{set: make(map[string]struct{}), caseInsensitive: ms.migrationStore.CaseInsensitive()},
-		silences:            make([]*pb.MeshSilence, 0),
-		alertRuleTitleDedup: make(map[string]Deduplicator),
+		orgID:    orgID,
+		silences: make([]*pb.MeshSilence, 0),
+	}
+}
 
-		// We deduplicate alert rule groups so that we don't have to ensure that the alerts rules have the same interval.
-		alertRuleGroupDedup: make(map[string]Deduplicator),
+// ChannelCache caches channels by ID and UID.
+type ChannelCache struct {
+	channels []*legacymodels.AlertNotification
+	cache    map[any]*legacymodels.AlertNotification
+	fetch    func(ctx context.Context, key notificationKey) (*legacymodels.AlertNotification, error)
+}
 
-		permissionsMap:        make(map[int64]map[permissionHash]*folder.Folder),
-		folderCache:           make(map[int64]*folder.Folder),
-		folderPermissionCache: make(map[string][]accesscontrol.ResourcePermission),
+func (c *ChannelCache) Get(ctx context.Context, key notificationKey) (*legacymodels.AlertNotification, error) {
+	if key.ID > 0 {
+		if channel, ok := c.cache[key.ID]; ok {
+			return channel, nil
+		}
+	}
+	if key.UID != "" {
+		if channel, ok := c.cache[key.UID]; ok {
+			return channel, nil
+		}
+	}
 
-		state: &migmodels.OrgMigrationState{
-			OrgID:          orgID,
-			CreatedFolders: make([]string, 0),
+	channel, err := c.fetch(ctx, key)
+	if err != nil {
+		if errors.Is(err, migrationStore.ErrNotFound) {
+			if key.ID > 0 {
+				c.cache[key.ID] = nil
+			}
+			if key.UID != "" {
+				c.cache[key.UID] = nil
+			}
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	c.cache[channel.ID] = channel
+	c.cache[channel.UID] = channel
+	c.channels = append(c.channels, channel)
+
+	return channel, nil
+}
+
+func (ms *migrationService) newChannelCache(orgID int64) *ChannelCache {
+	return &ChannelCache{
+		cache: make(map[any]*legacymodels.AlertNotification),
+		fetch: func(ctx context.Context, key notificationKey) (*legacymodels.AlertNotification, error) {
+			c, err := ms.migrationStore.GetNotificationChannel(ctx, migrationStore.GetNotificationChannelQuery{OrgID: orgID, ID: key.ID, UID: key.UID})
+			if err != nil {
+				return nil, err
+			}
+			return c, nil
 		},
 	}
-}
-
-func (om *OrgMigration) AlertTitleDeduplicator(folderUID string) Deduplicator {
-	if _, ok := om.alertRuleTitleDedup[folderUID]; !ok {
-		om.alertRuleTitleDedup[folderUID] = Deduplicator{
-			set:             make(map[string]struct{}),
-			caseInsensitive: om.migrationStore.CaseInsensitive(),
-			maxLen:          store.AlertDefinitionMaxTitleLength,
-		}
-	}
-	return om.alertRuleTitleDedup[folderUID]
-}
-
-func (om *OrgMigration) AlertGroupDeduplicator(folderUID string) Deduplicator {
-	if _, ok := om.alertRuleGroupDedup[folderUID]; !ok {
-		om.alertRuleGroupDedup[folderUID] = Deduplicator{
-			set:             make(map[string]struct{}),
-			caseInsensitive: om.migrationStore.CaseInsensitive(),
-			maxLen:          store.AlertRuleMaxRuleGroupNameLength,
-		}
-	}
-	return om.alertRuleGroupDedup[folderUID]
-}
-
-type AlertPair struct {
-	AlertRule *models.AlertRule
-	DashAlert *migrationStore.DashAlert
-}
-
-// Deduplicator is a wrapper around map[string]struct{} and util.GenerateShortUID() which aims help maintain and generate
-// unique strings (such as uids or titles). if caseInsensitive is true, all uniqueness is determined in a
-// case-insensitive manner. if maxLen is greater than 0, all strings will be truncated to maxLen before being checked in
-// contains and dedup will always return a string of length maxLen or less.
-type Deduplicator struct {
-	set             map[string]struct{}
-	caseInsensitive bool
-	maxLen          int
-}
-
-// contains checks whether the given string has already been seen by this Deduplicator.
-func (s *Deduplicator) contains(u string) bool {
-	dedup := u
-	if s.caseInsensitive {
-		dedup = strings.ToLower(dedup)
-	}
-	if s.maxLen > 0 && len(dedup) > s.maxLen {
-		dedup = dedup[:s.maxLen]
-	}
-	_, seen := s.set[dedup]
-	return seen
-}
-
-// deduplicate returns a unique string based on the given string by appending a uuid to it. Will truncate the given string if
-// the resulting string would be longer than maxLen.
-func (s *Deduplicator) deduplicate(dedup string) string {
-	uid := util.GenerateShortUID()
-	if s.maxLen > 0 && len(dedup)+1+len(uid) > s.maxLen {
-		trunc := s.maxLen - 1 - len(uid)
-		dedup = dedup[:trunc]
-	}
-
-	return dedup + "_" + uid
-}
-
-// add adds the given string to the Deduplicator.
-func (s *Deduplicator) add(uid string) {
-	dedup := uid
-	if s.caseInsensitive {
-		dedup = strings.ToLower(dedup)
-	}
-	s.set[dedup] = struct{}{}
 }

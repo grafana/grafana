@@ -1,8 +1,8 @@
 import { HistoryItem, dateTime } from '@grafana/data';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
+import { createLokiDatasource } from '../../../__mocks__/datasource';
 import { LokiDatasource } from '../../../datasource';
-import { createLokiDatasource } from '../../../mocks';
 import { LokiQuery } from '../../../types';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
@@ -51,6 +51,7 @@ const seriesLabels = { place: ['series', 'labels'], source: [], other: [] };
 const parserAndLabelKeys = {
   extractedLabelKeys: ['extracted', 'label', 'keys'],
   unwrapLabelKeys: ['unwrap', 'labels'],
+  structuredMetadataKeys: ['structured', 'metadata'],
   hasJSON: true,
   hasLogfmt: false,
   hasPack: false,
@@ -180,5 +181,12 @@ describe('CompletionDataProvider', () => {
 
   test('Returns the expected series labels', async () => {
     expect(await completionProvider.getSeriesLabels([])).toEqual(seriesLabels);
+  });
+
+  test('Escapes correct characters when building stream selector in getSeriesLabels', async () => {
+    completionProvider.getSeriesLabels([{ name: 'job', op: '=', value: '"a\\b\n' }]);
+    expect(languageProvider.fetchSeriesLabels).toHaveBeenCalledWith('{job="\\"a\\\\b\\n"}', {
+      timeRange: mockTimeRange,
+    });
   });
 });

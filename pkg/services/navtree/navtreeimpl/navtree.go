@@ -119,7 +119,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if setting.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
-			Id:         "explore",
+			Id:         navtree.NavIDExplore,
 			SubTitle:   "Explore your data",
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,
@@ -137,6 +137,11 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
 		if legacyAlertSection := s.buildLegacyAlertNavLinks(c); legacyAlertSection != nil {
 			treeRoot.AddSection(legacyAlertSection)
+		}
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingPreviewUpgrade) && !uaIsDisabledForOrg {
+			if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
+				treeRoot.AddSection(alertingSection)
+			}
 		}
 	} else if uaVisibleForOrg {
 		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
@@ -358,7 +363,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
@@ -366,15 +371,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Icon: "library-panel",
 			})
 		}
-	}
-
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagScenes) {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Scenes",
-			Id:   "scenes",
-			Url:  s.cfg.AppSubURL + "/scenes",
-			Icon: "apps",
-		})
 	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatatrails) {
@@ -403,13 +399,21 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
 	var alertChildNavs []*navtree.NavLink
 	alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-		Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+		Text: "Alert rules", Id: "alert-list-legacy", Url: s.cfg.AppSubURL + "/alerting-legacy/list", Icon: "list-ul",
 	})
 
 	if c.SignedInUser.HasRole(roletype.RoleEditor) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting/notifications",
+			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting-legacy/notifications",
 			Icon: "comment-alt-share",
+		})
+	}
+
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingPreviewUpgrade) && c.HasRole(org.RoleAdmin) {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text: "Upgrade Alerting", Id: "alerting-upgrade", Url: s.cfg.AppSubURL + "/alerting-legacy/upgrade",
+			SubTitle: "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
+			Icon:     "cog",
 		})
 	}
 
@@ -420,7 +424,7 @@ func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navt
 		Icon:       "bell",
 		Children:   alertChildNavs,
 		SortWeight: navtree.WeightAlerting,
-		Url:        s.cfg.AppSubURL + "/alerting",
+		Url:        s.cfg.AppSubURL + "/alerting-legacy",
 	}
 
 	return &alertNav

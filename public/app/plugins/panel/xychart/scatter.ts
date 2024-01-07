@@ -46,9 +46,9 @@ export function prepScatter(
   options: Options,
   getData: () => DataFrame[],
   theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
+  ttip: null | ScatterHoverCallback,
   onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
+  isToolTipOpen: null | MutableRefObject<boolean>
 ): ScatterPanelInfo {
   let series: ScatterSeries[];
   let builder: UPlotConfigBuilder;
@@ -294,14 +294,13 @@ interface DrawBubblesOpts {
   };
 }
 
-//const prepConfig: UPlotConfigPrepFnXY<Options> = ({ frames, series, theme }) => {
 const prepConfig = (
   getData: () => DataFrame[],
   scatterSeries: ScatterSeries[],
   theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback,
+  ttip: null | ScatterHoverCallback,
   onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: MutableRefObject<boolean>
+  isToolTipOpen: null | MutableRefObject<boolean>
 ) => {
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -393,6 +392,9 @@ const prepConfig = (
               }
 
               if (showPoints) {
+                // if pointHints.fixed? don't recalc size
+                // if pointColor has 0 opacity, draw as single path (assuming all strokes are alpha 1)
+
                 u.ctx.moveTo(cx + size / 2, cy);
                 u.ctx.beginPath();
                 u.ctx.arc(cx, cy, size / 2, 0, deg360);
@@ -519,8 +521,10 @@ const prepConfig = (
   });
 
   const clearPopupIfOpened = () => {
-    if (isToolTipOpen.current) {
-      ttip(undefined);
+    if (isToolTipOpen?.current) {
+      if (ttip) {
+        ttip(undefined);
+      }
       if (onUPlotClick) {
         onUPlotClick();
       }
@@ -531,7 +535,9 @@ const prepConfig = (
 
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
-    u.over.style.overflow = 'hidden';
+    if (!config.featureToggles.newVizTooltips) {
+      u.over.style.overflow = 'hidden';
+    }
     ref_parent = u.root.parentElement;
 
     if (onUPlotClick) {
@@ -553,26 +559,28 @@ const prepConfig = (
     rect = r;
   });
 
-  builder.addHook('setLegend', (u) => {
-    if (u.cursor.idxs != null) {
-      for (let i = 0; i < u.cursor.idxs.length; i++) {
-        const sel = u.cursor.idxs[i];
-        if (sel != null && !isToolTipOpen.current) {
-          ttip({
-            scatterIndex: i - 1,
-            xIndex: sel,
-            pageX: rect.left + u.cursor.left!,
-            pageY: rect.top + u.cursor.top!,
-          });
-          return; // only show the first one
+  if (ttip) {
+    builder.addHook('setLegend', (u) => {
+      if (u.cursor.idxs != null) {
+        for (let i = 0; i < u.cursor.idxs.length; i++) {
+          const sel = u.cursor.idxs[i];
+          if (sel != null && !isToolTipOpen?.current) {
+            ttip({
+              scatterIndex: i - 1,
+              xIndex: sel,
+              pageX: rect.left + u.cursor.left!,
+              pageY: rect.top + u.cursor.top!,
+            });
+            return; // only show the first one
+          }
         }
       }
-    }
 
-    if (!isToolTipOpen.current) {
-      ttip(undefined);
-    }
-  });
+      if (!isToolTipOpen?.current) {
+        ttip(undefined);
+      }
+    });
+  }
 
   builder.addHook('drawClear', (u) => {
     clearPopupIfOpened();
@@ -595,8 +603,8 @@ const prepConfig = (
   const frames = getData();
   let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
 
-  let config = xField.config;
-  let customConfig = config.custom;
+  let fieldConfig = xField.config;
+  let customConfig = fieldConfig.custom;
   let scaleDistr = customConfig?.scaleDistribution;
 
   builder.addScale({
@@ -607,12 +615,12 @@ const prepConfig = (
     distribution: scaleDistr?.type,
     log: scaleDistr?.log,
     linearThreshold: scaleDistr?.linearThreshold,
-    min: config.min,
-    max: config.max,
+    min: fieldConfig.min,
+    max: fieldConfig.max,
     softMin: customConfig?.axisSoftMin,
     softMax: customConfig?.axisSoftMax,
     centeredZero: customConfig?.axisCenteredZero,
-    decimals: config.decimals,
+    decimals: fieldConfig.decimals,
   });
 
   // why does this fall back to '' instead of null or undef?
@@ -693,7 +701,7 @@ const prepConfig = (
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
       scaleKey: '', // facets' scales used (above)
-      lineColor: lineColor as string,
+      lineColor: alpha('' + lineColor, 1),
       fillColor: alpha(pointColor, 0.5),
       show: !customConfig.hideFrom?.viz,
     });

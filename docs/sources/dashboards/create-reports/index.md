@@ -16,6 +16,7 @@ labels:
     - enterprise
 menuTitle: Reporting
 title: Create and manage reports
+description: Generate and share PDF reports from your Grafana dashboards
 weight: 85
 ---
 
@@ -25,10 +26,6 @@ Reporting enables you to automatically generate PDFs from any of your dashboards
 
 > If you have [Role-based access control][] enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
-
-<!--
-{{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" >}}
--->
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes, unless you've configured a custom time range.
 
@@ -119,14 +116,12 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ### Layout and orientation
 
-> We're actively developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=design-process&value=reporting) to get involved in the design process.
-
-| Layout | Orientation | Support | Description                                                                                               | Preview                                                                                                                                               |
-| ------ | ----------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Simple | Portrait    | v6.4+   | Generates an A4 page in portrait mode with three panels per page.                                         | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}      |
-| Simple | Landscape   | v6.7+   | Generates an A4 page in landscape mode with a single panel per page.                                      | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}                        |
-| Grid   | Portrait    | v7.2+   | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard.  | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}} |
-| Grid   | Landscape   | v7.2+   | Generates an A4 page in landscape mode with panels arranged in the same way as in the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}                   |
+| Layout | Orientation | Support | Description                                                                                               | Preview                                                                                                                                                                             |
+| ------ | ----------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Simple | Portrait    | v6.4+   | Generates an A4 page in portrait mode with three panels per page.                                         | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" alt="Simple layout in portrait" >}}    |
+| Simple | Landscape   | v6.7+   | Generates an A4 page in landscape mode with a single panel per page.                                      | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Simple layout in landscape" >}}                     |
+| Grid   | Portrait    | v7.2+   | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard.  | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" alt="Grid layout in portrait" >}} |
+| Grid   | Landscape   | v7.2+   | Generates an A4 page in landscape mode with panels arranged in the same way as in the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Grid layout in landscape" >}}                  |
 
 ### CSV export
 
@@ -139,6 +134,19 @@ This feature relies on the same plugin that supports the [image rendering][] fea
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 
 A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime][] setting. This setting also affects how long a renderer PNG file should be stored.
+
+### Table data in PDF
+
+{{% admonition type="note" %}}
+Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise][] v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+{{% /admonition %}}
+
+When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
+
+- **Include table data as PDF appendix** - Adds an appendix to the main dashboard PDF.
+- **Attach a separate PDF of table data** - Generates a separate PDF file.
+
+This feature relies on the same plugin that supports the [image rendering][] features.
 
 ### Scheduling
 

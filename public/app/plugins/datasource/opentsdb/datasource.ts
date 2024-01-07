@@ -550,6 +550,10 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     });
   }
 
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
   mapMetricsToTargets(metrics: any, options: any, tsdbVersion: number) {
     let interpolatedTagValue, arrTagV;
     return _map(metrics, (metricData) => {

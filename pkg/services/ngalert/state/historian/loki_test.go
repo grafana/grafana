@@ -21,7 +21,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-	"github.com/weaveworks/common/http/client"
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
@@ -89,7 +88,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.NotContains(t, res.Stream, "__private__")
 		})
 
-		t.Run("includes ruleUID in log line", func(t *testing.T) {
+		t.Run("includes rule data in log line", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{
@@ -98,8 +97,10 @@ func TestRemoteLokiBackend(t *testing.T) {
 			})
 
 			res := statesToStream(rule, states, nil, l)
-
 			entry := requireSingleEntry(t, res)
+
+			require.Equal(t, rule.Title, entry.RuleTitle)
+			require.Equal(t, rule.ID, entry.RuleID)
 			require.Equal(t, rule.UID, entry.RuleUID)
 		})
 
@@ -290,20 +291,20 @@ func TestRemoteLokiBackend(t *testing.T) {
 func TestMerge(t *testing.T) {
 	testCases := []struct {
 		name         string
-		res          queryRes
+		res          QueryRes
 		ruleID       string
 		expectedTime []time.Time
 	}{
 		{
 			name: "Should return values from multiple streams in right order",
-			res: queryRes{
-				Data: queryData{
-					Result: []stream{
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
 						{
 							Stream: map[string]string{
 								"current": "pending",
 							},
-							Values: []sample{
+							Values: []Sample{
 								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": "b"}}`},
 							},
 						},
@@ -311,7 +312,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "firing",
 							},
-							Values: []sample{
+							Values: []Sample{
 								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
 							},
 						},
@@ -326,14 +327,14 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "Should handle empty values",
-			res: queryRes{
-				Data: queryData{
-					Result: []stream{
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
 						{
 							Stream: map[string]string{
 								"current": "normal",
 							},
-							Values: []sample{},
+							Values: []Sample{},
 						},
 					},
 				},
@@ -343,14 +344,14 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "Should handle multiple values in one stream",
-			res: queryRes{
-				Data: queryData{
-					Result: []stream{
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
 						{
 							Stream: map[string]string{
 								"current": "normal",
 							},
-							Values: []sample{
+							Values: []Sample{
 								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
 								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
 							},
@@ -359,7 +360,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "firing",
 							},
-							Values: []sample{
+							Values: []Sample{
 								{time.Unix(0, 3), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
 							},
 						},
@@ -399,7 +400,7 @@ func TestMerge(t *testing.T) {
 func TestRecordStates(t *testing.T) {
 	t.Run("writes state transitions to loki", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -414,7 +415,7 @@ func TestRecordStates(t *testing.T) {
 
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
-		met := metrics.NewHistorianMetrics(reg)
+		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		loki := createTestLokiBackend(NewFakeRequester(), met)
 		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
@@ -451,7 +452,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("elides request if nothing to send", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := []state.StateTransition{}
 
@@ -463,7 +464,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("succeeds with special chars in labels", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State: eval.Alerting,
@@ -486,7 +487,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("adds external labels to log lines", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State: eval.Alerting,
@@ -502,7 +503,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 }
 
-func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
+func createTestLokiBackend(req Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL:   url,
@@ -525,20 +526,22 @@ func singleFromNormal(st *state.State) []state.StateTransition {
 func createTestRule() history_model.RuleMeta {
 	return history_model.RuleMeta{
 		OrgID:        1,
+		ID:           123,
 		UID:          "rule-uid",
 		Group:        "my-group",
 		NamespaceUID: "my-folder",
 		DashboardUID: "dash-uid",
 		PanelID:      123,
+		Title:        "my-title",
 	}
 }
 
-func requireSingleEntry(t *testing.T, res stream) lokiEntry {
+func requireSingleEntry(t *testing.T, res Stream) lokiEntry {
 	require.Len(t, res.Values, 1)
 	return requireEntry(t, res.Values[0])
 }
 
-func requireEntry(t *testing.T, row sample) lokiEntry {
+func requireEntry(t *testing.T, row Sample) lokiEntry {
 	t.Helper()
 
 	var entry lokiEntry

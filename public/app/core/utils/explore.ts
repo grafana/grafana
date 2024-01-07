@@ -28,8 +28,6 @@ import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
 
-import { config } from '../config';
-
 import { getNextRefIdChar } from './query';
 
 export const DEFAULT_UI_STATE = {
@@ -319,24 +317,11 @@ export const getQueryKeys = (queries: DataQuery[]): string[] => {
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalYearStartMonth: number): TimeRange => {
   let range = rangeUtil.convertRawToRange(rawRange, timeZone, fiscalYearStartMonth);
 
-  if (range.to.isBefore(range.from)) {
-    range = rangeUtil.convertRawToRange({ from: range.raw.to, to: range.raw.from }, timeZone, fiscalYearStartMonth);
-  }
-
   return range;
 };
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
-
-export const convertToWebSocketUrl = (url: string) => {
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
-  if (backend.endsWith('/')) {
-    backend = backend.slice(0, -1);
-  }
-  return `${backend}${url}`;
-};
 
 export const stopQueryState = (querySubscription: Unsubscribable | undefined) => {
   if (querySubscription) {
@@ -353,10 +338,14 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
 }
 
 export const copyStringToClipboard = (string: string) => {
-  const el = document.createElement('textarea');
-  el.value = string;
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(string);
+  } else {
+    const el = document.createElement('textarea');
+    el.value = string;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  }
 };

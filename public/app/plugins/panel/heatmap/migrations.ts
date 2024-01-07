@@ -7,6 +7,7 @@ import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
 } from '@grafana/schema';
+import { TooltipDisplayMode } from '@grafana/ui';
 
 import { colorSchemes } from './palettes';
 import { Options, defaultOptions, HeatmapColorMode } from './types';
@@ -14,9 +15,23 @@ import { Options, defaultOptions, HeatmapColorMode } from './types';
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => {
   // Migrating from angular
-  if (Object.keys(panel.options).length === 0) {
+  if (Object.keys(panel.options ?? {}).length === 0) {
     return heatmapChangedHandler(panel, 'heatmap', { angular: panel }, panel.fieldConfig);
   }
+
+  // multi tooltip mode in 10.3+
+  let showTooltip = panel.options?.tooltip?.show;
+  if (showTooltip !== undefined) {
+    if (showTooltip === true) {
+      panel.options.tooltip.mode = TooltipDisplayMode.Single;
+    } else if (showTooltip === false) {
+      panel.options.tooltip.mode = TooltipDisplayMode.None;
+    }
+
+    // Remove old tooltip option
+    delete panel.options.tooltip?.show;
+  }
+
   return panel.options;
 };
 
@@ -111,7 +126,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     },
     showValue: VisibilityMode.Never,
     tooltip: {
-      show: Boolean(angular.tooltip?.show),
+      mode: Boolean(angular.tooltip?.show) ? TooltipDisplayMode.Single : TooltipDisplayMode.None,
       yHistogram: Boolean(angular.tooltip?.showHistogram),
     },
     exemplars: {

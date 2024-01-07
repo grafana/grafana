@@ -43,9 +43,27 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 		)
-	// Grafana rule state history paths
+		// Grafana rule state history paths
 	case http.MethodGet + "/api/v1/rules/history":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+
+	// Grafana unified alerting upgrade paths
+	case http.MethodGet + "/api/v1/upgrade/org":
+		return middleware.ReqOrgAdmin
+	case http.MethodPost + "/api/v1/upgrade/org":
+		return middleware.ReqOrgAdmin
+	case http.MethodDelete + "/api/v1/upgrade/org":
+		return middleware.ReqOrgAdmin
+	case http.MethodPost + "/api/v1/upgrade/dashboards":
+		return middleware.ReqOrgAdmin
+	case http.MethodPost + "/api/v1/upgrade/dashboards/{DashboardID}":
+		return middleware.ReqOrgAdmin
+	case http.MethodPost + "/api/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}":
+		return middleware.ReqOrgAdmin
+	case http.MethodPost + "/api/v1/upgrade/channels":
+		return middleware.ReqOrgAdmin
+	case http.MethodPost + "/api/v1/upgrade/channels/{ChannelID}":
+		return middleware.ReqOrgAdmin
 
 	// Grafana, Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/rules":
@@ -182,7 +200,9 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana-only Provisioning Read Paths
 	case http.MethodGet + "/api/v1/provisioning/policies/export",
-		http.MethodGet + "/api/v1/provisioning/contact-points/export":
+		http.MethodGet + "/api/v1/provisioning/contact-points/export",
+		http.MethodGet + "/api/v1/provisioning/mute-timings/export",
+		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}/export":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),       // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),        // organization scope

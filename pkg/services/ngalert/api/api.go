@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -36,12 +37,14 @@ type ExternalAlertmanagerProvider interface {
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
 type RuleAccessControlService interface {
-	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) bool
+	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error)
+	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 }
 
 // API handlers.
@@ -71,6 +74,7 @@ type API struct {
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
+	UpgradeService       migration.UpgradeService
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -147,35 +151,13 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		logger: logger,
 		hist:   api.Historian,
 	}), m)
-}
 
-func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
-	u := &quota.Map{}
-
-	var orgID int64 = 0
-	if scopeParams != nil {
-		orgID = scopeParams.OrgID
+	// Inject upgrade endpoints if legacy alerting is enabled and the feature flag is enabled.
+	if !api.Cfg.UnifiedAlerting.IsEnabled() && api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
+		api.RegisterUpgradeApiEndpoints(NewUpgradeApi(NewUpgradeSrc(
+			logger,
+			api.UpgradeService,
+			api.Cfg,
+		)), m)
 	}
-
-	if orgUsage, err := api.RuleStore.Count(ctx, orgID); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
-		if err != nil {
-			return u, err
-		}
-		u.Set(tag, orgUsage)
-	}
-
-	if globalUsage, err := api.RuleStore.Count(ctx, 0); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
-		if err != nil {
-			return u, err
-		}
-		u.Set(tag, globalUsage)
-	}
-
-	return u, nil
 }

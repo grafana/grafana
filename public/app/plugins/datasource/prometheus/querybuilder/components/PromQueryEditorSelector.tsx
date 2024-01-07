@@ -11,10 +11,10 @@ import { PromQueryEditorProps } from '../../components/types';
 import { PromQueryFormat } from '../../dataquery.gen';
 import { PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
+import { promQueryEditorExplainKey, useFlag } from '../hooks/useFlag';
 import { buildVisualQueryFromString } from '../parsing';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
-import { promQueryEditorExplainKey, useFlag } from '../shared/hooks/useFlag';
 import { QueryEditorMode } from '../shared/types';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
 
@@ -116,7 +116,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       />
       <EditorHeader>
         <Button
-          aria-label={selectors.components.QueryBuilder.queryPatterns}
+          data-testid={selectors.components.QueryBuilder.queryPatterns}
           variant="secondary"
           size="sm"
           onClick={() => setQueryPatternsModalOpen((prevValue) => !prevValue)}

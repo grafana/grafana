@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -15,17 +17,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
-var logger = log.New("tsdb.postgres")
-
 func ProvideService(cfg *setting.Cfg) *Service {
+	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
 	s := &Service{
 		tlsManager: newTLSManager(logger, cfg.DataPath),
+		logger:     logger,
 	}
 	s.im = datasource.NewInstanceManager(s.newInstanceSettings(cfg))
 	return s
@@ -34,6 +36,7 @@ func ProvideService(cfg *setting.Cfg) *Service {
 type Service struct {
 	tlsManager tlsSettingsProvider
 	im         instancemgmt.InstanceManager
+	logger     log.Logger
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
@@ -54,6 +57,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
+	logger := s.logger
 	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
@@ -106,8 +110,6 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        driverName,
-			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 			RowLimit:          cfg.DataProxyRowLimit,
@@ -115,7 +117,16 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 
 		queryResultTransformer := postgresQueryResultTransformer{}
 
-		handler, err := sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+		db, err := sql.Open(driverName, cnnstr)
+		if err != nil {
+			return nil, err
+		}
+
+		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+		handler, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 			logger)
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)
@@ -133,6 +144,7 @@ func escape(input string) string {
 }
 
 func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
+	logger := s.logger
 	var host string
 	var port int
 	if strings.HasPrefix(dsInfo.URL, "/") {
@@ -219,8 +231,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	err = dsHandler.Ping()
 
 	if err != nil {
-		logger.Error("Check health failed", "error", err)
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+		s.logger.Error("Check health failed", "error", err)
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
 	}
 
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil

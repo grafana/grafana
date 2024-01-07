@@ -3,6 +3,7 @@ import { config, locationSearchToObject, locationService } from '@grafana/runtim
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { InspectTab } from 'app/features/inspector/types';
 
 import { getQueryRunnerFor } from './utils';
 
@@ -20,15 +21,10 @@ export interface DashboardUrlOptions {
   absolute?: boolean;
   // Add tz to query params
   timeZone?: string;
-
-  // Add tz to query params
-  useExperimentalURL?: boolean;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
-  let path = options.useExperimentalURL
-    ? `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`
-    : `/d/${options.uid}${options.subPath ?? ''}`;
+  let path = `/d/${options.uid}${options.subPath ?? ''}`;
 
   if (options.soloRoute) {
     path = `/d-solo/${options.uid}${options.subPath ?? ''}`;
@@ -71,8 +67,8 @@ export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
 }
 
-export function getInspectUrl(vizPanel: VizPanel) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect: vizPanel.state.key });
+export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect: vizPanel.state.key, inspectTab });
 }
 
 export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {

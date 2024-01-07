@@ -5,9 +5,10 @@ import { LabelValue } from './types';
 
 interface Props {
   keyValuePairs?: LabelValue[];
+  isPinned: boolean;
 }
 
-export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => (
+export const VizTooltipHeaderLabelValue = ({ keyValuePairs, isPinned }: Props) => (
   <>
     {keyValuePairs?.map((keyValuePair, i) => (
       <VizTooltipRow
@@ -16,8 +17,8 @@ export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => (
         value={keyValuePair.value}
         color={keyValuePair.color}
         colorIndicator={keyValuePair.colorIndicator!}
-        colorFirst={false}
         justify={'space-between'}
+        isPinned={isPinned}
       />
     ))}
   </>

@@ -5,7 +5,6 @@ import { useOverlay } from '@react-aria/overlays';
 import React, { memo, createRef, useState, useEffect } from 'react';
 
 import {
-  isDateTime,
   rangeUtil,
   GrafanaTheme2,
   dateTimeFormat,
@@ -108,8 +107,12 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const styles = useStyles2(getStyles);
   const { modalBackdrop } = useStyles2(getModalStyles);
-  const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
+  const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
+
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
+
+  const isFromAfterTo = value?.to?.isBefore(value.from);
+  const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
 
   const currentTimeRange = formattedRange(value, timeZone);
 
@@ -138,7 +141,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           })}
           aria-controls="TimePickerContent"
           onClick={onToolbarButtonSwitch}
-          icon="clock-nine"
+          icon={timePickerIcon}
           isOpen={isOpen}
           variant={variant}
         >
@@ -148,7 +151,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       {isOpen && (
         <div data-testid={selectors.components.TimePicker.overlayContent}>
           <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
-          <FocusScope contain autoFocus>
+          <FocusScope contain autoFocus restoreFocus>
             <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
               <TimePickerContent
                 timeZone={timeZone}

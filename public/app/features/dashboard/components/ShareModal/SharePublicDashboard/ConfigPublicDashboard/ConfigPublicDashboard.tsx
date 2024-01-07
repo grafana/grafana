@@ -24,13 +24,13 @@ import {
 import { DashboardModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
-import { trackDashboardSharingActionPerType } from '../../analytics';
 import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
@@ -111,7 +111,7 @@ export function ConfigPublicDashboardBase({
   };
 
   function onCopyURL() {
-    trackDashboardSharingActionPerType('copy_public_url', shareDashboardType.publicDashboard);
+    DashboardInteractions.publicDashboardUrlCopied();
   }
 
   return (
@@ -151,10 +151,9 @@ export function ConfigPublicDashboardBase({
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              trackDashboardSharingActionPerType(
-                e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
-                shareDashboardType.publicDashboard
-              );
+              DashboardInteractions.publicDashboardPauseSharingClicked({
+                paused: e.currentTarget.checked,
+              });
               onChange('isPaused', e.currentTarget.checked);
             }}
             data-testid={selectors.PauseSwitch}
@@ -243,6 +242,7 @@ export function ConfigPublicDashboard({ publicDashboard, unsupportedDatasources 
           showSaveChangesAlert={hasWritePermissions && dashboard.hasUnsavedChanges()}
           hasTemplateVariables={hasTemplateVariables}
           onRevoke={() => {
+            DashboardInteractions.revokePublicDashboardClicked();
             showModal(DeletePublicDashboardModal, {
               dashboardTitle: dashboard.title,
               onConfirm: () => onDeletePublicDashboardClick(hideModal),

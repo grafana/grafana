@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -81,6 +81,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
+	assets, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
+	if err != nil {
+		return nil, err
+	}
 
 	userOrgCount := 1
 	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
@@ -116,7 +120,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
-			Analytics:                  hs.buildUserAnalyticsSettings(c.Req.Context(), c.SignedInUser),
+			Analytics:                  hs.buildUserAnalyticsSettings(c),
 			AuthenticatedBy:            c.SignedInUser.AuthenticatedBy,
 		},
 		Settings:                            settings,
@@ -139,9 +143,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:                         "public/img/grafana_icon.svg",
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
+		Assets:                              assets,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -172,11 +176,16 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	return &data, nil
 }
 
-func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser identity.Requester) dtos.AnalyticsSettings {
-	namespace, id := signedInUser.GetNamespacedID()
+func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
+	namespace, id := c.SignedInUser.GetNamespacedID()
+
 	// Anonymous users do not have an email or auth info
 	if namespace != identity.NamespaceUser {
 		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+	}
+
+	if !c.IsSignedIn {
+		return dtos.AnalyticsSettings{}
 	}
 
 	userID, err := identity.IntIdentifier(namespace, id)
@@ -185,9 +194,9 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUs
 		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
 	}
 
-	identifier := signedInUser.GetEmail() + "@" + setting.AppUrl
+	identifier := c.SignedInUser.GetEmail() + "@" + setting.AppUrl
 
-	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
+	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		hs.log.Error("Failed to get auth info for analytics", "error", err)
 	}

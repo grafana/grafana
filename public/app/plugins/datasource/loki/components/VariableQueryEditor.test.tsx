@@ -5,7 +5,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { TemplateSrv } from '@grafana/runtime';
 
-import { createLokiDatasource } from '../mocks';
+import { createLokiDatasource } from '../__mocks__/datasource';
 import { LokiVariableQueryType } from '../types';
 
 import { LokiVariableQueryEditor, Props } from './VariableQueryEditor';
@@ -26,14 +26,7 @@ describe('LokiVariableQueryEditor', () => {
       onChange: () => {},
     };
 
-    jest.spyOn(props.datasource, 'labelNamesQuery').mockResolvedValue([
-      {
-        text: 'moon',
-      },
-      {
-        text: 'luna',
-      },
-    ]);
+    jest.spyOn(props.datasource.languageProvider, 'fetchLabels').mockResolvedValue(['luna', 'moon']);
   });
 
   test('Allows to create a Label names variable', async () => {
