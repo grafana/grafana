@@ -1,17 +1,10 @@
 import { useCallback, useState } from 'react';
 
-import store from '../../../../../../core/store';
+import store from '../../../../../core/store';
 
 export const promQueryEditorExplainKey = 'PrometheusQueryEditorExplainDefault';
-export const promQueryEditorRawQueryKey = 'PrometheusQueryEditorRawQueryDefault';
-export const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
-export const lokiQueryEditorRawQueryKey = 'LokiQueryEditorRawQueryDefault';
 
-export type QueryEditorFlags =
-  | typeof promQueryEditorExplainKey
-  | typeof promQueryEditorRawQueryKey
-  | typeof lokiQueryEditorExplainKey
-  | typeof lokiQueryEditorRawQueryKey;
+export type QueryEditorFlags = typeof promQueryEditorExplainKey;
 
 function getFlagValue(key: QueryEditorFlags, defaultValue = false): boolean {
   const val = store.get(key);
@@ -26,7 +19,7 @@ type UseFlagHookReturnType = { flag: boolean; setFlag: (val: boolean) => void };
 
 /**
  *
- * Use and store value of explain/rawquery switch in local storage.
+ * Use and store value of explain switch in local storage.
  * Needs to be a hook with local state to trigger re-renders.
  */
 export function useFlag(key: QueryEditorFlags, defaultValue = false): UseFlagHookReturnType {
