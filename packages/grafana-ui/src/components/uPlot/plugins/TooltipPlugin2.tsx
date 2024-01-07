@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import React, { useLayoutEffect, useRef, useReducer, CSSProperties, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
+// import { LayoutItemContext } from '../../../../../../public/app/features/dashboard/dashgrid/DashboardGrid';
 import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -30,6 +31,8 @@ interface TooltipPlugin2Props {
   queryZoom?: (range: { from: number; to: number }) => void;
   // y-only, via shiftKey
   clientZoom?: boolean;
+
+  incrPinnedCount: (count: number) => void;
 
   render: (
     u: uPlot,
@@ -90,7 +93,7 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom, incrPinnedCount }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
@@ -98,6 +101,10 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
   const sizeRef = useRef<TooltipContainerSize>();
 
   const styles = useStyles2(getStyles);
+
+  // let layoutCtx = useContext(LayoutItemContext);
+
+  // console.log(layoutCtx);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -181,7 +188,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
       if (pendingPinned) {
         _style = { pointerEvents: _isPinned ? 'all' : 'none' };
 
-        domRef.current?.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', _isPinned);
+        incrPinnedCount(_isPinned ? 1 : -1);
 
         // @ts-ignore
         _plot!.cursor._lock = _isPinned;

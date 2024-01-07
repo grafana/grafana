@@ -16,20 +16,26 @@ interface AnnoBoxProps {
   className: string;
   timezone: TimeZone;
   exitWipEdit?: null | (() => void);
+  incrPinnedCount: (count: number) => void;
 }
 
-export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timezone }: AnnoBoxProps) => {
+const STATE_DEFAULT = 0;
+const STATE_EDITING = 1;
+const STATE_HOVERED = 2;
+
+export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timezone, incrPinnedCount }: AnnoBoxProps) => {
   const { canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
 
   const styles = useStyles2(getStyles);
 
-  const [isHovered, setIsHovered] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [state, setState] = useState(STATE_DEFAULT);
 
   const clickAwayRef = useRef(null);
 
   useClickAway(clickAwayRef, () => {
-    isEditing && setIsEditingWrap(false);
+    if (state === STATE_EDITING) {
+      setIsEditingWrap(false);
+    }
   });
 
   const domRef = React.createRef<HTMLDivElement>();
@@ -37,17 +43,16 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWip
   // similar to TooltipPlugin2, when editing annotation (pinned), it should boost z-index
   const setIsEditingWrap = useCallback(
     (isEditing: boolean) => {
-      domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', isEditing);
-      setIsEditing(isEditing);
+      incrPinnedCount(isEditing ? 1 : -1);
+      setState(STATE_EDITING);
       if (!isEditing && exitWipEdit != null) {
         exitWipEdit();
       }
     },
-    [domRef, exitWipEdit]
+    [exitWipEdit, incrPinnedCount]
   );
 
   const onAnnotationEdit = useCallback(() => {
-    setIsHovered(false);
     setIsEditingWrap(true);
   }, [setIsEditingWrap]);
 
@@ -118,12 +123,12 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWip
       ref={domRef}
       className={className}
       style={style!}
-      onMouseEnter={() => !isEditing && setIsHovered(true)}
-      onMouseLeave={() => !isEditing && setIsHovered(false)}
+      onMouseEnter={() => state !== STATE_EDITING && setState(STATE_HOVERED)}
+      onMouseLeave={() => state !== STATE_EDITING && setState(STATE_DEFAULT)}
     >
       <div className={styles.annoInfo} ref={clickAwayRef}>
-        {isHovered && renderAnnotationTooltip()}
-        {isEditing && renderAnnotationEditor()}
+        {state === STATE_HOVERED && renderAnnotationTooltip()}
+        {state === STATE_EDITING && renderAnnotationEditor()}
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ interface AnnotationsPluginProps {
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRage: TimeRange2 | null) => void;
+  incrPinnedCount: (count: number) => void;
 }
 
 // TODO: batch by color, use Path2D objects
@@ -60,6 +61,7 @@ export const AnnotationsPlugin2 = ({
   config,
   newRange,
   setNewRange,
+  incrPinnedCount,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
 
@@ -207,6 +209,7 @@ export const AnnotationsPlugin2 = ({
 
           markers.push(
             <AnnotationMarker2
+              incrPinnedCount={incrPinnedCount}
               annoIdx={i}
               annoVals={vals}
               className={className}
