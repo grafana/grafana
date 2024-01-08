@@ -86,7 +86,7 @@ Query results for both the editor and the builder are returned in a table. Selec
 
 Selecting the trace ID from the returned results opens a trace diagram. Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram (above, the highlighted blue line).
 
-In the trace diagram, the bold text on the left side of each span indicates the service name, for example `mythical-requester: requester`, and it is hidden when subsequent spans have the same service name (nested spans). Each service has a color assigned to it, which is visible at the left of teh name and timeline graph above. Spans with the same color belong to the same service. The grey text at the right side of the service name indicates the span name.
+In the trace diagram, the bold text on the left side of each span indicates the service name, for example `mythical-requester: requester`, and it is hidden when subsequent spans have the same service name (nested spans). Each service has a color assigned to it, which is visible at the left of the name and timeline graph above. Spans with the same color belong to the same service. The grey text at the right side of the service name indicates the span name.
 
 ### Streaming results
 
