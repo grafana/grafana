@@ -11,7 +11,7 @@ jest.mock('@grafana/experimental', () => ({
     openai: {
       streamChatCompletions: jest.fn(),
       accumulateContent: jest.fn(),
-      enabled: jest.fn(),
+      health: jest.fn(),
     },
   },
 }));
@@ -89,8 +89,8 @@ describe('getDashboardChanges', () => {
 
 describe('isLLMPluginEnabled', () => {
   it('should return true if LLM plugin is enabled', async () => {
-    // Mock llms.openai.enabled to return true
-    jest.mocked(llms.openai.enabled).mockResolvedValue({ ok: true, configured: false });
+    // Mock llms.openai.health to return true
+    jest.mocked(llms.openai.health).mockResolvedValue({ ok: true, configured: false });
 
     const enabled = await isLLMPluginEnabled();
 
@@ -98,8 +98,8 @@ describe('isLLMPluginEnabled', () => {
   });
 
   it('should return false if LLM plugin is not enabled', async () => {
-    // Mock llms.openai.enabled to return false
-    jest.mocked(llms.openai.enabled).mockResolvedValue({ ok: false, configured: false });
+    // Mock llms.openai.health to return false
+    jest.mocked(llms.openai.health).mockResolvedValue({ ok: false, configured: false });
 
     const enabled = await isLLMPluginEnabled();
 

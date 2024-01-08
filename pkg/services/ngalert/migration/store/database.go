@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -37,6 +39,8 @@ type Store interface {
 
 // ReadStore is the database abstraction for read-only migration persistence.
 type ReadStore interface {
+	GetAlertmanagerConfig(ctx context.Context, orgID int64) (*apimodels.PostableUserConfig, error)
+
 	GetAllOrgs(ctx context.Context) ([]*org.OrgDTO, error)
 
 	GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester) (*datasources.DataSource, error)
@@ -44,6 +48,8 @@ type ReadStore interface {
 	GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error)
 	GetNotificationChannel(ctx context.Context, q GetNotificationChannelQuery) (*legacymodels.AlertNotification, error)
 
+	GetDashboardAlert(ctx context.Context, orgID int64, dashboardID int64, panelID int64) (*legacymodels.Alert, error)
+	GetDashboardAlerts(ctx context.Context, orgID int64, dashboardID int64) ([]*legacymodels.Alert, error)
 	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error)
 
 	GetDashboardPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error)
@@ -57,9 +63,15 @@ type ReadStore interface {
 	GetCurrentAlertingType(ctx context.Context) (AlertingType, error)
 	GetOrgMigrationState(ctx context.Context, orgID int64) (*OrgMigrationState, error)
 
-	GetAlertRuleTitles(ctx context.Context, orgID int64, namespaceUIDs ...string) (map[string][]string, error) // NamespaceUID -> Titles
+	GetAlertRuleTitles(ctx context.Context, orgID int64, namespaceUIDs ...string) (map[string][]string, error)                 // NamespaceUID -> Titles
+	GetRuleLabels(ctx context.Context, orgID int64, ruleUIDs []string) (map[models.AlertRuleKeyWithVersion]data.Labels, error) // Rule UID -> Labels
 
 	CaseInsensitive() bool
+
+	// Slims for performance optimization of GetOrgSummary rehydration.
+	GetSlimDashboards(ctx context.Context, orgID int64) (map[int64]SlimDashboard, error)
+	GetSlimOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*SlimAlert, error)
+	GetSlimAlertRules(ctx context.Context, orgID int64) (map[string]*SlimAlertRule, error)
 }
 
 // WriteStore is the database abstraction for write migration persistence.
@@ -77,7 +89,13 @@ type WriteStore interface {
 	SetCurrentAlertingType(ctx context.Context, t AlertingType) error
 	SetOrgMigrationState(ctx context.Context, orgID int64, summary *OrgMigrationState) error
 
+	RevertOrg(ctx context.Context, orgID int64) error
 	RevertAllOrgs(ctx context.Context) error
+
+	DeleteAlertRules(ctx context.Context, orgID int64, alertRuleUIDs ...string) error
+	DeleteFolders(ctx context.Context, orgID int64, uids ...string) error
+
+	UpdateRuleLabels(ctx context.Context, key models.AlertRuleKeyWithVersion, labels data.Labels) error
 }
 
 type migrationStore struct {
@@ -219,13 +237,25 @@ func (ms *migrationStore) GetOrgMigrationState(ctx context.Context, orgID int64)
 	}
 
 	if !exists {
-		return &OrgMigrationState{OrgID: orgID}, nil
+		return &OrgMigrationState{
+			OrgID:              orgID,
+			MigratedDashboards: make(map[int64]*DashboardUpgrade),
+			MigratedChannels:   make(map[int64]*ContactPair),
+		}, nil
 	}
 
 	var state OrgMigrationState
 	err = json.Unmarshal([]byte(content), &state)
 	if err != nil {
 		return nil, err
+	}
+
+	if state.MigratedChannels == nil {
+		state.MigratedChannels = make(map[int64]*ContactPair)
+	}
+
+	if state.MigratedDashboards == nil {
+		state.MigratedDashboards = make(map[int64]*DashboardUpgrade)
 	}
 
 	return &state, nil
@@ -272,6 +302,47 @@ func (ms *migrationStore) GetAlertRuleTitles(ctx context.Context, orgID int64, n
 	return res, err
 }
 
+// GetRuleLabels returns a map of rule UID / version -> labels for all given org and rule uids. Version is needed to
+// update alert rules because of their optimistic locking.
+func (ms *migrationStore) GetRuleLabels(ctx context.Context, orgID int64, ruleUIDs []string) (map[models.AlertRuleKeyWithVersion]data.Labels, error) {
+	res := make(map[models.AlertRuleKeyWithVersion]data.Labels, len(ruleUIDs))
+	err := ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		type label struct {
+			models.AlertRuleKeyWithVersion `xorm:"extends"`
+			Labels                         data.Labels
+		}
+		labels := make([]label, 0)
+		err := sess.Table("alert_rule").Cols("uid", "org_id", "version", "labels").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&labels)
+		if err != nil {
+			return err
+		}
+
+		for _, l := range labels {
+			res[l.AlertRuleKeyWithVersion] = l.Labels
+		}
+		return nil
+	})
+	return res, err
+}
+
+// UpdateRuleLabels updates the labels of an alert rule. Version is needed to update alert rules because of optimistic locking.
+func (ms *migrationStore) UpdateRuleLabels(ctx context.Context, key models.AlertRuleKeyWithVersion, labels data.Labels) error {
+	return ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		affected, err := sess.Cols("labels").Where("org_id = ? AND uid = ?", key.OrgID, key.UID).Update(&models.AlertRule{
+			Version: key.Version,
+			Labels:  labels,
+		})
+
+		if err != nil {
+			return err
+		}
+		if affected == 0 {
+			return fmt.Errorf("rule with uid %v not found", key)
+		}
+		return nil
+	})
+}
+
 // BATCHSIZE is a reasonable SQL batch size to prevent hitting placeholder limits (such as Error 1390 in MySQL) or packet size limits.
 const BATCHSIZE = 1000
 
@@ -295,6 +366,35 @@ func (ms *migrationStore) InsertAlertRules(ctx context.Context, rules ...models.
 	return nil
 }
 
+// DeleteAlertRules deletes alert rules in a given org by their UIDs.
+func (ms *migrationStore) DeleteAlertRules(ctx context.Context, orgID int64, alertRuleUIDs ...string) error {
+	batches := batchBy(alertRuleUIDs, BATCHSIZE)
+	for _, batch := range batches {
+		err := ms.alertingStore.DeleteAlertRulesByUID(ctx, orgID, batch...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetAlertmanagerConfig returns the alertmanager configuration for the given org.
+func (ms *migrationStore) GetAlertmanagerConfig(ctx context.Context, orgID int64) (*apimodels.PostableUserConfig, error) {
+	amConfig, err := ms.alertingStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+	if err != nil && !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+		return nil, err
+	}
+	if amConfig == nil {
+		return nil, nil
+	}
+
+	cfg, err := notifier.Load([]byte(amConfig.AlertmanagerConfiguration))
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
 // SaveAlertmanagerConfiguration saves the alertmanager configuration for the given org.
 func (ms *migrationStore) SaveAlertmanagerConfiguration(ctx context.Context, orgID int64, amConfig *apimodels.PostableUserConfig) error {
 	rawAmConfig, err := json.Marshal(amConfig)
@@ -316,6 +416,62 @@ func (ms *migrationStore) SaveAlertmanagerConfiguration(ctx context.Context, org
 var revertPermissions = []accesscontrol.Permission{
 	{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
 	{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+}
+
+// RevertOrg reverts the migration for a given org, deleting all unified alerting resources such as alert rules and alertmanager
+// configurations as well as all other database resources created during the migration, such as folders.
+func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
+	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
+		return ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+			if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ?", orgID); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ?", orgID); err != nil {
+				return err
+			}
+
+			state, err := ms.GetOrgMigrationState(ctx, orgID)
+			if err != nil {
+				return err
+			}
+			if err := ms.DeleteFolders(ctx, orgID, state.CreatedFolders...); err != nil {
+				ms.log.Warn("Failed to delete migrated folders", "orgId", orgID, "err", err)
+			}
+
+			if _, err := sess.Exec("DELETE FROM alert_configuration WHERE org_id = ?", orgID); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM ngalert_configuration WHERE org_id = ?", orgID); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ?", orgID); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ? AND org_id = ?", notifier.KVNamespace, orgID); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ? AND org_id = ?", KVNamespace, orgID); err != nil {
+				return err
+			}
+
+			files, err := filepath.Glob(filepath.Join(ms.cfg.DataPath, "alerting", strconv.FormatInt(orgID, 10), "silences"))
+			if err != nil {
+				return err
+			}
+			for _, f := range files {
+				if err := os.Remove(f); err != nil {
+					ms.log.Error("Failed to remove silence file", "file", f, "err", err)
+				}
+			}
+
+			return nil
+		})
+	})
 }
 
 // RevertAllOrgs reverts the migration, deleting all unified alerting resources such as alert rules, alertmanager configurations, and silence files.
@@ -342,7 +498,7 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 					return err
 				}
 				if err := ms.DeleteFolders(ctx, o.ID, state.CreatedFolders...); err != nil {
-					ms.log.Warn("Failed to delete migrated folders", "orgID", o.ID, "err", err)
+					ms.log.Warn("Failed to delete migrated folders", "orgId", o.ID, "err", err)
 					continue
 				}
 			}
@@ -504,6 +660,39 @@ func (ms *migrationStore) GetNotificationChannel(ctx context.Context, q GetNotif
 	return &res, err
 }
 
+// GetDashboardAlert loads a single legacy dashboard alerts for the given org and alert id.
+func (ms *migrationStore) GetDashboardAlert(ctx context.Context, orgID int64, dashboardID int64, panelID int64) (*legacymodels.Alert, error) {
+	var dashAlert legacymodels.Alert
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.SQL("select * from alert WHERE org_id = ? AND dashboard_id = ? AND panel_id = ?", orgID, dashboardID, panelID).Get(&dashAlert)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return ErrNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &dashAlert, nil
+}
+
+// GetDashboardAlerts loads all legacy dashboard alerts for the given org and dashboard.
+func (ms *migrationStore) GetDashboardAlerts(ctx context.Context, orgID int64, dashboardID int64) ([]*legacymodels.Alert, error) {
+	var dashAlerts []*legacymodels.Alert
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL("select * from alert WHERE org_id = ? AND dashboard_id = ?", orgID, dashboardID).Find(&dashAlerts)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dashAlerts, nil
+}
+
 // GetOrgDashboardAlerts loads all legacy dashboard alerts for the given org mapped by dashboard id.
 func (ms *migrationStore) GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error) {
 	var dashAlerts []*legacymodels.Alert
@@ -551,4 +740,67 @@ func (ms *migrationStore) MapActions(permission accesscontrol.ResourcePermission
 
 func (ms *migrationStore) CaseInsensitive() bool {
 	return ms.store.GetDialect().SupportEngine()
+}
+
+// GetSlimDashboards returns a map of dashboard id -> SlimDashboard for all dashboards in the given org. This is used as a
+// performance optimization to avoid loading the full dashboards in bulk.
+func (ms *migrationStore) GetSlimDashboards(ctx context.Context, orgID int64) (map[int64]SlimDashboard, error) {
+	res := make(map[int64]SlimDashboard)
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		dashes := make([]SlimDashboard, 0)
+		err := sess.Table("dashboard").Alias("d").Select("d.id, d.uid, d.title, d.folder_id, dashboard_provisioning.id IS NOT NULL as provisioned").
+			Join("LEFT", "dashboard_provisioning", `d.id = dashboard_provisioning.dashboard_id`).
+			Where("org_id = ?", orgID).Find(&dashes)
+		if err != nil {
+			return err
+		}
+		for _, d := range dashes {
+			res[d.ID] = d
+		}
+		res[0] = SlimDashboard{ID: 0, Title: folder.GeneralFolder.Title}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// GetSlimOrgDashboardAlerts returns a map of dashboard id -> SlimAlert for all alerts in the given org. This is used as a
+// performance optimization to avoid loading the full alerts in bulk.
+func (ms *migrationStore) GetSlimOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*SlimAlert, error) {
+	res := make(map[int64][]*SlimAlert)
+	rules := make([]*SlimAlert, 0)
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Table("alert").Cols("id", "dashboard_id", "panel_id", "name").Where("org_id = ?", orgID).Find(&rules)
+		if err != nil {
+			return err
+		}
+
+		for _, r := range rules {
+			res[r.DashboardID] = append(res[r.DashboardID], r)
+		}
+		return nil
+	})
+	return res, err
+}
+
+// GetSlimAlertRules returns a map of rule UID -> SlimAlertRule for all alert rules in the given org. This is used as a
+// performance optimization to avoid loading the full alert rules in bulk.
+func (ms *migrationStore) GetSlimAlertRules(ctx context.Context, orgID int64) (map[string]*SlimAlertRule, error) {
+	res := make(map[string]*SlimAlertRule)
+	err := ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+		rules := make([]*SlimAlertRule, 0)
+		err := sess.Table("alert_rule").Cols("uid", "title", "namespace_uid", "labels").Where("org_id = ?", orgID).Find(&rules)
+		if err != nil {
+			return err
+		}
+
+		for _, r := range rules {
+			res[r.UID] = r
+		}
+		return nil
+	})
+	return res, err
 }
