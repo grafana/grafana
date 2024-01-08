@@ -7,10 +7,8 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
-
-import { ConfigDescriptionLink } from './ConfigDescriptionLink';
 
 export interface NodeGraphOptions {
   enabled?: boolean;
