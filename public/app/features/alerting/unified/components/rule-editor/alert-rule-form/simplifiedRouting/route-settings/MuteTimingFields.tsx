@@ -24,7 +24,7 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
     <Field
       label="Mute timings"
       data-testid="am-mute-timing-select"
-      description="Select the mute timing to define when not to send notification for this alert rule"
+      description="Select a mute timing to define when not to send notifications for this alert rule"
       invalid={!!errors.contactPoints?.[alertManager]?.muteTimeIntervals}
     >
       <InputControl
