@@ -316,6 +316,7 @@
       "save": "Guardar panel de control",
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
+      "share-button": "",
       "unmark-favorite": "Deshacer marca como favorito"
     },
     "validation": {

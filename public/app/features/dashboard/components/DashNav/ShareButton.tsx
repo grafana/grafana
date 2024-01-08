@@ -1,14 +1,13 @@
 import React, { useContext, useEffect } from 'react';
 
-import { ModalsContext } from '@grafana/ui';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { ModalsContext, Button } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { t } from 'app/core/internationalization';
+import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ShareModal } from '../ShareModal';
-
-import { DashNavButton } from './DashNavButton';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   const [queryParams] = useQueryParams();
@@ -28,10 +27,10 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   }, [showModal, hideModal, dashboard, queryParams.shareView]);
 
   return (
-    <DashNavButton
-      tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
-      icon="share-alt"
-      iconSize="lg"
+    <Button
+      data-testid={e2eSelectors.pages.Dashboard.DashNav.shareButton}
+      variant="primary"
+      size="sm"
       onClick={() => {
         DashboardInteractions.toolbarShareClick();
         showModal(ShareModal, {
@@ -39,6 +38,8 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
           onDismiss: hideModal,
         });
       }}
-    />
+    >
+      <Trans i18nKey="dashboard.toolbar.share-button">Share</Trans>
+    </Button>
   );
 };

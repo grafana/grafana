@@ -311,6 +311,7 @@
       "save": "Save dashboard",
       "settings": "Dashboard settings",
       "share": "Share dashboard",
+      "share-button": "Share",
       "unmark-favorite": "Unmark as favorite"
     },
     "validation": {
