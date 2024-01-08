@@ -17,9 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/api"
 	"github.com/grafana/grafana/pkg/services/authn"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -156,6 +154,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 // ListDevices returns all devices that have been updated between the given times.
 func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*anonstore.Device, error) {
 	if !a.cfg.AnonymousEnabled {
+		a.log.Debug("Anonymous access is disabled, returning empty result")
 		return []*anonstore.Device{}, nil
 	}
 
@@ -165,50 +164,19 @@ func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to
 // CountDevices returns the number of devices that have been updated between the given times.
 func (a *AnonDeviceService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
 	if !a.cfg.AnonymousEnabled {
+		a.log.Debug("Anonymous access is disabled, returning empty result")
 		return 0, nil
 	}
 
 	return a.anonStore.CountDevices(ctx, from, to)
 }
 
-func (a *AnonDeviceService) SearchDevices(c *contextmodel.ReqContext) (*anonstore.SearchDeviceQueryResult, error) {
+func (a *AnonDeviceService) SearchDevices(ctx context.Context, query *anonstore.SearchDeviceQuery) (*anonstore.SearchDeviceQueryResult, error) {
 	if !a.cfg.AnonymousEnabled {
+		a.log.Debug("Anonymous access is disabled, returning empty result")
 		return nil, nil
 	}
-
-	perPage := c.QueryInt("perpage")
-	if perPage <= 0 {
-		perPage = 1000
-	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
-
-	searchQuery := c.Query("query")
-	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
-	if err != nil {
-		return nil, err
-	}
-
-	query := &anonstore.SearchDeviceQuery{
-		// added SignedInUser to the query, as to only list the users that the user has permission to read
-		SignedInUser: c.SignedInUser,
-		Query:        searchQuery,
-		Page:         page,
-		Limit:        perPage,
-		SortOpts:     sortOpts,
-	}
-	res, err := a.anonStore.SearchDevices(c.Req.Context(), query)
-	if err != nil {
-		return nil, err
-	}
-
-	res.Page = page
-	res.PerPage = perPage
-
-	return res, nil
+	return a.anonStore.SearchDevices(ctx, query)
 }
 
 func (a *AnonDeviceService) Run(ctx context.Context) error {
