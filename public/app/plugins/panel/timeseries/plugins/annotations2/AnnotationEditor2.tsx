@@ -70,7 +70,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFo
       <div className={styles.editorForm}>
         <Form<AnnotationEditFormDTO>
           onSubmit={onSubmit}
-          defaultValues={{ description: annoVals.text[annoIdx], tags: annoVals.tags[annoIdx] || [] }}
+          defaultValues={{ description: annoVals.text?.[annoIdx], tags: annoVals.tags?.[annoIdx] || [] }}
         >
           {({ register, errors, control }) => {
             return (

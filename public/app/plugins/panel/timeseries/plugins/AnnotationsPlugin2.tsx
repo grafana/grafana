@@ -78,8 +78,6 @@ export const AnnotationsPlugin2 = ({
           timeEnd: isRegion ? newRange.to : null,
           isRegion: isRegion,
           color: DEFAULT_ANNOTATION_COLOR_HEX8,
-          text: '',
-          tags: ['text', 'server'],
         },
       ]);
 
