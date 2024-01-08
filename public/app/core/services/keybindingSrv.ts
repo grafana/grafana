@@ -19,6 +19,7 @@ import {
   ZoomOutEvent,
   AbsoluteTimeEvent,
   CopyTimeEvent,
+  PasteTimeEvent,
 } from '../../types/events';
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
@@ -208,6 +209,11 @@ export class KeybindingSrv {
     this.bind('t c', () => {
       console.log('copy time range binding');
       appEvents.publish(new CopyTimeEvent());
+    });
+
+    this.bind('t v', () => {
+      console.log('paste time range binding');
+      appEvents.publish(new PasteTimeEvent());
     });
   }
 

@@ -1,4 +1,4 @@
-import { cloneDeep, extend, isString } from 'lodash';
+import { cloneDeep, extend, isString, update } from 'lodash';
 
 import {
   dateMath,
@@ -10,6 +10,7 @@ import {
   TimeRange,
   toUtc,
   IntervalValues,
+  AppEvents,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
@@ -19,7 +20,14 @@ import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/c
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
-import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../types/events';
+import {
+  AbsoluteTimeEvent,
+  CopyTimeEvent,
+  PasteTimeEvent,
+  ShiftTimeEvent,
+  ShiftTimeEventDirection,
+  ZoomOutEvent,
+} from '../../../types/events';
 import { TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
@@ -49,6 +57,14 @@ export class TimeSrv {
 
     appEvents.subscribe(AbsoluteTimeEvent, (e) => {
       this.makeAbsoluteTime(e.payload.updateUrl);
+    });
+
+    appEvents.subscribe(CopyTimeEvent, () => {
+      this.copyTimeRangeToClipboard();
+    });
+
+    appEvents.subscribe(PasteTimeEvent, () => {
+      this.pasteTimeRangeFromClipboard();
     });
 
     document.addEventListener('visibilitychange', () => {
@@ -355,6 +371,25 @@ export class TimeSrv {
   makeAbsoluteTime(updateUrl: boolean) {
     const { from, to } = this.timeRange();
     this.setTime({ from, to }, updateUrl);
+  }
+
+  copyTimeRangeToClipboard() {
+    const { raw } = this.timeRange();
+    console.log('dashboard - copyTimeRangeToClipboard');
+    navigator.clipboard.writeText(JSON.stringify({ from: raw.from, to: raw.to }));
+    appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
+  }
+
+  pasteTimeRangeFromClipboard() {
+    navigator.clipboard.readText().then((text) => {
+      const { from, to } = JSON.parse(text);
+      try {
+        this.setTime({ from, to });
+      } catch (err) {
+        console.log('dashboard - pasteTimeRangeFromClipboard', from, to);
+        console.error('Invalid time range in clipboard', err);
+      }
+    });
   }
 
   // isRefreshOutsideThreshold function calculates the difference between last refresh and now

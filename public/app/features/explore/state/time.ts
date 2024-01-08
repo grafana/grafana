@@ -169,15 +169,27 @@ export function zoomOut(scale: number): ThunkResult<void> {
 }
 
 export function copyTimeRangeToClipboard(): ThunkResult<void> {
-  return () => {
-    console.log('copy time range to clipboard');
-    const range = getTimeRange('utc', { from: 'now-6h', to: 'now' }, 1);
-    console.log(range);
+  return (dispatch, getState) => {
+    const range = getState().explore.panes[Object.keys(getState().explore.panes)[0]]!.range.raw;
+    console.log('copyTimeRangeToClipboard', range);
     navigator.clipboard.writeText(JSON.stringify(range));
-    // navigator.clipboard.readText().then((clipText) => {
-    //   window.alert(clipText);
-    // });
+
     appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
+  };
+}
+
+export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
+  return (dispatch, getState) => {
+    navigator.clipboard.readText().then((text) => {
+      const range = JSON.parse(text);
+      // TODO: determine if we want to update both panes
+      // update both panes if they are synced
+      // also before updating pane[1] we need to check if it exists
+
+      //TODO: add error handling
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
+      // dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: range }));
+    });
   };
 }
 
