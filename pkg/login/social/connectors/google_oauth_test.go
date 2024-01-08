@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -660,6 +661,63 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantData, gotData)
+			}
+		})
+	}
+}
+
+func TestSocialGoogle_Validate(t *testing.T) {
+	testCases := []struct {
+		name        string
+		settings    ssoModels.SSOSettings
+		expectError bool
+	}{
+		{
+			name: "SSOSettings is valid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "fails if settings map contains an invalid field",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "client-id",
+					"invalid_field": []int{1, 2, 3},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "fails if client id is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "",
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "fails if client id does not exist",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Validate(context.Background(), tc.settings)
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}

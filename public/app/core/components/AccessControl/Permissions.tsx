@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Space } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Text, Box, Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { Trans, t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -191,13 +191,9 @@ export const Permissions = ({
         </>
       )}
       {items.length === 0 && (
-        <table className="filter-table gf-form-group">
-          <tbody>
-            <tr>
-              <th>{emptyLabel}</th>
-            </tr>
-          </tbody>
-        </table>
+        <Box>
+          <Text>{emptyLabel}</Text>
+        </Box>
       )}
       <PermissionList
         title={titleRole}

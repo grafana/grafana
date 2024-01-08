@@ -9,8 +9,8 @@ import {
   QueryBuilderOperationParamDef,
 } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
+import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiDatasource } from '../../datasource';
-import { createLokiDatasource } from '../../mocks';
 import { LokiOperationId } from '../types';
 
 import { UnwrapParamEditor } from './UnwrapParamEditor';
