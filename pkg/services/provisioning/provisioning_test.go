@@ -3,13 +3,13 @@ package provisioning
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
