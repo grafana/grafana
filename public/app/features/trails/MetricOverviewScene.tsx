@@ -21,11 +21,12 @@ import { ALL_VARIABLE_VALUE } from '../variables/constants';
 
 import { DataTrail } from './DataTrail';
 import { MetricScene } from './MetricScene';
-import { trailDS, VAR_DATASOURCE, VAR_FILTERS, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
+import { trailDS, VAR_DATASOURCE, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
 import { getMetricSceneFor } from './utils';
 export interface MetricOverviewSceneState extends SceneObjectState {
   labels: Array<SelectableValue<string>>;
   metadata?: PromMetricsMetadataItem;
+  languageProvider?: PrometheusLanguageProvider;
   loading?: boolean;
 }
 
@@ -52,6 +53,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   private _onActivate() {
     const metricScene = getMetricSceneFor(this);
     this.updateMetadata();
+    this.updateLanguageProvider();
 
     metricScene.subscribeToState((newState, oldState) => {
       if (newState.metric !== oldState.metric) {
@@ -66,12 +68,25 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
         newState.value !== oldState.value ||
         newState.loading !== oldState.loading
       ) {
-        const labels = this.getLabelOptions(this.getVariable());
+        const labels = this.getLabelOptions(this.getVariable()).filter((l) => l.value !== ALL_VARIABLE_VALUE);
         this.setState({ labels, loading: variable.state.loading });
+        this.updateLabelValuesCount();
       }
     });
 
     this.setState({ loading: variable.state.loading });
+  }
+
+  private updateLanguageProvider() {
+    const dsUid = sceneGraph.getAncestor(this, DataTrail).state.$variables?.getByName(VAR_DATASOURCE)?.getValue();
+    if (typeof dsUid === 'string') {
+      getDatasourceSrv()
+        .get(dsUid)
+        .then((ds) => {
+          const languageProvider: PrometheusLanguageProvider = ds.languageProvider;
+          this.setState({ languageProvider });
+        });
+    }
   }
 
   private updateMetadata() {
@@ -92,6 +107,21 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
           }
         });
     }
+  }
+
+  private updateLabelValuesCount() {
+    this.state.labels.forEach((l) => {
+      if (l.value) {
+        const match = sceneGraph.interpolate(this, `${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}`, undefined, 'text');
+        this.state.languageProvider?.fetchSeriesValuesWithMatch(l.value, match).then((res) => {
+          this.setState({
+            labels: this.state.labels.map((label) =>
+              label.value === l.value ? { ...label, count: res.length } : label
+            ),
+          });
+        });
+      }
+    });
   }
 
   private getLabelOptions(variable: QueryVariable) {
@@ -147,13 +177,11 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             </Stack>
             <Stack direction="column" gap={0.5}>
               <div className={styles.label}>Labels</div>
-              {labels
-                .filter((l) => l.value !== ALL_VARIABLE_VALUE)
-                .map((l) => (
-                  <button key={l.label} className={styles.labelButton} onClick={() => labelOnClick(l.value)}>
-                    {l.label}
-                  </button>
-                ))}
+              {labels.map((l) => (
+                <button key={l.label} className={styles.labelButton} onClick={() => labelOnClick(l.value)}>
+                  {l.label} ({l.count})
+                </button>
+              ))}
             </Stack>
           </>
         )}
