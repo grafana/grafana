@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -116,6 +117,58 @@ func main() {
 	if err = jfs.Write(context.Background(), ""); err != nil {
 		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
+
+	if err := copyCueSchemas("packages/grafana-schema/src/common", filepath.Join(outputPath, "next")); err != nil {
+		die(fmt.Errorf("error while copying the grafana-schema/common package:\n%s", err))
+	}
+}
+
+func copyCueSchemas(fromDir string, toDir string) error {
+	baseTargetDir := filepath.Base(fromDir)
+
+	return filepath.Walk(fromDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		targetPath := filepath.Join(
+			toDir,
+			baseTargetDir,
+			strings.TrimPrefix(path, fromDir),
+		)
+
+		if info.IsDir() {
+			return ensureDirectoryExists(targetPath, info.Mode())
+		}
+
+		if !strings.HasSuffix(path, ".cue") {
+			return nil
+		}
+
+		return copyFile(path, targetPath, info.Mode())
+	})
+}
+
+func copyFile(from string, to string, mode os.FileMode) error {
+	input, err := os.ReadFile(from)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(to, input, mode)
+}
+
+func ensureDirectoryExists(directory string, mode os.FileMode) error {
+	_, err := os.Stat(directory)
+	if errors.Is(err, os.ErrNotExist) {
+		if err = os.Mkdir(directory, mode); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	return os.Chmod(directory, mode)
 }
 
 func die(errs ...error) {
@@ -401,11 +454,11 @@ func (registry *kindRegistry) getPublishedKind(name string, category string, lat
 
 	var cueFilePath string
 	switch category {
-		case "core":
-			cueFilePath = fmt.Sprintf("%s/%s.cue", name, name)
-		case "composable":
-			cueFilePath = fmt.Sprintf("%s.cue", name)
-		default:
+	case "core":
+		cueFilePath = fmt.Sprintf("%s/%s.cue", name, name)
+	case "composable":
+		cueFilePath = fmt.Sprintf("%s.cue", name)
+	default:
 		return "", fmt.Errorf("kind can only be core or composable")
 	}
 
