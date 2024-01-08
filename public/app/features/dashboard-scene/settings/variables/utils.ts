@@ -94,7 +94,7 @@ export function getVariableTypeSelectOptions(): SelectableValue<VariableType> {
 }
 
 export function getVariableEditor(type: EditableVariableType) {
-  return EDITABLE_VARIABLES[type]?.editor;
+  return EDITABLE_VARIABLES[type].editor;
 }
 
 export function getVariableScene(type: EditableVariableType) {
