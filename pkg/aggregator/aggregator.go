@@ -2,6 +2,9 @@
 // Provenance-includes-location: https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/aggregator.go
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
+// Provenance-includes-location: https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go
+// Provenance-includes-license: Apache-2.0
+// Provenance-includes-copyright: The Kubernetes Authors.
 
 package aggregator
 
@@ -270,7 +273,9 @@ func (o *AggregatorServerOptions) CreateAggregatorConfig() (*aggregatorapiserver
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
 			ProxyClientCertFile: o.ExtraOptions.ProxyClientCertFile,
 			ProxyClientKeyFile:  o.ExtraOptions.ProxyClientKeyFile,
-			ProxyTransport:      createProxyTransport(),
+			// NOTE: while ProxyTransport can be skipped in the configuration, it allows honoring
+			// DISABLE_HTTP2, HTTPS_PROXY and NO_PROXY env vars as needed
+			ProxyTransport: createProxyTransport(),
 		},
 	}
 
@@ -486,10 +491,13 @@ func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, 
 	return apiServices
 }
 
-// createProxyTransport creates the dialer infrastructure to connect to the nodes.
+// NOTE: below function imported from https://github.com/kubernetes/kubernetes/blob/master/cmd/kube-apiserver/app/server.go#L197
+// createProxyTransport creates the dialer infrastructure to connect to the api servers.
 func createProxyTransport() *http.Transport {
+	// NOTE: We don't set proxyDialerFn but the below SetTransportDefaults will
+	// See https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/util/net/http.go#L109
 	var proxyDialerFn utilnet.DialFunc
-	// Proxying to pods and services is IP-based... don't expect to be able to verify the hostname
+	// Proxying to services is IP-based... don't expect to be able to verify the hostname
 	proxyTLSClientConfig := &tls.Config{InsecureSkipVerify: true}
 	proxyTransport := utilnet.SetTransportDefaults(&http.Transport{
 		DialContext:     proxyDialerFn,
