@@ -306,6 +306,7 @@
       "save": "保存仪表板",
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
+      "share-button": "",
       "unmark-favorite": "取消标记为收藏"
     },
     "validation": {
