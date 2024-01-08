@@ -37,7 +37,7 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 		Transport: &MimirAuthRoundTripper{
 			TenantID:    cfg.TenantID,
 			Password:    cfg.Password,
-			TimedClient: client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestsDuration),
+			TimedClient: client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestDuration),
 		},
 	}
 

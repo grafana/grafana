@@ -65,18 +65,17 @@ func (e *errorResponse) Error() string {
 }
 
 func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
-	rt := &MimirAuthRoundTripper{
-		TenantID:    cfg.TenantID,
-		Password:    cfg.Password,
-		TimedClient: client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestsDuration),
-	}
 	c := &http.Client{
-		Transport: rt,
+		Transport: &MimirAuthRoundTripper{
+			TenantID:    cfg.TenantID,
+			Password:    cfg.Password,
+			TimedClient: client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestDuration),
+		},
 	}
 
 	return &Mimir{
 		endpoint: cfg.URL,
-		client:   client.NewTimedClient(c, metrics.HTTPRequestsDuration),
+		client:   c,
 		logger:   cfg.Logger,
 		metrics:  metrics,
 	}, nil

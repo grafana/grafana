@@ -7,12 +7,12 @@ import (
 )
 
 type RemoteAlertmanager struct {
-	HTTPRequestsDuration *instrument.HistogramCollector
+	HTTPRequestDuration *instrument.HistogramCollector
 }
 
 func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 	return &RemoteAlertmanager{
-		HTTPRequestsDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
+		HTTPRequestDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "remote_alertmanager_http_request_duration_seconds",
