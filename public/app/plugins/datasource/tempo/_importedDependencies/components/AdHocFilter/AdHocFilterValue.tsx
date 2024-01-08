@@ -7,12 +7,9 @@ import {
   SelectableValue,
   getDefaultTimeRange,
 } from '@grafana/data';
-// import { getTimeSrv } from '@grafana/runtime/src/services/TimeSrv';
-import { getDataSourceSrv as getDatasourceSrv } from '@grafana/runtime/src/services/dataSourceSrv';
-import { SegmentAsync } from '@grafana/ui';
-
-// import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 // import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { SegmentAsync } from '@grafana/ui';
 
 interface Props {
   datasource: DataSourceRef;
@@ -54,7 +51,7 @@ const fetchFilterValues = async (
   key: string,
   allFilters: AdHocVariableFilter[]
 ): Promise<Array<SelectableValue<string>>> => {
-  const ds = await getDatasourceSrv().get(datasource);
+  const ds = await getDataSourceSrv().get(datasource);
 
   if (!ds || !ds.getTagValues) {
     return [];
