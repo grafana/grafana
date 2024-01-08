@@ -2,9 +2,10 @@ import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
+export type ActioViewType = 'overview' | 'breakdown' | 'logs' | 'related';
 export interface ActionViewDefinition {
   displayName: string;
-  value: string;
+  value: ActioViewType;
   getScene: () => SceneObject;
 }
 

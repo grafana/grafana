@@ -25,6 +25,7 @@ import { SelectMetricAction } from './SelectMetricAction';
 import { getTrailStore } from './TrailStore/TrailStore';
 import {
   ActionViewDefinition,
+  ActioViewType,
   getVariablesWithMetricConstant,
   LOGS_METRIC,
   MakeOptional,
@@ -58,7 +59,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       if (this.state.actionView !== values.actionView) {
         const actionViewDef = actionViewsDefinitions.find((v) => v.value === values.actionView);
         if (actionViewDef) {
-          this.setActionView(actionViewDef);
+          this.setActionView(actionViewDef.value);
         }
       }
     } else if (values.actionView === null) {
@@ -66,8 +67,9 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
     }
   }
 
-  public setActionView(actionViewDef?: ActionViewDefinition) {
+  public setActionView(actionView?: ActioViewType) {
     const { body } = this.state;
+    const actionViewDef = actionViewsDefinitions.find((v) => v.value === actionView);
 
     if (actionViewDef && actionViewDef.value !== this.state.actionView) {
       // reduce max height for main panel to reduce height flicker
@@ -119,7 +121,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     };
 
     if (!actionView) {
-      metricScene.setActionView(actionViewsDefinitions[0]);
+      metricScene.setActionView(actionViewsDefinitions[0].value);
     }
 
     return (
@@ -158,7 +160,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                 key={index}
                 label={tab.displayName}
                 active={actionView === tab.value}
-                onChangeTab={() => metricScene.setActionView(tab)}
+                onChangeTab={() => metricScene.setActionView(tab.value)}
               />
             );
           })}
@@ -184,6 +186,7 @@ const MAIN_PANEL_MAX_HEIGHT = '40%';
 
 function buildGraphScene(metric: string) {
   const autoQuery = getAutoQueriesForMetric(metric);
+  const bodyAutoVizPanel = new AutoVizPanel({ autoQuery });
 
   return new SceneFlexLayout({
     direction: 'column',
@@ -191,7 +194,7 @@ function buildGraphScene(metric: string) {
       new SceneFlexItem({
         minHeight: MAIN_PANEL_MIN_HEIGHT,
         maxHeight: MAIN_PANEL_MAX_HEIGHT,
-        body: new AutoVizPanel({ autoQuery }),
+        body: bodyAutoVizPanel,
       }),
       new SceneFlexItem({
         ySizing: 'content',

@@ -22,6 +22,7 @@ import { ALL_VARIABLE_VALUE } from '../variables/constants';
 import { DataTrail } from './DataTrail';
 import { MetricScene } from './MetricScene';
 import { trailDS, VAR_DATASOURCE, VAR_FILTERS, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
+import { getMetricSceneFor } from './utils';
 export interface MetricOverviewSceneState extends SceneObjectState {
   labels: Array<SelectableValue<string>>;
   metadata?: PromMetricsMetadataItem;
@@ -49,19 +50,14 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   }
 
   private _onActivate() {
-    const metric = sceneGraph.getAncestor(this, MetricScene).state.metric;
-    const dsUid = sceneGraph.getAncestor(this, DataTrail).state.$variables?.getByName(VAR_DATASOURCE)?.getValue();
-    let metricMetadata = undefined;
-    if (typeof dsUid === 'string') {
-      getDatasourceSrv()
-        .get(dsUid)
-        .then((ds) => {
-          const langProvider: PrometheusLanguageProvider = ds.languageProvider;
-          langProvider.start().then(() => {
-            metricMetadata = langProvider.metricsMetadata?.[metric];
-          });
-        });
-    }
+    const metricScene = getMetricSceneFor(this);
+    this.updateMetadata();
+
+    metricScene.subscribeToState((newState, oldState) => {
+      if (newState.metric !== oldState.metric) {
+        this.updateMetadata();
+      }
+    });
 
     const variable = this.getVariable();
     variable.subscribeToState((newState, oldState) => {
@@ -71,12 +67,31 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
         newState.loading !== oldState.loading
       ) {
         const labels = this.getLabelOptions(this.getVariable());
-        console.log(labels);
         this.setState({ labels, loading: variable.state.loading });
       }
     });
 
-    this.setState({ metadata: metricMetadata, loading: variable.state.loading });
+    this.setState({ loading: variable.state.loading });
+  }
+
+  private updateMetadata() {
+    const metricScene = getMetricSceneFor(this);
+    const metric = metricScene.state.metric;
+    const dsUid = sceneGraph.getAncestor(this, DataTrail).state.$variables?.getByName(VAR_DATASOURCE)?.getValue();
+    if (typeof dsUid === 'string') {
+      getDatasourceSrv()
+        .get(dsUid)
+        .then((ds) => {
+          const langProvider: PrometheusLanguageProvider = ds.languageProvider;
+          if (langProvider.metricsMetadata) {
+            this.setState({ metadata: langProvider.metricsMetadata[metric] });
+          } else {
+            langProvider.start().then(() => {
+              this.setState({ metadata: langProvider.metricsMetadata?.[metric] });
+            });
+          }
+        });
+    }
   }
 
   private getLabelOptions(variable: QueryVariable) {
@@ -102,26 +117,46 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
     const { loading, metadata, labels } = model.useState();
     const styles = useStyles2(getStyles);
+    const metricScene = sceneGraph.getAncestor(model, MetricScene);
+    const labelVariable = model.getVariable();
+
+    const labelOnClick = (label?: string) => {
+      if (label) {
+        metricScene.setActionView('breakdown');
+        labelVariable?.changeValueTo(label);
+      }
+    };
 
     return (
       <Stack gap={6}>
-        {loading && <div>Loading...</div>}
-        <Stack direction="column" gap={0.5}>
-          <div className={styles.label}>Description</div>
-          {metadata?.help ? <div>{metadata?.help}</div> : <i>No description available</i>}
-        </Stack>
-        <Stack direction="column" gap={0.5}>
-          <div className={styles.label}>Type</div>
-          {metadata?.type ? <div>{metadata?.type}</div> : <i>Unknown</i>}
-        </Stack>
-        <Stack direction="column" gap={0.5}>
-          <div className={styles.label}>Labels</div>
-          {labels
-            .filter((l) => l.value !== ALL_VARIABLE_VALUE)
-            .map((l) => (
-              <div key={l.label}>{l.label}</div>
-            ))}
-        </Stack>
+        {loading ? (
+          <div>Loading...</div>
+        ) : (
+          <>
+            <Stack direction="column" gap={0.5}>
+              <div className={styles.label}>Description</div>
+              {metadata?.help ? <div>{metadata?.help}</div> : <i>No description available</i>}
+            </Stack>
+            <Stack direction="column" gap={0.5}>
+              <div className={styles.label}>Type</div>
+              {metadata?.type ? <div>{metadata?.type}</div> : <i>Unknown</i>}
+            </Stack>
+            <Stack direction="column" gap={0.5}>
+              <div className={styles.label}>Unit</div>
+              {metadata?.unit ? <div>{metadata?.unit}</div> : <i>Unknown</i>}
+            </Stack>
+            <Stack direction="column" gap={0.5}>
+              <div className={styles.label}>Labels</div>
+              {labels
+                .filter((l) => l.value !== ALL_VARIABLE_VALUE)
+                .map((l) => (
+                  <button key={l.label} className={styles.labelButton} onClick={() => labelOnClick(l.value)}>
+                    {l.label}
+                  </button>
+                ))}
+            </Stack>
+          </>
+        )}
       </Stack>
     );
   };
@@ -131,6 +166,16 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     label: css({
       fontWeight: 'bold',
+    }),
+    labelButton: css({
+      background: 'none',
+      border: 'none',
+      textAlign: 'left',
+      padding: 0,
+      ':hover': {
+        textDecoration: 'underline',
+        cursor: 'pointer',
+      },
     }),
   };
 }
