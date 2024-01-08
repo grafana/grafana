@@ -1172,7 +1172,7 @@ var (
 		{
 			Name:            "ssoSettingsApi",
 			Description:     "Enables the SSO settings API",
-			RequiresDevMode: false,
+			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
 			Owner:           identityAccessTeam,
