@@ -1014,7 +1014,7 @@ const backendSrvWithPrometheus = {
     }
     throw new Error('unexpected uid');
   },
-  getDataSourceSettingsByUid(uid: string) {
+  getInstanceSettings(uid: string) {
     if (uid === 'prom') {
       return { name: 'Prometheus' };
     } else if (uid === 'gdev-tempo') {
