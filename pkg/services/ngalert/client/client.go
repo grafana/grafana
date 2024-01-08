@@ -39,6 +39,11 @@ func (c TimedClient) Do(r *http.Request) (*http.Response, error) {
 	return TimeRequest(r.Context(), c.operationName(r), c.collector, c.client, r)
 }
 
+// RoundTrip implements the RoundTripper interface.
+func (c TimedClient) RoundTrip(r *http.Request) (*http.Response, error) {
+	return c.Do(r)
+}
+
 func (c TimedClient) operationName(r *http.Request) string {
 	operation, _ := r.Context().Value(OperationNameContextKey).(string)
 	if operation == "" {

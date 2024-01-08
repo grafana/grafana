@@ -89,7 +89,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, metrics *metrics.
 		Password: cfg.BasicAuthPassword,
 		Logger:   logger,
 	}
-	amc, err := remoteClient.NewAlertmanager(amcCfg)
+	amc, err := remoteClient.NewAlertmanager(amcCfg, metrics)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,8 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 )
 
@@ -29,13 +31,16 @@ type Alertmanager struct {
 	logger     log.Logger
 }
 
-func NewAlertmanager(cfg *AlertmanagerConfig) (*Alertmanager, error) {
+func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	// First, add the authentication middleware.
-	c := &http.Client{Transport: &MimirAuthRoundTripper{
-		TenantID: cfg.TenantID,
-		Password: cfg.Password,
-		Next:     http.DefaultTransport,
-	}}
+	timedClient := client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestsDuration)
+	c := &http.Client{
+		Transport: &MimirAuthRoundTripper{
+			TenantID: cfg.TenantID,
+			Password: cfg.Password,
+			Next:     timedClient,
+		},
+	}
 
 	apiEndpoint := *cfg.URL
 

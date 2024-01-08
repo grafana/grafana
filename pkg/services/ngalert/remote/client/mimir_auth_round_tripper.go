@@ -2,14 +2,17 @@ package client
 
 import (
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 )
 
 const mimirTenantHeader = "X-Scope-OrgID"
 
 type MimirAuthRoundTripper struct {
-	TenantID string
-	Password string
-	Next     http.RoundTripper
+	TenantID    string
+	Password    string
+	Next        http.RoundTripper
+	TimedClient *client.TimedClient
 }
 
 // RoundTrip implements the http.RoundTripper interface
