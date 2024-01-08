@@ -13,7 +13,7 @@ import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } fr
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
 export interface VariablesEditViewState extends DashboardEditViewState {
-  editIndex: number | undefined;
+  editIndex?: number | undefined;
 }
 
 export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> implements DashboardEditView {
@@ -119,21 +119,45 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
     this.setState({ editIndex: variableIndex });
   };
+
+  public onUpdate = (variable: SceneVariable) => {
+    // Find the index of the variable to be deleted
+    const variableIndex = this.state.editIndex;
+    const { variables } = this.getVariableSet().state;
+
+    if (!variableIndex || variableIndex < 0) {
+      // Handle the case where the variable is not found
+      console.error('Variable not found');
+      return;
+    }
+
+    const updatedVariables = [...variables.slice(0, variableIndex), variable, ...variables.slice(variableIndex + 1)];
+
+    // Update the state or the variables array
+    this.getVariableSet().setState({ variables: updatedVariables });
+    this.setState({ editIndex: undefined });
+  };
 }
 
 function VariableEditorSettingsListView({ model }: SceneComponentProps<VariablesEditView>) {
   const dashboard = model.getDashboard();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   // get variables from dashboard state
-  const { onDelete, onDuplicated, onOrderChanged, onEdit } = model;
+  const { onDelete, onDuplicated, onOrderChanged, onEdit, onUpdate } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
 
-  if (editIndex !== undefined) {
+  if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];
     if (variable) {
       return (
-        <VariableEditorSettingsView variable={variable} pageNav={pageNav} navModel={navModel} dashboard={dashboard} />
+        <VariableEditorSettingsView
+          variable={variable}
+          onUpdate={onUpdate}
+          pageNav={pageNav}
+          navModel={navModel}
+          dashboard={dashboard}
+        />
       );
     }
   }
@@ -158,20 +182,28 @@ interface VariableEditorSettingsEditViewProps {
   pageNav: NavModelItem;
   navModel: NavModel;
   dashboard: DashboardScene;
+  onUpdate: (variable: SceneVariable) => void;
 }
 
-function VariableEditorSettingsView({ variable, pageNav, navModel, dashboard }: VariableEditorSettingsEditViewProps) {
+function VariableEditorSettingsView({
+  variable,
+  pageNav,
+  navModel,
+  dashboard,
+  onUpdate,
+}: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
+  const { name } = variable.useState();
 
   const editVariablePageNav = {
-    text: 'Edit Variable',
+    text: name,
     parentItem: parentTab,
   };
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} />
+      <VariableEditorForm variable={variable} onSubmit={onUpdate} />
     </Page>
   );
 }
