@@ -13,7 +13,6 @@ import {
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
-  escapeRegex,
   FieldType,
   MetricFindValue,
   QueryResultMeta,
@@ -782,11 +781,11 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   };
 }
 
-export function influxRegularEscape(value: string | string[]) {
+export function influxRegularEscape(value: string | string[] | unknown) {
   if (typeof value === 'string') {
     // Check the value is a number. If not run to escape special characters
     if (isNaN(parseFloat(value))) {
-      return escapeRegex(value);
+      return value.replace(/[\\^'$*+?.()|[\]{}\/]/g, '\\$&');
     }
   }
 
@@ -794,10 +793,5 @@ export function influxRegularEscape(value: string | string[]) {
 }
 
 export function influxSpecialRegexEscape(value: string | string[]) {
-  if (typeof value !== 'string') {
-    return value;
-  }
-  value = value.replace(/\\/g, '\\\\\\\\');
-  value = value.replace(/[$^*{}\[\]\'+?.()|]/g, '$&');
-  return value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }
