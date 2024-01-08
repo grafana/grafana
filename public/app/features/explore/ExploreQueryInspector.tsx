@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { CoreApp, LoadingState, TimeZone } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { defaultTimeZone } from '@grafana/schema';
+import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
