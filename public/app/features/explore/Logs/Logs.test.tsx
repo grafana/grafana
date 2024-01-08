@@ -18,7 +18,8 @@ import { organizeFieldsTransformer } from '@grafana/data/src/transformations/tra
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
-import { Logs, visualisationTypeKey } from './Logs';
+import { Logs } from './Logs';
+import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
 
 const reportInteraction = jest.fn();

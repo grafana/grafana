@@ -163,6 +163,7 @@ export const StateTimelinePanel = ({
     }
   }
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
 
   return (
     <TimelineChart
@@ -178,7 +179,7 @@ export const StateTimelinePanel = ({
       mode={TimelineMode.Changes}
     >
       {(builder, alignedFrame) => {
-        if (oldConfig.current !== builder) {
+        if (oldConfig.current !== builder && !showNewVizTooltips) {
           oldConfig.current = addTooltipSupport({
             config: builder,
             onUPlotClick,
@@ -195,7 +196,7 @@ export const StateTimelinePanel = ({
 
         return (
           <>
-            {config.featureToggles.newVizTooltips ? (
+            {showNewVizTooltips ? (
               <>
                 {options.tooltip.mode !== TooltipDisplayMode.None && (
                   <TooltipPlugin2
