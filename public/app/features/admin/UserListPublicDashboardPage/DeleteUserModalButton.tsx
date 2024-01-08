@@ -18,7 +18,12 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
   };
 
   return (
-    <Modal className={styles.modal} isOpen title={t('public-dashboard-users-access-list.delete-user-modal.revoke-access-title','Revoke access')} onDismiss={hideModal}>
+    <Modal
+      className={styles.modal}
+      isOpen
+      title={t('public-dashboard-users-access-list.delete-user-modal.revoke-access-title', 'Revoke access')}
+      onDismiss={hideModal}
+    >
       <p className={styles.description}>
         <Trans i18nKey="public-dashboard-users-access-list.delete-user-modal.revoke-user-access-modal-desc-line1">
           Are you sure you want to revoke access for {{ email: user.email }}?
