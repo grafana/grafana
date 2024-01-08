@@ -35,7 +35,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const [isSaving, setIsSaving] = useState(false);
   const providerFields = fields[provider];
   const [submitError, setSubmitError] = useState(false);
-  const dataSubmitted = isSubmitted && !submitError && !Object.keys(errors).length;
+  const dataSubmitted = isSubmitted && !submitError;
   const sections = sectionFields[provider];
 
   const onSubmit = async (data: SSOProviderDTO) => {
@@ -52,8 +52,11 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         type: AppEvents.alertSuccess.name,
         payload: ['Settings saved'],
       });
-      reset();
-      locationService.push(`/admin/authentication`);
+      reset(data);
+      // Delay redirect so the form state can update
+      setTimeout(() => {
+        locationService.push(`/admin/authentication`);
+      }, 300);
     } catch (error) {
       let message = '';
       if (isFetchError(error)) {
