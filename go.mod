@@ -113,7 +113,7 @@ require (
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
 	golang.org/x/tools v0.16.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
-	google.golang.org/api v0.149.0 // @grafana/backend-platform
+	google.golang.org/api v0.155.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.60.1 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.32.0 // @grafana/plugins-platform-backend
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
