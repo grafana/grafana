@@ -33,12 +33,11 @@ type Alertmanager struct {
 
 func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	// First, add the authentication middleware.
-	timedClient := client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestsDuration)
 	c := &http.Client{
 		Transport: &MimirAuthRoundTripper{
-			TenantID: cfg.TenantID,
-			Password: cfg.Password,
-			Next:     timedClient,
+			TenantID:    cfg.TenantID,
+			Password:    cfg.Password,
+			TimedClient: client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestsDuration),
 		},
 	}
 

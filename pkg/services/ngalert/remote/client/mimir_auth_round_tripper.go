@@ -11,7 +11,6 @@ const mimirTenantHeader = "X-Scope-OrgID"
 type MimirAuthRoundTripper struct {
 	TenantID    string
 	Password    string
-	Next        http.RoundTripper
 	TimedClient *client.TimedClient
 }
 
@@ -27,5 +26,5 @@ func (r *MimirAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		req.SetBasicAuth(r.TenantID, r.Password)
 	}
 
-	return r.Next.RoundTrip(req)
+	return r.TimedClient.Do(req)
 }

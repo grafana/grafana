@@ -39,7 +39,8 @@ type Config struct {
 	TenantID string
 	Password string
 
-	Logger log.Logger
+	Logger      log.Logger
+	TimedClient *client.TimedClient
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -65,9 +66,9 @@ func (e *errorResponse) Error() string {
 
 func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 	rt := &MimirAuthRoundTripper{
-		TenantID: cfg.TenantID,
-		Password: cfg.Password,
-		Next:     http.DefaultTransport,
+		TenantID:    cfg.TenantID,
+		Password:    cfg.Password,
+		TimedClient: client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestsDuration),
 	}
 	c := &http.Client{
 		Transport: rt,
