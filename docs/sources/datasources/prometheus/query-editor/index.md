@@ -96,7 +96,7 @@ For more information, refer to the [Time Series Transform option documentation][
 
 {{% admonition type="note" %}}
 Grafana modifies the request dates for queries to align them with the dynamically calculated step.
-This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
+This ensures a consistent display of metrics data and Prometheus requires this for caching results. But, aligning the range with the step can result in a small gap of data at the right edge of a graph or change the start date of the range. For example, a 15s step aligns the range to Unix time divisible by 15s and a 1w minstep aligns the range to the start of the week on a Thursday.
 {{% /admonition %}}
 
 ### Exemplars
