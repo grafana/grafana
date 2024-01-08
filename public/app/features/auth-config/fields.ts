@@ -107,6 +107,9 @@ export const fieldMap: Record<string, FieldData> = {
   teamIds: {
     label: 'Team Ids',
     type: 'select',
+    description:
+      'String list of team IDs. If set, the user must be a member of one of the given teams to log in. \n' +
+      'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.',
     multi: true,
     allowCustomValue: true,
     options: [],
@@ -127,6 +130,9 @@ export const fieldMap: Record<string, FieldData> = {
   allowedOrganizations: {
     label: 'Allowed Organizations',
     type: 'select',
+    description:
+      'List of comma- or space-separated organizations. The user should be a member \n' +
+      'of at least one organization to log in.',
     multi: true,
     allowCustomValue: true,
     options: [],
@@ -135,6 +141,8 @@ export const fieldMap: Record<string, FieldData> = {
   allowedDomains: {
     label: 'Allowed Domains',
     type: 'select',
+    description:
+      'List comma- or space-separated domains. The user should belong to at least \n' + 'one domain to log in.',
     multi: true,
     allowCustomValue: true,
     options: [],
@@ -142,6 +150,7 @@ export const fieldMap: Record<string, FieldData> = {
   authUrl: {
     label: 'Auth Url',
     type: 'text',
+    description: 'The authorization endpoint of your OAuth2 provider.',
     validation: {
       required: false,
     },
@@ -149,6 +158,7 @@ export const fieldMap: Record<string, FieldData> = {
   tokenUrl: {
     label: 'Token Url',
     type: 'text',
+    description: 'Endpoint used to obtain the OAuth2 access token.',
     validation: {
       required: false,
     },
@@ -156,6 +166,7 @@ export const fieldMap: Record<string, FieldData> = {
   scopes: {
     label: 'Scopes',
     type: 'select',
+    description: 'List of comma- or space-separated OAuth2 scopes.',
     multi: true,
     allowCustomValue: true,
     options: [],
@@ -163,6 +174,10 @@ export const fieldMap: Record<string, FieldData> = {
   allowedGroups: {
     label: 'Allowed Groups',
     type: 'select',
+    description:
+      'List of comma- or space-separated groups. The user should be a member of \n' +
+      'at least one group to log in. If you configure allowed_groups, you must also configure \n' +
+      'groups_attribute_path.',
     multi: true,
     allowCustomValue: true,
     options: [],
@@ -170,6 +185,9 @@ export const fieldMap: Record<string, FieldData> = {
   apiUrl: {
     label: 'API Url',
     type: 'text',
+    description:
+      'The user information endpoint of your OAuth2 provider. Information returned \n' +
+      'by this endpoint must be compatible with OpenID UserInfo.',
     validation: {
       required: false,
     },
@@ -275,6 +293,7 @@ export const fieldMap: Record<string, FieldData> = {
   },
   tlsClientCert: {
     label: 'TLS Client Cert',
+    description: 'The path to the certificate',
     type: 'text',
   },
   tlsClientKey: {
