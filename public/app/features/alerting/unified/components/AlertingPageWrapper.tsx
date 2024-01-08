@@ -4,6 +4,7 @@ import { useLocation } from 'react-use';
 import { Page } from 'app/core/components/Page/Page';
 import { PageProps } from 'app/core/components/Page/types';
 
+import { UAPreviewNotice } from '../../components/UAPreviewNotice';
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
@@ -18,7 +19,12 @@ interface AlertingPageWrapperProps extends PageProps {
 
 export const AlertingPageWrapper = ({ children, isLoading, ...rest }: AlertingPageWrapperProps) => (
   <Page {...rest}>
-    <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
+    <Page.Contents isLoading={isLoading}>
+      <div>
+        <UAPreviewNotice />
+        {children}
+      </div>
+    </Page.Contents>
   </Page>
 );
 

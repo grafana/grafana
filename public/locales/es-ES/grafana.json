@@ -716,6 +716,10 @@
       "subtitle": "Detener notificaciones de una o más reglas de alerta",
       "title": "Silencios"
     },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerts-and-incidents": {
       "subtitle": "Aplicaciones de gestión de alertas e incidentes",
       "title": "Alertas e IRM"
