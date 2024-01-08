@@ -19,6 +19,7 @@ import {
   rangeUtil,
   ScopedVars,
   TestDataSourceResponse,
+  urlUtil,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -39,7 +40,6 @@ import { getDatasourceSrv } from './_importedDependencies/datasource_srv';
 import { LokiOptions } from './_importedDependencies/datasources/loki/types';
 import { PromQuery, PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
 import { TraceToLogsOptions } from './_importedDependencies/grafana-traces/src';
-import { serializeParams } from './_importedDependencies/utils/fetch';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   defaultTableFilter,
@@ -691,7 +691,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     data?: unknown,
     options?: Partial<BackendSrvRequest>
   ): Observable<Record<string, any>> {
-    const params = data ? serializeParams(data) : '';
+    const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
 
