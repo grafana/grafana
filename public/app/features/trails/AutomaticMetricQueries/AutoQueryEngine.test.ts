@@ -24,6 +24,7 @@ describe('getAutoQueriesForMetric', () => {
       // Bucket
       ['my_metric_bucket', 'histogram_quantile(0.99, sum by(le) (rate(...[$__rate_interval])))', 'short', 3],
       ['my_metric_seconds_bucket', 'histogram_quantile(0.99, sum by(le) (rate(...[$__rate_interval])))', 's', 3],
+      ['my_metric_bytes_bucket', 'histogram_quantile(0.99, sum by(le) (rate(...[$__rate_interval])))', 'bytes', 3],
     ])('Given metric %p expect %p with unit %p', (metric, expr, unit, queryCount) => {
       const result = getAutoQueriesForMetric(metric);
 
@@ -53,8 +54,9 @@ describe('getAutoQueriesForMetric', () => {
       ['my_metric_bytes_total', 'sum(rate(...[$__rate_interval]))', 'Bps'], // bytes/s
       ['my_metric_bytes_sum', 'avg(rate(...[$__rate_interval]))', 'Bps'],
       // Bucket
-      ['my_metric_bucket', 'histogram_quantile(0.50, sum by(le) (rate(...[$__rate_interval])))', 'short'],
-      ['my_metric_seconds_bucket', 'histogram_quantile(0.50, sum by(le) (rate(...[$__rate_interval])))', 's'],
+      ['my_metric_bucket', 'histogram_quantile(0.5, sum by(le) (rate(...[$__rate_interval])))', 'short'],
+      ['my_metric_seconds_bucket', 'histogram_quantile(0.5, sum by(le) (rate(...[$__rate_interval])))', 's'],
+      ['my_metric_bytes_bucket', 'histogram_quantile(0.5, sum by(le) (rate(...[$__rate_interval])))', 'bytes'],
     ])('Given metric %p expect %p with unit %p', (metric, expr, unit) => {
       const result = getAutoQueriesForMetric(metric);
 
@@ -86,11 +88,16 @@ describe('getAutoQueriesForMetric', () => {
       ['my_metric_bytes_total', 'sum(rate(...[$__rate_interval])) by(${groupby})', 'Bps'], // bytes/s
       ['my_metric_bytes_sum', 'avg(rate(...[$__rate_interval])) by(${groupby})', 'Bps'],
       // Bucket
-      ['my_metric_bucket', 'histogram_quantile(0.50, sum by(le, ${groupby}) (rate(...[$__rate_interval])))', 'short'],
+      ['my_metric_bucket', 'histogram_quantile(0.5, sum by(le, ${groupby}) (rate(...[$__rate_interval])))', 'short'],
       [
         'my_metric_seconds_bucket',
-        'histogram_quantile(0.50, sum by(le, ${groupby}) (rate(...[$__rate_interval])))',
+        'histogram_quantile(0.5, sum by(le, ${groupby}) (rate(...[$__rate_interval])))',
         's',
+      ],
+      [
+        'my_metric_bytes_bucket',
+        'histogram_quantile(0.5, sum by(le, ${groupby}) (rate(...[$__rate_interval])))',
+        'bytes',
       ],
     ])('Given metric %p expect %p with unit %p', (metric, expr, unit) => {
       const result = getAutoQueriesForMetric(metric);
@@ -125,8 +132,8 @@ describe('getAutoQueriesForMetric', () => {
             unit: 'short',
             exprs: [
               'histogram_quantile(0.99, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
-              'histogram_quantile(0.90, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
-              'histogram_quantile(0.50, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
+              'histogram_quantile(0.9, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
+              'histogram_quantile(0.5, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
             ],
           },
           {
@@ -144,13 +151,32 @@ describe('getAutoQueriesForMetric', () => {
             unit: 's',
             exprs: [
               'histogram_quantile(0.99, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
-              'histogram_quantile(0.90, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
-              'histogram_quantile(0.50, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
+              'histogram_quantile(0.9, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
+              'histogram_quantile(0.5, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
             ],
           },
           {
             variant: 'heatmap',
             unit: 's',
+            exprs: ['sum by(le) (rate(${metric}{${filters}}[$__rate_interval]))'],
+          },
+        ],
+      ],
+      [
+        'my_metric_bytes_bucket',
+        [
+          {
+            variant: 'percentiles',
+            unit: 'bytes',
+            exprs: [
+              'histogram_quantile(0.99, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
+              'histogram_quantile(0.9, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
+              'histogram_quantile(0.5, sum by(le) (rate(${metric}{${filters}}[$__rate_interval])))',
+            ],
+          },
+          {
+            variant: 'heatmap',
+            unit: 'bytes',
             exprs: ['sum by(le) (rate(${metric}{${filters}}[$__rate_interval]))'],
           },
         ],
