@@ -2879,7 +2879,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/e2e-selectors": "npm:10.3.0-pre"
-    "@grafana/experimental": "npm:1.7.4"
+    "@grafana/experimental": "npm:1.7.5"
     "@grafana/plugin-configs": "npm:10.3.0-pre"
     "@grafana/runtime": "npm:10.3.0-pre"
     "@grafana/schema": "npm:10.3.0-pre"
@@ -2919,7 +2919,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/e2e-selectors": "npm:10.3.0-pre"
-    "@grafana/experimental": "npm:1.7.0"
+    "@grafana/experimental": "npm:1.7.5"
     "@grafana/plugin-configs": "npm:10.3.0-pre"
     "@grafana/runtime": "npm:10.3.0-pre"
     "@grafana/schema": "npm:10.3.0-pre"
@@ -3205,11 +3205,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.7.4":
-  version: 1.7.4
-  resolution: "@grafana/experimental@npm:1.7.4"
+"@grafana/experimental@npm:1.7.5":
+  version: 1.7.5
+  resolution: "@grafana/experimental@npm:1.7.5"
   dependencies:
     "@types/uuid": "npm:^8.3.3"
+    react-use: "npm:^17.4.2"
     semver: "npm:^7.5.4"
     uuid: "npm:^8.3.2"
   peerDependencies:
@@ -3221,7 +3222,7 @@ __metadata:
     react-dom: 17.0.2
     react-select: ^5.2.1
     rxjs: 7.8.0
-  checksum: e62e6382396d282281e31011c936fe9164650ea8caea7a09c4ef8615a66bb0ab0f74c4946354276457a2f5d1276016fc4225a08b8afb043c81e11b010f52b26d
+  checksum: 33f5e739bbc1646ea00c00b419c35a0b02abbfc35b0fa42d61f05a78a1929567388e4132093a029f88783264e739baeb8bcb53a68bcf1152f055a20be3b87e24
   languageName: node
   linkType: hard
 
@@ -13174,6 +13175,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"css-in-js-utils@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "css-in-js-utils@npm:3.1.0"
+  dependencies:
+    hyphenate-style-name: "npm:^1.0.3"
+  checksum: bd2f569f1870389004cfacfd7b798c0f40933d34af1f040c391a08322d097790b9a9524affb2ba4d26122e9cb8f4256afb59edb6077dbe607506944a9c673c67
+  languageName: node
+  linkType: hard
+
 "css-line-break@npm:^2.1.0":
   version: 2.1.0
   resolution: "css-line-break@npm:2.1.0"
@@ -13459,6 +13469,13 @@ __metadata:
   version: 2.6.18
   resolution: "csstype@npm:2.6.18"
   checksum: 378e718d34fb48b4ed74c4ab4c90db08ee6aa2b1c0b687ac11b6bae655bc9815a410592162abfde250a805b9ef4d7f711cbaa9d985b6610c5e781bcd1409f7aa
+  languageName: node
+  linkType: hard
+
+"csstype@npm:^3.1.2":
+  version: 3.1.3
+  resolution: "csstype@npm:3.1.3"
+  checksum: f593cce41ff5ade23f44e77521e3a1bcc2c64107041e1bf6c3c32adc5187d0d60983292fda326154d20b01079e24931aa5b08e4467cc488b60bb1e7f6d478ade
   languageName: node
   linkType: hard
 
@@ -16174,6 +16191,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-loops@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "fast-loops@npm:1.1.3"
+  checksum: 1bf9f102d8ed48a8c8304e2b27fd32afa65d370498db9b49d5762696ac4aa8c55593d505c142c2b7e25ca79f45207c4b25f778afd80f35df98cb2caaaf9609b7
+  languageName: node
+  linkType: hard
+
 "fast-memoize@npm:^2.5.2":
   version: 2.5.2
   resolution: "fast-memoize@npm:2.5.2"
@@ -17412,7 +17436,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:6.0.1"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": "npm:1.7.4"
+    "@grafana/experimental": "npm:1.7.5"
     "@grafana/faro-core": "npm:^1.3.5"
     "@grafana/faro-web-sdk": "npm:^1.3.5"
     "@grafana/flamegraph": "workspace:*"
@@ -18418,7 +18442,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hyphenate-style-name@npm:^1.0.2":
+"hyphenate-style-name@npm:^1.0.2, hyphenate-style-name@npm:^1.0.3":
   version: 1.0.4
   resolution: "hyphenate-style-name@npm:1.0.4"
   checksum: d37883e6b7e1be62e1ddae29cac83fa59fb93c068bc8eb1561585439adbad91dcf7e264ee2a82c4378fc58049f7bd853544a4a81bf00d4aff717f641052323e7
@@ -18702,6 +18726,16 @@ __metadata:
   dependencies:
     css-in-js-utils: "npm:^2.0.0"
   checksum: ceb5ddafe394e01494ba06129a19baa43a845a261126409279b5e7172cf6afc1e50e3d740aff057049c810d864758d50609d81de86eecdae8781e7a9703b2db0
+  languageName: node
+  linkType: hard
+
+"inline-style-prefixer@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "inline-style-prefixer@npm:7.0.0"
+  dependencies:
+    css-in-js-utils: "npm:^3.1.0"
+    fast-loops: "npm:^1.1.3"
+  checksum: 38486ce52ffa81649d845ffc4dda421ac24ea02709b8608d61f82cf186bc57749a73e562c2b7236c3946705a0c6e9d5e3872c59280972df73b0a1161fbf51eba
   languageName: node
   linkType: hard
 
@@ -22705,6 +22739,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nano-css@npm:^5.6.1":
+  version: 5.6.1
+  resolution: "nano-css@npm:5.6.1"
+  dependencies:
+    "@jridgewell/sourcemap-codec": "npm:^1.4.15"
+    css-tree: "npm:^1.1.2"
+    csstype: "npm:^3.1.2"
+    fastest-stable-stringify: "npm:^2.0.2"
+    inline-style-prefixer: "npm:^7.0.0"
+    rtl-css-js: "npm:^1.16.1"
+    stacktrace-js: "npm:^2.0.2"
+    stylis: "npm:^4.3.0"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: d4e5e3c9fdfc09f494852c75ae5320373dfa84e24f82b7d6ff45928205763ec7780446e3e10af98398409bd4bf1acebc1f987570592b2bc68b9c0997ad089f73
+  languageName: node
+  linkType: hard
+
 "nanoid@npm:3.3.3":
   version: 3.3.3
   resolution: "nanoid@npm:3.3.3"
@@ -26235,6 +26288,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-use@npm:^17.4.2":
+  version: 17.4.2
+  resolution: "react-use@npm:17.4.2"
+  dependencies:
+    "@types/js-cookie": "npm:^2.2.6"
+    "@xobotyi/scrollbar-width": "npm:^1.9.5"
+    copy-to-clipboard: "npm:^3.3.1"
+    fast-deep-equal: "npm:^3.1.3"
+    fast-shallow-equal: "npm:^1.0.0"
+    js-cookie: "npm:^2.2.1"
+    nano-css: "npm:^5.6.1"
+    react-universal-interface: "npm:^0.6.2"
+    resize-observer-polyfill: "npm:^1.5.1"
+    screenfull: "npm:^5.1.0"
+    set-harmonic-interval: "npm:^1.0.1"
+    throttle-debounce: "npm:^3.0.1"
+    ts-easing: "npm:^0.2.0"
+    tslib: "npm:^2.1.0"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 56d2da474d949d22eb34ff3ffccf5526986d51ed68a8f4e64f4b79bdcff3f0ea55d322c104e3fc0819b08b8765e8eb3fa47d8b506e9d61ff1fdc7bd1374c17d6
+  languageName: node
+  linkType: hard
+
 "react-virtual@npm:2.10.4, react-virtual@npm:^2.8.2":
   version: 2.10.4
   resolution: "react-virtual@npm:2.10.4"
@@ -27158,6 +27236,15 @@ __metadata:
   dependencies:
     "@babel/runtime": "npm:^7.1.2"
   checksum: 4694e399003941e906cc1a4dceec21b4b3ad9e5b54065430c11a219b76b3bcd0b206f304d43adc870a1523ea18b46332fa983b91fadb917d06f2317c2518eee5
+  languageName: node
+  linkType: hard
+
+"rtl-css-js@npm:^1.16.1":
+  version: 1.16.1
+  resolution: "rtl-css-js@npm:1.16.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.1.2"
+  checksum: fa6a3e1f73e65bf5763b8a051942477a0852ee072d29ebad0999f02556a73715e72374d9a31ddec3fe023b09702b56f8be3a5a0404816e795ab86ea879183e02
   languageName: node
   linkType: hard
 
@@ -28705,6 +28792,13 @@ __metadata:
   version: 4.2.0
   resolution: "stylis@npm:4.2.0"
   checksum: 58359185275ef1f39c339ae94e598168aa6bb789f6cf0d52e726c1e7087a94e9c17f0385a28d34483dec1ffc2c75670ec714dc5603d99c3124ec83bc2b0a0f42
+  languageName: node
+  linkType: hard
+
+"stylis@npm:^4.3.0":
+  version: 4.3.1
+  resolution: "stylis@npm:4.3.1"
+  checksum: 20b04044397c5c69e4b9f00b037159ba82b602c61d45f26d8def08577fd6ddc4b2853d86818548c1b404d29194a99b6495cca1733880afc845533ced843cb266
   languageName: node
   linkType: hard
 
