@@ -56,7 +56,11 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
         <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
       )}
       <div className={styles.routingSection}>
-        <CollapsableSection label="Muting, grouping and timings" isOpen={false} className={styles.collapsableSection}>
+        <CollapsableSection
+          label="Muting, grouping and timings (optional)"
+          isOpen={false}
+          className={styles.collapsableSection}
+        >
           <Stack direction="column" gap={1}>
             <MuteTimingFields alertManager={alertManagerName} />
             <RoutingSettings alertManager={alertManagerName} />
@@ -71,7 +75,7 @@ function LinkToContactPoints() {
   return (
     <Link target="_blank" href={createUrl(hrefToContactPoints)} rel="noopener" aria-label="View alert rule">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
-        <Text color="secondary">To browse contact points and create new ones go to</Text>
+        <Text color="secondary">To browse contact points and create new ones, go to</Text>
         <Text color="link">Contact points</Text>
         <Icon name={'external-link-alt'} size="sm" color="link" />
       </Stack>
