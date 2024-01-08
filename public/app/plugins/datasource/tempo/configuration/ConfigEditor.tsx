@@ -5,7 +5,6 @@ import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data
 import {
   AdvancedHttpSettings,
   Auth,
-  ConfigDescriptionLink,
   ConfigSection,
   ConfigSubSection,
   ConnectionSettings,
