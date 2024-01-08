@@ -5,7 +5,9 @@ import (
 	"crypto/md5"
 	"fmt"
 	"strings"
+	"testing"
 
+	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -141,8 +143,12 @@ func newNopTransactionManager() *NopTransactionManager {
 	return &NopTransactionManager{}
 }
 
+func assertInTransaction(t *testing.T, ctx context.Context) {
+	assert.Truef(t, ctx.Value(NopTransactionManager{}) != nil, "Expected to be executed in transaction but there is none")
+}
+
 func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
-	return work(ctx)
+	return work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
 }
 
 func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
@@ -184,4 +190,37 @@ func (m *MockQuotaChecker_Expecter) LimitOK() *MockQuotaChecker_Expecter {
 func (m *MockQuotaChecker_Expecter) LimitExceeded() *MockQuotaChecker_Expecter {
 	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(true, nil)
 	return m
+}
+
+type methodCall struct {
+	Method string
+	Args   []interface{}
+}
+
+type alertmanagerConfigStoreFake struct {
+	Calls  []methodCall
+	GetFn  func(ctx context.Context, orgID int64) (*cfgRevision, error)
+	SaveFn func(ctx context.Context, revision *cfgRevision) error
+}
+
+func (a *alertmanagerConfigStoreFake) Get(ctx context.Context, orgID int64) (*cfgRevision, error) {
+	a.Calls = append(a.Calls, methodCall{
+		Method: "Get",
+		Args:   []interface{}{ctx, orgID},
+	})
+	if a.GetFn != nil {
+		return a.GetFn(ctx, orgID)
+	}
+	return nil, nil
+}
+
+func (a *alertmanagerConfigStoreFake) Save(ctx context.Context, revision *cfgRevision, orgID int64) error {
+	a.Calls = append(a.Calls, methodCall{
+		Method: "Save",
+		Args:   []interface{}{ctx, revision, orgID},
+	})
+	if a.SaveFn != nil {
+		return a.SaveFn(ctx, revision)
+	}
+	return nil
 }

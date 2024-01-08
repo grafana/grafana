@@ -8,13 +8,12 @@ import { DataFrame, Field as DataFrameField } from '@grafana/data/';
 import { reportInteraction } from '@grafana/runtime/src';
 import { Field, Switch } from '@grafana/ui/';
 
+import { ItemLabels } from './ItemLabels';
+import RawListItem from './RawListItem';
 import {
   getRawPrometheusListItemsFromDataFrame,
   RawPrometheusListItemEmptyValue,
-} from '../utils/getRawPrometheusListItemsFromDataFrame';
-
-import { ItemLabels } from './ItemLabels';
-import RawListItem from './RawListItem';
+} from './utils/getRawPrometheusListItemsFromDataFrame';
 
 export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
 

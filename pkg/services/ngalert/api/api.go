@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -73,6 +74,7 @@ type API struct {
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
+	UpgradeService       migration.UpgradeService
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -149,4 +151,13 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		logger: logger,
 		hist:   api.Historian,
 	}), m)
+
+	// Inject upgrade endpoints if legacy alerting is enabled and the feature flag is enabled.
+	if !api.Cfg.UnifiedAlerting.IsEnabled() && api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
+		api.RegisterUpgradeApiEndpoints(NewUpgradeApi(NewUpgradeSrc(
+			logger,
+			api.UpgradeService,
+			api.Cfg,
+		)), m)
+	}
 }

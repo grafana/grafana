@@ -239,14 +239,14 @@ func TestContactPointService(t *testing.T) {
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
-		config, err := sut.amStore.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+		config, err := sut.configStore.store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
 		require.NoError(t, err)
 		expectedConcurrencyToken := config.ConfigurationHash
 
 		_, err = sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		fake := sut.amStore.(*fakeAMConfigStore)
+		fake := sut.configStore.store.(*fakeAMConfigStore)
 		intercepted := fake.lastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
 	})
@@ -349,7 +349,7 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 	require.NoError(t, err)
 
 	return &ContactPointService{
-		amStore:           newFakeAMConfigStore(string(raw)),
+		configStore:       &alertmanagerConfigStoreImpl{store: newFakeAMConfigStore(string(raw))},
 		provenanceStore:   NewFakeProvisioningStore(),
 		xact:              newNopTransactionManager(),
 		encryptionService: secretService,
