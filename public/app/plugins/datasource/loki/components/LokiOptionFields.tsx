@@ -1,12 +1,11 @@
 // Libraries
-import { css, cx } from '@emotion/css';
 import { map } from 'lodash';
 import React, { memo } from 'react';
 
 // Types
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
+import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select, Stack } from '@grafana/ui';
 
 import { getLokiQueryType } from '../queryUtils';
 import { LokiQuery, LokiQueryType } from '../types';
@@ -82,18 +81,9 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
   }
 
   return (
-    <div aria-label="Loki extra field" className="gf-form-inline">
+    <Stack alignItems="flex-start" gap={0.5} aria-label="Loki extra field">
       {/*Query type field*/}
-      <div
-        data-testid="queryTypeField"
-        className={cx(
-          'gf-form explore-input-margin',
-          css`
-            flex-wrap: nowrap;
-          `
-        )}
-        aria-label="Query type field"
-      >
+      <Stack wrap="nowrap" gap={0} data-testid="queryTypeField" aria-label="Query type field">
         <InlineFormLabel width="auto">Query type</InlineFormLabel>
 
         <RadioButtonGroup
@@ -106,18 +96,9 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             }
           }}
         />
-      </div>
+      </Stack>
       {/*Line limit field*/}
-      <div
-        data-testid="lineLimitField"
-        className={cx(
-          'gf-form',
-          css`
-            flex-wrap: nowrap;
-          `
-        )}
-        aria-label="Line limit field"
-      >
+      <Stack wrap="nowrap" gap={0} data-testid="lineLimitField" aria-label="Line limit field">
         <InlineField label="Line limit" tooltip={'Upper limit for number of log lines returned by query.'}>
           <Input
             className="width-4"
@@ -148,8 +129,8 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             aria-label="Select resolution"
           />
         </InlineField>
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 }
 
