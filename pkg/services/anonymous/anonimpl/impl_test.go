@@ -249,7 +249,7 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 
 			devices, err := anonService.anonStore.SearchDevices(context.Background(), &tc.searchQuery)
 			require.NoError(t, err)
-			require.Len(t, devices.Devices, int(tc.expectedCount))
+			require.Len(t, devices.Devices, tc.expectedCount)
 			if tc.expectedDevice != nil {
 				device := devices.Devices[0]
 				require.Equal(t, tc.expectedDevice.UserAgent, device.UserAgent)

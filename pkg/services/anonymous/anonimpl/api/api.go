@@ -91,7 +91,7 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 	return response.JSON(http.StatusOK, resDevices)
 }
 
-// swagger:route POST /search devices listDevices
+// swagger:route POST /search devices SearchDevices
 //
 // # Lists all devices within the last 30 days
 //
@@ -100,7 +100,7 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 //
 // Responses:
 //
-//	200: devicesResponse
+//	200: devicesSearchResponse
 //	401: unauthorisedError
 //	403: forbiddenError
 //	404: notFoundError
@@ -141,4 +141,10 @@ func (api *AnonDeviceServiceAPI) SearchDevices(c *contextmodel.ReqContext) respo
 type DevicesResponse struct {
 	// in:body
 	Body []deviceDTO `json:"body"`
+}
+
+// swagger:response devicesSearchResponse
+type DevicesSearchResponse struct {
+	// in:body
+	Body anonstore.SearchDeviceQueryResult `json:"body"`
 }
