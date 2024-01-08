@@ -462,6 +462,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/routes/ @grafana/grafana-frontend-platform
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
+/public/app/types/alerting.ts @grafana/alerting-frontend
 /public/dashboards/ @grafana/dashboards-squad
 /public/fonts/ @grafana/alerting-frontend
 /public/gazetteer/ @ryantxu
