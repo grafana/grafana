@@ -311,6 +311,7 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
+      "share-button": "",
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
     "validation": {

@@ -316,6 +316,7 @@
       "save": "Enregistrer le tableau de bord",
       "settings": "Paramètres du tableau de bord",
       "share": "Partager le tableau de bord ou le panneau",
+      "share-button": "",
       "unmark-favorite": "Supprimer des favoris"
     },
     "validation": {
