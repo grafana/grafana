@@ -1,5 +1,5 @@
 import { DataQueryResponse, QueryResultMetaStat } from '@grafana/data';
-import { getMockFrames } from 'app/plugins/datasource/loki/mocks';
+import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
 
 import { cloneQueryResponse, combineResponses } from './response';
 
