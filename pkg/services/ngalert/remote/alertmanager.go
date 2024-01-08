@@ -155,6 +155,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 }
 
 func (am *Alertmanager) checkReadiness(ctx context.Context) error {
+	am.metrics.LastReadinessCheck.SetToCurrentTime()
 	ready, err := am.amClient.IsReadyWithBackoff(ctx)
 	if err != nil {
 		return err
