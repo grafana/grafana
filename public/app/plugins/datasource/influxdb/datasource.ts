@@ -229,6 +229,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   applyVariables(query: InfluxQuery & SQLQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
+
     if (query.groupBy) {
       expandedQuery.groupBy = query.groupBy.map((groupBy) => {
         return {
@@ -265,22 +266,25 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (expandedQuery.tags) {
       expandedQuery.tags = expandedQuery.tags.map((tag) => {
+        // debugger;
         // If tag value contains special chars we need to escape before sending to influx backend, but the regex delimiter and operators should not be escaped
         if (isRegex(tag.value)) {
           const firstChars = tag.value.slice(0, 2); // `/^`
           const lastChars = tag.value.slice(tag.value.length - 2, tag.value.length); // `$/`
           const middleChars = tag.value.slice(2, tag.value.length - 2);
 
-          // regex escape doesn't catch `/` so we need to escape it manually
-          let escapedMiddleChars: string | string[] = influxSpecialRegexEscape(middleChars);
-          if (typeof escapedMiddleChars === 'string') {
-            escapedMiddleChars = escapedMiddleChars.replace(/[\/]/g, '\\\\$&');
-          }
+          // regex escape doesn't catch `/`, I would assume so it doesn't mangle the regex delimiter, so we need to escape it manually
+          // what about $?
+          // Also we only want 2 escape chars `\\` for regex?
+          const escapedMiddleChars = middleChars.replaceAll(`\\\\`, `\\`).replaceAll(`/`, '\\/');
 
-          return {
-            ...tag,
-            value: firstChars + escapedMiddleChars + lastChars,
-          };
+          // Do we want to remove empty regex matches?
+          if (escapedMiddleChars) {
+            return {
+              ...tag,
+              value: firstChars + escapedMiddleChars + lastChars,
+            };
+          }
         }
         return {
           ...tag,

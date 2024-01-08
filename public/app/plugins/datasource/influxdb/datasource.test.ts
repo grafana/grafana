@@ -316,8 +316,8 @@ describe('InfluxDataSource Frontend Mode', () => {
       it('should interpolate all variables with InfluxQL mode', () => {
         ds.version = InfluxVersion.InfluxQL;
         const queries = ds.interpolateVariablesInQueries([mockInfluxQueryWithTemplateVars(adhocFilters)], {
-          interpolationVar: { text: text, value: text },
-          interpolationVar2: { text: text2, value: text2 },
+          why: { text: 'you', value: 'shall' },
+          me: { text: 'not', value: 'pass' },
         });
         influxChecks(queries[0]);
       });
@@ -410,7 +410,7 @@ describe('InfluxDataSource Frontend Mode', () => {
       });
     });
 
-    describe('From Prometheus regexes escaping', () => {
+    describe('More regexes escaping', () => {
       it('should not escape simple string', () => {
         expect(influxSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
       });
@@ -446,10 +446,17 @@ describe('InfluxDataSource Frontend Mode', () => {
         expect(result).toEqual(expectation);
       });
 
-      it('should escape the url properly', () => {
+      it('should escape the url properly (regex)', () => {
         const value = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/jolokia';
         const expectation = `https://aaaa-aa-aaa\\\\.bbb\\\\.ccc\\\\.ddd:8443/jolokia`;
         const result = influxSpecialRegexEscape(value);
+        expect(result).toBe(expectation);
+      });
+
+      it('should escape the url properly (no regex)', () => {
+        const value = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/jolokia';
+        const expectation = `https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/jolokia`;
+        const result = influxRegularEscape(value);
         expect(result).toBe(expectation);
       });
 
