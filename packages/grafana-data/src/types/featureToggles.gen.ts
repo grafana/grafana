@@ -144,7 +144,6 @@ export interface FeatureToggles {
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
-  costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
