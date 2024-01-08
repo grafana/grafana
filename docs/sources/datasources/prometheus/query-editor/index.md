@@ -74,7 +74,7 @@ The **Legend** setting defines the time series's name. You can use a predefined 
 
 The **Min step** setting defines the lower bounds on the interval between data points.
 For example, set this to `1h` to hint that measurements are taken hourly.
-This setting supports the `$__interval` and `$__rate_interval` macros.
+This setting supports the `$__interval` and `$__rate_interval` macros. Be aware that the query range dates are aligned to the step and this can change the start and end of the range.
 
 ### Format
 
