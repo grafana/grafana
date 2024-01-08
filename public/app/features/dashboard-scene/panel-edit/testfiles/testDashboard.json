@@ -111,7 +111,7 @@
           "seriesCount": 1
         }
       ],
-      "title": "Source panel",
+      "title": "Panel with just queries",
       "type": "timeseries"
     },
     {
@@ -274,7 +274,7 @@
           "refId": "A"
         }
       ],
-      "title": "Dashboard query",
+      "title": "Panel with a Dashboard query",
       "type": "timeseries"
     },
     {
@@ -339,7 +339,7 @@
           "refId": "A"
         }
       ],
-      "title": "Dashboard query with transformations",
+      "title": "Panel with a dashboard query with transformations",
       "transformations": [
         {
           "id": "reduce",

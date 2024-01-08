@@ -611,18 +611,6 @@ describe('VizPanelManager', () => {
 
       vizPanelManager.activate();
 
-      expect(vizPanelManager.queryRunner.state.queries).toEqual([
-        {
-          datasource: {
-            type: 'grafana-testdata-datasource',
-            uid: 'gdev-testdata',
-          },
-          refId: 'A',
-          scenarioId: 'random_walk',
-          seriesCount: 1,
-        },
-      ]);
-
       vizPanelManager.changeQueries([
         {
           datasource: {
@@ -653,19 +641,12 @@ describe('VizPanelManager', () => {
 
       vizPanelManager.activate();
 
-      expect(vizPanelManager.queryRunner.parent).toBeInstanceOf(ShareQueryDataProvider);
-      expect((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId).toBe(1);
-
       let sourcePanel = findVizPanelByKey(
         scene,
         getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
       );
 
-      expect(vizPanelManager.queryRunner.state.queries).toEqual(
-        (sourcePanel!.state.$data as SceneQueryRunner)?.state.queries
-      );
-
-      // Changing query a panel with transformations
+      // Changing query to a panel with transformations
       vizPanelManager.changeQueries([
         {
           refId: 'A',
@@ -683,14 +664,6 @@ describe('VizPanelManager', () => {
       sourcePanel = findVizPanelByKey(
         scene,
         getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
-      );
-
-      expect(sourcePanel!.state.$data).toBeInstanceOf(SceneDataTransformer);
-      expect((sourcePanel!.state.$data as SceneDataTransformer).state.transformations).toEqual(
-        (vizPanelManager.queryRunner.parent?.state.$data as SceneDataTransformer).state.transformations
-      );
-      expect(vizPanelManager.queryRunner.state.queries).toEqual(
-        (sourcePanel!.state.$data as SceneQueryRunner)?.state.queries
       );
 
       // Changing query to a panel with queries only

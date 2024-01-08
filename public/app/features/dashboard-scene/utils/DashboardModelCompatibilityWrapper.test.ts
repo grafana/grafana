@@ -129,7 +129,7 @@ function setup() {
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({
-            title: 'Panel A',
+            title: 'Panel with a regular data source query',
             key: 'panel-1',
             pluginId: 'table',
             $data: new SceneQueryRunner({
@@ -141,7 +141,7 @@ function setup() {
         }),
         new SceneGridItem({
           body: new VizPanel({
-            title: 'Panel B',
+            title: 'Panel with no queries',
             key: 'panel-2',
             pluginId: 'table',
           }),
@@ -149,7 +149,7 @@ function setup() {
 
         new SceneGridItem({
           body: new VizPanel({
-            title: 'Panel C',
+            title: 'Panel with a shared query',
             key: 'panel-3',
             pluginId: 'table',
             $data: new ShareQueryDataProvider({ query: { refId: 'A', panelId: 1 } }),
@@ -158,7 +158,7 @@ function setup() {
 
         new SceneGridItem({
           body: new VizPanel({
-            title: 'Panel D',
+            title: 'Panel with a regular data source query and transformations',
             key: 'panel-4',
             pluginId: 'table',
             $data: new SceneDataTransformer({
@@ -173,7 +173,7 @@ function setup() {
         }),
         new SceneGridItem({
           body: new VizPanel({
-            title: 'Panel D',
+            title: 'Panel with a shared query and transformations',
             key: 'panel-4',
             pluginId: 'table',
             $data: new SceneDataTransformer({
