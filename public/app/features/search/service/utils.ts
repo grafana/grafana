@@ -1,4 +1,5 @@
 import { DataFrameView, IconName } from '@grafana/data';
+import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardViewItem, DashboardViewItemKind } from '../types';
@@ -38,12 +39,18 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function getIconForKind(kind: string, isOpen?: boolean): IconName {
+export function getIconForKind(_kind: string, isOpen?: boolean, item?: DashboardViewItemWithUIItems): IconName {
+  const kind = item?.kind ?? _kind;
+
   if (kind === 'dashboard') {
     return 'apps';
   }
 
   if (kind === 'folder') {
+    if (item?.uid === 'sharedwithme') {
+      return 'users-alt';
+    }
+
     return isOpen ? 'folder-open' : 'folder';
   }
 

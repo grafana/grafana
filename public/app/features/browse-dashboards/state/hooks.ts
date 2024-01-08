@@ -130,7 +130,7 @@ export function useLoadNextChildrenPage(
 }
 
 /**
- * Creates a list of items, with level indicating it's 'nested' in the tree structure
+ * Creates a list of items, with level indicating it's nesting in the tree structure
  *
  * @param folderUID The UID of the folder being viewed, or undefined if at root Browse Dashboards page
  * @param rootItems Array of loaded items at the root level (without a parent). If viewing a folder, we expect this to be empty and unused
@@ -180,7 +180,22 @@ export function createFlatTree(
       isOpen,
     };
 
-    return [thisItem, ...mappedChildren];
+    const items = [thisItem, ...mappedChildren];
+
+    if (item.kind === 'folder' && item.uid === 'sharedwithme') {
+      items.push({
+        item: {
+          kind: 'ui',
+          uiKind: 'divider',
+          uid: 'shared-with-me-divider',
+        },
+        parentUID,
+        level: level + 1,
+        isOpen: false,
+      });
+    }
+
+    return items;
   }
 
   const isOpen = (folderUID && openFolders[folderUID]) || level === 0;

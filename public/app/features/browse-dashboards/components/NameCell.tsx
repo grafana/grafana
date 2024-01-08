@@ -27,7 +27,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
   const { item, level, isOpen } = data;
   const childrenByParentUID = useChildrenByParentUIDState();
   const isLoading = isOpen && !childrenByParentUID[item.uid];
-  const iconName = getIconForKind(data.item.kind, isOpen);
+  const iconName = getIconForKind(data.item.kind, isOpen, data.item);
 
   if (item.kind === 'ui') {
     return (

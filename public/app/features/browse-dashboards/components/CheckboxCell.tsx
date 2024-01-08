@@ -28,6 +28,10 @@ export default function CheckboxCell({
     }
   }
 
+  if (item.kind === 'folder' && item.uid === 'sharedwithme') {
+    return <span className={styles.checkboxSpacer} />;
+  }
+
   const state = isSelected(item);
 
   return (
