@@ -12,7 +12,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
 
-import { getDataSourceSrv } from '../services/dataSourceSrv';
+import { DataSourceSrv, getDataSourceSrv } from '../services/dataSourceSrv';
 
 import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
 
@@ -49,6 +49,7 @@ export interface DataSourcePickerProps {
   invalid?: boolean;
   disabled?: boolean;
   isLoading?: boolean;
+  dataSourceSrv?: DataSourceSrv;
 }
 
 /**
@@ -83,7 +84,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
   componentDidMount() {
     const { current } = this.props;
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(current);
+    const dsSettings = this.getDataSourceService().getInstanceSettings(current);
     if (!dsSettings) {
       this.setState({ error: 'Could not find data source ' + current });
     }
@@ -95,7 +96,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       return;
     }
 
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(item.value);
+    const dsSettings = this.getDataSourceService().getInstanceSettings(item.value);
 
     if (dsSettings) {
       this.props.onChange(dsSettings);
@@ -109,7 +110,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       return;
     }
 
-    const ds = this.dataSourceSrv.getInstanceSettings(current);
+    const ds = this.getDataSourceService().getInstanceSettings(current);
 
     if (ds) {
       return {
@@ -135,11 +136,15 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     };
   }
 
+  getDataSourceService() {
+    return this.dataSourceSrv || this.props.dataSourceSrv || getDataSourceSrv();
+  }
+
   getDataSourceOptions() {
     const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
       this.props;
 
-    const options = this.dataSourceSrv
+    const options = this.getDataSourceService()
       .getList({
         alerting,
         tracing,
