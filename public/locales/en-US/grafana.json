@@ -311,6 +311,7 @@
       "save": "Save dashboard",
       "settings": "Dashboard settings",
       "share": "Share dashboard",
+      "share-button": "Share",
       "unmark-favorite": "Unmark as favorite"
     },
     "validation": {
@@ -709,6 +710,10 @@
     "alerting-silences": {
       "subtitle": "Stop notifications from one or more alerting rules",
       "title": "Silences"
+    },
+    "alerting-upgrade": {
+      "subtitle": "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
+      "title": "Alerting upgrade"
     },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",

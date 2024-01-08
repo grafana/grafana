@@ -316,6 +316,7 @@
       "save": "Guardar panel de control",
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
+      "share-button": "",
       "unmark-favorite": "Deshacer marca como favorito"
     },
     "validation": {
@@ -715,6 +716,10 @@
     "alerting-silences": {
       "subtitle": "Detener notificaciones de una o más reglas de alerta",
       "title": "Silencios"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "Aplicaciones de gestión de alertas e incidentes",

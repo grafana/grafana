@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, FormattedValue, toDataFrame } from '@grafana/data/src';
+import { DataFrame, FieldType, FormattedValue, toDataFrame } from '@grafana/data';
 
 import { getRawPrometheusListItemsFromDataFrame } from './getRawPrometheusListItemsFromDataFrame';
 

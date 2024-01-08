@@ -311,6 +311,7 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
+      "share-button": "",
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
     "validation": {
@@ -709,6 +710,10 @@
     "alerting-silences": {
       "subtitle": "Schalte Benachrichtigungen von einer oder mehrerer Warnregeln aus",
       "title": "Stummschalten"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
