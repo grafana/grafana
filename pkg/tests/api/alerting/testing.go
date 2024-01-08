@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -693,6 +694,20 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (i
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(body)
+}
+
+func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.Frame, int, string) {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/rules/history", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("ruleUID", ruleUID)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	return sendRequest[data.Frame](t, req, http.StatusOK)
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {

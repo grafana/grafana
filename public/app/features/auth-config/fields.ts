@@ -1,4 +1,5 @@
 import { FieldData, SSOProvider } from './types';
+import { isSelectableValue } from './utils/guards';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
@@ -46,7 +47,10 @@ export const fieldMap: Record<string, FieldData> = {
         if (typeof value === 'string') {
           return isNumeric(value);
         }
-        return value.every((v) => v?.value && isNumeric(v.value));
+        if (isSelectableValue(value)) {
+          return value.every((v) => v?.value && isNumeric(v.value));
+        }
+        return true;
       },
       message: 'Team ID must be a number.',
     },

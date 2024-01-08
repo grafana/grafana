@@ -511,10 +511,6 @@ const (
 	// Include a status source label for plugin request metrics and logs
 	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
 
-	// FlagCostManagementUi
-	// Toggles the display of the cost management ui plugin
-	FlagCostManagementUi = "costManagementUi"
-
 	// FlagManagedPluginsInstall
 	// Install managed plugins directly from plugins catalog
 	FlagManagedPluginsInstall = "managedPluginsInstall"
@@ -567,6 +563,10 @@ const (
 	// Enables the SSO settings API
 	FlagSsoSettingsApi = "ssoSettingsApi"
 
+	// FlagCanvasPanelPanZoom
+	// Allow pan and zoom in canvas panel
+	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
+
 	// FlagLogsInfiniteScrolling
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
@@ -614,4 +614,8 @@ const (
 	// FlagLokiQueryHints
 	// Enables query hints for Loki
 	FlagLokiQueryHints = "lokiQueryHints"
+
+	// FlagAlertingPreviewUpgrade
+	// Show Unified Alerting preview and upgrade page in legacy alerting
+	FlagAlertingPreviewUpgrade = "alertingPreviewUpgrade"
 )

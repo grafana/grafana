@@ -69,6 +69,18 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettin
 }
 
 func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	err = validateInfo(info)
+	if err != nil {
+		return err
+	}
+
+	// add specific validation rules for Generic OAuth
+
 	return nil
 }
 

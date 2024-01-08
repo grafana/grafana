@@ -339,6 +339,7 @@ func (ng *AlertNG) init() error {
 		Historian:            history,
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
+		UpgradeService:       ng.upgradeService,
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
@@ -373,7 +374,16 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 
 // shouldRun determines if AlertNG should init or run anything more than just the migration.
 func (ng *AlertNG) shouldRun() bool {
-	return ng.Cfg.UnifiedAlerting.IsEnabled()
+	if ng.Cfg.UnifiedAlerting.IsEnabled() {
+		return true
+	}
+
+	// Feature flag will preview UA alongside legacy, so that UA routes are registered but the scheduler remains disabled.
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
+		return true
+	}
+
+	return false
 }
 
 // Run starts the scheduler and Alertmanager.
@@ -392,7 +402,8 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.AlertsRouter.Run(subCtx)
 	})
 
-	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
+	// We explicitly check that UA is enabled here in case FlagAlertingPreviewUpgrade is enabled but UA is disabled.
+	if ng.Cfg.UnifiedAlerting.ExecuteAlerts && ng.Cfg.UnifiedAlerting.IsEnabled() {
 		// Only Warm() the state manager if we are actually executing alerts.
 		// Doing so when we are not executing alerts is wasteful and could lead
 		// to misleading rule status queries, as the status returned will be
