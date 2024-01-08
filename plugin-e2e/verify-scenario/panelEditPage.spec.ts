@@ -1,5 +1,4 @@
 import { expect, test } from '@grafana/plugin-e2e';
-import { getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { formatExpectError } from './errors';
 import { successfulDataQuery } from './mocks/queries';
@@ -19,7 +18,7 @@ test.describe('query editor query data', () => {
     ).toBeOK();
   });
 
-  test('query data response should not be OK when query is invalid', async ({ panelEditPage, page }) => {
+  test('query data response should not be OK when query is invalid', async ({ panelEditPage }) => {
     await panelEditPage.datasource.set('gdev-testdata');
     const queryEditorRow = await panelEditPage.getQueryEditorRow('A');
     await queryEditorRow.getByLabel('Labels').fill('invalid-label-format');
