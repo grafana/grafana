@@ -1226,8 +1226,9 @@ var (
 		{
 			Name:         "logRowsPopoverMenu",
 			Description:  "Enable filtering menu displayed when text of a log line is selected",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true",
 			Owner:        grafanaObservabilityLogsSquad,
 			Created:      time.Date(2023, time.November, 16, 12, 0, 0, 0, time.UTC),
 		},
