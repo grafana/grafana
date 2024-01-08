@@ -472,7 +472,7 @@ describe('InfluxDataSource Frontend Mode', () => {
 
     describe('Influx regular escaping', () => {
       it('should not escape non-string', () => {
-        expect(influxRegularEscape(12)).toEqual(12);
+        expect(influxRegularEscape(12 as unknown as string)).toEqual(12);
       });
 
       it('should not escape simple string', () => {

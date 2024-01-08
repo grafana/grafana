@@ -38,6 +38,7 @@ import { QueryFormat, SQLQuery } from '../../../features/plugins/sql';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
+import { isRegex } from './components/editor/query/influxql/utils/tagUtils';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import { toRawSql } from './fsql/sqlUtil';
 import InfluxQueryModel from './influx_query_model';
@@ -188,6 +189,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           const { condition, ...asTag } = af;
           return asTag;
         });
+
         query.tags = [...(query.tags ?? []), ...adhocFiltersToTags];
       }
     }
@@ -257,6 +259,32 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           ...tag,
           key: this.templateSrv.replace(tag.key, scopedVars, this.interpolateQueryExpr),
           value: this.templateSrv.replace(tag.value, scopedVars, this.interpolateQueryExpr),
+        };
+      });
+    }
+
+    if (expandedQuery.tags) {
+      expandedQuery.tags = expandedQuery.tags.map((tag) => {
+        // If tag value contains special chars we need to escape before sending to influx backend, but the regex delimiter and operators should not be escaped
+        if (isRegex(tag.value)) {
+          const firstChars = tag.value.slice(0, 2); // `/^`
+          const lastChars = tag.value.slice(tag.value.length - 2, tag.value.length); // `$/`
+          const middleChars = tag.value.slice(2, tag.value.length - 2);
+
+          // regex escape doesn't catch `/` so we need to escape it manually
+          let escapedMiddleChars: string | string[] = influxSpecialRegexEscape(middleChars);
+          if (typeof escapedMiddleChars === 'string') {
+            escapedMiddleChars = escapedMiddleChars.replace(/[\/]/g, '\\\\$&');
+          }
+
+          return {
+            ...tag,
+            value: firstChars + escapedMiddleChars + lastChars,
+          };
+        }
+        return {
+          ...tag,
+          value: tag.value,
         };
       });
     }
@@ -781,7 +809,7 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   };
 }
 
-export function influxRegularEscape(value: string | string[] | unknown) {
+export function influxRegularEscape(value: string | string[]) {
   if (typeof value === 'string') {
     // Check the value is a number. If not run to escape special characters
     if (isNaN(parseFloat(value))) {

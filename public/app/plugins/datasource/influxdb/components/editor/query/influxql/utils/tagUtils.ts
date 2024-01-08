@@ -1,6 +1,6 @@
 import { InfluxQueryTag } from '../../../../../types';
 
-function isRegex(text: string): boolean {
+export function isRegex(text: string): boolean {
   return /^\/.*\/$/.test(text);
 }
 
