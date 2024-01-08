@@ -466,10 +466,6 @@ export class LokiDatasource
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  isCompleteQuery(query?: LokiQuery | undefined): boolean {
-    return query?.expr !== undefined && query.expr.trim() !== '';
-  }
-
   /**
    * Implemented as part of DataSourceWithQueryImportSupport.
    * Imports queries from AbstractQuery objects when switching between different data source types.
@@ -1071,13 +1067,17 @@ export class LokiDatasource
     return returnVariables(expr);
   }
 
+  isCompleteQuery(query?: LokiQuery | undefined): boolean {
+    return query?.expr !== undefined && query.expr.trim() !== '';
+  }
+
   /**
    * Filters out queries that are empty or hidden. Used when running queries through backend.
    * It is called from DatasourceWithBackend.
    * @returns `true` if the query is not hidden and its expression is not empty; `false` otherwise.
    */
   filterQuery(query: LokiQuery): boolean {
-    if (query.hide || query.expr === '') {
+    if (query.hide || !this.isCompleteQuery(query)) {
       return false;
     }
     return true;

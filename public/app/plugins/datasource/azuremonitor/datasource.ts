@@ -57,12 +57,19 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     this.variables = new VariableSupport(this);
   }
 
-  filterQuery(item: AzureMonitorQuery): boolean {
-    if (!item.queryType) {
+  isCompleteQuery(query?: AzureMonitorQuery | undefined): boolean {
+    if (!query || !query.queryType) {
       return false;
     }
-    const ds = this.pseudoDatasource[item.queryType];
-    return ds?.filterQuery?.(item) ?? true;
+    const ds = this.pseudoDatasource[query.queryType];
+    return ds?.filterQuery?.(query) ?? true;
+  }
+
+  filterQuery(item: AzureMonitorQuery): boolean {
+    if (item.hide || !this.isCompleteQuery(item)) {
+      return false;
+    }
+    return true;
   }
 
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
@@ -120,10 +127,6 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     }
 
     return of({ state: LoadingState.Done, data: [] });
-  }
-
-  isCompleteQuery(query?: AzureMonitorQuery | undefined): boolean {
-    return query?.region !== undefined && query.region.trim() !== '';
   }
 
   targetContainsTemplate(query: AzureMonitorQuery) {

@@ -77,8 +77,13 @@ export class CloudWatchDatasource
     this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
   }
 
+  isCompleteQuery(query: CloudWatchQuery): boolean {
+    const isMetricsQuery = isCloudWatchMetricsQuery(query);
+    return !isMetricsQuery || query.id !== '';
+  }
+
   filterQuery(query: CloudWatchQuery) {
-    return query.hide !== true || (isCloudWatchMetricsQuery(query) && query.id !== '');
+    return query.hide !== true || this.isCompleteQuery(query);
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
@@ -141,10 +146,6 @@ export class CloudWatchDatasource
       ...(isCloudWatchMetricsQuery(query) &&
         this.metricsQueryRunner.interpolateMetricsQueryVariables(query, scopedVars)),
     }));
-  }
-
-  isCompleteQuery(query?: CloudWatchQuery | undefined): boolean {
-    return query?.region !== undefined && query.region.trim() !== '';
   }
 
   getLogRowContext(

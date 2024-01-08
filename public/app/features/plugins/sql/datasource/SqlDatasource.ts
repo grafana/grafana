@@ -113,8 +113,15 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return expandedQueries;
   }
 
+  isCompleteQuery(query?: SQLQuery | undefined): boolean {
+    return query?.rawSql !== undefined && query.rawSql.trim() !== '';
+  }
+
   filterQuery(query: SQLQuery): boolean {
-    return !query.hide;
+    if (query.hide || !this.isCompleteQuery(query)) {
+      return false;
+    }
+    return true;
   }
 
   applyTemplateVariables(
@@ -214,10 +221,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
     const response = await this.runMetaQuery(interpolatedQuery, range);
     return this.getResponseParser().transformMetricFindResponse(response);
-  }
-
-  isCompleteQuery(query?: SQLQuery | undefined): boolean {
-    return query?.rawSql !== undefined && query.rawSql.trim() !== '';
   }
 
   // NOTE: this always runs with the `@grafana/data/getDefaultTimeRange` time range

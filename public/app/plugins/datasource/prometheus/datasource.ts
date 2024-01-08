@@ -871,9 +871,13 @@ export class PrometheusDatasource
     return finalQuery;
   }
 
+  isCompleteQuery(query?: PromQuery | undefined): boolean {
+    return query?.expr !== undefined && query.expr.trim() !== '';
+  }
+
   // Used when running queries through backend
   filterQuery(query: PromQuery): boolean {
-    if (query.hide || !query.expr) {
+    if (query.hide || !this.isCompleteQuery(query)) {
       return false;
     }
     return true;
@@ -965,10 +969,6 @@ export class PrometheusDatasource
     }
 
     return defaults;
-  }
-
-  isCompleteQuery(query?: PromQuery | undefined): boolean {
-    return query?.expr !== undefined && query.expr.trim() !== '';
   }
 }
 

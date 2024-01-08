@@ -59,10 +59,6 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
-  isCompleteQuery(query?: CloudMonitoringQuery | undefined): boolean {
-    return query?.queryType !== undefined;
-  }
-
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars) {
     const { timeSeriesList, timeSeriesQuery, sloQuery, promQLQuery } = target;
 
@@ -307,11 +303,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }, {} as T);
   }
 
-  filterQuery(query: CloudMonitoringQuery): boolean {
-    if (query.hide) {
-      return false;
-    }
-
+  isCompleteQuery(query: CloudMonitoringQuery): boolean {
     if (query.queryType === QueryType.SLO) {
       if (!query.sloQuery) {
         return false;
@@ -341,6 +333,14 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     return false;
+  }
+
+  filterQuery(query: CloudMonitoringQuery): boolean {
+    if (query.hide) {
+      return false;
+    }
+
+    return this.isCompleteQuery(query);
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {

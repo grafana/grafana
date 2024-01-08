@@ -161,14 +161,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
   }
 
+  isCompleteQuery(query?: InfluxQuery | undefined): boolean {
+    return this.version !== InfluxVersion.Flux || (query?.query !== undefined && query.query.trim() !== '');
+  }
+
   /**
    * Returns false if the query should be skipped
    */
   filterQuery(query: InfluxQuery): boolean {
-    if (this.version === InfluxVersion.Flux) {
-      return !!query.query;
-    }
-    return true;
+    return this.isCompleteQuery(query) || !query.hide || false;
   }
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
@@ -293,10 +294,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     return escapedValues.join('|');
-  }
-
-  isCompleteQuery(query?: InfluxQuery | undefined): boolean {
-    return query?.query !== undefined && query.query.trim() !== '';
   }
 
   async runMetadataQuery(target: InfluxQuery): Promise<MetricFindValue[]> {
