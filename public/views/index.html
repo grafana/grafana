@@ -243,7 +243,7 @@
         user: [[.User]],
         settings: [[.Settings]],
         navTree: [[.NavTree]],
-        assets: [[.Assets]] 
+        assets: [[.Assets]]
       };
 
       // Set theme to match system only on startup.
@@ -256,11 +256,11 @@
 
         if (darkQuery.matches) {
           document.body.classList.add("theme-dark");
-          cssLink.href = window.grafanaBootData.themePaths.dark;
+          cssLink.href = window.grafanaBootData.assets.dark;
           window.grafanaBootData.user.lightTheme = false;
         } else {
           document.body.classList.add("theme-light");
-          cssLink.href = window.grafanaBootData.themePaths.light;
+          cssLink.href = window.grafanaBootData.assets.light;
           window.grafanaBootData.user.lightTheme = true;
         }
         document.head.appendChild(cssLink);

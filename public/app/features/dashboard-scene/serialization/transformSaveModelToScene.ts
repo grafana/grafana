@@ -29,6 +29,7 @@ import {
   UserActionEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -67,7 +68,10 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
     autoMigrateOldPanels: false,
   });
 
-  return createDashboardSceneFromDashboardModel(oldModel);
+  const scene = createDashboardSceneFromDashboardModel(oldModel);
+  scene.state.$behaviors?.push(registerDashboardSceneTracking(oldModel, rsp.dashboard.version));
+
+  return scene;
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -479,6 +483,18 @@ const getLimitedDescriptionReporter = () => {
     DashboardInteractions.panelDescriptionShown();
   };
 };
+
+function registerDashboardSceneTracking(model: DashboardModel, version?: number) {
+  return () => {
+    const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
+
+    trackDashboardLoaded(model, version);
+
+    return () => {
+      unsetDashboardInteractionsScenesContext();
+    };
+  };
+}
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
   const descriptionReporter = getLimitedDescriptionReporter();

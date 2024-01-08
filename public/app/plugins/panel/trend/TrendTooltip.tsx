@@ -43,7 +43,6 @@ export const TrendTooltip = ({
   data,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
-  sync,
   dataIdxs,
   seriesIdx,
   isPinned,
