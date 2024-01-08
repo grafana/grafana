@@ -18,7 +18,7 @@ import (
 func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 	queryReader, err := util.NewURLQueryReader(c.Req.URL)
 	if err != nil {
-		c.Handle(hs.Cfg, http.StatusNotFound, "Render parameters error", err)
+		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", err)
 		return
 	}
 
@@ -26,25 +26,25 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 
 	width, err := strconv.Atoi(queryReader.Get("width", "800"))
 	if err != nil {
-		c.Handle(hs.Cfg, http.StatusNotFound, "Render parameters error", fmt.Errorf("cannot parse width as int: %s", err))
+		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", fmt.Errorf("cannot parse width as int: %s", err))
 		return
 	}
 
 	height, err := strconv.Atoi(queryReader.Get("height", "400"))
 	if err != nil {
-		c.Handle(hs.Cfg, http.StatusNotFound, "Render parameters error", fmt.Errorf("cannot parse height as int: %s", err))
+		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", fmt.Errorf("cannot parse height as int: %s", err))
 		return
 	}
 
 	timeout, err := strconv.Atoi(queryReader.Get("timeout", "60"))
 	if err != nil {
-		c.Handle(hs.Cfg, http.StatusNotFound, "Render parameters error", fmt.Errorf("cannot parse timeout as int: %s", err))
+		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", fmt.Errorf("cannot parse timeout as int: %s", err))
 		return
 	}
 
 	scale, err := strconv.ParseFloat(queryReader.Get("scale", "1"), 64)
 	if err != nil {
-		c.Handle(hs.Cfg, http.StatusNotFound, "Render parameters error", fmt.Errorf("cannot parse scale as float: %s", err))
+		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", fmt.Errorf("cannot parse scale as float: %s", err))
 		return
 	}
 

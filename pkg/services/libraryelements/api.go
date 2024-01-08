@@ -324,7 +324,7 @@ func toLibraryElementError(err error, message string) response.Response {
 		return response.Error(http.StatusNotFound, dashboards.ErrFolderNotFound.Error(), err)
 	}
 	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-		return response.Error(http.StatusUnauthorized, dashboards.ErrFolderAccessDenied.Error(), err)
+		return response.Error(http.StatusForbidden, dashboards.ErrFolderAccessDenied.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementHasConnections) {
 		return response.Error(http.StatusForbidden, model.ErrLibraryElementHasConnections.Error(), err)
