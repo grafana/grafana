@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
-import { Checkbox, Field, Input, InputControl, SecretInput, Select, Switch } from '@grafana/ui';
+import { Checkbox, Field, Input, InputControl, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { fieldMap } from './fields';
 import { SSOProviderDTO, SSOSettingsField } from './types';
@@ -29,7 +30,7 @@ export const FieldRenderer = ({
   const name = isDependantField ? field.name : field;
   const parentValue = isDependantField ? watch(field.dependsOn) : null;
   const fieldData = fieldMap[name];
-
+  const theme = useTheme2();
   // Unregister a field that depends on a toggle to clear its data
   useEffect(() => {
     if (isDependantField) {
@@ -133,9 +134,7 @@ export const FieldRenderer = ({
       );
     case 'checkbox':
       return (
-        <Field {...fieldProps}>
-          <Checkbox {...register(name)} id={name} />
-        </Field>
+        <Checkbox {...register(name)} id={name} {...fieldProps} className={css({ marginBottom: theme.spacing(2) })} />
       );
     default:
       console.error(`Unknown field type: ${fieldData.type}`);
