@@ -49,9 +49,13 @@ function LogsNavigation({
   // e.g. if last 5 min selected, always run 5 min range
   const rangeSpanRef = useRef(0);
 
-  const currentPageIndex = useMemo(() => pages.findIndex((page) => {
-    return page.queryRange.to === absoluteRange.to;
-  }), [absoluteRange.to, pages]);
+  const currentPageIndex = useMemo(
+    () =>
+      pages.findIndex((page) => {
+        return page.queryRange.to === absoluteRange.to;
+      }),
+    [absoluteRange.to, pages]
+  );
 
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
   const onFirstPage = oldestLogsFirst ? currentPageIndex === pages.length - 1 : currentPageIndex === 0;
