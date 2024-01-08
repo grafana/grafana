@@ -61,7 +61,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
     eventData.totalQueries = Object.keys(queryCacheStatus).length;
     eventData.cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
-    if (typeof data.request?.panelId === 'number') {
+    if (Number.isInteger(data.request?.panelId)) {
       eventData.panelId = data.request.panelId;
     }
 
