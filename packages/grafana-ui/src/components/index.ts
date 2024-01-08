@@ -264,6 +264,8 @@ export { Avatar } from './UsersIndicator/Avatar';
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
 
+export { LayoutItemContext, type LayoutItemContextProps } from './Layout/LayoutItemContext';
+
 /** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
   SecretFormField,

@@ -1,10 +1,11 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { PureComponent, CSSProperties, useCallback, useRef, useState } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
+import { LayoutItemContext, LayoutItemContextProps } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -383,6 +384,21 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   let width = 100;
   let height = 100;
 
+  const pinnedCount = useRef(0);
+
+  const incrPinnedCount = useCallback((count: number) => {
+    let prevPinnedCount = pinnedCount.current;
+    let nextPinnedCount = (pinnedCount.current = prevPinnedCount + count);
+
+    // redraw with popped z-index when non-zero pinned items
+    if ((prevPinnedCount === 0 && nextPinnedCount > 0) || (prevPinnedCount > 0 && nextPinnedCount === 0)) {
+      setContextVal({ incrPinnedCount });
+    }
+  }, []);
+
+  // here to force redraw via context re-wrap
+  const [contextVal, setContextVal] = useState<LayoutItemContextProps>({ incrPinnedCount });
+
   const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, descendingOrderIndex, ...divProps } = props;
   const style: CSSProperties = props.style ?? {};
 
@@ -413,10 +429,17 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <div {...divProps} style={{ ...divProps.style, zIndex: descendingOrderIndex }} ref={ref}>
-      {/* Pass width and height to children as render props */}
-      {[props.children[0](width, height), props.children.slice(1)]}
-    </div>
+    <LayoutItemContext.Provider value={contextVal}>
+      <div
+        {...divProps}
+        // .context-menu-open === $zindex-dropdown === 1030 (zIndex.ts)
+        style={{ ...divProps.style, zIndex: pinnedCount.current === 0 ? descendingOrderIndex : 1030 }}
+        ref={ref}
+      >
+        {/* Pass width and height to children as render props */}
+        {[props.children[0](width, height), props.children.slice(1)]}
+      </div>
+    </LayoutItemContext.Provider>
   );
 });
 
