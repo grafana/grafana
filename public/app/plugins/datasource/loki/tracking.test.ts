@@ -1,6 +1,4 @@
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
-
-import { DashboardLoadedEvent, dateTime } from '@grafana/data';
+import { DashboardLoadedEvent, DataQueryRequest, dateTime } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
@@ -27,7 +25,7 @@ const range = {
     to: dateTime('2023-02-10T06:00:00.000Z'),
   },
 };
-const originalRequest = getQueryOptions<LokiQuery>({
+const originalRequest = {
   targets: [
     { expr: 'count_over_time({a="b"}[1m])', refId: 'A', ...baseTarget },
     { expr: '{a="b"}', refId: 'B', maxLines: 10, ...baseTarget },
@@ -35,26 +33,23 @@ const originalRequest = getQueryOptions<LokiQuery>({
   ],
   range,
   app: 'explore',
-});
+} as DataQueryRequest<LokiQuery>;
+
 const requests: LokiGroupedRequest[] = [
   {
     request: {
-      ...getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', ...baseTarget }],
-        range,
-      }),
+      targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', ...baseTarget }],
+      range,
       app: 'explore',
-    },
+    } as DataQueryRequest<LokiQuery>,
     partition: partitionTimeRange(true, range, 60000, 24 * 60 * 60 * 1000),
   },
   {
     request: {
-      ...getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{a="b"}', refId: 'B', maxLines: 10, ...baseTarget }],
-        range,
-      }),
+      targets: [{ expr: '{a="b"}', refId: 'B', maxLines: 10, ...baseTarget }],
+      range,
       app: 'explore',
-    },
+    } as DataQueryRequest<LokiQuery>,
     partition: partitionTimeRange(false, range, 60000, 24 * 60 * 60 * 1000),
   },
 ];
