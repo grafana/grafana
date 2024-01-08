@@ -407,6 +407,9 @@
       "label": "添加新数据源"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
     "rich-history": {
@@ -662,6 +665,9 @@
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
     },
+    "alert-list-legacy": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
       "title": "警报"
@@ -697,6 +703,10 @@
     "alerting-silences": {
       "subtitle": "停止来自一个或多个警报规则的通知",
       "title": "静默"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "警报和事件管理应用",
@@ -964,6 +974,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "最新博客"
   },
   "notifications": {

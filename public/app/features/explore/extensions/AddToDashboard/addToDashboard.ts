@@ -1,5 +1,5 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { Dashboard, DataQuery, DataSourceRef } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
@@ -19,6 +19,7 @@ interface AddPanelToDashboardOptions {
   datasource?: DataSourceRef;
   dashboardUid?: string;
   panelState?: ExplorePanelsState;
+  time: Dashboard['time'];
 }
 
 function createDashboard(): DashboardDTO {
@@ -92,6 +93,8 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
   }
 
   dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
+
+  dto.dashboard.time = options.time;
 
   try {
     setDashboardToFetchFromLocalStorage(dto);

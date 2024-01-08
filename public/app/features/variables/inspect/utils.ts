@@ -60,6 +60,12 @@ export function getVariableName(expression: string) {
     return undefined;
   }
   const variableName = match.slice(1).find((match) => match !== undefined);
+
+  // ignore variables that match inherited object prop names
+  if (variableName! in {}) {
+    return undefined;
+  }
+
   return variableName;
 }
 

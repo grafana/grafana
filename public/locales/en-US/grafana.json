@@ -412,6 +412,9 @@
       "label": "Add new data source"
     }
   },
+  "drawer": {
+    "close": "Close Drawer"
+  },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "rich-history": {
@@ -668,6 +671,9 @@
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
     },
+    "alert-list-legacy": {
+      "title": "Alert rules"
+    },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
@@ -703,6 +709,10 @@
     "alerting-silences": {
       "subtitle": "Stop notifications from one or more alerting rules",
       "title": "Silences"
+    },
+    "alerting-upgrade": {
+      "subtitle": "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
+      "title": "Alerting upgrade"
     },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
@@ -970,6 +980,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": "Close Drawer"
+    },
     "title": "Latest from the blog"
   },
   "notifications": {

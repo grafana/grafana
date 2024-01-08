@@ -412,6 +412,9 @@
       "label": "Neue Datenquelle hinzufügen"
     }
   },
+  "drawer": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
     "rich-history": {
@@ -668,6 +671,9 @@
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
     },
+    "alert-list-legacy": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
       "title": "Meldungen"
@@ -703,6 +709,10 @@
     "alerting-silences": {
       "subtitle": "Schalte Benachrichtigungen von einer oder mehrerer Warnregeln aus",
       "title": "Stummschalten"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
@@ -970,6 +980,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {

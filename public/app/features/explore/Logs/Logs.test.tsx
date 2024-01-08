@@ -19,6 +19,7 @@ import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { Logs } from './Logs';
+import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
 
 const reportInteraction = jest.fn();
@@ -477,6 +478,20 @@ describe('Logs', () => {
       await userEvent.click(logsSection);
 
       const table = screen.getByTestId('logRowsTable');
+      expect(table).toBeInTheDocument();
+    });
+
+    it('should use default state from localstorage - table', async () => {
+      localStorage.setItem(visualisationTypeKey, 'table');
+      setup({});
+      const table = await screen.findByTestId('logRowsTable');
+      expect(table).toBeInTheDocument();
+    });
+
+    it('should use default state from localstorage - logs', async () => {
+      localStorage.setItem(visualisationTypeKey, 'logs');
+      setup({});
+      const table = await screen.findByTestId('logRows');
       expect(table).toBeInTheDocument();
     });
 

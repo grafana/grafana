@@ -12,24 +12,24 @@ import (
 )
 
 type MuteTimingService struct {
-	config AMConfigStore
-	prov   ProvisioningStore
-	xact   TransactionManager
-	log    log.Logger
+	configStore     alertmanagerConfigStore
+	provenanceStore ProvisioningStore
+	xact            TransactionManager
+	log             log.Logger
 }
 
 func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *MuteTimingService {
 	return &MuteTimingService{
-		config: config,
-		prov:   prov,
-		xact:   xact,
-		log:    log,
+		configStore:     &alertmanagerConfigStoreImpl{store: config},
+		provenanceStore: prov,
+		xact:            xact,
+		log:             log,
 	}
 }
 
 // GetMuteTimings returns a slice of all mute timings within the specified org.
 func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error) {
-	rev, err := getLastConfiguration(ctx, orgID, svc.config)
+	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return nil, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	revision, err := getLastConfiguration(ctx, orgID, svc.config)
+	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,32 +66,15 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 	}
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(revision.cfg.AlertmanagerConfig.MuteTimeIntervals, mt.MuteTimeInterval)
 
-	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
-	if err != nil {
-		return nil, err
-	}
-	cmd := models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      revision.version,
-		FetchedConfigurationHash:  revision.concurrencyToken,
-		Default:                   false,
-		OrgID:                     orgID,
-	}
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = PersistConfig(ctx, svc.config, &cmd)
-		if err != nil {
+		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		err = svc.prov.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
-		if err != nil {
-			return err
-		}
-		return nil
+		return svc.provenanceStore.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	return &mt, nil
 }
 
@@ -101,7 +84,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return nil, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	revision, err := getLastConfiguration(ctx, orgID, svc.config)
+	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -121,38 +104,21 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return nil, nil
 	}
 
-	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
-	if err != nil {
-		return nil, err
-	}
-	cmd := models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      revision.version,
-		FetchedConfigurationHash:  revision.concurrencyToken,
-		Default:                   false,
-		OrgID:                     orgID,
-	}
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = PersistConfig(ctx, svc.config, &cmd)
-		if err != nil {
+		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		err = svc.prov.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
-		if err != nil {
-			return err
-		}
-		return nil
+		return svc.provenanceStore.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	return &mt, err
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
 func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64) error {
-	revision, err := getLastConfiguration(ctx, orgID, svc.config)
+	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -170,28 +136,12 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		}
 	}
 
-	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
-	if err != nil {
-		return err
-	}
-	cmd := models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      revision.version,
-		FetchedConfigurationHash:  revision.concurrencyToken,
-		Default:                   false,
-		OrgID:                     orgID,
-	}
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = PersistConfig(ctx, svc.config, &cmd)
-		if err != nil {
+		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
 		target := definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: name}}
-		err := svc.prov.DeleteProvenance(ctx, &target, orgID)
-		if err != nil {
-			return err
-		}
-		return nil
+		return svc.provenanceStore.DeleteProvenance(ctx, &target, orgID)
 	})
 }
 
