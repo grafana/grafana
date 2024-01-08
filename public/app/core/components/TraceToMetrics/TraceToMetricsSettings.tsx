@@ -8,11 +8,10 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 import { IntervalInput } from '../IntervalInput/IntervalInput';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 import { getTimeShiftLabel, getTimeShiftTooltip, invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
