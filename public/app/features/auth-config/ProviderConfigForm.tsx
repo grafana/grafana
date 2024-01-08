@@ -85,6 +85,9 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
               reset();
             }}
           />
+          <Field label="Enabled">
+            <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
+          </Field>
           {sections ? (
             <Stack gap={2} direction={'column'}>
               {sections.map((section, index) => {
@@ -111,9 +114,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             </Stack>
           ) : (
             <>
-              <Field label="Enabled">
-                <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
-              </Field>
               {providerFields.map((field) => {
                 return (
                   <FieldRenderer
