@@ -176,6 +176,7 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.up(theme.breakpoints.values.md)]: {
         position: 'absolute',
         right: 0,
+        zIndex: 2,
       },
     }),
   };
