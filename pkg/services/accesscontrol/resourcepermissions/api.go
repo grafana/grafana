@@ -82,7 +82,7 @@ type Description struct {
 	Permissions []string    `json:"permissions"`
 }
 
-// swagger:route POST /access-control/{resource}/description access_control getResourceDescription
+// swagger:route GET /access-control/{resource}/description access_control getResourceDescription
 //
 // Get a description of a resource's access control properties.
 //
@@ -128,7 +128,7 @@ type GetResourcePermissionsParams struct {
 // swagger:response getResourcePermissionsResponse
 type getResourcePermissionsResponse []resourcePermissionDTO
 
-// swagger:route POST /access-control/{resource}/{resourceID} access_control getResourcePermissions
+// swagger:route GET /access-control/{resource}/{resourceID} access_control getResourcePermissions
 //
 // Get permissions for a resource.
 //

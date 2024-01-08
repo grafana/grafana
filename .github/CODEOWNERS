@@ -666,10 +666,10 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/update-changelog.yml @grafana/grafana-release-guild
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
 /.github/workflows/snyk.yml @grafana/security-team
-/.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-as-code
-/.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
-/.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
-/.github/workflows/verify-kinds.yml @grafana/grafana-as-code
+/.github/workflows/scripts/kinds/verify-kinds.go @grafana/platform-cat
+/.github/workflows/publish-kinds-next.yml @grafana/platform-cat
+/.github/workflows/publish-kinds-release.yml @grafana/platform-cat
+/.github/workflows/verify-kinds.yml @grafana/platform-cat
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad

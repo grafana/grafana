@@ -751,65 +751,66 @@ func TestDashAlertMigration(t *testing.T) {
 	})
 }
 
+const newQueryModel = `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"interval":"%s","intervalMs":%d,"maxDataPoints":1500,"refId":"%s"}`
+
+func createAlertQueryWithModel(refId string, ds string, from string, to string, model string) ngModels.AlertQuery {
+	rel, _ := getRelativeDuration(from, to)
+	return ngModels.AlertQuery{
+		RefID:             refId,
+		RelativeTimeRange: ngModels.RelativeTimeRange{From: rel.From, To: rel.To},
+		DatasourceUID:     ds,
+		Model:             []byte(model),
+	}
+}
+
+func createAlertQuery(refId string, ds string, from string, to string) ngModels.AlertQuery {
+	dur, _ := calculateInterval(legacydata.NewDataTimeRange(from, to), simplejson.New(), nil)
+	return createAlertQueryWithModel(refId, ds, from, to, fmt.Sprintf(newQueryModel, "", dur.Milliseconds(), refId))
+}
+
+func createClassicConditionQuery(refId string, conditions []classicCondition) ngModels.AlertQuery {
+	exprModel := struct {
+		Type       string             `json:"type"`
+		RefID      string             `json:"refId"`
+		Conditions []classicCondition `json:"conditions"`
+	}{
+		"classic_conditions",
+		refId,
+		conditions,
+	}
+	exprModelJSON, _ := json.Marshal(&exprModel)
+
+	q := ngModels.AlertQuery{
+		RefID:         refId,
+		DatasourceUID: expressionDatasourceUID,
+		Model:         exprModelJSON,
+	}
+	// IntervalMS and MaxDataPoints are created PreSave by AlertQuery. They don't appear to be necessary for expressions,
+	// but run PreSave here to match the expected model.
+	_ = q.PreSave()
+	return q
+}
+
+func cond(refId string, reducer string, evalType string, thresh float64) classicCondition {
+	return classicCondition{
+		Evaluator: evaluator{Params: []float64{thresh}, Type: evalType},
+		Operator: struct {
+			Type string `json:"type"`
+		}{Type: "and"},
+		Query: struct {
+			Params []string `json:"params"`
+		}{Params: []string{refId}},
+		Reducer: struct {
+			Type string `json:"type"`
+		}{Type: reducer},
+	}
+}
+
 // TestDashAlertQueryMigration tests the execution of the migration specifically for alert rule queries.
 func TestDashAlertQueryMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
 	service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
-
-	newQueryModel := `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"interval":"%s","intervalMs":%d,"maxDataPoints":1500,"refId":"%s"}`
-	createAlertQueryWithModel := func(refId string, ds string, from string, to string, model string) ngModels.AlertQuery {
-		rel, _ := getRelativeDuration(from, to)
-		return ngModels.AlertQuery{
-			RefID:             refId,
-			RelativeTimeRange: ngModels.RelativeTimeRange{From: rel.From, To: rel.To},
-			DatasourceUID:     ds,
-			Model:             []byte(model),
-		}
-	}
-
-	createAlertQuery := func(refId string, ds string, from string, to string) ngModels.AlertQuery {
-		dur, _ := calculateInterval(legacydata.NewDataTimeRange(from, to), simplejson.New(), nil)
-		return createAlertQueryWithModel(refId, ds, from, to, fmt.Sprintf(newQueryModel, "", dur.Milliseconds(), refId))
-	}
-
-	createClassicConditionQuery := func(refId string, conditions []classicCondition) ngModels.AlertQuery {
-		exprModel := struct {
-			Type       string             `json:"type"`
-			RefID      string             `json:"refId"`
-			Conditions []classicCondition `json:"conditions"`
-		}{
-			"classic_conditions",
-			refId,
-			conditions,
-		}
-		exprModelJSON, _ := json.Marshal(&exprModel)
-
-		q := ngModels.AlertQuery{
-			RefID:         refId,
-			DatasourceUID: expressionDatasourceUID,
-			Model:         exprModelJSON,
-		}
-		// IntervalMS and MaxDataPoints are created PreSave by AlertQuery. They don't appear to be necessary for expressions,
-		// but run PreSave here to match the expected model.
-		_ = q.PreSave()
-		return q
-	}
-
-	cond := func(refId string, reducer string, evalType string, thresh float64) classicCondition {
-		return classicCondition{
-			Evaluator: evaluator{Params: []float64{thresh}, Type: evalType},
-			Operator: struct {
-				Type string `json:"type"`
-			}{Type: "and"},
-			Query: struct {
-				Params []string `json:"params"`
-			}{Params: []string{refId}},
-			Reducer: struct {
-				Type string `json:"type"`
-			}{Type: reducer},
-		}
-	}
 
 	genAlert := func(mutators ...ngModels.AlertRuleMutator) *ngModels.AlertRule {
 		rule := &ngModels.AlertRule{

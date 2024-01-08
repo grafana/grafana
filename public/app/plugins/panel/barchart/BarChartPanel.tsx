@@ -213,7 +213,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       }
     }
 
-    return <PlotLegend data={info.viz} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
+    return <PlotLegend data={[info.legend]} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {

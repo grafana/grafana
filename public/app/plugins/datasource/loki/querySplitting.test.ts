@@ -3,10 +3,11 @@ import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import { dateTime, LoadingState } from '@grafana/data';
 
+import { createLokiDatasource } from './__mocks__/datasource';
+import { getMockFrames } from './__mocks__/frames';
 import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
-import { createLokiDatasource, getMockFrames } from './mocks';
 import { runSplitQuery } from './querySplitting';
 import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryType } from './types';
@@ -81,8 +82,8 @@ describe('runSplitQuery()', () => {
           intervalMs: 60000,
           range: expect.objectContaining({
             from: expect.objectContaining({
-              //2023-02-09T06:00:00.000Z
-              _i: 1675922400000,
+              //2023-02-10T05:00:00.000Z
+              _i: 1676005200000,
             }),
             to: expect.objectContaining({
               // 2023-02-10T06:00:00.000Z
@@ -99,12 +100,12 @@ describe('runSplitQuery()', () => {
           intervalMs: 60000,
           range: expect.objectContaining({
             from: expect.objectContaining({
-              //2023-02-08T05:59:00.000Z
-              _i: 1675835940000,
+              // 2023-02-09T05:00:00.000Z
+              _i: 1675918800000,
             }),
             to: expect.objectContaining({
-              // 2023-02-09T05:59:00.000Z
-              _i: 1675922340000,
+              // 2023-02-10T04:59:00.000Z
+              _i: 1676005140000,
             }),
           }),
         })
@@ -117,12 +118,12 @@ describe('runSplitQuery()', () => {
           intervalMs: 60000,
           range: expect.objectContaining({
             from: expect.objectContaining({
-              //2023-02-08T05:00:00.000Z
+              // 2023-02-08T05:00:00.000Z
               _i: 1675832400000,
             }),
             to: expect.objectContaining({
-              // 2023-02-08T05:58:00.000Z
-              _i: 1675835880000,
+              // 2023-02-09T04:59:00.000Z
+              _i: 1675918740000,
             }),
           }),
         })
@@ -141,8 +142,8 @@ describe('runSplitQuery()', () => {
           intervalMs: 60000,
           range: expect.objectContaining({
             from: expect.objectContaining({
-              //2023-02-09T06:00:00.000Z
-              _i: 1675922400000,
+              //2023-02-10T05:00:00.000Z
+              _i: 1676005200000,
             }),
             to: expect.objectContaining({
               // 2023-02-10T06:00:00.000Z
@@ -159,12 +160,12 @@ describe('runSplitQuery()', () => {
           intervalMs: 60000,
           range: expect.objectContaining({
             from: expect.objectContaining({
-              //2023-02-08T05:59:50.000Z
-              _i: 1675835990000,
+              // 2023-02-09T05:00:00.000Z
+              _i: 1675918800000,
             }),
             to: expect.objectContaining({
-              // 2023-02-09T05:59:50.000Z
-              _i: 1675922390000,
+              // 2023-02-10T04:59:50.000Z
+              _i: 1676005190000,
             }),
           }),
         })
@@ -181,8 +182,8 @@ describe('runSplitQuery()', () => {
               _i: 1675832400000,
             }),
             to: expect.objectContaining({
-              // 2023-02-08T05:59:40.000Z
-              _i: 1675835980000,
+              // 2023-02-09T04:59:50.000Z
+              _i: 1675918790000,
             }),
           }),
         })

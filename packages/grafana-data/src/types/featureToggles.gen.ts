@@ -170,4 +170,5 @@ export interface FeatureToggles {
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
+  alertingPreviewUpgrade?: boolean;
 }
