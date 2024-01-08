@@ -1,3 +1,4 @@
+---
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
@@ -11,4 +12,4 @@ spec:
   service:
     name: example-apiserver
     namespace: grafana
-    port: 8443
+    port: 7443
