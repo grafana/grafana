@@ -26,38 +26,40 @@ type AlertmanagerConfig struct {
 
 type Alertmanager struct {
 	*amclient.AlertmanagerAPI
-	httpClient *http.Client
+	httpClient client.Requester
 	url        *url.URL
 	logger     log.Logger
 }
 
 func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	// First, add the authentication middleware.
-	c := &http.Client{
-		Transport: &MimirAuthRoundTripper{
-			TenantID:    cfg.TenantID,
-			Password:    cfg.Password,
-			TimedClient: client.NewTimedClient(http.DefaultClient, metrics.HTTPRequestDuration),
-		},
-	}
+	c := &http.Client{Transport: &MimirAuthRoundTripper{
+		TenantID: cfg.TenantID,
+		Password: cfg.Password,
+		Next:     http.DefaultTransport,
+	}}
 
+	tc := client.NewTimedClient(c, metrics.HTTPRequestDuration)
 	apiEndpoint := *cfg.URL
 
 	// Next, make sure you set the right path.
 	u := apiEndpoint.JoinPath(alertmanagerAPIMountPath, amclient.DefaultBasePath)
-	transport := httptransport.NewWithClient(u.Host, u.Path, []string{u.Scheme}, c)
+
+	// Create an Alertmanager client using the timed client as the transport.
+	r := httptransport.New(u.Host, u.Path, []string{u.Scheme})
+	r.Transport = tc
 
 	return &Alertmanager{
 		logger:          cfg.Logger,
 		url:             cfg.URL,
-		AlertmanagerAPI: amclient.New(transport, nil),
-		httpClient:      c,
+		AlertmanagerAPI: amclient.New(r, nil),
+		httpClient:      tc,
 	}, nil
 }
 
-// GetAuthedClient returns a *http.Client that includes a configured MimirAuthRoundTripper.
+// GetAuthedClient returns a client.Requester that includes a configured MimirAuthRoundTripper.
 // Requests using this client are fully authenticated.
-func (am *Alertmanager) GetAuthedClient() *http.Client {
+func (am *Alertmanager) GetAuthedClient() client.Requester {
 	return am.httpClient
 }
 
