@@ -37,6 +37,7 @@ export type Props = {
   resource: string;
   resourceId: ResourceId;
   canSetPermissions: boolean;
+  teamLBACTeamsConfigured?: number[];
 };
 
 export const Permissions = ({
@@ -47,15 +48,20 @@ export const Permissions = ({
   resourceId,
   canSetPermissions,
   addPermissionTitle,
+  teamLBACTeamsConfigured,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
 
-  const fetchItems = useCallback(() => {
-    return getPermissions(resource, resourceId).then((r) => setItems(r));
-  }, [resource, resourceId]);
+  const fetchItems = useCallback(async () => {
+    let items = await getPermissions(resource, resourceId);
+    if (teamLBACTeamsConfigured) {
+      items = addTeamLBACWarnings(teamLBACTeamsConfigured, items);
+    }
+    setItems(items);
+  }, [resource, resourceId, teamLBACTeamsConfigured]);
 
   useEffect(() => {
     getDescription(resource).then((r) => {
@@ -265,6 +271,16 @@ const setPermission = (
   permission: string
 ): Promise<void> =>
   getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}`, { permission });
+
+const addTeamLBACWarnings = (teams: number[], items: ResourcePermission[]) => {
+  return items.map((item) => {
+    if (item.permission !== 'Admin' && (!item.teamId || !teams.includes(item.teamId))) {
+      item.warning = `Warning: permission does not have corresponding rule configured in team LBAC.
+      Users might have full access to the data.`;
+    }
+    return { ...item };
+  });
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   breakdown: css({
