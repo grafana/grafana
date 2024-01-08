@@ -207,12 +207,10 @@ export class KeybindingSrv {
     });
 
     this.bind('t c', () => {
-      console.log('copy time range binding');
       appEvents.publish(new CopyTimeEvent());
     });
 
     this.bind('t v', () => {
-      console.log('paste time range binding');
       appEvents.publish(new PasteTimeEvent());
     });
   }

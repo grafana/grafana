@@ -1,4 +1,4 @@
-import { cloneDeep, extend, isString, update } from 'lodash';
+import { cloneDeep, extend, isString } from 'lodash';
 
 import {
   dateMath,
@@ -375,7 +375,6 @@ export class TimeSrv {
 
   copyTimeRangeToClipboard() {
     const { raw } = this.timeRange();
-    console.log('dashboard - copyTimeRangeToClipboard');
     navigator.clipboard.writeText(JSON.stringify({ from: raw.from, to: raw.to }));
     appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
   }
@@ -384,10 +383,12 @@ export class TimeSrv {
     navigator.clipboard.readText().then((text) => {
       const { from, to } = JSON.parse(text);
       try {
-        this.setTime({ from, to });
+        this.setTime({ from, to }, true);
       } catch (err) {
-        console.log('dashboard - pasteTimeRangeFromClipboard', from, to);
-        console.error('Invalid time range in clipboard', err);
+        appEvents.emit(AppEvents.alertError, [
+          'Invalid time range',
+          `From: ${from}, To: ${to} is not a valid time range`,
+        ]);
       }
     });
   }
