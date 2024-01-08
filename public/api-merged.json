@@ -11351,6 +11351,39 @@
       }
     },
     "/v1/sso-settings/{key}": {
+      "get": {
+        "description": "You need to have a permission with action `settings:read` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "tags": [
+          "sso_settings"
+        ],
+        "summary": "Get an SSO Settings entry by Key",
+        "operationId": "getProviderSettings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "key",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          }
+        }
+      },
       "put": {
         "description": "Inserts or updates the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
         "tags": [
