@@ -1144,7 +1144,6 @@
       "view-button-tooltip": ""
     },
     "dashboard-title": {
-      "not-orphaned-title": "",
       "orphaned-title": "",
       "orphaned-tooltip": ""
     },
@@ -1163,6 +1162,7 @@
       "delete-user-button-text": "",
       "delete-user-cancel-button": "",
       "delete-user-revoke-access-button": "",
+      "revoke-access-title": "",
       "revoke-user-access-modal-desc-line1": "",
       "revoke-user-access-modal-desc-line2": ""
     },

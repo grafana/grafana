@@ -1138,7 +1138,6 @@
       "view-button-tooltip": "Vįęŵ pūþľįč đäşĥþőäřđ"
     },
     "dashboard-title": {
-      "not-orphaned-title": "{{title}}",
       "orphaned-title": "<0>Øřpĥäŉęđ pūþľįč đäşĥþőäřđ</0>",
       "orphaned-tooltip": "Ŧĥę ľįŉĸęđ đäşĥþőäřđ ĥäş äľřęäđy þęęŉ đęľęŧęđ"
     },
@@ -1157,6 +1156,7 @@
       "delete-user-button-text": "Đęľęŧę ūşęř",
       "delete-user-cancel-button": "Cäŉčęľ",
       "delete-user-revoke-access-button": "Ŗęvőĸę äččęşş",
+      "revoke-access-title": "Ŗęvőĸę äččęşş",
       "revoke-user-access-modal-desc-line1": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę äččęşş ƒőř {{email}}?",
       "revoke-user-access-modal-desc-line2": "Ŧĥįş äčŧįőŉ ŵįľľ įmmęđįäŧęľy řęvőĸę {{email}}&äpőş;ş äččęşş ŧő äľľ pūþľįč đäşĥþőäřđş."
     },

@@ -1138,7 +1138,6 @@
       "view-button-tooltip": "View public dashboard"
     },
     "dashboard-title": {
-      "not-orphaned-title": "{{title}}",
       "orphaned-title": "<0>Orphaned public dashboard</0>",
       "orphaned-tooltip": "The linked dashboard has already been deleted"
     },
@@ -1157,6 +1156,7 @@
       "delete-user-button-text": "Delete user",
       "delete-user-cancel-button": "Cancel",
       "delete-user-revoke-access-button": "Revoke access",
+      "revoke-access-title": "Revoke access",
       "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?",
       "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
     },
