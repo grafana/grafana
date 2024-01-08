@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -56,6 +57,19 @@ export const Expression: FC<ExpressionProps> = ({
 
   const queryType = query?.type;
 
+  const { setError, clearErrors } = useFormContext();
+
+  const onQueriesValidationError = useCallback(
+    (errorMsg: string | undefined) => {
+      if (errorMsg) {
+        setError('queries', { type: 'custom', message: errorMsg });
+      } else {
+        clearErrors('queries');
+      }
+    },
+    [setError, clearErrors]
+  );
+
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
@@ -85,13 +99,22 @@ export const Expression: FC<ExpressionProps> = ({
           return <ClassicConditions onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
 
         case ExpressionQueryType.threshold:
-          return <Threshold onChange={onChangeQuery} query={query} labelWidth={'auto'} refIds={availableRefIds} />;
+          return (
+            <Threshold
+              onChange={onChangeQuery}
+              query={query}
+              labelWidth={'auto'}
+              refIds={availableRefIds}
+              onError={onQueriesValidationError}
+              useHysteresis={true}
+            />
+          );
 
         default:
           return <>Expression not supported: {query.type}</>;
       }
     },
-    [onChangeQuery, queries]
+    [onChangeQuery, queries, onQueriesValidationError]
   );
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';

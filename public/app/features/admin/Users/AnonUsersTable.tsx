@@ -11,6 +11,7 @@ import {
   Pagination,
   FetchDataFunc,
 } from '@grafana/ui';
+import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
 import { UserAnonymousDeviceDTO } from 'app/types';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
@@ -113,6 +114,11 @@ export const AnonUsersDevicesTable = ({
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
         </Stack>
+      )}
+      {devices.length === 0 && (
+        <EmptyArea>
+          <span>No anonymous users found.</span>
+        </EmptyArea>
       )}
     </Stack>
   );
