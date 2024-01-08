@@ -56,7 +56,7 @@ func (s *OAuthStrategy) loadAllSettings() {
 }
 
 func (s *OAuthStrategy) loadSettingsForProvider(provider string) *social.OAuthInfo {
-	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
+	section := s.cfg.Raw.Section("auth." + provider)
 
 	result := &social.OAuthInfo{
 		AllowAssignGrafanaAdmin: section.Key("allow_assign_grafana_admin").MustBool(false),
