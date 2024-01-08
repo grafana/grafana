@@ -55,7 +55,7 @@ function fixRefIds(queryDef: PromQuery, index: number): PromQuery {
   // This method will reassign based on `A + index` -- A, B, C, etc
   return {
     ...queryDef,
-    refId: String.fromCharCode('A'.charCodeAt(0) + index) || 'A',
+    refId: String.fromCharCode('A'.charCodeAt(0) + index),
   };
 }
 
@@ -84,5 +84,3 @@ function percentileQuery(percentile: number, groupings: string[] = []) {
     legendFormat: `${percentile}th Percentile`,
   };
 }
-
-// const BASE_QUERY = `sum by(le) ()`;
