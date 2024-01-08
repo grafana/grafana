@@ -27,6 +27,12 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
 	}
 
+	// We only want to set the appSubURL if we are actually serving requests from a sub path
+	var appSubURL string
+	if grafanaCfg.ServeFromSubPath {
+		appSubURL = grafanaCfg.AppSubURL
+	}
+
 	return pCfg.NewCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
 		grafanaCfg.PluginsPath,
@@ -41,7 +47,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
 		grafanaCfg.AppURL,
-		grafanaCfg.AppSubURL,
+		appSubURL,
 		tracingCfg,
 		features,
 		grafanaCfg.AngularSupportEnabled,
