@@ -227,7 +227,7 @@ export const userListAnonymousDevicesSlice = createSlice({
   name: 'userListAnonymousDevices',
   initialState: initialUserListAnonymousDevicesState,
   reducers: {
-  usersAnonymousDevicesFetched: (state, action: PayloadAction<UsersAnonymousDevicesFetched>) => {
+    usersAnonymousDevicesFetched: (state, action: PayloadAction<UsersAnonymousDevicesFetched>) => {
       const { totalCount, perPage, ...rest } = action.payload;
       const totalPages = Math.ceil(totalCount / perPage);
 
@@ -270,10 +270,10 @@ export const userListAnonymousDevicesSlice = createSlice({
       };
     },
   },
-
 });
 
-export const { usersAnonymousDevicesFetched, anonUserSortChanged, anonPageChanged, anonQueryChanged } = userListAnonymousDevicesSlice.actions;
+export const { usersAnonymousDevicesFetched, anonUserSortChanged, anonPageChanged, anonQueryChanged } =
+  userListAnonymousDevicesSlice.actions;
 export const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
 
 export default {
