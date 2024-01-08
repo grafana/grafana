@@ -121,7 +121,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       getDashboardUrl({
         uid: this.state.dashboardRef.resolve().state.uid,
         currentQueryParams: locationService.getLocation().search,
-        useExperimentalURL: true,
       })
     );
   }

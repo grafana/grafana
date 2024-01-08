@@ -134,6 +134,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
       winHeight = htmlEl.clientHeight - 5;
     });
 
+    let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
     let closestSeriesIdx: number | null = null;
 
     let pendingRender = false;
@@ -192,9 +193,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering
-          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss)
-          : null,
+        contents: _isHovering ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss) : null,
         dismiss,
       };
 
@@ -324,12 +323,12 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
     // fires on data value hovers/unhovers (before setSeries)
     config.addHook('setLegend', (u) => {
-      let hoveredSeriesIdx = _plot!.cursor.idxs!.findIndex((v, i) => i > 0 && v != null);
+      seriesIdxs = _plot?.cursor!.idxs!.slice()!;
+
+      let hoveredSeriesIdx = seriesIdxs.findIndex((v, i) => i > 0 && v != null);
       let _isHoveringNow = hoveredSeriesIdx !== -1;
 
-      // in mode: 2 uPlot won't fire the proximity-based setSeries (below)
-      // so we set closestSeriesIdx here instead
-      // TODO: setSeries only fires for TimeSeries & Trend...not state timeline or statsus history
+      // setSeries may not fire if focus.prox is not set, so we set closestSeriesIdx here instead
       if (hoverMode === TooltipHoverMode.xyOne) {
         closestSeriesIdx = hoveredSeriesIdx;
       }
