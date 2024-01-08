@@ -43,7 +43,7 @@ func ProvideUsersService(searchUserFilter user.SearchUserFilter, userService use
 func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
-		return response.ErrOrFallback(500, "Failed to fetch users", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch users", err)
 	}
 
 	return response.JSON(http.StatusOK, result.Users)
@@ -62,7 +62,7 @@ func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 func (s *OSSService) SearchUsersWithPaging(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
-		return response.ErrOrFallback(500, "Failed to fetch users", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch users", err)
 	}
 
 	return response.JSON(http.StatusOK, result)

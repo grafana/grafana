@@ -2,6 +2,7 @@ package apierrors
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -19,25 +20,25 @@ func ToFolderErrorResponse(err error) response.Response {
 		errors.Is(err, dashboards.ErrDashboardTypeMismatch) ||
 		errors.Is(err, dashboards.ErrDashboardInvalidUid) ||
 		errors.Is(err, dashboards.ErrDashboardUidTooLong) {
-		return response.Error(400, err.Error(), nil)
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
 	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-		return response.Error(403, "Access denied", err)
+		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		return response.JSON(404, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
+		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
 	}
 
 	if errors.Is(err, dashboards.ErrFolderSameNameExists) ||
 		errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
-		return response.Error(409, err.Error(), nil)
+		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
 	if errors.Is(err, dashboards.ErrFolderVersionMismatch) {
-		return response.JSON(412, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
 	}
 
-	return response.ErrOrFallback(500, "Folder API error", err)
+	return response.ErrOrFallback(http.StatusInternalServerError, "Folder API error", err)
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -39,7 +40,7 @@ func (s *searchHTTPService) doQuery(c *contextmodel.ReqContext) response.Respons
 			"reason": searchReadinessCheckResp.Reason,
 		}).Inc()
 
-		return response.JSON(200, &backend.DataResponse{
+		return response.JSON(http.StatusOK, &backend.DataResponse{
 			Frames: []*data.Frame{{
 				Name: "Loading",
 			}},
@@ -49,30 +50,30 @@ func (s *searchHTTPService) doQuery(c *contextmodel.ReqContext) response.Respons
 
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
-		return response.Error(500, "error reading bytes", err)
+		return response.Error(http.StatusInternalServerError, "error reading bytes", err)
 	}
 
 	query := &DashboardQuery{}
 	err = json.Unmarshal(body, query)
 	if err != nil {
-		return response.Error(400, "error parsing body", err)
+		return response.Error(http.StatusBadRequest, "error parsing body", err)
 	}
 
 	resp := s.search.doDashboardQuery(c.Req.Context(), c.SignedInUser, c.SignedInUser.GetOrgID(), *query)
 
 	if resp.Error != nil {
-		return response.Error(500, "error handling search request", resp.Error)
+		return response.Error(http.StatusInternalServerError, "error handling search request", resp.Error)
 	}
 
 	if len(resp.Frames) == 0 {
 		msg := "invalid search response"
-		return response.Error(500, msg, errors.New(msg))
+		return response.Error(http.StatusInternalServerError, msg, errors.New(msg))
 	}
 
 	bytes, err := resp.MarshalJSON()
 	if err != nil {
-		return response.Error(500, "error marshalling response", err)
+		return response.Error(http.StatusInternalServerError, "error marshalling response", err)
 	}
 
-	return response.JSON(200, bytes)
+	return response.JSON(http.StatusOK, bytes)
 }

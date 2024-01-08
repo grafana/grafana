@@ -98,7 +98,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
 
@@ -198,7 +198,7 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 		return response.JSON(http.StatusOK, util.DynMap{"message": "Logged in"})
 	}
 
-	return response.Error(401, "Unauthorized", nil)
+	return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {

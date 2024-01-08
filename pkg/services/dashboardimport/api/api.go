@@ -71,7 +71,7 @@ func (api *ImportDashboardAPI) ImportDashboard(c *contextmodel.ReqContext) respo
 	}
 
 	if limitReached {
-		return response.Error(403, "Quota reached", nil)
+		return response.Error(http.StatusInternalServerError, "Quota reached", nil)
 	}
 
 	req.User = c.SignedInUser

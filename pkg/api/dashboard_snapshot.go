@@ -229,7 +229,7 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 
 	// expired snapshots should also be removed from db
 	if snapshot.Expires.Before(time.Now()) {
-		return response.Error(404, "Dashboard snapshot not found", err)
+		return response.Error(http.StatusNotFound, "Dashboard snapshot not found", err)
 	}
 
 	dto := dtos.DashboardFullWithMeta{
@@ -299,7 +299,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 
 	key := web.Params(c.Req)[":deleteKey"]
 	if len(key) == 0 {
-		return response.Error(404, "Snapshot not found", nil)
+		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
 	}
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: key}
@@ -311,14 +311,14 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 	if queryResult.External {
 		err := deleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
 		if err != nil {
-			return response.Error(500, "Failed to delete external dashboard", err)
+			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
 		}
 	}
 
 	cmd := &dashboardsnapshots.DeleteDashboardSnapshotCommand{DeleteKey: queryResult.DeleteKey}
 
 	if err := hs.dashboardsnapshotsService.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
-		return response.Error(500, "Failed to delete dashboard snapshot", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard snapshot", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -430,7 +430,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 
 	searchQueryResult, err := hs.dashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
 	if err != nil {
-		return response.Error(500, "Search failed", err)
+		return response.Error(http.StatusInternalServerError, "Search failed", err)
 	}
 
 	dto := make([]*dashboardsnapshots.DashboardSnapshotDTO, len(searchQueryResult))

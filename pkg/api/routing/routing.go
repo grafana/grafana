@@ -8,7 +8,7 @@ import (
 
 var (
 	ServerError = func(err error) response.Response {
-		return response.Error(500, "Server error", err)
+		return response.Error(http.StatusInternalServerError, "Server error", err)
 	}
 )
 

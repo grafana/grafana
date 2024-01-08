@@ -92,9 +92,9 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 	if err != nil {
 		var status int
 		if errors.Is(err, apikey.ErrNotFound) {
-			status = 404
+			status = http.StatusNotFound
 		} else {
-			status = 500
+			status = http.StatusInternalServerError
 		}
 		return response.Error(status, "Failed to delete API key", err)
 	}

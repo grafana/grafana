@@ -72,16 +72,16 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 
 	sendAlertsTo, err := ngmodels.StringToAlertmanagersChoice(string(body.AlertmanagersChoice))
 	if err != nil {
-		return response.Error(400, "Invalid alertmanager choice specified", err)
+		return response.Error(http.StatusBadRequest, "Invalid alertmanager choice specified", err)
 	}
 
 	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
-		return response.Error(500, "Couldn't fetch the external Alertmanagers from datasources", err)
+		return response.Error(http.StatusInternalServerError, "Couldn't fetch the external Alertmanagers from datasources", err)
 	}
 
 	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(externalAlertmanagers) < 1 {
-		return response.Error(400, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
+		return response.Error(http.StatusBadRequest, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
 	}
 
 	cfg := &ngmodels.AdminConfiguration{
