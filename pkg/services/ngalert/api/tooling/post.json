@@ -2058,6 +2058,24 @@
    "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
+  "MuteTimeIntervalAPIModel": {
+   "description": "MuteTimeIntervalAPIModel is a serialized representation of the MuteTimeInterval struct, as returned by the API",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalModel"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "MuteTimeIntervalExport": {
    "properties": {
     "name": {
@@ -2076,9 +2094,24 @@
    },
    "type": "object"
   },
-  "MuteTimings": {
+  "MuteTimeIntervalModel": {
+   "description": "MuteTimeIntervalModel is a serialized representation of the MuteTimeInterval struct",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalModel"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "MuteTimingsAPIModel": {
    "items": {
-    "$ref": "#/definitions/MuteTimeInterval"
+    "$ref": "#/definitions/MuteTimeIntervalAPIModel"
    },
    "type": "array"
   },
@@ -4149,6 +4182,45 @@
    },
    "type": "object"
   },
+  "TimeIntervalModel": {
+   "description": "TimeIntervalModel is a serialized representation of the timeinterval.TimeInterval struct",
+   "properties": {
+    "days_of_month": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "location": {
+     "type": "string"
+    },
+    "months": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "times": {
+     "items": {
+      "$ref": "#/definitions/TimeRangeModel"
+     },
+     "type": "array"
+    },
+    "weekdays": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "years": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "TimeRange": {
    "description": "Redefining this to avoid an import cycle",
    "properties": {
@@ -4158,6 +4230,18 @@
     },
     "to": {
      "format": "date-time",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TimeRangeModel": {
+   "description": "TimeRangeModel is a serialize representation of the timeinterval.TimeRange struct",
+   "properties": {
+    "end_time": {
+     "type": "string"
+    },
+    "start_time": {
      "type": "string"
     }
    },
@@ -4405,7 +4489,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4534,7 +4617,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4590,6 +4672,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4652,7 +4735,6 @@
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4796,6 +4878,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -7520,9 +7603,9 @@
     "operationId": "RouteGetMuteTimings",
     "responses": {
      "200": {
-      "description": "MuteTimings",
+      "description": "MuteTimingsAPIModel",
       "schema": {
-       "$ref": "#/definitions/MuteTimings"
+       "$ref": "#/definitions/MuteTimingsAPIModel"
       }
      }
     },
@@ -7541,7 +7624,7 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
+       "$ref": "#/definitions/MuteTimeIntervalAPIModel"
       }
      },
      {
@@ -7552,9 +7635,9 @@
     ],
     "responses": {
      "201": {
-      "description": "MuteTimeInterval",
+      "description": "MuteTimeIntervalAPIModel",
       "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
+       "$ref": "#/definitions/MuteTimeIntervalAPIModel"
       }
      },
      "400": {
@@ -7644,9 +7727,9 @@
     ],
     "responses": {
      "200": {
-      "description": "MuteTimeInterval",
+      "description": "MuteTimeIntervalAPIModel",
       "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
+       "$ref": "#/definitions/MuteTimeIntervalAPIModel"
       }
      },
      "404": {
@@ -7675,7 +7758,7 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
+       "$ref": "#/definitions/MuteTimeIntervalAPIModel"
       }
      },
      {
@@ -7686,9 +7769,9 @@
     ],
     "responses": {
      "200": {
-      "description": "MuteTimeInterval",
+      "description": "MuteTimeIntervalAPIModel",
       "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
+       "$ref": "#/definitions/MuteTimeIntervalAPIModel"
       }
      },
      "400": {

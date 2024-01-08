@@ -9,7 +9,7 @@ import (
 // Get all the mute timings.
 //
 //     Responses:
-//       200: MuteTimings
+//       200: MuteTimingsAPIModel
 
 // swagger:route GET /api/v1/provisioning/mute-timings/export provisioning stable RouteExportMuteTimings
 //
@@ -24,7 +24,7 @@ import (
 // Get a mute timing.
 //
 //     Responses:
-//       200: MuteTimeInterval
+//       200: MuteTimeIntervalAPIModel
 //       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/mute-timings/{name}/export provisioning stable RouteExportMuteTiming
@@ -43,7 +43,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       201: MuteTimeInterval
+//       201: MuteTimeIntervalAPIModel
 //       400: ValidationError
 
 // swagger:route PUT /api/v1/provisioning/mute-timings/{name} provisioning stable RoutePutMuteTiming
@@ -54,7 +54,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       200: MuteTimeInterval
+//       200: MuteTimeIntervalAPIModel
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming
@@ -64,9 +64,6 @@ import (
 //     Responses:
 //       204: description: The mute timing was deleted successfully.
 
-// swagger:route
-
-// swagger:model
 type MuteTimings []MuteTimeInterval
 
 // swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming RouteExportMuteTiming
@@ -79,7 +76,7 @@ type RouteGetMuteTimingParam struct {
 // swagger:parameters RoutePostMuteTiming RoutePutMuteTiming
 type MuteTimingPayload struct {
 	// in:body
-	Body MuteTimeInterval
+	Body MuteTimeIntervalAPIModel
 }
 
 // swagger:parameters RoutePostMuteTiming RoutePutMuteTiming
@@ -88,7 +85,6 @@ type MuteTimingHeaders struct {
 	XDisableProvenance string `json:"X-Disable-Provenance"`
 }
 
-// swagger:model
 type MuteTimeInterval struct {
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
 	Provenance              Provenance `json:"provenance,omitempty"`
@@ -107,24 +103,34 @@ type MuteTimeIntervalExport struct {
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
 }
 
-// MuteTimeIntervalExportHcl is a representation of the MuteTimeInterval in HCL
-type MuteTimeIntervalExportHcl struct {
-	Name          string                  `json:"name" hcl:"name"`
-	TimeIntervals []TimeIntervalExportHcl `json:"time_intervals" hcl:"intervals,block"`
+// MuteTimeIntervalAPIModel is a serialized representation of the MuteTimeInterval struct, as returned by the API
+// swagger:model
+type MuteTimeIntervalAPIModel struct {
+	MuteTimeIntervalModel
+	Provenance Provenance `json:"provenance,omitempty"` // TODO: This is never populated on GETs
 }
 
-// TimeIntervalExportHcl is a representation of the timeinterval.TimeInterval in HCL
-type TimeIntervalExportHcl struct {
-	Times       []TimeRangeExportHcl `json:"times,omitempty" hcl:"times,block"`
-	Weekdays    *[]string            `json:"weekdays,omitempty" hcl:"weekdays"`
-	DaysOfMonth *[]string            `json:"days_of_month,omitempty" hcl:"days_of_month"`
-	Months      *[]string            `json:"months,omitempty" hcl:"months"`
-	Years       *[]string            `json:"years,omitempty" hcl:"years"`
-	Location    *string              `json:"location,omitempty" hcl:"location"`
+// swagger:model
+type MuteTimingsAPIModel []MuteTimeIntervalAPIModel
+
+// MuteTimeIntervalModel is a serialized representation of the MuteTimeInterval struct
+type MuteTimeIntervalModel struct {
+	Name          string              `json:"name" hcl:"name"`
+	TimeIntervals []TimeIntervalModel `json:"time_intervals" hcl:"intervals,block"`
 }
 
-// TimeRangeExportHcl is a representation of the timeinterval.TimeRange in HCL
-type TimeRangeExportHcl struct {
+// TimeIntervalModel is a serialized representation of the timeinterval.TimeInterval struct
+type TimeIntervalModel struct {
+	Times       []TimeRangeModel `json:"times,omitempty" hcl:"times,block"`
+	Weekdays    *[]string        `json:"weekdays,omitempty" hcl:"weekdays"`
+	DaysOfMonth *[]string        `json:"days_of_month,omitempty" hcl:"days_of_month"`
+	Months      *[]string        `json:"months,omitempty" hcl:"months"`
+	Years       *[]string        `json:"years,omitempty" hcl:"years"`
+	Location    *string          `json:"location,omitempty" hcl:"location"`
+}
+
+// TimeRangeModel is a serialize representation of the timeinterval.TimeRange struct
+type TimeRangeModel struct {
 	StartMinute string `json:"start_time" hcl:"start"`
 	EndMinute   string `json:"end_time" hcl:"end"`
 }

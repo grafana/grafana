@@ -6917,6 +6917,24 @@
         "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
         "type": "object"
       },
+      "MuteTimeIntervalAPIModel": {
+        "description": "MuteTimeIntervalAPIModel is a serialized representation of the MuteTimeInterval struct, as returned by the API",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeIntervalModel"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "MuteTimeIntervalExport": {
         "properties": {
           "name": {
@@ -6935,9 +6953,24 @@
         },
         "type": "object"
       },
-      "MuteTimings": {
+      "MuteTimeIntervalModel": {
+        "description": "MuteTimeIntervalModel is a serialized representation of the MuteTimeInterval struct",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeIntervalModel"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MuteTimingsAPIModel": {
         "items": {
-          "$ref": "#/components/schemas/MuteTimeInterval"
+          "$ref": "#/components/schemas/MuteTimeIntervalAPIModel"
         },
         "type": "array"
       },
@@ -10846,6 +10879,45 @@
         },
         "type": "object"
       },
+      "TimeIntervalModel": {
+        "description": "TimeIntervalModel is a serialized representation of the timeinterval.TimeInterval struct",
+        "properties": {
+          "days_of_month": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "location": {
+            "type": "string"
+          },
+          "months": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "times": {
+            "items": {
+              "$ref": "#/components/schemas/TimeRangeModel"
+            },
+            "type": "array"
+          },
+          "weekdays": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "years": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "TimeRange": {
         "description": "Redefining this to avoid an import cycle",
         "properties": {
@@ -10855,6 +10927,18 @@
           },
           "to": {
             "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TimeRangeModel": {
+        "description": "TimeRangeModel is a serialize representation of the timeinterval.TimeRange struct",
+        "properties": {
+          "end_time": {
+            "type": "string"
+          },
+          "start_time": {
             "type": "string"
           }
         },
@@ -11899,6 +11983,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -12117,6 +12202,7 @@
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12315,6 +12401,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -16327,11 +16414,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MuteTimings"
+                  "$ref": "#/components/schemas/MuteTimingsAPIModel"
                 }
               }
             },
-            "description": "MuteTimings"
+            "description": "MuteTimingsAPIModel"
           }
         },
         "summary": "Get all the mute timings.",
@@ -16354,7 +16441,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MuteTimeInterval"
+                "$ref": "#/components/schemas/MuteTimeIntervalAPIModel"
               }
             }
           },
@@ -16365,11 +16452,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
+                  "$ref": "#/components/schemas/MuteTimeIntervalAPIModel"
                 }
               }
             },
-            "description": "MuteTimeInterval"
+            "description": "MuteTimeIntervalAPIModel"
           },
           "400": {
             "content": {
@@ -16481,11 +16568,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
+                  "$ref": "#/components/schemas/MuteTimeIntervalAPIModel"
                 }
               }
             },
-            "description": "MuteTimeInterval"
+            "description": "MuteTimeIntervalAPIModel"
           },
           "404": {
             "description": " Not found."
@@ -16520,7 +16607,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MuteTimeInterval"
+                "$ref": "#/components/schemas/MuteTimeIntervalAPIModel"
               }
             }
           },
@@ -16531,11 +16618,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
+                  "$ref": "#/components/schemas/MuteTimeIntervalAPIModel"
                 }
               }
             },
-            "description": "MuteTimeInterval"
+            "description": "MuteTimeIntervalAPIModel"
           },
           "400": {
             "content": {

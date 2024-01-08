@@ -363,8 +363,8 @@ func MuteTimeIntervalExportFromMuteTiming(orgID int64, m definitions.MuteTimeInt
 }
 
 // Converts definitions.MuteTimeIntervalExport to definitions.MuteTimeIntervalExportHcl using JSON marshalling. Returns error if structure could not be marshalled\unmarshalled
-func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeIntervalExport) (definitions.MuteTimeIntervalExportHcl, error) {
-	result := definitions.MuteTimeIntervalExportHcl{}
+func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeIntervalExport) (definitions.MuteTimeIntervalModel, error) {
+	result := definitions.MuteTimeIntervalModel{}
 	j := jsoniter.ConfigCompatibleWithStandardLibrary
 	mdata, err := j.Marshal(m)
 	if err != nil {
