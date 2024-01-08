@@ -21,9 +21,7 @@ export class VariableSupport extends CustomVariableSupport<PyroscopeDataSource> 
 
   query(request: DataQueryRequest<VariableQuery>): Observable<DataQueryResponse> {
     if (request.targets[0].type === 'profileType') {
-      return from(
-        this.dataAPI.getProfileTypes(this.timeSrv.timeRange().from.valueOf(), this.timeSrv.timeRange().to.valueOf())
-      ).pipe(
+      return from(this.dataAPI.getProfileTypes(request.range.from.valueOf(), request.range.to.valueOf())).pipe(
         map((values) => {
           return { data: values.map<MetricFindValue>((v) => ({ text: v.label, value: v.id })) };
         })
