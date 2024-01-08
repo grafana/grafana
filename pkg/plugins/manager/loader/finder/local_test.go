@@ -354,27 +354,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		require.Empty(t, paths)
 	})
 
-	t.Run("should forward if the dist folder should be evaluated", func(t *testing.T) {
-		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
-			if followDistFolder {
-				return walkFn(path, nil, errors.New("unexpected followDistFolder"))
-			}
-			return walkFn(path, nil, filepath.SkipDir)
-		}
-		t.Cleanup(func() {
-			walk = origWalk
-		})
-
-		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
-		paths, err := finder.getAbsPluginJSONPaths("test", false)
-		require.ErrorIs(t, err, filepath.SkipDir)
-		require.Empty(t, paths)
-	})
-}
-
-func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
-	t.Run("When a dist folder exists as a direct child of the plugins path, it will always be resolved", func(t *testing.T) {
+	t.Run("The followDistFolder state controls whether certain folders are followed", func(t *testing.T) {
 		dir, err := filepath.Abs("../../testdata/pluginRootWithDist")
 		require.NoError(t, err)
 
@@ -384,20 +364,17 @@ func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
 			expected   []string
 		}{
 			{
-				name:       "When followDistFolder is enabled, a nested dist folder will also be resolved",
+				name:       "When followDistFolder is enabled, only the nested dist folder will be followed",
 				followDist: true,
 				expected: []string{
-					filepath.Join(dir, "datasource/plugin.json"),
 					filepath.Join(dir, "dist/plugin.json"),
-					filepath.Join(dir, "panel/dist/plugin.json"),
 				},
 			},
 			{
-				name:       "When followDistFolder is disabled, a nested dist folder will not be resolved",
+				name:       "When followDistFolder is disabled, no dist folders will be followed",
 				followDist: false,
 				expected: []string{
 					filepath.Join(dir, "datasource/plugin.json"),
-					filepath.Join(dir, "dist/plugin.json"),
 					filepath.Join(dir, "panel/src/plugin.json"),
 				},
 			},
