@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"runtime"
 	"strings"
 	"time"
@@ -177,10 +178,12 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 			return folder.ErrDatabaseError.Errorf("failed to get folder: %w", err)
 		}
 		if !exists {
-			return folder.ErrFolderNotFound.Errorf("folder not found")
+			// embed dashboards.ErrFolderNotFound
+			return folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
 		}
 		return nil
 	})
+
 	return foldr.WithURL(), err
 }
 

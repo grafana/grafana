@@ -75,6 +75,7 @@ func ProvideService(
 		secretService:                secrectService,
 		log:                          log.New("provisioning"),
 		orgService:                   orgService,
+		folderService:                folderService,
 	}
 	return s, nil
 }
@@ -145,6 +146,7 @@ type ProvisioningServiceImpl struct {
 	searchService                searchV2.SearchService
 	quotaService                 quota.Service
 	secretService                secrets.Service
+	folderService                folder.Service
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -239,7 +241,7 @@ func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) e
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService)
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
 	if err != nil {
 		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
 	}
