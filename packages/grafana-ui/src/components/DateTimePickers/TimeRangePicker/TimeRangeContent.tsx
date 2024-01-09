@@ -116,10 +116,10 @@ export const TimeRangeContent = (props: Props) => {
 
   const onPaste = async () => {
     const raw = await navigator.clipboard.readText();
-    let parsed;
+    let range;
 
     try {
-      parsed = JSON.parse(raw);
+      range = JSON.parse(raw);
     } catch (error) {
       if (onPasteError) {
         onPasteError(raw);
@@ -127,7 +127,7 @@ export const TimeRangeContent = (props: Props) => {
       return;
     }
 
-    const [fromValue, toValue] = valueToState(parsed.from, parsed.to, timeZone);
+    const [fromValue, toValue] = valueToState(range.from, range.to, timeZone);
     setFrom(fromValue);
     setTo(toValue);
   };

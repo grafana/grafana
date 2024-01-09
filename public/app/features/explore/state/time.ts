@@ -171,7 +171,6 @@ export function zoomOut(scale: number): ThunkResult<void> {
 export function copyTimeRangeToClipboard(): ThunkResult<void> {
   return (dispatch, getState) => {
     const range = getState().explore.panes[Object.keys(getState().explore.panes)[0]]!.range.raw;
-    console.log('copyTimeRangeToClipboard', range);
     navigator.clipboard.writeText(JSON.stringify(range));
 
     appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
