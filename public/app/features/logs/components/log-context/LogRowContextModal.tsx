@@ -364,7 +364,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       const allRows = [...above.rows, row, ...below.rows];
 
       const newRows = (await loadMore(place, allRows)).map((r) =>
-        // apply the original row's searchWords to all the rows
+        // apply the original row's searchWords to all the rows for highlighting
         !r.searchWords || !r.searchWords?.length ? { ...r, searchWords: row.searchWords } : r
       );
       const [older, newer] = partition(newRows, (newRow) => newRow.timeEpochNs > row.timeEpochNs);
