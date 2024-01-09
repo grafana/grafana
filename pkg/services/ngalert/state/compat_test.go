@@ -10,6 +10,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -56,7 +57,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Run("it generates proper URL", func(t *testing.T) {
 				t.Run("to alert rule", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
 					result := StateToPostableAlert(alertState, appURL)
 					u := *appURL
@@ -65,7 +66,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 				})
 
 				t.Run("app URL as is if rule UID is not specified", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Labels[alertingModels.RuleUIDLabel] = ""
 					result := StateToPostableAlert(alertState, appURL)
 					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
@@ -76,7 +77,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 				})
 
 				t.Run("empty string if app URL is not provided", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
 					result := StateToPostableAlert(alertState, nil)
 					require.Equal(t, "", result.Alert.GeneratorURL.String())
@@ -84,20 +85,20 @@ func Test_StateToPostableAlert(t *testing.T) {
 			})
 
 			t.Run("Start and End timestamps should be the same", func(t *testing.T) {
-				alertState := randomState(tc.state)
+				alertState := randomTransition(eval.Normal, tc.state)
 				result := StateToPostableAlert(alertState, appURL)
 				require.Equal(t, strfmt.DateTime(alertState.StartsAt), result.StartsAt)
 				require.Equal(t, strfmt.DateTime(alertState.EndsAt), result.EndsAt)
 			})
 
 			t.Run("should copy annotations", func(t *testing.T) {
-				alertState := randomState(tc.state)
+				alertState := randomTransition(eval.Normal, tc.state)
 				alertState.Annotations = randomMapOfStrings()
 				result := StateToPostableAlert(alertState, appURL)
 				require.Equal(t, models.LabelSet(alertState.Annotations), result.Annotations)
 
 				t.Run("add __value_string__ if it has results", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Annotations = randomMapOfStrings()
 					expectedValueString := util.GenerateShortUID()
 					alertState.LastEvaluationString = expectedValueString
@@ -119,7 +120,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 				})
 
 				t.Run("add __alertImageToken__ if there is an image token", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Annotations = randomMapOfStrings()
 					alertState.Image = &ngModels.Image{Token: "test_token"}
 
@@ -135,7 +136,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 				})
 
 				t.Run("don't add __alertImageToken__ if there's no image token", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Annotations = randomMapOfStrings()
 					alertState.Image = &ngModels.Image{}
 
@@ -151,7 +152,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 			})
 
 			t.Run("should add state reason annotation if not empty", func(t *testing.T) {
-				alertState := randomState(tc.state)
+				alertState := randomTransition(eval.Normal, tc.state)
 				alertState.StateReason = "TEST_STATE_REASON"
 				result := StateToPostableAlert(alertState, appURL)
 				require.Equal(t, alertState.StateReason, result.Annotations[ngModels.StateReasonAnnotation])
@@ -160,7 +161,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 			switch tc.state {
 			case eval.NoData:
 				t.Run("should keep existing labels and change name", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Labels = randomMapOfStrings()
 					alertName := util.GenerateShortUID()
 					alertState.Labels[model.AlertNameLabel] = alertName
@@ -177,7 +178,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 					require.Equal(t, expected, result.Labels)
 
 					t.Run("should not backup original alert name if it does not exist", func(t *testing.T) {
-						alertState := randomState(tc.state)
+						alertState := randomTransition(eval.Normal, tc.state)
 						alertState.Labels = randomMapOfStrings()
 						delete(alertState.Labels, model.AlertNameLabel)
 
@@ -189,7 +190,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 				})
 			case eval.Error:
 				t.Run("should keep existing labels and change name", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Labels = randomMapOfStrings()
 					alertName := util.GenerateShortUID()
 					alertState.Labels[model.AlertNameLabel] = alertName
@@ -206,7 +207,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 					require.Equal(t, expected, result.Labels)
 
 					t.Run("should not backup original alert name if it does not exist", func(t *testing.T) {
-						alertState := randomState(tc.state)
+						alertState := randomTransition(eval.Normal, tc.state)
 						alertState.Labels = randomMapOfStrings()
 						delete(alertState.Labels, model.AlertNameLabel)
 
@@ -218,12 +219,58 @@ func Test_StateToPostableAlert(t *testing.T) {
 				})
 			default:
 				t.Run("should copy labels as is", func(t *testing.T) {
-					alertState := randomState(tc.state)
+					alertState := randomTransition(eval.Normal, tc.state)
 					alertState.Labels = randomMapOfStrings()
 					result := StateToPostableAlert(alertState, appURL)
 					require.Equal(t, models.LabelSet(alertState.Labels), result.Labels)
 				})
 			}
+		})
+	}
+}
+
+func TestStateToPostableAlertFromNodataError(t *testing.T) {
+	appURL := &url.URL{
+		Scheme: "http:",
+		Host:   fmt.Sprintf("host-%d", rand.Int()),
+		Path:   fmt.Sprintf("path-%d", rand.Int()),
+	}
+
+	standardLabels := models.LabelSet{model.AlertNameLabel: "name"}
+	noDataLabels := models.LabelSet{Rulename: "name", model.AlertNameLabel: NoDataAlertName}
+	errorLabels := models.LabelSet{Rulename: "name", model.AlertNameLabel: ErrorAlertName}
+
+	testCases := []struct {
+		name           string
+		resolved       bool
+		from           eval.State
+		to             eval.State
+		expectedLabels models.LabelSet
+	}{
+		// These are the important cases.
+		{name: "from NoData to Normal resolved", resolved: true, from: eval.NoData, to: eval.Normal, expectedLabels: noDataLabels},
+		{name: "from Error  to Normal resolved", resolved: true, from: eval.Error, to: eval.Normal, expectedLabels: errorLabels},
+
+		// Regressions.
+		{name: "from NoData to Normal unresolved", resolved: false, from: eval.NoData, to: eval.Normal, expectedLabels: standardLabels},
+		{name: "from Error  to Normal unresolved", resolved: false, from: eval.Error, to: eval.Normal, expectedLabels: standardLabels},
+		{name: "from NoData to Alerting unresolved", resolved: false, from: eval.NoData, to: eval.Alerting, expectedLabels: standardLabels},
+		{name: "from Error  to Alerting unresolved", resolved: false, from: eval.Error, to: eval.Alerting, expectedLabels: standardLabels},
+		{name: "from NoData to Pending unresolved", resolved: false, from: eval.NoData, to: eval.Pending, expectedLabels: standardLabels},
+		{name: "from Error  to Pending unresolved", resolved: false, from: eval.Error, to: eval.Pending, expectedLabels: standardLabels},
+		{name: "from NoData to NoData unresolved", resolved: false, from: eval.NoData, to: eval.NoData, expectedLabels: noDataLabels},
+		{name: "from Error  to NoData unresolved", resolved: false, from: eval.Error, to: eval.NoData, expectedLabels: noDataLabels},
+		{name: "from NoData to Error unresolved", resolved: false, from: eval.NoData, to: eval.Error, expectedLabels: errorLabels},
+		{name: "from Error  to Error unresolved", resolved: false, from: eval.Error, to: eval.Error, expectedLabels: errorLabels},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			alertState := randomTransition(tc.from, tc.to)
+			alertState.Resolved = tc.resolved
+			alertState.Labels = data.Labels(standardLabels)
+			result := StateToPostableAlert(alertState, appURL)
+			require.Equal(t, tc.expectedLabels, result.Labels)
 		})
 	}
 }
@@ -239,10 +286,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 	states := make([]StateTransition, 0, len(evalStates)*len(evalStates))
 	for _, to := range evalStates {
 		for _, from := range evalStates {
-			states = append(states, StateTransition{
-				State:         randomState(to),
-				PreviousState: from,
-			})
+			states = append(states, randomTransition(from, to))
 		}
 	}
 
@@ -254,7 +298,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 		if !(s.PreviousState == eval.Alerting || s.PreviousState == eval.Error || s.PreviousState == eval.NoData) {
 			continue
 		}
-		alert := StateToPostableAlert(s.State, appURL)
+		alert := StateToPostableAlert(s, appURL)
 		alert.EndsAt = strfmt.DateTime(clk.Now())
 		expected = append(expected, *alert)
 	}
@@ -285,17 +329,20 @@ func randomTimeInPast() time.Time {
 	return time.Now().Add(-randomDuration())
 }
 
-func randomState(evalState eval.State) *State {
-	return &State{
-		State:              evalState,
-		AlertRuleUID:       util.GenerateShortUID(),
-		StartsAt:           time.Now(),
-		EndsAt:             randomTimeInFuture(),
-		LastEvaluationTime: randomTimeInPast(),
-		EvaluationDuration: randomDuration(),
-		LastSentAt:         randomTimeInPast(),
-		Annotations:        make(map[string]string),
-		Labels:             make(map[string]string),
-		Values:             make(map[string]float64),
+func randomTransition(from, to eval.State) StateTransition {
+	return StateTransition{
+		PreviousState: from,
+		State: &State{
+			State:              to,
+			AlertRuleUID:       util.GenerateShortUID(),
+			StartsAt:           time.Now(),
+			EndsAt:             randomTimeInFuture(),
+			LastEvaluationTime: randomTimeInPast(),
+			EvaluationDuration: randomDuration(),
+			LastSentAt:         randomTimeInPast(),
+			Annotations:        make(map[string]string),
+			Labels:             make(map[string]string),
+			Values:             make(map[string]float64),
+		},
 	}
 }
