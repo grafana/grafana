@@ -1,9 +1,10 @@
 import { gte, SemVer } from 'semver';
 
+import { DataFrame, FieldType, LogLevel } from '@grafana/data';
+
 import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { ElasticsearchQuery, MetricAggregation, MetricAggregationWithInlineScript } from './types';
-import { DataFrame, FieldType, LogLevel } from '@grafana/data';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
