@@ -56,11 +56,17 @@ type FrontendSettingsLicenseInfoDTO struct {
 	AppUrl      *string `json:"appUrl,omitempty"`
 }
 
+type FrontendSettingsAzureCloudDTO struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+}
+
 type FrontendSettingsAzureDTO struct {
-	Cloud                   string `json:"cloud"`
-	ManagedIdentityEnabled  bool   `json:"managedIdentityEnabled"`
-	WorkloadIdentityEnabled bool   `json:"workloadIdentityEnabled"`
-	UserIdentityEnabled     bool   `json:"userIdentityEnabled"`
+	Cloud                   string                          `json:"cloud"`
+	Clouds                  []FrontendSettingsAzureCloudDTO `json:"clouds"`
+	ManagedIdentityEnabled  bool                            `json:"managedIdentityEnabled"`
+	WorkloadIdentityEnabled bool                            `json:"workloadIdentityEnabled"`
+	UserIdentityEnabled     bool                            `json:"userIdentityEnabled"`
 }
 
 type FrontendSettingsCachingDTO struct {
