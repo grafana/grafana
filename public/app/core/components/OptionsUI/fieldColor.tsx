@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { CSSProperties, FC } from 'react';
 
 import {
-  FieldConfigEditorProps,
+  StandardEditorProps,
   FieldColorModeId,
   SelectableValue,
   FieldColor,
@@ -17,7 +17,7 @@ import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana
 
 import { ColorValueEditor } from './color';
 
-type Props = FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>;
+type Props = StandardEditorProps<FieldColor | undefined, FieldColorConfigSettings>;
 
 export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const theme = useTheme2();

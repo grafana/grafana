@@ -39,7 +39,6 @@ describe('FlameGraph', () => {
         data={container}
         rangeMin={0}
         rangeMax={1}
-        search={''}
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
         onItemFocused={onItemFocused}

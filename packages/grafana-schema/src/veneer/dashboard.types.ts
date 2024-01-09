@@ -1,4 +1,4 @@
-import { DataSourceRef as CommonDataSourceRef, DataSourceRef } from '../common/common.gen';
+import { DataSourceRef as CommonDataSourceRef, DataSourceRef, DataTopic } from '../common/common.gen';
 import * as raw from '../raw/dashboard/x/dashboard_types.gen';
 
 import { DataQuery } from './common.types';
@@ -59,12 +59,16 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
 
 export interface DataTransformerConfig<TOptions = any> extends raw.DataTransformerConfig {
   options: TOptions;
+  topic?: DataTopic;
 }
+
+export interface TimePickerConfig extends raw.TimePickerConfig {}
 
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
 } as VariableModel;
+export const defaultTimePickerConfig = raw.defaultTimePickerConfig as TimePickerConfig;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;

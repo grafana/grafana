@@ -22,7 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -32,6 +34,11 @@ var _ plugins.RoleRegistry = &Service{}
 const (
 	cacheTTL = 10 * time.Second
 )
+
+var SharedWithMeFolderPermission = accesscontrol.Permission{
+	Action: dashboards.ActionFoldersRead,
+	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
+}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
@@ -113,6 +120,10 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		if basicRole, ok := s.roles[builtin]; ok {
 			permissions = append(permissions, basicRole.Permissions...)
 		}
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
 
 	userID, err := identity.UserIdentifier(user.GetNamespacedID())

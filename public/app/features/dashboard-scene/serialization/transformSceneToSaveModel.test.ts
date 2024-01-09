@@ -168,6 +168,31 @@ describe('transformSceneToSaveModel', () => {
     getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
   });
 
+  describe('Given a simple scene with custom settings', () => {
+    it('Should transform back to persisted model', () => {
+      const dashboardWithCustomSettings = {
+        ...dashboard_to_load1,
+        title: 'My custom title',
+        description: 'My custom description',
+        tags: ['tag1', 'tag2'],
+        timezone: 'America/New_York',
+        weekStart: 'monday',
+        graphTooltip: 1,
+        editable: false,
+        timepicker: {
+          ...dashboard_to_load1.timepicker,
+          refresh_intervals: ['5m', '15m', '30m', '1h'],
+          time_options: ['5m', '15m', '30m'],
+          hidden: true,
+        },
+      };
+      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel).toMatchSnapshot();
+    });
+  });
+
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });

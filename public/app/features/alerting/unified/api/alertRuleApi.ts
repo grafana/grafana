@@ -239,5 +239,21 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         method: 'POST',
       }),
     }),
+    exportMuteTimings: build.query<string, { format: ExportFormats }>({
+      query: ({ format }) => ({
+        url: `/api/v1/provisioning/mute-timings/export/`,
+        params: { format: format },
+        responseType: 'text',
+      }),
+      keepUnusedDataFor: 0,
+    }),
+    exportMuteTiming: build.query<string, { format: ExportFormats; muteTiming: string }>({
+      query: ({ format, muteTiming }) => ({
+        url: `/api/v1/provisioning/mute-timings/${muteTiming}/export/`,
+        params: { format: format },
+        responseType: 'text',
+      }),
+      keepUnusedDataFor: 0,
+    }),
   }),
 });

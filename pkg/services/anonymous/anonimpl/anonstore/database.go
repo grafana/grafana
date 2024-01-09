@@ -13,10 +13,14 @@ import (
 )
 
 const cacheKeyPrefix = "anon-device"
+const anonymousDeviceExpiration = 30 * 24 * time.Hour
+
+var ErrDeviceLimitReached = fmt.Errorf("device limit reached")
 
 type AnonDBStore struct {
-	sqlStore db.DB
-	log      log.Logger
+	sqlStore    db.DB
+	log         log.Logger
+	deviceLimit int64
 }
 
 type Device struct {
@@ -45,8 +49,8 @@ type AnonStore interface {
 	DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error
 }
 
-func ProvideAnonDBStore(sqlStore db.DB) *AnonDBStore {
-	return &AnonDBStore{sqlStore: sqlStore, log: log.New("anonstore")}
+func ProvideAnonDBStore(sqlStore db.DB, deviceLimit int64) *AnonDBStore {
+	return &AnonDBStore{sqlStore: sqlStore, log: log.New("anonstore"), deviceLimit: deviceLimit}
 }
 
 func (s *AnonDBStore) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*Device, error) {
@@ -65,8 +69,53 @@ func (s *AnonDBStore) ListDevices(ctx context.Context, from *time.Time, to *time
 	return devices, err
 }
 
+// updateDevice updates a device if it exists and has been updated between the given times.
+func (s *AnonDBStore) updateDevice(ctx context.Context, device *Device) error {
+	const query = `UPDATE anon_device SET
+client_ip = ?,
+user_agent = ?,
+updated_at = ?
+WHERE device_id = ? AND updated_at BETWEEN ? AND ?`
+
+	args := []interface{}{device.ClientIP, device.UserAgent, device.UpdatedAt.UTC(), device.DeviceID,
+		device.UpdatedAt.UTC().Add(-anonymousDeviceExpiration), device.UpdatedAt.UTC().Add(time.Minute),
+	}
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		args = append([]interface{}{query}, args...)
+		result, err := dbSession.Exec(args...)
+		if err != nil {
+			return err
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		if rowsAffected == 0 {
+			return ErrDeviceLimitReached
+		}
+
+		return nil
+	})
+
+	return err
+}
+
 func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) error {
 	var query string
+
+	// if device limit is reached, only update devices
+	if s.deviceLimit > 0 {
+		count, err := s.CountDevices(ctx, time.Now().UTC().Add(-anonymousDeviceExpiration), time.Now().UTC().Add(time.Minute))
+		if err != nil {
+			return err
+		}
+
+		if count >= s.deviceLimit {
+			return s.updateDevice(ctx, device)
+		}
+	}
 
 	args := []any{device.DeviceID, device.ClientIP, device.UserAgent,
 		device.CreatedAt.UTC(), device.UpdatedAt.UTC()}

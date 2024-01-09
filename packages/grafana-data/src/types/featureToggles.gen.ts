@@ -43,7 +43,7 @@ export interface FeatureToggles {
   topnav?: boolean;
   dockedMegaMenu?: boolean;
   grpcServer?: boolean;
-  entityStore?: boolean;
+  unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -53,7 +53,6 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
-  accessTokenExpirationCheck?: boolean;
   emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -105,6 +104,7 @@ export interface FeatureToggles {
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
+  grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -135,6 +135,7 @@ export interface FeatureToggles {
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  kubernetesSnapshots?: boolean;
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
@@ -143,7 +144,6 @@ export interface FeatureToggles {
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
-  costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -157,6 +157,7 @@ export interface FeatureToggles {
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
+  canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
@@ -164,6 +165,10 @@ export interface FeatureToggles {
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
+  tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
+  alertStateHistoryAnnotationsFromLoki?: boolean;
+  lokiQueryHints?: boolean;
+  alertingPreviewUpgrade?: boolean;
 }

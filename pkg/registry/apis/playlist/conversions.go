@@ -13,6 +13,7 @@ import (
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -85,7 +86,7 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 			Key:  fmt.Sprintf("%d", v.Id),
 		})
 	}
-	return &playlist.Playlist{
+	p := &playlist.Playlist{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Uid,
 			UID:               types.UID(v.Uid),
@@ -96,6 +97,8 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 		},
 		Spec: spec,
 	}
+	p.UID = utils.CalculateClusterWideUID(p)
+	return p
 }
 
 func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlistsvc.UpdatePlaylistCommand, error) {
@@ -123,7 +126,7 @@ func getLegacyID(item *unstructured.Unstructured) int64 {
 	meta := kinds.GrafanaResourceMetadata{
 		Annotations: item.GetAnnotations(),
 	}
-	info := meta.GetOriginInfo()
+	info, _ := meta.GetOriginInfo()
 	if info != nil && info.Name == "SQL" {
 		i, err := strconv.ParseInt(info.Key, 10, 64)
 		if err == nil {

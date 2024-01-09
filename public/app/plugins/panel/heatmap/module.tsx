@@ -9,6 +9,7 @@ import {
   ScaleDistributionConfig,
   HeatmapCellLayout,
 } from '@grafana/schema';
+import { TooltipDisplayMode } from '@grafana/ui';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
@@ -30,8 +31,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         path: 'scaleDistribution',
         name: 'Y axis scale',
         category: ['Heatmap'],
-        editor: ScaleDistributionEditor as any,
-        override: ScaleDistributionEditor as any,
+        editor: ScaleDistributionEditor,
+        override: ScaleDistributionEditor,
         defaultValue: { type: ScaleDistribution.Linear },
         shouldApply: (f) => f.type === FieldType.number,
         process: identityOverrideProcessor,
@@ -391,11 +392,18 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     category = ['Tooltip'];
 
-    builder.addBooleanSwitch({
-      path: 'tooltip.show',
-      name: 'Show tooltip',
-      defaultValue: defaultOptions.tooltip.show,
+    builder.addRadio({
+      path: 'tooltip.mode',
+      name: 'Tooltip mode',
       category,
+      defaultValue: TooltipDisplayMode.Single,
+      settings: {
+        options: [
+          { value: TooltipDisplayMode.Single, label: 'Single' },
+          { value: TooltipDisplayMode.Multi, label: 'All' },
+          { value: TooltipDisplayMode.None, label: 'Hidden' },
+        ],
+      },
     });
 
     builder.addBooleanSwitch({
@@ -403,7 +411,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Show histogram (Y axis)',
       defaultValue: defaultOptions.tooltip.yHistogram,
       category,
-      showIf: (opts) => opts.tooltip.show,
+      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None,
     });
 
     builder.addBooleanSwitch({
@@ -411,7 +419,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Show color scale',
       defaultValue: defaultOptions.tooltip.showColorScale,
       category,
-      showIf: (opts) => opts.tooltip.show && config.featureToggles.newVizTooltips,
+      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None && config.featureToggles.newVizTooltips,
     });
 
     category = ['Legend'];
@@ -430,4 +438,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       category,
     });
   })
-  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());
+  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier())
+  .setDataSupport({ annotations: true });

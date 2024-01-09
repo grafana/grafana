@@ -7,7 +7,7 @@ aliases:
   - ../panels/specify-thresholds/add-threshold-to-graph/
   - ../panels/specify-thresholds/delete-a-threshold/
   - ../panels/thresholds/
-description: This section includes information about using thresholds in your visualizations.
+description: Configure thresholds in your visualizations
 labels:
   products:
     - cloud

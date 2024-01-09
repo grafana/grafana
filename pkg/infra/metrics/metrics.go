@@ -613,7 +613,7 @@ func init() {
 }
 
 // SetBuildInformation sets the build information for this binary
-func SetBuildInformation(version, revision, branch string, buildTimestamp int64) {
+func SetBuildInformation(reg prometheus.Registerer, version, revision, branch string, buildTimestamp int64) {
 	edition := "oss"
 	if setting.IsEnterprise {
 		edition = "enterprise"
@@ -631,7 +631,7 @@ func SetBuildInformation(version, revision, branch string, buildTimestamp int64)
 		Namespace: ExporterName,
 	}, []string{"version", "revision", "branch", "goversion", "edition"})
 
-	prometheus.MustRegister(grafanaBuildVersion, grafanaBuildTimestamp)
+	reg.MustRegister(grafanaBuildVersion, grafanaBuildTimestamp)
 
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
 	grafanaBuildTimestamp.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(float64(buildTimestamp))
@@ -639,7 +639,7 @@ func SetBuildInformation(version, revision, branch string, buildTimestamp int64)
 
 // SetEnvironmentInformation exposes environment values provided by the operators as an `_info` metric.
 // If there are no environment metrics labels configured, this metric will not be exposed.
-func SetEnvironmentInformation(labels map[string]string) error {
+func SetEnvironmentInformation(reg prometheus.Registerer, labels map[string]string) error {
 	if len(labels) == 0 {
 		return nil
 	}
@@ -651,7 +651,7 @@ func SetEnvironmentInformation(labels map[string]string) error {
 		ConstLabels: labels,
 	})
 
-	prometheus.MustRegister(grafanaEnvironmentInfo)
+	reg.MustRegister(grafanaEnvironmentInfo)
 
 	grafanaEnvironmentInfo.Set(1)
 	return nil
@@ -661,8 +661,8 @@ func SetPluginBuildInformation(pluginID, pluginType, version, signatureStatus st
 	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version, signatureStatus).Set(1)
 }
 
-func initMetricVars() {
-	prometheus.MustRegister(
+func initMetricVars(reg prometheus.Registerer) {
+	reg.MustRegister(
 		MInstanceStart,
 		MPageStatus,
 		MApiStatus,

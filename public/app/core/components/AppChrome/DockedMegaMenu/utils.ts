@@ -6,7 +6,6 @@ import { ShowModalReactEvent } from '../../../../types/events';
 import appEvents from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 import { HelpModal } from '../../help/HelpModal';
-import { MegaMenuState } from '../AppChromeService';
 
 export const enrichHelpItem = (helpItem: NavModelItem) => {
   let menuItems = helpItem.children || [];
@@ -30,19 +29,19 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
   return helpItem;
 };
 
-export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuState: MegaMenuState) => {
+export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuDockedState: boolean) => {
   // creating a new object here to not mutate the original item object
   const newItem = { ...item };
   const onClick = newItem.onClick;
   newItem.onClick = () => {
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
-      state: megaMenuState,
+      menuIsDocked: megaMenuDockedState,
     });
     onClick?.();
   };
   if (newItem.children) {
-    newItem.children = newItem.children.map((item) => enrichWithInteractionTracking(item, megaMenuState));
+    newItem.children = newItem.children.map((item) => enrichWithInteractionTracking(item, megaMenuDockedState));
   }
   return newItem;
 };

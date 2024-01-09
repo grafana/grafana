@@ -13,8 +13,8 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { trackDashboardSharingTypeOpen } from '../analytics';
 import { shareDashboardType } from '../utils';
 
 import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
@@ -33,9 +33,11 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-jest.mock('../analytics', () => ({
-  ...jest.requireActual('../analytics'),
-  trackDashboardSharingTypeOpen: jest.fn(),
+jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
+  DashboardInteractions: {
+    ...jest.requireActual('app/features/dashboard-scene/utils/interactions').DashboardInteractions,
+    sharingTabChanged: jest.fn(),
+  },
 }));
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -68,6 +70,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
+  config.publicDashboardsEnabled = true;
 
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
@@ -135,7 +138,14 @@ describe('SharePublic', () => {
   beforeEach(() => {
     server.use(getExistentPublicDashboardResponse());
   });
-  it('does not render share panel when public dashboards feature is disabled', async () => {
+  it('does not render share panel when public dashboards feature is disabled using config setting', async () => {
+    config.publicDashboardsEnabled = false;
+    await renderSharePublicDashboard(undefined, false);
+
+    expect(screen.getByRole('tablist')).toHaveTextContent('Link');
+    expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
+  });
+  it('does not render share panel when public dashboards feature is disabled using feature toggle', async () => {
     config.featureToggles.publicDashboards = false;
     await renderSharePublicDashboard(undefined, false);
 
@@ -345,8 +355,8 @@ describe('SharePublic - Report interactions', () => {
     await renderSharePublicDashboard();
 
     await waitFor(() => {
-      expect(trackDashboardSharingTypeOpen).toHaveBeenCalledTimes(1);
-      expect(trackDashboardSharingTypeOpen).lastCalledWith(shareDashboardType.publicDashboard);
+      expect(DashboardInteractions.sharingTabChanged).toHaveBeenCalledTimes(1);
+      expect(DashboardInteractions.sharingTabChanged).lastCalledWith({ item: shareDashboardType.publicDashboard });
     });
   });
 

@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/login/socialtest"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -298,9 +298,7 @@ func Test_GetUserByID(t *testing.T) {
 
 			switch tc.authModule {
 			case login.GenericOAuthModule:
-				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled}
-				cfg.GenericOAuthAuthEnabled = tc.authEnabled
-				cfg.GenericOAuthSkipOrgRoleSync = tc.skipOrgRoleSync
+				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled, SkipOrgRoleSync: tc.skipOrgRoleSync}
 			case login.JWTModule:
 				cfg.JWTAuthEnabled = tc.authEnabled
 				cfg.JWTAuthSkipOrgRoleSync = tc.skipOrgRoleSync

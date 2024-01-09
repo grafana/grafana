@@ -14,7 +14,7 @@ import {
   transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -189,9 +189,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       theme: config.theme2,
       fieldConfig: fieldConfigCleaned,
       timeZone,
-      replaceVariables: (value: string) => {
-        return value;
-      },
+      replaceVariables: (value, scopedVars, format) => getTemplateSrv().replace(value, scopedVars, format),
     });
   }
 

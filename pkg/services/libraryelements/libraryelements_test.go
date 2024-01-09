@@ -302,6 +302,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		cfg, dashboardStore, folderStore, dashAlertExtractor,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
+		nil,
 	)
 	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -321,7 +322,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sc.sqlStore, features)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sc.sqlStore, features, nil)
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &sc.user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
@@ -385,6 +386,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		sqlStore.Cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
+		nil,
 	)
 	require.NoError(t, svcErr)
 	guardian.InitAccessControlGuardian(sqlStore.Cfg, ac, dashboardService)
@@ -445,6 +447,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			sqlStore.Cfg, dashboardStore, folderStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(),
+			nil,
 		)
 		require.NoError(t, dashSvcErr)
 		guardian.InitAccessControlGuardian(sqlStore.Cfg, ac, dashService)
@@ -452,7 +455,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Cfg:           sqlStore.Cfg,
 			features:      featuremgmt.WithFeatures(),
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features, nil),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear

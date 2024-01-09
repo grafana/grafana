@@ -86,7 +86,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
           />
         </Stack>
 
-        <Stack gap={1}>
+        <Stack direction="column" gap={1}>
           {pageItems.map((currentRule) => (
             <Card
               key={currentRule.name}

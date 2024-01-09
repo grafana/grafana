@@ -4,11 +4,12 @@ import { FormState, UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime';
 import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
+import { Trans } from 'app/core/internationalization';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
@@ -46,7 +47,7 @@ export const CreatePublicDashboardBase = ({
   const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
   const onCreate = () => {
     createPublicDashboard({ dashboard, payload: { isEnabled: true } });
-    reportInteraction('dashboards_sharing_public_generate_url_clicked', {});
+    DashboardInteractions.generatePublicDashboardUrlClicked({});
   };
 
   const disableInputs = !hasWritePermissions || isLoading || isError || hasError;
@@ -54,8 +55,14 @@ export const CreatePublicDashboardBase = ({
   return (
     <div className={styles.container}>
       <div>
-        <p className={styles.title}>Welcome to public dashboards!</p>
-        <p className={styles.description}>Currently, we don’t support template variables or frontend data sources</p>
+        <p className={styles.title}>
+          <Trans i18nKey="public-dashboard.create-page.welcome-title">Welcome to public dashboards!</Trans>
+        </p>
+        <p className={styles.description}>
+          <Trans i18nKey="public-dashboard.create-page.unsupported-features-desc">
+            Currently, we don’t support template variables or frontend data sources
+          </Trans>
+        </p>
       </div>
 
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
@@ -80,7 +87,8 @@ export const CreatePublicDashboardBase = ({
             </div>
             <div className={styles.buttonContainer}>
               <Button type="submit" disabled={disableInputs || !isValid} data-testid={selectors.CreateButton}>
-                Generate public URL {isLoading && <Spinner className={styles.loadingSpinner} />}
+                <Trans i18nKey="public-dashboard.create-page.generate-public-url-button">Generate public URL</Trans>
+                {isLoading && <Spinner className={styles.loadingSpinner} />}
               </Button>
             </div>
           </>

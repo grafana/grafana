@@ -35,6 +35,26 @@ func addFolderMigrations(mg *migrator.Migrator) {
 		Type: migrator.UniqueIndex,
 		Cols: []string{"title", "parent_uid", "org_id"},
 	}))
+
+	mg.AddMigration("Sync dashboard and folder table", migrator.NewRawSQLMigration("").
+		Mysql(`
+			INSERT INTO folder (uid, org_id, title, created, updated)
+			SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
+			ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
+		`).Postgres(`
+			INSERT INTO folder (uid, org_id, title, created, updated)
+			SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
+			ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
+		`).SQLite(`
+			INSERT INTO folder (uid, org_id, title, created, updated)
+			SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
+			ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
+		`))
+
+	mg.AddMigration("Remove ghost folders from the folder table", migrator.NewRawSQLMigration(`
+			DELETE FROM folder WHERE NOT EXISTS
+				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
+	`))
 }
 
 func folderv1() migrator.Table {

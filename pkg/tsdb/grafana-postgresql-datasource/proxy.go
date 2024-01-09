@@ -2,34 +2,28 @@ package postgres
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"net"
+	"slices"
 	"time"
 
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/lib/pq"
 	"golang.org/x/net/proxy"
-	"xorm.io/core"
 )
 
 // createPostgresProxyDriver creates and registers a new sql driver that uses a postgres connector and updates the dialer to
 // route connections through the secure socks proxy
 func createPostgresProxyDriver(cnnstr string, opts *sdkproxy.Options) (string, error) {
-	sqleng.XormDriverMu.Lock()
-	defer sqleng.XormDriverMu.Unlock()
-
 	// create a unique driver per connection string
-	hash, err := util.Md5SumString(cnnstr)
-	if err != nil {
-		return "", err
-	}
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(cnnstr)))
 	driverName := "postgres-proxy-" + hash
 
 	// only register the driver once
-	if core.QueryDriver(driverName) == nil {
+	if !slices.Contains(sql.Drivers(), driverName) {
 		connector, err := pq.NewConnector(cnnstr)
 		if err != nil {
 			return "", err
@@ -41,7 +35,6 @@ func createPostgresProxyDriver(cnnstr string, opts *sdkproxy.Options) (string, e
 		}
 
 		sql.Register(driverName, driver)
-		core.RegisterDriver(driverName, driver)
 	}
 	return driverName, nil
 }
@@ -53,7 +46,6 @@ type postgresProxyDriver struct {
 }
 
 var _ driver.DriverContext = (*postgresProxyDriver)(nil)
-var _ core.Driver = (*postgresProxyDriver)(nil)
 
 // newPostgresProxyDriver updates the dialer for a postgres connector with a dialer that proxies connections through the secure socks proxy
 // and returns a new postgres driver to register
@@ -85,14 +77,6 @@ func (p *postgresProxyDialer) DialTimeout(network, address string, timeout time.
 	defer cancel()
 
 	return p.d.(proxy.ContextDialer).DialContext(ctx, network, address)
-}
-
-// Parse uses the xorm postgres dialect for the driver (this has to be implemented to register the driver with xorm)
-func (d *postgresProxyDriver) Parse(a string, b string) (*core.Uri, error) {
-	sqleng.XormDriverMu.RLock()
-	defer sqleng.XormDriverMu.RUnlock()
-
-	return core.QueryDriver("postgres").Parse(a, b)
 }
 
 // OpenConnector returns the normal postgres connector that has the updated dialer context

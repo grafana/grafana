@@ -25,7 +25,7 @@ describe('CloudWatchAnnotationQueryRunner', () => {
     const { runner, queryMock, request } = setupMockedAnnotationQueryRunner({
       variables: [namespaceVariable, regionVariable],
     });
-    await expect(runner.handleAnnotationQuery(queries, request)).toEmitValuesWith(() => {
+    await expect(runner.handleAnnotationQuery(queries, request, queryMock)).toEmitValuesWith(() => {
       expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject(
         expect.objectContaining({
           region: regionVariable.current.value,

@@ -39,6 +39,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/d/:uid/panel-edit/:panelId',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
+      ),
+    },
+    {
       path: '/d/:uid/:slug?',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
@@ -171,6 +177,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="alerts-and-incidents" />,
     },
     {
+      path: '/testing-and-synthetics',
+      component: () => <NavLandingPage navId="testing-and-synthetics" />,
+    },
+    {
       path: '/monitoring',
       component: () => <NavLandingPage navId="monitoring" />,
     },
@@ -278,9 +288,19 @@ export function getAppRoutes(): RouteDescriptor[] {
       component:
         config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled || config.featureToggles.ssoSettingsApi
           ? SafeDynamicImport(
-              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+              () =>
+                import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/AuthProvidersListPage')
             )
           : () => <Redirect to="/admin" />,
+    },
+    {
+      path: '/admin/authentication/advanced/:provider',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
+      component: config.featureToggles.ssoSettingsApi
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
+          )
+        : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin/settings',
@@ -474,7 +494,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
     },
-    ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),
@@ -506,41 +525,6 @@ export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SupportBundlesCreate" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),
-    },
-  ];
-}
-
-export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.scenes) {
-    return [];
-  }
-  return [
-    {
-      path: '/scenes',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneListPage')),
-    },
-    {
-      path: '/scenes/dashboard/:uid',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/DashboardScenePage')
-      ),
-    },
-    {
-      path: '/scenes/dashboard/:uid/panel-edit/:panelId',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
-      ),
-    },
-    {
-      path: '/scenes/grafana-monitoring',
-      exact: false,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/apps/GrafanaMonitoringApp')
-      ),
-    },
-    {
-      path: '/scenes/:name',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
     },
   ];
 }

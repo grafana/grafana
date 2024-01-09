@@ -15,9 +15,9 @@ interface Props {
   onNowDelayChange: (nowDelay: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
   onLiveNowChange: (liveNow: boolean) => void;
-  refreshIntervals: string[];
-  timePickerHidden: boolean;
-  nowDelay: string;
+  refreshIntervals?: string[];
+  timePickerHidden?: boolean;
+  nowDelay?: string;
   timezone: TimeZone;
   weekStart: string;
   liveNow: boolean;

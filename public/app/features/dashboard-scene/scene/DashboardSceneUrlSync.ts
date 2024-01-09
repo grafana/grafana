@@ -7,7 +7,7 @@ import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findVizPanelByKey } from '../utils/utils';
+import { findVizPanelByKey, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { ViewPanelScene } from './ViewPanelScene';
@@ -36,7 +36,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && meta.canEdit) {
-      update.editview = createDashboardEditViewFor(values.editview, this._scene.getRef());
+      update.editview = createDashboardEditViewFor(values.editview);
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
@@ -69,7 +69,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
       if (!panel) {
         // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
-        if (values.viewPanel.indexOf('clone')) {
+        if (isPanelClone(values.viewPanel)) {
           this._handleViewRepeatClone(values.viewPanel);
           return;
         }

@@ -10,15 +10,16 @@ import {
   LoadingState,
   LogLevel,
   LogRowModel,
-  MutableDataFrame,
   standardTransformersRegistry,
   toUtc,
+  createDataFrame,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { Logs } from './Logs';
+import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
 
 const reportInteraction = jest.fn();
@@ -480,6 +481,20 @@ describe('Logs', () => {
       expect(table).toBeInTheDocument();
     });
 
+    it('should use default state from localstorage - table', async () => {
+      localStorage.setItem(visualisationTypeKey, 'table');
+      setup({});
+      const table = await screen.findByTestId('logRowsTable');
+      expect(table).toBeInTheDocument();
+    });
+
+    it('should use default state from localstorage - logs', async () => {
+      localStorage.setItem(visualisationTypeKey, 'logs');
+      setup({});
+      const table = await screen.findByTestId('logRows');
+      expect(table).toBeInTheDocument();
+    });
+
     it('should change visualisation to table on toggle (elastic)', async () => {
       setup({}, getMockElasticFrame());
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
@@ -498,7 +513,7 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     uid,
     entryFieldIndex: 0,
     rowIndex: 0,
-    dataFrame: new MutableDataFrame(),
+    dataFrame: createDataFrame({ fields: [] }),
     logLevel: LogLevel.debug,
     entry,
     hasAnsi: false,

@@ -200,8 +200,8 @@ func (r *Registry) retrieveExtSvcProviders(ctx context.Context) (map[string]exts
 	return extsvcs, nil
 }
 
-func (r *Registry) Run(ctx context.Context) error {
-	// This is a one-time background job.
-	// Cleans up external services that have not been registered this time.
-	return r.CleanUpOrphanedExternalServices(ctx)
-}
+// func (r *Registry) Run(ctx context.Context) error {
+// 	// This is a one-time background job.
+// 	// Cleans up external services that have not been registered this time.
+// 	return r.CleanUpOrphanedExternalServices(ctx)
+// }

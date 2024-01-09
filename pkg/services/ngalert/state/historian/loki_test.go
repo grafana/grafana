@@ -21,7 +21,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-	"github.com/weaveworks/common/http/client"
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
@@ -89,7 +88,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.NotContains(t, res.Stream, "__private__")
 		})
 
-		t.Run("includes ruleUID in log line", func(t *testing.T) {
+		t.Run("includes rule data in log line", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{
@@ -98,8 +97,10 @@ func TestRemoteLokiBackend(t *testing.T) {
 			})
 
 			res := statesToStream(rule, states, nil, l)
-
 			entry := requireSingleEntry(t, res)
+
+			require.Equal(t, rule.Title, entry.RuleTitle)
+			require.Equal(t, rule.ID, entry.RuleID)
 			require.Equal(t, rule.UID, entry.RuleUID)
 		})
 
@@ -502,7 +503,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 }
 
-func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
+func createTestLokiBackend(req Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL:   url,
@@ -525,11 +526,13 @@ func singleFromNormal(st *state.State) []state.StateTransition {
 func createTestRule() history_model.RuleMeta {
 	return history_model.RuleMeta{
 		OrgID:        1,
+		ID:           123,
 		UID:          "rule-uid",
 		Group:        "my-group",
 		NamespaceUID: "my-folder",
 		DashboardUID: "dash-uid",
 		PanelID:      123,
+		Title:        "my-title",
 	}
 }
 

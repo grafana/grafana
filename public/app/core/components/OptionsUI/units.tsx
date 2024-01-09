@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { FieldConfigEditorProps, GrafanaTheme2, UnitFieldConfigSettings } from '@grafana/data';
+import { StandardEditorProps, GrafanaTheme2, UnitFieldConfigSettings } from '@grafana/data';
 import { IconButton, UnitPicker, useStyles2 } from '@grafana/ui';
 
-type Props = FieldConfigEditorProps<string, UnitFieldConfigSettings>;
+type Props = StandardEditorProps<string, UnitFieldConfigSettings>;
 
 export function UnitValueEditor({ value, onChange, item }: Props) {
   const styles = useStyles2(getStyles);

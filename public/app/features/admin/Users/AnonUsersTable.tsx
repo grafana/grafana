@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { Avatar, CellProps, Column, InteractiveTable, Stack, Badge, Tooltip } from '@grafana/ui';
+import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
 import { UserAnonymousDeviceDTO } from 'app/types';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
@@ -10,9 +11,18 @@ type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO>
 
 // A helper function to parse the user agent string and extract parts
 const parseUserAgent = (userAgent: string) => {
+  // If the user agent string doesn't contain a space, it's probably just the browser name
+  // or some other entity that are accessing grafana
+  if (!userAgent.includes(' ')) {
+    return {
+      browser: userAgent,
+      computer: '',
+    };
+  }
+  const parts = userAgent.split(' ');
   return {
-    browser: userAgent.split(' ')[0],
-    computer: userAgent.split(' ')[1],
+    browser: parts[0],
+    computer: parts[1],
   };
 };
 
@@ -77,6 +87,11 @@ export const AnonUsersDevicesTable = ({ devices }: AnonUsersTableProps) => {
   return (
     <Stack direction={'column'} gap={2}>
       <InteractiveTable columns={columns} data={devices} getRowId={(user) => user.deviceId} />
+      {devices.length === 0 && (
+        <EmptyArea>
+          <span>No anonymous users found.</span>
+        </EmptyArea>
+      )}
     </Stack>
   );
 };

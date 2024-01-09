@@ -318,6 +318,41 @@
         }
       }
     },
+    "/access-control/teams/roles/search": {
+      "post": {
+        "description": "Lists the roles that have been directly assigned to the given teams.\n\nYou need to have a permission with action `teams.roles:read` and scope `teams:id:*`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "List roles assigned to multiple teams.",
+        "operationId": "listTeamsRoles",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RolesSearchQuery"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listTeamsRolesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/access-control/teams/{teamId}/roles": {
       "get": {
         "description": "You need to have a permission with action `teams.roles:read` and scope `teams:id:\u003cteam ID\u003e`.",
@@ -466,6 +501,41 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/users/roles/search": {
+      "post": {
+        "description": "Lists the roles that have been directly assigned to the given users. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:*`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "List roles assigned to multiple users.",
+        "operationId": "listUsersRoles",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RolesSearchQuery"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listUsersRolesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -1193,7 +1263,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+              "$ref": "#/definitions/CreateOrUpdateReportConfig"
             }
           }
         ],
@@ -1234,7 +1304,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/ReportEmailDTO"
+              "$ref": "#/definitions/ReportEmail"
             }
           }
         ],
@@ -1433,7 +1503,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/SettingsDTO"
+              "$ref": "#/definitions/ReportSettings"
             }
           }
         ],
@@ -1471,7 +1541,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+              "$ref": "#/definitions/CreateOrUpdateReportConfig"
             }
           }
         ],
@@ -1550,7 +1620,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+              "$ref": "#/definitions/CreateOrUpdateReportConfig"
             }
           },
           {
@@ -1881,6 +1951,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "active_anonymous_devices": {
+          "type": "integer",
+          "format": "int64"
+        },
         "active_users": {
           "type": "integer",
           "format": "int64"
@@ -2100,6 +2174,10 @@
       "type": "object",
       "properties": {
         "activeAdmins": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "activeDevices": {
           "type": "integer",
           "format": "int64"
         },
@@ -2661,6 +2739,23 @@
         }
       }
     },
+    "Assignments": {
+      "type": "object",
+      "properties": {
+        "builtInRoles": {
+          "type": "boolean"
+        },
+        "serviceAccounts": {
+          "type": "boolean"
+        },
+        "teams": {
+          "type": "boolean"
+        },
+        "users": {
+          "type": "boolean"
+        }
+      }
+    },
     "AttributeTypeAndValue": {
       "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
       "type": "object",
@@ -2669,26 +2764,6 @@
           "$ref": "#/definitions/ObjectIdentifier"
         },
         "Value": {}
-      }
-    },
-    "BrandingOptionsDTO": {
-      "type": "object",
-      "properties": {
-        "emailFooterLink": {
-          "type": "string"
-        },
-        "emailFooterMode": {
-          "type": "string"
-        },
-        "emailFooterText": {
-          "type": "string"
-        },
-        "emailLogoUrl": {
-          "type": "string"
-        },
-        "reportLogoUrl": {
-          "type": "string"
-        }
       }
     },
     "CalculateDiffTarget": {
@@ -2963,88 +3038,6 @@
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
       "format": "double"
-    },
-    "ConfigDTO": {
-      "description": "ConfigDTO is model representation in transfer",
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "dashboards": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DashboardDTO"
-          }
-        },
-        "enableCsv": {
-          "type": "boolean"
-        },
-        "enableDashboardUrl": {
-          "type": "boolean"
-        },
-        "formats": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Type"
-          }
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "options": {
-          "$ref": "#/definitions/ReportOptionsDTO"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "recipients": {
-          "type": "string"
-        },
-        "replyTo": {
-          "type": "string"
-        },
-        "scaleFactor": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "schedule": {
-          "$ref": "#/definitions/ScheduleDTO"
-        },
-        "state": {
-          "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
     },
     "CookiePreferences": {
       "type": "object",
@@ -3346,7 +3339,7 @@
         }
       }
     },
-    "CreateOrUpdateConfigCmd": {
+    "CreateOrUpdateReportConfig": {
       "type": "object",
       "properties": {
         "dashboardId": {
@@ -3359,7 +3352,7 @@
         "dashboards": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DashboardDTO"
+            "$ref": "#/definitions/ReportDashboard"
           }
         },
         "enableCsv": {
@@ -3381,7 +3374,7 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptionsDTO"
+          "$ref": "#/definitions/ReportOptions"
         },
         "recipients": {
           "type": "string"
@@ -3394,7 +3387,7 @@
           "format": "int64"
         },
         "schedule": {
-          "$ref": "#/definitions/ScheduleDTO"
+          "$ref": "#/definitions/ReportSchedule"
         },
         "state": {
           "$ref": "#/definitions/State"
@@ -3625,20 +3618,6 @@
         }
       }
     },
-    "DashboardDTO": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/DashboardReportDTO"
-        },
-        "reportVariables": {
-          "type": "object"
-        },
-        "timeRange": {
-          "$ref": "#/definitions/TimeRangeDTO"
-        }
-      }
-    },
     "DashboardFullWithMeta": {
       "type": "object",
       "properties": {
@@ -3746,21 +3725,6 @@
       "type": "object",
       "properties": {
         "redirectUri": {
-          "type": "string"
-        }
-      }
-    },
-    "DashboardReportDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "uid": {
           "type": "string"
         }
       }
@@ -4056,6 +4020,20 @@
         "format": "int64"
       }
     },
+    "Description": {
+      "type": "object",
+      "properties": {
+        "assignments": {
+          "$ref": "#/definitions/Assignments"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "DsAccess": {
       "type": "string"
     },
@@ -4341,7 +4319,11 @@
           "type": "boolean"
         },
         "id": {
-          "description": "Deprecated: use Uid instead",
+          "description": "Deprecated: use UID instead",
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
           "type": "integer",
           "format": "int64"
         },
@@ -4888,6 +4870,18 @@
         "Version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "LibraryElementArrayResponse": {
+      "type": "object",
+      "title": "LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.",
+      "properties": {
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LibraryElementDTO"
+          }
         }
       }
     },
@@ -5719,6 +5713,38 @@
         }
       }
     },
+    "Preferences": {
+      "description": "Spec defines user, team or org Grafana preferences",
+      "type": "object",
+      "properties": {
+        "cookiePreferences": {
+          "$ref": "#/definitions/CookiePreferences"
+        },
+        "homeDashboardUID": {
+          "description": "UID for the home dashboard",
+          "type": "string"
+        },
+        "language": {
+          "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "theme": {
+          "description": "Theme light, dark, empty is default",
+          "type": "string"
+        },
+        "timezone": {
+          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+          "type": "string"
+        },
+        "weekStart": {
+          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "type": "string"
+        }
+      }
+    },
     "PrometheusRemoteWriteTargetJSON": {
       "type": "object",
       "properties": {
@@ -5816,6 +5842,9 @@
         "isEnabled": {
           "type": "boolean"
         },
+        "slug": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -5904,8 +5933,10 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
+      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
+          "description": "HomeTab one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -6103,7 +6134,138 @@
         }
       }
     },
-    "ReportEmailDTO": {
+    "Report": {
+      "description": "ConfigDTO is model representation in transfer",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardName": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportDashboard"
+          }
+        },
+        "enableCsv": {
+          "type": "boolean"
+        },
+        "enableDashboardUrl": {
+          "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/ReportOptions"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "recipients": {
+          "type": "string"
+        },
+        "replyTo": {
+          "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ReportSchedule"
+        },
+        "state": {
+          "$ref": "#/definitions/State"
+        },
+        "templateVars": {
+          "type": "object"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ReportBrandingOptions": {
+      "type": "object",
+      "properties": {
+        "emailFooterLink": {
+          "type": "string"
+        },
+        "emailFooterMode": {
+          "type": "string"
+        },
+        "emailFooterText": {
+          "type": "string"
+        },
+        "emailLogoUrl": {
+          "type": "string"
+        },
+        "reportLogoUrl": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportDashboard": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/ReportDashboardID"
+        },
+        "reportVariables": {
+          "type": "object"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/ReportTimeRange"
+        }
+      }
+    },
+    "ReportDashboardID": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportEmail": {
       "type": "object",
       "properties": {
         "email": {
@@ -6124,7 +6286,7 @@
         }
       }
     },
-    "ReportOptionsDTO": {
+    "ReportOptions": {
       "type": "object",
       "properties": {
         "layout": {
@@ -6134,7 +6296,81 @@
           "type": "string"
         },
         "timeRange": {
-          "$ref": "#/definitions/TimeRangeDTO"
+          "$ref": "#/definitions/ReportTimeRange"
+        }
+      }
+    },
+    "ReportSchedule": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "string"
+        },
+        "dayOfMonth": {
+          "type": "string"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "hour": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalAmount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalFrequency": {
+          "type": "string"
+        },
+        "minute": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timeZone": {
+          "type": "string"
+        },
+        "workdaysOnly": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ReportSettings": {
+      "type": "object",
+      "properties": {
+        "branding": {
+          "$ref": "#/definitions/ReportBrandingOptions"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ReportTimeRange": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
         }
       }
     },
@@ -6209,6 +6445,9 @@
         "displayName": {
           "type": "string"
         },
+        "global": {
+          "type": "boolean"
+        },
         "group": {
           "type": "string"
         },
@@ -6234,6 +6473,50 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "RolesSearchQuery": {
+      "type": "object",
+      "properties": {
+        "includeHidden": {
+          "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "teamIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "userIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "SSOSettings": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "source": {
+          "$ref": "#/definitions/SettingsSource"
         }
       }
     },
@@ -6267,49 +6550,6 @@
         "userId": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "ScheduleDTO": {
-      "type": "object",
-      "properties": {
-        "day": {
-          "type": "string"
-        },
-        "dayOfMonth": {
-          "type": "string"
-        },
-        "endDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "hour": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "intervalAmount": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "intervalFrequency": {
-          "type": "string"
-        },
-        "minute": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "timeZone": {
-          "type": "string"
-        },
-        "workdaysOnly": {
-          "type": "boolean"
         }
       }
     },
@@ -6576,6 +6816,25 @@
         }
       }
     },
+    "SetResourcePermissionCommand": {
+      "type": "object",
+      "properties": {
+        "builtInRole": {
+          "type": "string"
+        },
+        "permission": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "SetRoleAssignmentsCommand": {
       "type": "object",
       "properties": {
@@ -6628,25 +6887,9 @@
         }
       }
     },
-    "SettingsDTO": {
-      "type": "object",
-      "properties": {
-        "branding": {
-          "$ref": "#/definitions/BrandingOptionsDTO"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
+    "SettingsSource": {
+      "type": "integer",
+      "format": "int64"
     },
     "ShareType": {
       "type": "string"
@@ -6654,38 +6897,6 @@
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
-    },
-    "Spec": {
-      "type": "object",
-      "title": "Spec defines model for Spec.",
-      "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/CookiePreferences"
-        },
-        "homeDashboardUID": {
-          "description": "UID for the home dashboard",
-          "type": "string"
-        },
-        "language": {
-          "description": "Selected language (beta)",
-          "type": "string"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
-        },
-        "theme": {
-          "description": "Theme light, dark, empty is default",
-          "type": "string"
-        },
-        "timezone": {
-          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-          "type": "string"
-        },
-        "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
-          "type": "string"
-        }
-      }
     },
     "State": {
       "type": "string"
@@ -6966,22 +7177,15 @@
         }
       }
     },
-    "TimeRangeDTO": {
-      "type": "object",
-      "properties": {
-        "from": {
-          "type": "string"
-        },
-        "to": {
-          "type": "string"
-        }
-      }
-    },
     "Token": {
       "type": "object",
       "properties": {
         "account": {
           "type": "string"
+        },
+        "anonymousRatio": {
+          "type": "integer",
+          "format": "int64"
         },
         "company": {
           "type": "string"
@@ -7827,6 +8031,34 @@
       "type": "string",
       "title": "VisType is used to indicate how the data should be visualized in explore."
     },
+    "deviceDTO": {
+      "type": "object",
+      "properties": {
+        "avatarUrl": {
+          "type": "string"
+        },
+        "clientIp": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
     "publicError": {
       "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
       "type": "object",
@@ -7852,6 +8084,78 @@
           "description": "StatusCode The HTTP status code returned",
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "resourcePermissionDTO": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "builtInRole": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isInherited": {
+          "type": "boolean"
+        },
+        "isManaged": {
+          "type": "boolean"
+        },
+        "isServiceAccount": {
+          "type": "boolean"
+        },
+        "permission": {
+          "type": "string"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "team": {
+          "type": "string"
+        },
+        "teamAvatarUrl": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userAvatarUrl": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userLogin": {
+          "type": "string"
+        }
+      }
+    },
+    "setPermissionCommand": {
+      "type": "object",
+      "properties": {
+        "permission": {
+          "type": "string"
+        }
+      }
+    },
+    "setPermissionsCommand": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SetResourcePermissionCommand"
+          }
         }
       }
     }
@@ -8210,6 +8514,15 @@
         }
       }
     },
+    "devicesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/deviceDTO"
+        }
+      }
+    },
     "folderResponse": {
       "description": "",
       "schema": {
@@ -8437,6 +8750,12 @@
         "$ref": "#/definitions/GetHomeDashboardResponse"
       }
     },
+    "getLibraryElementArrayResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/LibraryElementArrayResponse"
+      }
+    },
     "getLibraryElementConnectionsResponse": {
       "description": "",
       "schema": {
@@ -8533,7 +8852,7 @@
     "getPreferencesResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Spec"
+        "$ref": "#/definitions/Preferences"
       }
     },
     "getPublicAnnotationsResponse": {
@@ -8581,13 +8900,13 @@
     "getReportResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/ConfigDTO"
+        "$ref": "#/definitions/Report"
       }
     },
     "getReportSettingsResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/SettingsDTO"
+        "$ref": "#/definitions/ReportSettings"
       }
     },
     "getReportsResponse": {
@@ -8595,7 +8914,16 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/ConfigDTO"
+          "$ref": "#/definitions/Report"
+        }
+      }
+    },
+    "getResourcePermissionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/resourcePermissionDTO"
         }
       }
     },
@@ -8809,12 +9137,36 @@
         }
       }
     },
+    "listTeamsRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleDTO"
+          }
+        }
+      }
+    },
     "listTokensResponse": {
       "description": "",
       "schema": {
         "type": "array",
         "items": {
           "$ref": "#/definitions/TokenDTO"
+        }
+      }
+    },
+    "listUsersRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleDTO"
+          }
         }
       }
     },
@@ -9006,6 +9358,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/ActiveUserStats"
+      }
+    },
+    "resourcePermissionsDescription": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Description"
       }
     },
     "retrieveServiceAccountResponse": {

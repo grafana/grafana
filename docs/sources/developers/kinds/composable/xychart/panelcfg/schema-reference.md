@@ -18,14 +18,14 @@ title: XYChartPanelCfg kind
 
 
 
-| Property              | Type                           | Required | Default | Description                                             |
-|-----------------------|--------------------------------|----------|---------|---------------------------------------------------------|
-| `FieldConfig`         | [object](#fieldconfig)         | **Yes**  |         |                                                         |
-| `Options`             | [object](#options)             | **Yes**  |         |                                                         |
-| `ScatterSeriesConfig` | [object](#scatterseriesconfig) | **Yes**  |         |                                                         |
-| `ScatterShow`         | string                         | **Yes**  |         | Possible values are: `points`, `lines`, `points+lines`. |
-| `SeriesMapping`       | string                         | **Yes**  |         | Possible values are: `auto`, `manual`.                  |
-| `XYDimensionConfig`   | [object](#xydimensionconfig)   | **Yes**  |         |                                                         |
+| Property              | Type                           | Required | Default | Description                                                          |
+|-----------------------|--------------------------------|----------|---------|----------------------------------------------------------------------|
+| `FieldConfig`         | [object](#fieldconfig)         | **Yes**  |         |                                                                      |
+| `Options`             | [object](#options)             | **Yes**  |         |                                                                      |
+| `ScatterSeriesConfig` | [object](#scatterseriesconfig) | **Yes**  |         |                                                                      |
+| `ScatterShow`         | string                         | **Yes**  |         | Possible values are: `points`, `lines`, `points+lines`.              |
+| `SeriesMapping`       | string                         | **Yes**  |         | Auto is "table" in the UI<br/>Possible values are: `auto`, `manual`. |
+| `XYDimensionConfig`   | [object](#xydimensionconfig)   | **Yes**  |         | Configuration for the Table/Auto mode                                |
 
 ### FieldConfig
 
@@ -150,11 +150,11 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 
 | Property        | Type                                          | Required | Default | Description                                                                |
 |-----------------|-----------------------------------------------|----------|---------|----------------------------------------------------------------------------|
-| `dims`          | [XYDimensionConfig](#xydimensionconfig)       | **Yes**  |         |                                                                            |
+| `dims`          | [XYDimensionConfig](#xydimensionconfig)       | **Yes**  |         | Configuration for the Table/Auto mode                                      |
 | `legend`        | [VizLegendOptions](#vizlegendoptions)         | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
-| `series`        | [ScatterSeriesConfig](#scatterseriesconfig)[] | **Yes**  |         |                                                                            |
+| `series`        | [ScatterSeriesConfig](#scatterseriesconfig)[] | **Yes**  |         | Manual Mode                                                                |
 | `tooltip`       | [VizTooltipOptions](#viztooltipoptions)       | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
-| `seriesMapping` | string                                        | No       |         | Possible values are: `auto`, `manual`.                                     |
+| `seriesMapping` | string                                        | No       |         | Auto is "table" in the UI<br/>Possible values are: `auto`, `manual`.       |
 
 ### OptionsWithLegend
 
@@ -227,6 +227,8 @@ It extends [FieldConfig](#fieldconfig).
 | `y`                 | string                                              | No       |         |                                                                                                                                           |
 
 ### XYDimensionConfig
+
+Configuration for the Table/Auto mode
 
 | Property  | Type     | Required | Default | Description                       |
 |-----------|----------|----------|---------|-----------------------------------|

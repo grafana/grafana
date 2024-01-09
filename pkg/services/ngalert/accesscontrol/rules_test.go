@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
@@ -328,8 +330,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 						ac: ac,
 					}
 					err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(missing), groupChanges)
-					require.Errorf(t, err, "expected error because less permissions than expected were provided. Provided: %v; Expected: %v", missing, permissions)
-					require.ErrorIs(t, err, ErrAuthorization)
+
+					assert.Errorf(t, err, "expected error because less permissions than expected were provided. Provided: %v; Expected: %v; Diff: %v", missing, permissions, cmp.Diff(permissions, missing))
 					require.NotEmptyf(t, ac.EvaluateRecordings, "Access control was supposed to be called but it was not")
 				}
 			})
@@ -361,8 +363,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 	var data []models.AlertQuery
 	var scopes []string
-	expectedExecutions := rand.Intn(3) + 2
-	for i := 0; i < expectedExecutions; i++ {
+	for i := 0; i < rand.Intn(3)+2; i++ {
 		q := models.GenerateAlertQuery()
 		scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(q.DatasourceUID))
 		data = append(data, q)
@@ -387,8 +388,8 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(permissions), rule)
 
-		require.True(t, eval)
-		require.Len(t, ac.EvaluateRecordings, expectedExecutions)
+		require.NoError(t, eval)
+		require.Len(t, ac.EvaluateRecordings, 1)
 	})
 
 	t.Run("should return on first negative evaluation", func(t *testing.T) {
@@ -401,9 +402,9 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 			ac: ac,
 		}
 
-		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(nil), rule)
+		result := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(nil), rule)
 
-		require.False(t, eval)
+		require.Error(t, result)
 		require.Len(t, ac.EvaluateRecordings, 1)
 	})
 }
@@ -427,7 +428,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
 
-		require.True(t, result)
+		require.NoError(t, result)
 		require.NotEmpty(t, ac.EvaluateRecordings)
 	})
 	t.Run("should return false if user does not have access to at least one rule in group", func(t *testing.T) {
@@ -453,6 +454,6 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
 
-		require.False(t, result)
+		require.Error(t, result)
 	})
 }

@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -52,41 +51,31 @@ func TestIntegrationPluginManager(t *testing.T) {
 	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
 	require.NoError(t, err)
 
-	// We use the raw config here as it forms the basis for the setting.Provider implementation
-	// The plugin manager also relies directly on the setting.Cfg struct to provide Grafana specific
-	// properties such as the loading paths
-	raw, err := ini.Load([]byte(`
-		app_mode = production
-
-		[plugin.test-app]
-		path=../../plugins/manager/testdata/test-app
-
-		[plugin.test-panel]
-		not=included
-		`),
-	)
-	require.NoError(t, err)
-
 	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
-		Raw:                raw,
+		Raw:                ini.Empty(),
 		StaticRootPath:     staticRootPath,
 		BundledPluginsPath: bundledPluginsPath,
 		Azure:              &azsettings.AzureSettings{},
-
-		// nolint:staticcheck
-		IsFeatureToggleEnabled: features.IsEnabledGlobally,
+		PluginSettings: map[string]map[string]string{
+			"test-app": {
+				"path": "../../plugins/manager/testdata/test-app",
+			},
+			"test-panel": {
+				"not": "included",
+			},
+		},
 	}
 
 	tracer := tracing.InitializeTracerForTest()
 
 	hcp := httpclient.NewProvider()
-	am := azuremonitor.ProvideService(cfg, hcp, features)
+	am := azuremonitor.ProvideService(hcp)
 	cw := cloudwatch.ProvideService(cfg, hcp, features)
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
 	es := elasticsearch.ProvideService(hcp, tracer)
 	grap := graphite.ProvideService(hcp, tracer)
-	idb := influxdb.ProvideService(hcp)
+	idb := influxdb.ProvideService(hcp, features)
 	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp, cfg, features)
@@ -97,7 +86,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
-	pyroscope := pyroscope.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
+	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca)
 
