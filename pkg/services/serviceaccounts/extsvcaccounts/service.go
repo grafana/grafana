@@ -26,7 +26,7 @@ import (
 
 type ExtSvcAccountsService struct {
 	acSvc    ac.Service
-	features *featuremgmt.FeatureManager
+	features featuremgmt.FeatureToggles
 	logger   log.Logger
 	metrics  *metrics
 	saSvc    sa.Service

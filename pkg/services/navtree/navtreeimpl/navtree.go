@@ -33,7 +33,7 @@ type ServiceImpl struct {
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
 	starService          star.Service
-	features             *featuremgmt.FeatureManager
+	features             featuremgmt.FeatureToggles
 	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
@@ -52,7 +52,7 @@ type NavigationAppConfig struct {
 	Icon       string
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, license licensing.Licensing) navtree.Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service, features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, license licensing.Licensing) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),

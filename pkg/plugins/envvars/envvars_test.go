@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -726,35 +727,35 @@ func TestService_GetConfigMap(t *testing.T) {
 func TestService_GetConfigMap_featureToggles(t *testing.T) {
 	t.Run("Feature toggles list is deterministic", func(t *testing.T) {
 		tcs := []struct {
-			enabledFeatures []string
-			expectedConfig  map[string]string
+			features       featuremgmt.FeatureToggles
+			expectedConfig map[string]string
 		}{
 			{
-				enabledFeatures: nil,
-				expectedConfig:  map[string]string{},
+				features:       nil,
+				expectedConfig: map[string]string{},
 			},
 			{
-				enabledFeatures: []string{},
-				expectedConfig:  map[string]string{},
+				features:       featuremgmt.WithFeatures(),
+				expectedConfig: map[string]string{},
 			},
 			{
-				enabledFeatures: []string{"A", "B", "C"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
+				features:       featuremgmt.WithFeatures("A", "B", "C"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
 			},
 			{
-				enabledFeatures: []string{"C", "B", "A"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
+				features:       featuremgmt.WithFeatures("C", "B", "A"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
 			},
 			{
-				enabledFeatures: []string{"b", "a", "c", "d"},
-				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "a,b,c,d"},
+				features:       featuremgmt.WithFeatures("b", "a", "c", "d"),
+				expectedConfig: map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "a,b,c,d"},
 			},
 		}
 
 		for _, tc := range tcs {
 			s := &Service{
 				cfg: &config.Cfg{
-					Features: fakes.NewFakeFeatureToggles(tc.enabledFeatures...),
+					Features: tc.features,
 				},
 			}
 			require.Equal(t, tc.expectedConfig, s.GetConfigMap(context.Background(), "", nil))

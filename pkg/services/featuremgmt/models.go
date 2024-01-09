@@ -18,6 +18,10 @@ type FeatureToggles interface {
 	// Use of global feature flags should be limited and careful as they require
 	// a full server restart for a change to take place.
 	IsEnabledGlobally(flag string) bool
+
+	// Get the enabled flags -- this *may* also include disabled flags (with value false)
+	// but it is guaranteed to have the enabled ones listed
+	GetEnabled(ctx context.Context) map[string]bool
 }
 
 // FeatureFlagStage indicates the quality level

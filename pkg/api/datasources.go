@@ -339,7 +339,7 @@ func validateURL(cmdType string, url string) response.Response {
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
-func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features *featuremgmt.FeatureManager) error {
+func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
 	if jsonData == nil {
 		return nil
 	}

@@ -19,7 +19,7 @@ var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
 func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
-	features *featuremgmt.FeatureManager) *Session {
+	features featuremgmt.FeatureToggles) *Session {
 	return &Session{
 		cfg:            cfg,
 		features:       features,
@@ -30,7 +30,7 @@ func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
 
 type Session struct {
 	cfg            *setting.Cfg
-	features       *featuremgmt.FeatureManager
+	features       featuremgmt.FeatureToggles
 	sessionService auth.UserTokenService
 	log            log.Logger
 }

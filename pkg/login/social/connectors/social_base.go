@@ -26,14 +26,14 @@ type SocialBase struct {
 	info              *social.OAuthInfo
 	log               log.Logger
 	autoAssignOrgRole string
-	features          featuremgmt.FeatureManager
+	features          featuremgmt.FeatureToggles
 }
 
 func newSocialBase(name string,
 	config *oauth2.Config,
 	info *social.OAuthInfo,
 	autoAssignOrgRole string,
-	features featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 

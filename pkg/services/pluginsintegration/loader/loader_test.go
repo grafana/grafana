@@ -507,7 +507,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 
 	t.Run("Load a plugin with oauth client registration", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features:             fakes.NewFakeFeatureToggles(featuremgmt.FlagExternalServiceAuth),
+			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "oauth-external-registration")}
@@ -608,7 +608,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 
 	t.Run("Load a plugin with service account registration", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features:             fakes.NewFakeFeatureToggles(featuremgmt.FlagExternalServiceAuth),
+			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}

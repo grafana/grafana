@@ -34,7 +34,7 @@ type SSOSettingsService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
-	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager,
+	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service) *SSOSettingsService {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),

@@ -22,7 +22,7 @@ import (
 
 func TestSocialService_ProvideService(t *testing.T) {
 	type testEnv struct {
-		features *featuremgmt.FeatureManager
+		features featuremgmt.FeatureToggles
 	}
 	testCases := []struct {
 		name                                string
