@@ -2760,10 +2760,43 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@floating-ui/react-dom@npm:^2.0.3":
+  version: 2.0.4
+  resolution: "@floating-ui/react-dom@npm:2.0.4"
+  dependencies:
+    "@floating-ui/dom": "npm:^1.5.1"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 4240a718502c797fd2e174cd06dcd7321a6eda9c8966dbaf61864b9e16445e95649a59bfe7c19ee13f68c11f3693724d7970c7e618089a3d3915bd343639cfae
+  languageName: node
+  linkType: hard
+
+"@floating-ui/react@npm:0.26.4":
+  version: 0.26.4
+  resolution: "@floating-ui/react@npm:0.26.4"
+  dependencies:
+    "@floating-ui/react-dom": "npm:^2.0.3"
+    "@floating-ui/utils": "npm:^0.1.5"
+    tabbable: "npm:^6.0.1"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: dda933ec2abee0b09360eaec889462e072967340837fd55a91ef76f78a034c57b73f8174fa9f37d62141037ab651b1e02dcd996ee12b66dcc6a8b0e8516821c9
+  languageName: node
+  linkType: hard
+
 "@floating-ui/utils@npm:^0.1.3":
   version: 0.1.4
   resolution: "@floating-ui/utils@npm:0.1.4"
   checksum: 9729bfa9b41a0dfa002f637c38b2b6f9f208d2b938ed3bcd24493abc08afb6ee107bab2b8aadaa2d131eecbc9511e810920c4665c5e6ee83ba97502413c0968e
+  languageName: node
+  linkType: hard
+
+"@floating-ui/utils@npm:^0.1.5":
+  version: 0.1.6
+  resolution: "@floating-ui/utils@npm:0.1.6"
+  checksum: 450ec4ecc1dd8161b1904d4e1e9d95e653cc06f79af6c3b538b79efb10541d90bcc88646ab3cdffc5b92e00c4804ca727b025d153ad285f42dbbb39aec219ec9
   languageName: node
   linkType: hard
 
@@ -2839,6 +2872,46 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana-plugins/grafana-azure-monitor-datasource@workspace:*, @grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "npm:10.3.0-pre"
+    "@grafana/e2e-selectors": "npm:10.3.0-pre"
+    "@grafana/experimental": "npm:1.7.5"
+    "@grafana/plugin-configs": "npm:10.3.0-pre"
+    "@grafana/runtime": "npm:10.3.0-pre"
+    "@grafana/schema": "npm:10.3.0-pre"
+    "@grafana/ui": "npm:10.3.0-pre"
+    "@kusto/monaco-kusto": "npm:^7.4.0"
+    "@testing-library/react": "npm:14.0.0"
+    "@testing-library/user-event": "npm:14.5.1"
+    "@types/jest": "npm:29.5.4"
+    "@types/lodash": "npm:4.14.195"
+    "@types/node": "npm:20.8.10"
+    "@types/prismjs": "npm:1.26.0"
+    "@types/react": "npm:18.2.15"
+    "@types/testing-library__jest-dom": "npm:5.14.8"
+    fast-deep-equal: "npm:^3.1.3"
+    i18next: "npm:^22.0.0"
+    immer: "npm:10.0.2"
+    lodash: "npm:4.17.21"
+    monaco-editor: "npm:0.34.0"
+    prismjs: "npm:1.29.0"
+    react: "npm:18.2.0"
+    react-select-event: "npm:5.5.1"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.1"
+    tslib: "npm:2.6.0"
+    typescript: "npm:5.2.2"
+    webpack: "npm:5.89.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/grafana-testdata-datasource@workspace:*, @grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
@@ -2846,7 +2919,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/e2e-selectors": "npm:10.3.0-pre"
-    "@grafana/experimental": "npm:1.7.0"
+    "@grafana/experimental": "npm:1.7.5"
     "@grafana/plugin-configs": "npm:10.3.0-pre"
     "@grafana/runtime": "npm:10.3.0-pre"
     "@grafana/schema": "npm:10.3.0-pre"
@@ -2859,6 +2932,7 @@ __metadata:
     "@types/react": "npm:18.2.15"
     "@types/testing-library__jest-dom": "npm:5.14.8"
     lodash: "npm:4.17.21"
+    micro-memoize: "npm:^4.1.2"
     react: "npm:18.2.0"
     react-use: "npm:17.4.0"
     rxjs: "npm:7.8.1"
@@ -2890,6 +2964,33 @@ __metadata:
     ts-node: "npm:10.9.1"
     tslib: "npm:2.5.0"
     webpack: "npm:5.76.0"
+  languageName: unknown
+  linkType: soft
+
+"@grafana-plugins/parca@workspace:*, @grafana-plugins/parca@workspace:public/app/plugins/datasource/parca":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/parca@workspace:public/app/plugins/datasource/parca"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "npm:10.3.0-pre"
+    "@grafana/plugin-configs": "npm:10.3.0-pre"
+    "@grafana/runtime": "npm:10.3.0-pre"
+    "@grafana/schema": "npm:10.3.0-pre"
+    "@grafana/ui": "npm:10.3.0-pre"
+    "@testing-library/react": "npm:14.0.0"
+    "@testing-library/user-event": "npm:14.5.1"
+    "@types/lodash": "npm:4.14.195"
+    "@types/react": "npm:18.2.15"
+    lodash: "npm:4.17.21"
+    monaco-editor: "npm:0.34.0"
+    react: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.1"
+    tslib: "npm:2.6.0"
+    webpack: "npm:5.89.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
   languageName: unknown
   linkType: soft
 
@@ -2969,7 +3070,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "npm:1.6.28"
     xss: "npm:^1.0.14"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -3104,11 +3205,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.7.4":
-  version: 1.7.4
-  resolution: "@grafana/experimental@npm:1.7.4"
+"@grafana/experimental@npm:1.7.5":
+  version: 1.7.5
+  resolution: "@grafana/experimental@npm:1.7.5"
   dependencies:
     "@types/uuid": "npm:^8.3.3"
+    react-use: "npm:^17.4.2"
     semver: "npm:^7.5.4"
     uuid: "npm:^8.3.2"
   peerDependencies:
@@ -3120,7 +3222,7 @@ __metadata:
     react-dom: 17.0.2
     react-select: ^5.2.1
     rxjs: 7.8.0
-  checksum: e62e6382396d282281e31011c936fe9164650ea8caea7a09c4ef8615a66bb0ab0f74c4946354276457a2f5d1276016fc4225a08b8afb043c81e11b010f52b26d
+  checksum: 33f5e739bbc1646ea00c00b419c35a0b02abbfc35b0fa42d61f05a78a1929567388e4132093a029f88783264e739baeb8bcb53a68bcf1152f055a20be3b87e24
   languageName: node
   linkType: hard
 
@@ -3349,6 +3451,7 @@ __metadata:
     "@babel/core": "npm:7.23.2"
     "@emotion/css": "npm:11.11.2"
     "@emotion/react": "npm:11.11.1"
+    "@floating-ui/react": "npm:0.26.4"
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/e2e-selectors": "npm:10.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.5"
@@ -3449,12 +3552,11 @@ __metadata:
     react-dom: "npm:18.2.0"
     react-dropzone: "npm:14.2.3"
     react-highlight-words: "npm:0.20.0"
-    react-hook-form: "npm:7.5.3"
+    react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^12.0.0"
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.3.1"
     react-popper: "npm:2.3.0"
-    react-popper-tooltip: "npm:4.4.2"
     react-router-dom: "npm:5.3.3"
     react-select: "npm:5.7.4"
     react-select-event: "npm:^5.1.0"
@@ -3481,7 +3583,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "npm:1.6.28"
     uuid: "npm:9.0.0"
     webpack: "npm:5.89.0"
   peerDependencies:
@@ -5176,7 +5278,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@popperjs/core@npm:2.11.8, @popperjs/core@npm:^2.11.5":
+"@popperjs/core@npm:2.11.8":
   version: 2.11.8
   resolution: "@popperjs/core@npm:2.11.8"
   checksum: ddd16090cde777aaf102940f05d0274602079a95ad9805bd20bc55dcc7c3a2ba1b99dd5c73e5cc2753c3d31250ca52a67d58059459d7d27debb983a9f552936c
@@ -13073,6 +13175,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"css-in-js-utils@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "css-in-js-utils@npm:3.1.0"
+  dependencies:
+    hyphenate-style-name: "npm:^1.0.3"
+  checksum: bd2f569f1870389004cfacfd7b798c0f40933d34af1f040c391a08322d097790b9a9524affb2ba4d26122e9cb8f4256afb59edb6077dbe607506944a9c673c67
+  languageName: node
+  linkType: hard
+
 "css-line-break@npm:^2.1.0":
   version: 2.1.0
   resolution: "css-line-break@npm:2.1.0"
@@ -13358,6 +13469,13 @@ __metadata:
   version: 2.6.18
   resolution: "csstype@npm:2.6.18"
   checksum: 378e718d34fb48b4ed74c4ab4c90db08ee6aa2b1c0b687ac11b6bae655bc9815a410592162abfde250a805b9ef4d7f711cbaa9d985b6610c5e781bcd1409f7aa
+  languageName: node
+  linkType: hard
+
+"csstype@npm:^3.1.2":
+  version: 3.1.3
+  resolution: "csstype@npm:3.1.3"
+  checksum: f593cce41ff5ade23f44e77521e3a1bcc2c64107041e1bf6c3c32adc5187d0d60983292fda326154d20b01079e24931aa5b08e4467cc488b60bb1e7f6d478ade
   languageName: node
   linkType: hard
 
@@ -14951,16 +15069,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-plugin-browserslist@npm:^0.8.0":
-  version: 0.8.1
-  resolution: "esbuild-plugin-browserslist@npm:0.8.1"
+"esbuild-plugin-browserslist@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "esbuild-plugin-browserslist@npm:0.10.0"
   dependencies:
     debug: "npm:^4.3.4"
     zod: "npm:^3.21.4"
   peerDependencies:
     browserslist: ^4.21.8
-    esbuild: ~0.18.2
-  checksum: d77be417ea4cb27ff1184178239b1fd338a50cd80d44ac4f3619c711ba5845b58375c8d31901ce39ebb070513a3122955d96111ab7021c186c2d6b232e8830d9
+    esbuild: ~0.19.2
+  checksum: 39c5b237fbd01a4e8aec150426f82593522be82b545dd0f342d342eec0a8a750b27ee04d8aba040b8a36b0f90ab6902eaf4653e4f9b46d2487078972f0760c55
   languageName: node
   linkType: hard
 
@@ -16070,6 +16188,13 @@ __metadata:
   version: 2.0.6
   resolution: "fast-levenshtein@npm:2.0.6"
   checksum: eb7e220ecf2bab5159d157350b81d01f75726a4382f5a9266f42b9150c4523b9795f7f5d9fbbbeaeac09a441b2369f05ee02db48ea938584205530fe5693cfe1
+  languageName: node
+  linkType: hard
+
+"fast-loops@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "fast-loops@npm:1.1.3"
+  checksum: 1bf9f102d8ed48a8c8304e2b27fd32afa65d370498db9b49d5762696ac4aa8c55593d505c142c2b7e25ca79f45207c4b25f778afd80f35df98cb2caaaf9609b7
   languageName: node
   linkType: hard
 
@@ -17301,14 +17426,17 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@emotion/react": "npm:11.11.1"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
+    "@floating-ui/react": "npm:0.26.4"
     "@glideapps/glide-data-grid": "npm:^5.2.1"
+    "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
+    "@grafana-plugins/parca": "workspace:*"
     "@grafana/aws-sdk": "npm:0.3.1"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:6.0.1"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": "npm:1.7.4"
+    "@grafana/experimental": "npm:1.7.5"
     "@grafana/faro-core": "npm:^1.3.5"
     "@grafana/faro-web-sdk": "npm:^1.3.5"
     "@grafana/flamegraph": "workspace:*"
@@ -17467,7 +17595,7 @@ __metadata:
     emotion: "npm:11.0.0"
     esbuild: "npm:0.18.12"
     esbuild-loader: "npm:3.0.1"
-    esbuild-plugin-browserslist: "npm:^0.8.0"
+    esbuild-plugin-browserslist: "npm:^0.10.0"
     eslint: "npm:8.52.0"
     eslint-config-prettier: "npm:8.8.0"
     eslint-plugin-import: "npm:^2.26.0"
@@ -17560,13 +17688,12 @@ __metadata:
     react-dropzone: "npm:^14.2.3"
     react-grid-layout: "npm:1.4.2"
     react-highlight-words: "npm:0.20.0"
-    react-hook-form: "npm:7.5.3"
+    react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^12.0.0"
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.3.1"
     react-moveable: "npm:0.46.1"
     react-popper: "npm:2.3.0"
-    react-popper-tooltip: "npm:4.4.2"
     react-redux: "npm:8.1.3"
     react-refresh: "npm:0.14.0"
     react-resizable: "npm:3.0.5"
@@ -17585,6 +17712,7 @@ __metadata:
     react-virtualized-auto-sizer: "npm:1.0.7"
     react-window: "npm:1.8.9"
     react-window-infinite-loader: "npm:1.0.9"
+    react-zoom-pan-pinch: "npm:^3.3.0"
     redux: "npm:4.2.1"
     redux-mock-store: "npm:1.5.4"
     redux-thunk: "npm:2.4.2"
@@ -17617,7 +17745,7 @@ __metadata:
     tslib: "npm:2.6.0"
     tween-functions: "npm:^1.2.0"
     typescript: "npm:5.2.2"
-    uplot: "npm:1.6.27"
+    uplot: "npm:1.6.28"
     uuid: "npm:9.0.0"
     vendor: "link:./public/vendor"
     visjs-network: "npm:4.25.0"
@@ -18314,7 +18442,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hyphenate-style-name@npm:^1.0.2":
+"hyphenate-style-name@npm:^1.0.2, hyphenate-style-name@npm:^1.0.3":
   version: 1.0.4
   resolution: "hyphenate-style-name@npm:1.0.4"
   checksum: d37883e6b7e1be62e1ddae29cac83fa59fb93c068bc8eb1561585439adbad91dcf7e264ee2a82c4378fc58049f7bd853544a4a81bf00d4aff717f641052323e7
@@ -18598,6 +18726,16 @@ __metadata:
   dependencies:
     css-in-js-utils: "npm:^2.0.0"
   checksum: ceb5ddafe394e01494ba06129a19baa43a845a261126409279b5e7172cf6afc1e50e3d740aff057049c810d864758d50609d81de86eecdae8781e7a9703b2db0
+  languageName: node
+  linkType: hard
+
+"inline-style-prefixer@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "inline-style-prefixer@npm:7.0.0"
+  dependencies:
+    css-in-js-utils: "npm:^3.1.0"
+    fast-loops: "npm:^1.1.3"
+  checksum: 38486ce52ffa81649d845ffc4dda421ac24ea02709b8608d61f82cf186bc57749a73e562c2b7236c3946705a0c6e9d5e3872c59280972df73b0a1161fbf51eba
   languageName: node
   linkType: hard
 
@@ -22601,6 +22739,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nano-css@npm:^5.6.1":
+  version: 5.6.1
+  resolution: "nano-css@npm:5.6.1"
+  dependencies:
+    "@jridgewell/sourcemap-codec": "npm:^1.4.15"
+    css-tree: "npm:^1.1.2"
+    csstype: "npm:^3.1.2"
+    fastest-stable-stringify: "npm:^2.0.2"
+    inline-style-prefixer: "npm:^7.0.0"
+    rtl-css-js: "npm:^1.16.1"
+    stacktrace-js: "npm:^2.0.2"
+    stylis: "npm:^4.3.0"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: d4e5e3c9fdfc09f494852c75ae5320373dfa84e24f82b7d6ff45928205763ec7780446e3e10af98398409bd4bf1acebc1f987570592b2bc68b9c0997ad089f73
+  languageName: node
+  linkType: hard
+
 "nanoid@npm:3.3.3":
   version: 3.3.3
   resolution: "nanoid@npm:3.3.3"
@@ -25579,12 +25736,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-hook-form@npm:7.5.3":
-  version: 7.5.3
-  resolution: "react-hook-form@npm:7.5.3"
+"react-hook-form@npm:^7.49.2":
+  version: 7.49.2
+  resolution: "react-hook-form@npm:7.49.2"
   peerDependencies:
-    react: ^16.8.0 || ^17
-  checksum: ee359714c538ee8f328e147732aba629269849e159a88f96662c2e2d8ca175a6015e5364304bb8bada0249de0c335bafa64835abe09b5db895b702bce9159912
+    react: ^16.8.0 || ^17 || ^18
+  checksum: 7895d65b8458c42d46eb338803bb0fd1aab42fc69ecf80b47846eace9493a10cac5b05c9b744a5f9f1f7969a3e2703fc2118cdab97e49a7798a72d09f106383f
   languageName: node
   linkType: hard
 
@@ -25714,21 +25871,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-popper-tooltip@npm:4.4.2":
-  version: 4.4.2
-  resolution: "react-popper-tooltip@npm:4.4.2"
-  dependencies:
-    "@babel/runtime": "npm:^7.18.3"
-    "@popperjs/core": "npm:^2.11.5"
-    react-popper: "npm:^2.3.0"
-  peerDependencies:
-    react: ">=16.6.0"
-    react-dom: ">=16.6.0"
-  checksum: 87192cd6a42f2d04826da82b4a55130a0bc50ef5fbf83328e0560b47a27e363dbe5538a66b835fb0309e2f2c011e20b09029c36c8a241fb790605638f212e6aa
-  languageName: node
-  linkType: hard
-
-"react-popper@npm:2.3.0, react-popper@npm:^2.3.0":
+"react-popper@npm:2.3.0":
   version: 2.3.0
   resolution: "react-popper@npm:2.3.0"
   dependencies:
@@ -26145,6 +26288,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-use@npm:^17.4.2":
+  version: 17.4.2
+  resolution: "react-use@npm:17.4.2"
+  dependencies:
+    "@types/js-cookie": "npm:^2.2.6"
+    "@xobotyi/scrollbar-width": "npm:^1.9.5"
+    copy-to-clipboard: "npm:^3.3.1"
+    fast-deep-equal: "npm:^3.1.3"
+    fast-shallow-equal: "npm:^1.0.0"
+    js-cookie: "npm:^2.2.1"
+    nano-css: "npm:^5.6.1"
+    react-universal-interface: "npm:^0.6.2"
+    resize-observer-polyfill: "npm:^1.5.1"
+    screenfull: "npm:^5.1.0"
+    set-harmonic-interval: "npm:^1.0.1"
+    throttle-debounce: "npm:^3.0.1"
+    ts-easing: "npm:^0.2.0"
+    tslib: "npm:^2.1.0"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 56d2da474d949d22eb34ff3ffccf5526986d51ed68a8f4e64f4b79bdcff3f0ea55d322c104e3fc0819b08b8765e8eb3fa47d8b506e9d61ff1fdc7bd1374c17d6
+  languageName: node
+  linkType: hard
+
 "react-virtual@npm:2.10.4, react-virtual@npm:^2.8.2":
   version: 2.10.4
   resolution: "react-virtual@npm:2.10.4"
@@ -26186,6 +26354,16 @@ __metadata:
     react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 946bf990b58cafe054c6a36ae9f56ce084a94ab69366c7bc6c9117d8ec94227fd0d0e8efc39f1aa0f9dc13e29b7f6bb7d0e7284d0c7546a50a9e51465269e221
+  languageName: node
+  linkType: hard
+
+"react-zoom-pan-pinch@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "react-zoom-pan-pinch@npm:3.3.0"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 56e102f603dc5d0dbcff2effe403a1f46b718bde0bbad395fc990db0ef48f25fefb6969fec465948e90471a8e8e702cddaaa93742f77075cb1f4f32b10c1ab43
   languageName: node
   linkType: hard
 
@@ -27058,6 +27236,15 @@ __metadata:
   dependencies:
     "@babel/runtime": "npm:^7.1.2"
   checksum: 4694e399003941e906cc1a4dceec21b4b3ad9e5b54065430c11a219b76b3bcd0b206f304d43adc870a1523ea18b46332fa983b91fadb917d06f2317c2518eee5
+  languageName: node
+  linkType: hard
+
+"rtl-css-js@npm:^1.16.1":
+  version: 1.16.1
+  resolution: "rtl-css-js@npm:1.16.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.1.2"
+  checksum: fa6a3e1f73e65bf5763b8a051942477a0852ee072d29ebad0999f02556a73715e72374d9a31ddec3fe023b09702b56f8be3a5a0404816e795ab86ea879183e02
   languageName: node
   linkType: hard
 
@@ -28608,6 +28795,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"stylis@npm:^4.3.0":
+  version: 4.3.1
+  resolution: "stylis@npm:4.3.1"
+  checksum: 20b04044397c5c69e4b9f00b037159ba82b602c61d45f26d8def08577fd6ddc4b2853d86818548c1b404d29194a99b6495cca1733880afc845533ced843cb266
+  languageName: node
+  linkType: hard
+
 "supports-color@npm:8.1.1, supports-color@npm:^8.0.0, supports-color@npm:^8.1.1":
   version: 8.1.1
   resolution: "supports-color@npm:8.1.1"
@@ -28731,6 +28925,13 @@ __metadata:
   version: 6.14.2
   resolution: "systemjs@npm:6.14.2"
   checksum: 5e126987ab10c3a19c3134d1ca82ab18cbf05018b396b0cc64c31c9cd561e5129f134cd0985d1987d7f82bd115a9b03182658ea76d612c58e8acfd446cda550f
+  languageName: node
+  linkType: hard
+
+"tabbable@npm:^6.0.1":
+  version: 6.2.0
+  resolution: "tabbable@npm:6.2.0"
+  checksum: 980fa73476026e99dcacfc0d6e000d41d42c8e670faf4682496d30c625495e412c4369694f2a15cf1e5252d22de3c396f2b62edbe8d60b5dadc40d09e3f2dde3
   languageName: node
   linkType: hard
 
@@ -29926,10 +30127,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.27":
-  version: 1.6.27
-  resolution: "uplot@npm:1.6.27"
-  checksum: b46de70804fdec2aa62101d8980aa18517a9a84e94fdeac922baa8121140ddae35685002a7cbdc74bbe6ea2306e341628490f5a5e2fa4b8086ff1643dccf2be9
+"uplot@npm:1.6.28":
+  version: 1.6.28
+  resolution: "uplot@npm:1.6.28"
+  checksum: 6771289c45f2b8e8ad5d56abd8c92e7f5687244d75265f80957af857c2034b7b5e3128122262e5a546da2fc4437b600e56a058523eff1435b5bf6728ddc19612
   languageName: node
   linkType: hard
 

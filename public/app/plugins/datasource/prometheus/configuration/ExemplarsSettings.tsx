@@ -46,7 +46,7 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
         {!disabled && (
           <Button
             variant="secondary"
-            aria-label={selectors.components.DataSource.Prometheus.configPage.exemplarsAddButton}
+            data-testid={selectors.components.DataSource.Prometheus.configPage.exemplarsAddButton}
             className={css`
               margin-bottom: 10px;
             `}

@@ -68,7 +68,10 @@ export const getDefaultFormValues = (): RuleFormValues => {
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
     manualRouting: false, // let's decide this later
-    contactPoints: [],
+    contactPoints: {},
+    overrideGrouping: false,
+    overrideTimings: false,
+    muteTimeIntervals: [],
 
     // cortex / loki
     namespace: '',
@@ -136,7 +139,8 @@ export function normalizeDefaultAnnotations(annotations: Array<{ key: string; va
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused } = values;
+  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused, contactPoints, manualRouting } =
+    values;
   if (condition) {
     return {
       grafana_alert: {
@@ -146,6 +150,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         data: queries.map(fixBothInstantAndRangeQuery),
         is_paused: Boolean(isPaused),
+        contactPoints: manualRouting ? contactPoints : undefined,
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -178,8 +183,26 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
-        // manualrouting: ?? //todo depending on the implementation of the manual routing
-        // contactPoints: ?? //todo depending on the implementation of the manual routing
+        contactPoints: ga.contactPoints,
+        manualRouting: Boolean(ga.contactPoints),
+        // next line is for testing
+        // manualRouting: true,
+        // contactPoints: {
+        //   grafana: {
+        //       selectedContactPoint: "contact_point_5",
+        //       muteTimeIntervals: [
+        //           "mute timing 1"
+        //       ],
+        //       overrideGrouping: true,
+        //       overrideTimings: true,
+        //       "groupBy": [
+        //           "..."
+        //       ],
+        //       groupWaitValue: "35s",
+        //       groupIntervalValue: "6m",
+        //       repeatIntervalValue: "5h"
+        //   }
+        // }
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');

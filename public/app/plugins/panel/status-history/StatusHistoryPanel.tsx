@@ -190,6 +190,8 @@ export const StatusHistoryPanel = ({
     );
   }
 
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
+
   return (
     <TimelineChart
       theme={theme}
@@ -204,7 +206,7 @@ export const StatusHistoryPanel = ({
       mode={TimelineMode.Samples}
     >
       {(builder, alignedFrame) => {
-        if (oldConfig.current !== builder) {
+        if (oldConfig.current !== builder && !showNewVizTooltips) {
           oldConfig.current = addTooltipSupport({
             config: builder,
             onUPlotClick,
@@ -228,7 +230,7 @@ export const StatusHistoryPanel = ({
                 disableCanvasRendering={true}
               />
             )}
-            {config.featureToggles.newVizTooltips ? (
+            {showNewVizTooltips ? (
               <>
                 {options.tooltip.mode !== TooltipDisplayMode.None && (
                   <TooltipPlugin2
