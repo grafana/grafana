@@ -144,6 +144,7 @@ describe('InfluxDataSource Backend Mode', () => {
     });
   });
 
+  // @todo revisit these tests
   describe('when interpolating template variables', () => {
     const text = 'interpolationText';
     const text2 = 'interpolationText2';
@@ -189,7 +190,7 @@ describe('InfluxDataSource Backend Mode', () => {
       expect(query.adhocFilters?.[0].key).toBe(adhocFilters[0].key);
     }
 
-    // @todo what is this testing?
+    // @todo what is this testing and why is it passing?
     it('should apply all template variables with InfluxQL mode', () => {
       ds.version = ds.version = InfluxVersion.InfluxQL;
       ds.access = 'proxy';
@@ -200,21 +201,22 @@ describe('InfluxDataSource Backend Mode', () => {
       influxChecks(query);
     });
 
-    // @todo fix, not testing anything?
-    // it('should apply all scopedVars to tags', () => {
-    //   ds.version = InfluxVersion.InfluxQL;
-    //   ds.access = 'proxy';
-    //   const query = ds.applyTemplateVariables(mockInfluxQueryWithTemplateVars(adhocFilters), {
-    //     interpolationVar: { text: 'na', value: 'na' },
-    //     interpolationVar2: { text: 'na', value: 'na' },
-    //   });
-    //   if (!query.tags?.length) {
-    //     throw new Error('Tags are not defined');
-    //   }
-    //   const value = query.tags[0].value;
-    //   const scopedVars = 'interpolationText,interpolationText2';
-    //   expect(value).toBe(scopedVars);
-    // });
+    // @todo fix, the TemplateSrv being called is not the one we are mocking
+    it('should apply all scopedVars to tags', () => {
+      ds.version = InfluxVersion.InfluxQL;
+      ds.access = 'proxy';
+
+      const query = ds.applyTemplateVariables(mockInfluxQueryWithTemplateVars(adhocFilters), {
+        nothing: { text: 'you', value: 'shall' },
+        doing: { text: 'not', value: 'pass' },
+      });
+      if (!query.tags?.length) {
+        throw new Error('Tags are not defined');
+      }
+      const value = query.tags[0].value;
+      const scopedVars = 'interpolationText,interpolationText2';
+      expect(value).toBe(scopedVars);
+    });
   });
 
   describe('variable interpolation with chained variables with backend mode', () => {
@@ -372,7 +374,7 @@ describe('applyVariables', () => {
     });
   });
 
-  it('Should intepolate, and escape delimiter and remove extra escape chars for variable value', () => {
+  it('Should interpolate and escape', () => {
     const query: InfluxQuery = ds.applyTemplateVariables(
       {
         ...mockInfluxQueryWithTemplateVars([]),

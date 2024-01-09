@@ -274,7 +274,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           const middleChars = tag.value.slice(2, tag.value.length - 2);
 
           // regex escape doesn't catch `/`, I would assume so it doesn't mangle the regex delimiter, so we need to escape it manually
-          // what about $?
+          // what about `$` and `^`
           // Also we only want 2 escape chars `\\` for regex?
           const escapedMiddleChars = middleChars.replaceAll(`\\\\`, `\\`).replaceAll(`/`, '\\/');
 
@@ -817,6 +817,7 @@ export function influxRegularEscape(value: string | string[]) {
   if (typeof value === 'string') {
     // Check the value is a number. If not run to escape special characters
     if (isNaN(parseFloat(value))) {
+      //     value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
       return value.replace(/[\\^'$*+?.()|[\]{}\/]/g, '\\$&');
     }
   }
