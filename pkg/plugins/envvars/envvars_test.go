@@ -366,6 +366,18 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			exp:    expDefaultOtlp,
 		},
 		{
+			name: "enabled on plugin with wrong plugin setting but with enablePluginsTracingByDefault feature flag",
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: defaultOTelCfg,
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "false"}},
+				Features:       featuremgmt.WithFeatures(featuremgmt.FlagEnablePluginsTracingByDefault),
+			},
+			plugin: defaultPlugin,
+			exp:    expDefaultOtlp,
+		},
+		{
 			name: "GF_PLUGIN_VERSION is not present if tracing is disabled",
 			cfg: &config.Cfg{
 				Tracing: config.Tracing{
