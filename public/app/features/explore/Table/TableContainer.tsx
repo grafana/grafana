@@ -104,7 +104,6 @@ export class TableContainer extends PureComponent<Props> {
             {frames.map((data, i) => (
               <PanelChrome
                 key={data.refId || `table-${i}`}
-                // @ts-expect-error expects a string while a ReactElement is valid
                 title={this.getTableTitle(dataFrames, data, i)}
                 width={width}
                 height={this.getTableHeight(data.length, this.hasSubFrames(data))}
