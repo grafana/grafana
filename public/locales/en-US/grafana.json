@@ -551,6 +551,9 @@
     "loading": "Loading folders..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": "Close"
+    },
     "modal": {
       "close-tooltip": "Close"
     },

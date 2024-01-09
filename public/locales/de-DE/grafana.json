@@ -551,6 +551,9 @@
     "loading": "Ordner werden geladen …"
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Schließen"
     },

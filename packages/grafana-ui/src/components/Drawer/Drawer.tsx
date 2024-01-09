@@ -123,7 +123,7 @@ export function Drawer({
                   fill="text"
                   onClick={onClose}
                   data-testid={selectors.components.Drawer.General.close}
-                  aria-label={t('selectors.components.Drawer.General.close', 'Close Drawer')}
+                  aria-label={t('grafana-ui.drawer.close', 'Close')}
                 />
               </div>
               <div className={styles.titleWrapper}>

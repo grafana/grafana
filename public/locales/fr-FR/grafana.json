@@ -556,6 +556,9 @@
     "loading": "Chargement des dossiers..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Fermer"
     },

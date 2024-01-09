@@ -556,6 +556,9 @@
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Cerrar"
     },

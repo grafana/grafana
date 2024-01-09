@@ -546,6 +546,9 @@
     "loading": "正在加载文件夹..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "关闭"
     },
