@@ -484,9 +484,10 @@ type provisioningMetadata struct {
 }
 
 type dashboardIdentity struct {
-	// Deprecated: use FolderUID instead
-	folderID int64
-	title    string
+	// Deprecated: use folderUID instead
+	folderID  int64
+	folderUID string
+	title     string
 }
 
 func (d *dashboardIdentity) Exists() bool {

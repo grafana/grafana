@@ -71,7 +71,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
             uid: dashboard.state.uid,
             subPath: `/panel-edit/${panelId}`,
             currentQueryParams: location.search,
-            useExperimentalURL: true,
           }),
         });
       }

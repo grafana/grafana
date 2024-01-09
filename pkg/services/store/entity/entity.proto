@@ -5,12 +5,11 @@ option go_package = "github.com/grafana/grafana/pkg/services/store/entity";
 
 // The canonical entity/document data -- this represents the raw bytes and storage level metadata
 message Entity {
-
   // Globally unique ID set by the system.  This can not be set explicitly
   string guid = 1;
 
-  // The resourceVersion -- it will change whenever anythign on the object is saved
-  string version = 2;
+  // The resource version, this is a snowflake id controlled by storage
+  int64 resource_version = 2;
 
   // group
   string group = 24;
@@ -19,17 +18,17 @@ message Entity {
   // namespace
   string namespace = 26;
   // k8s name
-  string uid = 27;
+  string name = 27;
   // subresource
   string subresource = 28;
 
   // group version
   string group_version = 23;
 
-  // k8s key value
+  // k8s key value (TODO remove -- it is duplicate of group+resource+version)
   string key = 22;
 
-  // The folder UID
+  // The folder k8s name
   string folder = 4;
 
   // Raw meta from k8s
@@ -42,7 +41,7 @@ message Entity {
   bytes status = 7;
 
   // the friendly name of the entity
-  string name = 8;
+  string title = 8;
 
   // Content Length
   int64 size = 9;
@@ -118,7 +117,7 @@ message ReadEntityRequest {
   string key = 1;
 
   // Fetch an explicit version (default is latest)
-  string version = 2;
+  int64 resource_version = 2;
 
   // Include the full body
   bool with_body = 4;
@@ -174,7 +173,7 @@ message UpdateEntityRequest {
   Entity entity = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 2;
+  int64 previous_version = 2;
 }
 
 message UpdateEntityResponse {
@@ -204,7 +203,7 @@ message DeleteEntityRequest {
   string key = 1;
 
   // Used for optimistic locking.  If missing, the current version will be deleted regardless
-  string previous_version = 2;
+  int64 previous_version = 2;
 }
 
 message DeleteEntityResponse {
@@ -299,10 +298,14 @@ message ReferenceRequest {
   int64 limit = 2;
 
   // Free text query string -- mileage may vary :)
+  string namespace = 5;
+
+  string group = 6;
+
   string resource = 3;
 
   // Free text query string -- mileage may vary :)
-  string uid = 4;
+  string name = 4;
 }
 
 message EntityListResponse {

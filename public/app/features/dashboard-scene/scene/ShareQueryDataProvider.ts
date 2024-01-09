@@ -56,22 +56,27 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       this._querySub.unsubscribe();
     }
 
-    if (!query.panelId) {
-      return;
-    }
+    if (this.state.$data) {
+      this._sourceProvider = this.state.$data;
+      this._passContainerWidth = true;
+    } else {
+      if (!query.panelId) {
+        return;
+      }
 
-    const keyToFind = getVizPanelKeyForPanelId(query.panelId);
-    const source = findObjectInScene(this.getRoot(), (scene: SceneObject) => scene.state.key === keyToFind);
+      const keyToFind = getVizPanelKeyForPanelId(query.panelId);
+      const source = findObjectInScene(this.getRoot(), (scene: SceneObject) => scene.state.key === keyToFind);
 
-    if (!source) {
-      console.log('Shared dashboard query refers to a panel that does not exist in the scene');
-      return;
-    }
+      if (!source) {
+        console.log('Shared dashboard query refers to a panel that does not exist in the scene');
+        return;
+      }
 
-    this._sourceProvider = source.state.$data;
-    if (!this._sourceProvider) {
-      console.log('No source data found for shared dashboard query');
-      return;
+      this._sourceProvider = source.state.$data;
+      if (!this._sourceProvider) {
+        console.log('No source data found for shared dashboard query');
+        return;
+      }
     }
 
     // If the source is not active we need to pass the container width

@@ -2,6 +2,9 @@ package remote
 
 import (
 	"context"
+	"fmt"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -9,28 +12,103 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
-type RemoteSecondaryForkedAlertmanager struct {
-	log log.Logger
-
-	internal notifier.Alertmanager
-	remote   notifier.Alertmanager
+type configStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
-func NewRemoteSecondaryForkedAlertmanager(l log.Logger, internal, remote notifier.Alertmanager) *RemoteSecondaryForkedAlertmanager {
-	return &RemoteSecondaryForkedAlertmanager{
-		log:      l,
-		internal: internal,
-		remote:   remote,
+//go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
+type remoteAlertmanager interface {
+	notifier.Alertmanager
+	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
+	CompareAndSendState(context.Context) error
+}
+
+type RemoteSecondaryForkedAlertmanager struct {
+	log   log.Logger
+	orgID int64
+	store configStore
+
+	internal notifier.Alertmanager
+	remote   remoteAlertmanager
+
+	lastSync     time.Time
+	syncInterval time.Duration
+}
+
+type RemoteSecondaryConfig struct {
+	Logger log.Logger
+	OrgID  int64
+	Store  configStore
+
+	// SyncInterval determines how often we should attempt to synchronize
+	// state and configuration on the external Alertmanager.
+	SyncInterval time.Duration
+}
+
+func (c *RemoteSecondaryConfig) Validate() error {
+	if c.Logger == nil {
+		return fmt.Errorf("logger cannot be nil")
 	}
+	return nil
+}
+
+func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal notifier.Alertmanager, remote remoteAlertmanager) (*RemoteSecondaryForkedAlertmanager, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+	return &RemoteSecondaryForkedAlertmanager{
+		log:          cfg.Logger,
+		orgID:        cfg.OrgID,
+		store:        cfg.Store,
+		internal:     internal,
+		remote:       remote,
+		syncInterval: cfg.SyncInterval,
+	}, nil
 }
 
 // ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
 // We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
-		fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
-	}
-	return fam.internal.ApplyConfig(ctx, config)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	// Figure out if we need to sync the external Alertmanager in another goroutine.
+	go func() {
+		defer wg.Done()
+		// If the Alertmanager has not been marked as "ready" yet, delegate the call to the remote Alertmanager.
+		// This will perform a readiness check and sync the Alertmanagers.
+		if !fam.remote.Ready() {
+			if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+				fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
+				return
+			}
+			fam.lastSync = time.Now()
+			return
+		}
+
+		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
+		if time.Since(fam.lastSync) >= fam.syncInterval {
+			fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
+			cfgErr := fam.remote.CompareAndSendConfiguration(ctx, config)
+			if cfgErr != nil {
+				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", cfgErr)
+			}
+
+			stateErr := fam.remote.CompareAndSendState(ctx)
+			if stateErr != nil {
+				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", stateErr)
+			}
+			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
+
+			if cfgErr == nil && stateErr == nil {
+				fam.lastSync = time.Now()
+			}
+		}
+	}()
+
+	// Call ApplyConfig on the internal Alertmanager - we only care about errors for this one.
+	err := fam.internal.ApplyConfig(ctx, config)
+	wg.Wait()
+	return err
 }
 
 // SaveAndApplyConfig is only called on the internal Alertmanager when running in remote secondary mode.
@@ -93,14 +171,29 @@ func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
+	// Stop the internal Alertmanager.
 	fam.internal.StopAndWait()
+	// Stop our alert senders.
 	fam.remote.StopAndWait()
+
+	// Send config and state to the remote Alertmanager.
+	// Using context.TODO() here as we think we want to allow this operation to finish regardless of time.
+	ctx := context.TODO()
+	if err := fam.remote.CompareAndSendState(ctx); err != nil {
+		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
+	}
+
+	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
+	if err != nil {
+		fam.log.Error("Error getting latest Alertmanager configuration while stopping", "err", err)
+		return
+	}
+	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
+		fam.log.Error("Error sending configuration to the remote Alertmanager while stopping", "err", err)
+	}
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
-	// Both Alertmanagers must be ready.
-	if ready := fam.remote.Ready(); !ready {
-		return false
-	}
+	// We only care about the internal Alertmanager being ready.
 	return fam.internal.Ready()
 }

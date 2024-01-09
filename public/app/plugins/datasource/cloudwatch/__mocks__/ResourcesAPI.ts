@@ -1,6 +1,6 @@
+import { CustomVariableModel } from '@grafana/data';
 import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CustomVariableModel } from 'app/features/variables/types';
 
 import { ResourcesAPI } from '../resources/ResourcesAPI';
 

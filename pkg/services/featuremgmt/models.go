@@ -107,30 +107,32 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 }
 
 type FeatureFlag struct {
+	// Required properties
 	Name        string           `json:"name" yaml:"name"` // Unique name
 	Description string           `json:"description"`
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
-	DocsURL     string           `json:"docsURL,omitempty"`
 	Created     time.Time        `json:"created,omitempty"` // when the flag was introduced
+	Owner       codeowner        `json:"-"`                 // Owner person or team that owns this feature flag
 
-	// Owner person or team that owns this feature flag
-	Owner codeowner `json:"-"`
+	// Recommended properties - control behavior of the feature toggle management page in the UI
+	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow users with the right privileges to toggle this from the UI (GeneralAvailability and Deprecated toggles only)
+	HideFromAdminPage bool `json:"hideFromAdminPage,omitempty"` // GA, Deprecated, and PublicPreview toggles only: don't display this feature in the UI; if this is a GA toggle, add a comment with the reasoning
 
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
 	Expression string `json:"expression,omitempty"`
 
-	// Special behavior flags
+	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	// This flag is currently unused.
-	RequiresRestart   bool  `json:"requiresRestart,omitempty"`   // The server must be initialized with the value
-	RequiresLicense   bool  `json:"requiresLicense,omitempty"`   // Must be enabled in the license
-	FrontendOnly      bool  `json:"frontend,omitempty"`          // change is only seen in the frontend
-	HideFromDocs      bool  `json:"hideFromDocs,omitempty"`      // don't add the values to docs
-	HideFromAdminPage bool  `json:"hideFromAdminPage,omitempty"` // don't display the feature in the admin page - add a comment with the reasoning
-	AllowSelfServe    *bool `json:"allowSelfServe,omitempty"`    // allow admin users to toggle the feature state from the admin page; this is required for GA toggles only
+	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
+	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
+	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
 	// This field is only for the feature management API. To enable your feature toggle by default, use `Expression`.
 	Enabled bool `json:"enabled,omitempty"`
+
+	// These are currently unused
+	DocsURL         string `json:"docsURL,omitempty"`
+	RequiresRestart bool   `json:"requiresRestart,omitempty"` // The server must be initialized with the value
 }
 
 type UpdateFeatureTogglesCommand struct {

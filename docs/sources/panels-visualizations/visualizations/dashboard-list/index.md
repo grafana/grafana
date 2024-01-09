@@ -15,6 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's dashboard list visualization
 title: Dashboard list
 weight: 100
 ---

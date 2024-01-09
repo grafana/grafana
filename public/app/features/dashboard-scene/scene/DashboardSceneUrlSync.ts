@@ -36,7 +36,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && meta.canEdit) {
-      update.editview = createDashboardEditViewFor(values.editview, this._scene.getRef());
+      update.editview = createDashboardEditViewFor(values.editview);
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {

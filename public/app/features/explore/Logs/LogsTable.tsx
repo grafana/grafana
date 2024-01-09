@@ -183,7 +183,9 @@ const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => 
   if (timeName === field.name) {
     return false;
   }
-  // @todo not currently excluding derived fields from filtering
+  if (field.config.links?.length) {
+    return false;
+  }
 
   return true;
 };

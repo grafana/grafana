@@ -10,8 +10,8 @@ import {
 } from '@grafana/data';
 import { getBackendSrv, setBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 
+import { initialCustomVariableModelState } from '../__mocks__/variables';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData } from '../types';
 

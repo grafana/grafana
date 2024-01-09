@@ -19,6 +19,7 @@ labels:
     - oss
 menuTitle: Use dashboards
 title: Use dashboards
+description: Learn about the features of a Grafana dashboard
 weight: 1
 ---
 

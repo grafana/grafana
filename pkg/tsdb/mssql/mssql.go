@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -20,7 +22,7 @@ import (
 	mssql "github.com/microsoft/go-mssqldb"
 	_ "github.com/microsoft/go-mssqldb/azuread"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -40,7 +42,7 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
-	logger := log.New("tsdb.mssql")
+	logger := backend.NewLoggerWith("logger", "tsdb.mssql")
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
 		logger: logger,
@@ -125,8 +127,6 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        driverName,
-			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 			RowLimit:          cfg.DataProxyRowLimit,
@@ -136,12 +136,29 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			userError: cfg.UserFacingDefaultError,
 		}
 
-		return sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+		db, err := sql.Open(driverName, cnnstr)
+		if err != nil {
+			return nil, err
+		}
+
+		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+		return sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
 }
 
+// ParseURL is called also from pkg/api/datasource/validation.go,
+// which uses a different logging interface,
+// so we have a special minimal interface that is fulfilled by
+// both places.
+type DebugOnlyLogger interface {
+	Debug(msg string, args ...interface{})
+}
+
 // ParseURL tries to parse an MSSQL URL string into a URL object.
-func ParseURL(u string, logger log.Logger) (*url.URL, error) {
+func ParseURL(u string, logger DebugOnlyLogger) (*url.URL, error) {
 	logger.Debug("Parsing MSSQL URL", "url", u)
 
 	// Recognize ODBC connection strings like host\instance:1234

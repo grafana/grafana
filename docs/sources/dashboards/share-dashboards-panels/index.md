@@ -31,6 +31,7 @@ labels:
     - oss
 menuTitle: Sharing
 title: Share dashboards and panels
+description: Share Grafana dashboards and panels within your organization and publicly
 weight: 85
 ---
 

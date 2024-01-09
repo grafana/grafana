@@ -61,12 +61,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   logQueries: Record<string, { id: string; region: string; statsQuery: boolean }> = {};
   tracingDataSourceUid?: string;
 
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    templateSrv: TemplateSrv,
-    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-  ) {
-    super(instanceSettings, templateSrv, queryFn);
+  constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
+    super(instanceSettings, templateSrv);
 
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '30m';
@@ -80,10 +76,12 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     error,
     logQueries,
     timeoutFunc,
+    queryFn,
   }: {
     frames: DataFrame[];
     logQueries: CloudWatchLogsQuery[];
     timeoutFunc: () => boolean;
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>;
     error?: DataQueryError;
   }) => {
     // If every frame is already finished, we can return the result as the
@@ -112,7 +110,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         refId: dataFrame.refId!,
         statsGroups: logQueries.find((target) => target.refId === dataFrame.refId)?.statsGroups,
       })),
-      timeoutFunc
+      timeoutFunc,
+      queryFn
     ).pipe(
       map((response: DataQueryResponse) => {
         if (!response.error && error) {
@@ -131,7 +130,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
    */
   handleLogQueries = (
     logQueries: CloudWatchLogsQuery[],
-    options: DataQueryRequest<CloudWatchQuery>
+    options: DataQueryRequest<CloudWatchQuery>,
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
   ): Observable<DataQueryResponse> => {
     const validLogQueries = logQueries.filter(this.filterQuery);
 
@@ -171,13 +171,13 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     return runWithRetry(
       (targets) => {
-        return this.makeLogActionRequest('StartQuery', targets, options);
+        return this.makeLogActionRequest('StartQuery', targets, queryFn, options);
       },
       startQueryRequests,
       timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
-        this.getQueryResults({ frames, logQueries, timeoutFunc, error })
+        this.getQueryResults({ frames, logQueries, timeoutFunc, error, queryFn })
       ),
       mergeMap((dataQueryResponse) => {
         return from(
@@ -202,7 +202,11 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
    * Checks progress and polls data of a started logs query with some retry logic.
    * @param queryParams
    */
-  logsQuery(queryParams: QueryParam[], timeoutFunc: () => boolean): Observable<DataQueryResponse> {
+  logsQuery(
+    queryParams: QueryParam[],
+    timeoutFunc: () => boolean,
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
+  ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach((param) => {
       this.logQueries[param.refId] = {
@@ -213,7 +217,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     });
 
     const dataFrames = increasingInterval({ startPeriod: 100, endPeriod: 1000, step: 300 }).pipe(
-      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams)),
+      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams, queryFn)),
       repeat(),
       share()
     );
@@ -284,10 +288,10 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       takeWhile(({ state }) => state !== LoadingState.Error && state !== LoadingState.Done, true)
     );
 
-    return withTeardown(queryResponse, () => this.stopQueries());
+    return withTeardown(queryResponse, () => this.stopQueries(queryFn));
   }
 
-  stopQueries() {
+  stopQueries(queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>) {
     if (Object.keys(this.logQueries).length > 0) {
       this.makeLogActionRequest(
         'StopQuery',
@@ -296,7 +300,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
           region: logQuery.region,
           queryString: '',
           refId: '',
-        }))
+        })),
+        queryFn
       ).pipe(
         finalize(() => {
           this.logQueries = {};
@@ -308,6 +313,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   makeLogActionRequest(
     subtype: LogAction,
     queryParams: CloudWatchLogsRequest[],
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>,
     options?: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataFrame[]> {
     const range = options?.range || getDefaultTimeRange();
@@ -336,7 +342,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       })),
     };
 
-    return this.query(requestParams).pipe(
+    return queryFn(requestParams).pipe(
       map((response) => response.data),
       catchError((err: FetchError) => {
         if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
@@ -362,6 +368,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   getLogRowContext = async (
     row: LogRowModel,
     { limit = 10, direction = LogRowContextQueryDirection.Backward }: LogRowContextOptions = {},
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>,
     query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;
@@ -396,7 +403,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       requestParams.startTime = row.timeEpochMs;
     }
 
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogEvents', [requestParams]));
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogEvents', [requestParams], queryFn));
 
     return {
       data: dataFrames,

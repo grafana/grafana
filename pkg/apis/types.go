@@ -49,6 +49,14 @@ func (info *ResourceInfo) GroupResource() schema.GroupResource {
 	}
 }
 
+func (info *ResourceInfo) GroupVersionKind() schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   info.group,
+		Version: info.version,
+		Kind:    info.kind,
+	}
+}
+
 func (info *ResourceInfo) SingularGroupResource() schema.GroupResource {
 	return schema.GroupResource{
 		Group:    info.group,

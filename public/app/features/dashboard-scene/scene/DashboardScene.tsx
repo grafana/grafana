@@ -2,7 +2,7 @@ import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
 import { CoreApp, DataQueryRequest, NavIndex, NavModelItem } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
@@ -33,6 +33,7 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
+import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -194,7 +195,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         uid: this.state.uid,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null },
-        useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && meta.canEdit),
       }),
     };
 
@@ -248,6 +248,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         }
         if (event.payload.changedObject instanceof SceneTimeRange) {
           this.setIsDirty();
+        }
+        if (event.payload.changedObject instanceof DashboardControls) {
+          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'hideTimeControls')) {
+            this.setIsDirty();
+          }
         }
       }
     );

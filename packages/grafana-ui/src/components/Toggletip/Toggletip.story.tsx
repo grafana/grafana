@@ -15,7 +15,7 @@ const meta: Meta<typeof Toggletip> = {
       page: mdx,
     },
     controls: {
-      exclude: ['onClose', 'children'],
+      exclude: ['children'],
     },
   },
   argTypes: {
