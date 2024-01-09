@@ -118,6 +118,7 @@ export function VariableEditorForm({ variable, onReplaceVariable, onGoBack }: Va
             <Button
               variant="secondary"
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+              onClick={onGoBack}
             >
               Back to list
             </Button>

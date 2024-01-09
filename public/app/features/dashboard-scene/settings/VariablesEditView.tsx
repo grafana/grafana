@@ -187,6 +187,7 @@ interface VariableEditorSettingsEditViewProps {
   navModel: NavModel;
   dashboard: DashboardScene;
   onReplace: (variable: SceneVariable) => void;
+  onGoBack: () => void;
 }
 
 function VariableEditorSettingsView({

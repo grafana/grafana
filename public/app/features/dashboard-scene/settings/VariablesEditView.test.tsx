@@ -107,7 +107,7 @@ describe('VariablesEditView', () => {
         query: 'a,b,c',
       });
 
-      variableView.onUpdate(newVariable);
+      variableView.onReplace(newVariable);
       expect(variableView.getVariables()).toHaveLength(2);
       const variable = variableView.getVariables()[1] as CustomVariable;
       expect(variable).toBe(newVariable);
