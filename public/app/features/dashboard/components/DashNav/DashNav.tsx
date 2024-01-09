@@ -11,9 +11,9 @@ import {
   ModalsController,
   ToolbarButton,
   useForceUpdate,
-  Tag,
   ToolbarButtonRow,
   ConfirmModal,
+  Badge,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
@@ -163,7 +163,7 @@ export const DashNav = React.memo<Props>((props) => {
 
   const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
-    const { canStar, canShare, isStarred } = dashboard.meta;
+    const { canStar, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
     if (kioskMode || isPlaylistRunning()) {
@@ -186,13 +186,10 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (canShare) {
-      buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
-    }
-
     if (dashboard.meta.publicDashboardEnabled) {
+      // TODO: This will be replaced with the new badge component. Color is required but gets override by css
       buttons.push(
-        <Tag key="public-dashboard" name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>
+        <Badge color="blue" text="Public" className={publicBadgeStyle} data-testid={selectors.publicDashboardTag} />
       );
     }
 
@@ -254,8 +251,8 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const renderRightActions = () => {
-    const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
-    const { canSave, canEdit, showSettings } = dashboard.meta;
+    const { dashboard, onAddPanel, isFullscreen, kioskMode, hideTimePicker } = props;
+    const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
@@ -266,6 +263,50 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (kioskMode === KioskMode.TV) {
       return [renderTimeControls()];
+    }
+
+    if (snapshotUrl) {
+      buttons.push(
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
+          onClick={onOpenSnapshotOriginal}
+          icon="link"
+          key="button-snapshot"
+        />
+      );
+    }
+
+    if (canSave && !isFullscreen) {
+      buttons.push(
+        <ModalsController key="button-save">
+          {({ showModal, hideModal }) => (
+            <ToolbarButton
+              tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
+              icon="save"
+              onClick={() => {
+                DashboardInteractions.toolbarSaveClick();
+                showModal(SaveDashboardDrawer, {
+                  dashboard,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      );
+    }
+
+    addCustomContent(dynamicDashNavActions.right, buttons);
+
+    if (showSettings) {
+      buttons.push(
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
+          icon="cog"
+          onClick={onOpenSettings}
+          key="button-settings"
+        />
+      );
     }
 
     if (canEdit && !isFullscreen) {
@@ -290,49 +331,14 @@ export const DashNav = React.memo<Props>((props) => {
       }
     }
 
-    if (canSave && !isFullscreen) {
-      buttons.push(
-        <ModalsController key="button-save">
-          {({ showModal, hideModal }) => (
-            <ToolbarButton
-              tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
-              icon="save"
-              onClick={() => {
-                DashboardInteractions.toolbarSaveClick();
-                showModal(SaveDashboardDrawer, {
-                  dashboard,
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
-      );
+    if (canShare) {
+      buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
 
-    if (snapshotUrl) {
-      buttons.push(
-        <ToolbarButton
-          tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
-          onClick={onOpenSnapshotOriginal}
-          icon="link"
-          key="button-snapshot"
-        />
-      );
+    // if the timepicker is hidden, we don't need to add this separator
+    if (!hideTimePicker) {
+      buttons.push(<NavToolbarSeparator key="toolbar-separator" />);
     }
-
-    if (showSettings) {
-      buttons.push(
-        <ToolbarButton
-          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
-          icon="cog"
-          onClick={onOpenSettings}
-          key="button-settings"
-        />
-      );
-    }
-
-    addCustomContent(dynamicDashNavActions.right, buttons);
 
     buttons.push(renderTimeControls());
 
@@ -359,4 +365,10 @@ export default connector(DashNav);
 const modalStyles = css({
   width: 'max-content',
   maxWidth: '80vw',
+});
+
+const publicBadgeStyle = css({
+  color: 'grey',
+  backgroundColor: 'transparent',
+  border: '1px solid',
 });
