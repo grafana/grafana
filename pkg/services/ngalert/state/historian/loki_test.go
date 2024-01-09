@@ -21,7 +21,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-	"github.com/weaveworks/common/http/client"
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
@@ -504,7 +503,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 }
 
-func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
+func createTestLokiBackend(req Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL:   url,
