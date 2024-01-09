@@ -20,21 +20,32 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		return nil, fmt.Errorf("only testadata is currently supported")
 	}
 
-	p := plugins.JSONData{
-		ID:   "grafana-testdata-datasource",
-		Type: plugins.TypeDataSource,
+	orgId := int64(1)
+	pluginId := "grafana-testdata-datasource"
+	now := time.Now()
+	dss := []*datasources.DataSource{
+		{
+			OrgID:   orgId, // default -- used in the list command
+			Type:    pluginId,
+			UID:     "builtin", // fake for now
+			Created: now,
+			Updated: now,
+			Name:    "Testdata (builtin)",
+		},
+		{
+			OrgID:   orgId, // default -- used in the list command
+			Type:    pluginId,
+			UID:     "PD8C576611E62080A", // match the gdev version
+			Created: now,
+			Updated: now,
+			Name:    "gdev-testdata",
+		},
 	}
-	s := testdatasource.ProvideService()
-	ds := &datasources.DataSource{
-		UID:     "builtin", // fake for now
-		Created: time.Now(),
-		Updated: time.Now(),
-		Name:    "Testdata (builtin)",
-	}
-	dss := []*datasources.DataSource{ds}
-	return NewDataSourceAPIBuilder(p, s,
+	return NewDataSourceAPIBuilder(
+		plugins.JSONData{ID: pluginId}, testdatasource.ProvideService(),
 		&fakeDatasources.FakeDataSourceService{DataSources: dss},
 		&fakeDatasources.FakeCacheService{DataSources: dss},
-		&actest.FakeAccessControl{ExpectedEvaluate: true}, // always OK
+		// Always allow... but currently not called in standalone!
+		&actest.FakeAccessControl{ExpectedEvaluate: true},
 	)
 }

@@ -10,11 +10,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/sims"
 )
 
-var _ plugins.Client = &Service{}
+// "github.com/grafana/grafana/pkg/plugins"
+// var _ plugins.Client = &Service{}
 
 func ProvideService() *Service {
 	s := &Service{
