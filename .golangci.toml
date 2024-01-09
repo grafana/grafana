@@ -55,6 +55,8 @@ deny = [
   { pkg = "github.com/grafana/grafana/pkg/tsdb/intervalv2", desc = "Core plugins are not allowed to depend on Grafana core packages" },
 ]
 files = [
+  "**/pkg/tsdb/grafana-pyroscope-datasource/*",
+  "**/pkg/tsdb/grafana-pyroscope-datasource/**/*",
   "**/pkg/tsdb/grafana-testdata-datasource/*",
   "**/pkg/tsdb/grafana-testdata-datasource/**/*",
   "**/pkg/tsdb/azuremonitor/*",
