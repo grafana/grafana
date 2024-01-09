@@ -52,6 +52,8 @@ type SearchDeviceQuery struct {
 	Query    string
 	Page     int
 	Limit    int
+	From     time.Time
+	To       time.Time
 	SortOpts []model.SortOption
 }
 
@@ -70,7 +72,7 @@ type AnonStore interface {
 	DeleteDevice(ctx context.Context, deviceID string) error
 	// DeleteDevicesOlderThan deletes all devices that have no been updated since the given time.
 	DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error
-	// SearchDevices searches for devices.
+	// SearchDevices searches for devices within the 30 days active.
 	SearchDevices(ctx context.Context, query *SearchDeviceQuery) (*SearchDeviceQueryResult, error)
 }
 
@@ -214,9 +216,18 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 		Devices: make([]*DeviceSearchHitDTO, 0),
 	}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSess *db.Session) error {
-		// restricted only to last 30 days
-		fromTime := time.Now().Add(-anonymousDeviceExpiration)
-		toTime := time.Now()
+		if query.From.IsZero() && !query.To.IsZero() {
+			return fmt.Errorf("from date must be set if to date is set")
+		}
+		if !query.From.IsZero() && query.To.IsZero() {
+			return fmt.Errorf("to date must be set if from date is set")
+		}
+
+		// restricted only to last 30 days, if noting else specified
+		if query.From.IsZero() && query.To.IsZero() {
+			query.From = time.Now().Add(-anonymousDeviceExpiration)
+			query.To = time.Now()
+		}
 
 		sess := dbSess.Table("anon_device").Alias("d")
 
@@ -237,7 +248,7 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 		}
 
 		// add to query about from and to session
-		sess.Where("d.updated_at BETWEEN ? AND ?", fromTime.UTC(), toTime.UTC())
+		sess.Where("d.updated_at BETWEEN ? AND ?", query.From.UTC(), query.To.UTC())
 
 		if query.Query != "" {
 			queryWithWildcards := "%" + query.Query + "%"
@@ -245,7 +256,7 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 		}
 
 		// get total
-		devices, err := s.ListDevices(ctx, &fromTime, &toTime)
+		devices, err := s.ListDevices(ctx, &query.From, &query.To)
 		if err != nil {
 			return err
 		}
