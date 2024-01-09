@@ -43,53 +43,63 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
 const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> = {
   custom: {
     name: 'Custom',
-    description: 'Custom variables',
+    description: 'Define variable values manually',
     scene: CustomVariable,
     editor: CustomVariableEditor,
   },
   query: {
     name: 'Query',
-    description: 'Query variables',
+    description: 'Variable values are fetched from a datasource query',
     scene: QueryVariable,
     editor: QueryVariableEditor,
   },
   constant: {
     name: 'Constant',
-    description: 'Constant variables',
+    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
     scene: ConstantVariable,
     editor: ConstantVariableEditor,
   },
   interval: {
     name: 'Interval',
-    description: 'Interval variables',
+    description: 'Define a timespan interval (ex 1m, 1h, 1d)',
     scene: IntervalVariable,
     editor: IntervalVariableEditor,
   },
   datasource: {
-    name: 'Datasource',
-    description: 'Datasource variables',
+    name: 'Data source',
+    description: 'Enables you to dynamically switch the data source for multiple panels',
     scene: DataSourceVariable,
     editor: DataSourceVariableEditor,
   },
   adhoc: {
-    name: 'Adhoc',
-    description: 'Adhoc variables',
+    name: 'Ad hoc filters',
+    description: 'Add key/value filters on the fly',
     scene: AdHocFiltersVariable,
     editor: AdHocFiltersVariableEditor,
   },
   textbox: {
     name: 'Textbox',
-    description: 'Textbox variables',
+    description: 'Define a textbox variable, where users can enter any arbitrary string',
     scene: TextBoxVariable,
     editor: TextBoxVariableEditor,
   },
 };
 
+const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
+  'query',
+  'custom',
+  'textbox',
+  'constant',
+  'datasource',
+  'interval',
+  'adhoc',
+];
+
 export function getVariableTypeSelectOptions(): SelectableValue<VariableType> {
-  return Object.entries(EDITABLE_VARIABLES).map(([id, variableType]) => ({
-    label: variableType.name,
-    value: id,
-    description: variableType.description,
+  return EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
+    label: EDITABLE_VARIABLES[variableType].name,
+    value: variableType,
+    description: EDITABLE_VARIABLES[variableType].description,
   }));
 }
 
