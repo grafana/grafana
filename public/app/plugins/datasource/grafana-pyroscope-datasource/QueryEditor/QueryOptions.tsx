@@ -5,10 +5,10 @@ import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
 
-import { QueryOptionGroup } from '../../prometheus/querybuilder/shared/QueryOptionGroup';
 import { Query } from '../types';
 
 import { EditorField } from './EditorField';
+import { QueryOptionGroup } from './QueryOptionGroup';
 import { Stack } from './Stack';
 
 export interface Props {
