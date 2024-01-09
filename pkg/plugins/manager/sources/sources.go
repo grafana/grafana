@@ -51,7 +51,7 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 
 	var pluginDirs []string
 	for _, dir := range d {
-		if dir.IsDir() {
+		if dir.IsDir() || dir.Type()&os.ModeSymlink == os.ModeSymlink {
 			pluginDirs = append(pluginDirs, filepath.Join(pluginsPath, dir.Name()))
 		}
 	}
