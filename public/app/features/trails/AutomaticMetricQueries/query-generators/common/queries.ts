@@ -23,7 +23,7 @@ export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQ
   const main = {
     ...common,
     queries: [{ refId: 'A', expr: `${agg}(${baseQuery})` }],
-    vizBuilder: simpleGraphBuilder(common),
+    vizBuilder: () => simpleGraphBuilder(main),
   };
 
   const breakdown = {
@@ -35,7 +35,7 @@ export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQ
         legendFormat: `{{${VAR_GROUP_BY_EXP}}}`,
       },
     ],
-    vizBuilder: simpleGraphBuilder(common),
+    vizBuilder: () => simpleGraphBuilder(breakdown),
   };
 
   return { preview: main, main: main, breakdown: breakdown, variants: [] };

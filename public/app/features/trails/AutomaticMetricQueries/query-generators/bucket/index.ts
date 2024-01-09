@@ -23,28 +23,28 @@ function generator(metricParts: string[]) {
     ...common,
     variant: 'p50',
     queries: [percentileQuery(50)],
-    vizBuilder: simpleGraphBuilder(common),
+    vizBuilder: () => simpleGraphBuilder(p50),
   };
 
   const breakdown: AutoQueryDef = {
     ...common,
     variant: 'p50',
     queries: [percentileQuery(50, [VAR_GROUP_BY_EXP])],
-    vizBuilder: simpleGraphBuilder(common),
+    vizBuilder: () => simpleGraphBuilder(breakdown),
   };
 
   const percentiles: AutoQueryDef = {
     ...common,
     variant: 'percentiles',
     queries: [99, 90, 50].map((p) => percentileQuery(p)).map(fixRefIds),
-    vizBuilder: percentilesGraphBuilder(common),
+    vizBuilder: () => percentilesGraphBuilder(percentiles),
   };
 
   const heatmap: AutoQueryDef = {
     ...common,
     variant: 'heatmap',
     queries: [heatMapQuery()],
-    vizBuilder: heatmapGraphBuilder(common),
+    vizBuilder: () => heatmapGraphBuilder(heatmap),
   };
 
   return { preview: p50, main: percentiles, variants: [percentiles, heatmap], breakdown: breakdown };
