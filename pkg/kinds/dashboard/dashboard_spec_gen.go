@@ -156,6 +156,7 @@ const (
 // Defines values for VariableType.
 const (
 	VariableTypeAdhoc      VariableType = "adhoc"
+	VariableTypeAdhocGroup VariableType = "adhoc-group"
 	VariableTypeConstant   VariableType = "constant"
 	VariableTypeCustom     VariableType = "custom"
 	VariableTypeDatasource VariableType = "datasource"
