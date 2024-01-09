@@ -114,12 +114,12 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
-
 	const minMaxAttempts = 1
 	if cfg.MaxAttempts < minMaxAttempts {
 		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.MaxAttempts, "actual", minMaxAttempts)
 		cfg.MaxAttempts = minMaxAttempts
 	}
+
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:           cfg.MaxAttempts,
