@@ -3564,7 +3564,7 @@ __metadata:
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.1"
     "@types/common-tags": "npm:^1.8.0"
-    "@types/d3": "npm:7.4.0"
+    "@types/d3": "npm:7.4.3"
     "@types/hoist-non-react-statics": "npm:3.3.1"
     "@types/is-hotkey": "npm:0.1.7"
     "@types/jest": "npm:29.5.4"
@@ -8189,9 +8189,9 @@ __metadata:
   linkType: hard
 
 "@types/d3-force@npm:*, @types/d3-force@npm:^3.0.0":
-  version: 3.0.4
-  resolution: "@types/d3-force@npm:3.0.4"
-  checksum: 99d7513a71ec35e6dd1285b1acadeadd9f104055e0ae1f7e8a0aee599566e5c83e1f7afdad2f50f0e83b90af1d171d3b81edc3397c081f88856791dad0aa00c1
+  version: 3.0.9
+  resolution: "@types/d3-force@npm:3.0.9"
+  checksum: e7f2260b9d57d0623f24b2876a10f6e4f7b9690035a5d9e776513b5f9261d0d1a8c436b0b977445f1753686b88ce1cecf3dd4538907da833c6ddc03cfbf45936
   languageName: node
   linkType: hard
 
@@ -8218,7 +8218,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-interpolate@npm:*, @types/d3-interpolate@npm:3.0.1, @types/d3-interpolate@npm:^3.0.0":
+"@types/d3-interpolate@npm:*, @types/d3-interpolate@npm:^3.0.0":
+  version: 3.0.4
+  resolution: "@types/d3-interpolate@npm:3.0.4"
+  dependencies:
+    "@types/d3-color": "npm:*"
+  checksum: 72a883afd52c91132598b02a8cdfced9e783c54ca7e4459f9e29d5f45d11fb33f2cabc844e42fd65ba6e28f2a931dcce1add8607d2f02ef6fb8ea5b83ae84127
+  languageName: node
+  linkType: hard
+
+"@types/d3-interpolate@npm:3.0.1":
   version: 3.0.1
   resolution: "@types/d3-interpolate@npm:3.0.1"
   dependencies:
@@ -8262,10 +8271,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-scale-chromatic@npm:*, @types/d3-scale-chromatic@npm:3.0.0":
-  version: 3.0.0
-  resolution: "@types/d3-scale-chromatic@npm:3.0.0"
-  checksum: c92ec398e1f6aa1b43fe4db06017367ba588d0a2372a1c0476078142f7a03fccf5aef7c336ed61dd30a4169c694797663029af2e1c21c7b563f63afe2a6ab678
+"@types/d3-scale-chromatic@npm:*, @types/d3-scale-chromatic@npm:3.0.3":
+  version: 3.0.3
+  resolution: "@types/d3-scale-chromatic@npm:3.0.3"
+  checksum: cc5488af1136c3f9e28aa3c3ee2dc3e5e843c666f64360fb3870f0b8679cd2ee844edaa5a93504a9665deb98cb3c2ae2257d610c338fa8caa4a31ab6fdeb2f15
   languageName: node
   linkType: hard
 
@@ -8350,9 +8359,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3@npm:7.4.0, @types/d3@npm:^7":
-  version: 7.4.0
-  resolution: "@types/d3@npm:7.4.0"
+"@types/d3@npm:7.4.3, @types/d3@npm:^7":
+  version: 7.4.3
+  resolution: "@types/d3@npm:7.4.3"
   dependencies:
     "@types/d3-array": "npm:*"
     "@types/d3-axis": "npm:*"
@@ -8384,7 +8393,7 @@ __metadata:
     "@types/d3-timer": "npm:*"
     "@types/d3-transition": "npm:*"
     "@types/d3-zoom": "npm:*"
-  checksum: d1383f5fca7c4a819d57eb4bccc387dccaa7cb4c24d56388e5247954db6c88f5fb7c74d156165dfe044f1da8d4d510796c8d8487b5956d8270a94a1182a6e00f
+  checksum: 12234aa093c8661546168becdd8956e892b276f525d96f65a7b32fed886fc6a569fe5a1171bff26fef2a5663960635f460c9504a6f2d242ba281a2b6c8c6465c
   languageName: node
   linkType: hard
 
@@ -17276,9 +17285,9 @@ __metadata:
     "@types/angular-route": "npm:1.7.3"
     "@types/chance": "npm:^1.1.3"
     "@types/common-tags": "npm:^1.8.0"
-    "@types/d3": "npm:7.4.0"
+    "@types/d3": "npm:7.4.3"
     "@types/d3-force": "npm:^3.0.0"
-    "@types/d3-scale-chromatic": "npm:3.0.0"
+    "@types/d3-scale-chromatic": "npm:3.0.3"
     "@types/debounce-promise": "npm:3.1.6"
     "@types/diff": "npm:^5"
     "@types/eslint": "npm:8.44.0"
