@@ -84,8 +84,8 @@ describe('DashboardModelCompatibilityWrapper', () => {
   it('Can get fake panel with getPanelById', () => {
     const { wrapper } = setup();
 
-    expect(wrapper.getPanelById(1)!.title).toBe('Panel A');
-    expect(wrapper.getPanelById(2)!.title).toBe('Panel B');
+    expect(wrapper.getPanelById(1)!.title).toBe('Panel with a regular data source query');
+    expect(wrapper.getPanelById(2)!.title).toBe('Panel with no queries');
   });
 
   it('Can remove panel', () => {
