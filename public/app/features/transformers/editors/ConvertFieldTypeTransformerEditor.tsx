@@ -169,7 +169,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                 <>
                   {(c.joinWith?.length || targetField?.type === FieldType.other) && (
                     <InlineField label="Join with" tooltip="Use an explicit separator when joining array values">
-                      <Input value={c.joinWith} placeholder={'json'} onChange={onJoinWithChange(idx)} width={9} />
+                      <Input value={c.joinWith} placeholder={'JSON'} onChange={onJoinWithChange(idx)} width={9} />
                     </InlineField>
                   )}
                   {c.dateFormat ||
