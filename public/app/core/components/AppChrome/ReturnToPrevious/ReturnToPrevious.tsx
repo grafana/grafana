@@ -14,10 +14,11 @@ export interface ReturnToPreviousProps {
 
 export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
+  const [, setParams] = useQueryParams();
+
   const handleOnClick = () => {
     href && locationService.push(href.toString());
   };
-  const [, setParams] = useQueryParams();
   const closeButton = () => {
     setParams({ __returnToTitle: null, __returnToUrl: null });
     const currentLocation = locationService.getLocation();
@@ -26,12 +27,9 @@ export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProp
 
   const shortenTitle = (title: UrlQueryValue) => {
     const titleLength = 37;
-    if (title && title.toString().length > titleLength) {
-      return title.toString().substring(0, titleLength) + '...';
-    } else {
-      return title;
-    }
+    return title && title.toString().length > titleLength ? title.toString().substring(0, titleLength) + '...' : title;
   };
+
   return (
     <ButtonGroup className={styles.wrapper}>
       <Button
