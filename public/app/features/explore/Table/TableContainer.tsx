@@ -6,7 +6,7 @@ import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, Fiel
 import { getTemplateSrv } from '@grafana/runtime';
 import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -58,7 +58,11 @@ export class TableContainer extends PureComponent<Props> {
       name = data.refId || `${i}`;
     }
 
-    return name ? t('explore.table.title-with-name', 'Table - {{name}}', { name }) : t('explore.table.title', 'Table');
+    return name ? (
+        <Trans i18nKey="explore.table.title-with-name">
+          Table - {{name}}
+        </Trans>
+      ) : t('explore.table.title', 'Table');
   }
 
   render() {
@@ -100,6 +104,7 @@ export class TableContainer extends PureComponent<Props> {
             {frames.map((data, i) => (
               <PanelChrome
                 key={data.refId || `table-${i}`}
+                // @ts-expect-error expects a string while a ReactElement is valid
                 title={this.getTableTitle(dataFrames, data, i)}
                 width={width}
                 height={this.getTableHeight(data.length, this.hasSubFrames(data))}
