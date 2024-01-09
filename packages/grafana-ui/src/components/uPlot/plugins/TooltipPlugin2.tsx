@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
@@ -425,7 +425,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
   if (plot && isHovering) {
     return createPortal(
-      <div className={styles.tooltipWrapper} style={style} ref={domRef}>
+      <div className={cx(styles.tooltipWrapper, isPinned && styles.pinned)} style={style} ref={domRef}>
         {isPinned && <CloseButton onClick={dismiss} />}
         {contents}
       </div>,
@@ -446,7 +446,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+    boxShadow: theme.shadows.z2,
     userSelect: 'text',
+  }),
+  pinned: css({
+    boxShadow: theme.shadows.z3,
   }),
 });
