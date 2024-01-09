@@ -90,6 +90,13 @@ const legacyRoutes: RouteDescriptor[] = [
         )
     ),
   },
+  {
+    path: '/alerting-legacy/upgrade',
+    roles: () => ['Admin'],
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingUpgrade" */ 'app/features/alerting/Upgrade')
+    ),
+  },
 ];
 
 const unifiedRoutes: RouteDescriptor[] = [
@@ -302,6 +309,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   if (cfg.unifiedAlertingEnabled) {
     return unifiedRoutes;
   } else if (cfg.alertingEnabled) {
+    if (config.featureToggles.alertingPreviewUpgrade) {
+      // If preview is enabled, return both legacy and unified routes.
+      return [...legacyRoutes, ...unifiedRoutes];
+    }
     // Redirect old overlapping legacy routes to new separate ones to minimize unintended 404s.
     const redirects = [
       {
@@ -330,6 +341,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     return [...legacyRoutes, ...redirects];
   }
 
+  // Disable all alerting routes.
   const uniquePaths = uniq([...legacyRoutes, ...unifiedRoutes].map((route) => route.path));
   return uniquePaths.map((path) => ({
     path,

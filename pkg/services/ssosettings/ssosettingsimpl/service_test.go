@@ -103,6 +103,99 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 	}
 }
 
+func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
+	testCases := []struct {
+		name    string
+		setup   func(env testEnv)
+		want    *models.SSOSettings
+		wantErr bool
+	}{
+		{
+			name: "should return successfully and redact secrets",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+					Source: models.DB,
+				}
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":       true,
+					"secret":        "*********",
+					"client_secret": "*********",
+					"client_id":     "client_id",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "should return error if store returns an error different than not found",
+			setup:   func(env testEnv) { env.store.ExpectedError = fmt.Errorf("error") },
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should fallback to strategy if store returns not found",
+			setup: func(env testEnv) {
+				env.store.ExpectedError = ssosettings.ErrNotFound
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": true}
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Settings: map[string]any{"enabled": true},
+				Source:   models.System,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return error if the fallback strategy was not found",
+			setup: func(env testEnv) {
+				env.store.ExpectedError = ssosettings.ErrNotFound
+				env.fallbackStrategy.ExpectedIsMatch = false
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return error if fallback strategy returns error",
+			setup: func(env testEnv) {
+				env.store.ExpectedError = ssosettings.ErrNotFound
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedError = fmt.Errorf("error")
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			env := setupTestEnv(t)
+			if tc.setup != nil {
+				tc.setup(env)
+			}
+
+			actual, err := env.service.GetForProviderWithRedactedSecrets(context.Background(), "github")
+
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.want, actual)
+		})
+	}
+}
+
 func TestSSOSettingsService_List(t *testing.T) {
 	testCases := []struct {
 		name    string
