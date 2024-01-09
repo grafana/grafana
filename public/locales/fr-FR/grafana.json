@@ -590,6 +590,7 @@
     "shortcuts-description": {
       "change-theme": "Modifier le thème",
       "collapse-all-rows": "Réduire toutes les lignes",
+      "copy-time-range": "",
       "dashboard-settings": "Paramètres du tableau de bord",
       "duplicate-panel": "Dupliquer le panneau",
       "exit-edit/setting-views": "Quitter les affichages de modification/configuration",
@@ -603,6 +604,7 @@
       "move-time-range-forward": "Avancer la plage de temps",
       "open-search": "Ouvrir la recherche",
       "open-shared-modal": "Ouvrir le panneau de partage modal",
+      "paste-time-range": "",
       "refresh-all-panels": "Actualiser tous les panneaux",
       "remove-panel": "Retirer le panneau",
       "save-dashboard": "Enregistrer le tableau de bord",

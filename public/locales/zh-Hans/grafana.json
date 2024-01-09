@@ -580,6 +580,7 @@
     "shortcuts-description": {
       "change-theme": "更改主题",
       "collapse-all-rows": "折叠所有行",
+      "copy-time-range": "",
       "dashboard-settings": "仪表板设置",
       "duplicate-panel": "复制面板",
       "exit-edit/setting-views": "退出编辑/设置视图",
@@ -593,6 +594,7 @@
       "move-time-range-forward": "向前移动时间范围",
       "open-search": "打开搜索",
       "open-shared-modal": "打开面板分享模式",
+      "paste-time-range": "",
       "refresh-all-panels": "刷新所有面板",
       "remove-panel": "删除面板",
       "save-dashboard": "保存仪表板",

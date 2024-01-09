@@ -585,6 +585,7 @@
     "shortcuts-description": {
       "change-theme": "Change theme",
       "collapse-all-rows": "Collapse all rows",
+      "copy-time-range": "Copy time range",
       "dashboard-settings": "Dashboard settings",
       "duplicate-panel": "Duplicate Panel",
       "exit-edit/setting-views": "Exit edit/setting views",
@@ -598,6 +599,7 @@
       "move-time-range-forward": "Move time range forward",
       "open-search": "Open search",
       "open-shared-modal": "Open Panel Share Modal",
+      "paste-time-range": "Paste time range",
       "refresh-all-panels": "Refresh all panels",
       "remove-panel": "Remove Panel",
       "save-dashboard": "Save dashboard",

@@ -585,6 +585,7 @@
     "shortcuts-description": {
       "change-theme": "Thema ändern",
       "collapse-all-rows": "Alle Zeilen einklappen",
+      "copy-time-range": "",
       "dashboard-settings": "Dashboard-Einstellungen",
       "duplicate-panel": "Fenster duplizieren",
       "exit-edit/setting-views": "Ansicht beenden/einstellen",
@@ -598,6 +599,7 @@
       "move-time-range-forward": "Zeitbereich nach vorne verschieben",
       "open-search": "Suche öffnen",
       "open-shared-modal": "Geteilter Fenstermodus öffnen",
+      "paste-time-range": "",
       "refresh-all-panels": "Alle Fenster aktualisieren",
       "remove-panel": "Fenster entfernen",
       "save-dashboard": "Dashboard speichern",
