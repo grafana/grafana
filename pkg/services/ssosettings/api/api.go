@@ -177,7 +177,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}
 
-	return response.Respond(http.StatusNoContent, nil)
+	return response.Empty(http.StatusNoContent)
 }
 
 // swagger:route DELETE /v1/sso-settings/{key} sso_settings removeProviderSettings
@@ -209,7 +209,7 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusInternalServerError, "Failed to delete provider settings", err)
 	}
 
-	return response.Respond(http.StatusNoContent, nil)
+	return response.Empty(http.StatusNoContent)
 }
 
 // swagger:parameters getProviderSettings
