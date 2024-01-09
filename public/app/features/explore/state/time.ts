@@ -179,17 +179,26 @@ export function copyTimeRangeToClipboard(): ThunkResult<void> {
 }
 
 export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
-  return (dispatch, getState) => {
-    navigator.clipboard.readText().then((text) => {
-      const range = JSON.parse(text);
-      // TODO: determine if we want to update both panes
-      // update both panes if they are synced
-      // also before updating pane[1] we need to check if it exists
+  return async (dispatch, getState) => {
+    const raw = await navigator.clipboard.readText();
+    let range;
 
-      //TODO: add error handling
+    try {
+      range = JSON.parse(raw);
+    } catch (e) {
+      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${range}" is not a valid time range`]);
+      return;
+    }
+
+    const panesSynced = getState().explore.syncedTimes;
+
+    if (panesSynced) {
       dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
-      // dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: range }));
-    });
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: range }));
+      return;
+    }
+
+    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
   };
 }
 

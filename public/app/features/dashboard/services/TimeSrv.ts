@@ -379,19 +379,20 @@ export class TimeSrv {
     appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
   }
 
-  pasteTimeRangeFromClipboard(updateUrl = true) {
-    console.log('dashboards - pasteTimeRangeFromClipboard');
-    navigator.clipboard.readText().then((text) => {
-      const { from, to } = JSON.parse(text);
-      try {
-        this.setTime({ from, to }, updateUrl);
-      } catch (err) {
-        appEvents.emit(AppEvents.alertError, [
-          'Invalid time range',
-          `From: ${from}, To: ${to} is not a valid time range`,
-        ]);
-      }
-    });
+  async pasteTimeRangeFromClipboard(updateUrl = true) {
+    const raw = await navigator.clipboard.readText();
+    let range;
+
+    try {
+      range = JSON.parse(raw);
+    } catch (err) {
+      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${raw}" is not a valid time range`]);
+      return;
+    }
+
+    const { from, to } = range;
+
+    this.setTime({ from, to }, updateUrl);
   }
 
   // isRefreshOutsideThreshold function calculates the difference between last refresh and now
