@@ -11,9 +11,8 @@ import {
   convertLegacyAuthProps,
   DataSourceDescription,
 } from '@grafana/experimental';
-import { Alert, SecureSocksProxySettings } from '@grafana/ui';
-import { Divider } from 'app/core/components/Divider';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
+import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import { ElasticsearchOptions } from '../types';
 
@@ -21,6 +20,7 @@ import { DataLinks } from './DataLinks';
 import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { coerceOptions, isValidOptions } from './utils';
+import { css } from '@emotion/css';
 
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 
@@ -61,9 +61,9 @@ export const ConfigEditor = (props: Props) => {
         docsLink="https://grafana.com/docs/grafana/latest/datasources/elasticsearch"
         hasRequiredFields={false}
       />
-      <Divider />
+      <Divider spacing={4} />
       <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:9200" />
-      <Divider />
+      <Divider spacing={4} />
       <Auth
         {...authProps}
         onAuthMethodSelect={(method) => {
@@ -79,7 +79,7 @@ export const ConfigEditor = (props: Props) => {
           });
         }}
       />
-      <Divider />
+      <Divider spacing={4} />
       <ConfigSection
         title="Additional settings"
         description="Additional settings are optional settings that can be configured for more control over your data source."
@@ -87,12 +87,16 @@ export const ConfigEditor = (props: Props) => {
         isInitiallyOpen
       >
         <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
-        <Divider hideLine />
+        <div className={styles.dividerInvisible}>
+          <Divider spacing={3} />
+        </div>
         {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
         <ElasticDetails value={options} onChange={onOptionsChange} />
-        <Divider hideLine />
+        <div className={styles.dividerInvisible}>
+          <Divider spacing={3} />
+        </div>
         <LogsConfig
           value={options.jsonData}
           onChange={(newValue) =>
@@ -102,7 +106,9 @@ export const ConfigEditor = (props: Props) => {
             })
           }
         />
-        <Divider hideLine />
+        <div className={styles.dividerInvisible}>
+          <Divider spacing={3} />
+        </div>
         <DataLinks
           value={options.jsonData.dataLinks}
           onChange={(newValue) => {
@@ -119,3 +125,11 @@ export const ConfigEditor = (props: Props) => {
     </>
   );
 };
+
+const styles = {
+  dividerInvisible: css({
+    '> hr': {
+      border: 'none'
+    }
+  })
+}
