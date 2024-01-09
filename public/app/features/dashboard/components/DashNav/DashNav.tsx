@@ -251,7 +251,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const renderRightActions = () => {
-    const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
+    const { dashboard, onAddPanel, isFullscreen, kioskMode, hideTimePicker } = props;
     const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -335,7 +335,10 @@ export const DashNav = React.memo<Props>((props) => {
       buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
 
-    buttons.push(<NavToolbarSeparator key="toolbar-separator" />);
+    // if the timepicker is hidden, we don't need to add this separator
+    if (!hideTimePicker) {
+      buttons.push(<NavToolbarSeparator key="toolbar-separator" />);
+    }
 
     buttons.push(renderTimeControls());
 
