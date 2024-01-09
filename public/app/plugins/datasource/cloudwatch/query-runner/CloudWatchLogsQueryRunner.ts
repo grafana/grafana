@@ -31,8 +31,7 @@ import {
   getDefaultTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { config, FetchError } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { config, FetchError, TemplateSrv } from '@grafana/runtime';
 
 import {
   CloudWatchJsonData,

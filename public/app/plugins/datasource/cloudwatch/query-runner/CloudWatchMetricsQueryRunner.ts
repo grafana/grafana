@@ -12,9 +12,9 @@ import {
   rangeUtil,
   ScopedVars,
 } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
 
