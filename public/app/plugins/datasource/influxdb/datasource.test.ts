@@ -414,9 +414,14 @@ describe('InfluxDataSource Frontend Mode', () => {
       it('should not escape simple string', () => {
         expect(influxSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
       });
+      it('should not escape regex delimited by `/`', () => {
+        expect(influxSpecialRegexEscape("/looking'glass/")).toEqual("/looking\\\\'glass/");
+      });
+      it('should escape regex delimited by `/`', () => {
+        expect(influxRegularEscape("/looking'glass/")).toEqual("\\/looking\\'glass\\/");
+      });
 
       it('should escape $^*+?.()|\\', () => {
-        expect(influxSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
         expect(influxSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
         expect(influxSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
         expect(influxSpecialRegexEscape('looking[glass')).toEqual('looking\\\\[glass');
