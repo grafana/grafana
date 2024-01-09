@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
 import { LogsSortOrder } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import LogsNavigation from './LogsNavigation';
 
@@ -91,6 +92,42 @@ describe('LogsNavigation', () => {
     );
     await userEvent.click(screen.getByTestId('olderLogsButton'));
     expect(onChangeTimeMock).toHaveBeenCalledWith({ from: 1637319338000, to: 1637322938000 });
+  });
+
+  it('should correctly display the active page', async () => {
+    const queries: DataQuery[] = [];
+    const { rerender } = setup({
+      absoluteRange: { from: 1704737384139, to: 1704737684139 },
+      visibleRange: { from: 1704737384207, to: 1704737683316 },
+      queries,
+      logsSortOrder: LogsSortOrder.Descending,
+    });
+
+    expect(await screen.findByTestId('page1')).toBeInTheDocument();
+    expect(screen.getByTestId('page1').firstChild).toHaveClass('selectedBg');
+
+    expect(screen.queryByTestId('page2')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId('olderLogsButton'));
+
+    rerender(
+      <LogsNavigation
+        {...defaultProps}
+        absoluteRange={{ from: 1704737084207, to: 1704737384207 }}
+        visibleRange={{ from: 1704737084627, to: 1704737383765 }}
+        onChangeTime={jest.fn()}
+        logsSortOrder={LogsSortOrder.Descending}
+        queries={queries}
+      />
+    );
+
+    expect(await screen.findByTestId('page1')).toBeInTheDocument();
+    expect(screen.getByTestId('page1').firstChild).not.toHaveClass('selectedBg');
+
+    expect(await screen.findByTestId('page2')).toBeInTheDocument();
+    expect(screen.getByTestId('page2').firstChild).toHaveClass('selectedBg');
+
+    expect(screen.queryByTestId('page3')).not.toBeInTheDocument();
   });
 
   it('should reset the scroll when pagination is clicked', async () => {
