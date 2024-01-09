@@ -177,6 +177,7 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 // If not, it sends the configuration to the remote Alertmanager.
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.shouldSendConfig(ctx, config) {
+		am.metrics.ConfigSyncsTotal.Inc()
 		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 			ctx,
 			config.AlertmanagerConfiguration,
@@ -185,6 +186,7 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 			config.CreatedAt,
 			config.Default,
 		); err != nil {
+			am.metrics.ConfigSyncErrorsTotal.Inc()
 			return err
 		}
 	}
@@ -200,7 +202,9 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	}
 
 	if am.shouldSendState(ctx, state) {
+		am.metrics.StateSyncsTotal.Inc()
 		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
+			am.metrics.ConfigSyncErrorsTotal.Inc()
 			return err
 		}
 	}
