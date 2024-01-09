@@ -167,7 +167,7 @@ export function PanelChrome({
     <>
       {/* Non collapsible title */}
       {!collapsible && title && (
-        <h6 className={styles.title}>
+        <h6 title={typeof title === 'string' ? title : undefined} className={styles.title}>
           {title}
         </h6>
       )}
