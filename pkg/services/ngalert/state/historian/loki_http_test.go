@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
-	"github.com/weaveworks/common/http/client"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -338,7 +337,7 @@ func TestStream(t *testing.T) {
 	})
 }
 
-func createTestLokiClient(req client.Requester) *HttpLokiClient {
+func createTestLokiClient(req Requester) *HttpLokiClient {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL: url,
