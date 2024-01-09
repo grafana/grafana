@@ -33,7 +33,8 @@ const (
 // - if evaluation state is either NoData or Error, the resulting set of labels is changed:
 //   - original alert name (label: model.AlertNameLabel) is backed up to OriginalAlertName
 //   - label model.AlertNameLabel is overwritten to either NoDataAlertName or ErrorAlertName
-func StateToPostableAlert(alertState *State, appURL *url.URL) *models.PostableAlert {
+func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.PostableAlert {
+	alertState := transition.State
 	nL := alertState.Labels.Copy()
 	nA := data.Labels(alertState.Annotations).Copy()
 
@@ -71,11 +72,19 @@ func StateToPostableAlert(alertState *State, appURL *url.URL) *models.PostableAl
 		urlStr = ""
 	}
 
-	if alertState.State == eval.NoData {
+	state := alertState.State
+	if alertState.Resolved {
+		// If this is a resolved alert, we need to send an alert with the correct labels such that they will expire the previous alert.
+		// In most cases the labels on the state will be correct, however when the previous alert was a NoData or Error alert, we need to
+		// ensure to modify it appropriately.
+		state = transition.PreviousState
+	}
+
+	if state == eval.NoData {
 		return noDataAlert(nL, nA, alertState, urlStr)
 	}
 
-	if alertState.State == eval.Error {
+	if state == eval.Error {
 		return errorAlert(nL, nA, alertState, urlStr)
 	}
 
@@ -139,7 +148,7 @@ func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateMa
 		if !alertState.NeedsSending(stateManager.ResendDelay) {
 			continue
 		}
-		alert := StateToPostableAlert(alertState.State, appURL)
+		alert := StateToPostableAlert(alertState, appURL)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
 		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
 			continue
@@ -160,7 +169,7 @@ func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.U
 		if transition.PreviousState == eval.Normal || transition.PreviousState == eval.Pending {
 			continue
 		}
-		postableAlert := StateToPostableAlert(transition.State, appURL)
+		postableAlert := StateToPostableAlert(transition, appURL)
 		postableAlert.EndsAt = strfmt.DateTime(ts)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}

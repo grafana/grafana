@@ -217,7 +217,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		s.SetNormal(reason, startsAt, now)
 		// Set Resolved property so the scheduler knows to send a postable alert
 		// to Alertmanager.
-		s.Resolved = oldState == eval.Alerting
+		s.Resolved = oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData
 		s.LastEvaluationTime = now
 		s.Values = map[string]float64{}
 		transitions = append(transitions, StateTransition{
