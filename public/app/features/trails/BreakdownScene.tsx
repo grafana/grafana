@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DashboardCursorSync, DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   AdHocFiltersVariable,
+  behaviors,
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
@@ -229,11 +230,13 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
     active: 'grid',
     layouts: [
       new SceneCSSGridLayout({
+        $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
         templateColumns: GRID_TEMPLATE_COLUMNS,
         autoRows: '200px',
         children: children,
       }),
       new SceneCSSGridLayout({
+        $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
         templateColumns: '1fr',
         autoRows: '200px',
         children: children,
@@ -277,6 +280,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
     layouts: [
       new SceneFlexLayout({
         direction: 'column',
+        $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
         children: [
           new SceneFlexItem({
             minHeight: 300,
@@ -286,6 +290,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       }),
       new ByFrameRepeater({
         body: new SceneCSSGridLayout({
+          $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
           templateColumns: GRID_TEMPLATE_COLUMNS,
           autoRows: '200px',
           children: [],
@@ -304,6 +309,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       }),
       new ByFrameRepeater({
         body: new SceneCSSGridLayout({
+          $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
           templateColumns: '1fr',
           autoRows: '200px',
           children: [],
