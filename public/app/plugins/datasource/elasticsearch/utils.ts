@@ -3,6 +3,7 @@ import { gte, SemVer } from 'semver';
 import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { ElasticsearchQuery, MetricAggregation, MetricAggregationWithInlineScript } from './types';
+import { DataFrame, FieldType, LogLevel } from '@grafana/data';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -115,3 +116,33 @@ export const isTimeSeriesQuery = (query: ElasticsearchQuery): boolean => {
  * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
  */
 export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
+
+export const logLevelMap: Record<string, LogLevel> = {
+  emerg: LogLevel.emerg,
+  fatal: LogLevel.fatal,
+  alert: LogLevel.alert,
+  crit: LogLevel.crit,
+  critical: LogLevel.critical,
+  warn: LogLevel.warn,
+  warning: LogLevel.warning,
+  err: LogLevel.err,
+  eror: LogLevel.eror,
+  error: LogLevel.error,
+  info: LogLevel.info,
+  information: LogLevel.information,
+  informational: LogLevel.informational,
+  notice: LogLevel.notice,
+  dbug: LogLevel.dbug,
+  debug: LogLevel.debug,
+  trace: LogLevel.trace,
+  unknown: LogLevel.unknown,
+}
+
+export function dataFrameLogLevel(dataFrame: DataFrame): LogLevel {
+  const field = dataFrame.fields.find((f) => f.type === FieldType.number);
+  const level = field?.labels?.['level'] ?? field?.labels?.['lvl'] ?? field?.labels?.['loglevel'] ?? '';
+  if (!level) {
+    return LogLevel.unknown;
+  }
+  return level in logLevelMap ? logLevelMap[level] : LogLevel.unknown;
+}

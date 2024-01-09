@@ -31,7 +31,6 @@ import {
   SupplementaryQueryOptions,
   toUtc,
   AnnotationEvent,
-  FieldType,
   DataSourceWithToggleableQueryFiltersSupport,
   QueryFilterOptions,
   ToggleFilterAction,
@@ -49,7 +48,6 @@ import {
 } from '@grafana/runtime';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
-import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
@@ -83,7 +81,7 @@ import {
   ElasticsearchAnnotationQuery,
   RangeMap,
 } from './types';
-import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
+import { dataFrameLogLevel, getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
@@ -644,7 +642,7 @@ export class ElasticDatasource
       {
         range: request.range,
         targets: request.targets,
-        extractLevel,
+        extractLevel: dataFrameLogLevel,
       }
     );
   }
@@ -1172,8 +1170,3 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
   }
 }
 
-function extractLevel(dataFrame: DataFrame): LogLevel {
-  const valueField = dataFrame.fields.find((f) => f.type === FieldType.number);
-  const name = valueField?.labels?.['level'] ?? '';
-  return getLogLevelFromKey(name);
-}

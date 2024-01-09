@@ -1,5 +1,6 @@
+import { FieldType, LogLevel, createDataFrame } from '@grafana/data';
 import { ElasticsearchQuery } from './types';
-import { isTimeSeriesQuery, removeEmpty } from './utils';
+import { dataFrameLogLevel, isTimeSeriesQuery, logLevelMap, removeEmpty } from './utils';
 
 describe('removeEmpty', () => {
   it('Should remove all empty', () => {
@@ -77,5 +78,47 @@ describe('isTimeSeriesQuery', () => {
     };
 
     expect(isTimeSeriesQuery(query)).toBe(true);
+  });
+});
+
+describe('dataFrameLogLevel', () => {
+  function getLogFrame(label: string, level: string) {
+    return createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        {
+          type: FieldType.number,
+          values: [7],
+          labels: {
+            [label]: level
+          },
+        },
+      ],
+    });
+  }
+
+  it.each(Object.keys(logLevelMap))('returns the level from the level field of a %s log data frame', (level: string) => {
+    const dataFrame = getLogFrame('level', level);
+    
+    expect(dataFrameLogLevel(dataFrame)).toBe(logLevelMap[level]);
+  });
+
+  it.each(Object.keys(logLevelMap))('returns the level from the lvl field of a %s log data frame', (level: string) => {
+    const dataFrame = getLogFrame('lvl', level);
+    
+    expect(dataFrameLogLevel(dataFrame)).toBe(logLevelMap[level]);
+  });
+
+  it.each(Object.keys(logLevelMap))('returns the level from the loglevel field of a %s log data frame', (level: string) => {
+    const dataFrame = getLogFrame('loglevel', level);
+    
+    expect(dataFrameLogLevel(dataFrame)).toBe(logLevelMap[level]);
+  });
+
+  it('returns unknown if the level is missing', () => {
+    const dataFrame = getLogFrame('not_level', '');
+    
+    expect(dataFrameLogLevel(dataFrame)).toBe(LogLevel.unknown);
   });
 });
