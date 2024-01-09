@@ -25,7 +25,7 @@ const STATE_HOVERED = 2;
 export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timezone }: AnnoBoxProps) => {
   const { canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
 
-  const { incrPinnedCount } = useContext(LayoutItemContext);
+  const { setAnchoredCount } = useContext(LayoutItemContext);
 
   const styles = useStyles2(getStyles);
 
@@ -44,13 +44,13 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWip
   // similar to TooltipPlugin2, when editing annotation (pinned), it should boost z-index
   const setIsEditingWrap = useCallback(
     (isEditing: boolean) => {
-      incrPinnedCount(isEditing ? 1 : -1);
+      setAnchoredCount((count) => count + (isEditing ? 1 : -1));
       setState(isEditing ? STATE_EDITING : STATE_DEFAULT);
       if (!isEditing && exitWipEdit != null) {
         exitWipEdit();
       }
     },
-    [exitWipEdit, incrPinnedCount]
+    [exitWipEdit, setAnchoredCount]
   );
 
   const onAnnotationEdit = useCallback(() => {

@@ -94,7 +94,7 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
-  const { incrPinnedCount } = useContext(LayoutItemContext);
+  const { setAnchoredCount } = useContext(LayoutItemContext);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
 
@@ -188,7 +188,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
       if (pendingPinned) {
         _style = { pointerEvents: _isPinned ? 'all' : 'none' };
 
-        incrPinnedCount(_isPinned ? 1 : -1);
+        setAnchoredCount((count) => count + (_isPinned ? 1 : -1));
 
         // @ts-ignore
         _plot!.cursor._lock = _isPinned;
