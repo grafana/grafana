@@ -203,6 +203,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				},
 			},
 			searchQuery: anonstore.SearchDeviceQuery{
+				Query: "",
+				Page:  1,
 				Limit: 1,
 			},
 			expectedCount: 1,
@@ -225,6 +227,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 			},
 			searchQuery: anonstore.SearchDeviceQuery{
 				Query: "test2",
+				Page:  1,
+				Limit: 50,
 			},
 			expectedCount: 1,
 			expectedDevice: &anonstore.Device{
