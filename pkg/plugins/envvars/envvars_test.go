@@ -39,7 +39,7 @@ func TestInitializer_envVars(t *testing.T) {
 					"custom_env_var": "customVal",
 				},
 			},
-		}, licensing)
+		}, licensing, featuremgmt.WithFeatures())
 
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Len(t, envVars, 6)
@@ -67,7 +67,7 @@ func TestInitializer_skipHostEnvVars(t *testing.T) {
 	}
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
-		envVarsProvider := NewProvider(&config.Cfg{Features: featuremgmt.WithFeatures()}, nil)
+		envVarsProvider := NewProvider(&config.Cfg{Features: featuremgmt.WithFeatures()}, nil, featuremgmt.WithFeatures())
 		envVars := envVarsProvider.Get(context.Background(), p)
 
 		// We want to test that the envvars.Provider does not add any of the host env vars.
@@ -82,7 +82,7 @@ func TestInitializer_skipHostEnvVars(t *testing.T) {
 			JSONData:        plugins.JSONData{ID: "test"},
 			SkipHostEnvVars: true,
 		}
-		envVarsProvider := NewProvider(&config.Cfg{}, nil)
+		envVarsProvider := NewProvider(&config.Cfg{}, nil, featuremgmt.WithFeatures())
 
 		t.Run("should populate allowed host env vars", func(t *testing.T) {
 			// Set all allowed variables
@@ -493,7 +493,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			envVarsProvider := NewProvider(tc.cfg, nil)
+			envVarsProvider := NewProvider(tc.cfg, nil, featuremgmt.WithFeatures())
 			envVars := envVarsProvider.Get(context.Background(), tc.plugin)
 			tc.exp(t, envVars)
 		})
@@ -542,7 +542,7 @@ func TestInitializer_authEnvVars(t *testing.T) {
 
 		envVarsProvider := NewProvider(&config.Cfg{
 			GrafanaAppURL: "https://myorg.com/",
-		}, nil)
+		}, nil, featuremgmt.WithFeatures())
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
 		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
@@ -559,7 +559,7 @@ func TestInitalizer_awsEnvVars(t *testing.T) {
 			AWSAssumeRoleEnabled:    true,
 			AWSAllowedAuthProviders: []string{"grafana_assume_role", "keys"},
 			AWSExternalId:           "mock_external_id",
-		}, nil)
+		}, nil, featuremgmt.WithFeatures())
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
 	})
@@ -576,7 +576,7 @@ func TestInitializer_featureToggleEnvVar(t *testing.T) {
 		p := &plugins.Plugin{}
 		envVarsProvider := NewProvider(&config.Cfg{
 			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
-		}, nil)
+		}, nil, featuremgmt.WithFeatures())
 		envVars := envVarsProvider.Get(context.Background(), p)
 
 		assert.Equal(t, 2, len(envVars))
@@ -621,7 +621,7 @@ func TestInitalizer_azureEnvVars(t *testing.T) {
 					UsernameAssertion: true,
 				},
 			},
-		}, nil)
+		}, nil, featuremgmt.WithFeatures())
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID=mock_managed_identity_client_id",
