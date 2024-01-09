@@ -34,7 +34,7 @@ type SSOSettingsService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
-	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager,
+	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service) *SSOSettingsService {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
@@ -80,6 +80,21 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 	}
 
 	storeSettings.Source = models.DB
+
+	return storeSettings, nil
+}
+
+func (s *SSOSettingsService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	storeSettings, err := s.GetForProvider(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range storeSettings.Settings {
+		if isSecret(k) && v != "" {
+			storeSettings.Settings[k] = "*********"
+		}
+	}
 
 	return storeSettings, nil
 }

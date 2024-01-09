@@ -395,12 +395,15 @@ func runGetScenario(
 	cfg := setting.NewCfg()
 	cfg.FeatureManagement = settings
 
+	fm := featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
+		Name:  featuremgmt.FlagFeatureToggleAdminPage,
+		Stage: featuremgmt.FeatureStageGeneralAvailability,
+	}}, features...), disabled...)
+
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.Features = featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
-			Name:  featuremgmt.FlagFeatureToggleAdminPage,
-			Stage: featuremgmt.FeatureStageGeneralAvailability,
-		}}, features...), disabled...)
+		hs.Features = fm
+		hs.featureManager = fm
 		hs.orgService = orgtest.NewOrgServiceFake()
 		hs.userService = &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 1},
@@ -459,12 +462,15 @@ func runSetScenario(
 	cfg := setting.NewCfg()
 	cfg.FeatureManagement = settings
 
+	features := featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
+		Name:  featuremgmt.FlagFeatureToggleAdminPage,
+		Stage: featuremgmt.FeatureStageGeneralAvailability,
+	}}, serverFeatures...), disabled...)
+
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.Features = featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
-			Name:  featuremgmt.FlagFeatureToggleAdminPage,
-			Stage: featuremgmt.FeatureStageGeneralAvailability,
-		}}, serverFeatures...), disabled...)
+		hs.Features = features
+		hs.featureManager = features
 		hs.orgService = orgtest.NewOrgServiceFake()
 		hs.userService = &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 1},

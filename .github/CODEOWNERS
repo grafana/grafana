@@ -275,6 +275,8 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
+/pkg/aggregator @grafana/grafana-app-platform-squad
+/pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend-product
@@ -462,6 +464,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/routes/ @grafana/grafana-frontend-platform
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
+/public/app/types/alerting.ts @grafana/alerting-frontend
 /public/dashboards/ @grafana/dashboards-squad
 /public/fonts/ @grafana/alerting-frontend
 /public/gazetteer/ @ryantxu
@@ -666,10 +669,10 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/update-changelog.yml @grafana/grafana-release-guild
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
 /.github/workflows/snyk.yml @grafana/security-team
-/.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-as-code
-/.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
-/.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
-/.github/workflows/verify-kinds.yml @grafana/grafana-as-code
+/.github/workflows/scripts/kinds/verify-kinds.go @grafana/platform-cat
+/.github/workflows/publish-kinds-next.yml @grafana/platform-cat
+/.github/workflows/publish-kinds-release.yml @grafana/platform-cat
+/.github/workflows/verify-kinds.yml @grafana/platform-cat
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
