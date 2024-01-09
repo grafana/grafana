@@ -706,8 +706,7 @@ interface RunLoadMoreLogsQueriesOptions {
   absoluteRange: AbsoluteTimeRange;
 }
 /**
- * Supplementary action to run queries that request more results, and dispatches sub-actions based
- * on which result viewers are active
+ * Dedicated action to run log queries requesting more results.
  */
 export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQueriesOptions>(
   'explore/runQueries',
