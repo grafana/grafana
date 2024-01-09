@@ -296,6 +296,12 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			continue
 		}
 		moa.alertmanagers[orgID] = alertmanager
+
+		if dbConfig.Default {
+			moa.metrics.UsingDefaultConfiguration.WithLabelValues(strconv.FormatInt(orgID, 10)).Set(1)
+			continue
+		}
+		moa.metrics.UsingDefaultConfiguration.WithLabelValues(strconv.FormatInt(orgID, 10)).Set(0)
 	}
 
 	amsToStop := map[int64]Alertmanager{}
