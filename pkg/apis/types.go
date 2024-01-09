@@ -13,6 +13,7 @@ type ResourceInfo struct {
 	version      string
 	resourceName string
 	singularName string
+	shortName    string
 	kind         string
 	newObj       func() runtime.Object
 	newList      func() runtime.Object
@@ -20,11 +21,32 @@ type ResourceInfo struct {
 
 func NewResourceInfo(group, version, resourceName, singularName, kind string,
 	newObj func() runtime.Object, newList func() runtime.Object) ResourceInfo {
-	return ResourceInfo{group, version, resourceName, singularName, kind, newObj, newList}
+	shortName := "" // an optional alias helpful in kubectl eg ("sa" for serviceaccounts)
+	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList}
+}
+
+func (info *ResourceInfo) WithGroupAndShortName(group string, shortName string) ResourceInfo {
+	return ResourceInfo{
+		group:        group,
+		version:      info.version,
+		resourceName: info.resourceName,
+		singularName: info.singularName,
+		kind:         info.kind,
+		shortName:    shortName,
+		newObj:       info.newObj,
+		newList:      info.newList,
+	}
 }
 
 func (info *ResourceInfo) GetSingularName() string {
 	return info.singularName
+}
+
+func (info *ResourceInfo) GetShortNames() []string {
+	if info.shortName == "" {
+		return []string{}
+	}
+	return []string{info.shortName}
 }
 
 // TypeMeta returns k8s type
