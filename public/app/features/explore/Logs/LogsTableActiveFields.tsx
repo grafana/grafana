@@ -16,8 +16,6 @@ export function getLogsFieldsStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
       display: 'flex',
     }),
-    // Making the checkbox sticky and label scrollable for labels that are wider then the container
-    // However, the checkbox component does not support this, so we need to do some css hackery for now until the API of that component is updated.
     columnWrapper: css({
       marginBottom: theme.spacing(1.5),
       // need some space or the outline of the checkbox is cut off

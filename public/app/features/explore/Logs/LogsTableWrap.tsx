@@ -177,7 +177,7 @@ export function LogsTableWrap(props: Props) {
       labels.forEach((labels: Labels) => {
         const labelsArray = Object.keys(labels);
         // Iterate through the label values
-        labelsArray.forEach((label, index) => {
+        labelsArray.forEach((label) => {
           // If it's already in our map, increment the count
           if (labelCardinality.has(label)) {
             const value = labelCardinality.get(label);
