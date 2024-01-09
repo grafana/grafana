@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
 
-import { logAlertingError, logInfo } from './Analytics';
+import { logError, logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';
 import type { RouteGroupsMatcher } from './routeGroupsMatcher';
 
@@ -23,7 +23,7 @@ function loadWorker() {
       routeMatcher = comlink.wrap<RouteGroupsMatcher>(worker);
     } catch (e: unknown) {
       if (e instanceof Error) {
-        logAlertingError(e);
+        logError(e);
       }
     }
   }

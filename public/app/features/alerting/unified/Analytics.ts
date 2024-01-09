@@ -27,7 +27,7 @@ export function logInfo(message: string, context?: Record<string, string>) {
   alertingLogger.logInfo(message, context);
 }
 
-export function logAlertingError(error: Error, context?: Record<string, string>) {
+export function logError(error: Error, context?: Record<string, string>) {
   alertingLogger.logError(error, context);
 }
 
