@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo } from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
-import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';

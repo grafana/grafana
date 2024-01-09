@@ -92,7 +92,13 @@ export function InstallControlsButton({
       if (isViewingAppConfigPage) {
         locationService.replace(`${location.pathname}?page=${PluginTabIds.OVERVIEW}`);
       }
-      appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
+
+      let successMessage = `Uninstalled ${plugin.name}`;
+      if (config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall) {
+        successMessage = 'Uninstall requested, this may take a few minutes.';
+      }
+
+      appEvents.emit(AppEvents.alertSuccess, [successMessage]);
       if (plugin.type === 'app') {
         dispatch(removePluginFromNavTree({ pluginID: plugin.id }));
         setNeedReload?.(false);

@@ -126,7 +126,8 @@ type HTTPServer struct {
 	RouteRegister                routing.RouteRegister
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
-	Features                     *featuremgmt.FeatureManager
+	Features                     featuremgmt.FeatureToggles
+	featureManager               *featuremgmt.FeatureManager
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
 	navTreeService               navtree.Service
@@ -290,7 +291,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ShortURLService:              shortURLService,
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
-		Features:                     features,
+		Features:                     features, // a read only view of the managers state
+		featureManager:               features,
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
@@ -656,7 +658,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.UseMiddleware(middleware.Gziper())
 	}
 
-	m.UseMiddleware(middleware.Recovery(hs.Cfg))
+	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")

@@ -1,13 +1,17 @@
 package entity
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
+	"strconv"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -16,8 +20,17 @@ import (
 )
 
 // this is terrible... but just making it work!!!!
-func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
+func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
 	var err error
+
+	// Read the body first -- it includes old resourceVersion!
+	if len(rsp.Body) > 0 {
+		decoded, _, err := codec.Decode(rsp.Body, &schema.GroupVersionKind{Group: rsp.Group, Version: rsp.GroupVersion}, res)
+		if err != nil {
+			return err
+		}
+		res = decoded
+	}
 
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
@@ -34,7 +47,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 	metaAccessor.SetName(rsp.Name)
 	metaAccessor.SetNamespace(rsp.Namespace)
 	metaAccessor.SetUID(types.UID(rsp.Guid))
-	metaAccessor.SetResourceVersion(rsp.Version)
+	metaAccessor.SetResourceVersion(fmt.Sprintf("%d", rsp.ResourceVersion))
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
 
 	grafanaAccessor := kinds.MetaAccessor(metaAccessor)
@@ -71,16 +84,6 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 
 	// TODO fields?
 
-	if len(rsp.Body) > 0 {
-		spec := reflect.ValueOf(res).Elem().FieldByName("Spec")
-		if spec != (reflect.Value{}) && spec.CanSet() {
-			err = json.Unmarshal(rsp.Body, spec.Addr().Interface())
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	if len(rsp.Status) > 0 {
 		status := reflect.ValueOf(res).Elem().FieldByName("Status")
 		if status != (reflect.Value{}) && status.CanSet() {
@@ -94,30 +97,31 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 	return nil
 }
 
-func resourceToEntity(key string, res runtime.Object, requestInfo *request.RequestInfo) (*entityStore.Entity, error) {
+func resourceToEntity(key string, res runtime.Object, requestInfo *request.RequestInfo, codec runtime.Codec) (*entityStore.Entity, error) {
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
 		return nil, err
 	}
 
 	grafanaAccessor := kinds.MetaAccessor(metaAccessor)
+	rv, _ := strconv.ParseInt(metaAccessor.GetResourceVersion(), 10, 64)
 
 	rsp := &entityStore.Entity{
-		Group:        requestInfo.APIGroup,
-		GroupVersion: requestInfo.APIVersion,
-		Resource:     requestInfo.Resource,
-		Subresource:  requestInfo.Subresource,
-		Namespace:    metaAccessor.GetNamespace(),
-		Key:          key,
-		Name:         metaAccessor.GetName(),
-		Guid:         string(metaAccessor.GetUID()),
-		Version:      metaAccessor.GetResourceVersion(),
-		Folder:       grafanaAccessor.GetFolder(),
-		CreatedAt:    metaAccessor.GetCreationTimestamp().Time.UnixMilli(),
-		CreatedBy:    grafanaAccessor.GetCreatedBy(),
-		UpdatedBy:    grafanaAccessor.GetUpdatedBy(),
-		Slug:         grafanaAccessor.GetSlug(),
-		Title:        grafanaAccessor.GetTitle(),
+		Group:           requestInfo.APIGroup,
+		GroupVersion:    requestInfo.APIVersion,
+		Resource:        requestInfo.Resource,
+		Subresource:     requestInfo.Subresource,
+		Namespace:       metaAccessor.GetNamespace(),
+		Key:             key,
+		Name:            metaAccessor.GetName(),
+		Guid:            string(metaAccessor.GetUID()),
+		ResourceVersion: rv,
+		Folder:          grafanaAccessor.GetFolder(),
+		CreatedAt:       metaAccessor.GetCreationTimestamp().Time.UnixMilli(),
+		CreatedBy:       grafanaAccessor.GetCreatedBy(),
+		UpdatedBy:       grafanaAccessor.GetUpdatedBy(),
+		Slug:            grafanaAccessor.GetSlug(),
+		Title:           grafanaAccessor.GetTitle(),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),
@@ -147,14 +151,12 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
-	// TODO: store entire object in body?
-	spec := reflect.ValueOf(res).Elem().FieldByName("Spec")
-	if spec != (reflect.Value{}) {
-		rsp.Body, err = json.Marshal(spec.Interface())
-		if err != nil {
-			return nil, err
-		}
+	var buf bytes.Buffer
+	err = codec.Encode(res, &buf)
+	if err != nil {
+		return nil, err
 	}
+	rsp.Body = buf.Bytes()
 
 	status := reflect.ValueOf(res).Elem().FieldByName("Status")
 	if status != (reflect.Value{}) {

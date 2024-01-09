@@ -67,12 +67,22 @@ type Requester interface {
 	GetIDToken() string
 }
 
+// IsNamespace returns true if namespace matches any expected namespace
+func IsNamespace(namespace string, expected ...string) bool {
+	for _, e := range expected {
+		if namespace == e {
+			return true
+		}
+	}
+
+	return false
+}
+
 // IntIdentifier converts a string identifier to an int64.
 // Applicable for users, service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if namespace is not recognized.
 func IntIdentifier(namespace, identifier string) (int64, error) {
-	switch namespace {
-	case NamespaceUser, NamespaceAPIKey, NamespaceServiceAccount, NamespaceRenderService:
+	if IsNamespace(namespace, NamespaceUser, NamespaceAPIKey, NamespaceServiceAccount, NamespaceRenderService) {
 		id, err := strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("unrecognized format for valid namespace %s: %w", namespace, err)
@@ -98,8 +108,7 @@ func UserIdentifier(namespace, identifier string) (int64, error) {
 		return 0, nil
 	}
 
-	switch namespace {
-	case NamespaceUser, NamespaceServiceAccount:
+	if IsNamespace(namespace, NamespaceUser, NamespaceServiceAccount) {
 		return userID, nil
 	}
 

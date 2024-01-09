@@ -17,11 +17,6 @@ type SSOSettingsStore struct {
 	log      log.Logger
 }
 
-var (
-	// timeNow makes it possible to test usage of time
-	timeNow = time.Now
-)
-
 func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
 	return &SSOSettingsStore{
 		sqlStore: sqlStore,
@@ -87,7 +82,7 @@ func (s *SSOSettingsStore) Upsert(ctx context.Context, settings models.SSOSettin
 			return err
 		}
 
-		now := timeNow().UTC()
+		now := time.Now().UTC()
 
 		if found {
 			updated := &models.SSOSettings{
@@ -130,7 +125,7 @@ func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
 			return ssosettings.ErrNotFound
 		}
 
-		existing.Updated = timeNow().UTC()
+		existing.Updated = time.Now().UTC()
 		existing.IsDeleted = true
 
 		_, err = sess.ID(existing.ID).MustCols("updated", "is_deleted").Update(existing)
