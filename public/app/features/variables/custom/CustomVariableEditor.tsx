@@ -1,13 +1,10 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { CustomVariableForm } from 'app/features/dashboard-scene/settings/variables/components/CustomVariableForm';
 import { StoreState } from 'app/types';
 
-import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableLegend } from '../editor/VariableLegend';
-import { VariableTextAreaField } from '../editor/VariableTextAreaField';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { CustomVariableModel, VariableWithMultiSupport } from '../types';
@@ -44,26 +41,23 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
 
   render() {
     return (
-      <>
-        <VariableLegend>Custom options</VariableLegend>
-
-        <VariableTextAreaField
-          name="Values separated by comma"
-          value={this.props.variable.query}
-          placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
-          onChange={this.onChange}
-          onBlur={this.onBlur}
-          required
-          width={52}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
-        />
-        <VariableLegend>Selection options</VariableLegend>
-        <SelectionOptionsEditor
-          variable={this.props.variable}
-          onPropChange={this.onSelectionOptionsChange}
-          onMultiChanged={this.props.changeVariableMultiValue}
-        />
-      </>
+      <CustomVariableForm
+        query={this.props.variable.query}
+        multi={this.props.variable.multi}
+        allValue={this.props.variable.allValue}
+        includeAll={this.props.variable.includeAll}
+        onQueryChange={this.onChange}
+        onMultiChange={(event) =>
+          this.onSelectionOptionsChange({ propName: 'multi', propValue: event.currentTarget.checked })
+        }
+        onIncludeAllChange={(event) =>
+          this.onSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked })
+        }
+        onAllValueChange={(event) =>
+          this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
+        }
+        onBlur={this.onBlur}
+      />
     );
   }
 }
