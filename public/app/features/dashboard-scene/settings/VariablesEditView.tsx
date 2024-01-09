@@ -1,7 +1,15 @@
 import React from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneVariable,
+  AdHocFiltersVariable,
+  SceneVariables,
+  sceneGraph,
+  AdHocFilterSet,
+} from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -12,6 +20,7 @@ import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
+import { EditableVariableType, getVariableScene } from './variables/utils';
 export interface VariablesEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
 }
@@ -120,18 +129,26 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.setState({ editIndex: variableIndex });
   };
 
-  public onReplace = (variable: SceneVariable) => {
+  public onTypeChange = (type: EditableVariableType) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex;
     const { variables } = this.getVariableSet().state;
+    const variable = variableIndex && variables[variableIndex];
 
-    if (!variableIndex || variableIndex < 0) {
+    if (!variable) {
       // Handle the case where the variable is not found
       console.error('Variable not found');
       return;
     }
 
-    const updatedVariables = [...variables.slice(0, variableIndex), variable, ...variables.slice(variableIndex + 1)];
+    const Variable = getVariableScene(type);
+    const newVariable =
+      Variable === AdHocFiltersVariable
+        ? // FIXME: Remove set and type as required properties from AdHocFiltersVariable in @grafana/scenes
+          // @ts-ignore
+          new Variable({ ...variable.state, set: new AdHocFilterSet({}), type: 'adhoc' })
+        : new Variable({ ...variable.state });
+    const updatedVariables = [...variables.slice(0, variableIndex), newVariable, ...variables.slice(variableIndex + 1)];
 
     // Update the state or the variables array
     this.getVariableSet().setState({ variables: updatedVariables });
@@ -146,7 +163,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const dashboard = model.getDashboard();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   // get variables from dashboard state
-  const { onDelete, onDuplicated, onOrderChanged, onEdit, onReplace } = model;
+  const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
 
@@ -156,8 +173,8 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
       return (
         <VariableEditorSettingsView
           variable={variable}
-          onReplace={onReplace}
-          onGoBack={model.onGoBack}
+          onTypeChange={onTypeChange}
+          onGoBack={onGoBack}
           pageNav={pageNav}
           navModel={navModel}
           dashboard={dashboard}
@@ -186,7 +203,7 @@ interface VariableEditorSettingsEditViewProps {
   pageNav: NavModelItem;
   navModel: NavModel;
   dashboard: DashboardScene;
-  onReplace: (variable: SceneVariable) => void;
+  onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
 }
 
@@ -195,7 +212,7 @@ function VariableEditorSettingsView({
   pageNav,
   navModel,
   dashboard,
-  onReplace,
+  onTypeChange,
   onGoBack,
 }: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
@@ -209,7 +226,7 @@ function VariableEditorSettingsView({
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} onReplaceVariable={onReplace} onGoBack={onGoBack} />
+      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} />
     </Page>
   );
 }

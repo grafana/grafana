@@ -7,6 +7,7 @@ import {
   IntervalVariable,
   TextBoxVariable,
   QueryVariable,
+  SceneVariable,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
 
@@ -18,19 +19,19 @@ import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 
+type EditableVariable =
+  | typeof CustomVariable
+  | typeof QueryVariable
+  | typeof ConstantVariable
+  | typeof IntervalVariable
+  | typeof DataSourceVariable
+  | typeof AdHocFiltersVariable
+  | typeof TextBoxVariable;
+
 interface EditableVariableConfig {
   name: string;
   description: string;
-  // FIXME: This should include all the scene objects
-  scene:
-    | typeof CustomVariable
-    | typeof QueryVariable
-    | typeof ConstantVariable
-    | typeof IntervalVariable
-    | typeof DataSourceVariable
-    | typeof AdHocFiltersVariable
-    | typeof TextBoxVariable;
-  // FIXME: This should include all the editor objects
+  Variable: EditableVariable;
   editor: React.ComponentType<any>;
 }
 
@@ -44,43 +45,43 @@ const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> =
   custom: {
     name: 'Custom',
     description: 'Define variable values manually',
-    scene: CustomVariable,
+    Variable: CustomVariable,
     editor: CustomVariableEditor,
   },
   query: {
     name: 'Query',
     description: 'Variable values are fetched from a datasource query',
-    scene: QueryVariable,
+    Variable: QueryVariable,
     editor: QueryVariableEditor,
   },
   constant: {
     name: 'Constant',
     description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
-    scene: ConstantVariable,
+    Variable: ConstantVariable,
     editor: ConstantVariableEditor,
   },
   interval: {
     name: 'Interval',
     description: 'Define a timespan interval (ex 1m, 1h, 1d)',
-    scene: IntervalVariable,
+    Variable: IntervalVariable,
     editor: IntervalVariableEditor,
   },
   datasource: {
     name: 'Data source',
     description: 'Enables you to dynamically switch the data source for multiple panels',
-    scene: DataSourceVariable,
+    Variable: DataSourceVariable,
     editor: DataSourceVariableEditor,
   },
   adhoc: {
     name: 'Ad hoc filters',
     description: 'Add key/value filters on the fly',
-    scene: AdHocFiltersVariable,
+    Variable: AdHocFiltersVariable,
     editor: AdHocFiltersVariableEditor,
   },
   textbox: {
     name: 'Textbox',
     description: 'Define a textbox variable, where users can enter any arbitrary string',
-    scene: TextBoxVariable,
+    Variable: TextBoxVariable,
     editor: TextBoxVariableEditor,
   },
 };
@@ -108,5 +109,5 @@ export function getVariableEditor(type: EditableVariableType) {
 }
 
 export function getVariableScene(type: EditableVariableType) {
-  return EDITABLE_VARIABLES[type].scene;
+  return EDITABLE_VARIABLES[type].Variable;
 }

@@ -2,7 +2,7 @@ import React, { FormEvent } from 'react';
 
 import { SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneVariable, AdHocFiltersVariable, AdHocFilterSet } from '@grafana/scenes';
+import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
 import { HorizontalGroup, Button } from '@grafana/ui';
 import { ConfirmDeleteModal } from 'app/features/variables/editor/ConfirmDeleteModal';
@@ -14,35 +14,23 @@ import { VariableTextField } from 'app/features/variables/editor/VariableTextFie
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
-import { getVariableEditor, getVariableScene, isEditableVariableType } from './utils';
+import { EditableVariableType, getVariableEditor, isEditableVariableType } from './utils';
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
-  onReplaceVariable: (variable: SceneVariable) => void;
+  onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
 }
 
-export function VariableEditorForm({ variable, onReplaceVariable, onGoBack }: VariableEditorFormProps) {
+export function VariableEditorForm({ variable, onTypeChange, onGoBack }: VariableEditorFormProps) {
   const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
 
-  const onTypeChange = (option: SelectableValue<VariableType>) => {
+  const onVariableTypeChange = (option: SelectableValue<VariableType>) => {
     const variableType = option.value && isEditableVariableType(option.value) ? option.value : undefined;
 
-    if (!variableType) {
-      return;
-    }
-
-    const scene = getVariableScene(variableType);
-
-    // FIXME: Remove set and type as required properties from AdHocFiltersVariable in @grafana/scenes
-    if (scene === AdHocFiltersVariable) {
-      const newVariable = new scene({ name, description, set: new AdHocFilterSet({}), type: 'adhoc' });
-      onReplaceVariable(newVariable);
-    } else {
-      // @ts-ignore TS complains about missing properties for AdHocFiltersVariable
-      const newVariable = new scene({ name, description });
-      onReplaceVariable(newVariable);
+    if (variableType) {
+      onTypeChange(variableType);
     }
   };
 
@@ -65,7 +53,7 @@ export function VariableEditorForm({ variable, onReplaceVariable, onGoBack }: Va
   return (
     <>
       <form aria-label="Variable editor Form">
-        <VariableTypeSelect onChange={onTypeChange} type={type} />
+        <VariableTypeSelect onChange={onVariableTypeChange} type={type} />
 
         <VariableLegend>General</VariableLegend>
         <VariableTextField

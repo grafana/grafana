@@ -100,19 +100,15 @@ describe('VariablesEditView', () => {
       errorSpy.mockRestore();
     });
 
-    it('should replace the editing variable when updating the variable', () => {
+    it('should change the variable type creating a new variable object', () => {
+      const previousVariable = variableView.getVariables()[1] as CustomVariable;
       variableView.onEdit('customVar2');
-      const newVariable = new CustomVariable({
-        name: 'newVariable',
-        query: 'a,b,c',
-      });
 
-      variableView.onReplace(newVariable);
+      variableView.onTypeChange('constant');
       expect(variableView.getVariables()).toHaveLength(2);
       const variable = variableView.getVariables()[1] as CustomVariable;
-      expect(variable).toBe(newVariable);
-      expect(variable.state.name).toBe('newVariable');
-      expect(variable.state.query).toBe('a,b,c');
+      expect(variable).not.toBe(previousVariable);
+      expect(variable.state.type).toBe('constant');
     });
   });
 });
