@@ -18,13 +18,12 @@ import { getVariableEditor, getVariableScene, isEditableVariableType } from './u
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
-  onSubmit: (variable: SceneVariable) => void;
+  onReplaceVariable: (variable: SceneVariable) => void;
+  onGoBack: () => void;
 }
 
-export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormProps) {
-  const [editingVariable, setEditingVariable] = React.useState(variable.clone());
-
-  const { name, type, label, description, hide } = editingVariable.useState();
+export function VariableEditorForm({ variable, onReplaceVariable, onGoBack }: VariableEditorFormProps) {
+  const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
 
   const onTypeChange = (option: SelectableValue<VariableType>) => {
@@ -39,38 +38,33 @@ export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormPro
     // FIXME: Remove set and type as required properties from AdHocFiltersVariable in @grafana/scenes
     if (scene === AdHocFiltersVariable) {
       const newVariable = new scene({ name, description, set: new AdHocFilterSet({}), type: 'adhoc' });
-      setEditingVariable(newVariable);
+      onReplaceVariable(newVariable);
     } else {
       // @ts-ignore TS complains about missing properties for AdHocFiltersVariable
       const newVariable = new scene({ name, description });
-      setEditingVariable(newVariable);
+      onReplaceVariable(newVariable);
     }
   };
 
   function onNameChange(event: FormEvent<HTMLInputElement>) {
-    editingVariable.setState({ name: event.currentTarget.value });
+    variable.setState({ name: event.currentTarget.value });
   }
 
   function onLabelChange(event: FormEvent<HTMLInputElement>) {
-    editingVariable.setState({ label: event.currentTarget.value });
+    variable.setState({ label: event.currentTarget.value });
   }
 
   function onDescriptionChange(event: FormEvent<HTMLTextAreaElement>) {
-    editingVariable.setState({ description: event.currentTarget.value });
+    variable.setState({ description: event.currentTarget.value });
   }
 
   function onHideChange(hide: VariableHide) {
-    editingVariable.setState({ hide });
-  }
-
-  function onSubmitHandler(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onSubmit(editingVariable);
+    variable.setState({ hide });
   }
 
   return (
     <>
-      <form aria-label="Variable editor Form" onSubmit={onSubmitHandler}>
+      <form aria-label="Variable editor Form">
         <VariableTypeSelect onChange={onTypeChange} type={type} />
 
         <VariableLegend>General</VariableLegend>
@@ -84,7 +78,6 @@ export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormPro
           maxLength={VariableNameConstraints.MaxSize}
           required
         />
-
         <VariableTextField
           name="Label"
           description="Optional display name"
@@ -123,11 +116,10 @@ export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormPro
               {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
             </Button> */}
             <Button
-              type="submit"
-              variant="primary"
+              variant="secondary"
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
             >
-              Apply
+              Back to list
             </Button>
           </HorizontalGroup>
         </div>

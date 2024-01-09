@@ -120,7 +120,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.setState({ editIndex: variableIndex });
   };
 
-  public onUpdate = (variable: SceneVariable) => {
+  public onReplace = (variable: SceneVariable) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex;
     const { variables } = this.getVariableSet().state;
@@ -135,6 +135,9 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
     // Update the state or the variables array
     this.getVariableSet().setState({ variables: updatedVariables });
+  };
+
+  public onGoBack = () => {
     this.setState({ editIndex: undefined });
   };
 }
@@ -143,7 +146,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const dashboard = model.getDashboard();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   // get variables from dashboard state
-  const { onDelete, onDuplicated, onOrderChanged, onEdit, onUpdate } = model;
+  const { onDelete, onDuplicated, onOrderChanged, onEdit, onReplace } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
 
@@ -153,7 +156,8 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
       return (
         <VariableEditorSettingsView
           variable={variable}
-          onUpdate={onUpdate}
+          onReplace={onReplace}
+          onGoBack={model.onGoBack}
           pageNav={pageNav}
           navModel={navModel}
           dashboard={dashboard}
@@ -182,7 +186,7 @@ interface VariableEditorSettingsEditViewProps {
   pageNav: NavModelItem;
   navModel: NavModel;
   dashboard: DashboardScene;
-  onUpdate: (variable: SceneVariable) => void;
+  onReplace: (variable: SceneVariable) => void;
 }
 
 function VariableEditorSettingsView({
@@ -190,7 +194,8 @@ function VariableEditorSettingsView({
   pageNav,
   navModel,
   dashboard,
-  onUpdate,
+  onReplace,
+  onGoBack,
 }: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
@@ -203,7 +208,7 @@ function VariableEditorSettingsView({
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} onSubmit={onUpdate} />
+      <VariableEditorForm variable={variable} onReplaceVariable={onReplace} onGoBack={onGoBack} />
     </Page>
   );
 }
