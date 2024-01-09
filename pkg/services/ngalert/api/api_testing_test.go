@@ -137,7 +137,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			},
 		}
 
-		t.Run("should return 401 if user cannot query a data source", func(t *testing.T) {
+		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
@@ -156,7 +156,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				NamespaceTitle: "test-folder",
 			})
 
-			require.Equal(t, http.StatusUnauthorized, response.Status())
+			require.Equal(t, http.StatusForbidden, response.Status())
 		})
 
 		t.Run("should return 200 if user can query all data sources", func(t *testing.T) {
@@ -208,7 +208,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			},
 		}
 
-		t.Run("should return 401 if user cannot query a data source", func(t *testing.T) {
+		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
@@ -224,7 +224,7 @@ func TestRouteEvalQueries(t *testing.T) {
 				Now:  time.Time{},
 			})
 
-			require.Equal(t, http.StatusUnauthorized, response.Status())
+			require.Equal(t, http.StatusForbidden, response.Status())
 		})
 
 		t.Run("should return 200 if user can query all data sources", func(t *testing.T) {

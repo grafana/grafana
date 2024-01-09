@@ -140,7 +140,10 @@ export const publicDashboardApi = createApi({
         url: '',
       }),
     }),
-    deleteRecipient: builder.mutation<void, { recipientUid: string; dashboardUid: string; uid: string }>({
+    deleteRecipient: builder.mutation<
+      void,
+      { recipientUid: string; recipientEmail: string; dashboardUid: string; uid: string }
+    >({
       query: () => ({
         url: '',
       }),
@@ -202,6 +205,11 @@ export const publicDashboardApi = createApi({
         'ActiveUserDashboards',
       ],
     }),
+    revokeAllAccess: builder.mutation<void, { email: string }>({
+      query: () => ({
+        url: '',
+      }),
+    }),
   }),
 });
 
@@ -216,4 +224,5 @@ export const {
   useReshareAccessToRecipientMutation,
   useGetActiveUsersQuery,
   useGetActiveUserDashboardsQuery,
+  useRevokeAllAccessMutation,
 } = publicDashboardApi;

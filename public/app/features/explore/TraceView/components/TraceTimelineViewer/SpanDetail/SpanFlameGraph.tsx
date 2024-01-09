@@ -21,7 +21,7 @@ import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-dat
 import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
 import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
-import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
+import { defaultProfilingKeys, getFormattedTags, pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { TraceSpan } from '../../types/trace';
 
 import { TraceFlameGraphs } from '.';
@@ -75,8 +75,20 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   const queryFlameGraph = useCallback(
     async (
       profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
-      traceToProfilesOptions: TraceToProfilesOptions
+      traceToProfilesOptions: TraceToProfilesOptions,
+      span: TraceSpan
     ) => {
+      let labelSelector = '{}';
+      if (traceToProfilesOptions.customQuery && traceToProfilesOptions.query) {
+        labelSelector = traceToProfilesOptions.query;
+      } else {
+        const tags =
+          traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
+            ? traceToProfilesOptions.tags
+            : defaultProfilingKeys;
+        labelSelector = `{${getFormattedTags(span, tags)}}`;
+      }
+
       const request = {
         requestId: 'span-flamegraph-requestId',
         interval: '2s',
@@ -88,7 +100,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
         startTime: span.startTime,
         targets: [
           {
-            labelSelector: '{}',
+            labelSelector,
             groupBy: [],
             profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
             queryType: 'profile' as PyroscopeQueryType,
@@ -107,7 +119,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
         setTraceFlameGraphs({ ...traceFlameGraphs, [profileTagValue]: flameGraph });
       }
     },
-    [getTimeRangeForProfile, profileTagValue, setTraceFlameGraphs, span.startTime, timeZone, traceFlameGraphs]
+    [getTimeRangeForProfile, profileTagValue, setTraceFlameGraphs, timeZone, traceFlameGraphs]
   );
 
   useEffect(() => {
@@ -117,18 +129,16 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
         profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
       }
       if (traceToProfilesOptions && profilesDataSourceSettings) {
-        queryFlameGraph(profilesDataSourceSettings, traceToProfilesOptions);
+        queryFlameGraph(profilesDataSourceSettings, traceToProfilesOptions, span);
       }
     }
   }, [
     setTraceFlameGraphs,
-    span.tags,
+    span,
     traceFlameGraphs,
     traceToProfilesOptions,
     getTimeRangeForProfile,
-    span.startTime,
     timeZone,
-    span.spanID,
     queryFlameGraph,
     profileTagValue,
   ]);

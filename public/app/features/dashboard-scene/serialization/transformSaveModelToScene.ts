@@ -29,6 +29,7 @@ import {
   UserActionEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -195,6 +196,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     variables = new SceneVariableSet({
       variables: variableObjects,
     });
+  } else {
+    // Create empty variable set
+    variables = new SceneVariableSet({
+      variables: [],
+    });
   }
 
   if (oldModel.annotations?.list?.length) {
@@ -252,6 +258,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
     ],
     $data:
@@ -263,16 +270,15 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     controls: [
       new DashboardControls({
         variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
-        timeControls: Boolean(oldModel.timepicker.hidden)
-          ? []
-          : [
-              new SceneTimePicker({}),
-              new SceneRefreshPicker({
-                refresh: oldModel.refresh,
-                intervals: oldModel.timepicker.refresh_intervals,
-              }),
-            ],
+        timeControls: [
+          new SceneTimePicker({}),
+          new SceneRefreshPicker({
+            refresh: oldModel.refresh,
+            intervals: oldModel.timepicker.refresh_intervals,
+          }),
+        ],
         linkControls: new DashboardLinksControls({}),
+        hideTimeControls: oldModel.timepicker.hidden,
       }),
     ],
   });
@@ -475,6 +481,18 @@ const getLimitedDescriptionReporter = () => {
     DashboardInteractions.panelDescriptionShown();
   };
 };
+
+function registerDashboardSceneTracking(model: DashboardModel) {
+  return () => {
+    const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
+
+    trackDashboardLoaded(model, model.version);
+
+    return () => {
+      unsetDashboardInteractionsScenesContext();
+    };
+  };
+}
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
   const descriptionReporter = getLimitedDescriptionReporter();

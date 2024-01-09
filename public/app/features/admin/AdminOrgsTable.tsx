@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Organization } from 'app/types';
 
@@ -22,7 +23,7 @@ const getTableHeader = () => (
   </thead>
 );
 
-export function AdminOrgsTable({ orgs, onDelete }: Props) {
+function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
   const canDeleteOrgs = contextSrv.hasPermission(AccessControlAction.OrgsDelete);
 
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
@@ -74,10 +75,10 @@ export function AdminOrgsTable({ orgs, onDelete }: Props) {
   );
 }
 
-const AdminOrgsTableSkeleton = () => {
+const AdminOrgsTableSkeleton: SkeletonComponent = ({ rootProps }) => {
   const styles = useStyles2(getSkeletonStyles);
   return (
-    <table className="filter-table">
+    <table className="filter-table" {...rootProps}>
       {getTableHeader()}
       <tbody>
         {new Array(3).fill(null).map((_, index) => (
@@ -98,7 +99,7 @@ const AdminOrgsTableSkeleton = () => {
   );
 };
 
-AdminOrgsTable.Skeleton = AdminOrgsTableSkeleton;
+export const AdminOrgsTable = attachSkeleton(AdminOrgsTableComponent, AdminOrgsTableSkeleton);
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   deleteButton: css({

@@ -36,7 +36,7 @@ export function setupMockedMetricsQueryRunner({
   const queryMock = errorResponse
     ? jest.fn().mockImplementation(() => throwError(errorResponse))
     : jest.fn().mockReturnValue(of(toDataQueryResponse({ data })));
-  const runner = new CloudWatchMetricsQueryRunner(instanceSettings, templateService, queryMock);
+  const runner = new CloudWatchMetricsQueryRunner(instanceSettings, templateService);
 
   const request: DataQueryRequest<CloudWatchQuery> = {
     range: TimeRangeMock,

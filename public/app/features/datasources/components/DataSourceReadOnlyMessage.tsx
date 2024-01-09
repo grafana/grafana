@@ -8,7 +8,7 @@ export const readOnlyMessage =
 
 export function DataSourceReadOnlyMessage() {
   return (
-    <Alert aria-label={e2eSelectors.pages.DataSource.readOnly} severity="info" title="Provisioned data source">
+    <Alert data-testid={e2eSelectors.pages.DataSource.readOnly} severity="info" title="Provisioned data source">
       {readOnlyMessage}
     </Alert>
   );

@@ -134,7 +134,7 @@ describe('Policy', () => {
     expect(within(secondPolicy).getByTestId('label-matchers')).toHaveTextContent(/^region \= EMEA$/);
     expect(within(secondPolicy).queryByTestId('continue-matching')).not.toBeInTheDocument();
     expect(within(secondPolicy).queryByTestId('mute-timings')).not.toBeInTheDocument();
-    expect(within(secondPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited4 properties');
+    expect(within(secondPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited3 properties');
 
     // third custom policy should be correct
     const thirdPolicy = customPolicies[2];

@@ -63,11 +63,33 @@ type Assignments struct {
 	BuiltInRoles    bool `json:"builtInRoles"`
 }
 
+// swagger:parameters getResourceDescription
+type GetResourceDescriptionParams struct {
+	// in:path
+	// required:true
+	Resource string `json:"resource"`
+}
+
+// swagger:response resourcePermissionsDescription
+type DescriptionResponse struct {
+	// in:body
+	// required:true
+	Body Description `json:"body"`
+}
+
 type Description struct {
 	Assignments Assignments `json:"assignments"`
 	Permissions []string    `json:"permissions"`
 }
 
+// swagger:route GET /access-control/{resource}/description access_control getResourceDescription
+//
+// Get a description of a resource's access control properties.
+//
+// Responses:
+// 200: resourcePermissionsDescription
+// 403: forbiddenError
+// 500: internalServerError
 func (a *api) getDescription(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &Description{
 		Permissions: a.permissions,
@@ -92,6 +114,28 @@ type resourcePermissionDTO struct {
 	Permission       string   `json:"permission"`
 }
 
+// swagger:parameters getResourcePermissions
+type GetResourcePermissionsParams struct {
+	// in:path
+	// required:true
+	Resource string `json:"resource"`
+
+	// in:path
+	// required:true
+	ResourceID string `json:"resourceID"`
+}
+
+// swagger:response getResourcePermissionsResponse
+type getResourcePermissionsResponse []resourcePermissionDTO
+
+// swagger:route GET /access-control/{resource}/{resourceID} access_control getResourcePermissions
+//
+// Get permissions for a resource.
+//
+// Responses:
+// 200: getResourcePermissionsResponse
+// 403: forbiddenError
+// 500: internalServerError
 func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
@@ -108,7 +152,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		})
 	}
 
-	dto := make([]resourcePermissionDTO, 0, len(permissions))
+	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 	for _, p := range permissions {
 		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
@@ -146,6 +190,38 @@ type setPermissionsCommand struct {
 	Permissions []accesscontrol.SetResourcePermissionCommand `json:"permissions"`
 }
 
+// swagger:parameters setResourcePermissionsForUser
+type SetResourcePermissionsForUserParams struct {
+	// in:path
+	// required:true
+	Resource string `json:"resource"`
+
+	// in:path
+	// required:true
+	ResourceID string `json:"resourceID"`
+
+	// in:path
+	// required:true
+	UserID int64 `json:"userID"`
+
+	// in:body
+	// required:true
+	Body setPermissionCommand
+}
+
+// swagger:route POST /access-control/{resource}/{resourceID}/users/{userID} access_control setResourcePermissionsForUser
+//
+// Set resource permissions for a user.
+//
+// Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to a user or a service account.
+// Allowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.
+// Refer to the `/access-control/{resource}/description` endpoint for allowed Permissions.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 403: forbiddenError
+// 500: internalServerError
 func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":userID"], 10, 64)
 	if err != nil {
@@ -166,6 +242,38 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	return permissionSetResponse(cmd)
 }
 
+// swagger:parameters setResourcePermissionsForTeam
+type SetResourcePermissionsForTeamParams struct {
+	// in:path
+	// required:true
+	Resource string `json:"resource"`
+
+	// in:path
+	// required:true
+	ResourceID string `json:"resourceID"`
+
+	// in:path
+	// required:true
+	TeamID int64 `json:"teamID"`
+
+	// in:body
+	// required:true
+	Body setPermissionCommand
+}
+
+// swagger:route POST /access-control/{resource}/{resourceID}/teams/{teamID} access_control setResourcePermissionsForTeam
+//
+// Set resource permissions for a team.
+//
+// Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to a team.
+// Allowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.
+// Refer to the `/access-control/{resource}/description` endpoint for allowed Permissions.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 403: forbiddenError
+// 500: internalServerError
 func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamID"], 10, 64)
 	if err != nil {
@@ -186,6 +294,38 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	return permissionSetResponse(cmd)
 }
 
+// swagger:parameters setResourcePermissionsForBuiltInRole
+type SetResourcePermissionsForBuiltInRoleParams struct {
+	// in:path
+	// required:true
+	Resource string `json:"resource"`
+
+	// in:path
+	// required:true
+	ResourceID string `json:"resourceID"`
+
+	// in:path
+	// required:true
+	BuiltInRole string `json:"builtInRole"`
+
+	// in:body
+	// required:true
+	Body setPermissionCommand
+}
+
+// swagger:route POST /access-control/{resource}/{resourceID}/builtInRoles/{builtInRole} access_control setResourcePermissionsForBuiltInRole
+//
+// Set resource permissions for a built-in role.
+//
+// Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to a built-in role.
+// Allowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.
+// Refer to the `/access-control/{resource}/description` endpoint for allowed Permissions.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 403: forbiddenError
+// 500: internalServerError
 func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Response {
 	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
@@ -203,6 +343,34 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 	return permissionSetResponse(cmd)
 }
 
+// swagger:parameters setResourcePermissions
+type SetResourcePermissionsParams struct {
+	// in:path
+	// required:true
+	Resource string `json:"resource"`
+
+	// in:path
+	// required:true
+	ResourceID string `json:"resourceID"`
+
+	// in:body
+	// required:true
+	Body setPermissionsCommand
+}
+
+// swagger:route POST /access-control/{resource}/{resourceID} access_control setResourcePermissions
+//
+// Set resource permissions.
+//
+// Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to one or many
+// assignment types. Allowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.
+// Refer to the `/access-control/{resource}/description` endpoint for allowed Permissions.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 403: forbiddenError
+// 500: internalServerError
 func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 

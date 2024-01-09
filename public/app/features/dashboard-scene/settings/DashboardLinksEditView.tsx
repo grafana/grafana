@@ -9,6 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditListViewState, useDashboardEditPageNav } from './utils';
@@ -26,8 +27,8 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
 }
 
 function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<DashboardLinksEditView>) {
-  const { dashboardRef, editIndex } = model.useState();
-  const dashboard = dashboardRef.resolve();
+  const { editIndex } = model.useState();
+  const dashboard = getDashboardSceneFor(model);
   const links = dashboard.state.links || [];
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
 

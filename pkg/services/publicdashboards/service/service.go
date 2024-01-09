@@ -87,6 +87,7 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		Version:                dash.Version,
 		IsFolder:               false,
 		FolderId:               dash.FolderID, // nolint:staticcheck
+		FolderUid:              dash.FolderUID,
 		PublicDashboardEnabled: pubdash.IsEnabled,
 	}
 	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)

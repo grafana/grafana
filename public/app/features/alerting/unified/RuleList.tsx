@@ -105,7 +105,7 @@ const RuleList = withErrorBoundary(
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
-      <AlertingPageWrapper pageId="alert-list" isLoading={false}>
+      <AlertingPageWrapper navId="alert-list" isLoading={false}>
         <RuleListErrors />
         <RulesFilter onFilterCleared={onFilterCleared} />
         {!hasNoAlertRulesCreatedYet && (

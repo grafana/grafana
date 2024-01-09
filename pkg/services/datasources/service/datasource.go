@@ -528,11 +528,12 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:   s.cfg.SecureSocksDSProxy.ClientCert,
-				ClientKey:    s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCA:       s.cfg.SecureSocksDSProxy.RootCA,
-				ProxyAddress: s.cfg.SecureSocksDSProxy.ProxyAddress,
-				ServerName:   s.cfg.SecureSocksDSProxy.ServerName,
+				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCert,
+				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKey,
+				RootCA:        s.cfg.SecureSocksDSProxy.RootCA,
+				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
+				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
+				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,
 			},
 		}
 

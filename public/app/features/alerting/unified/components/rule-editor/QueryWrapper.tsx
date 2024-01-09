@@ -213,7 +213,7 @@ export function MaxDataPointsOption({
       <Input
         type="number"
         width={10}
-        placeholder={DEFAULT_MAX_DATA_POINTS.toLocaleString()}
+        placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
         onBlur={onMaxDataPointsBlur}
         defaultValue={value}

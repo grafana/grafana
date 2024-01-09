@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	errAuthorizationGeneric = errutil.Unauthorized("alerting.unauthorized")
+	errAuthorizationGeneric = errutil.Forbidden("alerting.unauthorized")
 )
 
 func NewAuthorizationErrorWithPermissions(action string, eval accesscontrol.Evaluator) error {

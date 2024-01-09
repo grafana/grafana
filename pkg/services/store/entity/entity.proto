@@ -3,27 +3,32 @@ package entity;
 
 option go_package = "github.com/grafana/grafana/pkg/services/store/entity";
 
-import "pkg/infra/grn/grn.proto";
-
 // The canonical entity/document data -- this represents the raw bytes and storage level metadata
 message Entity {
-
   // Globally unique ID set by the system.  This can not be set explicitly
   string guid = 1;
 
-  // The resourceVersion -- it will change whenever anythign on the object is saved
-  string version = 2;
+  // The resource version, this is a snowflake id controlled by storage
+  int64 resource_version = 2;
 
-  // Entity identifier -- tenant_id, kind, uid
-  grn.GRN GRN = 3;
+  // group
+  string group = 24;
+  // kind resource
+  string resource = 25;
+  // namespace
+  string namespace = 26;
+  // k8s name
+  string name = 27;
+  // subresource
+  string subresource = 28;
 
-  // group version of the entity
+  // group version
   string group_version = 23;
 
-  // k8s key value
+  // k8s key value (TODO remove -- it is duplicate of group+resource+version)
   string key = 22;
 
-  // The folder UID
+  // The folder k8s name
   string folder = 4;
 
   // Raw meta from k8s
@@ -36,7 +41,7 @@ message Entity {
   bytes status = 7;
 
   // the friendly name of the entity
-  string name = 8;
+  string title = 8;
 
   // Content Length
   int64 size = 9;
@@ -109,28 +114,20 @@ message EntityErrorInfo {
 
 message ReadEntityRequest {
   // Entity identifier
-  grn.GRN GRN = 1;
-
-  string key = 7;
+  string key = 1;
 
   // Fetch an explicit version (default is latest)
-  string version = 2;
+  int64 resource_version = 2;
 
-  // Include the full meta bytes
-  bool with_meta = 3;
-
-  // Include the full body bytes
+  // Include the full body
   bool with_body = 4;
 
-  // Include the status bytes (ignored for now)
+  // Include the status
   bool with_status = 5;
-
-  // Include derived summary metadata
-  bool with_summary = 6;
 }
 
 //------------------------------------------------------
-// Make many read requests at once (by Kind+ID+version)
+// Make many read requests at once (by key+version)
 //------------------------------------------------------
 
 message BatchReadEntityRequest {
@@ -139,53 +136,6 @@ message BatchReadEntityRequest {
 
 message BatchReadEntityResponse {
   repeated Entity results = 1;
-}
-
-//-----------------------------------------------
-// Write request/response
-//-----------------------------------------------
-
-message WriteEntityRequest {
-  // Entity details
-  Entity entity = 1;
-
-  // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 2;
-}
-
-// This operation is useful when syncing a resource from external sources
-// that have more accurate metadata information (git, or an archive).
-// This process can bypass the forced checks that
-message AdminWriteEntityRequest {
-  // Entity details
-  Entity entity = 1;
-
-  // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  // This may not be used along with an explicit version in the request
-  string previous_version = 2;
-
-  // Request that all previous versions are removed from the history
-  // This will make sense for systems that manage history explicitly externallay
-  bool clear_history = 3;
-}
-
-message WriteEntityResponse {
-  // Error info -- if exists, the save did not happen
-  EntityErrorInfo error = 1;
-
-  // Entity details
-  Entity entity = 2;
-
-  // Status code
-  Status status = 3;
-
-  // Status enumeration
-  enum Status {
-    ERROR = 0;
-    CREATED = 1;
-    UPDATED = 2;
-    UNCHANGED = 3;
-  }
 }
 
 //-----------------------------------------------
@@ -223,7 +173,7 @@ message UpdateEntityRequest {
   Entity entity = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 2;
+  int64 previous_version = 2;
 }
 
 message UpdateEntityResponse {
@@ -250,12 +200,10 @@ message UpdateEntityResponse {
 
 message DeleteEntityRequest {
   // Entity identifier
-  grn.GRN GRN = 1;
-
-  string key = 3;
+  string key = 1;
 
   // Used for optimistic locking.  If missing, the current version will be deleted regardless
-  string previous_version = 2;
+  int64 previous_version = 2;
 }
 
 message DeleteEntityResponse {
@@ -282,7 +230,7 @@ message DeleteEntityResponse {
 
 message EntityHistoryRequest {
   // Entity identifier
-  grn.GRN GRN = 1;
+  string key = 1;
 
   // Maximum number of items to return
   int64 limit = 3;
@@ -293,7 +241,7 @@ message EntityHistoryRequest {
 
 message EntityHistoryResponse {
   // Entity identifier
-  grn.GRN GRN = 1;
+  string key = 1;
 
   // Entity metadata without the raw bytes
   repeated Entity versions = 2;
@@ -317,8 +265,11 @@ message EntityListRequest {
   // Free text query string -- mileage may vary :)
   string query = 3;
 
-  // limit to a specific kind (empty is all)
-  repeated string kind = 4;
+  // limit to a specific group (empty is all)
+  repeated string group = 9;
+
+  // limit to a specific resource (empty is all)
+  repeated string resource = 4;
 
   // limit to a specific key
   repeated string key = 11;
@@ -336,10 +287,7 @@ message EntityListRequest {
   bool with_body = 8;
 
   // Return the full body in each payload
-  bool with_labels = 9;
-
-  // Return the full body in each payload
-  bool with_fields = 10;
+  bool with_status = 10;
 }
 
 message ReferenceRequest {
@@ -350,10 +298,14 @@ message ReferenceRequest {
   int64 limit = 2;
 
   // Free text query string -- mileage may vary :)
-  string kind = 3;
+  string namespace = 5;
+
+  string group = 6;
+
+  string resource = 3;
 
   // Free text query string -- mileage may vary :)
-  string uid = 4;
+  string name = 4;
 }
 
 message EntityListResponse {
@@ -372,10 +324,10 @@ message EntityWatchRequest {
   int64 since = 1;
 
   // Watch sppecific entities
-  repeated grn.GRN GRN = 2;
+  repeated string key = 2;
 
-  // limit to a specific kind (empty is all)
-  repeated string kind = 3;
+  // limit to a specific resource (empty is all)
+  repeated string resource = 3;
 
   // Limit results to items in a specific folder
   string folder = 4;
@@ -386,11 +338,8 @@ message EntityWatchRequest {
   // Return the full body in each payload
   bool with_body = 6;
 
-  // Return the full body in each payload
-  bool with_labels = 7;
-
-  // Return the full body in each payload
-  bool with_fields = 8;
+  // Return the full status in each payload
+  bool with_status = 7;
 }
 
 message EntityWatchResponse {
@@ -465,20 +414,10 @@ message EntityExternalReference {
 service EntityStore {
   rpc Read(ReadEntityRequest) returns (Entity);
   rpc BatchRead(BatchReadEntityRequest) returns (BatchReadEntityResponse);
-  rpc Write(WriteEntityRequest) returns (WriteEntityResponse);
   rpc Create(CreateEntityRequest) returns (CreateEntityResponse);
   rpc Update(UpdateEntityRequest) returns (UpdateEntityResponse);
   rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
   rpc List(EntityListRequest) returns (EntityListResponse);
   rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
-
-  // TEMPORARY... while we split this into a new service (see below)
-  rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);
-}
-
-// The admin service extends the basic entity store interface, but provides
-// more explicit control that can support bulk operations like efficient git sync
-service EntityStoreAdmin {
-  rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);
 }

@@ -29,7 +29,10 @@ import { TableData } from '../types';
 type Props = {
   data: FlameGraphDataContainer;
   onSymbolClick: (symbol: string) => void;
+  // This is used for highlighting the search button in case there is exact match.
   search?: string;
+  // We use these to filter out rows in the table if users is doing text search.
+  matchedLabels?: Set<string>;
   sandwichItem?: string;
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
@@ -37,23 +40,29 @@ type Props = {
 };
 
 const FlameGraphTopTableContainer = React.memo(
-  ({ data, onSymbolClick, search, onSearch, sandwichItem, onSandwich, onTableSort }: Props) => {
+  ({ data, onSymbolClick, search, matchedLabels, onSearch, sandwichItem, onSandwich, onTableSort }: Props) => {
     const table = useMemo(() => {
       // Group the data by label, we show only one row per label and sum the values
       // TODO: should be by filename + funcName + linenumber?
-      let table: { [key: string]: TableData } = {};
+      let filteredTable: { [key: string]: TableData } = {};
       for (let i = 0; i < data.data.length; i++) {
         const value = data.getValue(i);
         const valueRight = data.getValueRight(i);
         const self = data.getSelf(i);
         const label = data.getLabel(i);
-        table[label] = table[label] || {};
-        table[label].self = table[label].self ? table[label].self + self : self;
-        table[label].total = table[label].total ? table[label].total + value : value;
-        table[label].totalRight = table[label].totalRight ? table[label].totalRight + valueRight : valueRight;
+
+        // If user is doing text search we filter out labels in the same way we highlight them in flamegraph.
+        if (!matchedLabels || matchedLabels.has(label)) {
+          filteredTable[label] = filteredTable[label] || {};
+          filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
+          filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
+          filteredTable[label].totalRight = filteredTable[label].totalRight
+            ? filteredTable[label].totalRight + valueRight
+            : valueRight;
+        }
       }
-      return table;
-    }, [data]);
+      return filteredTable;
+    }, [data, matchedLabels]);
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();

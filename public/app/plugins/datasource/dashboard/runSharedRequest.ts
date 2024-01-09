@@ -11,6 +11,7 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { PanelModel } from 'app/features/dashboard/state';
 import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';
@@ -42,7 +43,12 @@ export function runSharedRequest(options: QueryRunnerOptions, query: DashboardQu
       return undefined;
     }
 
-    const listenToPanel = dashboard?.getPanelById(listenToPanelId);
+    // Source panel might be contained in a collapsed row, in which
+    // case we need to create a PanelModel
+    let listenToPanel = dashboard?.getPanelById(listenToPanelId, true);
+    if (!(listenToPanel instanceof PanelModel)) {
+      listenToPanel = new PanelModel(listenToPanel);
+    }
 
     if (!listenToPanel) {
       subscriber.next(getQueryError('Unknown Panel: ' + listenToPanelId));

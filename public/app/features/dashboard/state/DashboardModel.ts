@@ -516,12 +516,22 @@ export class DashboardModel implements TimeModel {
     }
   }
 
-  getPanelById(id: number): PanelModel | null {
+  getPanelById(id: number, includeCollapsed = false): PanelModel | null {
     if (this.panelInEdit && this.panelInEdit.id === id) {
       return this.panelInEdit;
     }
 
-    return this.panels.find((p) => p.id === id) ?? null;
+    if (includeCollapsed) {
+      for (const panel of this.panelIterator()) {
+        if (panel.id === id) {
+          return panel;
+        }
+      }
+
+      return null;
+    } else {
+      return this.panels.find((p) => p.id === id) ?? null;
+    }
   }
 
   canEditPanel(panel?: PanelModel | null): boolean | undefined | null {

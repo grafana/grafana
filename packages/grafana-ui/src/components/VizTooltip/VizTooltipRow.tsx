@@ -11,9 +11,9 @@ import { ColorPlacement, LabelValue } from './types';
 
 interface Props extends LabelValue {
   justify?: string;
-  colorFirst?: boolean;
   isActive?: boolean; // for series list
   marginRight?: string;
+  isPinned: boolean;
 }
 
 export const VizTooltipRow = ({
@@ -21,11 +21,11 @@ export const VizTooltipRow = ({
   value,
   color,
   colorIndicator,
-  colorPlacement = ColorPlacement.leading,
+  colorPlacement = ColorPlacement.first,
   justify = 'flex-start',
-  colorFirst = true,
   isActive = false,
   marginRight = '0px',
+  isPinned,
 }: Props) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
@@ -52,32 +52,47 @@ export const VizTooltipRow = ({
     <div className={styles.contentWrapper}>
       {(color || label) && (
         <div className={styles.valueWrapper}>
-          {color && colorFirst && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
-          <Tooltip content={label} interactive={false} show={showLabelTooltip}>
-            <div
-              className={cx(styles.label, isActive && styles.activeSeries)}
-              onMouseEnter={onMouseEnterLabel}
-              onMouseLeave={onMouseLeaveLabel}
-            >
-              {label}
-            </div>
-          </Tooltip>
+          {color && colorPlacement === ColorPlacement.first && (
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
+          )}
+          {!isPinned ? (
+            <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>
+          ) : (
+            <Tooltip content={label} interactive={false} show={showLabelTooltip}>
+              <div
+                className={cx(styles.label, isActive && styles.activeSeries)}
+                onMouseEnter={onMouseEnterLabel}
+                onMouseLeave={onMouseLeaveLabel}
+              >
+                {label}
+              </div>
+            </Tooltip>
+          )}
         </div>
       )}
 
       <div className={styles.valueWrapper}>
-        {color && !colorFirst && colorPlacement === ColorPlacement.leading && (
-          <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />
+        {color && colorPlacement === ColorPlacement.leading && (
+          <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
         )}
-        <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
-          <div className={cx(styles.value, isActive)} onMouseEnter={onMouseEnterValue} onMouseLeave={onMouseLeaveValue}>
-            {value}
-          </div>
-        </Tooltip>
-        {color && !colorFirst && colorPlacement === ColorPlacement.trailing && (
+        {!isPinned ? (
+          <div className={cx(styles.value, isActive)}>{value}</div>
+        ) : (
+          <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
+            <div
+              className={cx(styles.value, isActive)}
+              onMouseEnter={onMouseEnterValue}
+              onMouseLeave={onMouseLeaveValue}
+            >
+              {value}
+            </div>
+          </Tooltip>
+        )}
+
+        {color && colorPlacement === ColorPlacement.trailing && (
           <>
             &nbsp;
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
           </>
         )}
       </div>
@@ -86,23 +101,12 @@ export const VizTooltipRow = ({
 };
 
 const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    gap: 4,
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(1),
-  }),
   contentWrapper: css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: justify,
     flexWrap: 'wrap',
     marginRight: marginRight,
-  }),
-  customContentPadding: css({
-    padding: `${theme.spacing(1)} 0`,
   }),
   label: css({
     color: theme.colors.text.secondary,

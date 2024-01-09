@@ -7,6 +7,7 @@ import {
   SceneQueryRunner,
   SceneTimeRange,
   VizPanel,
+  SceneTimePicker,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
@@ -18,7 +19,7 @@ import { DashboardModelCompatibilityWrapper } from './DashboardModelCompatibilit
 
 describe('DashboardModelCompatibilityWrapper', () => {
   it('Provide basic prop and function of compatability', () => {
-    const { wrapper } = setup();
+    const { wrapper, scene } = setup();
 
     expect(wrapper.uid).toBe('dash-1');
     expect(wrapper.title).toBe('hello');
@@ -30,6 +31,14 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.timezone).toBe('America/New_York');
     expect(wrapper.weekStart).toBe('friday');
     expect(wrapper.timepicker.refresh_intervals).toEqual(['1s']);
+    expect(wrapper.timepicker.hidden).toEqual(true);
+
+    (scene.state.controls![0] as DashboardControls).setState({
+      hideTimeControls: false,
+    });
+
+    const wrapper2 = new DashboardModelCompatibilityWrapper(scene);
+    expect(wrapper2.timepicker.hidden).toEqual(false);
   });
 
   it('Shared tooltip functions', () => {
@@ -90,10 +99,12 @@ function setup() {
         variableControls: [],
         linkControls: new DashboardLinksControls({}),
         timeControls: [
+          new SceneTimePicker({}),
           new SceneRefreshPicker({
             intervals: ['1s'],
           }),
         ],
+        hideTimeControls: true,
       }),
     ],
     body: new SceneGridLayout({

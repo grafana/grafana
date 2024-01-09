@@ -231,7 +231,7 @@ describe('shared actions', () => {
           toKeyedAction(
             key,
             createCustomOptionsFromQuery(
-              toVariablePayload({ ...custom, id: dispatchedActions[4].payload.action.payload.id })
+              toVariablePayload({ ...custom, id: dispatchedActions[4].payload.action.payload.id }, '')
             )
           )
         );
@@ -305,7 +305,7 @@ describe('shared actions', () => {
           key,
           setCurrentVariableValue(
             toVariablePayload(stats, {
-              option: { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false },
+              option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
             })
           )
         ),
@@ -473,8 +473,8 @@ describe('shared actions', () => {
         ${['A', 'B', 'C']} | ${['B']}      | ${'C'}       | ${['B']}      | ${true}
         ${['A', 'B', 'C']} | ${['B', 'C']} | ${undefined} | ${['B', 'C']} | ${true}
         ${['A', 'B', 'C']} | ${['B', 'C']} | ${'C'}       | ${['B', 'C']} | ${true}
-        ${['A', 'B', 'C']} | ${['X']}      | ${undefined} | ${'A'}        | ${false}
-        ${['A', 'B', 'C']} | ${['X']}      | ${'C'}       | ${'A'}        | ${false}
+        ${['A', 'B', 'C']} | ${['X']}      | ${undefined} | ${['A']}      | ${true}
+        ${['A', 'B', 'C']} | ${['X']}      | ${'C'}       | ${['A']}      | ${true}
       `(
         'then correct actions are dispatched',
         async ({ withOptions, withCurrent, defaultValue, expectedText, expectedSelected }) => {

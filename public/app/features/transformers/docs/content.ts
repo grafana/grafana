@@ -68,14 +68,14 @@ export const transformationDocsContent: TransformationDocsContentType = {
   - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
   - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
   
-  > **Note:** **Cumulative functions** and **Window functions** modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **addFieldFromCalculationStatFunctions** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  > **Note:** **Cumulative functions** and **Window functions** modes are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`addFieldFromCalculationStatFunctions\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
   In the example below, we added two fields together and named them Sum.
 
   ${buildImageContent(
     '/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png',
     imageRenderType,
-    'Add field from calculation'
+    'A stat visualization including one field called Sum'
   )}
   `;
     },
@@ -342,7 +342,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-by-query-stat-example-7-0.png',
     imageRenderType,
-    'Filter data by query refId'
+    'A stat visualization with results from two queries, A and C'
   )}
   `;
     },
@@ -459,8 +459,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-before-7-0.png',
     imageRenderType,
-    // Distinguish alt text for multiple images by appending a number.
-    'Filter fields by name' + 1
+    'A table visualization with time, value, Min, and Max columns'
   )}
 
   Here's the table after we applied the transformation to remove the Min field.
@@ -468,7 +467,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-after-7-0.png',
     imageRenderType,
-    'Filter fields by name' + 2
+    'A table visualization with time, value, and Max columns'
   )}
 
   Here is the same query using a Stat visualization.
@@ -476,7 +475,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-stat-after-7-0.png',
     imageRenderType,
-    'Filter fields by name' + 3
+    'A stat visualization with value and Max fields'
   )}
 
   This transformation provides flexibility in tailoring your query results to focus on the specific fields you need for effective analysis and visualization.
@@ -502,8 +501,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
-  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **formatString** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
-  `;
+  > **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`formatString\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.`;
     },
   },
   formatTime: {
@@ -790,7 +788,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-before-7-0.png',
     imageRenderType,
-    'Join by field' + 1
+    'A table visualization showing results for one server'
   )}
 
   I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
@@ -798,7 +796,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/join-fields-after-7-0.png',
     imageRenderType,
-    'Join by field' + 2
+    'A table visualization showing results for multiple servers'
   )}
 
   Combine and analyze data from various queries with table joining for a comprehensive view of your information.
@@ -1191,7 +1189,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
     imageRenderType,
-    'Rename by regex' + 1
+    'A bar chart with long series names'
   )}
 
   With the transformation applied, you can see we are left with just the remainder of the string.
@@ -1199,7 +1197,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/rename-by-regex-after-7-3.png',
     imageRenderType,
-    'Rename by regex' + 2
+    'A bar chart with shortened series names'
   )}
 
   This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
@@ -1386,15 +1384,19 @@ export const transformationDocsContent: TransformationDocsContentType = {
   There are two different models:
 
   - **Linear regression** - Fits a linear function to the data.
-  ${buildImageContent('/static/img/docs/transformations/linear-regression.png', imageRenderType, 'Linear regression')}
+${buildImageContent(
+  '/static/img/docs/transformations/linear-regression.png',
+  imageRenderType,
+  'A time series visualization with a straight line representing the linear function'
+)}
   - **Polynomial regression** - Fits a polynomial function to the data.
   ${buildImageContent(
     '/static/img/docs/transformations/polynomial-regression.png',
     imageRenderType,
-    'Polynomial regression'
+    'A time series visualization with a curved line representing the polynomial function'
   )}
 
-  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  > **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
   `;
     },
   },
@@ -1408,10 +1410,10 @@ export function getLinkToDocs(): string {
   `;
 }
 
-function buildImageContent(source: string, imageRenderType: ImageRenderType, imageName?: string) {
+function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText: string) {
   return imageRenderType === 'shortcodeFigure'
     ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
-      `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
+      `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" alt="${imageAltText}" >}}`
     : // This will build generic Markdown image syntax for UI rendering.
-      `![${imageName} helper image](https://grafana.com${source})`;
+      `![${imageAltText}](https://grafana.com${source})`;
 }

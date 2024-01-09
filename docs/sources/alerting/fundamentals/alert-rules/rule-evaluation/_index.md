@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/
-description: Introduction to alert rule evaluation
+description: Use alert rule evaluation to determine how frequently an alert rule should be evaluated and how quickly it should change its state
 keywords:
   - grafana
   - alerting
