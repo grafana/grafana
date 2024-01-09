@@ -106,3 +106,12 @@ export const unsupportedVersionMessage =
 export const isTimeSeriesQuery = (query: ElasticsearchQuery): boolean => {
   return query?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
 };
+
+/*
+ * This regex matches 3 types of variable reference with an optional format specifier
+ * There are 6 capture groups that replace will return
+ * \$(\w+)                                    $var1
+ * \[\[(\w+?)(?::(\w+))?\]\]                  [[var2]] or [[var2:fmt2]]
+ * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
+ */
+export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
