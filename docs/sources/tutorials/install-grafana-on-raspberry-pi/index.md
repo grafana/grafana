@@ -111,6 +111,7 @@ Now that you've got the Raspberry Pi up and running, the next step is to install
 1. Add the APT key used to authenticate packages:
 
    ```bash
+   sudo mkdir -p /etc/apt/keyrings/
    wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
    ```
 
