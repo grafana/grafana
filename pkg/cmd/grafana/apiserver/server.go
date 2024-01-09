@@ -11,10 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
-	"k8s.io/apiserver/pkg/util/openapi"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
@@ -176,16 +174,8 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
-	defsGetter := grafanaAPIServer.GetOpenAPIDefinitions(o.builders)
-	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
-		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
-		openapinamer.NewDefinitionNamer(Scheme))
-
-	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
-		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
-		openapinamer.NewDefinitionNamer(Scheme))
-
-	return serverConfig, nil
+	err := grafanaAPIServer.SetupAPIBuilders(serverConfig, o.builders)
+	return serverConfig, err
 }
 
 // Validate validates APIServerOptions
