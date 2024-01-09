@@ -2,8 +2,9 @@ import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, getDefaultTimeRa
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
+import { createLokiDatasource } from './__mocks__/datasource';
+import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
-import { createLokiDatasource, createMetadataRequest } from './mocks';
 import {
   extractLogParserFromDataFrame,
   extractLabelKeysFromDataFrame,

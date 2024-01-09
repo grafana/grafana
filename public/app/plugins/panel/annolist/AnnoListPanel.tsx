@@ -90,7 +90,11 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const { options } = this.props;
     const { queryUser, queryTags } = this.state;
 
-    const params: any = {
+    const params: {
+      tags: typeof options.tags;
+      limit: typeof options.limit;
+      type: string;
+    } & Record<string, unknown> = {
       tags: options.tags,
       limit: options.limit,
       type: 'annotation', // Skip the Annotations that are really alerts.  (Use the alerts panel!)
@@ -139,14 +143,11 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const dashboardSrv = getDashboardSrv();
     const current = dashboardSrv.getCurrent();
 
-    const params: any = {
+    const params = {
       from: this._timeOffset(anno.time, options.navigateBefore, true),
       to: this._timeOffset(anno.timeEnd ?? anno.time, options.navigateAfter, false),
+      viewPanel: options.navigateToPanel ? anno.panelId : undefined,
     };
-
-    if (options.navigateToPanel) {
-      params.viewPanel = anno.panelId;
-    }
 
     if (current?.uid === anno.dashboardUID) {
       locationService.partial(params);
@@ -157,8 +158,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     if (result && result.length && result[0].uid === anno.dashboardUID) {
       const dash = result[0];
       const url = new URL(dash.url, window.location.origin);
-      url.searchParams.set('from', params.from);
-      url.searchParams.set('to', params.to);
+      url.searchParams.set('from', String(params.from));
+      url.searchParams.set('to', String(params.to));
       locationService.push(locationUtil.stripBaseFromUrl(url.toString()));
       return;
     }
