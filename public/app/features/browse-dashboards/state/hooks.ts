@@ -5,6 +5,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector, StoreState, useDispatch } from 'app/types';
 
 import { PAGE_SIZE } from '../api/services';
+import { isSharedWithMe } from '../components/utils';
 import {
   BrowseDashboardsState,
   DashboardsTreeItem,
@@ -182,7 +183,7 @@ export function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    if (item.kind === 'folder' && item.uid === 'sharedwithme') {
+    if (isSharedWithMe(thisItem.item)) {
       items.push({
         item: {
           kind: 'ui',

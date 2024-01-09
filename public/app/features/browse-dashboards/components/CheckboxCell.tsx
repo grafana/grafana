@@ -8,6 +8,8 @@ import { t } from 'app/core/internationalization';
 
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
+import { isSharedWithMe } from './utils';
+
 export default function CheckboxCell({
   row: { original: row },
   isSelected,
@@ -28,7 +30,7 @@ export default function CheckboxCell({
     }
   }
 
-  if (item.kind === 'folder' && item.uid === 'sharedwithme') {
+  if (isSharedWithMe(item)) {
     return <span className={styles.checkboxSpacer} />;
   }
 

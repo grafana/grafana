@@ -132,7 +132,6 @@ export function DashboardsTree({
   const getRowHeight = useCallback(
     (rowIndex: number) => {
       const row = items[rowIndex];
-      console.log(rowIndex, row);
       if (row.item.kind === 'ui' && row.item.uiKind === 'divider') {
         return DIVIDER_HEIGHT;
       }

@@ -1,4 +1,5 @@
 import { DataFrameView, IconName } from '@grafana/data';
+import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -46,11 +47,11 @@ export function getIconForKind(_kind: string, isOpen?: boolean, item?: Dashboard
     return 'apps';
   }
 
-  if (kind === 'folder') {
-    if (item?.uid === 'sharedwithme') {
-      return 'users-alt';
-    }
+  if (item && isSharedWithMe(item)) {
+    return 'users-alt';
+  }
 
+  if (kind === 'folder') {
     return isOpen ? 'folder-open' : 'folder';
   }
 
