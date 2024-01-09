@@ -13,5 +13,6 @@ export {
   isTimeSeriesFrame,
   isTimeSeriesFrames,
   isTimeSeriesField,
+  addRow,
 } from './utils';
 export { StreamingDataFrame, StreamingFrameAction, type StreamingFrameOptions, closestIdx } from './StreamingDataFrame';

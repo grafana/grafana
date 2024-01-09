@@ -637,6 +637,11 @@ export function formatTraceQLResponse(
   return createTableFrameFromTraceQlQuery(data, instanceSettings);
 }
 
+/**
+ * Create data frame while adding spans for each trace into a subtable.
+ * @param data
+ * @param instanceSettings
+ */
 export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings

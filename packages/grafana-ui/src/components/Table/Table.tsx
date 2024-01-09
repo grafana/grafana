@@ -274,7 +274,6 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  console.log(state.expanded);
   return (
     <div
       {...getTableProps()}

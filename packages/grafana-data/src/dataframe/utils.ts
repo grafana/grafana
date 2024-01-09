@@ -86,3 +86,28 @@ export function anySeriesWithTimeField(data: DataFrame[]) {
 export function hasTimeField(data: DataFrame): boolean {
   return data.fields.some((field) => field.type === FieldType.time);
 }
+
+/**
+ * Simple helper to add values to a data frame. Doesn't do any validation so make sure you are adding the right types
+ * of values.
+ * @param dataFrame
+ * @param row Either an array of values or an object with keys that match the field names.
+ */
+export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unknown[]) {
+  if (row instanceof Array) {
+    for (let i = 0; i < row.length; i++) {
+      dataFrame.fields[i].values.push(row[i]);
+    }
+  } else {
+    for (const field of dataFrame.fields) {
+      let val = row[field.name];
+      field.values.push(val);
+    }
+  }
+  try {
+    dataFrame.length++;
+  } catch (e) {
+    // Unfortunate but even though DataFrame as interface defines length some implementation of DataFrame only have
+    // getter. In that case we just skip and assume they define getter for length that does not need updating.
+  }
+}

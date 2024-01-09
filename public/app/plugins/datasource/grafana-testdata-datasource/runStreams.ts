@@ -1,5 +1,6 @@
 import { defaults } from 'lodash';
 import { Observable } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   DataQueryRequest,
@@ -12,6 +13,8 @@ import {
   DataFrameSchema,
   DataFrameData,
   StreamingDataFrame,
+  createDataFrame,
+  addRow,
 } from '@grafana/data';
 
 import { getRandomLine } from './LogIpsum';
@@ -27,14 +30,15 @@ export const defaultStreamQuery: StreamingQuery = {
 
 export function runStream(target: TestData, req: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
   const query = defaults(target.stream, defaultStreamQuery);
-  if ('signal' === query.type) {
-    return runSignalStream(target, query, req);
-  }
-  if ('logs' === query.type) {
-    return runLogsStream(target, query, req);
-  }
-  if ('fetch' === query.type) {
-    return runFetchStream(target, query, req);
+  switch (query.type) {
+    case 'signal':
+      return runSignalStream(target, query, req);
+    case 'logs':
+      return runLogsStream(target, query, req);
+    case 'fetch':
+      return runFetchStream(target, query, req);
+    case 'traces':
+      return runTracesStream(target, query, req);
   }
   throw new Error(`Unknown Stream Type: ${query.type}`);
 }
@@ -241,5 +245,67 @@ export function runFetchStream(
       // Cancel fetch?
       console.log('unsubscribing to stream ' + streamId);
     };
+  });
+}
+
+export function runTracesStream(
+  target: TestData,
+  query: StreamingQuery,
+  req: DataQueryRequest<TestData>
+): Observable<DataQueryResponse> {
+  return new Observable<DataQueryResponse>((subscriber) => {
+    const streamId = `traces-${req.panelId}-${target.refId}`;
+    const data = createMainTraceFrame(target, req.maxDataPoints);
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const pushNextEvent = () => {
+      const subframe = createTraceSubFrame();
+      addRow(subframe, [uuidv4(), Date.now(), 'Grafana', 1500]);
+      addRow(data, [uuidv4(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
+
+      subscriber.next({
+        data: [data],
+        key: streamId,
+      });
+
+      timeoutId = setTimeout(pushNextEvent, query.speed);
+    };
+
+    // Send first event in 5ms
+    setTimeout(pushNextEvent, 5);
+
+    return () => {
+      console.log('unsubscribing to stream ' + streamId);
+      clearTimeout(timeoutId);
+    };
+  });
+}
+
+function createMainTraceFrame(target: TestData, maxDataPoints = 1000) {
+  const data = new CircularDataFrame({
+    append: 'tail',
+    // capacity: maxDataPoints,
+    capacity: 2,
+  });
+  data.refId = target.refId;
+  data.name = target.alias || 'Traces ' + target.refId;
+  data.addField({ name: 'TraceID', type: FieldType.string, config: { custom: { unique: true } } });
+  data.addField({ name: 'Start time', type: FieldType.time });
+  data.addField({ name: 'Service', type: FieldType.string });
+  data.addField({ name: 'Name', type: FieldType.string });
+  data.addField({ name: 'Duration', type: FieldType.number, config: { unit: 'ms' } });
+  data.addField({ name: 'nested', type: FieldType.nestedFrames });
+  data.meta = { preferredVisualisationType: 'table' };
+  return data;
+}
+
+function createTraceSubFrame() {
+  return createDataFrame({
+    fields: [
+      { name: 'SpanID', type: FieldType.string },
+      { name: 'Start time', type: FieldType.time },
+      { name: 'service.name', type: FieldType.string },
+      { name: 'duration', type: FieldType.number },
+    ],
   });
 }
