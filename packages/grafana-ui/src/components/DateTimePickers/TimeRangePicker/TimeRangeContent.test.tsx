@@ -1,5 +1,6 @@
 import { fireEvent, render, RenderResult } from '@testing-library/react';
 import React from 'react';
+import { act } from 'react-test-renderer';
 
 import { dateTimeParse, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,6 +11,15 @@ type TimeRangeFormRenderResult = RenderResult & {
   getCalendarDayByLabelText(label: string): HTMLButtonElement;
 };
 
+const mockClipboard = {
+  writeText: jest.fn(),
+  readText: jest.fn(),
+};
+
+Object.defineProperty(global.navigator, 'clipboard', {
+  value: mockClipboard,
+});
+
 const defaultTimeRange: TimeRange = {
   from: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
   to: dateTimeParse('2021-06-19 23:59:00', { timeZone: 'utc' }),
@@ -17,6 +27,11 @@ const defaultTimeRange: TimeRange = {
     from: '2021-06-17 00:00:00',
     to: '2021-06-19 23:59:00',
   },
+};
+
+const customRawTimeRange = {
+  from: '2023-06-17 00:00:00',
+  to: '2023-06-19 23:59:00',
 };
 
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc'): TimeRangeFormRenderResult {
@@ -34,7 +49,7 @@ function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc'): TimeRan
 }
 
 describe('TimeRangeForm', () => {
-  it('should render form correcty', () => {
+  it('should render form correctly', () => {
     const { getByLabelText, getByText, getAllByRole } = setup();
 
     expect(getByText('Apply time range')).toBeInTheDocument();
@@ -103,6 +118,28 @@ describe('TimeRangeForm', () => {
 
     expect(from).toHaveClass('react-calendar__tile--rangeStart');
     expect(to).toHaveClass('react-calendar__tile--rangeEnd');
+  });
+
+  it('should copy time range to clipboard', () => {
+    const { getByRole } = setup();
+
+    fireEvent.click(getByRole('button', { name: 'Copy time range' }));
+    expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith(
+      JSON.stringify({ from: defaultTimeRange.raw.from, to: defaultTimeRange.raw.to })
+    );
+  });
+
+  it('should paste time range from clipboard', async () => {
+    const { getByRole, getByLabelText } = setup();
+
+    mockClipboard.readText.mockResolvedValue(JSON.stringify(customRawTimeRange));
+
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'Paste time range' }));
+    });
+
+    expect(getByLabelText('From')).toHaveValue(customRawTimeRange.from);
+    expect(getByLabelText('To')).toHaveValue(customRawTimeRange.to);
   });
 
   describe('dates error handling', () => {
