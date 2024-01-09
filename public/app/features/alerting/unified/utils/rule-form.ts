@@ -25,6 +25,8 @@ import {
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
+  GrafanaNotificationSettings,
+  GrafanaRuleDefinition,
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
@@ -33,11 +35,11 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
-import { getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
+import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
@@ -138,10 +140,34 @@ export function normalizeDefaultAnnotations(annotations: Array<{ key: string; va
   return orderedAnnotations;
 }
 
+export function getNotificationSettingsForDTO(
+  manualRouting: boolean,
+  contactPoints?: AlertManagerManualRouting
+): GrafanaNotificationSettings | undefined {
+  if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
+    return {
+      receiver: contactPoints?.grafana?.selectedContactPoint,
+      mute_timings: contactPoints?.grafana?.muteTimeIntervals,
+      group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
+      group_wait: contactPoints?.grafana?.overrideTimings ? contactPoints?.grafana?.groupWaitValue : undefined,
+      group_interval: contactPoints?.grafana?.overrideTimings ? contactPoints?.grafana?.groupIntervalValue : undefined,
+      repeat_interval: contactPoints?.grafana?.overrideTimings
+        ? contactPoints?.grafana?.repeatIntervalValue
+        : undefined,
+    };
+  }
+  return undefined;
+}
+
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused, contactPoints, manualRouting } =
     values;
   if (condition) {
+    const notificationSettings: GrafanaNotificationSettings | undefined = getNotificationSettingsForDTO(
+      manualRouting,
+      contactPoints
+    );
+
     return {
       grafana_alert: {
         title: name,
@@ -150,7 +176,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         data: queries.map(fixBothInstantAndRangeQuery),
         is_paused: Boolean(isPaused),
-        contactPoints: manualRouting ? contactPoints : undefined,
+        notification_settings: notificationSettings,
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -160,6 +186,27 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   throw new Error('Cannot create rule without specifying alert condition');
 }
 
+export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
+  const contactPoint: ContactPoint | undefined = ga.notification_settings
+    ? {
+        selectedContactPoint: ga.notification_settings.receiver,
+        muteTimeIntervals: ga.notification_settings.mute_timings ?? [],
+        overrideGrouping: Boolean(ga.notification_settings?.group_by),
+        overrideTimings: Boolean(ga.notification_settings.group_wait),
+        groupBy: ga.notification_settings.group_by || [],
+        groupWaitValue: ga.notification_settings.group_wait || '',
+        groupIntervalValue: ga.notification_settings.group_interval || '',
+        repeatIntervalValue: ga.notification_settings.repeat_interval || '',
+      }
+    : undefined;
+  const routingSettings: AlertManagerManualRouting | undefined = contactPoint
+    ? {
+        [GRAFANA_RULES_SOURCE_NAME]: contactPoint,
+      }
+    : undefined;
+  return routingSettings;
+}
+
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
 
@@ -167,6 +214,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   if (isGrafanaRulesSource(ruleSourceName)) {
     if (isGrafanaRulerRule(rule)) {
       const ga = rule.grafana_alert;
+
+      const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
 
       return {
         ...defaultFormValues,
@@ -183,8 +232,9 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
-        contactPoints: ga.contactPoints,
-        manualRouting: Boolean(ga.contactPoints),
+
+        contactPoints: routingSettings,
+        manualRouting: Boolean(routingSettings),
         // next line is for testing
         // manualRouting: true,
         // contactPoints: {

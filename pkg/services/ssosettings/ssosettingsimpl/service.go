@@ -84,6 +84,21 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 	return storeSettings, nil
 }
 
+func (s *SSOSettingsService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	storeSettings, err := s.GetForProvider(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range storeSettings.Settings {
+		if isSecret(k) && v != "" {
+			storeSettings.Settings[k] = "*********"
+		}
+	}
+
+	return storeSettings, nil
+}
+
 func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	result := make([]*models.SSOSettings, 0, len(ssosettings.AllOAuthProviders))
 	storedSettings, err := s.store.List(ctx)
@@ -177,7 +192,7 @@ func (s *SSOSettingsService) RegisterFallbackStrategy(providerRegex string, stra
 }
 
 func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	loadStrategy, ok := s.getFallBackstrategyFor(provider)
+	loadStrategy, ok := s.getFallbackStrategyFor(provider)
 	if !ok {
 		return nil, errors.New("no fallback strategy found for provider: " + provider)
 	}
@@ -204,7 +219,7 @@ func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*m
 	return result
 }
 
-func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
+func (s *SSOSettingsService) getFallbackStrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
 	for _, strategy := range s.fbStrategies {
 		if strategy.IsMatch(provider) {
 			return strategy, true

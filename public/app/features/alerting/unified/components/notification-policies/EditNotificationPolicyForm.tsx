@@ -285,7 +285,7 @@ export const AmRoutesExpandedForm = ({
               >
                 <PromDurationInput
                   {...register('repeatIntervalValue', {
-                    validate: (value: string) => {
+                    validate: (value = '') => {
                       const groupInterval = getValues('groupIntervalValue');
                       return repeatIntervalValidator(value, groupInterval);
                     },

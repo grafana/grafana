@@ -168,10 +168,17 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
+	var alertingNodes []*navtree.NavLink
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
-	if alertingNode == nil {
-		// Search for legacy alerting node just in case
-		alertingNode = treeRoot.FindById(navtree.NavIDAlertingLegacy)
+	if alertingNode != nil {
+		alertingNodes = append(alertingNodes, alertingNode)
+	}
+	if len(alertingNodes) == 0 || s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingPreviewUpgrade) {
+		// If FlagAlertingPreviewUpgrade is enabled, we want to add both the legacy and new alerting nodes.
+		alertingNode := treeRoot.FindById(navtree.NavIDAlertingLegacy)
+		if alertingNode != nil {
+			alertingNodes = append(alertingNodes, alertingNode)
+		}
 	}
 	sectionID := navtree.NavIDApps
 
@@ -235,7 +242,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			})
 		case navtree.NavIDAlertsAndIncidents:
 			alertsAndIncidentsChildren := []*navtree.NavLink{}
-			if alertingNode != nil {
+			for _, alertingNode := range alertingNodes {
 				alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, alertingNode)
 				treeRoot.RemoveSection(alertingNode)
 			}
@@ -322,15 +329,10 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
+		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDCfg, Text: "Adaptive Metrics"},
+		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
 		"k6-app":                           k6Cfg,
-	}
-
-	if s.features.IsEnabledGlobally(featuremgmt.FlagCostManagementUi) {
-		// if cost management is enabled we want to nest adaptive metrics and log volume explorer under that plugin
-		// in the admin section
-		s.navigationAppConfig["grafana-adaptive-metrics-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg}
-		s.navigationAppConfig["grafana-logvolumeexplorer-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg}
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
