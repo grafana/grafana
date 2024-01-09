@@ -1623,7 +1623,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process
 		finder.NewLocalFinder(false, featuremgmt.WithFeatures()), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), featuremgmt.WithFeatures()),
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry()),
 		terminate)
 }
 
@@ -1656,7 +1656,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loade
 		finder.NewLocalFinder(false, featuremgmt.WithFeatures()), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), featuremgmt.WithFeatures()),
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry()),
 		terminate)
 }
 
