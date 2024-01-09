@@ -258,8 +258,6 @@ function getPreviewPanelFor(metric: string, index: number) {
 
   const vizPanel = autoQuery.preview
     .vizBuilder()
-    .setTitle(autoQuery.preview.title)
-    .setUnit(autoQuery.preview.unit)
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();

@@ -1,5 +1,7 @@
 import { PanelBuilders } from '@grafana/scenes';
 
-export function percentilesGraphBuilder() {
-  return PanelBuilders.timeseries().setCustomFieldConfig('fillOpacity', 9);
+import { CommonVizParams } from './types';
+
+export function percentilesGraphBuilder({ title, unit }: CommonVizParams) {
+  return () => PanelBuilders.timeseries().setTitle(title).setUnit(unit).setCustomFieldConfig('fillOpacity', 9);
 }

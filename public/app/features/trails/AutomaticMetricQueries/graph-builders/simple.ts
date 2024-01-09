@@ -1,5 +1,12 @@
 import { PanelBuilders } from '@grafana/scenes';
 
-export function simpleGraphBuilder() {
-  return PanelBuilders.timeseries().setOption('legend', { showLegend: false }).setCustomFieldConfig('fillOpacity', 9);
+import { CommonVizParams } from './types';
+
+export function simpleGraphBuilder({ title, unit }: CommonVizParams) {
+  return () =>
+    PanelBuilders.timeseries()
+      .setTitle(title)
+      .setUnit(unit)
+      .setOption('legend', { showLegend: false })
+      .setCustomFieldConfig('fillOpacity', 9);
 }
