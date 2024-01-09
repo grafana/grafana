@@ -7,7 +7,7 @@ import {
   IntervalVariable,
   TextBoxVariable,
   QueryVariable,
-  SceneVariable,
+  AdHocFilterSet,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
 
@@ -19,19 +19,9 @@ import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 
-type EditableVariable =
-  | typeof CustomVariable
-  | typeof QueryVariable
-  | typeof ConstantVariable
-  | typeof IntervalVariable
-  | typeof DataSourceVariable
-  | typeof AdHocFiltersVariable
-  | typeof TextBoxVariable;
-
 interface EditableVariableConfig {
   name: string;
   description: string;
-  Variable: EditableVariable;
   editor: React.ComponentType<any>;
 }
 
@@ -45,43 +35,36 @@ const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> =
   custom: {
     name: 'Custom',
     description: 'Define variable values manually',
-    Variable: CustomVariable,
     editor: CustomVariableEditor,
   },
   query: {
     name: 'Query',
     description: 'Variable values are fetched from a datasource query',
-    Variable: QueryVariable,
     editor: QueryVariableEditor,
   },
   constant: {
     name: 'Constant',
     description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
-    Variable: ConstantVariable,
     editor: ConstantVariableEditor,
   },
   interval: {
     name: 'Interval',
     description: 'Define a timespan interval (ex 1m, 1h, 1d)',
-    Variable: IntervalVariable,
     editor: IntervalVariableEditor,
   },
   datasource: {
     name: 'Data source',
     description: 'Enables you to dynamically switch the data source for multiple panels',
-    Variable: DataSourceVariable,
     editor: DataSourceVariableEditor,
   },
   adhoc: {
     name: 'Ad hoc filters',
     description: 'Add key/value filters on the fly',
-    Variable: AdHocFiltersVariable,
     editor: AdHocFiltersVariableEditor,
   },
   textbox: {
     name: 'Textbox',
     description: 'Define a textbox variable, where users can enter any arbitrary string',
-    Variable: TextBoxVariable,
     editor: TextBoxVariableEditor,
   },
 };
@@ -108,6 +91,26 @@ export function getVariableEditor(type: EditableVariableType) {
   return EDITABLE_VARIABLES[type].editor;
 }
 
-export function getVariableScene(type: EditableVariableType) {
-  return EDITABLE_VARIABLES[type].Variable;
+interface CommonVariableProperties {
+  name?: string;
+  label?: string;
+}
+
+export function getVariableScene(type: EditableVariableType, initialState: CommonVariableProperties) {
+  switch (type) {
+    case 'custom':
+      return new CustomVariable(initialState);
+    case 'query':
+      return new QueryVariable(initialState);
+    case 'constant':
+      return new ConstantVariable(initialState);
+    case 'interval':
+      return new IntervalVariable(initialState);
+    case 'datasource':
+      return new DataSourceVariable(initialState);
+    case 'adhoc':
+      return new AdHocFilterSet(initialState);
+    case 'textbox':
+      return new TextBoxVariable({});
+  }
 }

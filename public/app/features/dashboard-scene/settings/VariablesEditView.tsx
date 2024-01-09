@@ -131,9 +131,9 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
   public onTypeChange = (type: EditableVariableType) => {
     // Find the index of the variable to be deleted
-    const variableIndex = this.state.editIndex;
+    const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
-    const variable = variableIndex && variables[variableIndex];
+    const variable = variables[variableIndex];
 
     if (!variable) {
       // Handle the case where the variable is not found
@@ -141,17 +141,20 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       return;
     }
 
-    const Variable = getVariableScene(type);
-    const newVariable =
-      Variable === AdHocFiltersVariable
-        ? // FIXME: Remove set and type as required properties from AdHocFiltersVariable in @grafana/scenes
-          // @ts-ignore
-          new Variable({ ...variable.state, set: new AdHocFilterSet({}), type: 'adhoc' })
-        : new Variable({ ...variable.state });
-    const updatedVariables = [...variables.slice(0, variableIndex), newVariable, ...variables.slice(variableIndex + 1)];
+    const { name, label } = variable.state;
+    const newVariable = getVariableScene(type, { name, label });
+    if (newVariable instanceof AdHocFilterSet) {
+      // TODO: Update controls in adding this fiter set to the dashboard
+    } else {
+      const updatedVariables = [
+        ...variables.slice(0, variableIndex),
+        newVariable,
+        ...variables.slice(variableIndex + 1),
+      ];
 
-    // Update the state or the variables array
-    this.getVariableSet().setState({ variables: updatedVariables });
+      // Update the state or the variables array
+      this.getVariableSet().setState({ variables: updatedVariables });
+    }
   };
 
   public onGoBack = () => {
