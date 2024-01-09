@@ -25,7 +25,7 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 	dtos := make([]featuremgmt.FeatureToggleDTO, 0)
 
 	// loop through features an add features that should be visible to dtos
-	for _, ft := range hs.Features.GetFlags() {
+	for _, ft := range hs.featureManager.GetFlags() {
 		if isFeatureHidden(ft, cfg.HiddenToggles) {
 			continue
 		}
@@ -67,7 +67,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 
 	for _, t := range cmd.FeatureToggles {
 		// make sure flag exists, and only continue if flag is writeable
-		if f, ok := hs.Features.LookupFlag(t.Name); ok && isFeatureWriteable(f, hs.Cfg.FeatureManagement.ReadOnlyToggles) {
+		if f, ok := hs.featureManager.LookupFlag(t.Name); ok && isFeatureWriteable(f, hs.Cfg.FeatureManagement.ReadOnlyToggles) {
 			hs.log.Info("UpdateFeatureToggle: updating toggle", "toggle_name", t.Name, "enabled", t.Enabled, "username", ctx.SignedInUser.Login)
 			payload.FeatureToggles[t.Name] = strconv.FormatBool(t.Enabled)
 		} else {
@@ -82,13 +82,13 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		return response.Respond(http.StatusBadRequest, "Failed to perform webhook request")
 	}
 
-	hs.Features.SetRestartRequired()
+	hs.featureManager.SetRestartRequired()
 
 	return response.Respond(http.StatusOK, "feature toggles updated successfully")
 }
 
 func (hs *HTTPServer) GetFeatureMgmtState(ctx *contextmodel.ReqContext) response.Response {
-	fmState := hs.Features.GetState()
+	fmState := hs.featureManager.GetState()
 	return response.Respond(http.StatusOK, fmState)
 }
 
