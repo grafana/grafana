@@ -249,17 +249,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if fieldRequirements != nil {
 		req.Folder = fieldRequirements.Folder
 	}
-
-	// use Transform function to remove grafana.app/folder field selector
-	opts.Predicate.Field, err = opts.Predicate.Field.Transform(func(field, value string) (string, string, error) {
-		if field == "grafana.app/folder" {
-			return "", "", nil
-		}
-		return field, value, nil
-	})
-	if err != nil {
-		return err
-	}
+	// Clear the standard fields selector since we are using an explicit version
+	opts.Predicate.Field = nil
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
