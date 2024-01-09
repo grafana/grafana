@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
@@ -20,7 +21,6 @@ import { DataLinks } from './DataLinks';
 import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { coerceOptions, isValidOptions } from './utils';
-import { css } from '@emotion/css';
 
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 
