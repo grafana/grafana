@@ -106,6 +106,9 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, metrics *metrics.
 		return nil, err
 	}
 
+	// Initialize LastReadinessCheck so it's present even if the check fails.
+	metrics.LastReadinessCheck.Set(0)
+
 	return &Alertmanager{
 		amClient:    amc,
 		log:         logger,
@@ -155,7 +158,6 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 }
 
 func (am *Alertmanager) checkReadiness(ctx context.Context) error {
-	am.metrics.LastReadinessCheck.SetToCurrentTime()
 	ready, err := am.amClient.IsReadyWithBackoff(ctx)
 	if err != nil {
 		return err
@@ -163,6 +165,7 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 
 	if ready {
 		am.log.Debug("Alertmanager readiness check successful")
+		am.metrics.LastReadinessCheck.SetToCurrentTime()
 		am.ready = true
 		return nil
 	}

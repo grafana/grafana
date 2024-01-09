@@ -16,14 +16,14 @@ func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 		HTTPRequestDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "remote_alertmanager_http_request_duration_seconds",
+			Name:      "remote_alertmanager_latency_seconds",
 			Help:      "Histogram of request durations to the remote Alertmanager.",
 		}, instrument.HistogramCollectorBuckets)),
 		LastReadinessCheck: promauto.With(r).NewGauge(prometheus.GaugeOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "remote_alertmanager_last_readiness_check_timestamp_seconds",
-			Help:      "Timestamp of the last readiness check to the remote Alertmanager in seconds.",
+			Help:      "Timestamp of the last successful readiness check to the remote Alertmanager in seconds.",
 		}),
 	}
 }
