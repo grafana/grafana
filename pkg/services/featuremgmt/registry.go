@@ -1277,6 +1277,15 @@ var (
 			RequiresRestart:   true,
 			Created:           time.Date(2023, time.November, 30, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:            "ipRangeAccessControlForDataSources",
+			Description:     "Enable IP range access control for Grafana data sources when the data source is accessed through Grafana",
+			Stage:           FeatureStageExperimental,
+			Owner:           identityAccessTeam,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Created:         time.Date(2023, time.December, 20, 15, 0, 0, 0, time.UTC),
+		},
 	}
 )
 
