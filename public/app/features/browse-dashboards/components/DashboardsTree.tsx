@@ -35,7 +35,7 @@ interface DashboardsTreeProps {
 
 const HEADER_HEIGHT = 36;
 const ROW_HEIGHT = 36;
-const DIVIDER_HEIGHT = 1;
+const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
 
 export function DashboardsTree({
   items,
