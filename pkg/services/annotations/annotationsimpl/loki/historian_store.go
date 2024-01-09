@@ -82,7 +82,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		}
 	}
 
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(ctx, query, accessResources.Dashboards, rule.UID))
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID))
 	if err != nil {
 		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to build loki query: %w", err)
 	}
@@ -106,7 +106,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 
 	items := make([]*annotations.ItemDTO, 0)
 	for _, stream := range res.Data.Result {
-		items = append(items, r.annotationsFromStream(ctx, stream, query.OrgID, *accessResources)...)
+		items = append(items, r.annotationsFromStream(stream, *accessResources)...)
 	}
 
 	// order by time desc
@@ -117,7 +117,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func (r *LokiHistorianStore) annotationsFromStream(ctx context.Context, stream historian.Stream, orgID int64, ac accesscontrol.AccessResources) []*annotations.ItemDTO {
+func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac accesscontrol.AccessResources) []*annotations.ItemDTO {
 	items := make([]*annotations.ItemDTO, 0, len(stream.Values))
 	for _, sample := range stream.Values {
 		entry := historian.LokiEntry{}
@@ -259,7 +259,8 @@ func buildTransition(entry historian.LokiEntry) (*state.StateTransition, error) 
 		PreviousStateReason: prevReason,
 	}, nil
 }
-func buildHistoryQuery(ctx context.Context, query *annotations.ItemQuery, dashboards map[string]int64, ruleUID string) ngmodels.HistoryQuery {
+
+func buildHistoryQuery(query *annotations.ItemQuery, dashboards map[string]int64, ruleUID string) ngmodels.HistoryQuery {
 	historyQuery := ngmodels.HistoryQuery{
 		OrgID:        query.OrgID,
 		DashboardUID: query.DashboardUID,
@@ -286,7 +287,7 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 
 	// Override config based on feature toggles.
 	// We pass in a no-op logger here since this function is also called during ngalert init,
-	// and we don't want to log the same problem twice.
+	// and we don't want to log the same info twice.
 	ngalert.ApplyStateHistoryFeatureToggles(&cfg, ft, log.NewNopLogger())
 
 	backend, err := historian.ParseBackendType(cfg.Backend)
@@ -294,6 +295,6 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 		return false
 	}
 
-	// We should only query Loki if annotations do no exist in the database.
+	// We should only query Loki if annotations do not exist in the database.
 	return backend == historian.BackendTypeLoki
 }

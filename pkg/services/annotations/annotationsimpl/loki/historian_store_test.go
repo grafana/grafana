@@ -189,14 +189,14 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		store := createTestLokiStore(t, sql, fakeLokiClient)
 
 		t.Run("should return empty list when no streams", func(t *testing.T) {
-			items := store.annotationsFromStream(context.Background(), historian.Stream{}, 0, annotation_ac.AccessResources{})
+			items := store.annotationsFromStream(historian.Stream{}, annotation_ac.AccessResources{})
 			require.Empty(t, items)
 		})
 
 		t.Run("should return empty list when no entries", func(t *testing.T) {
-			items := store.annotationsFromStream(context.Background(), historian.Stream{
+			items := store.annotationsFromStream(historian.Stream{
 				Values: []historian.Sample{},
-			}, 0, annotation_ac.AccessResources{})
+			}, annotation_ac.AccessResources{})
 			require.Empty(t, items)
 		})
 
@@ -208,7 +208,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			stream := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			items := store.annotationsFromStream(context.Background(), stream, rule.OrgID, annotation_ac.AccessResources{
+			items := store.annotationsFromStream(stream, annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
@@ -253,7 +253,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				Stream: stream1.Stream,
 			}
 
-			items := store.annotationsFromStream(context.Background(), stream, rule.OrgID, annotation_ac.AccessResources{
+			items := store.annotationsFromStream(stream, annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
@@ -283,7 +283,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				Stream: stream1.Stream,
 			}
 
-			items := store.annotationsFromStream(context.Background(), stream, rule.OrgID, annotation_ac.AccessResources{
+			items := store.annotationsFromStream(stream, annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},

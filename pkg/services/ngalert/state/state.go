@@ -483,7 +483,7 @@ func FormatStateAndReason(state eval.State, reason string) string {
 // and returns the state and reason separately.
 func ParseFormattedState(stateStr string) (eval.State, string, error) {
 	split := strings.Split(stateStr, " ")
-	if len(split) < 1 {
+	if len(split) == 0 {
 		return -1, "", errors.New("invalid state format")
 	}
 
