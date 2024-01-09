@@ -18,7 +18,9 @@ test.describe('query editor query data', () => {
     ).toBeOK();
   });
 
-  test('query data response should not be OK when query is invalid', async ({ panelEditPage }) => {
+  test('query data response should not be OK and panel error should be displayed when query is invalid', async ({
+    panelEditPage,
+  }) => {
     await panelEditPage.datasource.set('gdev-testdata');
     const queryEditorRow = await panelEditPage.getQueryEditorRow('A');
     await queryEditorRow.getByLabel('Labels').fill('invalid-label-format');
@@ -31,7 +33,7 @@ test.describe('query editor query data', () => {
 });
 
 test.describe('query editor with mocked responses', () => {
-  test('mocked scenarios', async ({ panelEditPage, selectors }) => {
+  test('and resource `scenarios` is mocked', async ({ panelEditPage, selectors }) => {
     await panelEditPage.mockResourceResponse('scenarios', scenarios);
     await panelEditPage.datasource.set('gdev-testdata');
     const queryEditorRow = await panelEditPage.getQueryEditorRow('A');

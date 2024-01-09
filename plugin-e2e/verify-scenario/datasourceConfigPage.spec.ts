@@ -8,7 +8,7 @@ test.describe('test createDataSourceConfigPage fixture, saveAndTest and toBeOK m
     await page.getByPlaceholder('http://localhost:9090').fill('http://localhost:9090');
     await expect(
       configPage.saveAndTest(),
-      formatExpectError('Expected data source config to be successfully saved')
+      formatExpectError('Expected save data source config to fail when Prometheus server is not running')
     ).not.toBeOK();
   });
 

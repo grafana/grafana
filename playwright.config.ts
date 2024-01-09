@@ -33,7 +33,7 @@ export default defineConfig<PluginOptions>({
 
   /* Configure projects for major browsers */
   projects: [
-    // 1. Login to Grafana and store the cookie on disk for use in other tests.
+    // 1. Login to Grafana and store the cookie on disk for use in subsequent test projects.
     {
       name: 'authenticate',
       testMatch: [/.*auth\.setup\.ts/],
