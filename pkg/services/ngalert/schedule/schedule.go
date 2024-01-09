@@ -114,6 +114,12 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
+
+	const minMaxAttempts = 1
+	if cfg.MaxAttempts < minMaxAttempts {
+		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.MaxAttempts, "actual", minMaxAttempts)
+		cfg.MaxAttempts = minMaxAttempts
+	}
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:           cfg.MaxAttempts,
@@ -136,7 +142,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval)
+	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.maxAttempts)
 	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
 	defer t.Stop()
 
@@ -551,7 +557,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						return
 					}
 
-					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt, "error", err)
 					select {
 					case <-tracingCtx.Done():
 						logger.Error("Context has been cancelled while backing off", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
