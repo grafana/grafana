@@ -10,9 +10,9 @@ import {
   LoadingState,
   LogLevel,
   LogRowModel,
-  MutableDataFrame,
   standardTransformersRegistry,
   toUtc,
+  createDataFrame,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
@@ -513,7 +513,7 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     uid,
     entryFieldIndex: 0,
     rowIndex: 0,
-    dataFrame: new MutableDataFrame(),
+    dataFrame: createDataFrame({ fields: [] }),
     logLevel: LogLevel.debug,
     entry,
     hasAnsi: false,

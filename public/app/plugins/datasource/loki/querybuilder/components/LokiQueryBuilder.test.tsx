@@ -6,7 +6,7 @@ import { getSelectParent } from 'test/helpers/selectOptionInTest';
 import { dateTime } from '@grafana/data';
 
 import { MISSING_LABEL_FILTER_ERROR_MESSAGE } from '../../../prometheus/querybuilder/shared/LabelFilters';
-import { createLokiDatasource } from '../../mocks';
+import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';

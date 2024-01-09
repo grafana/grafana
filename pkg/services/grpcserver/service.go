@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/grafana/dskit/instrument"
+	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/weaveworks/common/instrument"
-	"github.com/weaveworks/common/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
