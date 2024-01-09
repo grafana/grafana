@@ -37,7 +37,7 @@ var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo apis.ResourceInfo
 
-	plugin        pluginstore.Plugin
+	plugin        plugins.JSONData
 	client        plugins.Client
 	dsService     datasources.DataSourceService
 	dsCache       datasources.CacheService
@@ -73,7 +73,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds, pluginClient, dsService, dsCache, accessControl, namespacer)
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData, pluginClient, dsService, dsCache, accessControl, namespacer)
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +83,7 @@ func RegisterAPIService(
 }
 
 func NewDataSourceAPIBuilder(
-	plugin pluginstore.Plugin,
+	plugin plugins.JSONData,
 	client plugins.Client,
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,

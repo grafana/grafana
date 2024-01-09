@@ -4,10 +4,11 @@ import (
 	"os"
 	"path"
 
-	"github.com/grafana/grafana/pkg/aggregator"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/aggregator"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -32,7 +33,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 		Example: "grafana apiserver example.grafana.app",
 		RunE: func(c *cobra.Command, args []string) error {
 			// Load each group from the args
-			if err := o.LoadAPIGroupBuilders(args[1:]); err != nil {
+			if err := o.loadAPIGroupBuilders(args[1:]); err != nil {
 				return err
 			}
 
