@@ -410,17 +410,37 @@ describe('InfluxDataSource Frontend Mode', () => {
       });
     });
 
-    describe('More regexes escaping', () => {
+    describe('Influx regular escaping', () => {
+      it('should not escape non-string', () => {
+        expect(influxRegularEscape(12 as unknown as string)).toEqual(12);
+      });
+      it('should not escape simple string', () => {
+        expect(influxRegularEscape('cryptodepression')).toEqual('cryptodepression');
+      });
+      it("should escape '", () => {
+        expect(influxRegularEscape("looking'glass")).toEqual("looking\\'glass");
+      });
+      it('should escape regex delimited by `/`', () => {
+        expect(influxRegularEscape("/looking'glass/")).toEqual("\\/looking\\'glass\\/");
+      });
+      it('should escape \\', () => {
+        expect(influxRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
+      });
+      it('should escape multiple characters', () => {
+        expect(influxRegularEscape("'looking'glass'")).toEqual("\\'looking\\'glass\\'");
+      });
+      it('should escape multiple different characters', () => {
+        expect(influxRegularEscape("'loo\\king'glass'")).toEqual("\\'loo\\\\king\\'glass\\'");
+      });
+    });
+
+    describe('Influx regex escaping', () => {
       it('should not escape simple string', () => {
         expect(influxSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
       });
       it('should not escape regex delimited by `/`', () => {
         expect(influxSpecialRegexEscape("/looking'glass/")).toEqual("/looking\\\\'glass/");
       });
-      it('should escape regex delimited by `/`', () => {
-        expect(influxRegularEscape("/looking'glass/")).toEqual("\\/looking\\'glass\\/");
-      });
-
       it('should escape $^*+?.()|\\', () => {
         expect(influxSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
         expect(influxSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
@@ -437,34 +457,27 @@ describe('InfluxDataSource Frontend Mode', () => {
         expect(influxSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
         expect(influxSpecialRegexEscape('looking|glass')).toEqual('looking\\\\|glass');
       });
-
       it('should escape multiple special characters', () => {
         expect(influxSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
       });
-    });
-
-    describe('influxSpecialRegexEscape', () => {
       it('should escape the dot properly', () => {
         const value = 'value.with-dot';
         const expectation = `value\\\\.with-dot`;
         const result = influxSpecialRegexEscape(value);
         expect(result).toEqual(expectation);
       });
-
       it('should escape the url properly (regex)', () => {
         const value = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/jolokia';
         const expectation = `https://aaaa-aa-aaa\\\\.bbb\\\\.ccc\\\\.ddd:8443/jolokia`;
         const result = influxSpecialRegexEscape(value);
         expect(result).toBe(expectation);
       });
-
       it('should escape the url properly (no regex)', () => {
         const value = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/jolokia';
         const expectation = `https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/jolokia`;
         const result = influxRegularEscape(value);
         expect(result).toBe(expectation);
       });
-
       it('should escape parenthesis chars', () => {
         const value = 'Value (1)';
         const expectation = `Value \\\\(1\\\\)`;
@@ -472,39 +485,12 @@ describe('InfluxDataSource Frontend Mode', () => {
         const result = influxSpecialRegexEscape(value);
         expect(result).toEqual(expectation);
       });
-
-      it('should escape arrays with special chars ', () => {
-        const value = '/etc/hostname';
-        const expectation = `/etc/hostname`;
+      it('should escape arrays with special chars, except the regex delimiter /', () => {
+        const value = '/var/log/resolv.conf';
+        const expectation = '/var/log/resolv\\\\.conf';
 
         const result = influxSpecialRegexEscape(value);
         expect(result).toBe(expectation);
-      });
-    });
-
-    describe('Influx regular escaping', () => {
-      it('should not escape non-string', () => {
-        expect(influxRegularEscape(12 as unknown as string)).toEqual(12);
-      });
-
-      it('should not escape simple string', () => {
-        expect(influxRegularEscape('cryptodepression')).toEqual('cryptodepression');
-      });
-
-      it("should escape '", () => {
-        expect(influxRegularEscape("looking'glass")).toEqual("looking\\'glass");
-      });
-
-      it('should escape \\', () => {
-        expect(influxRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
-      });
-
-      it('should escape multiple characters', () => {
-        expect(influxRegularEscape("'looking'glass'")).toEqual("\\'looking\\'glass\\'");
-      });
-
-      it('should escape multiple different characters', () => {
-        expect(influxRegularEscape("'loo\\king'glass'")).toEqual("\\'loo\\\\king\\'glass\\'");
       });
     });
   });
