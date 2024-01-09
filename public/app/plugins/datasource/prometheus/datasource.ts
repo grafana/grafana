@@ -876,14 +876,6 @@ export class PrometheusDatasource
   }
 
   // Used when running queries through backend
-  filterQuery(query: PromQuery): boolean {
-    if (query.hide || !this.isCompleteQuery(query)) {
-      return false;
-    }
-    return true;
-  }
-
-  // Used when running queries through backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     const variables = cloneDeep(scopedVars);
 

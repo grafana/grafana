@@ -165,13 +165,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.version !== InfluxVersion.Flux || (query?.query !== undefined && query.query.trim() !== '');
   }
 
-  /**
-   * Returns false if the query should be skipped
-   */
-  filterQuery(query: InfluxQuery): boolean {
-    return this.isCompleteQuery(query) || !query.hide || false;
-  }
-
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars || {};

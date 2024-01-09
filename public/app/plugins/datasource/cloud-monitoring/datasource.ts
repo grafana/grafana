@@ -335,14 +335,6 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return false;
   }
 
-  filterQuery(query: CloudMonitoringQuery): boolean {
-    if (query.hide) {
-      return false;
-    }
-
-    return this.isCompleteQuery(query);
-  }
-
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
     return queries.map((query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars));
   }

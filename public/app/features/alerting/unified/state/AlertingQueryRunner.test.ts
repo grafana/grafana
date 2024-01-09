@@ -270,7 +270,7 @@ interface MockOpts {
 
 const mockDataSourceSrv = (opts?: MockOpts) => {
   const ds = new DataSourceWithBackend({} as unknown as DataSourceInstanceSettings);
-  ds.filterQuery = opts?.filterQuery;
+  ds.filterQuery = opts?.filterQuery !== undefined ? opts.filterQuery : () => true;
   return {
     get: () => Promise.resolve(ds),
   } as unknown as DataSourceSrv;

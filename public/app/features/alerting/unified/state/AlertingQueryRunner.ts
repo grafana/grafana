@@ -64,9 +64,7 @@ export class AlertingQueryRunner {
 
       const dataSourceInstance = await this.dataSourceSrv.get(query.datasourceUid);
       const skipRunningQuery =
-        dataSourceInstance instanceof DataSourceWithBackend &&
-        dataSourceInstance.filterQuery &&
-        !dataSourceInstance.filterQuery(query.model);
+        dataSourceInstance instanceof DataSourceWithBackend && !dataSourceInstance.filterQuery(query.model);
 
       if (skipRunningQuery) {
         queriesToExclude.push(refId);

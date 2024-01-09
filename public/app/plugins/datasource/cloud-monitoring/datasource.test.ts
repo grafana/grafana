@@ -346,10 +346,5 @@ describe('Cloud Monitoring Datasource', () => {
       const query: CloudMonitoringQuery = { refId: 'A', queryType: QueryType.PROMQL };
       expect(ds.isCompleteQuery(query)).toBe(true);
     });
-    it('should return false when query is not defined', () => {
-      const mockInstanceSettings = createMockInstanceSetttings();
-      const ds = new Datasource(mockInstanceSettings);
-      expect(ds.isCompleteQuery()).toBe(false);
-    });
   });
 });

@@ -365,7 +365,6 @@ abstract class DataSourceApi<
 
   /**
    * Define if the contents of a query are complete
-   * @alpha -- experimental
    */
   isCompleteQuery?(query?: DataQuery): boolean;
 }

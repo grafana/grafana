@@ -82,10 +82,6 @@ export class CloudWatchDatasource
     return !isMetricsQuery || query.id !== '';
   }
 
-  filterQuery(query: CloudWatchQuery) {
-    return query.hide !== true || this.isCompleteQuery(query);
-  }
-
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
     options = cloneDeep(options);
 

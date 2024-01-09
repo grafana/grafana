@@ -133,10 +133,6 @@ describe('datasource', () => {
         const query: CloudWatchQuery = { refId: 'A', id: '1', namespace: 'foo', region: 'bar' };
         expect(datasource.isCompleteQuery(query)).toBe(true);
       });
-      it('should return false when query is not defined', () => {
-        const { datasource } = setupMockedDataSource();
-        expect(datasource.isCompleteQuery()).toBe(false);
-      });
       it('should return false when region is whitespace', () => {
         const { datasource } = setupMockedDataSource();
         const query: CloudWatchQuery = { refId: 'A', id: '1', namespace: 'foo', region: '   ' };

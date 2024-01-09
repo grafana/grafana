@@ -131,11 +131,7 @@ class DataSourceWithBackend<
     }
 
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
-    let targets = request.targets;
-
-    if (this.filterQuery) {
-      targets = targets.filter((q) => this.filterQuery!(q));
-    }
+    let targets = request.targets.filter((q) => this.filterQuery!(q));
 
     let hasExpr = false;
     const pluginIDs = new Set<string>();
@@ -265,21 +261,26 @@ class DataSourceWithBackend<
   }
 
   /**
+   * Filters out queries that are empty or hidden. Used when running queries through backend.
+   * @returns `true` if the query is not hidden and its expression is not empty; `false` otherwise.
+   */
+  filterQuery(query: TQuery): boolean {
+    if (query.hide) {
+      return false;
+    }
+    if (super.isCompleteQuery) {
+      return super.isCompleteQuery(query);
+    }
+
+    return true;
+  }
+
+  /**
    * Apply template variables for explore
    */
   interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[] {
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters) as TQuery);
   }
-
-  /**
-   * Override to skip executing a query.  Note this function may not be called
-   * if the query method is overwritten.
-   *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
-   */
-  filterQuery?(query: TQuery): boolean;
 
   /**
    * Override to apply template variables and adhoc filters.  The result is usually also `TQuery`, but sometimes this can

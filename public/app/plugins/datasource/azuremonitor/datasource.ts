@@ -65,13 +65,6 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return ds?.filterQuery?.(query) ?? true;
   }
 
-  filterQuery(item: AzureMonitorQuery): boolean {
-    if (item.hide || !this.isCompleteQuery(item)) {
-      return false;
-    }
-    return true;
-  }
-
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const byType = new Map<AzureQueryType, DataQueryRequest<AzureMonitorQuery>>();
 

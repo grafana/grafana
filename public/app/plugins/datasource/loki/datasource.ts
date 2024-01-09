@@ -1072,18 +1072,6 @@ export class LokiDatasource
   }
 
   /**
-   * Filters out queries that are empty or hidden. Used when running queries through backend.
-   * It is called from DatasourceWithBackend.
-   * @returns `true` if the query is not hidden and its expression is not empty; `false` otherwise.
-   */
-  filterQuery(query: LokiQuery): boolean {
-    if (query.hide || !this.isCompleteQuery(query)) {
-      return false;
-    }
-    return true;
-  }
-
-  /**
    * Applies template variables and add hoc filters to a query. Used when running queries through backend.
    * It is called from DatasourceWithBackend.
    * @returns A modified Loki query with template variables and ad hoc filters applied.

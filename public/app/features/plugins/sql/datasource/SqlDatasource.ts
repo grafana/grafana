@@ -117,13 +117,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return query?.rawSql !== undefined && query.rawSql.trim() !== '';
   }
 
-  filterQuery(query: SQLQuery): boolean {
-    if (query.hide || !this.isCompleteQuery(query)) {
-      return false;
-    }
-    return true;
-  }
-
   applyTemplateVariables(
     target: SQLQuery,
     scopedVars: ScopedVars
