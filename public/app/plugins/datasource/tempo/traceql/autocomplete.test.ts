@@ -136,9 +136,9 @@ describe('CompletionProvider', () => {
   it('suggests tags on empty input (API v1)', async () => {
     const { provider, model } = setup('', 0, v1Tags);
     const result = await provider.provideCompletionItems(model, emptyPosition);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
-      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+        expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
       expect.objectContaining({ label: 'bar', insertText: '{ .bar' }),
       expect.objectContaining({ label: 'foo', insertText: '{ .foo' }),
       expect.objectContaining({ label: 'status', insertText: '{ .status' }),
@@ -148,9 +148,9 @@ describe('CompletionProvider', () => {
   it('suggests tags on empty input (API v2)', async () => {
     const { provider, model } = setup('', 0, undefined, v2Tags);
     const result = await provider.provideCompletionItems(model, emptyPosition);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
-      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+        expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      ...scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}$0 }` })),
       expect.objectContaining({ label: 'cluster', insertText: '{ .cluster' }),
       expect.objectContaining({ label: 'container', insertText: '{ .container' }),
       expect.objectContaining({ label: 'db', insertText: '{ .db' }),
