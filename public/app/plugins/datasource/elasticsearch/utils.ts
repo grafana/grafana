@@ -147,3 +147,25 @@ export function dataFrameLogLevel(dataFrame: DataFrame): LogLevel {
   }
   return level in logLevelMap ? logLevelMap[level] : LogLevel.unknown;
 }
+
+export function flattenObject(target: Record<string, unknown> | unknown, prevKey = ''): Record<string, unknown> {
+  let output: Record<string, unknown> = {};
+  function isRecord(object: unknown): object is Record<string, unknown> {
+    return Object.prototype.toString.call(object) === '[object Object]';
+  }
+
+  if (!isRecord(target)) {
+    return {};
+  }
+
+  for (const key in target) {
+    const newKey = prevKey ? `${prevKey}.${key}` : key;
+    if (isRecord(target[key])) {
+      output = {...output, ...flattenObject(target[key], newKey)}
+    } else {
+      output[newKey] = target[key];
+    }
+  }
+
+  return output;
+}

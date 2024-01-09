@@ -1,6 +1,7 @@
 import { FieldType, LogLevel, createDataFrame } from '@grafana/data';
+
 import { ElasticsearchQuery } from './types';
-import { dataFrameLogLevel, isTimeSeriesQuery, logLevelMap, removeEmpty } from './utils';
+import { dataFrameLogLevel, flattenObject, isTimeSeriesQuery, logLevelMap, removeEmpty } from './utils';
 
 describe('removeEmpty', () => {
   it('Should remove all empty', () => {
@@ -120,5 +121,45 @@ describe('dataFrameLogLevel', () => {
     const dataFrame = getLogFrame('not_level', '');
     
     expect(dataFrameLogLevel(dataFrame)).toBe(LogLevel.unknown);
+  });
+});
+
+describe('flattenObject', () => {
+  it('flattents objects of arbitrary depth', () => {
+    const nestedObject = {
+      a: {
+        b: {
+          c: 1,
+          d: {
+            e: 2,
+            f: 3
+          }
+        },
+        g: 4
+      },
+      h: 5
+    };
+    
+    expect(flattenObject(nestedObject)).toEqual({
+      'a.b.c': 1,
+      'a.b.d.e': 2,
+      'a.b.d.f': 3,
+      'a.g': 4,
+      'h': 5,
+    });
+  });
+
+  it('does not alter other objects', () => {
+    const nestedObject = {
+      a: 'uno',
+      b: 'dos',
+      c: 3
+    };
+    
+    expect(flattenObject(nestedObject)).toEqual(nestedObject);
+  });
+
+  it.each([undefined, false, true, ''])('does not fail for other unknown types as input', (target: undefined | boolean | string) => {
+    expect(flattenObject(target)).toEqual({});
   });
 });
