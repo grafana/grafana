@@ -76,7 +76,7 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
     case 'links':
       return new DashboardLinksEditView({});
     case 'versions':
-      return new VersionsEditView({});
+      return new VersionsEditView({ versions: [] });
     case 'settings':
     default:
       return new GeneralSettingsEditView({});
