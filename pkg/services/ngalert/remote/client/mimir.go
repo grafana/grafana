@@ -76,7 +76,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 
 	return &Mimir{
 		endpoint: cfg.URL,
-		client:   client.NewTimedClient(c, metrics.HTTPRequestDuration),
+		client:   client.NewTimedClient(c, metrics.RequestLatency),
 		logger:   cfg.Logger,
 		metrics:  metrics,
 	}, nil

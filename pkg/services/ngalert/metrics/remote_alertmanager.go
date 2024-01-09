@@ -7,7 +7,7 @@ import (
 )
 
 type RemoteAlertmanager struct {
-	HTTPRequestDuration   *instrument.HistogramCollector
+	RequestLatency        *instrument.HistogramCollector
 	LastReadinessCheck    prometheus.Gauge
 	ConfigSyncsTotal      prometheus.Counter
 	ConfigSyncErrorsTotal prometheus.Counter
@@ -19,11 +19,11 @@ type RemoteAlertmanager struct {
 
 func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 	return &RemoteAlertmanager{
-		HTTPRequestDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
+		RequestLatency: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "remote_alertmanager_latency_seconds",
-			Help:      "Histogram of request durations to the remote Alertmanager.",
+			Help:      "Histogram of request latencies to the remote Alertmanager.",
 		}, instrument.HistogramCollectorBuckets)),
 		LastReadinessCheck: promauto.With(r).NewGauge(prometheus.GaugeOpts{
 			Namespace: Namespace,

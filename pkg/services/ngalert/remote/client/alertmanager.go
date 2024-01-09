@@ -39,7 +39,7 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 		Next:     http.DefaultTransport,
 	}}
 
-	tc := client.NewTimedClient(c, metrics.HTTPRequestDuration)
+	tc := client.NewTimedClient(c, metrics.RequestLatency)
 	apiEndpoint := *cfg.URL
 
 	// Next, make sure you set the right path.
