@@ -517,6 +517,7 @@ export function LogsTableWrap(props: Props) {
           />
         </section>
         <LogsTable
+          logsFrame={logsFrame}
           onClickFilterLabel={props.onClickFilterLabel}
           onClickFilterOutLabel={props.onClickFilterOutLabel}
           logsSortOrder={props.logsSortOrder}

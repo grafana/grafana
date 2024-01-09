@@ -19,7 +19,7 @@ import {
 import { config } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
-import { LogsFrame, parseLogsFrame } from 'app/features/logs/logsFrame';
+import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -36,20 +36,19 @@ interface Props {
   height: number;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  logsFrame: LogsFrame | null;
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
+  const timeIndex = logsFrame?.timeField.index;
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
       if (!frame.length) {
         return frame;
       }
-      // Parse the dataframe to a logFrame
-      const logsFrame = parseLogsFrame(frame);
-      const timeIndex = logsFrame?.timeField.index;
 
       const sortedFrame = sortDataFrame(frame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
 
@@ -84,21 +83,18 @@ export function LogsTable(props: Props) {
             ...field.config.custom,
           },
           // This sets the individual field value as filterable
-          filterable: isFieldFilterable(field, logsFrame ?? undefined),
+          filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
       }
 
       return frameWithOverrides;
     },
-    [logsSortOrder, timeZone, splitOpen, range]
+    [logsSortOrder, timeZone, splitOpen, range, logsFrame?.bodyField.name, logsFrame?.timeField.name, timeIndex]
   );
 
   useEffect(() => {
     const prepare = async () => {
-      // Parse the dataframe to a logFrame
-      const logsFrame = dataFrame ? parseLogsFrame(dataFrame) : undefined;
-
-      if (!logsFrame) {
+      if (!logsFrame?.timeField.name || !logsFrame?.bodyField.name) {
         setTableFrame(undefined);
         return;
       }
@@ -138,7 +134,14 @@ export function LogsTable(props: Props) {
       }
     };
     prepare();
-  }, [columnsWithMeta, dataFrame, logsSortOrder, prepareTableFrame]);
+  }, [
+    columnsWithMeta,
+    dataFrame,
+    logsSortOrder,
+    prepareTableFrame,
+    logsFrame?.bodyField.name,
+    logsFrame?.timeField.name,
+  ]);
 
   if (!tableFrame) {
     return null;
@@ -170,14 +173,14 @@ export function LogsTable(props: Props) {
   );
 }
 
-const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
-  if (!logsFrame) {
+const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => {
+  if (!bodyName || !timeName) {
     return false;
   }
-  if (logsFrame.bodyField.name === field.name) {
+  if (bodyName === field.name) {
     return false;
   }
-  if (logsFrame.timeField.name === field.name) {
+  if (timeName === field.name) {
     return false;
   }
   // @todo not currently excluding derived fields from filtering
