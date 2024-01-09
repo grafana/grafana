@@ -125,6 +125,13 @@ export const TimeSeriesPanel = ({
                         return;
                       }
 
+                      const annotate = () => {
+                        let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                        setNewAnnotationRange({ from: xVal, to: xVal });
+                        dismiss();
+                      };
+
                       return (
                         // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                         <TimeSeriesTooltip
@@ -135,13 +142,7 @@ export const TimeSeriesPanel = ({
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
-                          annotate={() => {
-                            // this is the actual cursor timestamp
-                            let xVal = u.posToVal(u.cursor.left!, 'x');
-
-                            setNewAnnotationRange({ from: xVal, to: xVal });
-                            dismiss();
-                          }}
+                          annotate={enableAnnotationCreation ? annotate : undefined}
                         />
                       );
                     }}
