@@ -16,6 +16,7 @@ var (
 type FeatureManager struct {
 	isDevMod        bool
 	restartRequired bool
+	allowEditing    bool
 	licensing       licensing.Licensing
 	flags           map[string]*FeatureFlag
 	enabled         map[string]bool // only the "on" values
@@ -125,7 +126,12 @@ func (fm *FeatureManager) readFile() error {
 }
 
 // IsEnabled checks if a feature is enabled
-func (fm *FeatureManager) IsEnabled(flag string) bool {
+func (fm *FeatureManager) IsEnabled(ctx context.Context, flag string) bool {
+	return fm.enabled[flag]
+}
+
+// IsEnabledGlobally checks if a feature is for all tenants
+func (fm *FeatureManager) IsEnabledGlobally(flag string) bool {
 	return fm.enabled[flag]
 }
 
@@ -150,7 +156,7 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 }
 
 func (fm *FeatureManager) GetState() *FeatureManagerState {
-	return &FeatureManagerState{RestartRequired: fm.restartRequired}
+	return &FeatureManagerState{RestartRequired: fm.restartRequired, AllowEditing: fm.allowEditing}
 }
 
 func (fm *FeatureManager) SetRestartRequired() {

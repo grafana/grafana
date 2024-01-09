@@ -4,7 +4,9 @@ import (
 	"context"
 	"sort"
 	"sync"
+	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -29,11 +31,23 @@ type Service struct {
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service) (*Service, error) {
 	ctx := context.Background()
+	start := time.Now()
+	totalPlugins := 0
+	logger := log.New("plugin.store")
+	logger.Info("Loading plugins...")
+
 	for _, ps := range pluginSources.List(ctx) {
-		if _, err := pluginLoader.Load(ctx, ps); err != nil {
+		loadedPlugins, err := pluginLoader.Load(ctx, ps)
+		if err != nil {
+			logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
 			return nil, err
 		}
+
+		totalPlugins += len(loadedPlugins)
 	}
+
+	logger.Info("Plugins loaded", "count", totalPlugins, "duration", time.Since(start))
+
 	return New(pluginRegistry, pluginLoader), nil
 }
 

@@ -16,20 +16,9 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 		wantErr         bool
 	}{
 		{
-			name: "invalid global statement",
-			cmd: SaveExternalServiceRoleCommand{
-				OrgID:             1,
-				Global:            true,
-				ExternalServiceID: "app 1",
-				ServiceAccountID:  2,
-				Permissions:       []Permission{{Action: "users:read", Scope: "users:id:1"}},
-			},
-			wantErr: true,
-		},
-		{
 			name: "invalid no permissions",
 			cmd: SaveExternalServiceRoleCommand{
-				OrgID:             1,
+				AssignmentOrgID:   1,
 				ExternalServiceID: "app 1",
 				ServiceAccountID:  2,
 				Permissions:       []Permission{},
@@ -39,7 +28,7 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 		{
 			name: "invalid service account id",
 			cmd: SaveExternalServiceRoleCommand{
-				OrgID:             1,
+				AssignmentOrgID:   1,
 				ExternalServiceID: "app 1",
 				ServiceAccountID:  -1,
 				Permissions:       []Permission{{Action: "users:read", Scope: "users:id:1"}},
@@ -49,7 +38,7 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 		{
 			name: "invalid no Ext Service ID",
 			cmd: SaveExternalServiceRoleCommand{
-				OrgID:            1,
+				AssignmentOrgID:  1,
 				ServiceAccountID: 2,
 				Permissions:      []Permission{{Action: "users:read", Scope: "users:id:1"}},
 			},
@@ -59,7 +48,7 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 			name: "slugify the external service ID correctly",
 			cmd: SaveExternalServiceRoleCommand{
 				ExternalServiceID: "ThisIs a Very Strange ___ App Name?",
-				Global:            true,
+				AssignmentOrgID:   1,
 				ServiceAccountID:  2,
 				Permissions:       []Permission{{Action: "users:read", Scope: "users:id:1"}},
 			},
@@ -69,7 +58,7 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 		{
 			name: "invalid empty Action",
 			cmd: SaveExternalServiceRoleCommand{
-				OrgID:             1,
+				AssignmentOrgID:   1,
 				ExternalServiceID: "app 1",
 				ServiceAccountID:  2,
 				Permissions:       []Permission{{Action: "", Scope: "users:id:1"}},
@@ -80,7 +69,7 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 		{
 			name: "permission deduplication",
 			cmd: SaveExternalServiceRoleCommand{
-				OrgID:             1,
+				AssignmentOrgID:   1,
 				ExternalServiceID: "app 1",
 				ServiceAccountID:  2,
 				Permissions: []Permission{

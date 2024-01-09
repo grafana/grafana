@@ -5,7 +5,7 @@ import { FixedSizeList as List } from 'react-window';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { Checkbox, FilterInput, Label, VerticalGroup } from '..';
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 
 interface Props {
   values: SelectableValue[];
@@ -18,8 +18,6 @@ const ITEM_HEIGHT = 28;
 const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
 export const FilterList = ({ options, values, caseSensitive, onChange }: Props) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
   const [searchFilter, setSearchFilter] = useState('');
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
@@ -32,15 +30,11 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
       }),
     [options, regex]
   );
+
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const gutter = theme.spacing.gridSize;
   const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
-
-  const onInputChange = useCallback(
-    (v: string) => {
-      setSearchFilter(v);
-    },
-    [setSearchFilter]
-  );
 
   const onCheckedChanged = useCallback(
     (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => {
@@ -55,7 +49,7 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
 
   return (
     <VerticalGroup spacing="md">
-      <FilterInput placeholder="Filter values" onChange={onInputChange} value={searchFilter} />
+      <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
       {!items.length && <Label>No values</Label>}
       {items.length && (
         <List
@@ -82,7 +76,7 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   filterList: css({
     label: 'filterList',
   }),
@@ -98,4 +92,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
       backgroundColor: theme.colors.action.hover,
     },
   }),
-}));
+});

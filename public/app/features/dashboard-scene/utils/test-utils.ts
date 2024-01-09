@@ -1,9 +1,25 @@
-import { DeepPartial, SceneDeactivationHandler, SceneObject } from '@grafana/scenes';
+import {
+  DeepPartial,
+  EmbeddedScene,
+  SceneDeactivationHandler,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneObject,
+  SceneTimeRange,
+  SceneVariableSet,
+  TestVariable,
+  VizPanel,
+} from '@grafana/scenes';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types';
 
-export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
-  const loadDashboardMock = jest.fn().mockResolvedValue(rsp);
+import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+
+export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
+  const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
   setDashboardLoaderSrv({
     loadDashboard: loadDashboardMock,
     // disabling type checks since this is a test util
@@ -68,4 +84,102 @@ export function activateFullSceneTree(scene: SceneObject): SceneDeactivationHand
       handler();
     }
   };
+}
+
+interface SceneOptions {
+  variableQueryTime: number;
+  maxPerRow?: number;
+  itemHeight?: number;
+  repeatDirection?: RepeatDirection;
+  x?: number;
+  y?: number;
+  numberOfOptions?: number;
+  usePanelRepeater?: boolean;
+  useRowRepeater?: boolean;
+}
+
+export function buildPanelRepeaterScene(options: SceneOptions) {
+  const defaults = { usePanelRepeater: true, ...options };
+
+  const repeater = new PanelRepeaterGridItem({
+    variableName: 'server',
+    repeatedPanels: [],
+    repeatDirection: options.repeatDirection,
+    maxPerRow: options.maxPerRow,
+    itemHeight: options.itemHeight,
+    source: new VizPanel({
+      title: 'Panel $server',
+      pluginId: 'timeseries',
+    }),
+    x: options.x || 0,
+    y: options.y || 0,
+  });
+
+  const gridItem = new SceneGridItem({
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 10,
+    body: new VizPanel({ title: 'Panel $server', pluginId: 'timeseries' }),
+  });
+
+  const rowChildren = defaults.usePanelRepeater ? repeater : gridItem;
+
+  const row = new SceneGridRow({
+    $behaviors: defaults.useRowRepeater
+      ? [
+          new RowRepeaterBehavior({
+            variableName: 'handler',
+            sources: [rowChildren],
+          }),
+        ]
+      : [],
+    children: defaults.useRowRepeater ? [] : [rowChildren],
+  });
+
+  const panelRepeatVariable = new TestVariable({
+    name: 'server',
+    query: 'A.*',
+    value: ALL_VARIABLE_VALUE,
+    text: ALL_VARIABLE_TEXT,
+    isMulti: true,
+    includeAll: true,
+    delayMs: options.variableQueryTime,
+    optionsToReturn: [
+      { label: 'A', value: '1' },
+      { label: 'B', value: '2' },
+      { label: 'C', value: '3' },
+      { label: 'D', value: '4' },
+      { label: 'E', value: '5' },
+    ].slice(0, options.numberOfOptions),
+  });
+
+  const rowRepeatVariable = new TestVariable({
+    name: 'handler',
+    query: 'A.*',
+    value: ALL_VARIABLE_VALUE,
+    text: ALL_VARIABLE_TEXT,
+    isMulti: true,
+    includeAll: true,
+    delayMs: options.variableQueryTime,
+    optionsToReturn: [
+      { label: 'AA', value: '11' },
+      { label: 'BB', value: '22' },
+      { label: 'CC', value: '33' },
+      { label: 'DD', value: '44' },
+      { label: 'EE', value: '55' },
+    ].slice(0, options.numberOfOptions),
+  });
+
+  const scene = new EmbeddedScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $variables: new SceneVariableSet({
+      variables: [panelRepeatVariable, rowRepeatVariable],
+    }),
+    body: new SceneGridLayout({
+      children: [row],
+    }),
+  });
+
+  return { scene, repeater, row, variable: panelRepeatVariable };
 }

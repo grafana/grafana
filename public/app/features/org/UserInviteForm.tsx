@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
@@ -17,6 +16,7 @@ import {
   TextLink,
   Tooltip,
   Label,
+  Stack,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole, useDispatch } from 'app/types';

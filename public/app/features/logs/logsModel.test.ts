@@ -28,6 +28,7 @@ import {
   filterLogLevels,
   getSeriesProperties,
   LIMIT_LABEL,
+  logRowToSingleRowDataFrame,
   logSeriesToLogsModel,
   queryLogsSample,
   queryLogsVolume,
@@ -436,9 +437,6 @@ describe('dataFrameToLogsModel', () => {
         ],
         meta: {
           limit: 1000,
-          custom: {
-            frameType: 'LabeledTimeValues',
-          },
         },
         refId: 'A',
       }),
@@ -516,25 +514,15 @@ describe('dataFrameToLogsModel', () => {
       type: FieldType.string,
       values: ['line1'],
     };
-
-    const meta = {
-      custom: {
-        frameType: 'LabeledTimeValues',
-      },
-    };
-
     const frame1 = new MutableDataFrame({
-      meta,
       fields: [labels, time, line],
     });
 
     const frame2 = new MutableDataFrame({
-      meta,
       fields: [time, labels, line],
     });
 
     const frame3 = new MutableDataFrame({
-      meta,
       fields: [time, line, labels],
     });
 
@@ -1469,5 +1457,56 @@ describe('logs sample', () => {
         'Error message',
       ]);
     });
+  });
+});
+
+const mockLogRow = {
+  dataFrame: toDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [0, 1] },
+      {
+        name: 'Line',
+        type: FieldType.string,
+        values: ['line1', 'line2'],
+      },
+      { name: 'labels', type: FieldType.other, values: [{ app: 'app01' }, { app: 'app02' }] },
+    ],
+  }),
+  rowIndex: 0,
+} as unknown as LogRowModel;
+
+describe('logRowToDataFrame', () => {
+  it('should return a DataFrame with the values from the specified row', () => {
+    const result = logRowToSingleRowDataFrame(mockLogRow);
+
+    expect(result?.length).toBe(1);
+
+    expect(result?.fields[0].values[0]).toEqual(0);
+    expect(result?.fields[1].values[0]).toEqual('line1');
+    expect(result?.fields[2].values[0]).toEqual({ app: 'app01' });
+  });
+
+  it('should return a DataFrame with the values from the specified different row', () => {
+    const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: 1 });
+
+    expect(result?.length).toBe(1);
+
+    expect(result?.fields[0].values[0]).toEqual(1);
+    expect(result?.fields[1].values[0]).toEqual('line2');
+    expect(result?.fields[2].values[0]).toEqual({ app: 'app02' });
+  });
+
+  it('should handle an empty DataFrame', () => {
+    const emptyLogRow = { dataFrame: { fields: [] }, rowIndex: 0 } as unknown as LogRowModel;
+    const result = logRowToSingleRowDataFrame(emptyLogRow);
+
+    expect(result?.length).toBe(0);
+  });
+
+  it('should handle rowIndex exceeding array bounds', () => {
+    const invalidRowIndex = 10;
+    const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: invalidRowIndex });
+
+    expect(result).toBe(null);
   });
 });

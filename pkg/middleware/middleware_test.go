@@ -149,9 +149,14 @@ func TestMiddlewareContext(t *testing.T) {
 				User:     &dtos.CurrentUser{},
 				Settings: &dtos.FrontendSettingsDTO{},
 				NavTree:  &navtree.NavTreeRoot{},
+				Assets: &dtos.EntryPointAssets{
+					JSFiles:  []dtos.EntryPointAsset{},
+					CSSDark:  "dark.css",
+					CSSLight: "light.css",
+				},
 			}
 			t.Log("Calling HTML", "data", data)
-			c.HTML(http.StatusOK, "index-template", data)
+			c.HTML(http.StatusOK, "index", data)
 			t.Log("Returned HTML with code 200")
 		}
 		sc.fakeReq("GET", "/").exec()
@@ -199,7 +204,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		cfg.LoginCookieName = "grafana_session"
 		cfg.LoginMaxLifetime = loginMaxLifetime
 		// Required when rendering errors
-		cfg.ErrTemplateName = "error-template"
+		cfg.ErrTemplateName = "error"
 		for _, cb := range cbs {
 			cb(cfg)
 		}

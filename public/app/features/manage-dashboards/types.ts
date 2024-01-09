@@ -2,20 +2,6 @@ import { Dashboard } from '@grafana/schema/src/veneer/dashboard.types';
 
 import { ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
 
-export interface Snapshot {
-  created: string;
-  expires: string;
-  external: boolean;
-  externalUrl: string;
-  id: number;
-  key: string;
-  name: string;
-  orgId: number;
-  updated: string;
-  url?: string;
-  userId: number;
-}
-
 export type DeleteDashboardResponse = {
   id: number;
   message: string;

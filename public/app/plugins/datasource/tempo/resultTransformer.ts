@@ -18,11 +18,18 @@ import {
   createTheme,
   DataFrameDTO,
   toDataFrame,
+  DataLink,
+  DataSourceJsonData,
+  Field,
+  DataLinkConfigOrigin,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
-import { Span, SpanAttributes, Spanset, TraceSearchMetadata } from './types';
+import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame | DataFrameDTO,
@@ -491,11 +498,54 @@ function getOTLPReferences(
   return links;
 }
 
-export function transformTrace(response: DataQueryResponse, nodeGraph = false): DataQueryResponse {
+export const RelatedProfilesTitle = 'Related profiles';
+
+export function transformTrace(
+  response: DataQueryResponse,
+  instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
+  nodeGraph = false
+): DataQueryResponse {
   const frame = response.data[0];
 
   if (!frame) {
     return emptyDataQueryResponse;
+  }
+
+  // Get profiles links
+  if (config.featureToggles.traceToProfiles) {
+    const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
+    const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
+    let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+    if (traceToProfilesOptions?.datasourceUid) {
+      profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+    }
+
+    if (traceToProfilesOptions && profilesDataSourceSettings) {
+      const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
+      const dataLink: DataLink = {
+        title: RelatedProfilesTitle,
+        url: '',
+        internal: {
+          datasourceUid: profilesDataSourceSettings.uid,
+          datasourceName: profilesDataSourceSettings.name,
+          query: {
+            labelSelector: customQuery ? customQuery : '{${__tags}}',
+            groupBy: [],
+            profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
+            queryType: 'profile',
+            spanSelector: ['${__span.tags["pyroscope.profile.id"]}'],
+            refId: 'profile',
+          },
+        },
+        origin: DataLinkConfigOrigin.Datasource,
+      };
+
+      frame.fields.forEach((field: Field) => {
+        if (field.name === 'tags') {
+          field.config.links = [dataLink];
+        }
+      });
+    }
   }
 
   let data = [...response.data];
@@ -690,7 +740,7 @@ export function createTableFrameFromTraceQlQueryAsSpans(
   const spanDynamicAttrs: Record<string, FieldDTO> = {};
   let hasNameAttribute = false;
 
-  data.forEach(
+  data?.forEach(
     (t) =>
       t.spanSets?.forEach((ss) => {
         ss.attributes?.forEach((attr) => {

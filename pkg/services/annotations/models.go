@@ -87,6 +87,7 @@ func (i Item) TableName() string {
 	return "annotation"
 }
 
+// swagger:model Annotation
 type ItemDTO struct {
 	ID           int64            `json:"id" xorm:"id"`
 	AlertID      int64            `json:"alertId" xorm:"alert_id"`

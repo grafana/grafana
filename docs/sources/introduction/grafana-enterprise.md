@@ -84,7 +84,6 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [k6 Cloud App](/grafana/plugins/grafana-k6-app)
 - [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](/grafana/plugins/grafana-newrelic-datasource)
-- [Sqlyze Datasource](/grafana/plugins/grafana-odbc-datasource)
 - [Oracle Database](/grafana/plugins/grafana-oracle-datasource)
 - [Salesforce](/grafana/plugins/grafana-salesforce-datasource)
 - [SAP HANA®](/grafana/plugins/grafana-saphana-datasource)
@@ -92,7 +91,8 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Snowflake](/grafana/plugins/grafana-snowflake-datasource)
 - [Splunk](/grafana/plugins/grafana-splunk-datasource)
 - [Splunk Infrastructure monitoring (SignalFx)](/grafana/plugins/grafana-splunk-monitoring-datasource)
-- [Sqlyze](/grafana/plugins/grafana-odbc-datasource/)
+- [Sqlyze Datasource](/grafana/plugins/grafana-odbc-datasource)
+- [SumoLogic](/grafana/plugins/grafana-sumologic-datasource)
 - [Wavefront](/grafana/plugins/grafana-wavefront-datasource)
 
 ## Try Grafana Enterprise

@@ -14,6 +14,7 @@ import {
   calculateLogsLabelStats,
   calculateStats,
   checkLogsError,
+  escapeUnescapedString,
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
@@ -407,6 +408,33 @@ describe('mergeLogsVolumeDataFrames', () => {
     ]);
     expect(maximum).toBe(6);
   });
+
+  it('produces merged results order by time', () => {
+    const frame1 = mockLogVolume('info', [1600000000001, 1600000000009], [1, 1]);
+    const frame2 = mockLogVolume('info', [1600000000000, 1600000000005], [1, 1]);
+
+    const { dataFrames: merged } = mergeLogsVolumeDataFrames([frame1, frame2]);
+
+    expect(merged).toMatchObject([
+      {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [1600000000000, 1600000000001, 1600000000005, 1600000000009],
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [1, 1, 1, 1],
+            config: {
+              displayNameFromDS: 'info',
+            },
+          },
+        ],
+      },
+    ]);
+  });
 });
 
 describe('getLogsVolumeDimensions', () => {
@@ -440,5 +468,14 @@ describe('getLogsVolumeDimensions', () => {
     ]);
 
     expect(maximumRange).toEqual({ from: 5, to: 25 });
+  });
+});
+
+describe('escapeUnescapedString', () => {
+  it('does not modify strings without unescaped characters', () => {
+    expect(escapeUnescapedString('a simple string')).toBe('a simple string');
+  });
+  it('escapes unescaped strings', () => {
+    expect(escapeUnescapedString(`\\r\\n|\\n|\\t|\\r`)).toBe(`\n|\n|\t|\n`);
   });
 });

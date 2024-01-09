@@ -16,17 +16,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"xorm.io/core"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
-
-// XormDriverMu is used to allow safe concurrent registering and querying of drivers in xorm
-var XormDriverMu sync.RWMutex
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
@@ -48,11 +43,11 @@ type SqlQueryResultTransformer interface {
 
 var sqlIntervalCalculator = intervalv2.NewCalculator()
 
-// NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
+// NewDB is a sql.DB factory, that can be stubbed by tests.
 //
 //nolint:gocritic
-var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
-	return xorm.NewEngine(driverName, connectionString)
+var NewDB = func(driverName string, connectionString string) (*sql.DB, error) {
+	return sql.Open(driverName, connectionString)
 }
 
 type JsonData struct {
@@ -89,13 +84,6 @@ type DataSourceInfo struct {
 	DecryptedSecureJSONData map[string]string
 }
 
-// Defaults for the xorm connection pool
-type DefaultConnectionInfo struct {
-	MaxOpenConns    int
-	MaxIdleConns    int
-	ConnMaxLifetime int
-}
-
 type DataPluginConfiguration struct {
 	DriverName        string
 	DSInfo            DataSourceInfo
@@ -108,7 +96,7 @@ type DataPluginConfiguration struct {
 type DataSourceHandler struct {
 	macroEngine            SQLMacroEngine
 	queryResultTransformer SqlQueryResultTransformer
-	engine                 *xorm.Engine
+	db                     *sql.DB
 	timeColumnNames        []string
 	metricColumnTypes      []string
 	log                    log.Logger
@@ -165,16 +153,16 @@ func NewQueryDataHandler(cfg *setting.Cfg, config DataPluginConfiguration, query
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
-	engine, err := NewXormEngine(config.DriverName, config.ConnectionString)
+	db, err := NewDB(config.DriverName, config.ConnectionString)
 	if err != nil {
 		return nil, err
 	}
 
-	engine.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
-	engine.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
-	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+	db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+	db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-	queryDataHandler.engine = engine
+	queryDataHandler.db = db
 	return &queryDataHandler, nil
 }
 
@@ -184,17 +172,17 @@ type DBDataResponse struct {
 }
 
 func (e *DataSourceHandler) Dispose() {
-	e.log.Debug("Disposing engine...")
-	if e.engine != nil {
-		if err := e.engine.Close(); err != nil {
-			e.log.Error("Failed to dispose engine", "error", err)
+	e.log.Debug("Disposing DB...")
+	if e.db != nil {
+		if err := e.db.Close(); err != nil {
+			e.log.Error("Failed to dispose db", "error", err)
 		}
 	}
-	e.log.Debug("Engine disposed")
+	e.log.Debug("DB disposed")
 }
 
 func (e *DataSourceHandler) Ping() error {
-	return e.engine.Ping()
+	return e.db.Ping()
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -285,11 +273,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	session := e.engine.NewSession()
-	defer session.Close()
-	db := session.DB()
-
-	rows, err := db.QueryContext(queryContext, interpolatedQuery)
+	rows, err := e.db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
@@ -308,7 +292,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
-	frame, err := sqlutil.FrameFromRows(rows.Rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
+	frame, err := sqlutil.FrameFromRows(rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
 		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
 		return
@@ -418,7 +402,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 }
 
 func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext context.Context,
-	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
+	rows *sql.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -431,7 +415,6 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 	qm := &dataQueryModel{
 		columnTypes:  columnTypes,
 		columnNames:  columnNames,
-		rows:         rows,
 		timeIndex:    -1,
 		timeEndIndex: -1,
 		metricIndex:  -1,
@@ -525,7 +508,6 @@ type dataQueryModel struct {
 	timeIndex         int
 	timeEndIndex      int
 	metricIndex       int
-	rows              *core.Rows
 	metricPrefix      bool
 	queryContext      context.Context
 }

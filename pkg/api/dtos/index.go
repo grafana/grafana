@@ -35,6 +35,19 @@ type IndexViewData struct {
 	Nonce           string
 	NewsFeedEnabled bool
 
+	Assets          *EntryPointAssets
+
 	// @PERCONA
 	Env string
+}
+
+type EntryPointAssets struct {
+	JSFiles  []EntryPointAsset
+	CSSDark  string
+	CSSLight string
+}
+
+type EntryPointAsset struct {
+	FilePath  string
+	Integrity string
 }

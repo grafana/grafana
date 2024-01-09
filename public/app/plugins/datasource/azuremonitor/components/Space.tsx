@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { stylesFactory, useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 export interface SpaceProps {
   v?: number;
@@ -11,8 +11,7 @@ export interface SpaceProps {
 }
 
 export const Space = (props: SpaceProps) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme, props);
+  const styles = useStyles2(getStyles, props);
 
   return <span className={cx(styles.wrapper)} />;
 };
@@ -23,7 +22,7 @@ Space.defaultProps = {
   layout: 'block',
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, props: SpaceProps) => ({
+const getStyles = (theme: GrafanaTheme2, props: SpaceProps) => ({
   wrapper: css([
     {
       paddingRight: theme.spacing(props.h ?? 0),
@@ -36,4 +35,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, props: SpaceProps) => ({
       display: 'block',
     },
   ]),
-}));
+});

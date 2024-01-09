@@ -372,7 +372,7 @@ export const Table = memo((props: Props) => {
               </CustomScrollbar>
             </div>
           ) : (
-            <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
+            <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
               No data
             </div>
           )}

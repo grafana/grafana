@@ -25,7 +25,7 @@ func RegionsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtx
 		return nil, models.NewHttpError("Error in Regions Handler when connecting to aws", http.StatusInternalServerError, err)
 	}
 
-	regions, err := service.GetRegions()
+	regions, err := service.GetRegions(ctx)
 	if err != nil {
 		return nil, models.NewHttpError("Error in Regions Handler while fetching regions", http.StatusInternalServerError, err)
 	}
@@ -44,5 +44,5 @@ var newRegionsService = func(ctx context.Context, pluginCtx backend.PluginContex
 		return nil, err
 	}
 
-	return services.NewRegionsService(reqCtx.EC2APIProvider), nil
+	return services.NewRegionsService(reqCtx.EC2APIProvider, reqCtx.Logger), nil
 }

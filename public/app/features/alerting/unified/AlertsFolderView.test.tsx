@@ -35,8 +35,6 @@ const mockFolder = (folderOverride: Partial<FolderState> = {}): FolderState => {
     canSave: false,
     url: '/folder-1',
     version: 1,
-    permissions: [],
-    canViewFolderPermissions: false,
     canDelete: false,
     ...folderOverride,
   };

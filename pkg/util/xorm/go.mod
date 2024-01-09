@@ -1,6 +1,6 @@
 module xorm.io/xorm
 
-go 1.11
+go 1.20
 
 require (
 	github.com/denisenkom/go-mssqldb v0.0.0-20190707035753-2be1aa521ff4

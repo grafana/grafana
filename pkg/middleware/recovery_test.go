@@ -50,7 +50,7 @@ func panicHandler(c *contextmodel.ReqContext) {
 func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
-		cfg.ErrTemplateName = "error-template"
+		cfg.ErrTemplateName = "error"
 		cfg.UserFacingDefaultError = "test error"
 		sc := &scenarioContext{
 			t:   t,

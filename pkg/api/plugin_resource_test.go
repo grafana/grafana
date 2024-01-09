@@ -46,9 +46,6 @@ func TestCallResource(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = staticRootPath
-	cfg.IsFeatureToggleEnabled = func(_ string) bool {
-		return false
-	}
 	cfg.Azure = &azsettings.AzureSettings{}
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
@@ -128,7 +125,7 @@ func TestCallResource(t *testing.T) {
 		_, err = io.Copy(body, resp.Body)
 		require.NoError(t, err)
 
-		expectedBody := `{ "error": "something went wrong", "message": "Failed to call resource", "traceID": "" }`
+		expectedBody := `{ "message": "Failed to call resource", "traceID": "" }`
 		require.JSONEq(t, expectedBody, body.String())
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 500, resp.StatusCode)

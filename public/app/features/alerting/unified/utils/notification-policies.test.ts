@@ -5,6 +5,7 @@ import {
   normalizeRoute,
   getInheritedProperties,
   computeInheritedTree,
+  matchLabels,
 } from './notification-policies';
 
 import 'core-js/stable/structured-clone';
@@ -22,6 +23,7 @@ describe('findMatchingRoutes', () => {
     routes: [
       {
         receiver: 'A',
+        object_matchers: [['team', MatcherOperator.equal, 'operations']],
         routes: [
           {
             receiver: 'B1',
@@ -29,10 +31,9 @@ describe('findMatchingRoutes', () => {
           },
           {
             receiver: 'B2',
-            object_matchers: [['region', MatcherOperator.notEqual, 'europe']],
+            object_matchers: [['region', MatcherOperator.equal, 'nasa']],
           },
         ],
-        object_matchers: [['team', MatcherOperator.equal, 'operations']],
       },
       {
         receiver: 'C',
@@ -53,6 +54,19 @@ describe('findMatchingRoutes', () => {
     const matches = findMatchingRoutes(policies, [['team', 'operations']]);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'A');
+  });
+
+  it('should match route with negative matchers', () => {
+    const policiesWithNegative = {
+      ...policies,
+      routes: policies.routes?.concat({
+        receiver: 'D',
+        object_matchers: [['name', MatcherOperator.notEqual, 'gilles']],
+      }),
+    };
+    const matches = findMatchingRoutes(policiesWithNegative, [['name', 'konrad']]);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].route).toHaveProperty('receiver', 'D');
   });
 
   it('should match child route of matching parent', () => {
@@ -376,5 +390,49 @@ describe('normalizeRoute', () => {
 
     expect(normalized).not.toHaveProperty('match');
     expect(normalized).not.toHaveProperty('match_re');
+  });
+});
+
+describe('matchLabels', () => {
+  it('should match with non-matching matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.equal, ''],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [['team', 'operations']]
+    );
+
+    expect(result).toHaveProperty('matches', true);
+    expect(result.labelsMatch).toMatchSnapshot();
+  });
+
+  it('should match with non-equal matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.notEqual, 'bar'],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [['team', 'operations']]
+    );
+
+    expect(result).toHaveProperty('matches', true);
+    expect(result.labelsMatch).toMatchSnapshot();
+  });
+
+  it('should not match with a set of matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.notEqual, 'bar'],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [
+        ['team', 'operations'],
+        ['foo', 'bar'],
+      ]
+    );
+
+    expect(result).toHaveProperty('matches', false);
+    expect(result.labelsMatch).toMatchSnapshot();
   });
 });

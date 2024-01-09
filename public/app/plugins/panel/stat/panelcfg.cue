@@ -31,6 +31,7 @@ composableKinds: PanelCfg: {
 					colorMode:   common.BigValueColorMode & (*"value" | _)
 					justifyMode: common.BigValueJustifyMode & (*"auto" | _)
 					textMode:    common.BigValueTextMode & (*"auto" | _)
+					wideLayout:  bool | *true
 				} @cuetsy(kind="interface")
 			}
 		}]

@@ -52,3 +52,5 @@ storage:
 
 overrides:
   metrics_generator_processors: [local-blocks, service-graphs, span-metrics]
+
+stream_over_http_enabled: true

@@ -17,6 +17,7 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 
+import { config } from '../../../../core/config';
 import { SectionFooter } from '../insights/SectionFooter';
 import { SectionSubheader } from '../insights/SectionSubheader';
 import { getGrafanaInstancesByStateScene } from '../insights/grafana/AlertsByStateScene';
@@ -94,6 +95,10 @@ export function overrideToFixedColor(key: keyof typeof SERIES_COLORS) {
 export const PANEL_STYLES = { minHeight: 300 };
 
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
+
+const namespace = config.bootData.settings.namespace;
+
+export const INSTANCE_ID = namespace.includes('stack-') ? namespace.replace('stack-', '') : undefined;
 
 export function getInsightsScenes() {
   const dataSourceSrv = getDataSourceSrv();
@@ -175,7 +180,7 @@ export function getInsightsScenes() {
 
 function getGrafanaManagedScenes() {
   return new NestedScene({
-    title: 'Grafana-managed rules',
+    title: 'Grafana-managed alert rules',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -282,7 +287,7 @@ function getGrafanaAlertmanagerScenes() {
 
 function getCloudScenes() {
   return new NestedScene({
-    title: 'Mimir alertmanager',
+    title: 'Mimir Alertmanager',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -316,7 +321,7 @@ function getCloudScenes() {
 
 function getMimirManagedRulesScenes() {
   return new NestedScene({
-    title: 'Mimir-managed rules',
+    title: 'Mimir-managed alert rules',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -364,7 +369,7 @@ function getMimirManagedRulesPerGroupScenes() {
   });
 
   return new NestedScene({
-    title: 'Mimir-managed Rules - Per Rule Group',
+    title: 'Mimir-managed alert rules - per rule group',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({

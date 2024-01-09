@@ -91,7 +91,7 @@ export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
             {!readOnly && (
               <>
                 {loading && (
-                  <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                  <Button disabled={true} icon="spinner" variant="primary">
                     Saving...
                   </Button>
                 )}

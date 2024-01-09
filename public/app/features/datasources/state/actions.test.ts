@@ -26,7 +26,6 @@ import {
   testDataSourceSucceeded,
   testDataSourceFailed,
   dataSourceLoaded,
-  dataSourcesLoaded,
 } from './reducers';
 
 jest.mock('../api');
@@ -383,18 +382,12 @@ describe('addDataSource', () => {
       type: PluginType.datasource,
       name: 'test DS',
     };
-    const state = {
-      dataSources: {
-        dataSources: [],
-      },
-    };
     const dataSourceMock = { datasource: { uid: 'azure23' }, meta };
     (api.createDataSource as jest.Mock).mockResolvedValueOnce(dataSourceMock);
     (api.getDataSources as jest.Mock).mockResolvedValueOnce([]);
 
-    const dispatchedActions = await thunkTester(state).givenThunk(addDataSource).whenThunkIsDispatched(meta);
+    await thunkTester({}).givenThunk(addDataSource).whenThunkIsDispatched(meta);
 
-    expect(dispatchedActions).toEqual([dataSourcesLoaded([])]);
     expect(trackDataSourceCreated).toHaveBeenCalledWith({
       plugin_id: 'azure-monitor',
       plugin_version: '1.2.3',

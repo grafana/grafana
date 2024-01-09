@@ -40,7 +40,8 @@ For links to data source-specific documentation, see [Data sources]({{< relref "
 
 ## Data source permissions
 
-You can configure data source permissions to allow or deny certain users the ability to query or edit a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, teams, or roles.
+You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, service accounts, teams, or roles.
+Query permission allows users to query the data source. Edit permission allows users to query the data source, edit the data source’s configuration and delete the data source. Admin permission allows users to query and edit the data source, change permissions on the data source and enable or disable query caching for the data source.
 
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
@@ -50,37 +51,37 @@ By default, data sources in an organization can be queried by any user in that o
 
 <div class="clearfix"></div>
 
-### Assign data source permissions to users, teams, or roles
+### Assign data source permissions to users, service accounts, teams, or roles
 
-You can assign data source permissions to users, teams, and roles which will allow access to query or edit the data source.
+You can assign data source permissions to users, service accounts, teams, and roles which will allow access to query, edit, or administrate the data source.
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Select the data source to which you want to assign permissions.
 1. On the Permissions tab, click **Add a permission**.
-1. Select **User**, **Team**, or **Role**.
+1. Select **User**, **Service Account**, **Team**, or **Role**.
 1. Select the entity for which you want to modify permissions.
-1. Select the **Query** or **Edit** permission.
+1. Select the **Query**, **Edit**, or **Admin** permission.
 1. Click **Save**.
 
 <div class="clearfix"></div>
 
-### Edit data source permissions for users, teams, or roles
+### Edit data source permissions for users, service accounts, teams, or roles
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Select the data source for which you want to edit permissions.
-1. On the Permissions tab, find the user, team, or role permission you want to update.
+1. On the Permissions tab, find the user, service account, team, or role permission you want to update.
 1. Select a different option in the **Permission** dropdown.
 
 <div class="clearfix"></div>
 
-### Remove data source permissions for users, teams, or roles
+### Remove data source permissions for users, service accounts, teams, or roles
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
 1. Select the data source from which you want to remove permissions.
-1. On the Permissions tab, find the user, team, or role permission you want to remove.
+1. On the Permissions tab, find the user, service account, team, or role permission you want to remove.
 1. Click the **X** next to the permission.
 
 <div class="clearfix"></div>

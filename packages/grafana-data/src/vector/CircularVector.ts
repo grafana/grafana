@@ -122,7 +122,7 @@ export class CircularVector<T = any> extends FunctionalVector<T> {
     return this.buffer[(index + this.index) % this.buffer.length];
   }
 
-  set(index: number, value: any) {
+  set(index: number, value: T) {
     this.buffer[(index + this.index) % this.buffer.length] = value;
   }
 

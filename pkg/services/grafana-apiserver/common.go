@@ -42,16 +42,12 @@ type APIRouteHandler struct {
 	Handler http.HandlerFunc // when Level = resource, the resource will be available in context
 }
 
-// APIRoutes define the
+// APIRoutes define explicit HTTP handlers in an apiserver
+// TBD: is this actually necessary -- there may be more k8s native options for this
 type APIRoutes struct {
 	// Root handlers are registered directly after the apiVersion identifier
 	Root []APIRouteHandler
 
 	// Namespace handlers are mounted under the namespace
 	Namespace []APIRouteHandler
-
-	// Resource routes behave the same as pod/logs
-	// it looks like a sub-resource, however the response is backed directly by an http handler
-	// The current resource can be fetched through context
-	Resource map[string]APIRouteHandler
 }

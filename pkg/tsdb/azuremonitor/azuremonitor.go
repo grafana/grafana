@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azmoncredentials"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
@@ -77,19 +79,26 @@ func getDatasourceService(ctx context.Context, settings *backend.DataSourceInsta
 
 func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonDataObj := map[string]any{}
-		err := json.Unmarshal(settings.JSONData, &jsonDataObj)
+		jsonData := map[string]any{}
+		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		azSettings := types.AzureSettings{}
-		err = json.Unmarshal(settings.JSONData, &azSettings)
+		azMonitorSettings := types.AzureMonitorSettings{}
+		err = json.Unmarshal(settings.JSONData, &azMonitorSettings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		cloud, err := getAzureCloud(cfg, &azSettings.AzureClientSettings)
+		credentials, err := azmoncredentials.FromDatasourceData(jsonData, settings.DecryptedSecureJSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		} else if credentials == nil {
+			credentials = azmoncredentials.GetDefaultCredentials(cfg.Azure)
+		}
+
+		cloud, err := azcredentials.GetAzureCloud(cfg.Azure, credentials)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -99,16 +108,11 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, err
 		}
 
-		credentials, err := getAzureCredentials(cfg, &azSettings.AzureClientSettings, settings.DecryptedSecureJSONData)
-		if err != nil {
-			return nil, fmt.Errorf("error getting credentials: %w", err)
-		}
-
 		model := types.DatasourceInfo{
 			Cloud:                   cloud,
 			Credentials:             credentials,
-			Settings:                azSettings.AzureMonitorSettings,
-			JSONData:                jsonDataObj,
+			Settings:                azMonitorSettings,
+			JSONData:                jsonData,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
 			Routes:                  routesForModel,

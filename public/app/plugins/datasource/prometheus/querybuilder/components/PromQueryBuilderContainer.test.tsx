@@ -44,7 +44,6 @@ function setup(queryOverrides: Partial<PromQuery> = {}) {
       meta: {} as DataSourcePluginMeta,
     } as DataSourceInstanceSettings,
     undefined,
-    undefined,
     languageProvider
   );
 

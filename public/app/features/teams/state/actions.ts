@@ -16,6 +16,8 @@ import {
   teamMembersLoaded,
   teamsLoaded,
   sortChanged,
+  rolesFetchBegin,
+  rolesFetchEnd,
 } from './reducers';
 
 export function loadTeams(initial = false): ThunkResult<void> {
@@ -37,6 +39,16 @@ export function loadTeams(initial = false): ThunkResult<void> {
     let noTeams = false;
     if (initial) {
       noTeams = response.teams.length === 0;
+    }
+
+    if (contextSrv.licensedAccessControlEnabled()) {
+      dispatch(rolesFetchBegin());
+      const teamIds = response?.teams.map((t: Team) => t.id);
+      const roles = await getBackendSrv().post(`/api/access-control/teams/roles/search`, { teamIds });
+      response.teams.forEach((t: Team) => {
+        t.roles = roles ? roles[t.id] || [] : [];
+      });
+      dispatch(rolesFetchEnd());
     }
 
     dispatch(teamsLoaded({ noTeams, ...response }));

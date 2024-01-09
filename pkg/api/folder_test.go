@@ -47,7 +47,7 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			description:    "folder creation succeeds given the correct request for creating a folder",
 			input:          folderWithoutParentInput,
 			expectedCode:   http.StatusOK,
-			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder"},
+			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}, // nolint:staticcheck
 			permissions:    []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
 		},
 		{
@@ -145,8 +145,7 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 
 			if tc.expectedCode == http.StatusOK {
-				assert.Equal(t, int64(1), folder.Id)
-				assert.Equal(t, "uid", folder.Uid)
+				assert.Equal(t, "uid", folder.UID)
 				assert.Equal(t, "Folder", folder.Title)
 			}
 		})
@@ -168,7 +167,7 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 		{
 			description:    "folder updating succeeds given the correct request and permissions to update a folder",
 			expectedCode:   http.StatusOK,
-			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"},
+			expectedFolder: &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"}, // nolint:staticcheck
 			permissions:    []accesscontrol.Permission{{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll}},
 		},
 		{
@@ -249,8 +248,7 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 
 			if tc.expectedCode == http.StatusOK {
-				assert.Equal(t, int64(1), folder.Id)
-				assert.Equal(t, "uid", folder.Uid)
+				assert.Equal(t, "uid", folder.UID)
 				assert.Equal(t, "Folder upd", folder.Title)
 			}
 		})
@@ -419,7 +417,7 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 func TestFolderGetAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{
 		ExpectedFolder: &folder.Folder{
-			ID:    1,
+			ID:    1, // nolint:staticcheck
 			UID:   "uid",
 			Title: "uid title",
 		},
@@ -441,6 +439,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 		features             *featuremgmt.FeatureManager
 		expectedCode         int
 		expectedParentUIDs   []string
+		expectedParentOrgIDs []int64
 		expectedParentTitles []string
 		permissions          []accesscontrol.Permission
 		g                    *guardian.FakeDashboardGuardian
@@ -452,6 +451,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedCode:         http.StatusOK,
 			features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			expectedParentUIDs:   []string{"parent", "subfolder"},
+			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{"parent title", "subfolder title"},
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
@@ -464,6 +464,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedCode:         http.StatusOK,
 			features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			expectedParentUIDs:   []string{REDACTED, REDACTED},
+			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{REDACTED, REDACTED},
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
@@ -476,6 +477,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedCode:         http.StatusOK,
 			features:             featuremgmt.WithFeatures(),
 			expectedParentUIDs:   []string{},
+			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{},
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
@@ -513,7 +515,8 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			require.Equal(t, len(folder.Parents), len(tc.expectedParentTitles))
 
 			for i := 0; i < len(tc.expectedParentUIDs); i++ {
-				assert.Equal(t, tc.expectedParentUIDs[i], folder.Parents[i].Uid)
+				assert.Equal(t, tc.expectedParentUIDs[i], folder.Parents[i].UID)
+				assert.Equal(t, tc.expectedParentOrgIDs[i], folder.Parents[i].OrgID)
 				assert.Equal(t, tc.expectedParentTitles[i], folder.Parents[i].Title)
 			}
 			require.NoError(t, resp.Body.Close())

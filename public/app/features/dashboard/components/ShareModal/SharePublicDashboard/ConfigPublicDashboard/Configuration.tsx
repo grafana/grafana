@@ -5,9 +5,7 @@ import { TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { FieldSet, Label, Switch, TimeRangeInput, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
-
-import { trackDashboardSharingActionPerType } from '../../analytics';
-import { shareDashboardType } from '../../utils';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
 
@@ -39,11 +37,10 @@ export const Configuration = ({
               {...register('isTimeSelectionEnabled')}
               data-testid={selectors.EnableTimeRangeSwitch}
               onChange={(e) => {
-                trackDashboardSharingActionPerType(
-                  e.currentTarget.checked ? 'enable_time' : 'disable_time',
-                  shareDashboardType.publicDashboard
-                );
                 onChange('isTimeSelectionEnabled', e.currentTarget.checked);
+                DashboardInteractions.publicDashboardTimeSelectionChanged({
+                  enabled: e.currentTarget.checked,
+                });
               }}
             />
             <Label description="Allow viewers to change time range">Time range picker enabled</Label>
@@ -52,11 +49,10 @@ export const Configuration = ({
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
-                trackDashboardSharingActionPerType(
-                  e.currentTarget.checked ? 'enable_annotations' : 'disable_annotations',
-                  shareDashboardType.publicDashboard
-                );
                 onChange('isAnnotationsEnabled', e.currentTarget.checked);
+                DashboardInteractions.publicDashboardAnnotationsSelectionChanged({
+                  enabled: e.currentTarget.checked,
+                });
               }}
               data-testid={selectors.EnableAnnotationsSwitch}
             />

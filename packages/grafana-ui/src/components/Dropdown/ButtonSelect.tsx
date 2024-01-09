@@ -8,7 +8,6 @@ import React, { HTMLAttributes } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { ButtonGroup } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
@@ -46,7 +45,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
   };
 
   return (
-    <ButtonGroup className={styles.wrapper}>
+    <div className={styles.wrapper}>
       <ToolbarButton
         className={className}
         isOpen={state.isOpen}
@@ -83,12 +82,15 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
           </ClickOutsideWrapper>
         </div>
       )}
-    </ButtonGroup>
+    </div>
   );
 };
 
 ButtonSelectComponent.displayName = 'ButtonSelect';
 
+// needed to properly forward the generic type through React.memo
+// see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/37087#issuecomment-656596623
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export const ButtonSelect = React.memo(ButtonSelectComponent) as typeof ButtonSelectComponent;
 
 const getStyles = (theme: GrafanaTheme2) => {

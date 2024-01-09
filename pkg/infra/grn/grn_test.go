@@ -38,24 +38,29 @@ func TestParseGRNStr(t *testing.T) {
 			&GRN{},
 			true,
 		},
+		{ // Missing Group
+			"grn::foo/Bar",
+			&GRN{},
+			true,
+		},
 		{ // good!
-			"grn::roles/Admin",
-			&GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin"},
+			"grn::core.grafana.com/Role/Admin",
+			&GRN{TenantID: 0, ResourceGroup: "core.grafana.com", ResourceKind: "Role", ResourceIdentifier: "Admin"},
 			false,
 		},
 		{ // good!
-			"grn::roles/Admin/with/some/slashes",
-			&GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
+			"grn::core.grafana.com/Role/Admin/with/some/slashes",
+			&GRN{TenantID: 0, ResourceGroup: "core.grafana.com", ResourceKind: "Role", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // good!
-			"grn:123456789:roles/Admin/with/some/slashes",
-			&GRN{TenantID: 123456789, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
+			"grn:123456789:core.grafana.com/Role/Admin/with/some/slashes",
+			&GRN{TenantID: 123456789, ResourceGroup: "core.grafana.com", ResourceKind: "Role", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // Weird, but valid.
-			"grn::roles///Admin/with/leading/slashes",
-			&GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "//Admin/with/leading/slashes"},
+			"grn::core.grafana.com/Role///Admin/with/leading/slashes",
+			&GRN{TenantID: 0, ResourceGroup: "core.grafana.com", ResourceKind: "Role", ResourceIdentifier: "//Admin/with/leading/slashes"},
 			false,
 		},
 	}

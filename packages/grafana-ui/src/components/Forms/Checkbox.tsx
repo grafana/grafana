@@ -3,7 +3,7 @@ import React, { HTMLProps, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 import { getLabelStyles } from './Label';
@@ -36,8 +36,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       },
       [onChange]
     );
-    const theme = useTheme2();
-    const styles = getCheckboxStyles(theme, invalid);
+    const styles = useStyles2(getCheckboxStyles, invalid);
 
     const ariaChecked = indeterminate ? 'mixed' : undefined;
 

@@ -4,19 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
-
-func GetEntityKindInfo() entity.EntityKindInfo {
-	return entity.EntityKindInfo{
-		ID:          entity.StandardKindDashboard,
-		Name:        "Dashboard",
-		Description: "Define a grafana dashboard layout",
-	}
-}
 
 // This summary does not resolve old name as UID
 func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
@@ -44,7 +37,7 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) en
 
 		summary := &entity.EntitySummary{
 			Labels: make(map[string]string),
-			Fields: make(map[string]any),
+			Fields: make(map[string]string),
 		}
 		stream := bytes.NewBuffer(body)
 		dash, err := readDashboard(stream, lookup)
@@ -62,9 +55,9 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) en
 			summary.Labels[v] = ""
 		}
 		if len(dash.TemplateVars) > 0 {
-			summary.Fields["hasTemplateVars"] = true
+			summary.Fields["hasTemplateVars"] = "true"
 		}
-		summary.Fields["schemaVersion"] = dash.SchemaVersion
+		summary.Fields["schemaVersion"] = fmt.Sprint(dash.SchemaVersion)
 
 		for _, panel := range dash.Panels {
 			panelRefs := NewReferenceAccumulator()
@@ -74,7 +67,7 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) en
 			}
 			p.Name = panel.Title
 			p.Description = panel.Description
-			p.Fields = make(map[string]any, 0)
+			p.Fields = make(map[string]string, 0)
 			p.Fields["type"] = panel.Type
 
 			if panel.Type != "row" {

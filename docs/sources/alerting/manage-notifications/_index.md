@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: Manage
 title: Manage your alerts
-weight: 160
+weight: 130
 ---
 
 # Manage your alerts

@@ -1,4 +1,4 @@
-import React, { SyntheticEvent } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -7,28 +7,29 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription, Stack } from '@grafana/experimental';
+import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
-  Alert,
-  Divider,
+  Collapse,
   Field,
   Icon,
   Input,
   Label,
-  Link,
   SecretInput,
   SecureSocksProxySettings,
   Switch,
   Tooltip,
 } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
+import { Divider } from 'app/features/plugins/sql/components/configuration/Divider';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { MySQLOptions } from '../types';
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MySQLOptions>) => {
+  const [isOpen, setIsOpen] = useState(true);
+
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
 
@@ -57,8 +58,19 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
       <DataSourceDescription
         dataSourceName="MySQL"
         docsLink="https://grafana.com/docs/grafana/latest/datasources/mysql/"
-        hasRequiredFields={false}
+        hasRequiredFields={true}
       />
+
+      <Divider />
+
+      <Collapse collapsible label="User Permission" isOpen={isOpen} onToggle={() => setIsOpen((x) => !x)}>
+        The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
+        query. <br />
+        Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
+        statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. <br />
+        To protect against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted
+        permissions. Check out the docs for more information.
+      </Collapse>
 
       <Divider />
 
@@ -73,11 +85,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             onChange={onDSOptionChanged('url')}
           />
         </Field>
-      </ConfigSection>
 
-      <Divider />
-
-      <ConfigSection title="Authentication">
         <Field label="Database name">
           <Input
             width={WIDTH_LONG}
@@ -87,8 +95,12 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           />
         </Field>
+      </ConfigSection>
 
-        <Field label="Username">
+      <Divider />
+
+      <ConfigSection title="Authentication">
+        <Field label="Username" required>
           <Input
             width={WIDTH_LONG}
             value={options.user || ''}
@@ -136,13 +148,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </Field>
       </ConfigSection>
 
-      {config.secureSocksDSProxyEnabled && (
-        <>
-          <Divider />
-          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-        </>
-      )}
-
       {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
         <>
           <Divider />
@@ -153,7 +158,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
                 showCACert={jsonData.tlsAuthWithCACert}
                 showKeyPair={jsonData.tlsAuth}
                 editorProps={props}
-                labelWidth={25}
+                labelWidth={WIDTH_LONG}
               />
             ) : null}
           </ConfigSection>
@@ -162,84 +167,74 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
 
       <Divider />
 
-      <ConfigSection title="Additional settings">
-        <Field
-          label={
-            <Label>
-              <Stack gap={0.5}>
-                <span>Session timezone</span>
-                <Tooltip
-                  content={
-                    <span>
-                      Specify the time zone used in the database session, e.g. <code>Europe/Berlin</code> or
-                      <code>+02:00</code>. This is necessary, if the timezone of the database (or the host of the
-                      database) is set to something other than UTC. The value is set in the session with
-                      <code>SET time_zone=&apos;...&apos;</code>. If you leave this field empty, the timezone is not
-                      updated. You can find more information in the MySQL documentation.
-                    </span>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Stack>
-            </Label>
-          }
-        >
-          <Input
-            width={WIDTH_LONG}
-            value={jsonData.timezone || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'timezone')}
-            placeholder="Europe/Berlin or +02:00"
-          />
-        </Field>
+      <ConfigSection title="Additional settings" isCollapsible>
+        <ConfigSubSection title="MySQL Options">
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>Session timezone</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        Specify the time zone used in the database session, e.g. <code>Europe/Berlin</code> or
+                        <code>+02:00</code>. This is necessary, if the timezone of the database (or the host of the
+                        database) is set to something other than UTC. The value is set in the session with
+                        <code>SET time_zone=&apos;...&apos;</code>. If you leave this field empty, the timezone is not
+                        updated. You can find more information in the MySQL documentation.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Input
+              width={WIDTH_LONG}
+              value={jsonData.timezone || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'timezone')}
+              placeholder="Europe/Berlin or +02:00"
+            />
+          </Field>
 
-        <Field
-          label={
-            <Label>
-              <Stack gap={0.5}>
-                <span>Min time interval</span>
-                <Tooltip
-                  content={
-                    <span>
-                      A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
-                      example
-                      <code>1m</code> if your data is written every minute.
-                    </span>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Stack>
-            </Label>
-          }
-          description="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."
-        >
-          <Input
-            width={WIDTH_LONG}
-            placeholder="1m"
-            value={jsonData.timeInterval || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
-          />
-        </Field>
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>Min time interval</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
+                        example
+                        <code>1m</code> if your data is written every minute.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+            description="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."
+          >
+            <Input
+              width={WIDTH_LONG}
+              placeholder="1m"
+              value={jsonData.timeInterval || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
+            />
+          </Field>
+        </ConfigSubSection>
+
+        <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
+
+        {config.secureSocksDSProxyEnabled && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        )}
       </ConfigSection>
-
-      <Divider />
-
-      <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
-
-      <Divider />
-
-      <Alert title="User Permission" severity="info">
-        The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
-        query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
-        statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted permissions.
-        Check out the{' '}
-        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mysql/">
-          MySQL Data Source Docs
-        </Link>{' '}
-        for more information.
-      </Alert>
     </>
   );
 };

@@ -15,7 +15,7 @@ labels:
     - oss
 menuTitle: Configure thresholds
 title: Configure thresholds
-weight: 300
+weight: 100
 ---
 
 # Configure thresholds

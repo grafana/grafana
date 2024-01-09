@@ -19,7 +19,7 @@ labels:
     - oss
 menuTitle: Configure panel options
 title: Configure panel options
-weight: 2
+weight: 50
 ---
 
 # Configure panel options
@@ -52,6 +52,8 @@ After you add a panel to a dashboard, you can open it at any time to change or u
    The panel opens in edit mode.
 
 ## Add a title and description to a panel
+
+You can use generative AI to create panel titles and descriptions with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to the [Set up generative AI features for dashboards documentation][]. Alternatively, you can take the following steps to create them yourself.
 
 Add a title and description to a panel to share with users any important information about the visualization. For example, use the description to document the purpose of the visualization.
 
@@ -92,7 +94,7 @@ Explore and export panel, panel data, and data frame JSON models.
 You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows][].
 
 {{% admonition type="note" %}}
-Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
+Repeating panels require variables to have one or more items selected; you can't repeat a panel zero times to hide it.
 {{% /admonition %}}
 
 To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
@@ -109,7 +111,7 @@ To see an example of repeating panels, refer to [this dashboard with repeating p
 
 1. Select a `direction`.
 
-   - Choose `horizontal` to arrange panels side-by-side. Grafana adjusts the width of a repeated panel. Currently, you cannot mix other panels on a row with a repeated panel.
+   - Choose `horizontal` to arrange panels side-by-side. Grafana adjusts the width of a repeated panel. Currently, you can't mix other panels on a row with a repeated panel.
    - Choose `vertical` to arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
 1. To propagate changes to all panels, reload the dashboard.
@@ -123,4 +125,10 @@ To see an example of repeating panels, refer to [this dashboard with repeating p
 
 [Configure repeating rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
 [Configure repeating rows]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
+
+[Grafana LLM plugin]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
+[Grafana LLM plugin]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
+
+[Set up generative AI features for dashboards documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[Set up generative AI features for dashboards documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 {{% /docs/reference %}}

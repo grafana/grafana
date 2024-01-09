@@ -10,12 +10,11 @@ import {
   FieldType,
   createDataFrame,
   ScopedVars,
+  urlUtil,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
-
-import { serializeParams } from '../../../core/utils/fetch';
 
 import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
@@ -104,7 +103,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData>
     data?: any,
     options?: Partial<BackendSrvRequest>
   ): Observable<FetchResponse<T>> {
-    const params = data ? serializeParams(data) : '';
+    const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,

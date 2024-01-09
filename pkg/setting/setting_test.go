@@ -384,19 +384,33 @@ func TestAuthDurationSettings(t *testing.T) {
 }
 
 func TestGetCDNPath(t *testing.T) {
-	var err error
-	cfg := NewCfg()
-	cfg.BuildVersion = "v7.5.0-11124"
-	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
-	require.NoError(t, err)
+	t.Run("should return CDN url as expected", func(t *testing.T) {
+		var (
+			err    error
+			actual string
+		)
+		cfg := NewCfg()
+		cfg.BuildVersion = "v7.5.0-11124"
+		cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+		require.NoError(t, err)
 
-	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-11124/", cfg.GetContentDeliveryURL("grafana-oss"))
-	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-11124/", cfg.GetContentDeliveryURL("grafana"))
-}
+		actual, err = cfg.GetContentDeliveryURL("grafana-oss")
+		require.NoError(t, err)
+		require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-11124/", actual)
+		actual, err = cfg.GetContentDeliveryURL("grafana")
+		require.NoError(t, err)
+		require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-11124/", actual)
+	})
 
-func TestGetContentDeliveryURLWhenNoCDNRootURLIsSet(t *testing.T) {
-	cfg := NewCfg()
-	require.Equal(t, "", cfg.GetContentDeliveryURL("grafana-oss"))
+	t.Run("should error if BuildVersion  is not set", func(t *testing.T) {
+		var err error
+		cfg := NewCfg()
+		cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+		require.NoError(t, err)
+
+		_, err = cfg.GetContentDeliveryURL("grafana")
+		require.Error(t, err)
+	})
 }
 
 func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
@@ -405,8 +419,12 @@ func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
 	cfg.BuildVersion = "v7.5.0-11124pre"
 	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com/sub")
 	require.NoError(t, err)
-	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana-oss"))
-	require.Equal(t, "http://cdn.grafana.com/sub/grafana/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
+	actual, err := cfg.GetContentDeliveryURL("grafana-oss")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/v7.5.0-11124pre/", actual)
+	actual, err = cfg.GetContentDeliveryURL("grafana")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana/v7.5.0-11124pre/", actual)
 }
 
 // Adding a case for this in case we switch to proper semver version strings
@@ -416,8 +434,12 @@ func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	cfg.BuildVersion = "v7.5.0-alpha.11124"
 	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
 	require.NoError(t, err)
-	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana-oss"))
-	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana"))
+	actual, err := cfg.GetContentDeliveryURL("grafana-oss")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-alpha.11124/", actual)
+	actual, err = cfg.GetContentDeliveryURL("grafana")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-alpha.11124/", actual)
 }
 
 func TestAlertingEnabled(t *testing.T) {

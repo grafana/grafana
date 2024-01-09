@@ -9,7 +9,6 @@ export interface ScenarioContext {
   lastAddedDataSource: string; // @todo rename to `lastAddedDataSourceName`
   lastAddedDataSourceId: string;
   hasChangedUserPreferences: boolean;
-  [key: string]: any;
 }
 
 const scenarioContext: ScenarioContext = {
@@ -50,9 +49,7 @@ export const setScenarioContext = (newContext: Partial<ScenarioContext>): Cypres
     .wrap(
       {
         setScenarioContext: () => {
-          Object.entries(newContext).forEach(([key, value]) => {
-            scenarioContext[key] = value;
-          });
+          Object.assign(scenarioContext, newContext);
         },
       },
       { log: false }

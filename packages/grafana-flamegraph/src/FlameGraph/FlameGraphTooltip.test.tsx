@@ -12,7 +12,7 @@ function setupData(unit?: string) {
       { name: 'label', values: ['total'] },
     ],
   });
-  return new FlameGraphDataContainer(flameGraphData);
+  return new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 }
 
 function setupDiffData() {
@@ -26,14 +26,14 @@ function setupDiffData() {
       { name: 'label', values: ['total', 'func1'] },
     ],
   });
-  return new FlameGraphDataContainer(flameGraphData);
+  return new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 }
 
 describe('FlameGraphTooltip', () => {
   it('for bytes', () => {
     const tooltipData = getTooltipData(
       setupData('bytes'),
-      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [], level: 0 },
       8_624_078_250
     );
     expect(tooltipData).toEqual({
@@ -49,7 +49,7 @@ describe('FlameGraphTooltip', () => {
   it('with default unit', () => {
     const tooltipData = getTooltipData(
       setupData('none'),
-      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [], level: 0 },
       8_624_078_250
     );
     expect(tooltipData).toEqual({
@@ -65,7 +65,7 @@ describe('FlameGraphTooltip', () => {
   it('without unit', () => {
     const tooltipData = getTooltipData(
       setupData('none'),
-      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [], level: 0 },
       8_624_078_250
     );
     expect(tooltipData).toEqual({
@@ -81,7 +81,7 @@ describe('FlameGraphTooltip', () => {
   it('for objects', () => {
     const tooltipData = getTooltipData(
       setupData('short'),
-      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [], level: 0 },
       8_624_078_250
     );
     expect(tooltipData).toEqual({
@@ -97,7 +97,7 @@ describe('FlameGraphTooltip', () => {
   it('for nanoseconds', () => {
     const tooltipData = getTooltipData(
       setupData('ns'),
-      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [], level: 0 },
       8_624_078_250
     );
     expect(tooltipData).toEqual({
@@ -115,7 +115,7 @@ describe('getDiffTooltipData', () => {
   it('works with diff data', () => {
     const tooltipData = getDiffTooltipData(
       setupDiffData(),
-      { start: 0, itemIndexes: [1], value: 90, valueRight: 40, children: [] },
+      { start: 0, itemIndexes: [1], value: 90, valueRight: 40, children: [], level: 0 },
       200
     );
     expect(tooltipData).toEqual([

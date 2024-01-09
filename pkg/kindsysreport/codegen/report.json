@@ -1229,6 +1229,7 @@
     "nodegraphpanelcfg": {
       "category": "composable",
       "codeowners": [
+        "grafana/app-o11y-visualizations",
         "grafana/observability-traces-and-profiling"
       ],
       "currentVersion": [

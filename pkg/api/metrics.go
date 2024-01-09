@@ -63,7 +63,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 
 func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
-	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+	if hs.Features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
 	}
 

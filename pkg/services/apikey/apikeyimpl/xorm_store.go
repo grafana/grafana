@@ -12,12 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlStore struct {
-	db  db.DB
-	cfg *setting.Cfg
+	db db.DB
 }
 
 // timeNow makes it possible to test usage of time

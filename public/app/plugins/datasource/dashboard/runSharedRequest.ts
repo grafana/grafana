@@ -71,7 +71,10 @@ export function runSharedRequest(options: QueryRunnerOptions, query: DashboardQu
 
     // If we are in fullscreen the other panel will not execute any queries
     // So we have to trigger it from here
-    if (!listenToPanel.isInView) {
+    if (
+      (!listenToPanel.isInView && listenToPanel.refreshWhenInView) ||
+      dashboard?.otherPanelInFullscreen(listenToPanel)
+    ) {
       const { datasource, targets } = listenToPanel;
       const modified = {
         ...options,
@@ -79,6 +82,8 @@ export function runSharedRequest(options: QueryRunnerOptions, query: DashboardQu
         panelId: listenToPanelId,
         queries: targets,
       };
+
+      listenToPanel.refreshWhenInView = false;
       listenToRunner.run(modified);
     }
 

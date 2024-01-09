@@ -1,0 +1,5 @@
+namespace: grafana
+
+resources:
+  - ../base
+  - service.yaml

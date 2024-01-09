@@ -10,12 +10,25 @@ export interface AuthProviderInfo {
 
 export type GetStatusHook = () => Promise<AuthProviderStatus>;
 
+export type SSOProvider = {
+  provider: string;
+  settings: {
+    enabled: boolean;
+    name: string;
+    type: string;
+
+    // Legacy fields
+    configPath?: string;
+  };
+};
+
 export interface AuthConfigState {
   settings: Settings;
   providerStatuses: Record<string, AuthProviderStatus>;
   isLoading?: boolean;
   updateError?: SettingsError;
   warning?: SettingsError;
+  providers: SSOProvider[];
 }
 
 export interface AuthProviderStatus {

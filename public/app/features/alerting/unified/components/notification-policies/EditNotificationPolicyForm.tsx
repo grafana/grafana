@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import {
   Button,
   Field,
@@ -17,6 +16,7 @@ import {
   useStyles2,
   Badge,
   FieldValidationMessage,
+  Stack,
 } from '@grafana/ui';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 

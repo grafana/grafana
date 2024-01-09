@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -62,7 +63,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 		listMetricsService := NewListMetricsService(fakeMetricsClient)
 
-		resp, err := listMetricsService.GetDimensionKeysByDimensionFilter(resources.DimensionKeysRequest{
+		resp, err := listMetricsService.GetDimensionKeysByDimensionFilter(context.Background(), resources.DimensionKeysRequest{
 			ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
 			Namespace:       "AWS/EC2",
 			MetricName:      "CPUUtilization",
@@ -122,7 +123,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 			fakeMetricsClient := &mocks.FakeMetricsClient{}
 			fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 			listMetricsService := NewListMetricsService(fakeMetricsClient)
-			res, err := listMetricsService.GetDimensionKeysByDimensionFilter(tc.input)
+			res, err := listMetricsService.GetDimensionKeysByDimensionFilter(context.Background(), tc.input)
 			require.NoError(t, err)
 			require.NotEmpty(t, res)
 			fakeMetricsClient.AssertCalled(t, "ListMetricsWithPageLimit", tc.listMetricsWithPageLimitInput)
@@ -136,7 +137,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 		listMetricsService := NewListMetricsService(fakeMetricsClient)
 
-		resp, err := listMetricsService.GetDimensionValuesByDimensionFilter(resources.DimensionValuesRequest{
+		resp, err := listMetricsService.GetDimensionValuesByDimensionFilter(context.Background(), resources.DimensionValuesRequest{
 			ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
 			Namespace:       "AWS/EC2",
 			MetricName:      "CPUUtilization",
@@ -189,7 +190,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 			fakeMetricsClient := &mocks.FakeMetricsClient{}
 			fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 			listMetricsService := NewListMetricsService(fakeMetricsClient)
-			res, err := listMetricsService.GetDimensionValuesByDimensionFilter(tc.input)
+			res, err := listMetricsService.GetDimensionValuesByDimensionFilter(context.Background(), tc.input)
 			require.NoError(t, err)
 			require.Empty(t, res)
 			fakeMetricsClient.AssertCalled(t, "ListMetricsWithPageLimit", tc.listMetricsWithPageLimitInput)

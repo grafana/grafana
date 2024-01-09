@@ -3,7 +3,6 @@ package migration
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -132,26 +131,6 @@ func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 		require.Len(t, name, MaxFolderName)
 		require.Contains(t, name, hash)
 	})
-}
-
-func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
-	s := Deduplicator{
-		set:             make(map[string]struct{}),
-		caseInsensitive: true,
-	}
-
-	// 10000 uids seems to be enough to cause a collision in almost every run if using util.GenerateShortUID directly.
-	for i := 0; i < 10000; i++ {
-		s.add(util.GenerateShortUID())
-	}
-
-	// check if any are case-insensitive duplicates.
-	deduped := make(map[string]struct{})
-	for k := range s.set {
-		deduped[strings.ToLower(k)] = struct{}{}
-	}
-
-	require.Equal(t, len(s.set), len(deduped))
 }
 
 func mustRawMessage[T any](s T) apimodels.RawMessage {

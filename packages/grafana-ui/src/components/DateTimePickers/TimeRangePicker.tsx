@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, FormEvent, createRef, useState } from 'react';
+import React, { memo, createRef, useState, useEffect } from 'react';
 
 import {
-  isDateTime,
   rangeUtil,
   GrafanaTheme2,
   dateTimeFormat,
@@ -16,7 +15,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { getModalStyles } from '../Modal/getModalStyles';
@@ -44,6 +43,7 @@ export interface TimeRangePickerProps {
   hideQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
+  onToolbarTimePickerClick?: () => void;
 }
 
 export interface State {
@@ -68,6 +68,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     hideQuickRanges,
     widthOverride,
     isOnCanvas,
+    onToolbarTimePickerClick,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -75,24 +76,39 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     setOpen(false);
   };
 
-  const onOpen = (event: FormEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    event.preventDefault();
-    setOpen(!isOpen);
+  useEffect(() => {
+    if (isOpen && onToolbarTimePickerClick) {
+      onToolbarTimePickerClick();
+    }
+  }, [isOpen, onToolbarTimePickerClick]);
+
+  const onToolbarButtonSwitch = () => {
+    setOpen((prevState) => !prevState);
   };
 
   const onClose = () => {
     setOpen(false);
   };
 
-  const ref = createRef<HTMLElement>();
-  const { overlayProps, underlayProps } = useOverlay({ onClose, isDismissable: true, isOpen }, ref);
-  const { dialogProps } = useDialog({}, ref);
+  const overlayRef = createRef<HTMLElement>();
+  const buttonRef = createRef<HTMLElement>();
+  const { overlayProps, underlayProps } = useOverlay(
+    {
+      onClose,
+      isDismissable: true,
+      isOpen,
+      shouldCloseOnInteractOutside: (element) => {
+        return !buttonRef.current?.contains(element);
+      },
+    },
+    overlayRef
+  );
+  const { dialogProps } = useDialog({}, overlayRef);
 
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { modalBackdrop } = getModalStyles(theme);
-  const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
+  const { modalBackdrop } = useStyles2(getModalStyles);
+  const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
+
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
   const currentTimeRange = formattedRange(value, timeZone);
@@ -109,14 +125,19 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         />
       )}
 
-      <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom" interactive>
+      <Tooltip
+        ref={buttonRef}
+        content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />}
+        placement="bottom"
+        interactive
+      >
         <ToolbarButton
           data-testid={selectors.components.TimePicker.openButton}
           aria-label={t('time-picker.range-picker.current-time-selected', 'Time range selected: {{currentTimeRange}}', {
             currentTimeRange,
           })}
           aria-controls="TimePickerContent"
-          onClick={onOpen}
+          onClick={onToolbarButtonSwitch}
           icon="clock-nine"
           isOpen={isOpen}
           variant={variant}
@@ -125,10 +146,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
-        <div>
+        <div data-testid={selectors.components.TimePicker.overlayContent}>
           <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
           <FocusScope contain autoFocus>
-            <section className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
+            <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
               <TimePickerContent
                 timeZone={timeZone}
                 fiscalYearStartMonth={fiscalYearStartMonth}

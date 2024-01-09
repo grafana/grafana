@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { ComponentProps, HTMLAttributes } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Icon, IconName, useStyles2, Text } from '@grafana/ui';
+import { Icon, IconName, useStyles2, Text, Stack } from '@grafana/ui';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   icon?: IconName;
@@ -22,7 +21,7 @@ const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
       {...rest}
     >
       <Text variant="bodySmall" color={color}>
-        <Stack direction="row" alignItems="center" gap={0.5}>
+        <Stack direction="row" alignItems="center" gap={0.5} wrap={'wrap'}>
           {icon && <Icon size="sm" name={icon} />}
           {children}
         </Stack>

@@ -46,10 +46,10 @@ func TestLibaryPanelConversion(t *testing.T) {
 		  "resourceVersion": "10",
 		  "creationTimestamp": "2000-01-01T08:00:00Z",
 		  "annotations": {
-			"grafana.com/createdBy": "user:11",
-			"grafana.com/folder": "TheFolderUID",
-			"grafana.com/updatedBy": "user:12",
-			"grafana.com/updatedTimestamp": "2010-01-01T08:00:00Z"
+			"grafana.app/createdBy": "user:11",
+			"grafana.app/folder": "TheFolderUID",
+			"grafana.app/updatedBy": "user:12",
+			"grafana.app/updatedTimestamp": "2010-01-01T08:00:00Z"
 		  }
 		},
 		"spec": {}

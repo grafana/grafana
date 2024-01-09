@@ -34,7 +34,13 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, withPerformanceLogging } from '../Analytics';
+import {
+  logInfo,
+  LogMessages,
+  withPerformanceLogging,
+  withPromRulesMetadataLogging,
+  withRulerRulesMetadataLogging,
+} from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -117,10 +123,11 @@ export const fetchPromRulesAction = createAsyncThunk(
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-    const fetchRulesWithLogging = withPerformanceLogging(fetchRules, `[${rulesSourceName}] Prometheus rules loaded`, {
-      dataSourceName: rulesSourceName,
-      thunk: 'unifiedalerting/fetchPromRules',
-    });
+    const fetchRulesWithLogging = withPromRulesMetadataLogging(
+      fetchRules,
+      `[${rulesSourceName}] Prometheus rules loaded`,
+      { dataSourceName: rulesSourceName, thunk: 'unifiedalerting/fetchPromRules' }
+    );
 
     return await withSerializedError(
       fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
@@ -157,7 +164,7 @@ export const fetchRulerRulesAction = createAsyncThunk(
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
 
-    const fetchRulerRulesWithLogging = withPerformanceLogging(
+    const fetchRulerRulesWithLogging = withRulerRulesMetadataLogging(
       fetchRulerRules,
       `[${rulesSourceName}] Ruler rules loaded`,
       {

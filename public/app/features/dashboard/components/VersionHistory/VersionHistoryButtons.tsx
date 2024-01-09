@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Tooltip, Button } from '@grafana/ui';
+import { Tooltip, Button, Stack } from '@grafana/ui';
 
 type VersionsButtonsType = {
   hasMore: boolean;

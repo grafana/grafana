@@ -52,8 +52,10 @@ interface PanelWithExportableLibraryPanel {
   libraryPanel: LibraryPanel;
 }
 
-function isExportableLibraryPanel(p: any): p is PanelWithExportableLibraryPanel {
-  return p.libraryPanel && typeof p.libraryPanel.name === 'string' && typeof p.libraryPanel.uid === 'string';
+function isExportableLibraryPanel(
+  p: PanelModel | PanelWithExportableLibraryPanel
+): p is PanelWithExportableLibraryPanel {
+  return Boolean(p.libraryPanel?.name && p.libraryPanel?.uid);
 }
 
 interface DataSources {

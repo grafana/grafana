@@ -66,25 +66,23 @@ Use [`t.Cleanup`](https://golang.org/pkg/testing/#T.Cleanup) to clean up resourc
 
 ### Mock
 
-Optionally, we use [`mock.Mock`](https://github.com/stretchr/testify#mock-package) package to generate mocks. This is
+Optionally, we use [`mock.Mock`](https://github.com/stretchr/testify#mock-package) package to write mocks. This is
 useful when you expect different behaviours of the same function.
 
 #### Tips
 
-- Use `Once()` or `Times(n)` to make this mock only works `n` times.
-- Use `mockedClass.AssertExpectations(t)` to guarantee that the mock is called the times asked.
-  - If any mock set is not called or its expects more calls, the test fails.
+- Use `Once()` or `Times(n)` to make a method call work `n` times.
+- Use `mockedClass.AssertExpectations(t)` to guarantee that methods are called the times asked.
+  - If any method is not called the expected amount of times, the test fails.
 - You can pass `mock.Anything` as argument if you don't care about the argument passed.
-- Use `mockedClass.AssertNotCalled(t, "FunctionName")` to assert that this test is not called.
+- Use `mockedClass.AssertNotCalled(t, "MethodName")` to assert that a method was not called.
 
 #### Example
-
-This is an example to easily create a mock of an interface.
 
 Given this interface:
 
 ```go
-func MyInterface interface {
+type MyInterface interface {
     Get(ctx context.Context, id string) (Object, error)
 }
 ```
@@ -92,39 +90,38 @@ func MyInterface interface {
 Mock implementation should be like this:
 
 ```go
-import
+import "github.com/stretchr/testify/mock"
 
-func MockImplementation struct {
+type MockImplementation struct {
     mock.Mock
 }
 
-func (m *MockImplementation) Get(ctx context.Context, id string) error {
+func (m *MockImplementation) Get(ctx context.Context, id string) (Object, error) {
     args := m.Called(ctx, id) // Pass all arguments in order here
     return args.Get(0).(Object), args.Error(1)
 }
 ```
 
-And use it as the following way:
+And use it in the following way:
 
 ```go
-
 objectToReturn := Object{Message: "abc"}
 errToReturn := errors.New("my error")
 
 myMock := &MockImplementation{}
 defer myMock.AssertExpectations(t)
 
-myMock.On("Get", mock.Anything, "id1").Return(objectToReturn, errToReturn).Once()
-myMock.On("Get", mock.Anything, "id2").Return(Object{}, nil).Once()
+myMock.On("Get", mock.Anything, "id1").Return(Object{}, errToReturn).Once()
+myMock.On("Get", mock.Anything, "id2").Return(objectToReturn, nil).Once()
 
 anyService := NewService(myMock)
-resp, err := anyService.Call("id1")
 
-assert.Equal(t, resp.Message, objectToReturn.Message)
+resp, err := anyService.Call("id1")
 assert.Error(t, err, errToReturn)
 
 resp, err = anyService.Call("id2")
 assert.Nil(t, err)
+assert.Equal(t, resp.Message, objectToReturn.Message)
 ```
 
 #### Mockery

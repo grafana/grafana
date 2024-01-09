@@ -1,8 +1,12 @@
 export const PIXELS_PER_LEVEL = 22 * window.devicePixelRatio;
-export const COLLAPSE_THRESHOLD = 10 * window.devicePixelRatio;
+export const MUTE_THRESHOLD = 10 * window.devicePixelRatio;
 export const HIDE_THRESHOLD = 0.5 * window.devicePixelRatio;
 export const LABEL_THRESHOLD = 20 * window.devicePixelRatio;
 export const BAR_BORDER_WIDTH = 0.5 * window.devicePixelRatio;
 export const BAR_TEXT_PADDING_LEFT = 4 * window.devicePixelRatio;
+export const GROUP_STRIP_WIDTH = 3 * window.devicePixelRatio;
+export const GROUP_STRIP_PADDING = 3 * window.devicePixelRatio;
+export const GROUP_STRIP_MARGIN_LEFT = 4 * window.devicePixelRatio;
+export const GROUP_TEXT_OFFSET = 2 * window.devicePixelRatio;
 export const MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH = 800;
 export const TOP_TABLE_COLUMN_WIDTH = 120;

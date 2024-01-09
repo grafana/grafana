@@ -8,10 +8,10 @@ import { Components } from './components';
 export const Pages = {
   Login: {
     url: '/login',
-    username: 'Username input field',
-    password: 'Password input field',
-    submit: 'Login button',
-    skip: 'Skip change password button',
+    username: 'data-testid Username input field',
+    password: 'data-testid Password input field',
+    submit: 'data-testid Login button',
+    skip: 'data-testid Skip change password button',
   },
   Home: {
     url: '/',
@@ -249,6 +249,9 @@ export const Pages = {
     recipientInput: 'request-view-access-recipient-input',
     submitButton: 'request-view-access-submit-button',
   },
+  PublicDashboardConfirmAccess: {
+    submitButton: 'data-testid confirm-access-submit-button',
+  },
   Explore: {
     url: '/explore',
     General: {
@@ -307,6 +310,7 @@ export const Pages = {
     tabs: {
       allUsers: 'data-testid all-users-tab',
       orgUsers: 'data-testid org-users-tab',
+      anonUserDevices: 'data-testid anon-user-devices-tab',
       publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
       users: 'data-testid users-tab',
     },

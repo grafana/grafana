@@ -1,0 +1,70 @@
+{
+  "cluster": {
+    "name": "01HGAVE6N6RG55BZW8N5ZJ12T3",
+    "peers": [{ "address": "172.19.0.6:9094", "name": "01HGAVE6N6RG55BZW8N5ZJ12T3" }],
+    "status": "settling"
+  },
+  "config": {
+    "global": {
+      "resolve_timeout": "5m",
+      "http_config": {
+        "tls_config": { "insecure_skip_verify": false },
+        "follow_redirects": true,
+        "enable_http2": true,
+        "proxy_url": null
+      },
+      "smtp_hello": "localhost",
+      "smtp_smarthost": "",
+      "smtp_require_tls": true,
+      "pagerduty_url": "https://events.pagerduty.com/v2/enqueue",
+      "opsgenie_api_url": "https://api.opsgenie.com/",
+      "wechat_api_url": "https://qyapi.weixin.qq.com/cgi-bin/",
+      "victorops_api_url": "https://alert.victorops.com/integrations/generic/20131114/alert/",
+      "telegram_api_url": "https://api.telegram.org",
+      "webex_api_url": "https://webexapis.com/v1/messages"
+    },
+    "route": {
+      "receiver": "web.hook",
+      "group_by": ["alertname"],
+      "group_wait": "30s",
+      "group_interval": "5m",
+      "repeat_interval": "1h"
+    },
+    "inhibit_rules": [
+      {
+        "source_match": { "severity": "critical" },
+        "target_match": { "severity": "warning" },
+        "equal": ["alertname", "dev", "instance"]
+      }
+    ],
+    "templates": [],
+    "receivers": [
+      {
+        "name": "web.hook",
+        "webhook_configs": [
+          {
+            "send_resolved": true,
+            "http_config": {
+              "tls_config": { "insecure_skip_verify": false },
+              "follow_redirects": true,
+              "enable_http2": true,
+              "proxy_url": null
+            },
+            "url": "\u003csecret\u003e",
+            "url_file": "",
+            "max_alerts": 0
+          }
+        ]
+      }
+    ]
+  },
+  "uptime": "2023-11-28T11:36:10.663Z",
+  "versionInfo": {
+    "branch": "HEAD",
+    "buildDate": "20230824-11:09:02",
+    "buildUser": "root@520df6c16a84",
+    "goVersion": "go1.20.7",
+    "revision": "d7b4f0c7322e7151d6e3b1e31cbc15361e295d8d",
+    "version": "0.26.0"
+  }
+}

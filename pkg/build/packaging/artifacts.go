@@ -81,6 +81,7 @@ var ArtifactConfigs = []buildArtifact{
 		Arch:       "arm64",
 		urlPostfix: ".linux-arm64.tar.gz",
 	},
+	// https://github.com/golang/go/issues/58425 disabling arm builds until go issue is resolved
 	// {
 	// 	Os:         debOS,
 	// 	Arch:       "armv7",

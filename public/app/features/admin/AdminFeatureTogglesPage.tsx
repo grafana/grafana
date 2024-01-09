@@ -23,7 +23,7 @@ export default function AdminFeatureTogglesPage() {
     setUpdateSuccessful(true);
   };
 
-  const AlertMessage = () => {
+  const EditingAlert = () => {
     return (
       <div className={styles.warning}>
         <div className={styles.icon}>
@@ -38,15 +38,33 @@ export default function AdminFeatureTogglesPage() {
     );
   };
 
+  const subTitle = (
+    <div>
+      View and edit feature toggles. Read more about feature toggles at{' '}
+      <a
+        className="external-link"
+        target="_new"
+        href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/"
+      >
+        grafana.com
+      </a>
+      .
+    </div>
+  );
+
   return (
-    <Page navId="feature-toggles">
+    <Page navId="feature-toggles" subTitle={subTitle}>
       <Page.Contents>
         <>
           {isError && getErrorMessage()}
           {isLoading && 'Fetching feature toggles'}
-          <AlertMessage />
+          {featureMgmtState?.allowEditing && <EditingAlert />}
           {featureToggles && (
-            <AdminFeatureTogglesTable featureToggles={featureToggles} onUpdateSuccess={handleUpdateSuccess} />
+            <AdminFeatureTogglesTable
+              featureToggles={featureToggles}
+              allowEditing={featureMgmtState?.allowEditing || false}
+              onUpdateSuccess={handleUpdateSuccess}
+            />
           )}
         </>
       </Page.Contents>
@@ -58,7 +76,8 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     warning: css({
       display: 'flex',
-      marginTop: theme.spacing(3),
+      marginTop: theme.spacing(0.25),
+      marginBottom: theme.spacing(0.25),
     }),
     icon: css({
       color: theme.colors.warning.main,

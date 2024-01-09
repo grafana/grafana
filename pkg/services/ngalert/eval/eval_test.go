@@ -2,6 +2,7 @@ package eval
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -767,6 +768,70 @@ func TestEvaluateRaw(t *testing.T) {
 		_, err := e.EvaluateRaw(context.Background(), time.Now())
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
+}
+
+func TestResults_HasNonRetryableErrors(t *testing.T) {
+	tc := []struct {
+		name     string
+		eval     Results
+		expected bool
+	}{
+		{
+			name: "with non-retryable errors",
+			eval: Results{
+				{
+					State: Error,
+					Error: &invalidEvalResultFormatError{refID: "A", reason: "unable to get frame row length", err: errors.New("weird error")},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "with retryable errors",
+			eval: Results{
+				{
+					State: Error,
+					Error: errors.New("some weird error"),
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, tt.eval.HasNonRetryableErrors())
+		})
+	}
+}
+
+func TestResults_Error(t *testing.T) {
+	tc := []struct {
+		name     string
+		eval     Results
+		expected string
+	}{
+		{
+			name: "with non-retryable errors",
+			eval: Results{
+				{
+					State: Error,
+					Error: &invalidEvalResultFormatError{refID: "A", reason: "unable to get frame row length", err: errors.New("weird error")},
+				},
+				{
+					State: Error,
+					Error: errors.New("unable to get a data frame"),
+				},
+			},
+			expected: "invalid format of evaluation results for the alert definition A: unable to get frame row length: weird error\nunable to get a data frame",
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, tt.eval.Error().Error())
+		})
+	}
 }
 
 type fakeExpressionService struct {

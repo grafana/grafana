@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"testing"
 
@@ -69,6 +70,7 @@ func TestIntegrationCreate(t *testing.T) {
 
 		assert.Equal(t, folderTitle, f.Title)
 		assert.Equal(t, folderDsc, f.Description)
+		// nolint:staticcheck
 		assert.NotEmpty(t, f.ID)
 		assert.Equal(t, uid, f.UID)
 		assert.Empty(t, f.ParentUID)
@@ -96,6 +98,7 @@ func TestIntegrationCreate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "parent", parent.Title)
+		// nolint:staticcheck
 		require.NotEmpty(t, parent.ID)
 		assert.Equal(t, parentUID, parent.UID)
 		assert.NotEmpty(t, parent.URL)
@@ -122,6 +125,7 @@ func TestIntegrationCreate(t *testing.T) {
 
 		assert.Equal(t, folderTitle, f.Title)
 		assert.Equal(t, folderDsc, f.Description)
+		// nolint:staticcheck
 		assert.NotEmpty(t, f.ID)
 		assert.Equal(t, uid, f.UID)
 		assert.Equal(t, parentUID, f.ParentUID)
@@ -400,6 +404,7 @@ func TestIntegrationGet(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
+		// nolint:staticcheck
 		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
@@ -417,6 +422,7 @@ func TestIntegrationGet(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
+		// nolint:staticcheck
 		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
@@ -430,9 +436,10 @@ func TestIntegrationGet(t *testing.T) {
 
 	t.Run("get folder by title should succeed", func(t *testing.T) {
 		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
-			ID: &f.ID,
+			ID: &f.ID, // nolint:staticcheck
 		})
 		require.NoError(t, err)
+		// nolint:staticcheck
 		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
@@ -705,6 +712,63 @@ func TestIntegrationGetHeight(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetFolders(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	foldersNum := 10
+	db := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+
+	orgID := CreateOrg(t, db)
+
+	// create folders
+	uids := make([]string, 0)
+	folders := make([]*folder.Folder, 0)
+	for i := 0; i < foldersNum; i++ {
+		uid := util.GenerateShortUID()
+		f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+			Title:       folderTitle,
+			Description: folderDsc,
+			OrgID:       orgID,
+			UID:         uid,
+		})
+		require.NoError(t, err)
+
+		uids = append(uids, uid)
+		folders = append(folders, f)
+	}
+
+	t.Cleanup(func() {
+		for _, uid := range uids {
+			err := folderStore.Delete(context.Background(), uid, orgID)
+			require.NoError(t, err)
+		}
+	})
+
+	t.Run("get folders by UIDs should succeed", func(t *testing.T) {
+		ff, err := folderStore.GetFolders(context.Background(), orgID, uids)
+		require.NoError(t, err)
+		assert.Equal(t, len(uids), len(ff))
+		for _, f := range folders {
+			folderInResponseIdx := slices.IndexFunc(ff, func(rf *folder.Folder) bool {
+				return rf.UID == f.UID
+			})
+			assert.NotEqual(t, -1, folderInResponseIdx)
+			rf := ff[folderInResponseIdx]
+			// nolint:staticcheck
+			assert.Equal(t, f.ID, rf.ID)
+			assert.Equal(t, f.OrgID, rf.OrgID)
+			assert.Equal(t, f.Title, rf.Title)
+			assert.Equal(t, f.Description, rf.Description)
+			assert.NotEmpty(t, rf.Created)
+			assert.NotEmpty(t, rf.Updated)
+			assert.NotEmpty(t, rf.URL)
+		}
+	})
+}
+
 func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	t.Helper()
 
@@ -738,6 +802,7 @@ func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 		f, err := store.Create(context.Background(), cmd)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
+		// nolint:staticcheck
 		require.NotEmpty(t, f.ID)
 		require.NotEmpty(t, f.UID)
 

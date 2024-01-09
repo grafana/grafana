@@ -283,7 +283,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				Scopes:   []string{"profile", "groups"},
 			},
 			initTestEnv: func(env *testEnv) {
-				env.oauthSvc.ExpectedErr = oauthserver.ErrClientNotFound("unknown-client-id")
+				env.oauthSvc.ExpectedErr = oauthserver.ErrClientNotFoundFn("unknown-client-id")
 			},
 			orgID:   1,
 			want:    nil,

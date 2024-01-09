@@ -153,7 +153,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
-  private getMaxPerRow(): number {
+  public getMaxPerRow(): number {
     return this.state.maxPerRow ?? 4;
   }
 

@@ -8,6 +8,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { Page } from 'app/core/components/Page/Page';
+import { useSelector } from 'app/types/store';
 
 import { PanelEditor } from './PanelEditor';
 
@@ -15,7 +16,8 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const { body, controls, drawer } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
-  const pageNav = model.getPageNav(location);
+  const navIndex = useSelector((state) => state.navIndex);
+  const pageNav = model.getPageNav(location, navIndex);
 
   return (
     <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>

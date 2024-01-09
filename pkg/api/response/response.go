@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -251,12 +250,6 @@ func Error(status int, message string, err error) *NormalResponse {
 
 	if message != "" {
 		data["message"] = message
-	}
-
-	if err != nil {
-		if setting.Env != setting.Prod {
-			data["error"] = err.Error()
-		}
 	}
 
 	resp := JSON(status, data)

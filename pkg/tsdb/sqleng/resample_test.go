@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng/util"
 	"github.com/stretchr/testify/require"
 )
 

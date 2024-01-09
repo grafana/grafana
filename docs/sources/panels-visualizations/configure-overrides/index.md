@@ -15,7 +15,7 @@ labels:
     - oss
 menuTitle: Configure field overrides
 title: Configure field overrides
-weight: 400
+weight: 110
 ---
 
 # Configure field overrides

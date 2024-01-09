@@ -467,6 +467,29 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			require.Error(t, err)
 		})
+
+		t.Run("Returns datasources based on alias", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+
+			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:    10,
+				Name:     "Elasticsearch",
+				Type:     "other",
+				Access:   datasources.DS_ACCESS_DIRECT,
+				URL:      "http://test",
+				Database: "site",
+				ReadOnly: true,
+			})
+			require.NoError(t, err)
+
+			query := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES, AliasIDs: []string{"other"}}
+
+			dataSources, err := ss.GetDataSourcesByType(context.Background(), &query)
+
+			require.NoError(t, err)
+			require.Equal(t, 1, len(dataSources))
+		})
 	})
 }
 

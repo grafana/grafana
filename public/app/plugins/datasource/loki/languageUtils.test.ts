@@ -1,4 +1,12 @@
-import { escapeLabelValueInExactSelector, isBytesString, unescapeLabelValue } from './languageUtils';
+import { toDataFrame, FieldType } from '@grafana/data';
+
+import {
+  escapeLabelValueInExactSelector,
+  getLabelTypeFromFrame,
+  isBytesString,
+  unescapeLabelValue,
+} from './languageUtils';
+import { LabelType } from './types';
 
 describe('isBytesString', () => {
   it('correctly matches bytes string with integers', () => {
@@ -40,5 +48,45 @@ describe('unescapeLabelValueInExactSelector', () => {
     ${'escape slash: \\\\'}     | ${'escape slash: \\'}
   `('when called with $value', ({ value, unescapedValue }) => {
     expect(unescapeLabelValue(value)).toEqual(unescapedValue);
+  });
+});
+
+describe('getLabelTypeFromFrame', () => {
+  const frameWithTypes = toDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [0] },
+      {
+        name: 'Line',
+        type: FieldType.string,
+        values: ['line1'],
+      },
+      { name: 'labelTypes', type: FieldType.other, values: [{ indexed: 'I', parsed: 'P', structured: 'S' }] },
+    ],
+  });
+  const frameWithoutTypes = toDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [0] },
+      {
+        name: 'Line',
+        type: FieldType.string,
+        values: ['line1'],
+      },
+      { name: 'labels', type: FieldType.other, values: [{ job: 'test' }] },
+    ],
+  });
+  it('returns structuredMetadata', () => {
+    expect(getLabelTypeFromFrame('structured', frameWithTypes, 0)).toBe(LabelType.StructuredMetadata);
+  });
+  it('returns indexed', () => {
+    expect(getLabelTypeFromFrame('indexed', frameWithTypes, 0)).toBe(LabelType.Indexed);
+  });
+  it('returns parsed', () => {
+    expect(getLabelTypeFromFrame('parsed', frameWithTypes, 0)).toBe(LabelType.Parsed);
+  });
+  it('returns null for unknown field', () => {
+    expect(getLabelTypeFromFrame('unknown', frameWithTypes, 0)).toBe(null);
+  });
+  it('returns null for frame without types', () => {
+    expect(getLabelTypeFromFrame('job', frameWithoutTypes, 0)).toBe(null);
   });
 });

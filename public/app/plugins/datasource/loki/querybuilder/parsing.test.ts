@@ -171,6 +171,26 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it.each([
+    ['|=', LokiOperationId.LineContains],
+    ['!=', LokiOperationId.LineContainsNot],
+    ['|~', LokiOperationId.LineMatchesRegex],
+    ['!~', LokiOperationId.LineMatchesRegexNot],
+  ])('parses query with line filter and `or` statements', (op: string, id: LokiOperationId) => {
+    expect(buildVisualQueryFromString(`{app="frontend"} ${op} "line" or "text"`)).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id, params: ['line', 'text'] }],
+      })
+    );
+  });
+
   it('parses query with line filters and escaped characters', () => {
     expect(buildVisualQueryFromString('{app="frontend"} |= "\\\\line"')).toEqual(
       noErrors({

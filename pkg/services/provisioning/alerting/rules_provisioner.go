@@ -97,7 +97,7 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	ctx context.Context, folderName string, orgID int64) (string, error) {
 	cmd := &dashboards.GetDashboardQuery{
 		Title:    &folderName,
-		FolderID: util.Pointer(int64(0)),
+		FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 		OrgID:    orgID,
 	}
 	cmdResult, err := prov.dashboardService.GetDashboard(ctx, cmd)

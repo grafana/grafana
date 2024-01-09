@@ -255,6 +255,7 @@ export const defaultAzureTracesFilter: Partial<AzureTracesFilter> = {
 };
 
 export enum ResultFormat {
+  Logs = 'logs',
   Table = 'table',
   TimeSeries = 'time_series',
   Trace = 'trace',

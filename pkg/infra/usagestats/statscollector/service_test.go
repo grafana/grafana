@@ -384,7 +384,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		&pluginstore.FakePluginStore{},
 		featuremgmt.WithFeatures("feature1", "feature2"),
 		o.datasources,
-		httpclient.NewProvider(),
+		httpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{}}),
 	)
 }
 

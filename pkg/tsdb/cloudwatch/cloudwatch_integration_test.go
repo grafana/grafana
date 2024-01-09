@@ -39,7 +39,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		return &logApi
 	}
 	ec2Mock := &mocks.EC2Mock{}
-	ec2Mock.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
+	ec2Mock.On("DescribeRegionsWithContext", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
 	NewEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {
 		return ec2Mock
 	}
@@ -221,7 +221,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 
 	t.Run("Should handle log group fields request", func(t *testing.T) {
 		logApi = mocks.LogsAPI{}
-		logApi.On("GetLogGroupFields", mock.Anything).Return(&cloudwatchlogs.GetLogGroupFieldsOutput{
+		logApi.On("GetLogGroupFieldsWithContext", mock.Anything).Return(&cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
 					Name:    aws.String("field1"),

@@ -31,7 +31,7 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   // list all the
-  if (index === undefined) {
+  if (index === undefined && frame.fields.length > 0) {
     return frame.fields
       .filter((f) => f.type !== FieldType.time)
       .map((f) => getFieldDisplayName(f, frame))
@@ -159,7 +159,7 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
   return displayName;
 }
 
-function getUniqueFieldName(field: Field, frame?: DataFrame) {
+export function getUniqueFieldName(field: Field, frame?: DataFrame) {
   let dupeCount = 0;
   let foundSelf = false;
 

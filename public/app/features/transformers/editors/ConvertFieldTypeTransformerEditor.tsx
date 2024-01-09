@@ -19,10 +19,12 @@ import {
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
-import { hasAlphaPanels } from 'app/core/config';
 import { findField } from 'app/features/dimensions';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';
+
+import { EnumMappingEditor } from './EnumMappingEditor';
 
 const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
@@ -174,12 +176,8 @@ export const ConvertFieldTypeTransformerEditor = ({
                 aria-label={'Remove convert field type transformer'}
               />
             </InlineFieldRow>
-            {c.destinationType === FieldType.enum && hasAlphaPanels && (
-              <InlineFieldRow>
-                <InlineField label={''} labelWidth={6}>
-                  <div>TODO... show options here (alpha panels enabled)</div>
-                </InlineField>
-              </InlineFieldRow>
+            {c.destinationType === FieldType.enum && (
+              <EnumMappingEditor input={input} options={options} transformIndex={idx} onChange={onChange} />
             )}
           </div>
         );
@@ -204,4 +202,5 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   name: standardTransformers.convertFieldTypeTransformer.name,
   description: standardTransformers.convertFieldTypeTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
 };

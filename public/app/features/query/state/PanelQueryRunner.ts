@@ -303,7 +303,7 @@ export class PanelQueryRunner {
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
-      request.filters = this.templateSrv.getAdhocFilters(ds.name);
+      request.filters = this.templateSrv.getAdhocFilters(ds.name, true);
 
       this.lastRequest = request;
 

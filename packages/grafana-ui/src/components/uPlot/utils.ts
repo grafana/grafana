@@ -5,7 +5,8 @@ import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, Stacki
 
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
-import { buildScaleKey } from '../GraphNG/utils';
+
+import { buildScaleKey } from './internal';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
@@ -380,7 +381,7 @@ function hasNegSample(data: unknown[], samples = 100) {
     for (let i = firstIdx; i <= lastIdx; i += stride) {
       const v = data[i];
 
-      if (v != null) {
+      if (v != null && typeof v === 'number') {
         if (v < 0 || Object.is(v, -0)) {
           negCount++;
         } else if (v > 0) {

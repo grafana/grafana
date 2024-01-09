@@ -7,12 +7,13 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // needed to mock the function for testing
@@ -93,7 +94,7 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// Update the query cache with the result for this metrics request
 	if err == nil && cr.UpdateCacheFn != nil {
 		// If AWS async caching is not enabled, use the old code path
-		if m.features == nil || !m.features.IsEnabled(featuremgmt.FlagAwsAsyncQueryCaching) {
+		if m.features == nil || !m.features.IsEnabled(ctx, featuremgmt.FlagAwsAsyncQueryCaching) {
 			cr.UpdateCacheFn(ctx, resp)
 		} else {
 			// time how long shouldCacheQuery takes

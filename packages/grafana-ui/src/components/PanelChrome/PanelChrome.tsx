@@ -465,7 +465,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       left: 0,
       top: 0,
-      zIndex: theme.zIndex.tooltip,
+      zIndex: 1,
     }),
     rightActions: css({
       display: 'flex',

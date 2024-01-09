@@ -17,25 +17,12 @@
     "updated": "2023-08-03",
     "version": "1.0.0"
   },
-  "externalServiceRegistration": {
-    "impersonation": {
-      "enabled" : true,
-      "groups" : true,
-      "permissions" :  [
-        {
-          "action": "read",
-          "scope": "datasource"
-        }
-      ]
-    },
-    "self": {
-      "enabled" : true,
-      "permissions" :  [
-        {
-          "action": "read",
-          "scope": "datasource"
-        }
-      ]
-    }
+  "iam": {
+    "permissions" :  [
+      {
+        "action": "read",
+        "scope": "datasource"
+      }
+    ]
   }
 }

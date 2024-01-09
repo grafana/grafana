@@ -95,7 +95,7 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		var err error
 
 		cctx, canc := context.WithTimeout(ctx, time.Second*10)
-		p.AngularDetected, err = a.angularInspector.Inspect(cctx, p)
+		p.Angular.Detected, err = a.angularInspector.Inspect(cctx, p)
 		canc()
 
 		if err != nil {
@@ -103,11 +103,11 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		}
 
 		// Do not initialize plugins if they're using Angular and Angular support is disabled
-		if p.AngularDetected && !a.cfg.AngularSupportEnabled {
+		if p.Angular.Detected && !a.cfg.AngularSupportEnabled {
 			a.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginId", p.ID)
 			return errors.New("angular plugins are not supported")
 		}
 	}
-
+	p.Angular.HideDeprecation = a.cfg.PluginSettings[p.ID]["hide_angular_deprecation"] == "true"
 	return nil
 }

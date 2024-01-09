@@ -44,6 +44,7 @@ resource "grafana_rule_group" "rule_group_0000" {
 
     no_data_state  = "NoData"
     exec_err_state = "Alerting"
+    for            = "2m"
     is_paused      = false
   }
   rule {

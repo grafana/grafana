@@ -16,6 +16,7 @@ const (
 )
 
 var AllVariants = []Variant{
+	// https://github.com/golang/go/issues/58425 disabling arm builds until go issue is resolved
 	// VariantArmV6,
 	// VariantArmV7,
 	// VariantArmV7Musl,

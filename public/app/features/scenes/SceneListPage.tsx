@@ -2,8 +2,7 @@
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { Stack } from '@grafana/experimental';
-import { Card } from '@grafana/ui';
+import { Card, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 // Types

@@ -55,8 +55,10 @@ type Store interface {
 	GetFolder(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error)
 	CreateFolder(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error)
 
-	IsMigrated(ctx context.Context) (bool, error)
-	SetMigrated(ctx context.Context, migrated bool) error
+	IsMigrated(ctx context.Context, orgID int64) (bool, error)
+	SetMigrated(ctx context.Context, orgID int64, migrated bool) error
+	GetCurrentAlertingType(ctx context.Context) (AlertingType, error)
+	SetCurrentAlertingType(ctx context.Context, t AlertingType) error
 	GetOrgMigrationState(ctx context.Context, orgID int64) (*migmodels.OrgMigrationState, error)
 	SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error
 
@@ -122,11 +124,12 @@ const migratedKey = "migrated"
 // stateKey is the kvstore key used for the OrgMigrationState.
 const stateKey = "stateKey"
 
-const anyOrg = 0
+// typeKey is the kvstore key used for the current AlertingType.
+const typeKey = "currentAlertingType"
 
 // IsMigrated returns the migration status from the kvstore.
-func (ms *migrationStore) IsMigrated(ctx context.Context) (bool, error) {
-	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
+func (ms *migrationStore) IsMigrated(ctx context.Context, orgID int64) (bool, error) {
+	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
 	content, exists, err := kv.Get(ctx, migratedKey)
 	if err != nil {
 		return false, err
@@ -140,9 +143,58 @@ func (ms *migrationStore) IsMigrated(ctx context.Context) (bool, error) {
 }
 
 // SetMigrated sets the migration status in the kvstore.
-func (ms *migrationStore) SetMigrated(ctx context.Context, migrated bool) error {
-	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
+func (ms *migrationStore) SetMigrated(ctx context.Context, orgID int64, migrated bool) error {
+	kv := kvstore.WithNamespace(ms.kv, orgID, KVNamespace)
 	return kv.Set(ctx, migratedKey, strconv.FormatBool(migrated))
+}
+
+// AlertingType represents the current alerting type of Grafana. This is used to detect transitions between
+// Legacy and UnifiedAlerting by comparing to the desired type in the configuration.
+type AlertingType string
+
+const (
+	Legacy          AlertingType = "Legacy"
+	UnifiedAlerting AlertingType = "UnifiedAlerting"
+)
+
+// typeFromString converts a string to an AlertingType.
+func typeFromString(s string) (AlertingType, error) {
+	switch s {
+	case "Legacy":
+		return Legacy, nil
+	case "UnifiedAlerting":
+		return UnifiedAlerting, nil
+	default:
+		return "", fmt.Errorf("unknown alerting type: %s", s)
+	}
+}
+
+const anyOrg = 0
+
+// GetCurrentAlertingType returns the current AlertingType of Grafana.
+func (ms *migrationStore) GetCurrentAlertingType(ctx context.Context) (AlertingType, error) {
+	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
+	content, exists, err := kv.Get(ctx, typeKey)
+	if err != nil {
+		return "", err
+	}
+
+	if !exists {
+		return Legacy, nil
+	}
+
+	t, err := typeFromString(content)
+	if err != nil {
+		return "", err
+	}
+
+	return t, nil
+}
+
+// SetCurrentAlertingType stores the current AlertingType of Grafana.
+func (ms *migrationStore) SetCurrentAlertingType(ctx context.Context, t AlertingType) error {
+	kv := kvstore.WithNamespace(ms.kv, anyOrg, KVNamespace)
+	return kv.Set(ctx, typeKey, string(t))
 }
 
 // GetOrgMigrationState returns a summary of a previous migration.
@@ -224,64 +276,62 @@ var revertPermissions = []accesscontrol.Permission{
 }
 
 // RevertAllOrgs reverts the migration, deleting all unified alerting resources such as alert rules, alertmanager configurations, and silence files.
-// In addition, it will delete all folders and permissions originally created by this migration, these are stored in the kvstore.
+// In addition, it will delete all folders and permissions originally created by this migration, as well as the various migration statuses stored
+// in kvstore, both org-specific and anyOrg.
 func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
-	return ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if _, err := sess.Exec("DELETE FROM alert_rule"); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule_version"); err != nil {
-			return err
-		}
-
-		orgs, err := ms.GetAllOrgs(ctx)
-		if err != nil {
-			return fmt.Errorf("get orgs: %w", err)
-		}
-		for _, o := range orgs {
-			if err := ms.DeleteMigratedFolders(ctx, o.ID); err != nil {
-				ms.log.Warn("Failed to delete migrated folders", "orgID", o.ID, "err", err)
-				continue
+	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
+		return ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+			if _, err := sess.Exec("DELETE FROM alert_rule"); err != nil {
+				return err
 			}
-		}
 
-		if _, err := sess.Exec("DELETE FROM alert_configuration"); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM ngalert_configuration"); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_instance"); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ?", notifier.KVNamespace); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ?", KVNamespace); err != nil {
-			return err
-		}
-
-		files, err := filepath.Glob(filepath.Join(ms.cfg.DataPath, "alerting", "*", "silences"))
-		if err != nil {
-			return err
-		}
-		for _, f := range files {
-			if err := os.Remove(f); err != nil {
-				ms.log.Error("Failed to remove silence file", "file", f, "err", err)
+			if _, err := sess.Exec("DELETE FROM alert_rule_version"); err != nil {
+				return err
 			}
-		}
 
-		err = ms.SetMigrated(ctx, false)
-		if err != nil {
-			return fmt.Errorf("setting migration status: %w", err)
-		}
+			orgs, err := ms.GetAllOrgs(ctx)
+			if err != nil {
+				return fmt.Errorf("get orgs: %w", err)
+			}
+			for _, o := range orgs {
+				if err := ms.DeleteMigratedFolders(ctx, o.ID); err != nil {
+					ms.log.Warn("Failed to delete migrated folders", "orgID", o.ID, "err", err)
+					continue
+				}
+			}
 
-		return nil
+			if _, err := sess.Exec("DELETE FROM alert_configuration"); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM ngalert_configuration"); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM alert_instance"); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ?", notifier.KVNamespace); err != nil {
+				return err
+			}
+
+			if _, err := sess.Exec("DELETE FROM kv_store WHERE namespace = ?", KVNamespace); err != nil {
+				return err
+			}
+
+			files, err := filepath.Glob(filepath.Join(ms.cfg.DataPath, "alerting", "*", "silences"))
+			if err != nil {
+				return err
+			}
+			for _, f := range files {
+				if err := os.Remove(f); err != nil {
+					ms.log.Error("Failed to remove silence file", "file", f, "err", err)
+				}
+			}
+
+			return nil
+		})
 	})
 }
 

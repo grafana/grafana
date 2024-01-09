@@ -32,7 +32,7 @@ func ProvideService(
 ) *Service {
 	s := &Service{cfg: cfg, logger: log.New("id-service"), signer: signer, cache: cache, metrics: newMetrics(reg)}
 
-	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
+	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
 		authnService.RegisterPostAuthHook(s.hook, 140)
 	}
 

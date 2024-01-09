@@ -11,6 +11,7 @@ import {
   QueryHint,
   TimeRange,
 } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
@@ -317,8 +318,7 @@ function createDatasource(options?: Partial<DataSourceInstanceSettings<PromOptio
       meta: {} as DataSourcePluginMeta,
       ...options,
     } as DataSourceInstanceSettings<PromOptions>,
-    undefined,
-    undefined,
+    mockTemplateSrv(),
     languageProvider
   );
   return { datasource, languageProvider };
@@ -355,4 +355,10 @@ async function openMetricSelect(container: HTMLElement) {
 async function openLabelNameSelect(index = 0) {
   const { name } = getLabelSelects(index);
   await userEvent.click(name);
+}
+
+function mockTemplateSrv(): TemplateSrv {
+  return {
+    getVariables: () => [],
+  } as unknown as TemplateSrv;
 }

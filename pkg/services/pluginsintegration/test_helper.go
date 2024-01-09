@@ -51,7 +51,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	proc := process.ProvideService()
 	errTracker := pluginerrs.ProvideSignatureErrorTracker()
 
-	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true), reg)
+	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true, pCfg.Features), reg)
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn))
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector, errTracker)
 	init := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry())
@@ -86,7 +86,7 @@ type LoaderOpts struct {
 
 func CreateTestLoader(t *testing.T, cfg *pluginsCfg.Cfg, opts LoaderOpts) *loader.Loader {
 	if opts.Discoverer == nil {
-		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(cfg.DevMode), registry.ProvideService())
+		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(cfg.DevMode, cfg.Features), registry.ProvideService())
 	}
 
 	if opts.Bootstrapper == nil {

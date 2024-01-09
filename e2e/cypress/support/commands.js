@@ -1,13 +1,5 @@
 import 'cypress-file-upload';
 
-Cypress.Commands.add('compareScreenshots', (config) => {
-  cy.task('compareScreenshots', {
-    config,
-    screenshotsFolder: Cypress.config('screenshotsFolder'),
-    specName: Cypress.spec.name,
-  });
-});
-
 Cypress.Commands.add('logToConsole', (message, optional) => {
   cy.task('log', { message: '(' + new Date().toISOString() + ') ' + message, optional });
 });

@@ -512,6 +512,9 @@
     },
     "username": {
      "type": "string"
+    },
+    "username_file": {
+     "type": "string"
     }
    },
    "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -607,6 +610,9 @@
     "Error": {
      "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
+    },
+    "ErrorSource": {
+     "$ref": "#/definitions/ErrorSource"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
@@ -813,6 +819,10 @@
    },
    "type": "object"
   },
+  "ErrorSource": {
+   "description": "ErrorSource type defines the source of the error",
+   "type": "string"
+  },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
    "type": "string"
@@ -838,6 +848,9 @@
   },
   "EvalQueriesPayload": {
    "properties": {
+    "condition": {
+     "type": "string"
+    },
     "data": {
      "items": {
       "$ref": "#/definitions/AlertQuery"
@@ -1043,6 +1056,14 @@
     }
    },
    "title": "FloatHistogram is similar to Histogram but uses float64 for all\ncounts. Additionally, bucket counts are absolute and not deltas.",
+   "type": "object"
+  },
+  "ForbiddenError": {
+   "properties": {
+    "body": {
+     "$ref": "#/definitions/PublicError"
+    }
+   },
    "type": "object"
   },
   "Frame": {
@@ -1849,7 +1870,7 @@
   },
   "MatchRegexps": {
    "additionalProperties": {
-    "$ref": "#/definitions/Regexp"
+    "type": "string"
    },
    "title": "MatchRegexps represents a map of Regexp.",
    "type": "object"
@@ -1944,12 +1965,58 @@
   },
   "NotificationPolicyExport": {
    "properties": {
-    "Policy": {
-     "$ref": "#/definitions/RouteExport"
+    "continue": {
+     "type": "boolean"
+    },
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
     },
     "orgId": {
      "format": "int64",
      "type": "integer"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    },
+    "routes": {
+     "items": {
+      "$ref": "#/definitions/RouteExport"
+     },
+     "type": "array"
     }
    },
    "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
@@ -2724,6 +2791,26 @@
    },
    "type": "object"
   },
+  "PublicError": {
+   "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+   "properties": {
+    "extra": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "message": {
+     "type": "string"
+    },
+    "messageId": {
+     "type": "string"
+    },
+    "statusCode": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
   "PushoverConfig": {
    "properties": {
     "device": {
@@ -2971,11 +3058,6 @@
     }
    },
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
-   "type": "object"
-  },
-  "Regexp": {
-   "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-   "title": "Regexp is the representation of a compiled regular expression.",
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -4314,7 +4396,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4363,6 +4444,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -5902,6 +5984,12 @@
        "$ref": "#/definitions/AlertingFileExport"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -5937,6 +6025,12 @@
       "schema": {
        "$ref": "#/definitions/NamespaceConfigResponse"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "tags": [
@@ -5961,6 +6055,12 @@
       "description": "Ack",
       "schema": {
        "$ref": "#/definitions/Ack"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -5987,6 +6087,12 @@
       "description": "NamespaceConfigResponse",
       "schema": {
        "$ref": "#/definitions/NamespaceConfigResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -6021,6 +6127,12 @@
       "description": "UpdateRuleGroupResponse",
       "schema": {
        "$ref": "#/definitions/UpdateRuleGroupResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -6073,6 +6185,12 @@
        "$ref": "#/definitions/AlertingFileExport"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": " Not found."
      }
@@ -6106,6 +6224,12 @@
       "schema": {
        "$ref": "#/definitions/Ack"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "tags": [
@@ -6137,6 +6261,12 @@
       "description": "RuleGroupConfigResponse",
       "schema": {
        "$ref": "#/definitions/RuleGroupConfigResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -6179,6 +6309,12 @@
        "$ref": "#/definitions/NamespaceConfigResponse"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": "NotFound",
       "schema": {
@@ -6215,6 +6351,12 @@
       "description": "Ack",
       "schema": {
        "$ref": "#/definitions/Ack"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "404": {
@@ -6254,6 +6396,12 @@
       "description": "NamespaceConfigResponse",
       "schema": {
        "$ref": "#/definitions/NamespaceConfigResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "404": {
@@ -6303,6 +6451,12 @@
        "$ref": "#/definitions/Ack"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": "NotFound",
       "schema": {
@@ -6345,6 +6499,12 @@
       "description": "Ack",
       "schema": {
        "$ref": "#/definitions/Ack"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "404": {
@@ -6390,6 +6550,12 @@
       "description": "RuleGroupConfigResponse",
       "schema": {
        "$ref": "#/definitions/RuleGroupConfigResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "404": {

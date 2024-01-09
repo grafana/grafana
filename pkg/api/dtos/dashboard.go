@@ -7,24 +7,25 @@ import (
 )
 
 type DashboardMeta struct {
-	IsStarred              bool                  `json:"isStarred,omitempty"`
-	IsSnapshot             bool                  `json:"isSnapshot,omitempty"`
-	Type                   string                `json:"type,omitempty"`
-	CanSave                bool                  `json:"canSave"`
-	CanEdit                bool                  `json:"canEdit"`
-	CanAdmin               bool                  `json:"canAdmin"`
-	CanStar                bool                  `json:"canStar"`
-	CanDelete              bool                  `json:"canDelete"`
-	Slug                   string                `json:"slug"`
-	Url                    string                `json:"url"`
-	Expires                time.Time             `json:"expires"`
-	Created                time.Time             `json:"created"`
-	Updated                time.Time             `json:"updated"`
-	UpdatedBy              string                `json:"updatedBy"`
-	CreatedBy              string                `json:"createdBy"`
-	Version                int                   `json:"version"`
-	HasACL                 bool                  `json:"hasAcl" xorm:"has_acl"`
-	IsFolder               bool                  `json:"isFolder"`
+	IsStarred  bool      `json:"isStarred,omitempty"`
+	IsSnapshot bool      `json:"isSnapshot,omitempty"`
+	Type       string    `json:"type,omitempty"`
+	CanSave    bool      `json:"canSave"`
+	CanEdit    bool      `json:"canEdit"`
+	CanAdmin   bool      `json:"canAdmin"`
+	CanStar    bool      `json:"canStar"`
+	CanDelete  bool      `json:"canDelete"`
+	Slug       string    `json:"slug"`
+	Url        string    `json:"url"`
+	Expires    time.Time `json:"expires"`
+	Created    time.Time `json:"created"`
+	Updated    time.Time `json:"updated"`
+	UpdatedBy  string    `json:"updatedBy"`
+	CreatedBy  string    `json:"createdBy"`
+	Version    int       `json:"version"`
+	HasACL     bool      `json:"hasAcl" xorm:"has_acl"`
+	IsFolder   bool      `json:"isFolder"`
+	// Deprecated: use FolderUID instead
 	FolderId               int64                 `json:"folderId"`
 	FolderUid              string                `json:"folderUid"`
 	FolderTitle            string                `json:"folderTitle"`
@@ -48,11 +49,6 @@ type AnnotationActions struct {
 
 type DashboardFullWithMeta struct {
 	Meta      DashboardMeta    `json:"meta"`
-	Dashboard *simplejson.Json `json:"dashboard"`
-}
-
-type TrimDashboardFullWithMeta struct {
-	Meta      *simplejson.Json `json:"meta"`
 	Dashboard *simplejson.Json `json:"dashboard"`
 }
 

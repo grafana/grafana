@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
+import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import {
@@ -17,7 +18,7 @@ import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
-interface TableContainerProps {
+interface TableContainerProps extends Themeable2 {
   ariaLabel?: string;
   exploreId: string;
   width: number;
@@ -61,7 +62,8 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
+    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone, theme } =
+      this.props;
 
     let dataFrames = hasDeprecatedParentRowIndex(tableResult)
       ? migrateFromParentRowIndexToNestedFrames(tableResult)
@@ -93,30 +95,34 @@ export class TableContainer extends PureComponent<Props> {
             {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
           </PanelChrome>
         )}
-        {frames &&
-          frames.length > 0 &&
-          frames.map((data, i) => (
-            <PanelChrome
-              key={data.refId || `table-${i}`}
-              title={this.getTableTitle(dataFrames, data, i)}
-              width={width}
-              height={this.getTableHeight(data.length, this.hasSubFrames(data))}
-              loadingState={loading ? LoadingState.Loading : undefined}
-            >
-              {(innerWidth, innerHeight) => (
-                <Table
-                  ariaLabel={ariaLabel}
-                  data={data}
-                  width={innerWidth}
-                  height={innerHeight}
-                  onCellFilterAdded={onCellFilterAdded}
-                />
-              )}
-            </PanelChrome>
-          ))}
+        {frames && frames.length > 0 && (
+          <div className={css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) })}>
+            {frames.map((data, i) => (
+              <PanelChrome
+                key={data.refId || `table-${i}`}
+                title={this.getTableTitle(dataFrames, data, i)}
+                width={width}
+                height={this.getTableHeight(data.length, this.hasSubFrames(data))}
+                loadingState={loading ? LoadingState.Loading : undefined}
+              >
+                {(innerWidth, innerHeight) => (
+                  <Table
+                    ariaLabel={ariaLabel}
+                    data={data}
+                    width={innerWidth}
+                    height={innerHeight}
+                    onCellFilterAdded={onCellFilterAdded}
+                  />
+                )}
+              </PanelChrome>
+            ))}
+          </div>
+        )}
       </>
     );
   }
 }
 
-export default connector(TableContainer);
+export const TableContainerWithTheme = withTheme2(TableContainer);
+
+export default withTheme2(connector(TableContainer));

@@ -11,6 +11,7 @@ import {
   ReducerID,
   getDisplayProcessor,
 } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
 import {
   Portal,
@@ -173,6 +174,8 @@ export const XYChartPanel2 = (props: Props) => {
           if (props.options.seriesMapping === SeriesMapping.Manual) {
             item.label = props.options.series?.[si]?.name ?? `Series ${si + 1}`;
           }
+
+          item.color = alpha(s.lineColor(frame) as string, 1);
 
           items.push(item);
         }

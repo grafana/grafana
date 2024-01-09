@@ -49,8 +49,8 @@ export const SubMenu = React.memo(
 
     return (
       <>
-        <div className={styles.iconWrapper} aria-label={selectors.components.Menu.SubMenu.icon}>
-          <Icon name="angle-right" className={styles.icon} aria-hidden />
+        <div className={styles.iconWrapper} aria-hidden aria-label={selectors.components.Menu.SubMenu.icon}>
+          <Icon name="angle-right" className={styles.icon} />
         </div>
         {isOpen && (
           <div

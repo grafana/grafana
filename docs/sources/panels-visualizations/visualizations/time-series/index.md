@@ -93,7 +93,7 @@ Use opacity to specify the series area fill color.
 Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme][].
 
 - **None:** No gradient fill. This is the default setting.
-- **Opacity:** An opacity gradient where the opacity of the fill increases as Y-axis values increase.
+- **Opacity:** An opacity gradient where the opacity of the fill increases as y-axis values increase.
 - **Hue:** A subtle gradient that is based on the hue of the series color.
 - **Scheme:** A color gradient defined by your [Color scheme][]. This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
 
@@ -176,22 +176,26 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ## Axis options
 
-Options under the axis category change how the X and Y axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
+Options under the axis category change how the x- and y-axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
+
+### Time zone
+
+Set the desired time zone(s) to display along the x-axis.
 
 ### Placement
 
-Select the placement of the Y-axis.
+Select the placement of the y-axis.
 
-- **Auto:** Automatically assigns the Y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
-- **Left:** Display all Y-axes on the left side.
-- **Right:** Display all Y-axes on the right side.
+- **Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
+- **Left:** Display all y-axes on the left side.
+- **Right:** Display all y-axes on the right side.
 - **Hidden:** Hide all axes.
 
 To selectively hide axes, [Add a field override][] that targets specific fields.
 
 ### Label
 
-Set a Y-axis text label. If you have more than one Y-axis, then you can assign different labels using an override.
+Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override.
 
 ### Width
 
@@ -199,22 +203,46 @@ Set a fixed width of the axis. By default, Grafana dynamically calculates the wi
 
 By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity to each other.
 
-### Soft min and soft max
+### Show grid lines
 
-Set a **Soft min** or **soft max** option for better control of Y-axis limits. By default, Grafana sets the range for the Y-axis automatically based on the dataset.
+Set the axis grid line visibility.
 
-**Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a specific point.
+- **Auto:** Automatically show grid lines based on the density of the data.
+- **On:** Always show grid lines.
+- **Off:** Never show grid lines.
 
-To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options][].
+### Color
 
-![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
+Set the color of the axis.
+
+- **Text:** Set the color based on theme text color.
+- **Series:** Set the color based on the series color.
+
+### Show border
+
+Set the axis border visibility.
 
 ### Scale
 
-Set the Y-axis values scale.
+Set the y-axis values scale.
 
 - **Linear:** Divides the scale into equal parts.
 - **Logarithmic:** Use a logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale.
+- **Symlog:** Use a symmetrical logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale. The linear threshold option allows you to set the threshold at which the scale changes from linear to logarithmic.
+
+### Centered zero
+
+Set the y-axis to be centered on zero.
+
+### Soft min and soft max
+
+Set a **Soft min** or **soft max** option for better control of y-axis limits. By default, Grafana sets the range for the y-axis automatically based on the dataset.
+
+**Soft min** and **soft max** settings can prevent small variations in the data from being magnified when it's mostly flat. In contrast, hard min and max values help prevent obscuring useful detail in the data by clipping intermittent spikes past a specific point.
+
+To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options][].
+
+![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
 ### Transform
 

@@ -1,4 +1,4 @@
-import { VariableModel } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 
 import { EngineSchema } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
@@ -48,7 +48,7 @@ function transformMetadataFunction(sourceSchema: AzureLogAnalyticsMetadata) {
 export function transformMetadataToKustoSchema(
   sourceSchema: AzureLogAnalyticsMetadata,
   nameOrIdOrSomething: string,
-  templateVariables: VariableModel[]
+  templateVariables: TypedVariableModel[]
 ): EngineSchema {
   const database = {
     name: nameOrIdOrSomething,

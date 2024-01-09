@@ -253,13 +253,16 @@ export const getTimeShiftTooltip = (type: 'start' | 'end', defaultVal: string) =
 export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';
 
 export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  let suffix = options.type;
+  suffix += options.type === 'tempo' ? '/configure-tempo-data-source/#trace-to-logs' : '/#trace-to-logs';
+
   return (
     <ConfigSection
       title="Trace to logs"
       description={
         <ConfigDescriptionLink
           description="Navigate from a trace span to the selected data source's logs."
-          suffix={`${options.type}/#trace-to-logs`}
+          suffix={suffix}
           feature="trace to logs"
         />
       }

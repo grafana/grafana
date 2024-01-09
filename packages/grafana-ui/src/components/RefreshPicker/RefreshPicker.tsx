@@ -112,7 +112,7 @@ export class RefreshPicker extends PureComponent<Props> {
           tooltip={tooltip}
           onClick={onRefresh}
           variant={variant}
-          icon={isLoading ? 'fa fa-spinner' : 'sync'}
+          icon={isLoading ? 'spinner' : 'sync'}
           style={width ? { width } : undefined}
           data-testid={selectors.components.RefreshPicker.runButtonV2}
         >

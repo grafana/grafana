@@ -10,7 +10,7 @@ labels:
     - enterprise
     - oss
 title: The panel inspect view
-weight: 1200
+weight: 30
 ---
 
 # The panel inspect view

@@ -64,7 +64,7 @@ func (l *loggerImpl) Middleware() web.Middleware {
 			// put the start time on context so we can measure it later.
 			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 
-			if l.flags.IsEnabled(featuremgmt.FlagUnifiedRequestLog) {
+			if l.flags.IsEnabled(r.Context(), featuremgmt.FlagUnifiedRequestLog) {
 				r = r.WithContext(errutil.SetUnifiedLogging(r.Context()))
 			}
 
@@ -128,7 +128,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		logParams = append(logParams, "handler", handler)
 	}
 
-	if l.flags.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
+	if l.flags.IsEnabled(r.Context(), featuremgmt.FlagRequestInstrumentationStatusSource) {
 		rmd := requestmeta.GetRequestMetaData(c.Req.Context())
 		logParams = append(logParams, "status_source", rmd.StatusSource)
 	}

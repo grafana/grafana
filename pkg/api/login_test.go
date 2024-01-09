@@ -29,6 +29,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -49,6 +52,11 @@ func fakeSetIndexViewData(t *testing.T) {
 			User:     &dtos.CurrentUser{},
 			Settings: &dtos.FrontendSettingsDTO{},
 			NavTree:  &navtree.NavTreeRoot{},
+			Assets: &dtos.EntryPointAssets{
+				JSFiles:  []dtos.EntryPointAsset{},
+				CSSDark:  "dark.css",
+				CSSLight: "light.css",
+			},
 		}
 		return data, nil
 	}
@@ -60,7 +68,7 @@ func fakeViewIndex(t *testing.T) {
 		getViewIndex = origGetViewIndex
 	})
 	getViewIndex = func() string {
-		return "index-template"
+		return "index"
 	}
 }
 
@@ -587,7 +595,8 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
-			UserID: 10,
+			UserID:          10,
+			AuthenticatedBy: loginservice.AuthProxyAuthModule,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -626,7 +635,8 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
-			UserID: 10,
+			UserID:          10,
+			AuthenticatedBy: loginservice.AuthProxyAuthModule,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -639,6 +649,37 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
 	return sc
+}
+
+func TestLogoutSaml(t *testing.T) {
+	fakeSetIndexViewData(t)
+	fakeViewIndex(t)
+	sc := setupScenarioContextSamlLogout(t, "/logout")
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "saml").Return(true)
+
+	hs := &HTTPServer{
+		Cfg:              sc.cfg,
+		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
+		License:          license,
+		SocialService:    &mockSocialService{},
+		Features:         featuremgmt.WithFeatures(),
+		authInfoService: &authinfotest.FakeService{
+			ExpectedUserAuth: &loginservice.UserAuth{AuthModule: loginservice.SAMLAuthModule},
+		},
+	}
+
+	assert.Equal(t, true, hs.samlSingleLogoutEnabled())
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.SignedInUser = &user.SignedInUser{
+			UserID: 1,
+		}
+		hs.Logout(c)
+		return response.Empty(http.StatusOK)
+	})
+	sc.m.Get(sc.url, sc.defaultHandler)
+	sc.fakeReqNoAssertions("GET", sc.url).exec()
+	require.Equal(t, 302, sc.resp.Code)
 }
 
 type mockSocialService struct {

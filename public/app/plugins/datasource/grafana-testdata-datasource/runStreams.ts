@@ -182,7 +182,7 @@ export function runFetchStream(
     data.refId = target.refId;
     data.name = target.alias || 'Fetch ' + target.refId;
 
-    let reader: ReadableStreamReader<Uint8Array>;
+    let reader: ReadableStreamDefaultReader<Uint8Array>;
     const csv = new CSVReader({
       callback: {
         onHeader: (fields: Field[]) => {

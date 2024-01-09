@@ -645,6 +645,14 @@ export enum BarGaugeNamePlacement {
 }
 
 /**
+ * Allows for the bar gauge size to be set explicitly
+ */
+export enum BarGaugeSizing {
+  Auto = 'auto',
+  Manual = 'manual',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {

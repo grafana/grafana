@@ -17,17 +17,10 @@ interface Props {
 export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDisplay }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const renderValue = () => {
-    if (customValueDisplay) {
-      return customValueDisplay;
-    }
-
-    return <VizTooltipHeaderLabelValue keyValuePairs={keyValuePairs} />;
-  };
   return (
     <div className={styles.wrapper}>
       <HeaderLabel headerLabel={headerLabel} />
-      {renderValue()}
+      {customValueDisplay || <VizTooltipHeaderLabelValue keyValuePairs={keyValuePairs} />}
     </div>
   );
 };
@@ -37,6 +30,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    paddingBottom: theme.spacing(1),
+    padding: theme.spacing(1),
   }),
 });

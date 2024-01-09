@@ -8,7 +8,7 @@ import { LogRowStyles } from './getLogRowStyles';
 interface Props {
   logText: string;
   row: LogRowModel;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;

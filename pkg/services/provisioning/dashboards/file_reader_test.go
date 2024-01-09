@@ -364,7 +364,7 @@ func TestDashboardFileReader(t *testing.T) {
 		r, err := NewDashboardFileReader(cfg, logger, nil, nil)
 		require.NoError(t, err)
 
-		_, err = r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
+		_, _, err = r.getOrCreateFolder(context.Background(), cfg, fakeService, cfg.Folder)
 		require.Equal(t, err, ErrFolderNameMissing)
 	})
 
@@ -384,7 +384,7 @@ func TestDashboardFileReader(t *testing.T) {
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 		require.NoError(t, err)
 
-		_, err = r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
+		_, _, err = r.getOrCreateFolder(context.Background(), cfg, fakeService, cfg.Folder)
 		require.NoError(t, err)
 	})
 
@@ -404,7 +404,7 @@ func TestDashboardFileReader(t *testing.T) {
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 		require.NoError(t, err)
 
-		_, err = r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
+		_, _, err = r.getOrCreateFolder(context.Background(), cfg, fakeService, cfg.Folder)
 		require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
 	})
 

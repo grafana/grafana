@@ -31,8 +31,10 @@ composableKinds: PanelCfg: {
 					valueMode:     common.BarGaugeValueMode & (*"color" | _)
 					namePlacement: common.BarGaugeNamePlacement & (*"auto" | _)
 					showUnfilled:  bool | *true
-					minVizWidth:   uint32 | *0
-					minVizHeight:  uint32 | *10
+					sizing:        common.BarGaugeSizing & (*"auto" | _)
+					minVizWidth:   uint32 | *75
+					minVizHeight:  uint32 | *75
+					maxVizHeight:  uint32 | *300
 				} @cuetsy(kind="interface")
 			}
 		}]

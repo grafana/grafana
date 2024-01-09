@@ -9,12 +9,12 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  preProcessPanelData,
   rangeUtil,
   TimeRange,
   withLoadingIndicator,
-  preProcessPanelData,
 } from '@grafana/data';
-import { FetchResponse, getDataSourceSrv, toDataQueryError, DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
@@ -49,7 +49,7 @@ export class AlertingQueryRunner {
     return this.subject.asObservable();
   }
 
-  async run(queries: AlertQuery[]) {
+  async run(queries: AlertQuery[], condition: string) {
     const empty = initialState(queries, LoadingState.Done);
     const queriesToExclude: string[] = [];
 
@@ -79,7 +79,7 @@ export class AlertingQueryRunner {
       return this.subject.next(empty);
     }
 
-    this.subscription = runRequest(this.backendSrv, queriesToRun).subscribe({
+    this.subscription = runRequest(this.backendSrv, queriesToRun, condition).subscribe({
       next: (dataPerQuery) => {
         const nextResult = applyChange(dataPerQuery, (refId, data) => {
           const previous = this.lastResult[refId];
@@ -131,10 +131,14 @@ export class AlertingQueryRunner {
   }
 }
 
-const runRequest = (backendSrv: BackendSrv, queries: AlertQuery[]): Observable<Record<string, PanelData>> => {
+const runRequest = (
+  backendSrv: BackendSrv,
+  queries: AlertQuery[],
+  condition: string
+): Observable<Record<string, PanelData>> => {
   const initial = initialState(queries, LoadingState.Loading);
   const request = {
-    data: { data: queries },
+    data: { data: queries, condition },
     url: '/api/v1/eval',
     method: 'POST',
     requestId: uuidv4(),

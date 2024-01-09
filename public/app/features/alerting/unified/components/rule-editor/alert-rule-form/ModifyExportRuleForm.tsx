@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { Stack } from '@grafana/experimental';
-import { Button, CustomScrollbar, LinkButton, LoadingPlaceholder } from '@grafana/ui';
+import { Button, CustomScrollbar, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 

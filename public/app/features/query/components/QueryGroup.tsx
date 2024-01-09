@@ -27,7 +27,7 @@ import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/dataso
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { isAngularDatasourcePlugin } from '../../plugins/angularDeprecation/utils';
+import { isAngularDatasourcePluginAndNotHidden } from '../../plugins/angularDeprecation/utils';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
@@ -255,7 +255,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             </>
           )}
         </div>
-        {dataSource && isAngularDatasourcePlugin(dataSource.uid) && (
+        {dataSource && isAngularDatasourcePluginAndNotHidden(dataSource.uid) && (
           <AngularDeprecationPluginNotice
             pluginId={dataSource.type}
             pluginType={PluginType.datasource}

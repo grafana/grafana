@@ -6,6 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, Icon } from '@grafana/ui';
 
+import { getActiveItem, hasChildMatch } from '../MegaMenu/utils';
+
 export interface Props {
   item: NavModelItem;
   isSectionRoot?: boolean;
@@ -19,13 +21,14 @@ export function SectionNavItem({ item, isSectionRoot = false, level = 0 }: Props
   const styles = useStyles2(getStyles);
 
   const children = item.children?.filter((x) => !x.hideFromTabs);
+  const activeItem = item.children && getActiveItem(item.children, location.pathname);
 
   // If first root child is a section skip the bottom margin (as sections have top margin already)
   const noRootMargin = isSectionRoot && Boolean(item.children![0].children?.length);
 
   const linkClass = cx({
     [styles.link]: true,
-    [styles.activeStyle]: item.active,
+    [styles.activeStyle]: item.active || (level === MAX_DEPTH && hasChildMatch(item, activeItem)),
     [styles.isSection]: level < MAX_DEPTH && (Boolean(children?.length) || item.isSection),
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,

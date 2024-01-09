@@ -52,7 +52,7 @@ export const InfluxSqlConfig = (props: Props) => {
 
   const existingMetadata: MetadataState = jsonData?.metadata?.length
     ? jsonData?.metadata?.map((md) => ({ key: Object.keys(md)[0], value: Object.values(md)[0] }))
-    : [{ key: 'bucket-name', value: '' }];
+    : [{ key: '', value: '' }];
   const [metaDataArr, setMetaData] = useState<MetadataState>(existingMetadata);
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export const InfluxSqlConfig = (props: Props) => {
                 type="text"
                 value={metaDataArr[i]?.key || ''}
                 placeholder="key"
-                onChange={(e) => onKeyChange(e.currentTarget.value, metaDataArr, i, setMetaData)}
+                onChange={(e) => onKeyChange(e.currentTarget.value.trim(), metaDataArr, i, setMetaData)}
               ></Input>
             </InlineField>
             <InlineField labelWidth={20} label="Value">
@@ -112,7 +112,7 @@ export const InfluxSqlConfig = (props: Props) => {
                 type="text"
                 value={metaDataArr[i]?.value?.toString() ?? ''}
                 placeholder="value"
-                onChange={(e) => onValueChange(e.currentTarget.value, metaDataArr, i, setMetaData)}
+                onChange={(e) => onValueChange(e.currentTarget.value.trim(), metaDataArr, i, setMetaData)}
               ></Input>
             </InlineField>
             {i + 1 >= metaDataArr.length && (

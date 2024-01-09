@@ -9,6 +9,7 @@ import { usePopper } from 'react-popper';
 import { useMedia } from 'react-use';
 
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { Button } from '../../Button/Button';
@@ -83,7 +84,7 @@ export const DateTimePicker = ({
   const { dialogProps } = useDialog({}, ref);
 
   const theme = useTheme2();
-  const { modalBackdrop } = getModalStyles(theme);
+  const { modalBackdrop } = useStyles2(getModalStyles);
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
   const styles = useStyles2(getStyles);
 
@@ -288,7 +289,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           addonAfter={icon}
           value={internalDate.value}
           onBlur={onBlur}
-          data-testid="date-time-input"
+          data-testid={Components.DateTimePicker.input}
           placeholder="Select date/time"
           ref={ref}
           // @PERCONA

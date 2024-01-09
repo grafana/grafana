@@ -16,7 +16,7 @@ labels:
     - oss
 menuTitle: Configure value mappings
 title: Configure value mappings
-weight: 600
+weight: 90
 ---
 
 # Configure value mappings

@@ -233,6 +233,8 @@ export enum VariableHide {
  * `4`: Numerical DESC
  * `5`: Alphabetical Case Insensitive ASC
  * `6`: Alphabetical Case Insensitive DESC
+ * `7`: Natural ASC
+ * `8`: Natural DESC
  */
 export enum VariableSort {
   alphabeticalAsc = 1,
@@ -240,6 +242,8 @@ export enum VariableSort {
   alphabeticalCaseInsensitiveDesc = 6,
   alphabeticalDesc = 2,
   disabled = 0,
+  naturalAsc = 7,
+  naturalDesc = 8,
   numericalAsc = 3,
   numericalDesc = 4,
 }
@@ -301,7 +305,7 @@ export interface DashboardLink {
   /**
    * Link URL. Only required/valid if the type is link
    */
-  url: string;
+  url?: string;
 }
 
 export const defaultDashboardLink: Partial<DashboardLink> = {
@@ -622,6 +626,31 @@ export interface DataTransformerConfig {
 }
 
 /**
+ * Time picker configuration
+ * It defines the default config for the time picker and the refresh picker for the specific dashboard.
+ */
+export interface TimePickerConfig {
+  /**
+   * Whether timepicker is visible or not.
+   */
+  hidden: boolean;
+  /**
+   * Interval options available in the refresh picker dropdown.
+   */
+  refresh_intervals: Array<string>;
+  /**
+   * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+   */
+  time_options: Array<string>;
+}
+
+export const defaultTimePickerConfig: Partial<TimePickerConfig> = {
+  hidden: false,
+  refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+  time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
+};
+
+/**
  * 0 for no shared crosshair or tooltip (default).
  * 1 for shared crosshair.
  * 2 for shared crosshair AND shared tooltip.
@@ -937,7 +966,7 @@ export interface RowPanel {
   /**
    * List of panels in the row
    */
-  panels: Array<(Panel | GraphPanel | HeatmapPanel)>;
+  panels: Array<Panel>;
   /**
    * Name of template variable to repeat for.
    */
@@ -956,30 +985,6 @@ export const defaultRowPanel: Partial<RowPanel> = {
   collapsed: false,
   panels: [],
 };
-
-/**
- * Support for legacy graph panel.
- * @deprecated this a deprecated panel type
- */
-export interface GraphPanel {
-  /**
-   * @deprecated this is part of deprecated graph panel
-   */
-  legend?: {
-    show: boolean;
-    sort?: string;
-    sortDesc?: boolean;
-  };
-  type: 'graph';
-}
-
-/**
- * Support for legacy heatmap panel.
- * @deprecated this a deprecated panel type
- */
-export interface HeatmapPanel {
-  type: 'heatmap';
-}
 
 export interface Dashboard {
   /**
@@ -1028,7 +1033,7 @@ export interface Dashboard {
   /**
    * List of dashboard panels
    */
-  panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
+  panels?: Array<(Panel | RowPanel)>;
   /**
    * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */
@@ -1116,24 +1121,7 @@ export interface Dashboard {
   /**
    * Configuration of the time picker shown at the top of a dashboard.
    */
-  timepicker?: {
-    /**
-     * Whether timepicker is visible or not.
-     */
-    hidden: boolean;
-    /**
-     * Interval options available in the refresh picker dropdown.
-     */
-    refresh_intervals: Array<string>;
-    /**
-     * Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
-     */
-    collapse: boolean;
-    /**
-     * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-     */
-    time_options: Array<string>;
-  };
+  timepicker?: TimePickerConfig;
   /**
    * Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
    */

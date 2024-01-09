@@ -1292,7 +1292,7 @@
   {
     "name": "PostgreSQL",
     "type": "datasource",
-    "id": "postgres",
+    "id": "grafana-postgresql-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1303,8 +1303,8 @@
       "description": "Data source for PostgreSQL and compatible databases",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
-        "large": "/public/app/plugins/datasource/postgres/img/postgresql_logo.svg"
+        "small": "/public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg",
+        "large": "/public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1318,7 +1318,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/postgres/",
+    "defaultNavUrl": "/plugins/grafana-postgresql-datasource/",
     "category": "sql",
     "state": "",
     "signature": "internal",
@@ -1618,7 +1618,7 @@
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": ">=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },

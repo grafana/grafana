@@ -75,6 +75,7 @@ const (
 
 // Defines values for ResultFormat.
 const (
+	ResultFormatLogs       ResultFormat = "logs"
 	ResultFormatTable      ResultFormat = "table"
 	ResultFormatTimeSeries ResultFormat = "time_series"
 	ResultFormatTrace      ResultFormat = "trace"

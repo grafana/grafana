@@ -42,7 +42,7 @@ export function Editor({
   aliasBy,
   onChangeAliasBy,
 }: React.PropsWithChildren<Props>) {
-  const [labels, setLabels] = useState<{ [k: string]: any }>({});
+  const [labels, setLabels] = useState<{ [k: string]: string[] }>({});
   const [metricDescriptors, setMetricDescriptors] = useState<MetricDescriptor[]>([]);
   const [metricDescriptor, setMetricDescriptor] = useState<MetricDescriptor>();
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);

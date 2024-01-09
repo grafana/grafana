@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"slices"
 	"sort"
 	"strconv"
 	"sync"
@@ -12,7 +13,6 @@ import (
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/cluster/clusterpb"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/exp/slices"
 
 	"github.com/redis/go-redis/v9"
 

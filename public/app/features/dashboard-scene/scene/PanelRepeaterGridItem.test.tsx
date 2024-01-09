@@ -1,19 +1,8 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import {
-  EmbeddedScene,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneTimeRange,
-  SceneVariableSet,
-  TestVariable,
-  VizPanel,
-} from '@grafana/scenes';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
+import { SceneGridLayout } from '@grafana/scenes';
 
-import { activateFullSceneTree } from '../utils/test-utils';
-
-import { PanelRepeaterGridItem, RepeatDirection } from './PanelRepeaterGridItem';
+import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -22,7 +11,7 @@ setPluginImportUtils({
 
 describe('PanelRepeaterGridItem', () => {
   it('Given scene with variable with 2 values', async () => {
-    const { scene, repeater } = buildScene({ variableQueryTime: 0 });
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 });
 
     activateFullSceneTree(scene);
 
@@ -38,7 +27,7 @@ describe('PanelRepeaterGridItem', () => {
   });
 
   it('Should wait for variable to load', async () => {
-    const { scene, repeater } = buildScene({ variableQueryTime: 1 });
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1 });
 
     activateFullSceneTree(scene);
 
@@ -50,7 +39,7 @@ describe('PanelRepeaterGridItem', () => {
   });
 
   it('Should adjust container height to fit panels direction is horizontal', async () => {
-    const { scene, repeater } = buildScene({ variableQueryTime: 0, maxPerRow: 2, itemHeight: 10 });
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, maxPerRow: 2, itemHeight: 10 });
 
     const layoutForceRender = jest.fn();
     (scene.state.body as SceneGridLayout).forceRender = layoutForceRender;
@@ -64,7 +53,7 @@ describe('PanelRepeaterGridItem', () => {
   });
 
   it('Should adjust container height to fit panels when direction is vertical', async () => {
-    const { scene, repeater } = buildScene({ variableQueryTime: 0, itemHeight: 10, repeatDirection: 'v' });
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, itemHeight: 10, repeatDirection: 'v' });
 
     activateFullSceneTree(scene);
 
@@ -73,7 +62,7 @@ describe('PanelRepeaterGridItem', () => {
   });
 
   it('Should adjust itemHeight when container is resized, direction horizontal', async () => {
-    const { scene, repeater } = buildScene({
+    const { scene, repeater } = buildPanelRepeaterScene({
       variableQueryTime: 0,
       itemHeight: 10,
       repeatDirection: 'h',
@@ -92,7 +81,7 @@ describe('PanelRepeaterGridItem', () => {
   });
 
   it('Should adjust itemHeight when container is resized, direction vertical', async () => {
-    const { scene, repeater } = buildScene({
+    const { scene, repeater } = buildPanelRepeaterScene({
       variableQueryTime: 0,
       itemHeight: 10,
       repeatDirection: 'v',
@@ -110,7 +99,7 @@ describe('PanelRepeaterGridItem', () => {
   });
 
   it('When updating variable should update repeats', async () => {
-    const { scene, repeater, variable } = buildScene({ variableQueryTime: 0 });
+    const { scene, repeater, variable } = buildPanelRepeaterScene({ variableQueryTime: 0 });
 
     activateFullSceneTree(scene);
 
@@ -119,57 +108,3 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.length).toBe(2);
   });
 });
-
-interface SceneOptions {
-  variableQueryTime: number;
-  maxPerRow?: number;
-  itemHeight?: number;
-  repeatDirection?: RepeatDirection;
-}
-
-function buildScene(options: SceneOptions) {
-  const repeater = new PanelRepeaterGridItem({
-    variableName: 'server',
-    repeatedPanels: [],
-    repeatDirection: options.repeatDirection,
-    maxPerRow: options.maxPerRow,
-    itemHeight: options.itemHeight,
-    source: new VizPanel({
-      title: 'Panel $server',
-      pluginId: 'timeseries',
-    }),
-  });
-
-  const variable = new TestVariable({
-    name: 'server',
-    query: 'A.*',
-    value: ALL_VARIABLE_VALUE,
-    text: ALL_VARIABLE_TEXT,
-    isMulti: true,
-    includeAll: true,
-    delayMs: options.variableQueryTime,
-    optionsToReturn: [
-      { label: 'A', value: '1' },
-      { label: 'B', value: '2' },
-      { label: 'C', value: '3' },
-      { label: 'D', value: '4' },
-      { label: 'E', value: '5' },
-    ],
-  });
-
-  const scene = new EmbeddedScene({
-    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-    $variables: new SceneVariableSet({
-      variables: [variable],
-    }),
-    body: new SceneGridLayout({
-      children: [
-        new SceneGridRow({
-          children: [repeater],
-        }),
-      ],
-    }),
-  });
-
-  return { scene, repeater, variable };
-}

@@ -42,7 +42,7 @@ export interface MapLayerHandler<TConfig = any> {
    */
   registerOptionsUI?: (
     builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>,
-    context: StandardEditorContext<any, any>
+    context: StandardEditorContext<any>
   ) => void;
 }
 

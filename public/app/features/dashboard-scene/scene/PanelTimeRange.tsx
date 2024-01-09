@@ -104,6 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     timeshift: css({
       color: theme.colors.text.link,
       gap: theme.spacing(0.5),
+      whiteSpace: 'nowrap',
     }),
   };
 };
