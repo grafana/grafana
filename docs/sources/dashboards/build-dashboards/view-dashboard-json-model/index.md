@@ -166,7 +166,7 @@ Usage of the fields is explained below:
 | **notice**            |                                                           |
 | **now**               |                                                           |
 | **hidden**            | whether timepicker is hidden or not                       |
-| **nowDelay**          | exclude recent data that may be incomplete                |
+| **nowDelay**          | override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.               |
 | **time_options**      | options available in the time picker dropdown             |
 | **refresh_intervals** | interval options available in the refresh picker dropdown |
 | **status**            |                                                           |
