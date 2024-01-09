@@ -275,7 +275,7 @@ const setPermission = (
 const addTeamLBACWarnings = (teams: number[], items: ResourcePermission[]) => {
   return items.map((item) => {
     if (item.permission !== 'Admin' && (!item.teamId || !teams.includes(item.teamId))) {
-      item.warning = `Warning: permission does not have corresponding rule configured in team LBAC.
+      item.warning = `Warning: permission does not have corresponding LBAC rule configured.
       Users might have full access to the data.`;
     }
     return { ...item };
