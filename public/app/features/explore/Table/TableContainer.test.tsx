@@ -107,13 +107,13 @@ describe('TableContainerWithTheme', () => {
     });
 
     it('should render table title with Prometheus query', () => {
-      const dataFrames = [{...dataFrame, name: 'metric{label="value"}'}];
+      const dataFrames = [{ ...dataFrame, name: 'metric{label="value"}' }];
       const tableProps = { ...defaultProps, tableResult: dataFrames };
       render(<TableContainerWithTheme {...tableProps} />);
       expect(screen.getByText('Table - metric{label="value"}')).toBeInTheDocument();
     });
   });
-  
+
   describe('With multiple main frames', () => {
     it('should render multiple tables for multiple frames', () => {
       const dataFrames = [dataFrame, dataFrame];

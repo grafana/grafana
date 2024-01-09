@@ -246,7 +246,7 @@ export function PanelChrome({
         <>
           <HoverWidget
             menu={menu}
-            title={typeof title === 'string' ? title: undefined}
+            title={typeof title === 'string' ? title : undefined}
             offset={hoverHeaderOffset}
             dragClass={dragClass}
             onOpenMenu={onOpenMenu}
@@ -275,7 +275,7 @@ export function PanelChrome({
           {menu && (
             <PanelMenu
               menu={menu}
-              title={typeof title === 'string' ? title: undefined}
+              title={typeof title === 'string' ? title : undefined}
               placement="bottom-end"
               menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
               onOpenMenu={onOpenMenu}

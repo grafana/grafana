@@ -59,10 +59,10 @@ export class TableContainer extends PureComponent<Props> {
     }
 
     return name ? (
-        <Trans i18nKey="explore.table.title-with-name">
-          Table - {{name}}
-        </Trans>
-      ) : t('explore.table.title', 'Table');
+      <Trans i18nKey="explore.table.title-with-name">Table - {{ name }}</Trans>
+    ) : (
+      t('explore.table.title', 'Table')
+    );
   }
 
   render() {
