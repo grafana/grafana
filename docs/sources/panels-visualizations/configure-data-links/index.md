@@ -30,7 +30,7 @@ Data links allow you to provide more granular context to your links. You can cre
 
 <!-- what we do mean by the "value under the cursor" and when you're linking to using a variable, where is that link going to??? an code snippet representing the example above would be great for explaining this concept-->
 
-The link itself is accessible in different ways depending on the visualization. For the Graph you need to click on a data point or line, for a panel like
+The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click on a data point or line, for a panel like
 Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open the context menu.
 
 <!--screenshot here -->
