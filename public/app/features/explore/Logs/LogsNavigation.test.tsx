@@ -94,7 +94,7 @@ describe('LogsNavigation', () => {
     expect(onChangeTimeMock).toHaveBeenCalledWith({ from: 1637319338000, to: 1637322938000 });
   });
 
-  it.only('should correctly display the active page', async () => {
+  it('should correctly display the active page', async () => {
     const queries: DataQuery[] = [];
     const { rerender } = setup({
       absoluteRange: { from: 1704737384139, to: 1704737684139 },
