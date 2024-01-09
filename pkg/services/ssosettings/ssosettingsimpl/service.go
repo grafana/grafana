@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/api"
@@ -56,6 +58,10 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
 		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
 		ssoSettingsApi.RegisterAPIEndpoints()
+
+		if isGrafanaHA(cfg) {
+			svc.initReloadForHA()
+		}
 	}
 
 	return svc
@@ -250,6 +256,36 @@ func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[st
 	return result, nil
 }
 
+func (s *SSOSettingsService) initReloadForHA() {
+	go func() {
+		reloadTicker := time.NewTicker(1 * time.Minute)
+		for {
+			<-reloadTicker.C
+			s.doReloadForHA()
+		}
+	}()
+}
+
+func (s *SSOSettingsService) doReloadForHA() {
+	for provider, connector := range s.reloadables {
+		s.log.Debug("reloading SSO Settings", "provider", provider)
+
+		ctx := context.Background()
+
+		settings, err := s.GetForProvider(ctx, provider)
+		if err != nil {
+			s.log.Error("failed to fetch SSO Settings", "provider", provider, "err", err)
+			continue
+		}
+
+		err = connector.Reload(ctx, *settings)
+		if err != nil {
+			s.log.Error("failed to reload SSO Settings", "provider", provider, "err", err)
+			continue
+		}
+	}
+}
+
 func isSecret(fieldName string) bool {
 	secretFieldPatterns := []string{"secret"}
 
@@ -285,4 +321,12 @@ func isProviderConfigurable(provider string) bool {
 	}
 
 	return false
+}
+
+func isGrafanaHA(cfg *setting.Cfg) bool {
+	grafanaLive := &live.GrafanaLive{
+		Cfg: cfg,
+	}
+
+	return grafanaLive.IsHA()
 }
