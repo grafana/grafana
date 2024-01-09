@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -41,7 +41,6 @@ function LogsNavigation({
   addResultsToCache,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   // These refs are to determine, if we want to clear up logs navigation when totally new query is run
   const expectedQueriesRef = useRef<DataQuery[]>();
@@ -49,6 +48,14 @@ function LogsNavigation({
   // This ref is to store range span for future queres based on firstly selected time range
   // e.g. if last 5 min selected, always run 5 min range
   const rangeSpanRef = useRef(0);
+
+  const currentPageIndex = useMemo(
+    () =>
+      pages.findIndex((page) => {
+        return page.queryRange.to === absoluteRange.to;
+      }),
+    [absoluteRange.to, pages]
+  );
 
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
   const onFirstPage = oldestLogsFirst ? currentPageIndex === pages.length - 1 : currentPageIndex === 0;
@@ -64,7 +71,6 @@ function LogsNavigation({
     if (!isEqual(expectedRangeRef.current, absoluteRange) || !isEqual(expectedQueriesRef.current, queries)) {
       clearCache();
       setPages([newPage]);
-      setCurrentPageIndex(0);
       expectedQueriesRef.current = queries;
       rangeSpanRef.current = absoluteRange.to - absoluteRange.from;
     } else {
@@ -73,14 +79,8 @@ function LogsNavigation({
         newPages = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
         // Sort pages based on logsOrder so they visually align with displayed logs
         newPages = [...newPages, newPage].sort((a, b) => sortPages(a, b, logsSortOrder));
-        // Set new pages
-
         return newPages;
       });
-
-      // Set current page index
-      const index = newPages.findIndex((page) => page.queryRange.to === absoluteRange.to);
-      setCurrentPageIndex(index);
     }
     addResultsToCache();
   }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
