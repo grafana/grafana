@@ -31,14 +31,14 @@ const (
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
-	licensing plugins.Licensing, pCfg *config.Cfg, features plugins.FeatureToggles) *Provider {
+	licensing plugins.Licensing, pCfg *config.Cfg) *Provider {
 	return &Provider{
 		cfg:                   cfg,
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
-		pluginEnvVars:         envvars.NewProvider(pCfg, licensing, features),
+		pluginEnvVars:         envvars.NewProvider(pCfg, licensing),
 		logger:                log.New("plugin.context"),
 	}
 }
