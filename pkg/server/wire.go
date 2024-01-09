@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	"github.com/grafana/grafana/pkg/plugins"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -201,6 +202,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
 	pluginsintegration.WireSet,
+	wire.Bind(new(plugins.FeatureToggles), new(*featuremgmt.FeatureManager)),
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	cloudwatch.ProvideService,

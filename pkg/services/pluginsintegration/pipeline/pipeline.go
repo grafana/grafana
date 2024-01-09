@@ -61,11 +61,11 @@ func ProvideValidationStage(cfg *config.Cfg, sv signature.Validator, ai angulari
 
 func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
 	bp plugins.BackendFactoryProvider, pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
-	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
+	roleRegistry plugins.RoleRegistry, features plugins.FeatureToggles) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
-			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), bp),
+			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l, features), bp),
 			initialization.PluginRegistrationStep(pr),
 			initialization.BackendProcessStartStep(pm),
 			RegisterPluginRolesStep(roleRegistry),

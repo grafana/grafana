@@ -19,12 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 func ProvideService(cfg *config.Cfg, registry registry.Service, licensing plugins.Licensing,
-	features featuremgmt.FeatureToggles) (*Manager, error) {
+	features plugins.FeatureToggles) (*Manager, error) {
 	l, err := createLoader(cfg, registry, licensing, features)
 	if err != nil {
 		return nil, err
@@ -92,7 +91,7 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 }
 
 func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
-	features featuremgmt.FeatureToggles) (loader.Service, error) {
+	features plugins.FeatureToggles) (loader.Service, error) {
 	d := discovery.New(cfg, discovery.Opts{
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{plugins.TypeRenderer}),
@@ -111,7 +110,7 @@ func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
 	})
 	i := initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
-			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), provider.New(provider.RendererProvider)),
+			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l, features), provider.New(provider.RendererProvider)),
 			initialization.PluginRegistrationStep(pr),
 		},
 	})
