@@ -11,6 +11,10 @@ import (
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
+// This is a helper function to create a new datasource API server for a group
+// This currently has no dependencies and only works for testdata.  In future iterations
+// this will include here (or elsewhere) versions that can load config from HG api or
+// the remote SQL directly
 func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 	if group != "testdata.datasource.grafana.app" {
 		return nil, fmt.Errorf("only testadata is currently supported")
@@ -22,8 +26,6 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 	}
 	s := testdatasource.ProvideService()
 	ds := &datasources.DataSource{
-		ID:      1,
-		OrgID:   1,
 		UID:     "builtin", // fake for now
 		Created: time.Now(),
 		Updated: time.Now(),
