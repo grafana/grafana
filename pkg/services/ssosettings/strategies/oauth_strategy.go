@@ -46,7 +46,7 @@ func (s *OAuthStrategy) loadAllSettings() {
 }
 
 func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any {
-	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
+	section := s.cfg.Raw.Section("auth." + provider)
 
 	return map[string]any{
 		"client_id":                  section.Key("client_id").Value(),

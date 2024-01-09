@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -138,8 +139,6 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        "mysql",
-			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			TimeColumnNames:   []string{"time", "time_sec"},
 			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
@@ -150,7 +149,16 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			userError: cfg.UserFacingDefaultError,
 		}
 
-		return sqleng.NewQueryDataHandler(cfg, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
+		db, err := sql.Open("mysql", cnnstr)
+		if err != nil {
+			return nil, err
+		}
+
+		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+		return sqleng.NewQueryDataHandler(cfg, db, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
 	}
 }
 

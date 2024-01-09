@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { EditorRows, Stack } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
@@ -21,6 +21,7 @@ export interface Props {
   onRunQuery: () => void;
   query: CloudMonitoringQuery;
   datasource: CloudMonitoringDatasource;
+  range: TimeRange;
 }
 
 export const defaultTimeSeriesList: (dataSource: CloudMonitoringDatasource) => TimeSeriesList = (dataSource) => ({
@@ -45,6 +46,7 @@ function Editor({
   onRunQuery,
   customMetaData,
   variableOptionGroup,
+  range,
 }: React.PropsWithChildren<Props>) {
   const onChangeTimeSeriesList = useCallback(
     (timeSeriesList: TimeSeriesList) => {
@@ -96,6 +98,7 @@ function Editor({
             query={query.timeSeriesList}
             aliasBy={query.aliasBy}
             onChangeAliasBy={(aliasBy: string) => onQueryChange({ ...query, aliasBy })}
+            range={range}
           />
         )}
 

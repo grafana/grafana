@@ -30,11 +30,10 @@ import {
   serializeStateToUrlParam,
   SplitOpen,
   TimeRange,
-  TimeZone,
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import {
   Button,
   FeatureBadge,
@@ -62,7 +61,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTINGS_KEYS } from './utils/logs';
+import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -92,7 +91,11 @@ interface Props extends Themeable2 {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<any>;
-  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
@@ -137,6 +140,14 @@ const DEDUP_OPTIONS = [
   LogsDedupStrategy.signature,
 ];
 
+const getDefaultVisualisationType = (): LogsVisualisationType => {
+  const visualisationType = store.get(visualisationTypeKey);
+  if (visualisationType === 'table') {
+    return 'table';
+  }
+  return 'logs';
+};
+
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
@@ -157,7 +168,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     contextOpen: false,
     contextRow: undefined,
     tableFrame: undefined,
-    visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
+    visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
   };
 
@@ -219,9 +230,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
       );
     }
     if (this.props.panelState?.logs?.visualisationType !== prevProps.panelState?.logs?.visualisationType) {
+      const visualisationType = this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
+
       this.setState({
-        visualisationType: this.props.panelState?.logs?.visualisationType ?? 'logs',
+        visualisationType: visualisationType,
       });
+      store.set(visualisationTypeKey, visualisationType);
     }
   }
 
@@ -436,7 +450,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
     urlState.panelsState = {
       ...this.props.panelState,
-      logs: { id: row.uid, visualisationType: this.state.visualisationType ?? 'logs' },
+      logs: { id: row.uid, visualisationType: this.state.visualisationType ?? getDefaultVisualisationType() },
     };
     urlState.range = {
       from: new Date(this.props.absoluteRange.from).toISOString(),
@@ -778,6 +792,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   showContextToggle={showContextToggle}
+                  getRowContextQuery={getRowContextQuery}
                   showLabels={showLabels}
                   showTime={showTime}
                   enableLogDetails={true}

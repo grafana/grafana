@@ -83,7 +83,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
-  const validateNameIsAvailable: Validate<string> = useCallback(
+  const validateNameIsAvailable: Validate<string, ReceiverFormValues<R>> = useCallback(
     (name: string) =>
       takenReceiverNames.map((name) => name.trim().toLowerCase()).includes(name.trim().toLowerCase())
         ? 'Another receiver with this name already exists.'

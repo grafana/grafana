@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/version"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -34,7 +33,9 @@ import (
 	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -129,14 +130,14 @@ type service struct {
 
 	tracing *tracing.TracingService
 
-	authorizer authorizer.Authorizer
+	authorizer *authorizer.GrafanaAuthorizer
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
-	authz authorizer.Authorizer,
+	orgService org.Service,
 	tracing *tracing.TracingService,
 	db db.DB,
 ) (*service, error) {
@@ -147,7 +148,7 @@ func ProvideService(
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
-		authorizer: authz,
+		authorizer: authorizer.NewGrafanaAuthorizer(cfg, orgService),
 		tracing:    tracing,
 		db:         db, // For Unified storage
 	}
@@ -227,6 +228,12 @@ func (s *service) start(ctx context.Context) error {
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
+
+		// Optionally register a custom authorizer
+		auth := b.GetAuthorizer()
+		if auth != nil {
+			s.authorizer.Register(b.GetGroupVersion(), auth)
+		}
 	}
 
 	o := options.NewRecommendedOptions("/registry/grafana.app", Codecs.LegacyCodec(groupVersions...))
@@ -289,7 +296,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.Etcd.StorageConfig.Codec)
 
 	case StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
@@ -305,7 +312,7 @@ func (s *service) start(ctx context.Context) error {
 		// Create a client instance
 		store := entity.NewEntityStoreClientWrapper(conn)
 
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.Etcd.StorageConfig.Codec)
 
 	case StorageTypeFile:
 		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
