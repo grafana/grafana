@@ -732,12 +732,8 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       return;
     }
 
-    // Some datasource's query builders allow per-query interval limits,
-    // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance?.interval;
-
     const queryOptions: QueryOptions = {
-      minInterval,
+      minInterval: datasourceInstance?.interval,
       maxDataPoints: containerWidth,
     };
 
