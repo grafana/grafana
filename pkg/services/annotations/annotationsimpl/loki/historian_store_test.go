@@ -356,6 +356,45 @@ func TestFloat64Map(t *testing.T) {
 	})
 }
 
+func TestBuildHistoryQuery(t *testing.T) {
+	t.Run("should set dashboard UID from dashboard ID if query does not contain UID", func(t *testing.T) {
+		query := buildHistoryQuery(
+			&annotations.ItemQuery{
+				DashboardID: 1,
+			},
+			map[string]int64{
+				"dashboard-uid": 1,
+			},
+			"rule-uid",
+		)
+		require.Equal(t, "dashboard-uid", query.DashboardUID)
+	})
+
+	t.Run("should skip dashboard UID if missing from query and dashboard map", func(t *testing.T) {
+		query := buildHistoryQuery(
+			&annotations.ItemQuery{
+				DashboardID: 1,
+			},
+			map[string]int64{
+				"other-dashboard-uid": 2,
+			},
+			"rule-uid",
+		)
+		require.Zero(t, query.DashboardUID)
+	})
+
+	t.Run("should skip dashboard UID when not in query", func(t *testing.T) {
+		query := buildHistoryQuery(
+			&annotations.ItemQuery{},
+			map[string]int64{
+				"dashboard-uid": 1,
+			},
+			"rule-uid",
+		)
+		require.Zero(t, query.DashboardUID)
+	})
+}
+
 func TestBuildTransition(t *testing.T) {
 	t.Run("should return error when entry contains invalid state strings", func(t *testing.T) {
 		_, err := buildTransition(historian.LokiEntry{

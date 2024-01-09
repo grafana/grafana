@@ -267,7 +267,7 @@ func buildHistoryQuery(ctx context.Context, query *annotations.ItemQuery, dashbo
 		RuleUID:      ruleUID,
 	}
 
-	if historyQuery.DashboardUID == "" && query.DashboardID == 0 {
+	if historyQuery.DashboardUID == "" && query.DashboardID != 0 {
 		for uid, id := range dashboards {
 			if query.DashboardID == id {
 				historyQuery.DashboardUID = uid
