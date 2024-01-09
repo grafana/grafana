@@ -82,6 +82,18 @@ export const ConvertFieldTypeTransformerEditor = ({
     [onChange, options]
   );
 
+  const onJoinWithChange = useCallback(
+    (idx: number) => (e: ChangeEvent<HTMLInputElement>) => {
+      const conversions = options.conversions;
+      conversions[idx] = { ...conversions[idx], joinWith: e.currentTarget.value };
+      onChange({
+        ...options,
+        conversions: conversions,
+      });
+    },
+    [onChange, options]
+  );
+
   const onAddConvertFieldType = useCallback(() => {
     onChange({
       ...options,
@@ -119,6 +131,7 @@ export const ConvertFieldTypeTransformerEditor = ({
   return (
     <>
       {options.conversions.map((c: ConvertFieldTypeOptions, idx: number) => {
+        const targetField = findField(input?.[0], c.targetField);
         return (
           <div key={`${c.targetField}-${idx}`}>
             <InlineFieldRow>
@@ -152,22 +165,31 @@ export const ConvertFieldTypeTransformerEditor = ({
                   />
                 </InlineField>
               )}
-              {c.destinationType === FieldType.string &&
-                (c.dateFormat || findField(input?.[0], c.targetField)?.type === FieldType.time) && (
-                  <>
-                    <InlineField label="Date format" tooltip="Specify the output format.">
-                      <Input
-                        value={c.dateFormat}
-                        placeholder={'e.g. YYYY-MM-DD'}
-                        onChange={onInputFormat(idx)}
-                        width={24}
-                      />
+              {c.destinationType === FieldType.string && (
+                <>
+                  {(c.joinWith?.length || targetField?.type === FieldType.other) && (
+                    <InlineField label="Join with" tooltip="Use an explicit separator when joining array values">
+                      <Input value={c.joinWith} placeholder={'JSON'} onChange={onJoinWithChange(idx)} width={9} />
                     </InlineField>
-                    <InlineField label="Set timezone" tooltip="Set the timezone of the date manually">
-                      <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
-                    </InlineField>
-                  </>
-                )}
+                  )}
+                  {c.dateFormat ||
+                    (targetField?.type === FieldType.time && (
+                      <>
+                        <InlineField label="Date format" tooltip="Specify the output format.">
+                          <Input
+                            value={c.dateFormat}
+                            placeholder={'e.g. YYYY-MM-DD'}
+                            onChange={onInputFormat(idx)}
+                            width={24}
+                          />
+                        </InlineField>
+                        <InlineField label="Set timezone" tooltip="Set the timezone of the date manually">
+                          <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
+                        </InlineField>
+                      </>
+                    ))}
+                </>
+              )}
               <Button
                 size="md"
                 icon="trash-alt"
