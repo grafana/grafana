@@ -58,7 +58,7 @@ interface TooltipContainerSize {
   height: number;
 }
 
-interface TimeRange2 {
+export interface TimeRange2 {
   from: number;
   to: number;
 }
