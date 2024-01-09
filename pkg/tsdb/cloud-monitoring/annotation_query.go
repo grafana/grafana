@@ -21,7 +21,7 @@ type annotationEvent struct {
 func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, queries []cloudMonitoringQueryExecutor) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo, s.tracer)
+	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo)
 	if err != nil {
 		return resp, err
 	}

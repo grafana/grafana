@@ -7,18 +7,16 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func (sloQ *cloudMonitoringSLO) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
-	return runTimeSeriesRequest(ctx, sloQ.logger, req, s, dsInfo, tracer, sloQ.parameters.ProjectName, sloQ.params, nil)
+	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, any, string, error) {
+	return runTimeSeriesRequest(ctx, sloQ.logger, req, s, dsInfo, nil, sloQ.parameters.ProjectName, sloQ.params, nil)
 }
 
 func (sloQ *cloudMonitoringSLO) parseResponse(queryRes *backend.DataResponse,
 	response any, executedQueryString string) error {
-	return parseTimeSeriesResponse(queryRes, response.(cloudMonitoringResponse), executedQueryString, sloQ, sloQ.params, []string{})
+	return parseTimeSeriesResponse(queryRes, response.(cloudMonitoringResponse), executedQueryString, nil, sloQ.params, []string{})
 }
 
 func (sloQ *cloudMonitoringSLO) buildDeepLink() string {

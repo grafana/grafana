@@ -14,12 +14,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
 func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
+	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, any, string, error) {
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, promQLQ.parameters.ProjectName)
 	if err != nil {
@@ -32,7 +31,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 		return dr, promResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, tracer, req, dsInfo, r, "")
+	span := traceReq(ctx, nil, req, dsInfo, r, "")
 	defer span.End()
 
 	requestBody := map[string]any{

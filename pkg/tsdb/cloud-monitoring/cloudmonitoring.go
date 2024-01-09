@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-google-sdk-go/pkg/utils"
 	"github.com/huandu/xstrings"
+	"golang.org/x/exp/slog"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -23,12 +24,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
-)
-
-var (
-	slog = log.New("tsdb.cloudMonitoring")
 )
 
 var (
@@ -65,9 +61,8 @@ const (
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
 
-func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	s := &Service{
-		tracer:             tracer,
 		httpClientProvider: httpClientProvider,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 
@@ -107,11 +102,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			slog.Warn("Failed to close response body", "err", err)
-		}
-	}()
 
 	status := backend.HealthStatusOk
 	message := "Successfully queried the Google Cloud Monitoring API."
@@ -128,7 +118,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 type Service struct {
 	httpClientProvider httpclient.Provider
 	im                 instancemgmt.InstanceManager
-	tracer             tracing.Tracer
 
 	resourceHandler backend.CallResourceHandler
 
@@ -332,7 +321,6 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 // QueryData takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger := slog.FromContext(ctx)
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
@@ -347,7 +335,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	queries, err := s.buildQueryExecutors(logger, req)
+	queries, err := s.buildQueryExecutors(nil, req)
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +352,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	for _, queryExecutor := range queries {
-		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, s.tracer)
+		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo)
 		if err != nil {
 			return resp, err
 		}
@@ -388,7 +376,7 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 	return q, nil
 }
 
-func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
+func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
 	cloudMonitoringQueryExecutors := make([]cloudMonitoringQueryExecutor, 0, len(req.Queries))
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
@@ -405,7 +393,6 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 		case string(dataquery.QueryTypeTimeSeriesList), string(dataquery.QueryTypeAnnotation):
 			cmtsf := &cloudMonitoringTimeSeriesList{
 				refID:   query.RefID,
-				logger:  logger,
 				aliasBy: q.AliasBy,
 			}
 			if q.TimeSeriesList.View == nil || *q.TimeSeriesList.View == "" {
@@ -422,12 +409,10 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				parameters: q.TimeSeriesQuery,
 				IntervalMS: query.Interval.Milliseconds(),
 				timeRange:  req.Queries[0].TimeRange,
-				logger:     logger,
 			}
 		case string(dataquery.QueryTypeSlo):
 			cmslo := &cloudMonitoringSLO{
 				refID:      query.RefID,
-				logger:     logger,
 				aliasBy:    q.AliasBy,
 				parameters: q.SloQuery,
 			}
@@ -436,7 +421,6 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 		case string(dataquery.QueryTypePromQL):
 			cmp := &cloudMonitoringProm{
 				refID:      query.RefID,
-				logger:     logger,
 				aliasBy:    q.AliasBy,
 				parameters: q.PromQLQuery,
 				timeRange:  req.Queries[0].TimeRange,

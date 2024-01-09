@@ -11,13 +11,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/huandu/xstrings"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
-	return runTimeSeriesRequest(ctx, timeSeriesFilter.logger, req, s, dsInfo, tracer, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
+	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, any, string, error) {
+	return runTimeSeriesRequest(ctx, timeSeriesFilter.logger, req, s, dsInfo, nil, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
 }
 
 func parseTimeSeriesResponse(queryRes *backend.DataResponse,
