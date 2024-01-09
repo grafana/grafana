@@ -256,6 +256,43 @@ describe('InfluxDataSource Backend Mode', () => {
       expect(qData).toBe(qe);
     });
 
+    // in #80003 it was reported that non-regex values were also being escaped improperly as of 10.2.2
+    it('should render variables with URL (single quote)', () => {
+      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = \'$var1\'', {
+        ...queryOptions,
+        scopedVars: {
+          var1: {
+            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+          },
+        },
+      });
+      // this is the desired result AFAIK?
+      // const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg'`;
+
+      // And this is what we're currently returning
+      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = 'https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg'`;
+
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    // Users posted a workaround which is to denote the variable as raw, which will prevent escaping that breaks single quoted values
+    it('should render variables with URL (workaround)', () => {
+      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = "${var1:raw}"', {
+        ...queryOptions,
+        scopedVars: {
+          var1: {
+            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+          },
+        },
+      });
+      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = "https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg"`;
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
     it('should render chained regex variables with URL', () => {
       ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^$var1$/', {
         ...queryOptions,
@@ -374,7 +411,7 @@ describe('applyVariables', () => {
     });
   });
 
-  it('Should interpolate and escape', () => {
+  it('Should interpolate and escape delimiter', () => {
     const query: InfluxQuery = ds.applyTemplateVariables(
       {
         ...mockInfluxQueryWithTemplateVars([]),
@@ -398,6 +435,31 @@ describe('applyVariables', () => {
       throw new Error('Tags are not defined');
     }
     expect(query.tags[0].value).toBe('/^\\\\/etc\\\\/resolv\\.conf$/');
+  });
+  it('Should interpolate and escape delimiter 2', () => {
+    const query: InfluxQuery = ds.applyTemplateVariables(
+      {
+        ...mockInfluxQueryWithTemplateVars([]),
+        tags: [
+          {
+            condition: 'AND',
+            key: 'path::tag',
+            operator: '=~',
+            value: '/^$path$/',
+          },
+        ],
+      },
+      {
+        path: {
+          text: 'script/acme.sh:latest-amd64',
+          value: 'script/acme.sh:latest-amd64',
+        },
+      }
+    );
+    if (!query.tags) {
+      throw new Error('Tags are not defined');
+    }
+    expect(query.tags[0].value).toBe('/^script\\\\/acme\\.sh:latest-amd64$/');
   });
   it('Should escape single variable', () => {
     const query: InfluxQuery = ds.applyTemplateVariables(
