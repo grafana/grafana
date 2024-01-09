@@ -32,7 +32,14 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
       </td>
       <td>
         {item.warning ? (
-          <Tooltip content={item.warning}>
+          <Tooltip
+            content={
+              <>
+                <div className={styles.warningText}>{item.warning}</div>
+                {getPermissionInfo(item)}
+              </>
+            }
+          >
             <Icon name="exclamation-triangle" className={styles.warning} />
           </Tooltip>
         ) : (
@@ -96,5 +103,8 @@ const getPermissionInfo = (p: ResourcePermission) => `Actions: ${[...new Set(p.a
 const getStyles = (theme: GrafanaTheme2) => ({
   warning: css({
     color: theme.colors.warning.main,
+  }),
+  warningText: css({
+    marginBottom: theme.spacing(1),
   }),
 });
