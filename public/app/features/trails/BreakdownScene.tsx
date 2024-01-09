@@ -293,7 +293,8 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
         getLayoutChild: (data, frame, frameIndex) => {
           return new SceneCSSGridItem({
             body: queryDef
-              .vizBuilder(queryDef)
+              .vizBuilder()
+              .setUnit(queryDef.unit)
               .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
@@ -311,7 +312,8 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
         getLayoutChild: (data, frame, frameIndex) => {
           return new SceneCSSGridItem({
             body: queryDef
-              .vizBuilder(queryDef)
+              .vizBuilder()
+              .setUnit(queryDef.unit)
               .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
