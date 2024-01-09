@@ -279,6 +279,7 @@ function SearchQueryHelp() {
         <HelpRow title="State" expr="state:firing|normal|pending" />
         <HelpRow title="Type" expr="type:alerting|recording" />
         <HelpRow title="Health" expr="health:ok|nodata|error" />
+        <HelpRow title="Dashboard UID" expr="dashboard:eadde4c7-54e6-4964-85c0-484ab852fd04" />
       </div>
     </div>
   );
