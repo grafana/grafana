@@ -3387,7 +3387,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 9aec680a56196f844908afb395a2c401d85333ebe4f20cf1cdfdbd4a675d22174b647bb63155f95228198e6ba7a431392b8a27bcea44072ccdfa04c95e41dacb
+  checksum: faa374cc59eebab480410a52668028725d8bbacc1f0530b57268af3d67400dd9b439ac0d24e8874eff79a4959a824c052a68fa49d03d4a6caf7ee0e76f60d7d6
   languageName: node
   linkType: hard
 
