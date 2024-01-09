@@ -183,7 +183,7 @@ type OptionsState = {
 // Exported for tests
 export function useLoadOptions(datasource: ZipkinDatasource) {
   const isMounted = useMountedState();
-  const [allOptions, setAllOptions] = useState({} as OptionsState);
+  const [allOptions, setAllOptions] = useState<OptionsState>({});
 
   const [, fetchSpans] = useAsyncFn(
     async function findSpans(service: string): Promise<void> {
