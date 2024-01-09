@@ -15,8 +15,8 @@
   "postUpdateOptions": ["yarnDedupeHighest"],
   "packageRules": [
     {
-      "allowedVersions": ">=1",
       "automerge": true,
+      "matchCurrentVersion": "!/^0/",
       "matchUpdateTypes": ["patch"],
       "excludePackagePatterns": ["^@?storybook", "^@locker"]
     },
