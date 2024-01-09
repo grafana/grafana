@@ -275,6 +275,8 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
+/pkg/aggregator @grafana/grafana-app-platform-squad
+/pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend-product
