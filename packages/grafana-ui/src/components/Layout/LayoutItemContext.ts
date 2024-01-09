@@ -1,9 +1,9 @@
 import { createContext } from 'react';
 
 export interface LayoutItemContextProps {
-  incrPinnedCount: (count: number) => void;
+  setAnchoredCount: (nextCount: ((prevCount: number) => number) | number) => void;
 }
 
 export const LayoutItemContext = createContext<LayoutItemContextProps>({
-  incrPinnedCount: () => {},
+  setAnchoredCount: () => {},
 });
