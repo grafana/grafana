@@ -36,7 +36,5 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		&fakeDatasources.FakeDataSourceService{DataSources: dss},
 		&fakeDatasources.FakeCacheService{DataSources: dss},
 		&actest.FakeAccessControl{ExpectedEvaluate: true}, // always OK
-		func(orgId int64) string {
-			return "default" // all orgs are default
-		})
+	)
 }
