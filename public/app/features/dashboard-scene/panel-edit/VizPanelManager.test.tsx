@@ -17,7 +17,7 @@ import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompa
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { VizPanelManager } from './VizPanelManager';
-import testDashboard from './testfiles/testDashboard.json';
+import { panelWithQueriesOnly, panelWithTransformations, testDashboard } from './testfiles/testDashboard';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -606,88 +606,96 @@ describe('VizPanelManager', () => {
   });
 
   describe('change queries', () => {
-    it('should update plugin queries', () => {
-      const { vizPanelManager } = setupTest('panel-1');
+    describe('plugin queries', () => {
+      it('should update queries', () => {
+        const { vizPanelManager } = setupTest('panel-1');
 
-      vizPanelManager.activate();
+        vizPanelManager.activate();
 
-      vizPanelManager.changeQueries([
-        {
-          datasource: {
-            type: 'grafana-testdata-datasource',
-            uid: 'gdev-testdata',
+        vizPanelManager.changeQueries([
+          {
+            datasource: {
+              type: 'grafana-testdata-datasource',
+              uid: 'gdev-testdata',
+            },
+            refId: 'A',
+            scenarioId: 'random_walk',
+            seriesCount: 5,
           },
-          refId: 'A',
-          scenarioId: 'random_walk',
-          seriesCount: 5,
-        },
-      ]);
+        ]);
 
-      expect(vizPanelManager.queryRunner.state.queries).toEqual([
-        {
-          datasource: {
-            type: 'grafana-testdata-datasource',
-            uid: 'gdev-testdata',
+        expect(vizPanelManager.queryRunner.state.queries).toEqual([
+          {
+            datasource: {
+              type: 'grafana-testdata-datasource',
+              uid: 'gdev-testdata',
+            },
+            refId: 'A',
+            scenarioId: 'random_walk',
+            seriesCount: 5,
           },
-          refId: 'A',
-          scenarioId: 'random_walk',
-          seriesCount: 5,
-        },
-      ]);
+        ]);
+      });
     });
 
-    it('should update dashboard queries', () => {
-      const { vizPanelManager, scene } = setupTest('panel-3');
+    describe('dashboard queries', () => {
+      it('should update queries', () => {
+        const { vizPanelManager, scene } = setupTest('panel-3');
 
-      vizPanelManager.activate();
+        vizPanelManager.activate();
 
-      let sourcePanel = findVizPanelByKey(
-        scene,
-        getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
-      );
+        let sourcePanel = findVizPanelByKey(
+          scene,
+          getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
+        );
 
-      // Changing query to a panel with transformations
-      vizPanelManager.changeQueries([
-        {
-          refId: 'A',
-          datasource: {
-            type: DASHBOARD_DATASOURCE_PLUGIN_ID,
+        // Changing dashboard query to a panel with transformations
+        vizPanelManager.changeQueries([
+          {
+            refId: 'A',
+            datasource: {
+              type: DASHBOARD_DATASOURCE_PLUGIN_ID,
+            },
+            panelId: panelWithTransformations.id,
           },
-          panelId: 2,
-        },
-      ]);
-      expect(vizPanelManager.queryRunner.parent).toBeInstanceOf(ShareQueryDataProvider);
-      expect((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId).toBe(2);
-      expect(vizPanelManager.queryRunner.parent?.state.$data).toBeInstanceOf(SceneDataTransformer);
-      expect(vizPanelManager.queryRunner.parent?.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
+        ]);
+        expect(vizPanelManager.queryRunner.parent).toBeInstanceOf(ShareQueryDataProvider);
+        expect((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId).toBe(
+          panelWithTransformations.id
+        );
+        expect(vizPanelManager.queryRunner.parent?.state.$data).toBeInstanceOf(SceneDataTransformer);
+        expect(vizPanelManager.queryRunner.parent?.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
 
-      sourcePanel = findVizPanelByKey(
-        scene,
-        getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
-      );
+        sourcePanel = findVizPanelByKey(
+          scene,
+          getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
+        );
 
-      // Changing query to a panel with queries only
-      vizPanelManager.changeQueries([
-        {
-          refId: 'A',
-          datasource: {
-            type: DASHBOARD_DATASOURCE_PLUGIN_ID,
+        // Changing dashboard query to a panel with queries only
+        vizPanelManager.changeQueries([
+          {
+            refId: 'A',
+            datasource: {
+              type: DASHBOARD_DATASOURCE_PLUGIN_ID,
+            },
+            panelId: panelWithQueriesOnly.id,
           },
-          panelId: 1,
-        },
-      ]);
+        ]);
 
-      expect(vizPanelManager.queryRunner.parent).toBeInstanceOf(ShareQueryDataProvider);
-      expect((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId).toBe(1);
+        expect(vizPanelManager.queryRunner.parent).toBeInstanceOf(ShareQueryDataProvider);
+        expect((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId).toBe(
+          panelWithQueriesOnly.id
+        );
 
-      sourcePanel = findVizPanelByKey(
-        scene,
-        getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
-      );
+        sourcePanel = findVizPanelByKey(
+          scene,
+          getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
+        );
 
-      expect(vizPanelManager.queryRunner.state.queries).toEqual(
-        (sourcePanel!.state.$data as SceneQueryRunner)?.state.queries
-      );
+        expect(vizPanelManager.queryRunner.state.queries).toEqual(
+          (sourcePanel!.state.$data as SceneQueryRunner)?.state.queries
+        );
+      });
     });
   });
 });
