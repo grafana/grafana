@@ -2,16 +2,22 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { ReturnToPrevious } from './ReturnToPrevious';
 
 export const ReturnToPreviousWrapper = () => {
   const params = useQueryParams()[0];
-  const [paramsExist, setParamsExist] = React.useState(params?.__returnToTitle && params?.__returnToUrl);
-  const showReturnToPrevious: boolean = paramsExist && location.pathname !== params.__returnToUrl ? true : false;
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+
+  const [paramsExist, setParamsExist] = React.useState(params?.__returnToTitle && params?.__returnToUrl);
+  // Don't show the button whether if there is no params or the URL param matches the current URL
+  const showReturnToPrevious: boolean = paramsExist && location.pathname !== params.__returnToUrl ? true : false;
+
+  // Only show the button on large screens
+  const isLargeScreen = window.innerWidth >= theme.breakpoints.values.xl;
 
   React.useEffect(() => {
     if (params?.__returnToTitle && params?.__returnToUrl) {
@@ -21,7 +27,7 @@ export const ReturnToPreviousWrapper = () => {
     }
   }, [params]);
 
-  return showReturnToPrevious && paramsExist ? (
+  return showReturnToPrevious && isLargeScreen ? (
     <div className={styles.wrapper}>
       <ReturnToPrevious href={params.__returnToUrl} title={params.__returnToTitle}>
         {params.__returnToTitle}
