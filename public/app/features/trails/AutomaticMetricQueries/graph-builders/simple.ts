@@ -4,7 +4,7 @@ import { CommonVizParams } from './types';
 
 export function simpleGraphBuilder({ title, unit }: CommonVizParams) {
   return () =>
-    PanelBuilders.timeseries()
+    PanelBuilders.timeseries() //
       .setTitle(title)
       .setUnit(unit)
       .setOption('legend', { showLegend: false })
