@@ -31,14 +31,13 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
         />
       </td>
       <td>
-        <Tooltip content={getPermissionInfo(item)}>
-          <Icon name="info-circle" />
-        </Tooltip>
-      </td>
-      <td>
-        {item.warning && (
+        {item.warning ? (
           <Tooltip content={item.warning}>
             <Icon name="exclamation-triangle" className={styles.warning} />
+          </Tooltip>
+        ) : (
+          <Tooltip content={getPermissionInfo(item)}>
+            <Icon name="info-circle" />
           </Tooltip>
         )}
       </td>
