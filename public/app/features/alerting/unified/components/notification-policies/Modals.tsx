@@ -120,13 +120,16 @@ const useDetailsPolicyModal = (
               onSubmit={handleSave}
               receivers={AmRouteReceivers}
               route={route}
+              isReadOnly={isReadOnly}
               actionButtons={
-                <Modal.ButtonRow>
-                  <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                    Cancel
-                  </Button>
-                  <Button type="submit">Update default policy</Button>
-                </Modal.ButtonRow>
+                isReadOnly ? null : (
+                  <Modal.ButtonRow>
+                    <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
+                      Cancel
+                    </Button>
+                    <Button type="submit">Update default policy</Button>
+                  </Modal.ButtonRow>
+                )
               }
             />
           )}

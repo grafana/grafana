@@ -27,6 +27,7 @@ export interface AmRootRouteFormProps {
   onSubmit: (route: Partial<FormAmRoute>) => void;
   receivers: AmRouteReceiver[];
   route: RouteWithID;
+  isReadOnly?: boolean;
 }
 
 export const AmRootRouteForm = ({
@@ -35,6 +36,7 @@ export const AmRootRouteForm = ({
   onSubmit,
   receivers,
   route,
+  isReadOnly = false,
 }: AmRootRouteFormProps) => {
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
@@ -57,19 +59,24 @@ export const AmRootRouteForm = ({
                       className={styles.input}
                       onChange={(value) => onChange(mapSelectValueToString(value))}
                       options={receivers}
+                      disabled={isReadOnly}
                     />
                   )}
                   control={control}
                   name="receiver"
                   rules={{ required: { value: true, message: 'Required.' } }}
                 />
-                <span>or</span>
-                <Link
-                  className={styles.linkText}
-                  href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}
-                >
-                  Create a contact point
-                </Link>
+                {!isReadOnly && (
+                  <>
+                    <span>or</span>
+                    <Link
+                      className={styles.linkText}
+                      href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}
+                    >
+                      Create a contact point
+                    </Link>
+                  </>
+                )}
               </div>
             </>
           </Field>
@@ -94,6 +101,7 @@ export const AmRootRouteForm = ({
                   }}
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
                   options={[...commonGroupByOptions, ...groupByOptions]}
+                  disabled={isReadOnly}
                 />
               )}
               control={control}
@@ -120,6 +128,7 @@ export const AmRootRouteForm = ({
                   placeholder={TIMING_OPTIONS_DEFAULTS.group_wait}
                   className={styles.promDurationInput}
                   aria-label="Group wait"
+                  disabled={isReadOnly}
                 />
               </Field>
               <Field
@@ -134,6 +143,7 @@ export const AmRootRouteForm = ({
                   placeholder={TIMING_OPTIONS_DEFAULTS.group_interval}
                   className={styles.promDurationInput}
                   aria-label="Group interval"
+                  disabled={isReadOnly}
                 />
               </Field>
               <Field
@@ -153,6 +163,7 @@ export const AmRootRouteForm = ({
                   placeholder={TIMING_OPTIONS_DEFAULTS.repeat_interval}
                   className={styles.promDurationInput}
                   aria-label="Repeat interval"
+                  disabled={isReadOnly}
                 />
               </Field>
             </div>
