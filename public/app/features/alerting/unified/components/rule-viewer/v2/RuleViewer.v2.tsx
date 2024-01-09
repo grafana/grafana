@@ -120,8 +120,8 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
                   label="Export"
                   icon="download-alt"
                   childItems={[
-                    <Menu.Item key="no-modifications" label="Without modifications" icon="file-blank" />,
-                    <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
+                    // <Menu.Item key="export-no-modifications" label="Without modifications" icon="file-blank" url={} />,
+                    <ExportMenuItem key="export-with-modifications" identifier={identifier} />,
                   ]}
                 />
               )}
@@ -185,6 +185,18 @@ export const EditButton = ({ identifier }: EditButtonProps) => {
       Edit
     </LinkButton>
   );
+};
+
+interface ExportMenuItemProps {
+  identifier: RuleIdentifier;
+}
+const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
+  const returnTo = location.pathname + location.search;
+  const url = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`, {
+    returnTo,
+  });
+
+  return <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" url={url} />;
 };
 
 const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
