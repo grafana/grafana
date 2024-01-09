@@ -95,7 +95,7 @@ const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'adhoc',
 ];
 
-export function getVariableTypeSelectOptions(): SelectableValue<VariableType> {
+export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
   return EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
     label: EDITABLE_VARIABLES[variableType].name,
     value: variableType,

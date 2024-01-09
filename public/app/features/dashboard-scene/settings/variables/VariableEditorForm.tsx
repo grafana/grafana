@@ -36,10 +36,12 @@ export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormPro
 
     const scene = getVariableScene(variableType);
 
+    // FIXME: Remove set and type as required properties from AdHocFiltersVariable in @grafana/scenes
     if (scene === AdHocFiltersVariable) {
       const newVariable = new scene({ name, description, set: new AdHocFilterSet({}), type: 'adhoc' });
       setEditingVariable(newVariable);
     } else {
+      // @ts-ignore TS complains about missing properties for AdHocFiltersVariable
       const newVariable = new scene({ name, description });
       setEditingVariable(newVariable);
     }
