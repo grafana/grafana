@@ -15,10 +15,10 @@
   "postUpdateOptions": ["yarnDedupeHighest"],
   "packageRules": [
     {
+      "allowedVersions": ">=1",
+      "automerge": true,
       "matchUpdateTypes": ["patch"],
-      "excludePackagePatterns": ["^@?storybook", "^@locker"],
-      "extends": ["schedule:monthly"],
-      "groupName": "Monthly patch updates"
+      "excludePackagePatterns": ["^@?storybook", "^@locker"]
     },
     {
       "matchPackagePatterns": ["^@?storybook"],
