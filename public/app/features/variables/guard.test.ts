@@ -161,6 +161,7 @@ describe('type guards', () => {
   // test every type of variable, as new variables are added
   type ExtraVariableTypes = 'org' | 'dashboard' | 'user';
   // prettier-ignore
+  // TODO add adhoc-group variable here
   const variableFactsObj: Record<VariableType | ExtraVariableTypes, VariableFacts> = {
     query:      { variable: createQueryVariable(),      isMulti: true,  hasOptions: true,  hasCurrent: true },
     adhoc:      { variable: createAdhocVariable(),      isMulti: false, hasOptions: false, hasCurrent: false },
