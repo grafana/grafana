@@ -11,8 +11,10 @@ type RemoteAlertmanager struct {
 	LastReadinessCheck    prometheus.Gauge
 	ConfigSyncsTotal      prometheus.Counter
 	ConfigSyncErrorsTotal prometheus.Counter
+	LastConfigSync        prometheus.Gauge
 	StateSyncsTotal       prometheus.Counter
 	StateSyncErrorsTotal  prometheus.Counter
+	LastStateSync         prometheus.Gauge
 }
 
 func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
@@ -41,6 +43,12 @@ func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 			Name:      "remote_alertmanager_configuration_sync_errors_total",
 			Help:      "Total number of failed attempts to sync configurations between Alertmanagers.",
 		}),
+		LastConfigSync: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "remote_alertmanager_last_configuration_sync_timestamp_seconds",
+			Help:      "Timestamp of the last successful configuration sync to the remote Alertmanager in seconds.",
+		}),
 		StateSyncsTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
@@ -52,6 +60,12 @@ func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 			Subsystem: Subsystem,
 			Name:      "remote_alertmanager_state_sync_errors_total",
 			Help:      "Total number of failed attempts to sync state between Alertmanagers.",
+		}),
+		LastStateSync: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "remote_alertmanager_last_state_sync_timestamp_seconds",
+			Help:      "Timestamp of the last successful state sync to the remote Alertmanager in seconds.",
 		}),
 	}
 }

@@ -189,6 +189,7 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 			am.metrics.ConfigSyncErrorsTotal.Inc()
 			return err
 		}
+		am.metrics.LastConfigSync.SetToCurrentTime()
 	}
 	return nil
 }
@@ -207,6 +208,7 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 			am.metrics.ConfigSyncErrorsTotal.Inc()
 			return err
 		}
+		am.metrics.LastStateSync.SetToCurrentTime()
 	}
 	return nil
 }
