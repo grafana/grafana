@@ -12,6 +12,7 @@ import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
+import { mixedRequestId } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState, ExploreItemState } from 'app/types';
 
 import { runQueries } from './state/query';
@@ -21,12 +22,13 @@ interface DispatchProps {
   exploreId: string;
   timeZone: TimeZone;
   onClose: () => void;
+  isMixed: boolean;
 }
 
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { width, onClose, queryResponse, timeZone, exploreId } = props;
+  const { width, onClose, queryResponse, timeZone, exploreId, isMixed } = props;
   const dataFrames = queryResponse?.series || [];
   let errors = queryResponse?.errors;
   if (!errors?.length && queryResponse?.error) {
@@ -73,7 +75,7 @@ export function ExploreQueryInspector(props: Props) {
     icon: 'info-circle',
     content: (
       <QueryInspector
-        instanceId={requestIdGenerator(exploreId)}
+        instanceId={isMixed ? mixedRequestId(0, requestIdGenerator(exploreId)) : requestIdGenerator(exploreId)}
         data={queryResponse}
         onRefreshQuery={() => props.runQueries({ exploreId })}
       />
