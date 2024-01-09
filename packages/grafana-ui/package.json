@@ -113,7 +113,7 @@
     "uuid": "9.0.0"
   },
   "devDependencies": {
-    "@babel/core": "7.23.2",
+    "@babel/core": "7.23.7",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@storybook/addon-a11y": "7.4.5",
