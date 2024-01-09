@@ -235,13 +235,12 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 			},
 		},
 	}
+	store := db.InitTestDB(t)
+	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
+		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			store := db.InitTestDB(t)
-			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-				&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
-
 			for _, device := range tc.insertDevices {
 				err := anonService.anonStore.CreateOrUpdateDevice(context.Background(), device)
 				require.NoError(t, err)

@@ -219,8 +219,6 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 		toTime := time.Now()
 
 		sess := dbSess.Table("anon_device").Alias("d")
-		// add to query about from and to session
-		sess.Where("d.updated_at BETWEEN ? AND ?", fromTime.UTC(), toTime.UTC())
 
 		if query.Limit > 0 {
 			offset := query.Limit * (query.Page - 1)
@@ -238,8 +236,10 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 			sess.Asc("d.user_agent")
 		}
 
+		// add to query about from and to session
+		sess.Where("d.updated_at BETWEEN ? AND ?", fromTime.UTC(), toTime.UTC())
+
 		if query.Query != "" {
-			fmt.Printf("query: %s\n", query.Query)
 			queryWithWildcards := "%" + query.Query + "%"
 			sess.Where("d.user_agent "+s.sqlStore.GetDialect().LikeStr()+" ?", queryWithWildcards)
 		}
