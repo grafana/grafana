@@ -160,9 +160,8 @@ function getInheritedProperties(
   childRoute: Route,
   propertiesParentInherited?: Partial<InhertitableProperties>
 ) {
-  const fullParentProperties = merge({}, parentRoute, propertiesParentInherited);
-
-  const inheritableProperties: InhertitableProperties = pick(fullParentProperties, INHERITABLE_KEYS);
+  const propsFromParent = pick(parentRoute, INHERITABLE_KEYS);
+  const inheritableProperties: InhertitableProperties = merge({}, propsFromParent, propertiesParentInherited);
 
   // TODO how to solve this TypeScript mystery?
   const inherited = reduce(
