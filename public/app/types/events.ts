@@ -164,7 +164,11 @@ export class CopyTimeEvent extends BusEventBase {
   static type = 'copy-time';
 }
 
-export class PasteTimeEvent extends BusEventBase {
+interface PasteTimeEventPayload {
+  updateUrl?: boolean;
+}
+
+export class PasteTimeEvent extends BusEventWithPayload<PasteTimeEventPayload> {
   static type = 'paste-time';
 }
 

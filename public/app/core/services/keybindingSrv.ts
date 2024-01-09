@@ -211,7 +211,7 @@ export class KeybindingSrv {
     });
 
     this.bind('t v', () => {
-      appEvents.publish(new PasteTimeEvent());
+      appEvents.publish(new PasteTimeEvent({ updateUrl }));
     });
   }
 

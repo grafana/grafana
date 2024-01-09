@@ -63,8 +63,8 @@ export class TimeSrv {
       this.copyTimeRangeToClipboard();
     });
 
-    appEvents.subscribe(PasteTimeEvent, () => {
-      this.pasteTimeRangeFromClipboard();
+    appEvents.subscribe(PasteTimeEvent, (e) => {
+      this.pasteTimeRangeFromClipboard(e.payload.updateUrl);
     });
 
     document.addEventListener('visibilitychange', () => {
@@ -379,11 +379,12 @@ export class TimeSrv {
     appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
   }
 
-  pasteTimeRangeFromClipboard() {
+  pasteTimeRangeFromClipboard(updateUrl = true) {
+    console.log('dashboards - pasteTimeRangeFromClipboard');
     navigator.clipboard.readText().then((text) => {
       const { from, to } = JSON.parse(text);
       try {
-        this.setTime({ from, to }, true);
+        this.setTime({ from, to }, updateUrl);
       } catch (err) {
         appEvents.emit(AppEvents.alertError, [
           'Invalid time range',
