@@ -409,12 +409,12 @@ function setup(value: string, offset: number, tagsV1?: string[], tagsV2?: Scope[
         EnumMember: 2,
       },
     },
-  } as any;
+  } as unknown as typeof monacoTypes;
   provider.editor = {
     getModel() {
       return model;
     },
-  } as any;
+  } as unknown as monacoTypes.editor.IStandaloneCodeEditor;
 
   return { provider, model } as unknown as { provider: CompletionProvider; model: monacoTypes.editor.ITextModel };
 }

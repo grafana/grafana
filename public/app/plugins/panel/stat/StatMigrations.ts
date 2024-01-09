@@ -6,7 +6,7 @@ import { Options } from './panelcfg.gen';
 
 // This is called when the panel changes from another panel
 export const statPanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
+  panel: PanelModel<Partial<Options>>,
   prevPluginId: string,
   prevOptions: any
 ) => {

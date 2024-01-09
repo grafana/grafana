@@ -16,7 +16,7 @@ export const alertListPanelMigrationHandler = (
     tags: panel.options.tags ?? panel.dashboardTags ?? [],
     stateFilter:
       panel.options.stateFilter ??
-      panel.stateFilter?.reduce((filterObj: any, curFilter: any) => ({ ...filterObj, [curFilter]: true }), {}) ??
+      panel.stateFilter?.reduce((filterObj: object, curFilter: any) => ({ ...filterObj, [curFilter]: true }), {}) ??
       {},
   };
 

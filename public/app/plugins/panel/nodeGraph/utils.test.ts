@@ -275,6 +275,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
         config: {
           color: {
             fixedColor: 'green',
+            mode: 'fixed',
           },
         },
         name: 'arc__success',
@@ -285,6 +286,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
         config: {
           color: {
             fixedColor: 'red',
+            mode: 'fixed',
           },
         },
         name: 'arc__errors',
