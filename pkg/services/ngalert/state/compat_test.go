@@ -262,16 +262,6 @@ func TestStateToPostableAlertFromNodataError(t *testing.T) {
 		{name: "from Error  to NoData unresolved", resolved: false, from: eval.Error, to: eval.NoData, expectedLabels: noDataLabels},
 		{name: "from NoData to Error unresolved", resolved: false, from: eval.NoData, to: eval.Error, expectedLabels: errorLabels},
 		{name: "from Error  to Error unresolved", resolved: false, from: eval.Error, to: eval.Error, expectedLabels: errorLabels},
-
-		// Resolved edge cases that should never happen.
-		{name: "from NoData to Alerting resolved", resolved: true, from: eval.NoData, to: eval.Alerting, expectedLabels: standardLabels},
-		{name: "from Error  to Alerting resolved", resolved: true, from: eval.Error, to: eval.Alerting, expectedLabels: standardLabels},
-		{name: "from NoData to Pending resolved", resolved: true, from: eval.NoData, to: eval.Pending, expectedLabels: standardLabels},
-		{name: "from Error  to Pending resolved", resolved: true, from: eval.Error, to: eval.Pending, expectedLabels: standardLabels},
-		{name: "from NoData to NoData resolved", resolved: true, from: eval.NoData, to: eval.NoData, expectedLabels: noDataLabels},
-		{name: "from Error  to NoData resolved", resolved: true, from: eval.Error, to: eval.NoData, expectedLabels: noDataLabels},
-		{name: "from NoData to Error resolved", resolved: true, from: eval.NoData, to: eval.Error, expectedLabels: errorLabels},
-		{name: "from Error  to Error resolved", resolved: true, from: eval.Error, to: eval.Error, expectedLabels: errorLabels},
 	}
 
 	for _, tc := range testCases {

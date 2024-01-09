@@ -73,7 +73,7 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 	}
 
 	state := alertState.State
-	if alertState.Resolved && state == eval.Normal {
+	if alertState.Resolved {
 		// If this is a resolved alert, we need to send an alert with the correct labels such that they will expire the previous alert.
 		// In most cases the labels on the state will be correct, however when the previous alert was a NoData or Error alert, we need to
 		// ensure to modify it appropriately.
