@@ -634,6 +634,42 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 	})
 }
 
+func TestSSOSettingsService_DoReload(t *testing.T) {
+	t.Run("successfully reload settings", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := "github"
+
+		settings := &models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"enabled":   true,
+				"client_id": "github_client_id",
+			},
+		}
+		env.store.ExpectedSSOSetting = settings
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Reload", mock.Anything, *settings).Return(nil).Once()
+		env.reloadables[provider] = reloadable
+
+		env.service.doReload()
+	})
+
+	t.Run("failed fetching the SSO settings", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := "github"
+
+		env.store.ExpectedError = errors.New("failed fetching the settings")
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		env.service.doReload()
+	})
+}
+
 func setupTestEnv(t *testing.T) testEnv {
 	store := ssosettingstests.NewFakeStore()
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()

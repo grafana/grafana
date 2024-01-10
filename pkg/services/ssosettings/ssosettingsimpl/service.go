@@ -58,6 +58,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
 		ssoSettingsApi.RegisterAPIEndpoints()
 
+		// start background process for reloading SSO Settings
 		svc.initReload()
 	}
 
