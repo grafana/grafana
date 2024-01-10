@@ -339,8 +339,11 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID(), models.WithUniqueOrgID())
 	rule1 := createRule(t, store, generator)
 	rule2 := createRule(t, store, generator)
-	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID)
-	createFolder(t, store, rule2.NamespaceUID, rule2.Title, rule2.OrgID)
+
+	parentFolderUid := uuid.NewString()
+	createFolder(t, store, parentFolderUid, "Very Parent Folder", rule1.OrgID, "")
+	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID, parentFolderUid)
+	createFolder(t, store, rule2.NamespaceUID, rule2.Title, rule2.OrgID, "")
 
 	tc := []struct {
 		name         string
@@ -366,13 +369,13 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:    "with populate folders enabled, it returns them",
 			rules:   []string{rule1.Title, rule2.Title},
-			folders: map[string]string{rule1.NamespaceUID: rule1.Title, rule2.NamespaceUID: rule2.Title},
+			folders: map[string]string{rule1.NamespaceUID: models.GetNamespaceKey(parentFolderUid, rule1.Title), rule2.NamespaceUID: rule2.Title},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
-			folders:      map[string]string{rule1.NamespaceUID: rule1.Title},
+			folders:      map[string]string{rule1.NamespaceUID: models.GetNamespaceKey(parentFolderUid, rule1.Title)},
 		},
 	}
 
@@ -520,7 +523,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 
 	uid := uuid.NewString()
 	title := "folder-title"
-	createFolder(t, store, uid, title, 1)
+	createFolder(t, store, uid, title, 1, "")
 
 	actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
 	require.NoError(t, err)
@@ -602,7 +605,7 @@ func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule)
 	return rule
 }
 
-func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64) {
+func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, parentUID string) {
 	t.Helper()
 	u := &user.SignedInUser{
 		UserID:         1,
@@ -617,6 +620,7 @@ func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64) 
 		Title:        title,
 		Description:  "",
 		SignedInUser: u,
+		ParentUID:    parentUID,
 	})
 
 	require.NoError(t, err)
