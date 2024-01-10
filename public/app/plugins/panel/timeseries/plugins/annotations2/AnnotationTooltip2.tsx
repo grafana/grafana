@@ -111,7 +111,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css({
     padding: theme.spacing(0.5, 1),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
-    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightBold,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
     display: 'flex',
   }),
   meta: css({

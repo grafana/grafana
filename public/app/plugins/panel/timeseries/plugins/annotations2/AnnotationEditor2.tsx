@@ -3,7 +3,17 @@ import React, { useContext, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { AnnotationEventUIModel, GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Form, HorizontalGroup, InputControl, LayoutItemContext, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  Form,
+  HorizontalGroup,
+  InputControl,
+  LayoutItemContext,
+  TextArea,
+  usePanelContext,
+  useStyles2,
+} from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
@@ -65,16 +75,17 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, .
           <div>{time}</div>
         </HorizontalGroup>
       </div>
-      <div className={styles.editorForm}>
-        <Form<AnnotationEditFormDTO>
-          onSubmit={onSubmit}
-          defaultValues={{ description: annoVals.text?.[annoIdx], tags: annoVals.tags?.[annoIdx] || [] }}
-        >
-          {({ register, errors, control }) => {
-            return (
-              <>
+      <Form<AnnotationEditFormDTO>
+        onSubmit={onSubmit}
+        defaultValues={{ description: annoVals.text?.[annoIdx], tags: annoVals.tags?.[annoIdx] || [] }}
+      >
+        {({ register, errors, control }) => {
+          return (
+            <>
+              <div className={styles.content}>
                 <Field label={'Description'} invalid={!!errors.description} error={errors?.description?.message}>
                   <TextArea
+                    className={styles.textarea}
                     {...register('description', {
                       required: 'Annotation description is required',
                     })}
@@ -97,6 +108,8 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, .
                     }}
                   />
                 </Field>
+              </div>
+              <div className={styles.footer}>
                 <HorizontalGroup justify={'flex-end'}>
                   <Button size={'sm'} variant="secondary" onClick={dismiss} fill="outline">
                     Cancel
@@ -105,11 +118,11 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, .
                     {stateIndicator?.loading ? 'Saving' : 'Save'}
                   </Button>
                 </HorizontalGroup>
-              </>
-            );
-          }}
-        </Form>
-      </div>
+              </div>
+            </>
+          );
+        }}
+      </Form>
     </div>
   );
 };
@@ -125,15 +138,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       userSelect: 'text',
       width: '460px',
     }),
-    editorForm: css({
+    content: css({
       padding: theme.spacing(1),
     }),
     header: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0.5, 1),
-      fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightBold,
+      fontSize: theme.typography.fontSize.md,
+      color: theme.colors.text.primary,
+    }),
+    footer: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(1, 1),
+    }),
+    textarea: css({
       color: theme.colors.text.secondary,
+      fontSize: theme.typography.fontSize.sm,
     }),
   };
 };
