@@ -9,7 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
-	"k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/openapi"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func SetupAPIBuilders(serverConfig *server.RecommendedConfig, builders []APIGroupBuilder) error {
+func SetupConfig(serverConfig *genericapiserver.RecommendedConfig, builders []APIGroupBuilder) error {
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
@@ -64,6 +64,26 @@ func SetupAPIBuilders(serverConfig *server.RecommendedConfig, builders []APIGrou
 		GitCommit:    setting.BuildCommit,
 		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
 		GitVersion:   k8sVersion,
+	}
+	return nil
+}
+
+func InstallAPIs(server *genericapiserver.GenericAPIServer,
+	optsGetter generic.RESTOptionsGetter,
+	builders []APIGroupBuilder,
+) error {
+	for _, b := range builders {
+		g, err := b.GetAPIGroupInfo(Scheme, Codecs, optsGetter)
+		if err != nil {
+			return err
+		}
+		if g == nil || len(g.PrioritizedVersions) < 1 {
+			continue
+		}
+		err = server.InstallAPIGroup(g)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

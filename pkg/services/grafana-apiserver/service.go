@@ -319,7 +319,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Add OpenAPI specs for each group+version
-	err := SetupAPIBuilders(serverConfig, builders)
+	err := SetupConfig(serverConfig, builders)
 	if err != nil {
 		return err
 	}
@@ -331,18 +331,9 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API Group+version
-	for _, b := range builders {
-		g, err := b.GetAPIGroupInfo(Scheme, Codecs, serverConfig.RESTOptionsGetter)
-		if err != nil {
-			return err
-		}
-		if g == nil || len(g.PrioritizedVersions) < 1 {
-			continue
-		}
-		err = server.InstallAPIGroup(g)
-		if err != nil {
-			return err
-		}
+	err = InstallAPIs(server, serverConfig.RESTOptionsGetter, builders)
+	if err != nil {
+		return err
 	}
 
 	// Used by the proxy wrapper registered in ProvideService
