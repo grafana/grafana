@@ -60,11 +60,7 @@ Dashboard insights show the following information:
 
 {{< figure src="/static/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" alt="Stats tab" >}}{{< figure src="/static/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" alt="Users and activity tab" >}}
 
-{{% admonition type="note" %}}
-
 If public dashboards are [enabled][], you'll also see a **Public dashboards** tab in your analytics.
-
-{{% /admonition %}}
 
 ### Data source insights
 
