@@ -897,6 +897,18 @@ type VariableHide int
 
 // A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 type VariableModel struct {
+	// Value used when selecting the "All" option.
+	AllValue *string `json:"allValue,omitempty"`
+
+	// Dynamically calculates interval by dividing time range by the count specified.
+	Auto *bool `json:"auto,omitempty"`
+
+	// How many times the current time range should be divided to calculate the interval.
+	AutoCount *float32 `json:"auto_count,omitempty"`
+
+	// The calculated interval value will not go below this threshold.
+	AutoMin *string `json:"auto_min,omitempty"`
+
 	// Option to be selected in a variable.
 	Current *VariableOption `json:"current,omitempty"`
 
@@ -909,6 +921,9 @@ type VariableModel struct {
 	// Determine if the variable shows on dashboard
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 	Hide *VariableHide `json:"hide,omitempty"`
+
+	// Whether "all value" option is available or not.
+	IncludeAll *bool `json:"includeAll,omitempty"`
 
 	// Optional display name
 	Label *string `json:"label,omitempty"`
@@ -930,6 +945,9 @@ type VariableModel struct {
 	// `1`: Queries the data source every time the dashboard loads.
 	// `2`: Queries the data source when the dashboard time range changes.
 	Refresh *VariableRefresh `json:"refresh,omitempty"`
+
+	// Extracts part of a series name or metric node segment.
+	Regex *string `json:"regex,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
 	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`

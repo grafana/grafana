@@ -127,6 +127,22 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  */
 export interface VariableModel {
   /**
+   * Value used when selecting the "All" option.
+   */
+  allValue?: string;
+  /**
+   * Dynamically calculates interval by dividing time range by the count specified.
+   */
+  auto?: boolean;
+  /**
+   * How many times the current time range should be divided to calculate the interval.
+   */
+  auto_count?: number;
+  /**
+   * The calculated interval value will not go below this threshold.
+   */
+  auto_min?: string;
+  /**
    * Shows current selected variable text/value on the dashboard
    */
   current?: VariableOption;
@@ -142,6 +158,10 @@ export interface VariableModel {
    * Visibility configuration for the variable
    */
   hide?: VariableHide;
+  /**
+   * Whether "all value" option is available or not.
+   */
+  includeAll?: boolean;
   /**
    * Optional display name
    */
@@ -162,7 +182,14 @@ export interface VariableModel {
    * Query used to fetch values for a variable
    */
   query?: (string | Record<string, unknown>);
+  /**
+   * When to refresh the variable.
+   */
   refresh?: VariableRefresh;
+  /**
+   * Extracts part of a series name or metric node segment.
+   */
+  regex?: string;
   /**
    * Whether the variable value should be managed by URL query params or not
    */

@@ -197,11 +197,24 @@ lineage: schemas: [{
 			current?: #VariableOption
 			// Whether multiple values can be selected or not from variable value list
 			multi?: bool | *false
+			// Whether "all value" option is available or not.
+			includeAll?: bool
+			// Value used when selecting the "All" option.
+			allValue?: string
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
+			// When to refresh the variable.
 			refresh?: #VariableRefresh
 			// Options sort order
 			sort?: #VariableSort
+			// Extracts part of a series name or metric node segment.
+			regex?: string
+			// Dynamically calculates interval by dividing time range by the count specified.
+			auto?: bool
+			// The calculated interval value will not go below this threshold.
+			auto_min?: string
+			// How many times the current time range should be divided to calculate the interval.
+			auto_count?: number
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
