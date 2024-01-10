@@ -8,7 +8,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { ReturnToPrevious } from './ReturnToPrevious';
 
 export const ReturnToPreviousWrapper = () => {
-  const params = useQueryParams()[0];
+  const [params] = useQueryParams();
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
