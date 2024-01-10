@@ -25,7 +25,7 @@ import { SelectMetricAction } from './SelectMetricAction';
 import { getTrailStore } from './TrailStore/TrailStore';
 import {
   ActionViewDefinition,
-  ActioViewType,
+  ActionViewType,
   getVariablesWithMetricConstant,
   LOGS_METRIC,
   MakeOptional,
@@ -67,7 +67,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
     }
   }
 
-  public setActionView(actionView?: ActioViewType) {
+  public setActionView(actionView?: ActionViewType) {
     const { body } = this.state;
     const actionViewDef = actionViewsDefinitions.find((v) => v.value === actionView);
 
@@ -100,10 +100,6 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
 export interface MetricActionBarState extends SceneObjectState {}
 
 export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
-  public getButtonVariant(actionViewName: string, currentView: string | undefined) {
-    return currentView === actionViewName ? 'active' : 'canvas';
-  }
-
   public onOpenTrail = () => {
     this.publishEvent(new OpenEmbeddedTrailEvent(), true);
   };

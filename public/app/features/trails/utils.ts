@@ -8,7 +8,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { TRAILS_ROUTE, VAR_DATASOURCE } from './shared';
+import { TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -51,18 +51,18 @@ export function getMetricSceneFor(model: SceneObject): MetricScene {
 }
 
 export function getDatasourceForNewTrail(): string | undefined {
-  const mostRecentTrail = getTrailStore().recent[0];
-  const initialDS = mostRecentTrail?.resolve().state.$variables?.getByName(VAR_DATASOURCE)?.getValue();
-  let initialDSValue = undefined;
-  if (typeof initialDS === 'string') {
-    initialDSValue = initialDS;
-  } else {
-    const promDatasources = getDatasourceSrv().getList({ type: 'prometheus' });
-    if (config.defaultDatasource && promDatasources.find((mds) => mds.uid === config.defaultDatasource)) {
-      initialDSValue = config.defaultDatasource;
+  const prevTrail = getTrailStore().recent[0];
+  if (prevTrail) {
+    const prevDataSource = sceneGraph.interpolate(prevTrail.resolve(), VAR_DATASOURCE_EXPR);
+    if (typeof prevDataSource === 'string' && prevDataSource.length > 0) {
+      return prevDataSource;
     }
   }
-  return initialDSValue;
+  const promDatasources = getDatasourceSrv().getList({ type: 'prometheus' });
+  if (promDatasources.length > 0) {
+    return promDatasources.find((mds) => mds.uid === config.defaultDatasource)?.uid ?? promDatasources[0].uid;
+  }
+  return undefined;
 }
 
 export function getColorByIndex(index: number) {
