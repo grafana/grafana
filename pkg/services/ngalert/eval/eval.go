@@ -275,6 +275,23 @@ func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
+func ParseStateString(repr string) (State, error) {
+	switch strings.ToLower(repr) {
+	case "normal":
+		return Normal, nil
+	case "alerting":
+		return Alerting, nil
+	case "pending":
+		return Pending, nil
+	case "nodata":
+		return NoData, nil
+	case "error":
+		return Error, nil
+	default:
+		return -1, fmt.Errorf("invalid state: %s", repr)
+	}
+}
+
 func buildDatasourceHeaders(ctx context.Context) map[string]string {
 	headers := map[string]string{
 		// Many data sources check this in query method as sometimes alerting needs special considerations.
