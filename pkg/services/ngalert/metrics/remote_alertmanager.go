@@ -47,7 +47,7 @@ func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 		ConfigSyncErrorsTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "remote_alertmanager_configuration_sync_errors_total",
+			Name:      "remote_alertmanager_configuration_sync_failures_total",
 			Help:      "Total number of failed attempts to sync configurations between Alertmanagers.",
 		}),
 		LastConfigSync: promauto.With(r).NewGauge(prometheus.GaugeOpts{
@@ -65,7 +65,7 @@ func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 		StateSyncErrorsTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "remote_alertmanager_state_sync_errors_total",
+			Name:      "remote_alertmanager_state_sync_failures_total",
 			Help:      "Total number of failed attempts to sync state between Alertmanagers.",
 		}),
 		LastStateSync: promauto.With(r).NewGauge(prometheus.GaugeOpts{
