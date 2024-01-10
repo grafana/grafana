@@ -709,7 +709,7 @@ interface RunLoadMoreLogsQueriesOptions {
  * Dedicated action to run log queries requesting more results.
  */
 export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQueriesOptions>(
-  'explore/runQueries',
+  'explore/runLoadMoreQueries',
   async ({ exploreId, absoluteRange }, { dispatch, getState }) => {
     dispatch(cancelQueries(exploreId));
 
