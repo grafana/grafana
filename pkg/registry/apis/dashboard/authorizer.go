@@ -44,7 +44,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "error reading org from namespace", err
 			}
 
-			// expensive path to lookup permissions for a the single dashboard
+			// expensive path to lookup permissions for a single dashboard
 			dto, err := b.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 				UID:   attr.GetName(),
 				OrgID: info.OrgID,
