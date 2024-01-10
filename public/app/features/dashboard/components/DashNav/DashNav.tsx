@@ -41,7 +41,7 @@ import {
 
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ShareButton } from './ShareButton';
+import { ShareButton } from './ShareButton/ShareButton';
 
 const mapDispatchToProps = {
   setStarred,
