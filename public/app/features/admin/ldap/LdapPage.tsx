@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Button, Field, Form, HorizontalGroup, Input } from '@grafana/ui';
+import { Alert, Button, Field, Form, HorizontalGroup, Input, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -97,7 +97,7 @@ export class LdapPage extends PureComponent<Props, State> {
     return (
       <Page navId="authentication" pageNav={pageNav}>
         <Page.Contents isLoading={isLoading}>
-          <>
+          <Stack direction="column">
             {ldapError && ldapError.title && (
               <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
                 {ldapError.body}
@@ -140,7 +140,7 @@ export class LdapPage extends PureComponent<Props, State> {
                 {ldapUser && <LdapUserInfo ldapUser={ldapUser} showAttributeMapping={true} />}
               </>
             )}
-          </>
+          </Stack>
         </Page.Contents>
       </Page>
     );

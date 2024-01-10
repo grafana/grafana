@@ -1,13 +1,58 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
-import { Alert, Icon } from '@grafana/ui';
+import { Alert, CellProps, Column, Icon, InteractiveTable, Text, Tooltip } from '@grafana/ui';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
   ldapConnectionInfo: LdapConnectionInfo;
 }
 
+interface ServerInfo {
+  host: string;
+  port: number;
+  available: boolean;
+}
+
 export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
+  const columns = useMemo<Array<Column<ServerInfo>>>(
+    () => [
+      {
+        id: 'host',
+        header: 'Host',
+      },
+      {
+        id: 'port',
+        header: 'Port',
+      },
+      {
+        id: 'available',
+        cell: (serverInfo: CellProps<ServerInfo>) => {
+          return serverInfo.available ? (
+            <Tooltip content="Connection is available">
+              <Icon name="check" className="pull-right" />
+            </Tooltip>
+          ) : (
+            <Tooltip content="Connection is not available">
+              <Icon name="exclamation-triangle" className="pull-right" />
+            </Tooltip>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const data = useMemo<ServerInfo[]>(() => ldapConnectionInfo, [ldapConnectionInfo]);
+
+  return (
+    <section>
+      <Text color="primary" element="h3">
+        LDAP Connection
+      </Text>
+      <InteractiveTable data={data} columns={columns} getRowId={(serverInfo) => serverInfo.host + serverInfo.port} />
+      <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
+    </section>
+  );
   return (
     <>
       <h3 className="page-heading">LDAP Connection</h3>
