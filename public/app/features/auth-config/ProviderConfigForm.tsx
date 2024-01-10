@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { Box, Button, CollapsableSection, Field, LinkButton, Stack, Switch } from '@grafana/ui';
+import { Box, Button, CollapsableSection, ConfirmModal, Field, LinkButton, Stack, Switch } from '@grafana/ui';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
@@ -37,6 +37,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
   const sections = sectionFields[provider];
+  const [deleteConfig, setDeleteConfig] = useState(false);
 
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
@@ -72,6 +73,30 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       setSubmitError(true);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const onDeleteConfig = async () => {
+    try {
+      await getBackendSrv().delete(`/api/v1/sso-settings/${provider}`);
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Settings deleted'],
+      });
+      setTimeout(() => {
+        locationService.push(`/admin/authentication`);
+      });
+    } catch (error) {
+      let message = '';
+      if (isFetchError(error)) {
+        message = error.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [message],
+      });
     }
   };
 
@@ -144,9 +169,41 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                 Discard
               </LinkButton>
             </Field>
+            <Field>
+              <Button
+                variant={'destructive'}
+                onClick={(event) => {
+                  setDeleteConfig(true);
+                }}
+              >
+                Delete
+              </Button>
+            </Field>
           </Box>
         </>
       </form>
+      {deleteConfig && (
+        <ConfirmModal
+          isOpen
+          icon="trash-alt"
+          title="Delete"
+          body={
+            <Stack direction={'column'} gap={3}>
+              <span>Are you sure you want to delete this configuration?</span>
+              <small>
+                After removing these settings Grafana will use the provider configuration from the system (config
+                file/environment variables) if any.
+              </small>
+            </Stack>
+          }
+          confirmText="Delete"
+          onDismiss={() => setDeleteConfig(false)}
+          onConfirm={async () => {
+            await onDeleteConfig();
+            setDeleteConfig(false);
+          }}
+        />
+      )}
     </Page.Contents>
   );
 };
