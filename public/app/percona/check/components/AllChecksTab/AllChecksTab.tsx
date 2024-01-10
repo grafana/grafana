@@ -77,7 +77,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
     const action = !!check.disabled ? 'enable' : 'disable';
     try {
       await CheckService.changeCheck({ params: [{ name: check.name, [action]: true }] });
-      await dispatch(fetchAdvisors());
+      await dispatch(fetchAdvisors({}));
     } catch (e) {
       logger.error(e);
     }
@@ -95,7 +95,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
 
   const handleIntervalChanged = useCallback(
     async (check: CheckDetails) => {
-      await dispatch(fetchAdvisors());
+      await dispatch(fetchAdvisors({}));
       handleModalClose();
     },
     [handleModalClose]
