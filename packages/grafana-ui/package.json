@@ -54,7 +54,7 @@
     "@grafana/e2e-selectors": "10.3.0-pre",
     "@grafana/faro-web-sdk": "^1.3.5",
     "@grafana/schema": "10.3.0-pre",
-    "@leeoniya/ufuzzy": "1.0.13",
+    "@leeoniya/ufuzzy": "1.0.14",
     "@monaco-editor/react": "4.6.0",
     "@popperjs/core": "2.11.8",
     "@react-aria/button": "3.8.0",
