@@ -14,15 +14,15 @@ import {
 } from '@grafana/scenes';
 import { Stack, useStyles2 } from '@grafana/ui';
 
-import PrometheusLanguageProvider from '../../plugins/datasource/prometheus/language_provider';
-import { PromMetricsMetadataItem } from '../../plugins/datasource/prometheus/types';
-import { getDatasourceSrv } from '../plugins/datasource_srv';
-import { ALL_VARIABLE_VALUE } from '../variables/constants';
+import PrometheusLanguageProvider from '../../../plugins/datasource/prometheus/language_provider';
+import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { ALL_VARIABLE_VALUE } from '../../variables/constants';
+import { DataTrail } from '../DataTrail';
+import { MetricScene } from '../MetricScene';
+import { trailDS, VAR_DATASOURCE, VAR_DATASOURCE_EXPR, VAR_FILTERS, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
+import { getMetricSceneFor } from '../utils';
 
-import { DataTrail } from './DataTrail';
-import { MetricScene } from './MetricScene';
-import { trailDS, VAR_DATASOURCE, VAR_DATASOURCE_EXPR, VAR_FILTERS, VAR_GROUP_BY, VAR_METRIC_EXPR } from './shared';
-import { getMetricSceneFor } from './utils';
 export interface MetricOverviewSceneState extends SceneObjectState {
   labels: Array<SelectableValue<string>>;
   metadata?: PromMetricsMetadataItem;

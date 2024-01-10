@@ -23,14 +23,15 @@ import {
 import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
+import { AutoQueryDef } from '../AutomaticMetricQueries/types';
+import { MetricScene } from '../MetricScene';
+import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../shared';
+import { getColorByIndex } from '../utils';
+
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
-import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
-import { AutoQueryDef } from './AutomaticMetricQueries/types';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
-import { MetricScene } from './MetricScene';
-import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from './shared';
-import { getColorByIndex } from './utils';
 
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;

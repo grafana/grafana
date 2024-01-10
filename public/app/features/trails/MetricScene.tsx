@@ -8,26 +8,23 @@ import {
   SceneComponentProps,
   SceneFlexLayout,
   SceneFlexItem,
-  SceneQueryRunner,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  PanelBuilders,
   sceneGraph,
 } from '@grafana/scenes';
 import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
 
+import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
+import { buildLogsScene } from './ActionTabs/LogsScene';
+import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
+import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
-import { buildBreakdownActionScene } from './BreakdownScene';
-import { buildMetricOverviewScene } from './MetricOverviewScene';
-import { MetricSelectScene } from './MetricSelectScene';
-import { SelectMetricAction } from './SelectMetricAction';
 import { getTrailStore } from './TrailStore/TrailStore';
 import {
   ActionViewDefinition,
   ActionViewType,
   getVariablesWithMetricConstant,
-  LOGS_METRIC,
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
@@ -198,29 +195,5 @@ function buildGraphScene(metric: string) {
         body: new MetricActionBar({}),
       }),
     ],
-  });
-}
-
-function buildLogsScene() {
-  return new SceneFlexItem({
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: { uid: 'gdev-loki' },
-          expr: '{${filters}} | logfmt',
-        },
-      ],
-    }),
-    body: PanelBuilders.logs()
-      .setTitle('Logs')
-      .setHeaderActions(new SelectMetricAction({ metric: LOGS_METRIC, title: 'Open' }))
-      .build(),
-  });
-}
-
-function buildRelatedMetricsScene() {
-  return new SceneFlexItem({
-    body: new MetricSelectScene({}),
   });
 }
