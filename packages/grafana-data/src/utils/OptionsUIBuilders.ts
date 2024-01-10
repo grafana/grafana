@@ -187,11 +187,11 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
   constructor(public cfg: NestedPanelOptions<TSub>) {
     this.path = cfg.path;
     this.category = cfg.category;
-    this.defaultValue = this.getDefaultValue(cfg);
+    this.defaultValue = this.getDefaultValue(cfg) as TSub;
   }
 
   private getDefaultValue(cfg: NestedPanelOptions<TSub>) {
-    let result: any = cfg.defaultValue || {};
+    let result = cfg.defaultValue || {};
 
     const builder = new PanelOptionsEditorBuilder<TSub>();
     cfg.build(builder, { data: [] })
