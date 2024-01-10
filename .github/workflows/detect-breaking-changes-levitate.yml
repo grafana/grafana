@@ -223,6 +223,7 @@ jobs:
 
         # Comment on the PR
         - name: Comment on PR
+          if: steps.levitate-run.outputs.exit_code == 1
           uses: marocchino/sticky-pull-request-comment@v2
           with:
             header: levitate-breaking-change-comment
