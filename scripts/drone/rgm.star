@@ -333,10 +333,68 @@ def rgm_main_pipeline():
         rgm_main(),
     ]
 
+def rgm_promotion_pipeline():
+    promotion_trigger = {
+      "event": ["promote"],
+      "target": "rgm",
+    }
+
+    env = {
+        "GO_VERSION": golang_version,
+        "ALPINE_BASE": images["alpine"],
+        "UBUNTU_BASE": images["ubuntu"],
+    }
+
+    # Expected promotion args:
+    # * GRAFANA_REF = commit hash, branch name, or tag name
+    # * ENTERPRISE_REF = commit hash, branch name, or tag name. If not building an enterprise artifact, then this can be
+    #   left empty.
+    # * ARTIFACTS = comma delimited list of artifacts (ex: "targz:grafana:linux/amd64,rpm:grafana:linux/amd64")
+    # * VERSION = version string of Grafana that is being built (ex: v10.0.0)
+    # * DESTINATION = Google Cloud Storage URL to upload the built artifacts to. (ex: gs://some-bucket/path)
+    build_step = {
+        "name": "rgm-build",
+        "image": "grafana/grafana-build:main",
+        "pull": "always",
+        "commands": [
+            "dagger run go run /src/grafana-build artifacts " +
+            "-a $${ARTIFACTS} " +
+            "--grafana-ref=$${GRAFANA_REF} " +
+            "--enterprise-ref=$${ENTERPRISE_REF} " +
+            "--version=$${VERSION} ",
+        ],
+        "environment": rgm_env_secrets(env),
+        # The docker socket is a requirement for running dagger programs
+        # In the future we should find a way to use dagger without mounting the docker socket.
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+    }
+
+    publish_step = {
+        "name": "gcloud-copy",
+        "image": images["cloudsdk"],
+        "commands": [
+            "gcloud storage cp ./dist/* $${DESTINATION}",
+        ],
+        "environment": rgm_env_secrets(env),
+    }
+    steps = [
+        build_step,
+        publish_step,
+    ]
+
+    return [
+        pipeline(
+            name = "rgm-promotion",
+            trigger = promotion_trigger,
+            steps = steps,
+        )
+    ]
+
 def rgm():
     return (
         rgm_main_pipeline() +
         rgm_tag_pipeline() +
         rgm_version_branch_pipeline() +
-        rgm_nightly_pipeline()
+        rgm_nightly_pipeline() +
+        rgm_promotion_pipeline()
     )
