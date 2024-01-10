@@ -30,7 +30,7 @@ describe('VersionsEditView', () => {
       expect(versionsView.getDashboard()).toBe(dashboard);
     });
 
-    it('should return the decorated list of versions', async () => {
+    it('should return the decorated list of versions', () => {
       const versions = versionsView.versions;
 
       expect(versions).toHaveLength(2);
