@@ -233,7 +233,8 @@ export const CandlestickPanel = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips = config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+  const showNewVizTooltips =
+    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
 
   return (
     <TimeSeries
