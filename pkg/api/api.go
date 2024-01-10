@@ -629,8 +629,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
-
-	r.Post("/api/slack-unfurl", routing.Wrap(hs.AcknowledgeSlackEvent))
+	r.Post("/api/unfurl-url", routing.Wrap(hs.AcknowledgeSlackEvent))
 }
 
 func evalAuthenticationSettings() ac.Evaluator {
