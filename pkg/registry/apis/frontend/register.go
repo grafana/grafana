@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apis/frontend/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,9 +24,9 @@ type FrontendAPIBuilder struct {
 	store *extensionStorage
 }
 
-func NewFrontendAPIBuilder(mapper request.NamespaceMapper) *FrontendAPIBuilder {
+func NewFrontendAPIBuilder() *FrontendAPIBuilder {
 	return &FrontendAPIBuilder{
-		store: newStaticStorage(mapper),
+		store: newStaticStorage(),
 	}
 }
 
@@ -38,7 +37,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewFrontendAPIBuilder(request.GetNamespaceMapper(cfg))
+	builder := NewFrontendAPIBuilder()
 	apiregistration.RegisterAPI(builder)
 	return builder
 }

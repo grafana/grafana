@@ -8,11 +8,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/apis/frontend/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
@@ -25,15 +25,13 @@ var (
 
 type extensionStorage struct {
 	info           apis.ResourceInfo
-	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
 
-func newStaticStorage(namespacer request.NamespaceMapper) *extensionStorage {
+func newStaticStorage() *extensionStorage {
 	info := v0alpha1.ExtensionResourceInfo
 	return &extensionStorage{
-		info:       info,
-		namespacer: namespacer,
+		info: info,
 		tableConverter: utils.NewTableConverter(
 			info.GroupResource(),
 			[]metav1.TableColumnDefinition{
@@ -81,9 +79,10 @@ func (s *extensionStorage) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *extensionStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	orgId, err := request.OrgIDForList(ctx)
-	if err != nil {
-		return nil, err
+	ns := request.NamespaceValue(ctx)
+	if ns == "" {
+		// require a namespace so we do not need to support reverse mappings (yet)
+		return nil, fmt.Errorf("missing namespace in request URL")
 	}
 
 	return &v0alpha1.ExtensionResourceList{
@@ -91,7 +90,7 @@ func (s *extensionStorage) List(ctx context.Context, options *internalversion.Li
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "grafana",
-					Namespace:         s.namespacer(orgId),
+					Namespace:         ns,
 					CreationTimestamp: metav1.Now(),
 				},
 				Spec: v0alpha1.ExtensionInfo{
@@ -105,7 +104,7 @@ func (s *extensionStorage) List(ctx context.Context, options *internalversion.Li
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "grafana-incident-app",
-					Namespace:         s.namespacer(orgId),
+					Namespace:         ns,
 					CreationTimestamp: metav1.Now(),
 				},
 				Spec: v0alpha1.ExtensionInfo{
@@ -116,5 +115,5 @@ func (s *extensionStorage) List(ctx context.Context, options *internalversion.Li
 				},
 			},
 		},
-	}, err
+	}, nil
 }
