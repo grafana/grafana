@@ -17,9 +17,8 @@ import PrometheusLanguageProvider from '../../../plugins/datasource/prometheus/l
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
-import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
-import { trailDS, VAR_DATASOURCE, VAR_DATASOURCE_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
+import { trailDS, VAR_DATASOURCE_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
 import { getMetricSceneFor } from '../utils';
 
 import { getLabelOptions } from './utils';
@@ -52,10 +51,15 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   }
 
   private _onActivate() {
-    const metricScene = getMetricSceneFor(this);
-    this.updateMetadata();
     this.updateLanguageProvider();
 
+    this.subscribeToState((newState, oldState) => {
+      if (newState.languageProvider !== oldState.languageProvider) {
+        this.updateMetadata();
+      }
+    });
+
+    const metricScene = getMetricSceneFor(this);
     metricScene.subscribeToState((newState, oldState) => {
       if (newState.metric !== oldState.metric) {
         this.updateMetadata();
@@ -83,20 +87,12 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   private updateMetadata() {
     const metricScene = getMetricSceneFor(this);
     const metric = metricScene.state.metric;
-    const dsUid = sceneGraph.getAncestor(this, DataTrail).state.$variables?.getByName(VAR_DATASOURCE)?.getValue();
-    if (typeof dsUid === 'string') {
-      getDatasourceSrv()
-        .get(dsUid)
-        .then((ds) => {
-          const langProvider: PrometheusLanguageProvider = ds.languageProvider;
-          if (langProvider.metricsMetadata) {
-            this.setState({ metadata: langProvider.metricsMetadata[metric] });
-          } else {
-            langProvider.start().then(() => {
-              this.setState({ metadata: langProvider.metricsMetadata?.[metric] });
-            });
-          }
-        });
+    if (this.state.languageProvider?.metricsMetadata) {
+      this.setState({ metadata: this.state.languageProvider.metricsMetadata[metric] });
+    } else {
+      this.state.languageProvider?.start().then(() => {
+        this.setState({ metadata: this.state.languageProvider?.metricsMetadata?.[metric] });
+      });
     }
   }
 
