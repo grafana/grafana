@@ -138,4 +138,31 @@ describe('LogsNavigation', () => {
     await userEvent.click(screen.getByTestId('olderLogsButton'));
     expect(scrollToTopLogsMock).toHaveBeenCalled();
   });
+
+  it('should not trigger actions while loading', async () => {
+    const scrollToTopLogs = jest.fn();
+    const changeTimeMock = jest.fn();
+    setup({ scrollToTopLogs, onChangeTime: changeTimeMock, loading: true });
+
+    expect(scrollToTopLogs).not.toHaveBeenCalled();
+    expect(changeTimeMock).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByTestId('olderLogsButton'));
+    await userEvent.click(screen.getByTestId('newerLogsButton'));
+    expect(scrollToTopLogs).not.toHaveBeenCalled();
+    expect(changeTimeMock).not.toHaveBeenCalled();
+  });
+
+  it('should not add results to cache unless pagination is used', async () => {
+    const addResultsToCache = jest.fn();
+    setup({ addResultsToCache });
+
+    expect(addResultsToCache).not.toHaveBeenCalled();
+    expect(screen.getByTestId('olderLogsButton')).not.toBeDisabled();
+    expect(screen.getByTestId('newerLogsButton')).toBeDisabled();
+
+    await userEvent.click(screen.getByTestId('olderLogsButton'));
+    await userEvent.click(screen.getByTestId('newerLogsButton'));
+
+    expect(addResultsToCache).toHaveBeenCalledTimes(1);
+  });
 });

@@ -82,21 +82,15 @@ function LogsNavigation({
         return newPages;
       });
     }
-    addResultsToCache();
   }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
-
-  useEffect(() => {
-    clearCache();
-    // We can't enforce the eslint rule here because we only want to run when component is mounted.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const changeTime = useCallback(
     ({ from, to }: AbsoluteTimeRange) => {
+      addResultsToCache();
       expectedRangeRef.current = { from, to };
       onChangeTime({ from, to });
     },
-    [onChangeTime]
+    [onChangeTime, addResultsToCache]
   );
 
   const sortPages = (a: LogsPage, b: LogsPage, logsSortOrder?: LogsSortOrder | null) => {
@@ -173,10 +167,10 @@ function LogsNavigation({
         pageType: 'page',
         pageNumber,
       });
-      !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to });
+      changeTime({ from: page.queryRange.from, to: page.queryRange.to });
       scrollToTopLogs();
     },
-    [changeTime, loading, scrollToTopLogs]
+    [changeTime, scrollToTopLogs]
   );
 
   return (
