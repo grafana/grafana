@@ -10,15 +10,16 @@ import {
   LoadingState,
   LogLevel,
   LogRowModel,
-  MutableDataFrame,
   standardTransformersRegistry,
   toUtc,
+  createDataFrame,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
-import { Logs, visualisationTypeKey } from './Logs';
+import { Logs } from './Logs';
+import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
 
 const reportInteraction = jest.fn();
@@ -512,7 +513,7 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     uid,
     entryFieldIndex: 0,
     rowIndex: 0,
-    dataFrame: new MutableDataFrame(),
+    dataFrame: createDataFrame({ fields: [] }),
     logLevel: LogLevel.debug,
     entry,
     hasAnsi: false,

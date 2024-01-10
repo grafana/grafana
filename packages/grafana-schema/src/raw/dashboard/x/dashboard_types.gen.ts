@@ -623,6 +623,10 @@ export interface DataTransformerConfig {
    * Valid options depend on the transformer id
    */
   options: unknown;
+  /**
+   * Where to pull DataFrames from as input to transformation
+   */
+  topic?: ('series' | 'annotations' | 'alertStates'); // replaced with common.DataTopic
 }
 
 /**

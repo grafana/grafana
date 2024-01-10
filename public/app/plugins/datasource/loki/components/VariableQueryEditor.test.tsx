@@ -5,7 +5,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { TemplateSrv } from '@grafana/runtime';
 
-import { createLokiDatasource } from '../mocks';
+import { createLokiDatasource } from '../__mocks__/datasource';
 import { LokiVariableQueryType } from '../types';
 
 import { LokiVariableQueryEditor, Props } from './VariableQueryEditor';

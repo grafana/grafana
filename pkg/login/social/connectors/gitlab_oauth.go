@@ -52,10 +52,10 @@ type userData struct {
 	IsGrafanaAdmin *bool             `json:"-"`
 }
 
-func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGitlab {
+func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
 	config := createOAuthConfig(info, cfg, social.GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase: newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, *features),
+		SocialBase: newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, features),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -66,6 +66,18 @@ func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 }
 
 func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	err = validateInfo(info)
+	if err != nil {
+		return err
+	}
+
+	// add specific validation rules for Gitlab
+
 	return nil
 }
 

@@ -14,10 +14,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const (
@@ -207,8 +207,8 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 }
 
 func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
-	var pluginTracingEnabled bool
-	if v, exists := s.cfg.PluginSettings[plugin.ID]["tracing"]; exists {
+	pluginTracingEnabled := s.cfg.Features != nil && s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagEnablePluginsTracingByDefault)
+	if v, exists := s.cfg.PluginSettings[plugin.ID]["tracing"]; exists && !pluginTracingEnabled {
 		pluginTracingEnabled = v == "true"
 	}
 	if !s.cfg.Tracing.IsEnabled() || !pluginTracingEnabled {
