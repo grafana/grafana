@@ -13,12 +13,11 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
-import { config } from '@grafana/runtime';
+import { config, DataSourceWithBackend } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-datasource/dataquery.gen';
-import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
 import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
 import { defaultProfilingKeys, getFormattedTags, pyroscopeProfileIdTagKey } from '../../../createSpanLink';
@@ -61,7 +60,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
 
   const getFlameGraphData = async (request: DataQueryRequest<Query>, datasourceUid: string) => {
     const ds = await getDatasourceSrv().get(datasourceUid);
-    if (ds instanceof PyroscopeDataSource) {
+    if (ds instanceof DataSourceWithBackend) {
       const result = await lastValueFrom(ds.query(request));
       const frame = result.data.find((x: DataFrame) => {
         return x.name === 'response';
