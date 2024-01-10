@@ -56,6 +56,7 @@ export const Pages = {
       nav: 'Dashboard navigation',
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
+      shareButton: 'data-testid share-button',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -208,7 +209,6 @@ export const Pages = {
     linkToRenderedImage: 'Link to rendered image',
   },
   ShareDashboardModal: {
-    shareButton: 'Share dashboard',
     PublicDashboard: {
       Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',

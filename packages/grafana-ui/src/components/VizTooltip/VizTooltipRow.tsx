@@ -13,6 +13,7 @@ interface Props extends LabelValue {
   justify?: string;
   isActive?: boolean; // for series list
   marginRight?: string;
+  isPinned: boolean;
 }
 
 export const VizTooltipRow = ({
@@ -24,6 +25,7 @@ export const VizTooltipRow = ({
   justify = 'flex-start',
   isActive = false,
   marginRight = '0px',
+  isPinned,
 }: Props) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
@@ -53,15 +55,19 @@ export const VizTooltipRow = ({
           {color && colorPlacement === ColorPlacement.first && (
             <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
           )}
-          <Tooltip content={label} interactive={false} show={showLabelTooltip}>
-            <div
-              className={cx(styles.label, isActive && styles.activeSeries)}
-              onMouseEnter={onMouseEnterLabel}
-              onMouseLeave={onMouseLeaveLabel}
-            >
-              {label}
-            </div>
-          </Tooltip>
+          {!isPinned ? (
+            <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>
+          ) : (
+            <Tooltip content={label} interactive={false} show={showLabelTooltip}>
+              <div
+                className={cx(styles.label, isActive && styles.activeSeries)}
+                onMouseEnter={onMouseEnterLabel}
+                onMouseLeave={onMouseLeaveLabel}
+              >
+                {label}
+              </div>
+            </Tooltip>
+          )}
         </div>
       )}
 
@@ -69,11 +75,20 @@ export const VizTooltipRow = ({
         {color && colorPlacement === ColorPlacement.leading && (
           <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
         )}
-        <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
-          <div className={cx(styles.value, isActive)} onMouseEnter={onMouseEnterValue} onMouseLeave={onMouseLeaveValue}>
-            {value}
-          </div>
-        </Tooltip>
+        {!isPinned ? (
+          <div className={cx(styles.value, isActive)}>{value}</div>
+        ) : (
+          <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
+            <div
+              className={cx(styles.value, isActive)}
+              onMouseEnter={onMouseEnterValue}
+              onMouseLeave={onMouseLeaveValue}
+            >
+              {value}
+            </div>
+          </Tooltip>
+        )}
+
         {color && colorPlacement === ColorPlacement.trailing && (
           <>
             &nbsp;
@@ -86,23 +101,12 @@ export const VizTooltipRow = ({
 };
 
 const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    gap: 4,
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(1),
-  }),
   contentWrapper: css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: justify,
     flexWrap: 'wrap',
     marginRight: marginRight,
-  }),
-  customContentPadding: css({
-    padding: `${theme.spacing(1)} 0`,
   }),
   label: css({
     color: theme.colors.text.secondary,

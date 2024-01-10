@@ -84,7 +84,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
       const xValues = [];
 
       for (let i = 0; i < xField.values.length; i++) {
-        if (yField.values[i] !== null) {
+        if (yField.values[i] !== null && !isNaN(yField.values[i])) {
           xValues.push(xField.values[i] - normalizationSubtrahend);
           yValues.push(yField.values[i]);
         }

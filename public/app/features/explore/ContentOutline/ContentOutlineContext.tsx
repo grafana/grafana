@@ -10,7 +10,7 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
 
 type RegisterFunction = ({ title, icon, ref }: Omit<ContentOutlineItemContextProps, 'id'>) => string;
 
-interface ContentOutlineContextProps {
+export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
   register: RegisterFunction;
   unregister: (id: string) => void;
