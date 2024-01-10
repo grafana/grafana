@@ -12,8 +12,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ import (
 func TestNewInstanceSettings(t *testing.T) {
 	t.Run("should create a new instance with empty settings", func(t *testing.T) {
 		cli := httpclient.NewProvider()
-		f := newInstanceSettings(cli)
+		f := newInstanceSettings(*cli)
 		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
 			JSONData: json.RawMessage(`{}`),
 		})
@@ -34,7 +34,7 @@ func TestNewInstanceSettings(t *testing.T) {
 
 	t.Run("should create a new instance parsing settings", func(t *testing.T) {
 		cli := httpclient.NewProvider()
-		f := newInstanceSettings(cli)
+		f := newInstanceSettings(*cli)
 		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
 			JSONData: json.RawMessage(`{"authenticationType": "test", "defaultProject": "test", "clientEmail": "test", "tokenUri": "test"}`),
 		})

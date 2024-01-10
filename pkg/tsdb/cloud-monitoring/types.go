@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/huandu/xstrings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
@@ -40,7 +39,6 @@ type (
 	cloudMonitoringTimeSeriesList struct {
 		refID      string
 		aliasBy    string
-		logger     log.Logger
 		parameters *dataquery.TimeSeriesList
 		// Processed properties
 		params url.Values
@@ -49,7 +47,6 @@ type (
 	cloudMonitoringSLO struct {
 		refID      string
 		aliasBy    string
-		logger     log.Logger
 		parameters *dataquery.SLOQuery
 		// Processed properties
 		params url.Values
@@ -59,7 +56,6 @@ type (
 	cloudMonitoringProm struct {
 		refID      string
 		aliasBy    string
-		logger     log.Logger
 		parameters *dataquery.PromQLQuery
 		timeRange  backend.TimeRange
 		IntervalMS int64
@@ -69,7 +65,6 @@ type (
 	cloudMonitoringTimeSeriesQuery struct {
 		refID      string
 		aliasBy    string
-		logger     log.Logger
 		parameters *dataquery.TimeSeriesQuery
 		// Processed properties
 		timeRange  backend.TimeRange

@@ -14,15 +14,14 @@ import (
 
 	"github.com/grafana/grafana-google-sdk-go/pkg/utils"
 	"github.com/huandu/xstrings"
-	"golang.org/x/exp/slog"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
@@ -182,7 +181,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		for name, info := range routes {
-			client, err := newHTTPClient(dsInfo, opts, httpClientProvider, name)
+			client, err := newHTTPClient(dsInfo, opts, &httpClientProvider, name)
 			if err != nil {
 				return nil, err
 			}
@@ -629,7 +628,7 @@ func addConfigData(frames data.Frames, dl string, unit string, period *string) d
 		if period != nil && *period != "" {
 			err := addInterval(*period, frames[i].Fields[0])
 			if err != nil {
-				slog.Error("Failed to add interval", "error", err)
+				backend.Logger.Error("Failed to add interval", "error", err)
 			}
 		}
 	}
