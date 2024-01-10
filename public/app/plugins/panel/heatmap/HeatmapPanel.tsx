@@ -160,7 +160,7 @@ export const HeatmapPanel = ({
   // ugh
   const dataRef = useRef(info);
   dataRef.current = info;
-  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
 
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
