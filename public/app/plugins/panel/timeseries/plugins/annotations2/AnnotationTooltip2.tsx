@@ -105,7 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+    boxShadow: theme.shadows.z2,
     userSelect: 'text',
   }),
   header: css({
