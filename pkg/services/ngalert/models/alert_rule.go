@@ -536,7 +536,8 @@ type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 	RuleGroups      []string
 
-	ResultRules         []*AlertRule
+	ResultRules []*AlertRule
+	// A map of folder UID to folder Title in NamespaceKey format (see GetNamespaceKey)
 	ResultFoldersTitles map[string]string
 }
 
