@@ -70,6 +70,7 @@ describe('TraceQLSearch', () => {
   const onChange = (q: TempoQuery) => {
     query = q;
   };
+  const onClearResults = jest.fn();
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -83,7 +84,9 @@ describe('TraceQLSearch', () => {
   });
 
   it('should update operator when new value is selected in operator input', async () => {
-    const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+    const { container } = render(
+      <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
+    );
 
     const minDurationOperator = container.querySelector(`input[aria-label="select min-duration operator"]`);
     expect(minDurationOperator).not.toBeNull();
@@ -101,7 +104,9 @@ describe('TraceQLSearch', () => {
   });
 
   it('should add new filter when new value is selected in the service name section', async () => {
-    const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+    const { container } = render(
+      <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
+    );
     const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
     expect(serviceNameValue).not.toBeNull();
     expect(serviceNameValue).toBeInTheDocument();
@@ -136,7 +141,9 @@ describe('TraceQLSearch', () => {
     } as TempoDatasource;
     datasource.languageProvider = new TempoLanguageProvider(datasource);
     await act(async () => {
-      const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      const { container } = render(
+        <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
+      );
       const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
       expect(serviceNameValue).toBeNull();
       expect(serviceNameValue).not.toBeInTheDocument();
@@ -145,7 +152,9 @@ describe('TraceQLSearch', () => {
 
   it('should not render group by when feature toggle is not enabled', async () => {
     await waitFor(() => {
-      render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      render(
+        <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
+      );
       const groupBy = screen.queryByText('Aggregate by');
       expect(groupBy).toBeNull();
       expect(groupBy).not.toBeInTheDocument();
@@ -155,7 +164,9 @@ describe('TraceQLSearch', () => {
   it('should render group by when feature toggle enabled', async () => {
     config.featureToggles.metricsSummary = true;
     await waitFor(() => {
-      render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      render(
+        <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
+      );
       const groupBy = screen.queryByText('Aggregate by');
       expect(groupBy).not.toBeNull();
       expect(groupBy).toBeInTheDocument();

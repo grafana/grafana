@@ -30,11 +30,10 @@ import {
   serializeStateToUrlParam,
   SplitOpen,
   TimeRange,
-  TimeZone,
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import {
   Button,
   FeatureBadge,
@@ -62,7 +61,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTINGS_KEYS } from './utils/logs';
+import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -140,8 +139,6 @@ const DEDUP_OPTIONS = [
   LogsDedupStrategy.numbers,
   LogsDedupStrategy.signature,
 ];
-
-export const visualisationTypeKey = 'grafana.explore.logs.visualisationType';
 
 const getDefaultVisualisationType = (): LogsVisualisationType => {
   const visualisationType = store.get(visualisationTypeKey);
