@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -21,7 +22,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-	"github.com/weaveworks/common/http/client"
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
@@ -89,7 +89,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.NotContains(t, res.Stream, "__private__")
 		})
 
-		t.Run("includes ruleUID in log line", func(t *testing.T) {
+		t.Run("includes rule data in log line", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()
 			states := singleFromNormal(&state.State{
@@ -98,8 +98,10 @@ func TestRemoteLokiBackend(t *testing.T) {
 			})
 
 			res := statesToStream(rule, states, nil, l)
-
 			entry := requireSingleEntry(t, res)
+
+			require.Equal(t, rule.Title, entry.RuleTitle)
+			require.Equal(t, rule.ID, entry.RuleID)
 			require.Equal(t, rule.UID, entry.RuleUID)
 		})
 
@@ -525,11 +527,13 @@ func singleFromNormal(st *state.State) []state.StateTransition {
 func createTestRule() history_model.RuleMeta {
 	return history_model.RuleMeta{
 		OrgID:        1,
+		ID:           123,
 		UID:          "rule-uid",
 		Group:        "my-group",
 		NamespaceUID: "my-folder",
 		DashboardUID: "dash-uid",
 		PanelID:      123,
+		Title:        "my-title",
 	}
 }
 

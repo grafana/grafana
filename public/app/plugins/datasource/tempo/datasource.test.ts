@@ -79,6 +79,7 @@ describe('Tempo data source', () => {
         search: '$interpolationVar',
         minDuration: '$interpolationVar',
         maxDuration: '$interpolationVar',
+        serviceMapQuery: '$interpolationVar',
         filters: [],
       };
     }
@@ -111,6 +112,7 @@ describe('Tempo data source', () => {
       expect(queries[0].search).toBe(text);
       expect(queries[0].minDuration).toBe(text);
       expect(queries[0].maxDuration).toBe(text);
+      expect(queries[0].serviceMapQuery).toBe(text);
     });
 
     it('when traceId query for template variable', async () => {

@@ -11,11 +11,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"go.opentelemetry.io/otel/attribute"
@@ -30,7 +29,7 @@ var (
 )
 
 type ProfilingClient interface {
-	ProfileTypes(context.Context) ([]*ProfileType, error)
+	ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error)
 	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error)
 	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
@@ -43,11 +42,10 @@ type PyroscopeDatasource struct {
 	httpClient *http.Client
 	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
-	ac         accesscontrol.AccessControl
 }
 
 // NewPyroscopeDatasource creates a new datasource instance.
-func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
+func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	ctxLogger := logger.FromContext(ctx)
 	opt, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
@@ -64,7 +62,6 @@ func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.P
 		httpClient: httpClient,
 		client:     NewPyroscopeClient(httpClient, settings.URL),
 		settings:   settings,
-		ac:         ac,
 	}, nil
 }
 
@@ -89,7 +86,30 @@ func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.Cal
 
 func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctxLogger := logger.FromContext(ctx)
-	types, err := d.client.ProfileTypes(ctx)
+
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
+		return err
+	}
+	query := u.Query()
+
+	var start, end int64
+	if query.Has("start") && query.Has("end") {
+		start, err = strconv.ParseInt(query.Get("start"), 10, 64)
+		if err != nil {
+			ctxLogger.Error("Failed to parse start as int", "error", err, "function", logEntrypoint())
+			return err
+		}
+
+		end, err = strconv.ParseInt(query.Get("end"), 10, 64)
+		if err != nil {
+			ctxLogger.Error("Failed to parse end as int", "error", err, "function", logEntrypoint())
+			return err
+		}
+	}
+
+	types, err := d.client.ProfileTypes(ctx, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return err
@@ -202,7 +222,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 // contains Frames ([]*Frame).
 func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	ctxLogger := logger.FromContext(ctx)
-	ctxLogger.Debug("Processing queries", "queryLenght", len(req.Queries), "function", logEntrypoint())
+	ctxLogger.Debug("Processing queries", "queryLength", len(req.Queries), "function", logEntrypoint())
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -231,7 +251,11 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
-	if _, err := d.client.ProfileTypes(ctx); err != nil {
+	// Since this is a health check mechanism and we only care about whether the
+	// request succeeded or failed, we set the window to be small.
+	start := time.Now().Add(-5 * time.Minute).UnixMilli()
+	end := time.Now().UnixMilli()
+	if _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
 	}

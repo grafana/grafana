@@ -533,6 +533,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
+      serviceMapQuery: this.templateSrv.replace(query.serviceMapQuery ?? '', scopedVars),
     };
   }
 

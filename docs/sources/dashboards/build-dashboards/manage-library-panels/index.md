@@ -15,6 +15,7 @@ labels:
     - oss
 menuTitle: Manage library panels
 title: Manage library panels
+description: Create reusable library panels that you can use in any dashboard
 weight: 300
 ---
 

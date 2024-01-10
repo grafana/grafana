@@ -27,14 +27,13 @@ type SocialGrafanaCom struct {
 	*SocialBase
 	url                  string
 	allowedOrganizations []string
-	skipOrgRoleSync      bool
 }
 
 type OrgRecord struct {
 	Login string `json:"login"`
 }
 
-func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGrafanaCom {
+func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
@@ -42,12 +41,9 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 
 	config := createOAuthConfig(info, cfg, social.GrafanaComProviderName)
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(social.GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, features),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
-		skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -58,6 +54,18 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 }
 
 func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	err = validateInfo(info)
+	if err != nil {
+		return err
+	}
+
+	// add specific validation rules for GrafanaCom
+
 	return nil
 }
 
@@ -109,7 +117,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 
 	// on login we do not want to display the role from the external provider
 	var role roletype.RoleType
-	if !s.skipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		role = org.RoleType(data.Role)
 	}
 	userInfo := &social.BasicUserInfo{

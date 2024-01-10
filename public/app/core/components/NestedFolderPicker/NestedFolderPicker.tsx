@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
+import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import React, { useCallback, useId, useMemo, useState } from 'react';
-import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -85,13 +85,19 @@ export function NestedFolderPicker({
   const rootCollection = useSelector(rootItemsSelector);
   const childrenCollections = useSelector(childrenByParentUIDSelector);
 
-  const { getTooltipProps, setTooltipRef, setTriggerRef, visible, triggerRef } = usePopperTooltip({
-    visible: overlayOpen,
+  // the order of middleware is important!
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+  ];
+
+  const { context, refs, floatingStyles, elements } = useFloating({
+    open: overlayOpen,
     placement: 'bottom',
-    interactive: true,
-    offset: [0, 0],
-    trigger: 'click',
-    onVisibleChange: (value: boolean) => {
+    onOpenChange: (value) => {
       // ensure state is clean on opening the overlay
       if (value) {
         setSearch('');
@@ -99,7 +105,14 @@ export function NestedFolderPicker({
       }
       setOverlayOpen(value);
     },
+    middleware,
+    whileElementsMounted: autoUpdate,
   });
+
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
   const handleFolderExpand = useCallback(
     async (uid: string, newOpenState: boolean) => {
@@ -209,7 +222,7 @@ export function NestedFolderPicker({
     handleFolderExpand,
     idPrefix: overlayId,
     search,
-    visible,
+    visible: overlayOpen,
   });
 
   let label = selectedFolder.data?.title;
@@ -217,14 +230,14 @@ export function NestedFolderPicker({
     label = 'Dashboards';
   }
 
-  if (!visible) {
+  if (!overlayOpen) {
     return (
       <Trigger
         label={label}
         invalid={invalid}
         isLoading={selectedFolder.isLoading}
         autoFocus={autoFocusButton}
-        ref={setTriggerRef}
+        ref={refs.setReference}
         aria-label={
           label
             ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
@@ -232,6 +245,7 @@ export function NestedFolderPicker({
               })
             : undefined
         }
+        {...getReferenceProps()}
       />
     );
   }
@@ -239,14 +253,13 @@ export function NestedFolderPicker({
   return (
     <>
       <Input
-        ref={setTriggerRef}
+        ref={refs.setReference}
         autoFocus
         prefix={label ? <Icon name="folder" /> : null}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         invalid={invalid}
         className={styles.search}
-        onKeyDown={handleKeyDown}
         onChange={(e) => setSearch(e.currentTarget.value)}
         aria-autocomplete="list"
         aria-expanded
@@ -256,16 +269,18 @@ export function NestedFolderPicker({
         aria-activedescendant={getDOMId(overlayId, flatTree[focusedItemIndex]?.item.uid)}
         role="combobox"
         suffix={<Icon name="search" />}
+        {...getReferenceProps()}
+        onKeyDown={handleKeyDown}
       />
       <fieldset
-        ref={setTooltipRef}
+        ref={refs.setFloating}
         id={overlayId}
-        {...getTooltipProps({
-          className: styles.tableWrapper,
-          style: {
-            width: triggerRef?.clientWidth,
-          },
-        })}
+        className={styles.tableWrapper}
+        style={{
+          ...floatingStyles,
+          width: elements.domReference?.clientWidth,
+        }}
+        {...getFloatingProps()}
       >
         {error ? (
           <Alert

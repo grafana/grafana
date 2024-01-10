@@ -5,7 +5,7 @@ import { useMount } from 'react-use';
 import { PluginExtensionComponent, PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getPluginComponentExtensions } from '@grafana/runtime';
-import { Tab, TabsBar, TabContent, VerticalGroup } from '@grafana/ui';
+import { Tab, TabsBar, TabContent, VerticalGroup, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -116,9 +116,11 @@ export function UserProfileEditPage({
     <VerticalGroup spacing="md">
       <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
       <SharedPreferences resourceUri="user" preferenceType="user" />
-      <UserTeams isLoading={teamsAreLoading} teams={teams} />
-      <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
-      <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
+      <Stack direction="column" gap={6}>
+        <UserTeams isLoading={teamsAreLoading} teams={teams} />
+        <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
+        <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
+      </Stack>
     </VerticalGroup>
   );
 

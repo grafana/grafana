@@ -23,6 +23,8 @@ type Service interface {
 	List(ctx context.Context) ([]*models.SSOSettings, error)
 	// GetForProvider returns the SSO settings for a given provider (DB or config file)
 	GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error)
+	// GetForProviderWithRedactedSecrets returns the SSO settings for a given provider (DB or config file) with secret values redacted
+	GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error)
 	// Upsert creates or updates the SSO settings for a given provider
 	Upsert(ctx context.Context, settings models.SSOSettings) error
 	// Delete deletes the SSO settings for a given provider (soft delete)
@@ -36,6 +38,8 @@ type Service interface {
 }
 
 // Reloadable is an interface that can be implemented by a provider to allow it to be validated and reloaded
+//
+//go:generate mockery --name Reloadable --structname MockReloadable --outpkg ssosettingstests --filename reloadable_mock.go --output ./ssosettingstests/
 type Reloadable interface {
 	Reload(ctx context.Context, settings models.SSOSettings) error
 	Validate(ctx context.Context, settings models.SSOSettings) error
@@ -46,7 +50,8 @@ type Reloadable interface {
 // using the config file and/or environment variables. Used mostly for backwards compatibility.
 type FallbackStrategy interface {
 	IsMatch(provider string) bool
-	GetProviderConfig(ctx context.Context, provider string) (any, error)
+	// TODO: check if GetProviderConfig can return an error
+	GetProviderConfig(ctx context.Context, provider string) (map[string]any, error)
 }
 
 // Store is a SSO settings store

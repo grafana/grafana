@@ -1,5 +1,5 @@
 ---
-description: Guide for upgrading to Grafana v8.2
+description: Upgrade to Grafana v8.2
 keywords:
   - grafana
   - configuration

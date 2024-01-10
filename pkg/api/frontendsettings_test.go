@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
 	// nolint:staticcheck
@@ -65,7 +65,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		License:  &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
 			Cfg:                   cfg,
-			RendererPluginManager: &fakeRendererManager{},
+			RendererPluginManager: &fakeRendererPluginManager{},
 		},
 		SQLStore:             db.InitTestDB(t),
 		SettingsProvider:     setting.ProvideProvider(cfg),

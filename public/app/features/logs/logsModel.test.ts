@@ -1,10 +1,12 @@
 import { Observable } from 'rxjs';
 
 import {
+  arrayToDataFrame,
   DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  DataTopic,
   dateTimeParse,
   FieldType,
   LoadingState,
@@ -1282,6 +1284,33 @@ describe('logs volume', () => {
     ]);
   }
 
+  function setupLogsVolumeWithAnnotations() {
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5], 'A');
+    const loadingFrame = arrayToDataFrame([
+      {
+        time: 100,
+        timeEnd: 200,
+        isRegion: true,
+        color: 'rgba(120, 120, 120, 0.1)',
+      },
+    ]);
+    loadingFrame.name = 'annotation';
+    loadingFrame.meta = {
+      dataTopic: DataTopic.Annotations,
+    };
+
+    datasource = new MockObservableDataSourceApi('loki', [
+      {
+        state: LoadingState.Streaming,
+        data: [resultAFrame1, loadingFrame],
+      },
+      {
+        state: LoadingState.Done,
+        data: [resultAFrame1],
+      },
+    ]);
+  }
+
   function setupErrorResponse() {
     datasource = new MockObservableDataSourceApi('loki', [], undefined, 'Error message');
   }
@@ -1361,6 +1390,55 @@ describe('logs volume', () => {
         },
         'Error message',
       ]);
+    });
+  });
+
+  it('handles annotations in responses', async () => {
+    setup(setupLogsVolumeWithAnnotations);
+
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
+      expect(received).toContainEqual({
+        state: LoadingState.Streaming,
+        error: undefined,
+        data: [
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              custom: logVolumeCustomMeta,
+            },
+          }),
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              dataTopic: DataTopic.Annotations,
+            },
+            name: 'annotation',
+          }),
+        ],
+      });
+      expect(received).toContainEqual({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              custom: logVolumeCustomMeta,
+            },
+          }),
+        ],
+      });
     });
   });
 });

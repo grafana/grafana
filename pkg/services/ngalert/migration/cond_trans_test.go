@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,9 +19,9 @@ func TestCondTransMultiCondOnSingleQuery(t *testing.T) {
 	// Here we are testing that we got a query that is referenced by multiple conditions, all conditions get set correctly.
 	ordID := int64(1)
 
-	settings := store.DashAlertSettings{}
+	settings := dashAlertSettings{}
 
-	cond1 := store.DashAlertCondition{}
+	cond1 := dashAlertCondition{}
 	cond1.Evaluator.Params = []float64{20}
 	cond1.Evaluator.Type = "lt"
 	cond1.Operator.Type = "and"
@@ -35,7 +34,7 @@ func TestCondTransMultiCondOnSingleQuery(t *testing.T) {
 	}
 	cond1.Reducer.Type = "avg"
 
-	cond2 := store.DashAlertCondition{}
+	cond2 := dashAlertCondition{}
 	cond2.Evaluator.Params = []float64{500}
 	cond2.Evaluator.Type = "gt"
 	cond2.Operator.Type = "or"
@@ -48,7 +47,7 @@ func TestCondTransMultiCondOnSingleQuery(t *testing.T) {
 	}
 	cond2.Reducer.Type = "avg"
 
-	settings.Conditions = []store.DashAlertCondition{cond1, cond2}
+	settings.Conditions = []dashAlertCondition{cond1, cond2}
 
 	alertQuery1 := models.AlertQuery{
 		RefID:         "A",
@@ -69,13 +68,8 @@ func TestCondTransMultiCondOnSingleQuery(t *testing.T) {
 		Data:      []models.AlertQuery{alertQuery1, alertQuery2},
 	}
 
-	dashAlert := store.DashAlert{ParsedSettings: &settings}
-	dashAlert.Alert = &legacymodels.Alert{
-		OrgID: ordID,
-	}
-
 	migrationStore := store.NewTestMigrationStore(t, db.InitTestDB(t), &setting.Cfg{})
-	c, err := transConditions(context.Background(), &logtest.Fake{}, &dashAlert, migrationStore)
+	c, err := transConditions(context.Background(), &logtest.Fake{}, settings, ordID, migrationStore)
 
 	require.NoError(t, err)
 	require.Equal(t, expected, c)
@@ -86,9 +80,9 @@ func TestCondTransExtended(t *testing.T) {
 	// generated correctly all subqueries for each offset. RefID A exists twice with a different offset (cond1, cond4).
 	ordID := int64(1)
 
-	settings := store.DashAlertSettings{}
+	settings := dashAlertSettings{}
 
-	cond1 := store.DashAlertCondition{}
+	cond1 := dashAlertCondition{}
 	cond1.Evaluator.Params = []float64{-500000}
 	cond1.Evaluator.Type = "lt"
 	cond1.Operator.Type = "and"
@@ -101,7 +95,7 @@ func TestCondTransExtended(t *testing.T) {
 	}
 	cond1.Reducer.Type = "diff"
 
-	cond2 := store.DashAlertCondition{}
+	cond2 := dashAlertCondition{}
 	cond2.Evaluator.Params = []float64{
 		-0.01,
 		0.01,
@@ -117,7 +111,7 @@ func TestCondTransExtended(t *testing.T) {
 	}
 	cond2.Reducer.Type = "diff"
 
-	cond3 := store.DashAlertCondition{}
+	cond3 := dashAlertCondition{}
 	cond3.Evaluator.Params = []float64{
 		-500000,
 	}
@@ -132,7 +126,7 @@ func TestCondTransExtended(t *testing.T) {
 	}
 	cond3.Reducer.Type = "diff"
 
-	cond4 := store.DashAlertCondition{}
+	cond4 := dashAlertCondition{}
 	cond4.Evaluator.Params = []float64{
 		1000000,
 	}
@@ -147,7 +141,7 @@ func TestCondTransExtended(t *testing.T) {
 	}
 	cond4.Reducer.Type = "last"
 
-	settings.Conditions = []store.DashAlertCondition{cond1, cond2, cond3, cond4}
+	settings.Conditions = []dashAlertCondition{cond1, cond2, cond3, cond4}
 
 	alertQuery1 := models.AlertQuery{
 		RefID: "A",
@@ -189,13 +183,8 @@ func TestCondTransExtended(t *testing.T) {
 		Data:      []models.AlertQuery{alertQuery1, alertQuery2, alertQuery3, alertQuery4, alertQuery5},
 	}
 
-	dashAlert := store.DashAlert{ParsedSettings: &settings}
-	dashAlert.Alert = &legacymodels.Alert{
-		OrgID: ordID,
-	}
-
 	migrationStore := store.NewTestMigrationStore(t, db.InitTestDB(t), &setting.Cfg{})
-	c, err := transConditions(context.Background(), &logtest.Fake{}, &dashAlert, migrationStore)
+	c, err := transConditions(context.Background(), &logtest.Fake{}, settings, ordID, migrationStore)
 
 	require.NoError(t, err)
 	require.Equal(t, expected, c)

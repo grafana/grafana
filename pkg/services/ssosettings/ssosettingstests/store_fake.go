@@ -13,6 +13,8 @@ type FakeStore struct {
 	ExpectedSSOSetting  *models.SSOSettings
 	ExpectedSSOSettings []*models.SSOSettings
 	ExpectedError       error
+
+	ActualSSOSettings models.SSOSettings
 }
 
 func NewFakeStore() *FakeStore {
@@ -28,6 +30,8 @@ func (f *FakeStore) List(ctx context.Context) ([]*models.SSOSettings, error) {
 }
 
 func (f *FakeStore) Upsert(ctx context.Context, settings models.SSOSettings) error {
+	f.ActualSSOSettings = settings
+
 	return f.ExpectedError
 }
 

@@ -7,13 +7,14 @@ import (
 )
 
 type SecureSocksDSProxySettings struct {
-	Enabled      bool
-	ShowUI       bool
-	ClientCert   string
-	ClientKey    string
-	RootCA       string
-	ProxyAddress string
-	ServerName   string
+	Enabled       bool
+	ShowUI        bool
+	AllowInsecure bool
+	ClientCert    string
+	ClientKey     string
+	RootCA        string
+	ProxyAddress  string
+	ServerName    string
 }
 
 func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettings, error) {
@@ -26,20 +27,26 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	s.ProxyAddress = secureSocksProxySection.Key("proxy_address").MustString("")
 	s.ServerName = secureSocksProxySection.Key("server_name").MustString("")
 	s.ShowUI = secureSocksProxySection.Key("show_ui").MustBool(true)
+	s.AllowInsecure = secureSocksProxySection.Key("allow_insecure").MustBool(false)
 
 	if !s.Enabled {
 		return s, nil
 	}
 
-	// all fields must be specified to use the proxy
-	if s.RootCA == "" {
-		return s, errors.New("rootCA required")
-	} else if s.ClientCert == "" || s.ClientKey == "" {
-		return s, errors.New("client key pair required")
-	} else if s.ServerName == "" {
-		return s, errors.New("server name required")
-	} else if s.ProxyAddress == "" {
+	if s.ProxyAddress == "" {
 		return s, errors.New("proxy address required")
+	}
+
+	// If the proxy is going to use TLS.
+	if !s.AllowInsecure {
+		// all fields must be specified to use the proxy
+		if s.RootCA == "" {
+			return s, errors.New("rootCA required")
+		} else if s.ClientCert == "" || s.ClientKey == "" {
+			return s, errors.New("client key pair required")
+		} else if s.ServerName == "" {
+			return s, errors.New("server name required")
+		}
 	}
 
 	return s, nil
