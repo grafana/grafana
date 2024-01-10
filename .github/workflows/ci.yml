@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
 
     steps:
       - name: Checkout code
         uses: percona-platform/checkout@v2
-      - name: Run with Node 16
+      - name: Run with Node ${{ matrix.node-version }}
         uses: percona-platform/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
