@@ -155,10 +155,10 @@ var (
 		{
 			Name:           "newVizTooltips",
 			Description:    "New visualizations tooltips UX",
-			Stage:          FeatureStageGeneralAvailability,
+			Stage:          FeatureStagePublicPreview,
 			FrontendOnly:   true,
 			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: true,
+			AllowSelfServe: false,
 			Created:        time.Date(2023, time.November, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -718,7 +718,8 @@ var (
 		{
 			Name:            "grafanaAPIServer",
 			Description:     "Enable Kubernetes API Server for Grafana resources",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
+			Expression:      "true", // enabled by default
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Created:         time.Date(2023, time.July, 14, 12, 0, 0, 0, time.UTC),
@@ -753,7 +754,8 @@ var (
 		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
 			Created:     time.Date(2023, time.July, 21, 12, 0, 0, 0, time.UTC),
 		},
@@ -973,7 +975,7 @@ var (
 		{
 			Name:         "formatString",
 			Description:  "Enable format string transformer",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.October, 13, 12, 0, 0, 0, time.UTC),
@@ -1012,11 +1014,12 @@ var (
 		{
 			Name:            "recoveryThreshold",
 			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2023, time.October, 10, 12, 0, 0, 0, time.UTC),
+			Expression:      "true",
 		},
 		{
 			Name:         "lokiStructuredMetadata",
@@ -1067,14 +1070,6 @@ var (
 			Created:      time.Date(2023, time.October, 17, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "costManagementUi",
-			Description:  "Toggles the display of the cost management ui plugin",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaDatabasesFrontend,
-			Created:      time.Date(2023, time.October, 17, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
 			Stage:           FeatureStageExperimental,
@@ -1093,7 +1088,7 @@ var (
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.November, 3, 12, 0, 0, 0, time.UTC),
@@ -1163,7 +1158,7 @@ var (
 		{
 			Name:         "pdfTables",
 			Description:  "Enables generating table data as PDF in reporting",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
 			Created:      time.Date(2023, time.November, 6, 12, 0, 0, 0, time.UTC),
@@ -1176,6 +1171,14 @@ var (
 			FrontendOnly:    false,
 			Owner:           identityAccessTeam,
 			Created:         time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "canvasPanelPanZoom",
+			Description:  "Allow pan and zoom in canvas panel",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2023, time.December, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "logsInfiniteScrolling",
@@ -1223,8 +1226,9 @@ var (
 		{
 			Name:         "logRowsPopoverMenu",
 			Description:  "Enable filtering menu displayed when text of a log line is selected",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true",
 			Owner:        grafanaObservabilityLogsSquad,
 			Created:      time.Date(2023, time.November, 16, 12, 0, 0, 0, time.UTC),
 		},
@@ -1247,7 +1251,7 @@ var (
 		{
 			Name:         "regressionTransformation",
 			Description:  "Enables regression analysis transformation",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2023, time.November, 24, 12, 0, 0, 0, time.UTC),
@@ -1282,6 +1286,25 @@ var (
 			Owner:          grafanaObservabilityLogsSquad,
 			AllowSelfServe: false,
 			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "alertingPreviewUpgrade",
+			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
+			FrontendOnly:    false,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "enablePluginsTracingByDefault",
+			Description:     "Enable plugin tracing for all external plugins",
+			FrontendOnly:    false,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 9, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

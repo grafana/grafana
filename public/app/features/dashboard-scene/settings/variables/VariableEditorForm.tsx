@@ -111,18 +111,18 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
               {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
             </Button> */}
             <Button
-              variant="destructive"
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
-              onClick={onDiscardChanges}
-            >
-              Discard changes
-            </Button>
-            <Button
               variant="secondary"
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
               onClick={onGoBack}
             >
               Back to list
+            </Button>
+            <Button
+              variant="destructive"
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+              onClick={onDiscardChanges}
+            >
+              Discard changes
             </Button>
           </HorizontalGroup>
         </div>
