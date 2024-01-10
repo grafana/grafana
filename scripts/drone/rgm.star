@@ -252,6 +252,11 @@ def rgm_version_branch():
     )
 
 def rgm_nightly_build():
+    """Nightly build pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
     src = "$${DRONE_WORKSPACE}/dist/*"
     dst = "$${DESTINATION}/$${DRONE_BUILD_EVENT}"
     copy_step = rgm_copy(src, dst)
@@ -334,6 +339,11 @@ def rgm_main_pipeline():
     ]
 
 def rgm_promotion_pipeline():
+    """Promotion build pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
     promotion_trigger = {
       "event": ["promote"],
       "target": "rgm",
