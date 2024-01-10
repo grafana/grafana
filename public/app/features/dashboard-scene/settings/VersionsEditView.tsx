@@ -2,11 +2,13 @@ import React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { HorizontalGroup, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import {
-  DecoratedRevisionModel,
-  VersionsHistorySpinner,
-} from 'app/features/dashboard/components/DashboardSettings/VersionsSettings';
+
+import { DashboardScene } from '../scene/DashboardScene';
+import { getDashboardSceneFor } from '../utils/utils';
+
+import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import {
   RevisionsModel,
   VersionHistoryComparison,
@@ -14,21 +16,21 @@ import {
   VersionHistoryTable,
   VersionsHistoryButtons,
   historySrv,
-} from 'app/features/dashboard/components/VersionHistory';
-
-import { DashboardScene } from '../scene/DashboardScene';
-import { getDashboardSceneFor } from '../utils/utils';
-
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+} from './version-history';
 
 export const VERSIONS_FETCH_LIMIT = 10;
 
+export type DecoratedRevisionModel = RevisionsModel & {
+  createdDateString: string;
+  ageString: string;
+};
+
 export interface VersionsEditViewState extends DashboardEditViewState {
-  versions: DecoratedRevisionModel[];
+  versions?: DecoratedRevisionModel[];
   isLoading?: boolean;
   isAppending?: boolean;
   viewMode?: 'list' | 'compare';
-  diffData?: { lhs: { data?: string }; rhs: { data?: string } };
+  diffData?: { lhs: string; rhs: string };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest?: boolean;
@@ -48,8 +50,8 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       viewMode: 'list',
       isNewLatest: false,
       diffData: {
-        lhs: {},
-        rhs: {},
+        lhs: '',
+        rhs: '',
       },
     });
 
@@ -60,6 +62,14 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
+  }
+
+  public get diffData(): { lhs: string; rhs: string } {
+    return this.state.diffData ?? { lhs: '', rhs: '' };
+  }
+
+  public get versions(): DecoratedRevisionModel[] {
+    return this.state.versions ?? [];
   }
 
   public get limit(): number {
@@ -105,7 +115,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
   }
 
   public getDiff = async () => {
-    const selectedVersions = this.state.versions.filter((version) => version.checked);
+    const selectedVersions = this.versions.filter((version) => version.checked);
     const [newInfo, baseInfo] = selectedVersions;
     const isNewLatest = newInfo.version === this._dashboard.state.version;
 
@@ -137,19 +147,19 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     this.setState({
       baseInfo: undefined,
       diffData: {
-        lhs: {},
-        rhs: {},
+        lhs: '',
+        rhs: '',
       },
       isNewLatest: false,
       newInfo: undefined,
-      versions: this.state.versions.map((version) => ({ ...version, checked: false })),
+      versions: this.versions.map((version) => ({ ...version, checked: false })),
       viewMode: 'list',
     });
   };
 
   public onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
     this.setState({
-      versions: this.state.versions.map((version) =>
+      versions: this.versions.map((version) =>
         version.id === versionId ? { ...version, checked: ev.currentTarget.checked } : version
       ),
     });
@@ -171,12 +181,12 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
 function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsEditView>) {
   const dashboard = model.getDashboard();
-  const { versions, isLoading, isAppending, viewMode, baseInfo, newInfo, isNewLatest, diffData } = model.useState();
+  const { isLoading, isAppending, viewMode, baseInfo, newInfo, isNewLatest } = model.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const canCompare = versions.filter((version) => version.checked).length === 2;
-  const showButtons = versions.length > 1;
-  const hasMore = versions.length >= model.limit;
-  const isLastPage = versions.find((rev) => rev.version === 1);
+  const canCompare = model.versions.filter((version) => version.checked).length === 2;
+  const showButtons = model.versions.length > 1;
+  const hasMore = model.versions.length >= model.limit;
+  const isLastPage = model.versions.find((rev) => rev.version === 1);
 
   if (viewMode === 'compare') {
     return (
@@ -194,7 +204,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
             newInfo={newInfo!}
             baseInfo={baseInfo!}
             isNewLatest={isNewLatest!}
-            diffData={diffData!}
+            diffData={model.diffData}
           />
         )}
       </Page>
@@ -206,7 +216,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
       {isLoading ? (
         <VersionsHistorySpinner msg="Fetching history list&hellip;" />
       ) : (
-        <VersionHistoryTable versions={versions} onCheck={model.onCheck} canCompare={canCompare} />
+        <VersionHistoryTable versions={model.versions} onCheck={model.onCheck} canCompare={canCompare} />
       )}
       {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
       {showButtons && (
@@ -221,3 +231,10 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
     </Page>
   );
 }
+
+export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
+  <HorizontalGroup>
+    <Spinner />
+    <em>{msg}</em>
+  </HorizontalGroup>
+);

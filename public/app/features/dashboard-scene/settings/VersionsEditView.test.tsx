@@ -1,12 +1,12 @@
 import { SceneGridItem, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
-import { historySrv } from 'app/features/dashboard/components/VersionHistory/HistorySrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VERSIONS_FETCH_LIMIT, VersionsEditView } from './VersionsEditView';
+import { historySrv } from './version-history';
 
-jest.mock('app/features/dashboard/components/VersionHistory/HistorySrv');
+jest.mock('./version-history/HistorySrv');
 
 describe('VersionsEditView', () => {
   describe('Dashboard Versions state', () => {
@@ -31,7 +31,7 @@ describe('VersionsEditView', () => {
     });
 
     it('should return the decorated list of versions', () => {
-      const versions = versionsView.state.versions;
+      const versions = versionsView.versions;
 
       expect(versions).toHaveLength(2);
       expect(versions[0].createdDateString).toBe('2017-02-22 20:43:01');
