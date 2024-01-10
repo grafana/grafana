@@ -2,7 +2,10 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"hash/fnv"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -38,6 +41,22 @@ func ProvideApi(
 	}
 
 	return api
+}
+
+// generateFNVETag computes a FNV hash-based ETag for the SSOSettings struct
+func generateFNVETag(SSOSettings *models.SSOSettings) (string, error) {
+	hasher := fnv.New64()
+	data, err := json.Marshal(SSOSettings)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = hasher.Write(data)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
 }
 
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router
@@ -91,18 +110,39 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 	return authorizedProviders, nil
 }
 
+// swagger:route GET /v1/sso-settings/{key} sso_settings getProviderSettings
+//
+// # Get an SSO Settings entry by Key
+//
+// You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	settings, err := api.SSOSettingsService.GetForProvider(c.Req.Context(), key)
+	provider, err := api.SSOSettingsService.GetForProviderWithRedactedSecrets(c.Req.Context(), key)
+
 	if err != nil {
-		return response.Error(http.StatusNotFound, "The provider was not found", err)
+		if errors.Is(err, ssosettings.ErrNotFound) {
+			return response.Error(http.StatusNotFound, "The provider was not found", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get provider settings", err)
 	}
 
-	return response.JSON(http.StatusOK, settings)
+	etag, err := generateFNVETag(provider)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get provider settings", err)
+	}
+
+	return response.JSON(http.StatusOK, provider).SetHeader("ETag", etag)
 }
 
 // swagger:route PUT /v1/sso-settings/{key} sso_settings updateProviderSettings
@@ -137,7 +177,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}
 
-	return response.JSON(http.StatusNoContent, nil)
+	return response.Empty(http.StatusNoContent)
 }
 
 // swagger:route DELETE /v1/sso-settings/{key} sso_settings removeProviderSettings
@@ -169,7 +209,14 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusInternalServerError, "Failed to delete provider settings", err)
 	}
 
-	return response.JSON(http.StatusNoContent, nil)
+	return response.Empty(http.StatusNoContent)
+}
+
+// swagger:parameters getProviderSettings
+type GetProviderSettingsWrapper struct {
+	// in:path
+	// required:true
+	Provider string `json:"key"`
 }
 
 // swagger:parameters updateProviderSettings

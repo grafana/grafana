@@ -1,12 +1,11 @@
 import { BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { BaseTransport, Instrumentation, InternalLoggerLevel } from '@grafana/faro-core';
+import { Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import { FetchTransport, initializeFaro } from '@grafana/faro-web-sdk';
-import { EchoEventType, EchoMeta } from '@grafana/runtime';
 
+import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
-import { GrafanaJavascriptAgentEchoEvent } from './types';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   beforeEach(() => {
@@ -44,20 +43,16 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
     // arrange
-    jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
-      ...faroWebSdkModule.faro,
-      api: {
-        ...faroWebSdkModule.faro.api,
-        setUser: jest.fn(),
-      },
-    });
+    const constructorSpy = jest.spyOn(faroWebSdkModule, 'FetchTransport');
 
     //act
-    const backend = new GrafanaJavascriptAgentBackend(options);
+    new GrafanaJavascriptAgentBackend(options);
 
     //assert
-    expect(backend.transports.length).toEqual(1);
-    expect(backend.transports[0]).toBeInstanceOf(FetchTransport);
+    expect(constructorSpy).toHaveBeenCalledTimes(1);
+    expect(faroWebSdkModule.faro.transports.transports.length).toEqual(2);
+    expect(faroWebSdkModule.faro.transports.transports[0]).toBeInstanceOf(EchoSrvTransport);
+    expect(faroWebSdkModule.faro.transports.transports[1]).toBeInstanceOf(FetchTransport);
   });
 
   it('will initialize GrafanaJavascriptAgent and set user', () => {
@@ -76,71 +71,20 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       warn: jest.fn(),
       error: jest.fn(),
     };
-    const mockedAgent = () => {
-      return {
-        api: {
-          setUser: mockedSetUser,
-          pushLog: jest.fn(),
-          callOriginalConsoleMethod: jest.fn(),
-          pushError: jest.fn(),
-          pushMeasurement: jest.fn(),
-          pushTraces: jest.fn(),
-          pushEvent: jest.fn(),
-          initOTEL: jest.fn(),
-          getOTEL: jest.fn(),
-          getTraceContext: jest.fn(),
-          changeStacktraceParser: jest.fn(),
-          getStacktraceParser: jest.fn(),
-          isOTELInitialized: jest.fn(),
-          setSession: jest.fn(),
-          getSession: jest.fn(),
-          resetUser: jest.fn(),
-          resetSession: jest.fn(),
-          setView: jest.fn(),
-          getView: jest.fn(),
-        },
-        config: {
-          globalObjectKey: '',
-          preventGlobalExposure: false,
-          transports: [],
-          instrumentations: mockedInstrumentationsForConfig,
-          metas: [],
-          parseStacktrace: jest.fn(),
-          app: jest.fn(),
-          paused: false,
-          dedupe: true,
-          isolate: false,
-          internalLoggerLevel: InternalLoggerLevel.ERROR,
-          unpatchedConsole: { ...console },
-        },
-        metas: {
-          add: jest.fn(),
-          remove: jest.fn(),
-          value: {},
-          addListener: jest.fn(),
-          removeListener: jest.fn(),
-        },
-        transports: {
-          add: jest.fn(),
-          execute: jest.fn(),
-          transports: [],
-          pause: jest.fn(),
-          unpause: jest.fn(),
-          addBeforeSendHooks: jest.fn(),
-          addIgnoreErrorsPatterns: jest.fn(),
-          getBeforeSendHooks: jest.fn(),
-          isPaused: jest.fn(),
-          remove: jest.fn(),
-          removeBeforeSendHooks: jest.fn(),
-        },
-        pause: jest.fn(),
-        unpause: jest.fn(),
-        instrumentations: mockedInstrumentations,
-        internalLogger: mockedInternalLogger,
-        unpatchedConsole: { ...console },
-      };
-    };
-    jest.mocked(initializeFaro).mockImplementation(mockedAgent);
+
+    jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
+      ...faroWebSdkModule.faro,
+      api: {
+        ...faroWebSdkModule.faro.api,
+        setUser: mockedSetUser,
+      },
+      config: {
+        ...faroWebSdkModule.faro.config,
+        instrumentations: mockedInstrumentationsForConfig,
+      },
+      instrumentations: mockedInstrumentations,
+      internalLogger: mockedInternalLogger,
+    });
 
     //act
     new GrafanaJavascriptAgentBackend(options);
@@ -153,111 +97,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       attributes: {
         orgId: '1',
       },
-    });
-  });
-
-  it('will forward events to transports', () => {
-    //arrange
-    const mockedSetUser = jest.fn();
-    const mockedInstrumentationsForConfig: Instrumentation[] = [];
-    const mockedInstrumentations = {
-      add: jest.fn(),
-      instrumentations: mockedInstrumentationsForConfig,
-      remove: jest.fn(),
-    };
-    const mockedInternalLogger = {
-      prefix: 'Faro',
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    };
-    const mockedAgent = () => {
-      return {
-        api: {
-          setUser: mockedSetUser,
-          pushLog: jest.fn(),
-          callOriginalConsoleMethod: jest.fn(),
-          pushError: jest.fn(),
-          pushMeasurement: jest.fn(),
-          pushTraces: jest.fn(),
-          pushEvent: jest.fn(),
-          initOTEL: jest.fn(),
-          getOTEL: jest.fn(),
-          getTraceContext: jest.fn(),
-          changeStacktraceParser: jest.fn(),
-          getStacktraceParser: jest.fn(),
-          isOTELInitialized: jest.fn(),
-          setSession: jest.fn(),
-          getSession: jest.fn(),
-          resetUser: jest.fn(),
-          resetSession: jest.fn(),
-          setView: jest.fn(),
-          getView: jest.fn(),
-        },
-        config: {
-          globalObjectKey: '',
-          preventGlobalExposure: false,
-          transports: [],
-          instrumentations: mockedInstrumentationsForConfig,
-          metas: [],
-          parseStacktrace: jest.fn(),
-          app: jest.fn(),
-          paused: false,
-          dedupe: true,
-          isolate: false,
-          internalLoggerLevel: InternalLoggerLevel.ERROR,
-          unpatchedConsole: { ...console },
-        },
-        metas: {
-          add: jest.fn(),
-          remove: jest.fn(),
-          value: {},
-          addListener: jest.fn(),
-          removeListener: jest.fn(),
-        },
-        transports: {
-          add: jest.fn(),
-          execute: jest.fn(),
-          transports: [],
-          pause: jest.fn(),
-          unpause: jest.fn(),
-          addBeforeSendHooks: jest.fn(),
-          addIgnoreErrorsPatterns: jest.fn(),
-          getBeforeSendHooks: jest.fn(),
-          isPaused: jest.fn(),
-          remove: jest.fn(),
-          removeBeforeSendHooks: jest.fn(),
-        },
-        pause: jest.fn(),
-        unpause: jest.fn(),
-        instrumentations: mockedInstrumentations,
-        internalLogger: mockedInternalLogger,
-        unpatchedConsole: { ...console },
-      };
-    };
-
-    jest.mocked(initializeFaro).mockImplementation(mockedAgent);
-    const backend = new GrafanaJavascriptAgentBackend({
-      ...options,
-      preventGlobalExposure: true,
-    });
-
-    backend.transports = [
-      /* eslint-disable */
-      { send: jest.fn() } as unknown as BaseTransport,
-      { send: jest.fn() } as unknown as BaseTransport,
-    ];
-    const event: GrafanaJavascriptAgentEchoEvent = {
-      type: EchoEventType.GrafanaJavascriptAgent,
-      payload: { foo: 'bar' } as unknown as GrafanaJavascriptAgentEchoEvent,
-      meta: {} as unknown as EchoMeta,
-    };
-    /* eslint-enable */
-    backend.addEvent(event);
-    backend.transports.forEach((transport) => {
-      expect(transport.send).toHaveBeenCalledTimes(1);
-      expect(transport.send).toHaveBeenCalledWith(event.payload);
     });
   });
 

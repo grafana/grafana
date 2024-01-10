@@ -69,7 +69,7 @@ export class TemplateSrv implements BaseTemplateSrv {
    *
    * Use getVariables function instead
    */
-  get variables(): any[] {
+  get variables(): TypedVariableModel[] {
     deprecationWarning('template_srv.ts', 'variables', 'getVariables');
     return this.getVariables();
   }
@@ -84,7 +84,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   updateIndex() {
-    const existsOrEmpty = (value: any) => value || value === '';
+    const existsOrEmpty = (value: unknown) => value || value === '';
 
     this.index = this._variables.reduce((acc, currentValue) => {
       if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
@@ -360,7 +360,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  isAllValue(value: any) {
+  isAllValue(value: unknown) {
     return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 

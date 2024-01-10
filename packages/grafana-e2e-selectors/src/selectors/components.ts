@@ -53,7 +53,7 @@ export const Components = {
       },
     },
     DataSourceHttpSettings: {
-      urlInput: 'Datasource HTTP settings url',
+      urlInput: 'data-testid Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
@@ -287,7 +287,7 @@ export const Components = {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
   },
   BackButton: {
-    backArrow: 'Go Back',
+    backArrow: 'data-testid Go Back',
   },
   OptionsGroup: {
     group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
