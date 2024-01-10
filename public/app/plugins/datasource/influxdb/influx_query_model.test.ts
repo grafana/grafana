@@ -5,6 +5,33 @@ import InfluxQueryModel from './influx_query_model';
 describe('InfluxQuery', () => {
   const templateSrv = { replace: (val) => val } as TemplateSrv;
 
+  describe('interpolateQueryStr', () => {
+    // This is not the desired functionality!
+    it('should not escape', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+        },
+        templateSrv,
+        {}
+      );
+
+      const result = query.interpolateQueryStr(
+        ['www.example.com', 'www.example2.com', 'http://www.grafana.com/test/test.php'],
+        {
+          multi: true,
+          includeAll: false,
+        },
+        undefined
+      );
+      expect(result).toEqual(
+        '(www\\.example\\.com|www\\.example2\\.com|http:\\/\\/www\\.grafana\\.com\\/test\\/test\\.php)'
+      );
+    });
+  });
+
   describe('render series with measurement only', () => {
     it('should generate correct query', () => {
       const query = new InfluxQueryModel(
