@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react';
+import React from 'react';
 
 import { SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
