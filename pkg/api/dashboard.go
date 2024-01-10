@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -826,6 +827,29 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
+func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
+
+	body, err := io.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(500, "error reading bytes", err)
+	}
+
+	var eventPayload SlackEventPayloadBody
+
+	err = json.Unmarshal(body, &eventPayload)
+	if err != nil {
+		return response.Error(400, "error parsing body", err)
+	}
+
+	challenge := eventPayload.Challenge
+
+	resp := &PostSlackAckBody{
+		Challenge: challenge,
+	}
+
+	return response.JSON(http.StatusOK, resp)
+}
+
 // swagger:route POST /dashboards/validate dashboards alpha validateDashboard
 //
 // Validates a dashboard JSON against the schema.
@@ -1349,4 +1373,14 @@ type DashboardVersionResponse struct {
 type ValidateDashboardResponse struct {
 	IsValid bool   `json:"isValid"`
 	Message string `json:"message,omitempty"`
+}
+
+type SlackEventPayloadBody struct {
+	Token     string `json:"path"`
+	Challenge string `json:"challenge"`
+	Type      string `json:"type"`
+}
+
+type PostSlackAckBody struct {
+	Challenge string `json:"challenge"`
 }
