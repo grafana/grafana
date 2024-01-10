@@ -206,9 +206,9 @@ export const StateTimelinePanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xOne}
                     queryZoom={onChangeTimeRange}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange) => {
-                      if (timeRange != null) {
-                        setNewAnnotationRange(timeRange);
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
+                      if (timeRange2 != null) {
+                        setNewAnnotationRange(timeRange2);
                         dismiss();
                         return;
                       }

@@ -268,9 +268,9 @@ export const CandlestickPanel = ({
                 hoverMode={TooltipHoverMode.xAll}
                 queryZoom={onChangeTimeRange}
                 clientZoom={true}
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange) => {
-                  if (timeRange != null) {
-                    setNewAnnotationRange(timeRange);
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2) => {
+                  if (timeRange2 != null) {
+                    setNewAnnotationRange(timeRange2);
                     dismiss();
                     return;
                   }
