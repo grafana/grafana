@@ -791,7 +791,6 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
-
 	//if event is a challenge
 	ack, err := isChallengeEventPayload(c)
 	if ack != nil && err == nil {
@@ -809,7 +808,6 @@ func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response
 }
 
 func isChallengeEventPayload(c *contextmodel.ReqContext) (*EventChallengeAck, error) {
-
 	var eventChallengePayload EventChallengePayload
 
 	if err := web.Bind(c.Req, &eventChallengePayload); err != nil {
