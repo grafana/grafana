@@ -53,42 +53,6 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
       <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
     </section>
   );
-  return (
-    <>
-      <h3 className="page-heading">LDAP Connection</h3>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <table className="filter-table form-inline">
-            <thead>
-              <tr>
-                <th>Host</th>
-                <th colSpan={2}>Port</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ldapConnectionInfo &&
-                ldapConnectionInfo.map((serverInfo, index) => (
-                  <tr key={index}>
-                    <td>{serverInfo.host}</td>
-                    <td>{serverInfo.port}</td>
-                    <td>
-                      {serverInfo.available ? (
-                        <Icon name="check" className="pull-right" />
-                      ) : (
-                        <Icon name="exclamation-triangle" className="pull-right" />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="gf-form-group">
-          <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
-        </div>
-      </div>
-    </>
-  );
 };
 
 interface LdapConnectionErrorProps {
