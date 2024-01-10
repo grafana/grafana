@@ -195,7 +195,8 @@ export const StatusHistoryPanel = ({
     );
   }
 
-  const showNewVizTooltips = config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+  const showNewVizTooltips =
+    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
 
   return (
     <TimelineChart
@@ -270,6 +271,7 @@ export const StatusHistoryPanel = ({
                   timeZone={timeZone}
                   newRange={newAnnotationRange}
                   setNewRange={setNewAnnotationRange}
+                  canvasRegionRendering={false}
                 />
               </>
             ) : (

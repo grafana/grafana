@@ -22,6 +22,7 @@ interface AnnotationsPluginProps {
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRage: TimeRange2 | null) => void;
+  canvasRegionRendering?: boolean;
 }
 
 // TODO: batch by color, use Path2D objects
@@ -60,6 +61,7 @@ export const AnnotationsPlugin2 = ({
   config,
   newRange,
   setNewRange,
+  canvasRegionRendering = true,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
 
@@ -136,27 +138,26 @@ export const AnnotationsPlugin2 = ({
           let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
           let x0 = u.valToPos(vals.time[i], 'x', true);
-          renderLine(ctx, y0, y1, x0, color);
 
           if (!vals.isRegion?.[i]) {
+            renderLine(ctx, y0, y1, x0, color);
             // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
-          } else {
+          } else if (vals.isRegion?.[i] && canvasRegionRendering) {
+            renderLine(ctx, y0, y1, x0, color);
+
             let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
 
             renderLine(ctx, y0, y1, x1, color);
 
             ctx.fillStyle = colorManipulator.alpha(color, 0.1);
             ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
-
-            // ctx.fillStyle = color;
-            // ctx.fillRect(x0, y1, x1 - x0, 5);
           }
         }
       });
 
       ctx.restore();
     });
-  }, [config, getColorByName]);
+  }, [config, canvasRegionRendering, getColorByName]);
 
   // ensure annos are re-drawn whenever they change
   useEffect(() => {
