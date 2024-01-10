@@ -273,10 +273,13 @@ const setPermission = (
   getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}`, { permission });
 
 const addTeamLBACWarnings = (teams: number[], items: ResourcePermission[]) => {
+  const lbacPermissionWarning = t(
+    'access-control.permissions.lbac-warning',
+    'Warning: permission does not have corresponding LBAC rule configured. Users might have full access to the data.'
+  );
   return items.map((item) => {
     if (item.permission !== 'Admin' && (!item.teamId || !teams.includes(item.teamId))) {
-      item.warning = `Warning: permission does not have corresponding LBAC rule configured.
-      Users might have full access to the data.`;
+      item.warning = lbacPermissionWarning;
     }
     return { ...item };
   });
