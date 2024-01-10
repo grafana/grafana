@@ -670,7 +670,7 @@ func TestSSOSettingsService_DoReload(t *testing.T) {
 			env.reloadables[settings.Provider] = reloadable
 		}
 
-		env.service.doReload()
+		env.service.doReload(context.Background())
 	})
 
 	t.Run("failed fetching the SSO settings", func(t *testing.T) {
@@ -683,7 +683,7 @@ func TestSSOSettingsService_DoReload(t *testing.T) {
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		env.reloadables[provider] = reloadable
 
-		env.service.doReload()
+		env.service.doReload(context.Background())
 	})
 }
 

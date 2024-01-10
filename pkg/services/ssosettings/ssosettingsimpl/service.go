@@ -57,9 +57,6 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
 		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
 		ssoSettingsApi.RegisterAPIEndpoints()
-
-		// start background process for reloading SSO Settings
-		svc.initReload()
 	}
 
 	return svc
@@ -254,22 +251,24 @@ func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[st
 	return result, nil
 }
 
-// initReload starts a background process for reloading the SSO settings for all providers at a fixed interval
-// it is useful for high availability setups running multiple Grafana instances
-func (s *SSOSettingsService) initReload() {
-	go func() {
-		reloadTicker := time.NewTicker(1 * time.Minute)
-		for {
-			<-reloadTicker.C
-			s.doReload()
+func (s *SSOSettingsService) Run(ctx context.Context) error {
+	ticker := time.NewTicker(1 * time.Minute)
+
+	// start a background process for reloading the SSO settings for all providers at a fixed interval
+	// it is useful for high availability setups running multiple Grafana instances
+	for {
+		select {
+		case <-ticker.C:
+			s.doReload(ctx)
+
+		case <-ctx.Done():
+			return ctx.Err()
 		}
-	}()
+	}
 }
 
-func (s *SSOSettingsService) doReload() {
+func (s *SSOSettingsService) doReload(ctx context.Context) {
 	s.log.Debug("reloading SSO Settings for all providers")
-
-	ctx := context.Background()
 
 	settingsList, err := s.List(ctx)
 	if err != nil {
