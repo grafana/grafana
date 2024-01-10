@@ -357,7 +357,7 @@ def rgm_promotion_pipeline():
         "image": "grafana/grafana-build:main",
         "pull": "always",
         "commands": [
-            "dagger run go run /src/grafana-build artifacts " +
+            "dagger run --silent /src/grafana-build artifacts " +
             "-a $${ARTIFACTS} " +
             "--grafana-ref=$${GRAFANA_REF} " +
             "--enterprise-ref=$${ENTERPRISE_REF} " +
