@@ -117,4 +117,4 @@ export type FieldData = {
 
 export type SSOSettingsField =
   | keyof SSOProvider['settings']
-  | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings'] };
+  | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings']; hidden?: boolean };

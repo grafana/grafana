@@ -28,6 +28,7 @@ type Section = Record<
   Array<{
     name: string;
     id: string;
+    hidden?: boolean;
     fields: SSOSettingsField[];
   }>
 >;

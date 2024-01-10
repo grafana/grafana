@@ -80,7 +80,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
         <>
           <FormPrompt
-            // TODO Figure out why isDirty is not working
             confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
             onDiscard={() => {
               reset();
@@ -91,27 +90,31 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           </Field>
           {sections ? (
             <Stack gap={2} direction={'column'}>
-              {sections.map((section, index) => {
-                return (
-                  <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
-                    {section.fields.map((field) => {
-                      return (
-                        <FieldRenderer
-                          key={typeof field === 'string' ? field : field.name}
-                          field={field}
-                          control={control}
-                          errors={errors}
-                          setValue={setValue}
-                          register={register}
-                          watch={watch}
-                          unregister={unregister}
-                          secretConfigured={!!config?.settings.clientSecret}
-                        />
-                      );
-                    })}
-                  </CollapsableSection>
-                );
-              })}
+              {sections
+                .filter((section) => !section.hidden)
+                .map((section, index) => {
+                  return (
+                    <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
+                      {section.fields
+                        .filter((field) => (typeof field !== 'string' ? !field.hidden : true))
+                        .map((field) => {
+                          return (
+                            <FieldRenderer
+                              key={typeof field === 'string' ? field : field.name}
+                              field={field}
+                              control={control}
+                              errors={errors}
+                              setValue={setValue}
+                              register={register}
+                              watch={watch}
+                              unregister={unregister}
+                              secretConfigured={!!config?.settings.clientSecret}
+                            />
+                          );
+                        })}
+                    </CollapsableSection>
+                  );
+                })}
             </Stack>
           ) : (
             <>
