@@ -328,12 +328,12 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			require.Equal(t, []data.Notice{{
 				Severity: data.NoticeSeverityWarning,
-				Text:     "Query optimized from Range to Instant type",
+				Text:     "Query optimized from Range to Instant type; all uses exclusively require the last datapoint. Consider modifying your query to Instant type to ensure accuracy.",
 			}}, result.Responses["A"].Frames[0].Meta.Notices)
 
 			require.Equal(t, []data.Notice{{
 				Severity: data.NoticeSeverityWarning,
-				Text:     "Query optimized from Range to Instant type",
+				Text:     "Query optimized from Range to Instant type; all uses exclusively require the last datapoint. Consider modifying your query to Instant type to ensure accuracy.",
 			}}, result.Responses["B"].Frames[0].Meta.Notices)
 
 			require.Equal(t, 0, len(result.Responses["C"].Frames[0].Meta.Notices))
