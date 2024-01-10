@@ -2,22 +2,24 @@ import React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { HorizontalGroup, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import {
-  DecoratedRevisionModel,
-  VersionsHistorySpinner,
-} from 'app/features/dashboard/components/DashboardSettings/VersionsSettings';
-import { RevisionsModel, VersionHistoryTable, historySrv } from 'app/features/dashboard/components/VersionHistory';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { RevisionsModel, VersionHistoryTable, historySrv } from './version-history';
 
 export const VERSIONS_FETCH_LIMIT = 10;
 
+export type DecoratedRevisionModel = RevisionsModel & {
+  createdDateString: string;
+  ageString: string;
+};
+
 export interface VersionsEditViewState extends DashboardEditViewState {
-  versions: DecoratedRevisionModel[];
+  versions?: DecoratedRevisionModel[];
   isLoading?: boolean;
   isAppending?: boolean;
 }
@@ -42,6 +44,10 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
+  }
+
+  public get versions(): DecoratedRevisionModel[] {
+    return this.state.versions ?? [];
   }
 
   public get limit(): number {
@@ -102,9 +108,10 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
 function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsEditView>) {
   const dashboard = model.getDashboard();
-  const { versions, isLoading, isAppending } = model.useState();
+  const { isLoading, isAppending } = model.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const canCompare = versions.filter((version) => version.checked).length === 2;
+
+  const canCompare = model.versions.filter((version) => version.checked).length === 2;
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -112,7 +119,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
         <VersionsHistorySpinner msg="Fetching history list&hellip;" />
       ) : (
         <VersionHistoryTable
-          versions={versions}
+          versions={model.versions}
           onCheck={(x, y) => {
             console.log('todo');
           }}
@@ -123,3 +130,10 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
     </Page>
   );
 }
+
+export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
+  <HorizontalGroup>
+    <Spinner />
+    <em>{msg}</em>
+  </HorizontalGroup>
+);
