@@ -77,6 +77,7 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       }
       if (this._sourceDataDeactivationHandler) {
         this._sourceDataDeactivationHandler();
+        this._sourceDataDeactivationHandler = undefined;
       }
 
       if (this._shouldUnwireClonedData) {
@@ -100,6 +101,7 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
 
     if (this._sourceDataDeactivationHandler) {
       this._sourceDataDeactivationHandler();
+      this._sourceDataDeactivationHandler = undefined;
     }
 
     if (this.state.$data) {
