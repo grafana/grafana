@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { ResourcePermission } from './types';
 
@@ -35,7 +35,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
           <Tooltip
             content={
               <>
-                <div className={styles.warningText}>{item.warning}</div>
+                <Box marginBottom={1}>{item.warning}</Box>
                 {getPermissionInfo(item)}
               </>
             }
@@ -103,8 +103,5 @@ const getPermissionInfo = (p: ResourcePermission) => `Actions: ${[...new Set(p.a
 const getStyles = (theme: GrafanaTheme2) => ({
   warning: css({
     color: theme.colors.warning.main,
-  }),
-  warningText: css({
-    marginBottom: theme.spacing(1),
   }),
 });
