@@ -215,9 +215,12 @@ TODO docs
 
 TODO docs
 
-| Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| Property           | Type   | Required | Default | Description                                                                                 |
+|--------------------|--------|----------|---------|---------------------------------------------------------------------------------------------|
+| `mode`             | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`.                               |
+| `sizing`           | string | **Yes**  |         | Allows for the tooltip size to be set explicitly<br/>Possible values are: `auto`, `manual`. |
+| `sort`             | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.                                   |
+| `maxTooltipHeight` | number | No       |         |                                                                                             |
+| `maxTooltipWidth`  | number | No       |         |                                                                                             |
 
 

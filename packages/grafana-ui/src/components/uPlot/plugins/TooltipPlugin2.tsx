@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { VizTooltipOptions, TooltipSizing } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -11,6 +12,7 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { CloseButton } from './CloseButton';
 
 export const DEFAULT_TOOLTIP_WIDTH = 280;
+export const DEFAULT_TOOLTIP_HEIGHT = 280;
 
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {
@@ -38,6 +40,8 @@ interface TooltipPlugin2Props {
     isPinned: boolean,
     dismiss: () => void
   ) => React.ReactNode;
+
+  tooltipOptions?: VizTooltipOptions;
 }
 
 interface TooltipContainerState {
@@ -83,14 +87,24 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({
+  config,
+  hoverMode,
+  render,
+  clientZoom = false,
+  queryZoom,
+  tooltipOptions,
+}: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  const styles = useStyles2(getStyles);
+  const isTooltipAutoSizing = tooltipOptions?.sizing === TooltipSizing.Auto;
+  const maxWidth = isTooltipAutoSizing ? DEFAULT_TOOLTIP_WIDTH : tooltipOptions?.maxTooltipWidth;
+  const maxHeight = isTooltipAutoSizing ? 'auto' : tooltipOptions?.maxTooltipHeight;
+  const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -436,7 +450,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, width: number | undefined, height: number | string | undefined) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -448,6 +462,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
+    maxWidth: `${width}px`,
+    maxHeight: `${height}px`,
+    width: DEFAULT_TOOLTIP_WIDTH,
+    height: 'auto',
   }),
   pinned: css({
     boxShadow: theme.shadows.z3,

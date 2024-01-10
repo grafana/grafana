@@ -240,6 +240,7 @@ export const XYChartPanel = (props: Props) => {
                     />
                   );
                 }}
+                tooltipOptions={props.options.tooltip}
               />
             )}
           </UPlotChart>

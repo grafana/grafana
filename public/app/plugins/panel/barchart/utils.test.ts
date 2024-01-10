@@ -17,6 +17,7 @@ import {
   GraphGradientMode,
   StackingMode,
   SortOrder,
+  TooltipSizing,
 } from '@grafana/schema';
 
 import { FieldConfig as PanelFieldConfig, Options } from './panelcfg.gen';
@@ -104,6 +105,7 @@ describe('BarChart utils', () => {
       tooltip: {
         mode: TooltipDisplayMode.None,
         sort: SortOrder.None,
+        sizing: TooltipSizing.Auto,
       },
       text: {
         valueSize: 10,

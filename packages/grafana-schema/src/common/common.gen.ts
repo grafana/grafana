@@ -663,10 +663,21 @@ export enum BarGaugeSizing {
 }
 
 /**
+ * Allows for the tooltip size to be set explicitly
+ */
+export enum TooltipSizing {
+  Auto = 'auto',
+  Manual = 'manual',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
+  maxTooltipHeight?: number;
+  maxTooltipWidth?: number;
   mode: TooltipDisplayMode;
+  sizing: TooltipSizing;
   sort: SortOrder;
 }
 

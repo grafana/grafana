@@ -11,7 +11,7 @@ import {
   getDefaultTimeRange,
   EventBusSrv,
 } from '@grafana/data';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, TooltipSizing } from '@grafana/schema';
 
 import { PieChartPanel } from './PieChartPanel';
 import { Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
@@ -185,7 +185,7 @@ const setup = (propsOverrides?: {}) => {
       calcs: [],
     },
     orientation: VizOrientation.Auto,
-    tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending },
+    tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending, sizing: TooltipSizing.Auto },
   };
 
   const props: PieChartPanelProps = {

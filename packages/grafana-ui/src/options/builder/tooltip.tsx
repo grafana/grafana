@@ -1,5 +1,6 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
-import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { OptionsWithTooltip, TooltipDisplayMode, SortOrder, TooltipSizing } from '@grafana/schema';
+import { DEFAULT_TOOLTIP_HEIGHT, DEFAULT_TOOLTIP_WIDTH } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 
 export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -42,5 +43,43 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         options: sortOptions,
       },
+    })
+    .addRadio({
+      path: 'tooltip.sizing',
+      name: 'Tooltip size',
+      category,
+      settings: {
+        options: [
+          { value: TooltipSizing.Auto, label: 'Auto' },
+          { value: TooltipSizing.Manual, label: 'Manual' },
+        ],
+      },
+      defaultValue: TooltipSizing.Auto,
+    })
+    .addSliderInput({
+      path: 'tooltip.maxTooltipWidth',
+      name: 'Max width',
+      category,
+      description: 'Maximum tooltip width',
+      defaultValue: DEFAULT_TOOLTIP_WIDTH,
+      settings: {
+        min: 0,
+        max: 1024,
+        step: 1,
+      },
+      showIf: (options) => options.tooltip.sizing === TooltipSizing.Manual,
+    })
+    .addSliderInput({
+      path: 'tooltip.maxTooltipHeight',
+      name: 'Max height',
+      category,
+      description: 'Maximum tooltip height',
+      defaultValue: DEFAULT_TOOLTIP_HEIGHT,
+      settings: {
+        min: 0,
+        max: 1024,
+        step: 1,
+      },
+      showIf: (options) => options.tooltip.sizing === TooltipSizing.Manual,
     });
 }
