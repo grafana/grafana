@@ -62,7 +62,7 @@ Dashboard insights show the following information:
 
 {{% admonition type="note" %}}
 
-If public dashboards are [enabled]({{< relref "../../setup-grafana/configure-grafana/#public_dashboards" >}}), you'll also see a **Public dashboards** tab in your analytics.
+If public dashboards are [enabled][], you'll also see a **Public dashboards** tab in your analytics.
 
 {{% /admonition %}}
 
@@ -146,4 +146,7 @@ You can click the previous links to download the respective dashboard JSON, then
 
 [Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
 [Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
+
+[enabled]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#public_dashboards"
+[enabled]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#public_dashboards"
 {{% /docs/reference %}}
