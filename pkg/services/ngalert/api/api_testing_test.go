@@ -17,6 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -146,7 +147,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
-			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}))
+			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), &featuremgmt.FeatureManager{})
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -180,7 +181,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			evalFactory := eval_mocks.NewEvaluatorFactory(evaluator)
 
-			srv := createTestingApiSrv(t, ds, ac, evalFactory)
+			srv := createTestingApiSrv(t, ds, ac, evalFactory, &featuremgmt.FeatureManager{})
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -255,7 +256,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			}
 			evaluator.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), &featuremgmt.FeatureManager{})
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
@@ -315,7 +316,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			}
 			evaluator.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.WithManager(featuremgmt.FlagAlertingQueryOptimization))
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries(queries),
@@ -341,7 +342,7 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 }
 
-func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory) *TestingApiSrv {
+func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory, featureManager *featuremgmt.FeatureManager) *TestingApiSrv {
 	if ac == nil {
 		ac = acMock.New()
 	}
@@ -352,5 +353,6 @@ func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mo
 		evaluator:       evaluator,
 		cfg:             config(t),
 		tracer:          tracing.InitializeTracerForTest(),
+		featureManager:  featureManager,
 	}
 }

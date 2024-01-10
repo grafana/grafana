@@ -173,4 +173,5 @@ export interface FeatureToggles {
   alertingPreviewUpgrade?: boolean;
   enablePluginsTracingByDefault?: boolean;
   cloudRBACRoles?: boolean;
+  alertingQueryOptimization?: boolean;
 }
