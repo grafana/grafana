@@ -6,7 +6,9 @@ on:
         required: true
         type: choice
         options:
+          - grafana-azure-monitor-datasource
           - grafana-testdata-datasource
+          - parca
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
