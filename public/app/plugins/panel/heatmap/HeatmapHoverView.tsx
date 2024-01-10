@@ -42,6 +42,7 @@ interface Props {
   panelData: PanelData;
   replaceVars: InterpolateFunction;
   scopedVars: ScopedVars[];
+  annotate?: () => void;
 }
 
 export const HeatmapHoverView = (props: Props) => {
@@ -68,6 +69,7 @@ const HeatmapHoverCell = ({
   scopedVars,
   replaceVars,
   mode,
+  annotate,
 }: Props) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -383,7 +385,7 @@ const HeatmapHoverCell = ({
         customContent={getCustomContent()}
         isPinned={isPinned}
       />
-      {isPinned && <VizTooltipFooter dataLinks={links} />}
+      {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );
 };
