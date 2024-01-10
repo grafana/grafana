@@ -39,21 +39,14 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
     }
   };
 
-  function onNameChange(event: FormEvent<HTMLInputElement>) {
-    variable.setState({ name });
-  }
+  const onNameChange = (e: React.FormEvent<HTMLInputElement>) => setName(e.currentTarget.value);
+  const onLabelChange = (e: React.FormEvent<HTMLInputElement>) => setLabel(e.currentTarget.value);
+  const onDescriptionChange = (e: React.FormEvent<HTMLTextAreaElement>) => setDescription(e.currentTarget.value);
 
-  function onLabelChange(event: FormEvent<HTMLInputElement>) {
-    variable.setState({ label });
-  }
-
-  function onDescriptionChange(event: FormEvent<HTMLTextAreaElement>) {
-    variable.setState({ description });
-  }
-
-  function onHideChange(hide: VariableHide) {
-    variable.setState({ hide });
-  }
+  const onNameBlur = () => variable.setState({ name });
+  const onLabelBlur = () => variable.setState({ label });
+  const onDescriptionBlur = () => variable.setState({ description });
+  const onHideChange = (hide: VariableHide) => variable.setState({ hide });
 
   return (
     <>
@@ -63,8 +56,8 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
         <VariableLegend>General</VariableLegend>
         <VariableTextField
           value={name}
-          onBlur={onNameChange}
-          onChange={(e: React.FormEvent<HTMLInputElement>) => setName(e.currentTarget.value)}
+          onBlur={onNameBlur}
+          onChange={onNameChange}
           name="Name"
           placeholder="Variable name"
           description="The name of the template variable. (Max. 50 characters)"
@@ -76,17 +69,17 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
           name="Label"
           description="Optional display name"
           value={label}
-          onChange={(e: React.FormEvent<HTMLInputElement>) => setLabel(e.currentTarget.value)}
+          onChange={onLabelChange}
           placeholder="Label name"
-          onBlur={onLabelChange}
+          onBlur={onLabelBlur}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
         />
         <VariableTextAreaField
           name="Description"
           value={description}
-          onChange={(e: React.FormEvent<HTMLTextAreaElement>) => setDescription(e.currentTarget.value)}
+          onChange={onDescriptionChange}
           placeholder="Descriptive text"
-          onBlur={onDescriptionChange}
+          onBlur={onDescriptionBlur}
           width={52}
         />
 
