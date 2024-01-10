@@ -115,7 +115,7 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 	// Install the API Group+version
 	err = grafanaapiserver.InstallAPIs(aggregator.GenericAPIServer, config.GenericConfig.RESTOptionsGetter, serverOptions.Builders)
 	if err != nil {
-		klog.Errorf("Error initalizing apis: %s", err)
+		klog.Errorf("Error installing apis: %s", err)
 		return err
 	}
 

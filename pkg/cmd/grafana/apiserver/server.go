@@ -12,11 +12,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 const (
@@ -59,7 +57,7 @@ func (o *APIServerOptions) LoadAPIGroupBuilders(args []string) error {
 
 	// Install schemas
 	for _, b := range o.builders {
-		if err := b.InstallSchema(grafanaapiserver.Scheme); err != nil {
+		if err := b.InstallSchema(grafanaAPIServer.Scheme); err != nil {
 			return err
 		}
 	}
@@ -135,7 +133,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		o.RecommendedOptions.CoreAPI = nil
 	}
 
-	serverConfig := genericapiserver.NewRecommendedConfig(grafanaapiserver.Codecs)
+	serverConfig := genericapiserver.NewRecommendedConfig(grafanaAPIServer.Codecs)
 
 	if o.RecommendedOptions.CoreAPI == nil {
 		if err := o.ModifiedApplyTo(serverConfig); err != nil {
