@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -248,6 +249,44 @@ func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[st
 	}
 
 	return result, nil
+}
+
+func (s *SSOSettingsService) Run(ctx context.Context) error {
+	ticker := time.NewTicker(1 * time.Minute)
+
+	// start a background process for reloading the SSO settings for all providers at a fixed interval
+	// it is useful for high availability setups running multiple Grafana instances
+	for {
+		select {
+		case <-ticker.C:
+			s.doReload(ctx)
+
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
+func (s *SSOSettingsService) doReload(ctx context.Context) {
+	s.log.Debug("reloading SSO Settings for all providers")
+
+	settingsList, err := s.List(ctx)
+	if err != nil {
+		s.log.Error("failed to fetch SSO Settings for all providers", "err", err)
+		return
+	}
+
+	for provider, connector := range s.reloadables {
+		settings := getSettingsByProvider(provider, settingsList)
+
+		if len(settings) > 0 {
+			err = connector.Reload(ctx, *settings[0])
+			if err != nil {
+				s.log.Error("failed to reload SSO Settings", "provider", provider, "err", err)
+				continue
+			}
+		}
+	}
 }
 
 func isSecret(fieldName string) bool {
