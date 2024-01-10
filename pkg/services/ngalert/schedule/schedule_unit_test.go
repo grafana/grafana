@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -66,15 +67,19 @@ func TestProcessTicks(t *testing.T) {
 		Host:   "localhost",
 	}
 
+	cacheServ := &datasources.FakeCacheService{}
+	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &pluginstore.FakePluginStore{})
+
 	schedCfg := SchedulerCfg{
-		BaseInterval: cfg.BaseInterval,
-		C:            mockedClock,
-		AppURL:       appUrl,
-		RuleStore:    ruleStore,
-		Metrics:      testMetrics.GetSchedulerMetrics(),
-		AlertSender:  notifier,
-		Tracer:       testTracer,
-		Log:          log.New("ngalert.scheduler"),
+		BaseInterval:     cfg.BaseInterval,
+		C:                mockedClock,
+		AppURL:           appUrl,
+		EvaluatorFactory: evaluator,
+		RuleStore:        ruleStore,
+		Metrics:          testMetrics.GetSchedulerMetrics(),
+		AlertSender:      notifier,
+		Tracer:           testTracer,
+		Log:              log.New("ngalert.scheduler"),
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 testMetrics.GetStateMetrics(),
