@@ -246,11 +246,11 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
 
   addResultsToCache = () => {
     this.props.addResultsToCache(this.props.exploreId);
-  }
+  };
 
   clearCache = () => {
     this.props.clearCache(this.props.exploreId);
-  }
+  };
 
   render() {
     const {
