@@ -5,7 +5,7 @@ import {
   SceneComponentProps,
   SceneObjectBase,
   SceneVariable,
-  AdHocFiltersVariable,
+  SceneVariableState,
   SceneVariables,
   sceneGraph,
   AdHocFilterSet,
@@ -20,9 +20,10 @@ import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
-import { EditableVariableType, getVariableScene } from './variables/utils';
+import { EditableVariableType, getVariableScene, isEditableVariableType } from './variables/utils';
 export interface VariablesEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
+  originalVariableState?: SceneVariableState;
 }
 
 export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> implements DashboardEditView {
@@ -45,6 +46,32 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   private getVariableIndex = (identifier: string) => {
     const variables = this.getVariables();
     return variables.findIndex((variable) => variable.state.name === identifier);
+  };
+
+  private replaceEditVariable = (newVariable: SceneVariable | AdHocFilterSet) => {
+    // Find the index of the variable to be deleted
+    const variableIndex = this.state.editIndex ?? -1;
+    const { variables } = this.getVariableSet().state;
+    const variable = variables[variableIndex];
+
+    if (!variable) {
+      // Handle the case where the variable is not found
+      console.error('Variable not found');
+      return;
+    }
+
+    if (newVariable instanceof AdHocFilterSet) {
+      // TODO: Update controls in adding this fiter set to the dashboard
+    } else {
+      const updatedVariables = [
+        ...variables.slice(0, variableIndex),
+        newVariable,
+        ...variables.slice(variableIndex + 1),
+      ];
+
+      // Update the state or the variables array
+      this.getVariableSet().setState({ variables: updatedVariables });
+    }
   };
 
   public onDelete = (identifier: string) => {
@@ -126,7 +153,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       console.error('Variable not found');
       return;
     }
-    this.setState({ editIndex: variableIndex });
+    this.setState({ editIndex: variableIndex, originalVariableState: { ...this.getVariables()[variableIndex].state } });
   };
 
   public onTypeChange = (type: EditableVariableType) => {
@@ -143,22 +170,34 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
     const { name, label } = variable.state;
     const newVariable = getVariableScene(type, { name, label });
-    if (newVariable instanceof AdHocFilterSet) {
-      // TODO: Update controls in adding this fiter set to the dashboard
-    } else {
-      const updatedVariables = [
-        ...variables.slice(0, variableIndex),
-        newVariable,
-        ...variables.slice(variableIndex + 1),
-      ];
-
-      // Update the state or the variables array
-      this.getVariableSet().setState({ variables: updatedVariables });
-    }
+    this.replaceEditVariable(newVariable);
   };
 
   public onGoBack = () => {
     this.setState({ editIndex: undefined });
+  };
+
+  public onDiscardChanges: () => void = () => {
+    const variables = this.getVariableSet().state.variables;
+    const { editIndex, originalVariableState } = this.state;
+    if (editIndex === undefined || !originalVariableState) {
+      return;
+    }
+    const variable = variables[editIndex];
+    if (!variable) {
+      return;
+    }
+    if (isEditableVariableType(originalVariableState.type)) {
+      const newVariable = getVariableScene(originalVariableState.type, originalVariableState);
+      if (newVariable instanceof AdHocFilterSet) {
+        // TODO: Update controls in adding this fiter set to the dashboard
+      } else {
+        const updatedVariables = [...variables.slice(0, editIndex), newVariable, ...variables.slice(editIndex + 1)];
+        this.getVariableSet().setState({ variables: updatedVariables });
+      }
+    }
+
+    this.setState({ editIndex: undefined, originalVariableState: undefined });
   };
 }
 
@@ -166,7 +205,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const dashboard = model.getDashboard();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   // get variables from dashboard state
-  const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack } = model;
+  const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onDiscardChanges } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
 
@@ -178,6 +217,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
           variable={variable}
           onTypeChange={onTypeChange}
           onGoBack={onGoBack}
+          onDiscardChanges={onDiscardChanges}
           pageNav={pageNav}
           navModel={navModel}
           dashboard={dashboard}
@@ -208,6 +248,7 @@ interface VariableEditorSettingsEditViewProps {
   dashboard: DashboardScene;
   onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
+  onDiscardChanges: () => void;
 }
 
 function VariableEditorSettingsView({
@@ -217,6 +258,7 @@ function VariableEditorSettingsView({
   dashboard,
   onTypeChange,
   onGoBack,
+  onDiscardChanges,
 }: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
@@ -229,7 +271,12 @@ function VariableEditorSettingsView({
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} />
+      <VariableEditorForm
+        variable={variable}
+        onTypeChange={onTypeChange}
+        onGoBack={onGoBack}
+        onDiscardChanges={onDiscardChanges}
+      />
     </Page>
   );
 }

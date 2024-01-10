@@ -138,6 +138,14 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
     locationService.partial({ editIndex: null });
   };
 
+  getVariableOptions = () => {
+    const { variable } = this.props;
+    if (!hasOptions(variable)) {
+      return [];
+    }
+    return variable.options.map((option) => ({ label: String(option.text), value: String(option.value) }));
+  };
+
   render() {
     const { variable } = this.props;
     const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
@@ -188,7 +196,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
 
           {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
 
-          {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
+          {hasOptions(this.props.variable) ? <VariableValuesPreview options={this.getVariableOptions()} /> : null}
 
           <div style={{ marginTop: '16px' }}>
             <HorizontalGroup spacing="md" height="inherit">

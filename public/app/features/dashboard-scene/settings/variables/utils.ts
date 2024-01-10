@@ -1,6 +1,5 @@
 import { SelectableValue } from '@grafana/data';
 import {
-  AdHocFiltersVariable,
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
@@ -8,6 +7,8 @@ import {
   TextBoxVariable,
   QueryVariable,
   AdHocFilterSet,
+  SceneVariable,
+  VariableValueOption,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
 
@@ -113,4 +114,10 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'textbox':
       return new TextBoxVariable({});
   }
+}
+
+export function hasVariableOptions(
+  variable: SceneVariable
+): variable is SceneVariable & { options: VariableValueOption[] } {
+  return 'options' in variable;
 }

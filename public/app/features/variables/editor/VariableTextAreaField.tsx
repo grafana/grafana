@@ -9,7 +9,7 @@ interface VariableTextAreaFieldProps {
   name: string;
   value: string;
   placeholder: string;
-  onChange: (event: FormEvent<HTMLTextAreaElement>) => void;
+  onChange?: (event: FormEvent<HTMLTextAreaElement>) => void;
   width: number;
   ariaLabel?: string;
   required?: boolean;
