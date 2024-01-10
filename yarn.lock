@@ -6022,7 +6022,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:6.4.2, @react-awesome-query-builder/core@npm:^6.4.1":
+"@react-awesome-query-builder/core@npm:6.4.2, @react-awesome-query-builder/core@npm:^6.4.2":
   version: 6.4.2
   resolution: "@react-awesome-query-builder/core@npm:6.4.2"
   dependencies:
@@ -6037,11 +6037,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:6.4.1":
-  version: 6.4.1
-  resolution: "@react-awesome-query-builder/ui@npm:6.4.1"
+"@react-awesome-query-builder/ui@npm:6.4.2":
+  version: 6.4.2
+  resolution: "@react-awesome-query-builder/ui@npm:6.4.2"
   dependencies:
-    "@react-awesome-query-builder/core": "npm:^6.4.1"
+    "@react-awesome-query-builder/core": "npm:^6.4.2"
     classnames: "npm:^2.3.1"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.7.2"
@@ -6050,7 +6050,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.4 || ^17.0.1 || ^18.0.0
     react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
-  checksum: 811fa6b86a3d7ad2babe67bbed308cd4ff62266a4fdc56fb60ff408436add5704a3db406633f143a378d74cb9e636fb25cd13318748512f393b0f86dcba6abcf
+  checksum: 36dfc21caeb3d6db4c044fdb8913d8c5ff38738baa0d81f9123048d7ddcc9f6e5e130d1550257faf0373a118e8deb0dfb2f5b17e46da6f3a28483454b19890f0
   languageName: node
   linkType: hard
 
@@ -17079,7 +17079,7 @@ __metadata:
     "@react-aria/overlays": "npm:3.15.0"
     "@react-aria/utils": "npm:3.18.0"
     "@react-awesome-query-builder/core": "npm:6.4.2"
-    "@react-awesome-query-builder/ui": "npm:6.4.1"
+    "@react-awesome-query-builder/ui": "npm:6.4.2"
     "@react-stately/collections": "npm:3.9.0"
     "@react-stately/menu": "npm:3.5.3"
     "@react-stately/tree": "npm:3.7.0"
