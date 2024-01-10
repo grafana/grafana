@@ -122,7 +122,7 @@ export function Drawer({
                   variant="secondary"
                   onClick={onClose}
                   data-testid={selectors.components.Drawer.General.close}
-                  tooltip={t(`drawer.close`, 'Close Drawer')}
+                  tooltip={t(`grafana-ui.drawer.close`, 'Close')}
                 />
               </div>
               <div className={styles.titleWrapper}>

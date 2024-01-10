@@ -418,9 +418,6 @@
       "label": "Añadir nueva fuente de datos"
     }
   },
-  "drawer": {
-    "close": ""
-  },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
     "rich-history": {
@@ -560,6 +557,9 @@
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Cerrar"
     },

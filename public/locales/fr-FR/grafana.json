@@ -418,9 +418,6 @@
       "label": "Ajouter une nouvelle source de données"
     }
   },
-  "drawer": {
-    "close": ""
-  },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
     "rich-history": {
@@ -560,6 +557,9 @@
     "loading": "Chargement des dossiers..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Fermer"
     },

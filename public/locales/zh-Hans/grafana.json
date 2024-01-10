@@ -408,9 +408,6 @@
       "label": "添加新数据源"
     }
   },
-  "drawer": {
-    "close": ""
-  },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
     "rich-history": {
@@ -550,6 +547,9 @@
     "loading": "正在加载文件夹..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "关闭"
     },
