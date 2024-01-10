@@ -40,6 +40,16 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.panels[0].targets).toHaveLength(1);
     expect(wrapper.panels[0].targets[0]).toEqual({ refId: 'A' });
     expect(wrapper.panels[1].targets).toHaveLength(0);
+    expect(wrapper.panels[2].targets).toHaveLength(1);
+    expect(wrapper.panels[2].targets).toEqual([
+      { datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' }, refId: 'A', panelId: 1 },
+    ]);
+    expect(wrapper.panels[3].targets).toHaveLength(1);
+    expect(wrapper.panels[3].targets[0]).toEqual({ refId: 'A' });
+    expect(wrapper.panels[4].targets).toHaveLength(1);
+    expect(wrapper.panels[4].targets).toEqual([
+      { datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' }, refId: 'A', panelId: 1 },
+    ]);
 
     expect(wrapper.panels[0].datasource).toEqual({ uid: 'gdev-testdata', type: 'grafana-testdata-datasource' });
     expect(wrapper.panels[1].datasource).toEqual(null);
