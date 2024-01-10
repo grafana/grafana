@@ -10,9 +10,11 @@ import { logInfo, LogMessages } from './Analytics';
 import { GrafanaRulesExporter } from './components/export/GrafanaRulesExporter';
 import { AlertingAction, useAlertingAbility } from './hooks/useAbilities';
 
-interface Props {}
+interface Props {
+  enableExport?: boolean;
+}
 
-export function MoreActionsRuleButtons({}: Props) {
+export function MoreActionsRuleButtons({ enableExport }: Props) {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
@@ -40,7 +42,13 @@ export function MoreActionsRuleButtons({}: Props) {
 
   if (canExportRules) {
     menuItems.push(
-      <MenuItem label="Export all Grafana-managed rules" key="export-all-rules" onClick={toggleShowExportDrawer} />
+      <MenuItem
+        label="Export all Grafana-managed rules"
+        key="export-all-rules"
+        onClick={toggleShowExportDrawer}
+        disabled={!enableExport}
+        description={enableExport ? '' : 'No Grafana-managed rules found'}
+      />
     );
   }
 
