@@ -87,7 +87,7 @@
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/tsconfig": "^1.3.0-rc1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.11",
-    "@react-types/button": "3.9.0",
+    "@react-types/button": "3.9.1",
     "@react-types/menu": "3.9.2",
     "@react-types/overlays": "3.8.0",
     "@react-types/shared": "3.21.0",
