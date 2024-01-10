@@ -8,24 +8,18 @@ import { Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
-import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  GrafanaTheme2,
-  EventBus,
-} from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { polyStyle } from '../../style/markers';
-import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
+import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleConfigValues } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getPublicGeoJSONFiles } from '../../utils/utils';
-
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
@@ -131,11 +125,23 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             return polyStyle(values);
           }
 
+          // Support styling polygons from Feature properties
+          const featureProps = feature.getProperties();
+          if (featureProps.fill || featureProps['fill-opacity'] || featureProps['stroke-width']) {
+            const values: StyleConfigValues = {
+              color: featureProps.fill,
+              opacity: featureProps['fill-opacity'],
+              lineWidth: featureProps['stroke-width'],
+            };
+            return polyStyle(values);
+          }
+
           // Lazy create the style object
           if (isPoint) {
             if (!check.point) {
               check.point = check.state.maker(check.state.base);
             }
+            // TODO support styling points from Feature properties
             return check.point;
           }
 
@@ -196,4 +202,3 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   },
   defaultOptions,
 };
-
