@@ -145,7 +145,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0.5, 1),
       fontWeight: theme.typography.fontWeightBold,
-      fontSize: theme.typography.fontSize.md,
+      fontSize: theme.typography.fontSize,
       color: theme.colors.text.primary,
     }),
     footer: css({
@@ -154,7 +154,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     textarea: css({
       color: theme.colors.text.secondary,
-      fontSize: theme.typography.fontSize.sm,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 };
