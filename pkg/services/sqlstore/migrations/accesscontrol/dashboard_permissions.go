@@ -661,10 +661,10 @@ func (m *managedFolderLibraryPanelActionsMigrator) Exec(sess *xorm.Session, mg *
 	return nil
 }
 
-const managedDashboardAnnotationActionsMigratorID = "managed dashboard permissions annotation actions migration"
+const ManagedDashboardAnnotationActionsMigratorID = "managed dashboard permissions annotation actions migration"
 
 func AddManagedDashboardAnnotationActionsMigration(mg *migrator.Migrator) {
-	mg.AddMigration(managedDashboardAnnotationActionsMigratorID, &managedDashboardAnnotationActionsMigrator{})
+	mg.AddMigration(ManagedDashboardAnnotationActionsMigratorID, &managedDashboardAnnotationActionsMigrator{})
 }
 
 type managedDashboardAnnotationActionsMigrator struct {
