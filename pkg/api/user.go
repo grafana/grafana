@@ -484,9 +484,9 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authModule := authInfo.AuthModule
-		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
-			return response.Error(http.StatusBadRequest, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
+		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
+		if login.IsProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
+			return response.Error(http.StatusBadRequest, "Cannot update external user password", err)
 		}
 	}
 

@@ -11,10 +11,10 @@
     "directory": "packages/grafana-eslint-rules"
   },
   "dependencies": {
-    "@typescript-eslint/utils": "^5.46.1"
+    "@typescript-eslint/utils": "^6.0.0"
   },
   "devDependencies": {
-    "@typescript-eslint/types": "^5.46.1",
+    "@typescript-eslint/types": "^6.0.0",
     "eslint": "8.52.0",
     "tslib": "2.6.0"
   },

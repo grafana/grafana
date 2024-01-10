@@ -92,16 +92,15 @@ func (om *OrgMigration) addNoDataSilence(rule *models.AlertRule) error {
 	return nil
 }
 
-func (om *OrgMigration) writeSilencesFile() error {
+func writeSilencesFile(dataPath string, orgID int64, silences []*pb.MeshSilence) error {
 	var buf bytes.Buffer
-	om.log.Debug("Writing silences file", "silences", len(om.silences))
-	for _, e := range om.silences {
+	for _, e := range silences {
 		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
 			return err
 		}
 	}
 
-	f, err := openReplace(silencesFileNameForOrg(om.cfg.DataPath, om.orgID))
+	f, err := openReplace(silencesFileNameForOrg(dataPath, orgID))
 	if err != nil {
 		return err
 	}

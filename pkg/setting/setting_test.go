@@ -75,6 +75,19 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
 	})
 
+	t.Run("Should be able to expand parameter from environment variables", func(t *testing.T) {
+		t.Setenv("DEFAULT_IDP_URL", "grafana.com")
+		t.Setenv("GF_AUTH_GENERIC_OAUTH_AUTH_URL", "${DEFAULT_IDP_URL}/auth")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		genericOAuthSection, err := cfg.Raw.GetSection("auth.generic_oauth")
+		require.NoError(t, err)
+		require.Equal(t, "grafana.com/auth", genericOAuthSection.Key("auth_url").Value())
+	})
+
 	t.Run("Should replace password when defined in environment", func(t *testing.T) {
 		t.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
 
