@@ -522,43 +522,37 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 		// Single-statement approaches, specifically ones using batched sub-queries, seem to deadlock with concurrent inserts on MySQL.
 		// We have a bounded batch size, so work around this by first loading the IDs into memory and allowing any locks to flush inside each batch.
 		// This may under-delete when concurrent inserts happen, but any such annotations will simply be cleaned on the next cycle.
-		for {
+		//
+		// We execute the following batched operation repeatedly until either we run out of objects, the context is cancelled, or there is an error.
+		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
 			cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
 			ids, err := r.fetchIDs(ctx, "annotation", cond)
 			if err != nil {
-				return totalAffected, err
+				return 0, err
 			}
 
-			if len(ids) == 0 {
-				break
-			}
-
-			affected, err := r.deleteByIDs(ctx, "annotation", ids)
-			totalAffected += affected
-			if err != nil {
-				return totalAffected, err
-			}
+			return r.deleteByIDs(ctx, "annotation", ids)
+		})
+		totalAffected += affected
+		if err != nil {
+			return totalAffected, err
 		}
 	}
 
 	if cfg.MaxCount > 0 {
 		// Similar strategy as the above cleanup process, to avoid deadlocks.
-		for {
+		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
 			cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
 			ids, err := r.fetchIDs(ctx, "annotation", cond)
 			if err != nil {
 				return totalAffected, err
 			}
 
-			if len(ids) == 0 {
-				break
-			}
-
-			affected, err := r.deleteByIDs(ctx, "annotation", ids)
-			totalAffected += affected
-			if err != nil {
-				return totalAffected, err
-			}
+			return r.deleteByIDs(ctx, "annotation", ids)
+		})
+		totalAffected += affected
+		if err != nil {
+			return totalAffected, err
 		}
 	}
 
@@ -613,6 +607,8 @@ func commaSeparated(vs []int64) string {
 	return res
 }
 
+// executeSQLUntilDoneOrCancelled repeatedly executes a SQL statement until it affects no rows, produces an error, or the context is cancelled.
+// It operates in a similar way to untilDoneOrCancelled.
 func (r *xormRepositoryImpl) executeSQLUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
 	return untilDoneOrCancelled(ctx, func() (int64, error) {
 		var affected int64
@@ -629,6 +625,9 @@ func (r *xormRepositoryImpl) executeSQLUntilDoneOrCancelled(ctx context.Context,
 	})
 }
 
+// untilDoneOrCancelled repeatedly executes batched work until that work is either done (i.e., returns zero affected objects),
+// a batch produces an error, or the provided context is cancelled.
+// The work to be done is given as a callback that returns the number of affected objects for each batch, plus that batch's errors.
 func untilDoneOrCancelled(ctx context.Context, batchWork func() (int64, error)) (int64, error) {
 	var totalAffected int64
 	for {
