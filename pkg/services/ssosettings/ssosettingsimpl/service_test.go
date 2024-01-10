@@ -638,20 +638,37 @@ func TestSSOSettingsService_DoReload(t *testing.T) {
 	t.Run("successfully reload settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		provider := "github"
-
-		settings := &models.SSOSettings{
-			Provider: provider,
-			Settings: map[string]any{
-				"enabled":   true,
-				"client_id": "github_client_id",
+		settingsList := []*models.SSOSettings{
+			{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":   true,
+					"client_id": "github_client_id",
+				},
+			},
+			{
+				Provider: "google",
+				Settings: map[string]any{
+					"enabled":   true,
+					"client_id": "google_client_id",
+				},
+			},
+			{
+				Provider: "azuread",
+				Settings: map[string]any{
+					"enabled":   true,
+					"client_id": "azuread_client_id",
+				},
 			},
 		}
-		env.store.ExpectedSSOSetting = settings
+		env.store.ExpectedSSOSettings = settingsList
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Reload", mock.Anything, *settings).Return(nil).Once()
-		env.reloadables[provider] = reloadable
+
+		for _, settings := range settingsList {
+			reloadable.On("Reload", mock.Anything, *settings).Return(nil).Once()
+			env.reloadables[settings.Provider] = reloadable
+		}
 
 		env.service.doReload()
 	})

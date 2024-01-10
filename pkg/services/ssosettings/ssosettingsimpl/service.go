@@ -267,21 +267,25 @@ func (s *SSOSettingsService) initReload() {
 }
 
 func (s *SSOSettingsService) doReload() {
+	s.log.Debug("reloading SSO Settings for all providers")
+
+	ctx := context.Background()
+
+	settingsList, err := s.List(ctx)
+	if err != nil {
+		s.log.Error("failed to fetch SSO Settings for all providers", "err", err)
+		return
+	}
+
 	for provider, connector := range s.reloadables {
-		s.log.Debug("reloading SSO Settings", "provider", provider)
+		settings := getSettingsByProvider(provider, settingsList)
 
-		ctx := context.Background()
-
-		settings, err := s.GetForProvider(ctx, provider)
-		if err != nil {
-			s.log.Error("failed to fetch SSO Settings", "provider", provider, "err", err)
-			continue
-		}
-
-		err = connector.Reload(ctx, *settings)
-		if err != nil {
-			s.log.Error("failed to reload SSO Settings", "provider", provider, "err", err)
-			continue
+		if len(settings) > 0 {
+			err = connector.Reload(ctx, *settings[0])
+			if err != nil {
+				s.log.Error("failed to reload SSO Settings", "provider", provider, "err", err)
+				continue
+			}
 		}
 	}
 }
