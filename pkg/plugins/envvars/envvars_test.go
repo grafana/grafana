@@ -355,7 +355,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			exp:    expDefaultOtlp,
 		},
 		{
-			name: "enabled on plugin with no plugin setting but with enablePluginsTracingByDefault feature flag",
+			name: `enabled on plugin with no "tracing" plugin setting but with enablePluginsTracingByDefault feature flag`,
 			cfg: &config.Cfg{
 				Tracing: config.Tracing{
 					OpenTelemetry: defaultOTelCfg,
@@ -367,7 +367,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			exp:    expDefaultOtlp,
 		},
 		{
-			name: "enabled on plugin with wrong plugin setting but with enablePluginsTracingByDefault feature flag",
+			name: `enabled on plugin with plugin setting "tracing=false" but with enablePluginsTracingByDefault feature flag`,
 			cfg: &config.Cfg{
 				Tracing: config.Tracing{
 					OpenTelemetry: defaultOTelCfg,
