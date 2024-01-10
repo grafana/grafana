@@ -369,7 +369,7 @@ def rgm_promotion_pipeline():
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-    publish_step = rgm_copy("dist", "${{DESTINATION}}")
+    publish_step = rgm_copy("dist", "$${DESTINATION}")
 
     steps = [
         build_step,
