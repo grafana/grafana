@@ -520,7 +520,7 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 	if cfg.MaxAge > 0 {
 		cutoffDate := timeNow().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
 		// Single-statement approaches, specifically ones using batched sub-queries, seem to deadlock with concurrent inserts on MySQL.
-		// We have a bounded batch size, so work around this by first loading the IDs into memory and allowing any locks to flush.
+		// We have a bounded batch size, so work around this by first loading the IDs into memory and allowing any locks to flush inside each batch.
 		// This may under-delete when concurrent inserts happen, but any such annotations will simply be cleaned on the next cycle.
 		for {
 			cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
@@ -568,7 +568,7 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
 	deleteQuery := `DELETE FROM annotation_tag WHERE id IN ( SELECT id FROM (SELECT id FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s) a)`
 	sql := fmt.Sprintf(deleteQuery, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
-	return r.executeUntilDoneOrCancelled(ctx, sql)
+	return r.executeSQLUntilDoneOrCancelled(ctx, sql)
 }
 
 func (r *xormRepositoryImpl) fetchIDs(ctx context.Context, table, condition string) ([]int64, error) {
@@ -590,7 +590,16 @@ func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids 
 
 	deleteQuery := `DELETE FROM annotation WHERE id IN (%s)`
 	sql := fmt.Sprintf(deleteQuery, commaSeparated(ids))
-	return r.executeUntilDoneOrCancelled(ctx, sql)
+	var affected int64
+	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+		res, err := session.Exec(sql)
+		if err != nil {
+			return err
+		}
+		affected, err = res.RowsAffected()
+		return err
+	})
+	return affected, err
 }
 
 func commaSeparated(vs []int64) string {
@@ -604,25 +613,31 @@ func commaSeparated(vs []int64) string {
 	return res
 }
 
-func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
+func (r *xormRepositoryImpl) executeSQLUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
+	return untilDoneOrCancelled(ctx, func() (int64, error) {
+		var affected int64
+		err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+			res, err := session.Exec(sql)
+			if err != nil {
+				return err
+			}
+
+			affected, err = res.RowsAffected()
+			return err
+		})
+		return affected, err
+	})
+}
+
+func untilDoneOrCancelled(ctx context.Context, batchWork func() (int64, error)) (int64, error) {
 	var totalAffected int64
 	for {
 		select {
 		case <-ctx.Done():
 			return totalAffected, ctx.Err()
 		default:
-			var affected int64
-			err := r.db.WithDbSession(ctx, func(session *db.Session) error {
-				res, err := session.Exec(sql)
-				if err != nil {
-					return err
-				}
-
-				affected, err = res.RowsAffected()
-				totalAffected += affected
-
-				return err
-			})
+			affected, err := batchWork()
+			totalAffected += affected
 			if err != nil {
 				return totalAffected, err
 			}
