@@ -189,18 +189,16 @@ func getRule(ctx context.Context, sql db.DB, orgID int64, ruleID int64) (*ngmode
 }
 
 func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
-	if resources.CanAccessOrgAnnotations && entry.DashboardUID != "" {
-		return false
-	}
-
-	if resources.CanAccessDashAnnotations {
-		_, canAccess := resources.Dashboards[entry.DashboardUID]
-		if !canAccess {
+	orgFilter := resources.CanAccessOrgAnnotations && entry.DashboardUID == ""
+	dashFilter := func() bool {
+		if !resources.CanAccessDashAnnotations {
 			return false
 		}
+		_, canAccess := resources.Dashboards[entry.DashboardUID]
+		return canAccess
 	}
 
-	return true
+	return orgFilter || dashFilter()
 }
 
 type number interface {

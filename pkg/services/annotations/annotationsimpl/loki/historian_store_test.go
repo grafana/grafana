@@ -319,6 +319,12 @@ func TestHasAccess(t *testing.T) {
 		}))
 	})
 
+	t.Run("should return true when scope is organization and entry has no dashboard UID", func(t *testing.T) {
+		require.True(t, hasAccess(historian.LokiEntry{}, annotation_ac.AccessResources{
+			CanAccessOrgAnnotations: true,
+		}))
+	})
+
 	t.Run("should return true when scope is dashboard and dashboard UID is in resources", func(t *testing.T) {
 		require.True(t, hasAccess(entry, annotation_ac.AccessResources{
 			CanAccessDashAnnotations: true,
