@@ -729,3 +729,75 @@ func TestTimeRangeYAML(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, yamlRaw, string(serialized))
 }
+
+func TestGetNamespaceTitleFromKey(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"just title", "title with space", "title with space"},
+		{"title and uid", "uid/title with space", "title with space"},
+		{"title with / and uid", "uid/title\\/with\\/slashes", "title/with/slashes"},
+		{"just title with /", "title\\/with\\/slashes", "title/with/slashes"},
+		{"when uid is empty", "/part1", "part1"},
+		{"when title is empty", "part1/", ""},
+		{"when empty string", "", ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := GetNamespaceTitleFromKey(tc.input)
+			if got != tc.expected {
+				t.Errorf("got %s; expected %s", got, tc.expected)
+			}
+		})
+	}
+}
+
+func TestGetNamespaceKey(t *testing.T) {
+	cases := []struct {
+		name      string
+		parentUID string
+		title     string
+		expected  string
+	}{
+		{
+			name:      "NoSlashes",
+			parentUID: "parentUID",
+			title:     "Title",
+			expected:  "parentUID/Title",
+		},
+		{
+			name:      "WithSlashes",
+			parentUID: "parentUID",
+			title:     "Title/Title",
+			expected:  "parentUID/Title\\/Title",
+		},
+		{
+			name:      "EmptyTitle",
+			parentUID: "parentUID",
+			title:     "",
+			expected:  "parentUID",
+		},
+		{
+			name:      "EmptyParentUID",
+			parentUID: "",
+			title:     "Title",
+			expected:  "Title",
+		},
+		{
+			name:      "BothEmpty",
+			parentUID: "",
+			title:     "",
+			expected:  "",
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := GetNamespaceKey(tt.parentUID, tt.title)
+			require.Equal(t, actual, tt.expected)
+		})
+	}
+}

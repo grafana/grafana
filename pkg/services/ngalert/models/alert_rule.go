@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -671,4 +673,29 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+// GetNamespaceKey concatenates two strings with / as separator. If the latter string contains '/' it gets escaped with \/
+func GetNamespaceKey(parentUID, title string) string {
+	return path.Join(parentUID, strings.ReplaceAll(title, "/", "\\/"))
+}
+
+// GetNamespaceTitleFromKey extracts the latter part from the string produced by GetNamespaceKey
+func GetNamespaceTitleFromKey(ns string) string {
+	// the expected format of the string is (<UID>/)?Title with slashes escaped
+	// look for the first unescaped slash and return remaining part. If
+	resultUnescaped := ns
+	for i := 0; i < len(ns); i++ {
+		if ns[i] == '/' && (i == 0 || ns[i-1] != '\\') {
+			// got the first unescaped forward slash
+			resultUnescaped = ns[i+1:]
+			break
+		}
+		if ns[i] == '\\' && len(ns) < i+1 && ns[i+1] == '/' {
+			// if we got escaped slash then this is just a title
+			break
+		}
+	}
+	// Return the part after the last unescaped '/'
+	return strings.ReplaceAll(resultUnescaped, "\\/", "/")
 }
