@@ -35,10 +35,10 @@ const (
 )
 
 var (
-	ErrLokiStoreInternal     = errutil.NewBase(errutil.StatusInternal, "annotations.loki.internal")
-	ErrLokiStoreInvalidQuery = errutil.NewBase(errutil.StatusBadRequest, "annotations.loki.query")
+	ErrLokiStoreInternal = errutil.Internal("annotations.loki.internal")
+	ErrLokiStoreNotFound = errutil.NotFound("annotations.loki.notFound")
 
-	ErrMissingRule = errors.New("rule not found")
+	errMissingRule = errors.New("rule not found")
 )
 
 type lokiQueryClient interface {
@@ -75,8 +75,8 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		var err error
 		rule, err = getRule(ctx, r.db, query.OrgID, query.AlertID)
 		if err != nil {
-			if errors.Is(err, ErrMissingRule) {
-				return make([]*annotations.ItemDTO, 0), ErrLokiStoreInvalidQuery.Errorf("rule with ID %d does not exist", query.AlertID)
+			if errors.Is(err, errMissingRule) {
+				return make([]*annotations.ItemDTO, 0), ErrLokiStoreNotFound.Errorf("rule with ID %d does not exist", query.AlertID)
 			}
 			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query rule: %w", err)
 		}
@@ -108,11 +108,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	for _, stream := range res.Data.Result {
 		items = append(items, r.annotationsFromStream(stream, *accessResources)...)
 	}
-
-	// order by time desc
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].Time > items[j].Time
-	})
+	sort.Sort(annotations.SortedItems(items))
 
 	return items, err
 }
@@ -180,7 +176,7 @@ func getRule(ctx context.Context, sql db.DB, orgID int64, ruleID int64) (*ngmode
 			return err
 		}
 		if !exists {
-			return ErrMissingRule
+			return errMissingRule
 		}
 		return nil
 	})
