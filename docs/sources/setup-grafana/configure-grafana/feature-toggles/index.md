@@ -169,6 +169,7 @@ Experimental features might be changed or removed without prior notice.
 | `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `tableSharedCrosshair`                      | Enables shared crosshair in table panel                                                                                                                                                                                                                                           |
+| `enablePluginsTracingByDefault`             | Enable plugin tracing for all external plugins                                                                                                                                                                                                                                    |
 
 ## Development feature toggles
 

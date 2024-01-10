@@ -52,10 +52,10 @@ type userData struct {
 	IsGrafanaAdmin *bool             `json:"-"`
 }
 
-func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGitlab {
+func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
 	config := createOAuthConfig(info, cfg, social.GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase: newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, *features),
+		SocialBase: newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, features),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {

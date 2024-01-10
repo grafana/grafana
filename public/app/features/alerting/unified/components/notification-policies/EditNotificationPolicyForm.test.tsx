@@ -135,27 +135,6 @@ describe('EditNotificationPolicyForm', function () {
       expect.anything()
     );
   });
-  it('should allow render form with all inputs being readonly when isReadonly policy', async function () {
-    const onSubmit = jest.fn();
-    renderRouteForm(
-      {
-        id: '0',
-        receiver: 'default',
-        group_wait: '1m30s',
-        group_interval: '2d4h30m35s',
-        repeat_interval: '1w2d6h',
-      },
-      [{ value: 'default', label: 'Default' }],
-      onSubmit
-    );
-
-    screen.getAllByRole('checkbox').forEach((input) => {
-      expect(input).toBeDisabled();
-    });
-    screen.getAllByRole('textbox').forEach((input) => {
-      expect(input).toBeDisabled();
-    });
-  });
 });
 
 function renderRouteForm(

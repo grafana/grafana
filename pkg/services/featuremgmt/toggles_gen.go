@@ -618,4 +618,12 @@ const (
 	// FlagAlertingPreviewUpgrade
 	// Show Unified Alerting preview and upgrade page in legacy alerting
 	FlagAlertingPreviewUpgrade = "alertingPreviewUpgrade"
+
+	// FlagEnablePluginsTracingByDefault
+	// Enable plugin tracing for all external plugins
+	FlagEnablePluginsTracingByDefault = "enablePluginsTracingByDefault"
+
+	// FlagCloudRBACRoles
+	// Enabled grafana cloud specific RBAC roles
+	FlagCloudRBACRoles = "cloudRBACRoles"
 )
