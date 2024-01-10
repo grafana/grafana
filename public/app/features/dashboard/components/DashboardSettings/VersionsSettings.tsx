@@ -22,7 +22,7 @@ type State = {
   isAppending: boolean;
   versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
-  diffData: { lhs: unknown; rhs: unknown };
+  diffData: { lhs: { data?: string }; rhs: { data?: string } };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;

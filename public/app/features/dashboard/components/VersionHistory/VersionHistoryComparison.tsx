@@ -15,7 +15,7 @@ type DiffViewProps = {
   isNewLatest: boolean;
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
-  diffData: { lhs: unknown; rhs: unknown };
+  diffData: { lhs: { data?: string }; rhs: { data?: string } };
 };
 
 export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest }: DiffViewProps) => {
