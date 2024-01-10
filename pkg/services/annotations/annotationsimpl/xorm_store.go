@@ -519,34 +519,46 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 	var totalAffected int64
 	if cfg.MaxAge > 0 {
 		cutoffDate := timeNow().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
-		// Single-statement approaches, specifically ones using sub-queries, seem to deadlock with concurrent inserts on MySQL.
+		// Single-statement approaches, specifically ones using batched sub-queries, seem to deadlock with concurrent inserts on MySQL.
 		// We have a bounded batch size, so work around this by first loading the IDs into memory and allowing any locks to flush.
 		// This may under-delete when concurrent inserts happen, but any such annotations will simply be cleaned on the next cycle.
-		cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
-		ids, err := r.fetchIDs(ctx, "annotation", cond)
-		if err != nil {
-			return totalAffected, err
-		}
+		for {
+			cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+			ids, err := r.fetchIDs(ctx, "annotation", cond)
+			if err != nil {
+				return totalAffected, err
+			}
 
-		affected, err := r.deleteByIDs(ctx, "annotation", ids)
-		totalAffected += affected
-		if err != nil {
-			return totalAffected, err
+			if len(ids) == 0 {
+				break
+			}
+
+			affected, err := r.deleteByIDs(ctx, "annotation", ids)
+			totalAffected += affected
+			if err != nil {
+				return totalAffected, err
+			}
 		}
 	}
 
 	if cfg.MaxCount > 0 {
 		// Similar strategy as the above cleanup process, to avoid deadlocks.
-		cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
-		ids, err := r.fetchIDs(ctx, "annotation", cond)
-		if err != nil {
-			return totalAffected, err
-		}
+		for {
+			cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
+			ids, err := r.fetchIDs(ctx, "annotation", cond)
+			if err != nil {
+				return totalAffected, err
+			}
 
-		affected, err := r.deleteByIDs(ctx, "annotation", ids)
-		totalAffected += affected
-		if err != nil {
-			return totalAffected, err
+			if len(ids) == 0 {
+				break
+			}
+
+			affected, err := r.deleteByIDs(ctx, "annotation", ids)
+			totalAffected += affected
+			if err != nil {
+				return totalAffected, err
+			}
 		}
 	}
 
