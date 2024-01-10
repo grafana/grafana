@@ -3,6 +3,7 @@ package dtos
 import (
 	"time"
 
+	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -26,25 +27,15 @@ type DashboardMeta struct {
 	HasACL     bool      `json:"hasAcl" xorm:"has_acl"`
 	IsFolder   bool      `json:"isFolder"`
 	// Deprecated: use FolderUID instead
-	FolderId               int64                 `json:"folderId"`
-	FolderUid              string                `json:"folderUid"`
-	FolderTitle            string                `json:"folderTitle"`
-	FolderUrl              string                `json:"folderUrl"`
-	Provisioned            bool                  `json:"provisioned"`
-	ProvisionedExternalId  string                `json:"provisionedExternalId"`
-	AnnotationsPermissions *AnnotationPermission `json:"annotationsPermissions"`
-	PublicDashboardUID     string                `json:"publicDashboardUid,omitempty"`
-	PublicDashboardEnabled bool                  `json:"publicDashboardEnabled,omitempty"`
-}
-type AnnotationPermission struct {
-	Dashboard    AnnotationActions `json:"dashboard"`
-	Organization AnnotationActions `json:"organization"`
-}
-
-type AnnotationActions struct {
-	CanAdd    bool `json:"canAdd"`
-	CanEdit   bool `json:"canEdit"`
-	CanDelete bool `json:"canDelete"`
+	FolderId               int64                              `json:"folderId"`
+	FolderUid              string                             `json:"folderUid"`
+	FolderTitle            string                             `json:"folderTitle"`
+	FolderUrl              string                             `json:"folderUrl"`
+	Provisioned            bool                               `json:"provisioned"`
+	ProvisionedExternalId  string                             `json:"provisionedExternalId"`
+	AnnotationsPermissions *dashboardsV0.AnnotationPermission `json:"annotationsPermissions"`
+	PublicDashboardUID     string                             `json:"publicDashboardUid,omitempty"`
+	PublicDashboardEnabled bool                               `json:"publicDashboardEnabled,omitempty"`
 }
 
 type DashboardFullWithMeta struct {
