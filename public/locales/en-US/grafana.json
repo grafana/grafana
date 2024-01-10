@@ -16,7 +16,9 @@
     },
     "permissions": {
       "add-label": "Add a permission",
-      "lbac-warning": "Warning: permission does not have corresponding LBAC rule configured. Users might have full access to the data.",
+      "lbac-warning-basic-role": "",
+      "lbac-warning-service-account": "Warning: This service account has full data access with no Team LBAC rules applied.",
+      "lbac-warning-team": "Warning: This team has full data access with no Team LBAC rules applied.",
       "no-permissions": "There are no permissions",
       "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",

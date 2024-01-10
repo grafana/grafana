@@ -16,7 +16,9 @@
     },
     "permissions": {
       "add-label": "Añadir un permiso",
-      "lbac-warning": "",
+      "lbac-warning-basic-role": "",
+      "lbac-warning-service-account": "",
+      "lbac-warning-team": "",
       "no-permissions": "No hay ningún permiso",
       "permissions-change-warning": "Esto cambiará los permisos para esta carpeta y todos sus descendientes. En total, esto afectará:",
       "role": "Rol",
