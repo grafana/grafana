@@ -622,4 +622,8 @@ const (
 	// FlagEnablePluginsTracingByDefault
 	// Enable plugin tracing for all external plugins
 	FlagEnablePluginsTracingByDefault = "enablePluginsTracingByDefault"
+
+	// FlagCloudRBACRoles
+	// Enabled grafana cloud specific RBAC roles
+	FlagCloudRBACRoles = "cloudRBACRoles"
 )
