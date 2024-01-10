@@ -55,7 +55,7 @@ export class Quadtree {
     public y: number,
     public w: number,
     public h: number,
-    public l: number = 0
+    public l = 0
   ) {
     this.o = [];
     this.q = null;
