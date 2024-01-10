@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/api"
@@ -59,9 +58,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
 		ssoSettingsApi.RegisterAPIEndpoints()
 
-		if isGrafanaHA(cfg) {
-			svc.initReloadForHA()
-		}
+		svc.initReload()
 	}
 
 	return svc
@@ -256,17 +253,19 @@ func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[st
 	return result, nil
 }
 
-func (s *SSOSettingsService) initReloadForHA() {
+// initReload starts a background process for reloading the SSO settings for all providers at a fixed interval
+// it is useful for high availability setups running multiple Grafana instances
+func (s *SSOSettingsService) initReload() {
 	go func() {
 		reloadTicker := time.NewTicker(1 * time.Minute)
 		for {
 			<-reloadTicker.C
-			s.doReloadForHA()
+			s.doReload()
 		}
 	}()
 }
 
-func (s *SSOSettingsService) doReloadForHA() {
+func (s *SSOSettingsService) doReload() {
 	for provider, connector := range s.reloadables {
 		s.log.Debug("reloading SSO Settings", "provider", provider)
 
@@ -321,12 +320,4 @@ func isProviderConfigurable(provider string) bool {
 	}
 
 	return false
-}
-
-func isGrafanaHA(cfg *setting.Cfg) bool {
-	grafanaLive := &live.GrafanaLive{
-		Cfg: cfg,
-	}
-
-	return grafanaLive.IsHA()
 }
