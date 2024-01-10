@@ -8,6 +8,11 @@ import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon } from '@grafana/ui';
 
 import { StoreState, ThunkDispatch } from '../../../types';
+import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
+import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
+import { VariableValuesPreview } from '../../dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { variableAdapters } from '../adapters';
 import { hasOptions } from '../guard';
 import { updateOptions } from '../state/actions';
@@ -19,12 +24,7 @@ import { VariableHide } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
-import { VariableHideSelect } from './VariableHideSelect';
-import { VariableLegend } from './VariableLegend';
-import { VariableTextAreaField } from './VariableTextAreaField';
-import { VariableTextField } from './VariableTextField';
 import { VariableTypeSelect } from './VariableTypeSelect';
-import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, variableEditorMount, variableEditorUnMount } from './actions';
 import { OnPropChangeArguments, VariableNameConstraints } from './types';
 
