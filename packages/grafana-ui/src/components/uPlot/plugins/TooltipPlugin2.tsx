@@ -11,10 +11,6 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-type HTMLElementEvent<T extends HTMLElement> = Event & {
-  target: T;
-}
-
 export const DEFAULT_TOOLTIP_WIDTH = 280;
 
 // todo: barchart? histogram?
@@ -177,8 +173,9 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
     };
 
     // in some ways this is similar to ClickOutsideWrapper.tsx
-    const downEventOutside = (e: HTMLElementEvent<HTMLElement>) => {
-      if (!domRef.current!.contains(e.target)) {
+    const downEventOutside = (e: Event) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      if (!domRef.current!.contains(e.target as Node)) {
         dismiss();
       }
     };
