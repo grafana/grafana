@@ -275,7 +275,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       splitOpenFn,
       isLive,
       exploreId,
-      clearCache,
       logsVolume,
       scrollElement,
     } = this.props;
