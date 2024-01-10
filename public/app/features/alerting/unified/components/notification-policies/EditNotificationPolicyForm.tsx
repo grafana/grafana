@@ -139,7 +139,6 @@ export const AmRoutesExpandedForm = ({
                                 placeholder="value"
                               />
                             </Field>
-
                             <IconButton tooltip="Remove matcher" name={'trash-alt'} onClick={() => remove(index)}>
                               Remove
                             </IconButton>
@@ -181,13 +180,7 @@ export const AmRoutesExpandedForm = ({
             <Switch id="continue-toggle" {...register('continue')} />
           </Field>
           <Field label="Override grouping">
-            <InputControl
-              render={({ field: { onChange, ref, ...field } }) => (
-                <Switch id="override-grouping-toggle" {...field} onChange={onChange} />
-              )}
-              control={control}
-              name="overrideGrouping"
-            />
+            <Switch id="override-grouping-toggle" {...register('overrideGrouping')} />
           </Field>
           {watch().overrideGrouping && (
             <Field
@@ -229,13 +222,7 @@ export const AmRoutesExpandedForm = ({
             </Field>
           )}
           <Field label="Override general timings">
-            <InputControl
-              render={({ field: { onChange, ref, ...field } }) => (
-                <Switch data-testid="override-timings-toggle" {...field} onChange={onChange} />
-              )}
-              control={control}
-              name="overrideTimings"
-            />
+            <Switch id="override-timings-toggle" {...register('overrideTimings')} />
           </Field>
           {watch().overrideTimings && (
             <>

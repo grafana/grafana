@@ -3,8 +3,8 @@ import React, { FC, useCallback, useMemo, useState } from 'react';
 
 import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
 import {
-  AlertState,
   AlertmanagerGroup,
+  AlertState,
   ObjectMatcher,
   Receiver,
   RouteWithID,
@@ -133,7 +133,14 @@ const useEditPolicyModal = (
               receivers={AmRouteReceivers}
               route={route}
               onSubmit={handleSave}
-              actionButtons={<ActionButtons handleDismiss={handleDismiss} />}
+              actionButtons={
+                <Modal.ButtonRow>
+                  <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
+                    Cancel
+                  </Button>
+                  <Button type="submit">Update policy</Button>
+                </Modal.ButtonRow>
+              }
             />
           )}
         </Modal>
@@ -143,17 +150,6 @@ const useEditPolicyModal = (
 
   return [modalElement, handleShow, handleDismiss];
 };
-
-function ActionButtons({ handleDismiss }: { handleDismiss: () => void }) {
-  return (
-    <Modal.ButtonRow>
-      <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-        Cancel
-      </Button>
-      <Button type="submit">Save policy</Button>
-    </Modal.ButtonRow>
-  );
-}
 
 const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loading: boolean): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
@@ -291,4 +287,4 @@ const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
   </Modal>
 );
 
-export { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal };
+export { useAddPolicyModal, useDeletePolicyModal, useEditPolicyModal, useAlertGroupsModal };

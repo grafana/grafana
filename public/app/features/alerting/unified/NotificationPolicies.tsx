@@ -169,7 +169,7 @@ const AmRoutes = () => {
 
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd, updatingTree);
-  const [editModal, openDetailModal, closeEditModal] = useEditPolicyModal(
+  const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
     selectedAlertmanager ?? '',
     receivers,
     handleSave,
@@ -244,7 +244,7 @@ const AmRoutes = () => {
                       provisioned={isProvisioned}
                       alertManagerSourceName={selectedAlertmanager}
                       onAddPolicy={openAddModal}
-                      onEditPolicy={openDetailModal}
+                      onEditPolicy={openEditModal}
                       onDeletePolicy={openDeleteModal}
                       onShowAlertInstances={showAlertGroupsModal}
                       routesMatchingFilters={routesMatchingFilters}
