@@ -174,7 +174,6 @@ def rgm_copy(src, dst):
         "gcloud storage cp -r {} {}".format(src, dst),
     ]
 
-
     return {
         "name": "rgm-copy",
         "image": "google/cloud-sdk:alpine",
@@ -263,8 +262,7 @@ def rgm_nightly_build():
     if not dst.startswith("gs://"):
         copy_step["commands"].insert(0, "mkdir -p {}".format(dst))
 
-    copy_steps = with_deps([copy_step],  ["rgm-build"])
-
+    copy_steps = with_deps([copy_step], ["rgm-build"])
 
     return pipeline(
         name = "rgm-nightly-build",
@@ -345,8 +343,8 @@ def rgm_promotion_pipeline():
       Drone pipeline.
     """
     promotion_trigger = {
-      "event": ["promote"],
-      "target": "rgm",
+        "event": ["promote"],
+        "target": "rgm",
     }
 
     env = {
@@ -391,7 +389,7 @@ def rgm_promotion_pipeline():
             name = "rgm-promotion",
             trigger = promotion_trigger,
             steps = steps,
-        )
+        ),
     ]
 
 def rgm():
