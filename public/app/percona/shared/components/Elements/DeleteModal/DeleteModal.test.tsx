@@ -9,7 +9,7 @@ describe('DeleteModal', () => {
 
     expect(screen.getByTestId('confirm-delete-modal-button')).toBeInTheDocument();
     expect(screen.getByTestId('cancel-delete-modal-button')).toBeInTheDocument();
-    expect(screen.getByTestId('confirm-delete-modal-button').querySelector('i')).not.toBeInTheDocument();
+    expect(screen.getByTestId('confirm-delete-modal-button').querySelector('svg')).not.toBeInTheDocument();
     expect(screen.queryByTestId('force-checkbox-field')).not.toBeInTheDocument();
   });
 
@@ -32,7 +32,7 @@ describe('DeleteModal', () => {
   it('should render spinner when loading', () => {
     render(<DeleteModal setVisible={jest.fn()} onDelete={jest.fn()} isVisible loading />);
 
-    expect(screen.getByTestId('confirm-delete-modal-button').querySelector('i')).toBeTruthy();
+    expect(screen.getByTestId('confirm-delete-modal-button').querySelector('svg')).toBeTruthy();
   });
 
   it('should call setVisible on close', () => {
