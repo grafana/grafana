@@ -21,7 +21,7 @@ import {
   useAddPolicyModal,
   useAlertGroupsModal,
   useDeletePolicyModal,
-  useDetailsPolicyModal,
+  useEditPolicyModal,
 } from './components/notification-policies/Modals';
 import { Policy } from './components/notification-policies/Policy';
 import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
@@ -169,7 +169,7 @@ const AmRoutes = () => {
 
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd, updatingTree);
-  const [editModal, openDetailModal, closeEditModal] = useDetailsPolicyModal(
+  const [editModal, openDetailModal, closeEditModal] = useEditPolicyModal(
     selectedAlertmanager ?? '',
     receivers,
     handleSave,
@@ -244,7 +244,7 @@ const AmRoutes = () => {
                       provisioned={isProvisioned}
                       alertManagerSourceName={selectedAlertmanager}
                       onAddPolicy={openAddModal}
-                      openDetailModal={openDetailModal}
+                      onEditPolicy={openDetailModal}
                       onDeletePolicy={openDeleteModal}
                       onShowAlertInstances={showAlertGroupsModal}
                       routesMatchingFilters={routesMatchingFilters}

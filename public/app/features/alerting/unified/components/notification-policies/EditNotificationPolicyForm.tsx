@@ -47,7 +47,6 @@ export interface AmRoutesExpandedFormProps {
   onSubmit: (route: Partial<FormAmRoute>) => void;
   actionButtons: ReactNode;
   defaults?: Partial<FormAmRoute>;
-  isReadOnly?: boolean;
 }
 
 export const AmRoutesExpandedForm = ({
@@ -56,7 +55,6 @@ export const AmRoutesExpandedForm = ({
   route,
   onSubmit,
   defaults,
-  isReadOnly = false,
 }: AmRoutesExpandedFormProps) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
@@ -110,7 +108,6 @@ export const AmRoutesExpandedForm = ({
                                 {...register(`object_matchers.${index}.name`, { required: 'Field is required' })}
                                 defaultValue={field.name}
                                 placeholder="label"
-                                disabled={isReadOnly}
                                 autoFocus
                               />
                             </Field>
@@ -123,7 +120,6 @@ export const AmRoutesExpandedForm = ({
                                     onChange={(value) => onChange(value?.value)}
                                     options={matcherFieldOptions}
                                     aria-label="Operator"
-                                    disabled={isReadOnly}
                                   />
                                 )}
                                 defaultValue={field.operator}
@@ -141,31 +137,26 @@ export const AmRoutesExpandedForm = ({
                                 {...register(`object_matchers.${index}.value`, { required: 'Field is required' })}
                                 defaultValue={field.value}
                                 placeholder="value"
-                                disabled={isReadOnly}
                               />
                             </Field>
 
-                            {!isReadOnly && (
-                              <IconButton tooltip="Remove matcher" name={'trash-alt'} onClick={() => remove(index)}>
-                                Remove
-                              </IconButton>
-                            )}
+                            <IconButton tooltip="Remove matcher" name={'trash-alt'} onClick={() => remove(index)}>
+                              Remove
+                            </IconButton>
                           </Stack>
                         );
                       })}
                     </div>
                   )}
-                  {!isReadOnly && (
-                    <Button
-                      className={styles.addMatcherBtn}
-                      icon="plus"
-                      onClick={() => append(emptyArrayFieldMatcher)}
-                      variant="secondary"
-                      type="button"
-                    >
-                      Add matcher
-                    </Button>
-                  )}
+                  <Button
+                    className={styles.addMatcherBtn}
+                    icon="plus"
+                    onClick={() => append(emptyArrayFieldMatcher)}
+                    variant="secondary"
+                    type="button"
+                  >
+                    Add matcher
+                  </Button>
                 </Stack>
               </>
             )}
@@ -180,7 +171,6 @@ export const AmRoutesExpandedForm = ({
                   onChange={(value) => onChange(mapSelectValueToString(value))}
                   options={receiversWithOnCallOnTop}
                   isClearable
-                  disabled={isReadOnly}
                 />
               )}
               control={control}
@@ -188,12 +178,12 @@ export const AmRoutesExpandedForm = ({
             />
           </Field>
           <Field label="Continue matching subsequent sibling nodes">
-            <Switch id="continue-toggle" {...register('continue')} disabled={isReadOnly} />
+            <Switch id="continue-toggle" {...register('continue')} />
           </Field>
           <Field label="Override grouping">
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
-                <Switch id="override-grouping-toggle" {...field} disabled={isReadOnly} onChange={onChange} />
+                <Switch id="override-grouping-toggle" {...field} onChange={onChange} />
               )}
               control={control}
               name="overrideGrouping"
@@ -229,7 +219,6 @@ export const AmRoutesExpandedForm = ({
                       }}
                       onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
                       options={[...commonGroupByOptions, ...groupByOptions]}
-                      disabled={isReadOnly}
                     />
                     {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
                   </>
@@ -242,7 +231,7 @@ export const AmRoutesExpandedForm = ({
           <Field label="Override general timings">
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
-                <Switch data-testid="override-timings-toggle" {...field} disabled={isReadOnly} onChange={onChange} />
+                <Switch data-testid="override-timings-toggle" {...field} onChange={onChange} />
               )}
               control={control}
               name="overrideTimings"
@@ -260,7 +249,6 @@ export const AmRoutesExpandedForm = ({
                   {...register('groupWaitValue', { validate: promDurationValidator })}
                   aria-label={routeTimingsFields.groupWait.ariaLabel}
                   className={formStyles.promDurationInput}
-                  disabled={isReadOnly}
                 />
               </Field>
               <Field
@@ -268,13 +256,11 @@ export const AmRoutesExpandedForm = ({
                 description={routeTimingsFields.groupInterval.description}
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
-                disabled={isReadOnly}
               >
                 <PromDurationInput
                   {...register('groupIntervalValue', { validate: promDurationValidator })}
                   aria-label={routeTimingsFields.groupInterval.ariaLabel}
                   className={formStyles.promDurationInput}
-                  disabled={isReadOnly}
                 />
               </Field>
               <Field
@@ -292,7 +278,6 @@ export const AmRoutesExpandedForm = ({
                   })}
                   aria-label={routeTimingsFields.repeatInterval.ariaLabel}
                   className={formStyles.promDurationInput}
-                  disabled={isReadOnly}
                 />
               </Field>
             </>
@@ -311,7 +296,6 @@ export const AmRoutesExpandedForm = ({
                   className={formStyles.input}
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
                   options={muteTimingOptions}
-                  disabled={isReadOnly}
                 />
               )}
               control={control}

@@ -76,7 +76,7 @@ const useAddPolicyModal = (
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useDetailsPolicyModal = (
+const useEditPolicyModal = (
   alertManagerSourceName: string,
   receivers: Receiver[],
   handleSave: (route: Partial<FormAmRoute>) => void,
@@ -84,7 +84,6 @@ const useDetailsPolicyModal = (
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
-  const [isReadOnly, setIsReadOnly] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
   const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
@@ -93,9 +92,8 @@ const useDetailsPolicyModal = (
     setShowModal(false);
   }, []);
 
-  const handleShow = useCallback((route: RouteWithID, isDefaultPolicy?: boolean, isReadOnly?: boolean) => {
+  const handleShow = useCallback((route: RouteWithID, isDefaultPolicy?: boolean) => {
     setIsDefaultPolicy(isDefaultPolicy ?? false);
-    setIsReadOnly(isReadOnly ?? false);
     setRoute(route);
     setShowModal(true);
   }, []);
@@ -110,7 +108,7 @@ const useDetailsPolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title={isReadOnly ? 'View notification policy' : 'Edit notification policy'}
+          title="Edit notification policy"
         >
           {isDefaultPolicy && route && (
             <AmRootRouteForm
@@ -120,16 +118,13 @@ const useDetailsPolicyModal = (
               onSubmit={handleSave}
               receivers={AmRouteReceivers}
               route={route}
-              isReadOnly={isReadOnly}
               actionButtons={
-                isReadOnly ? null : (
-                  <Modal.ButtonRow>
-                    <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                      Cancel
-                    </Button>
-                    <Button type="submit">Update default policy</Button>
-                  </Modal.ButtonRow>
-                )
+                <Modal.ButtonRow>
+                  <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
+                    Cancel
+                  </Button>
+                  <Button type="submit">Update default policy</Button>
+                </Modal.ButtonRow>
               }
             />
           )}
@@ -138,23 +133,12 @@ const useDetailsPolicyModal = (
               receivers={AmRouteReceivers}
               route={route}
               onSubmit={handleSave}
-              isReadOnly={isReadOnly}
-              actionButtons={isReadOnly ? null : <ActionButtons handleDismiss={handleDismiss} />}
+              actionButtons={<ActionButtons handleDismiss={handleDismiss} />}
             />
           )}
         </Modal>
       ),
-    [
-      AmRouteReceivers,
-      alertManagerSourceName,
-      handleDismiss,
-      handleSave,
-      isDefaultPolicy,
-      loading,
-      route,
-      showModal,
-      isReadOnly,
-    ]
+    [AmRouteReceivers, alertManagerSourceName, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -307,4 +291,4 @@ const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
   </Modal>
 );
 
-export { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useDetailsPolicyModal };
+export { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal };

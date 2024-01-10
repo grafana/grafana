@@ -146,8 +146,7 @@ describe('EditNotificationPolicyForm', function () {
         repeat_interval: '1w2d6h',
       },
       [{ value: 'default', label: 'Default' }],
-      onSubmit,
-      true
+      onSubmit
     );
 
     screen.getAllByRole('checkbox').forEach((input) => {
@@ -162,8 +161,7 @@ describe('EditNotificationPolicyForm', function () {
 function renderRouteForm(
   route: RouteWithID,
   receivers: AmRouteReceiver[] = [],
-  onSubmit: (route: Partial<FormAmRoute>) => void = noop,
-  readOnly = false
+  onSubmit: (route: Partial<FormAmRoute>) => void = noop
 ) {
   render(
     <AlertmanagerProvider accessType="instance">
@@ -172,7 +170,6 @@ function renderRouteForm(
         onSubmit={onSubmit}
         receivers={receivers}
         route={route}
-        isReadOnly={readOnly}
       />
     </AlertmanagerProvider>,
     { wrapper: TestProvider }
