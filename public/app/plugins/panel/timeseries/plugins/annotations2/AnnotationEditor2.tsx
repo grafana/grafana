@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { AnnotationEventUIModel, GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Form, HorizontalGroup, InputControl, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Button, Field, Form, HorizontalGroup, InputControl, LayoutItemContext, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
@@ -11,8 +11,7 @@ interface Props {
   annoVals: Record<string, any[]>;
   annoIdx: number;
   timeFormatter: (v: number) => string;
-  onSave: () => void;
-  onDismiss: () => void;
+  dismiss: () => void;
 }
 
 interface AnnotationEditFormDTO {
@@ -20,23 +19,22 @@ interface AnnotationEditFormDTO {
   tags: string[];
 }
 
-export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFormatter, ...otherProps }: Props) => {
+export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const panelContext = usePanelContext();
 
+  const layoutCtx = useContext(LayoutItemContext);
+  useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
+
   const [createAnnotationState, createAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
     const result = await panelContext.onAnnotationCreate!(event);
-    if (onSave) {
-      onSave();
-    }
+    dismiss();
     return result;
   });
 
   const [updateAnnotationState, updateAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
     const result = await panelContext.onAnnotationUpdate!(event);
-    if (onSave) {
-      onSave();
-    }
+    dismiss();
     return result;
   });
 
@@ -100,7 +98,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, onSave, onDismiss, timeFo
                   />
                 </Field>
                 <HorizontalGroup justify={'flex-end'}>
-                  <Button size={'sm'} variant="secondary" onClick={onDismiss} fill="outline">
+                  <Button size={'sm'} variant="secondary" onClick={dismiss} fill="outline">
                     Cancel
                   </Button>
                   <Button size={'sm'} type={'submit'} disabled={stateIndicator?.loading}>

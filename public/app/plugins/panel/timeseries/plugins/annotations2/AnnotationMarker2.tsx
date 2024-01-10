@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useContext, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 
 import { dateTimeFormat, GrafanaTheme2, systemDateFormats } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { LayoutItemContext, usePanelContext, useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
@@ -25,8 +25,6 @@ const STATE_HOVERED = 2;
 export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timezone }: AnnoBoxProps) => {
   const { canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
 
-  const { setAnchoredCount } = useContext(LayoutItemContext);
-
   const styles = useStyles2(getStyles);
 
   const [state, setState] = useState(STATE_DEFAULT);
@@ -44,13 +42,12 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWip
   // similar to TooltipPlugin2, when editing annotation (pinned), it should boost z-index
   const setIsEditingWrap = useCallback(
     (isEditing: boolean) => {
-      setAnchoredCount((count) => count + (isEditing ? 1 : -1));
       setState(isEditing ? STATE_EDITING : STATE_DEFAULT);
       if (!isEditing && exitWipEdit != null) {
         exitWipEdit();
       }
     },
-    [exitWipEdit, setAnchoredCount]
+    [exitWipEdit]
   );
 
   const onAnnotationEdit = useCallback(() => {
@@ -110,8 +107,7 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWip
   const renderAnnotationEditor = useCallback(() => {
     return (
       <AnnotationEditor2
-        onDismiss={() => setIsEditingWrap(false)}
-        onSave={() => setIsEditingWrap(false)}
+        dismiss={() => setIsEditingWrap(false)}
         timeFormatter={timeFormatter}
         annoIdx={annoIdx}
         annoVals={annoVals}

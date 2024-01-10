@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 
 import { GrafanaTheme2, textUtil } from '@grafana/data';
-import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
+import { HorizontalGroup, IconButton, LayoutItemContext, Tag, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 interface Props {
@@ -25,6 +25,9 @@ export const AnnotationTooltip2 = ({
   onDelete,
 }: Props) => {
   const styles = useStyles2(getStyles);
+
+  const layoutCtx = useContext(LayoutItemContext);
+  useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
 
   let time = timeFormatter(annoVals.time[annoIdx]);
   let text = annoVals.text[annoIdx];

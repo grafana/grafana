@@ -1,12 +1,12 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties, useRef, useState } from 'react';
+import React, { PureComponent, CSSProperties, useRef, useCallback, useReducer, useMemo } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
 import { zIndex } from '@grafana/data/src/themes/zIndex';
 import { config } from '@grafana/runtime';
-import { LayoutItemContext, LayoutItemContextProps } from '@grafana/ui';
+import { LayoutItemContext } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -385,25 +385,20 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   let width = 100;
   let height = 100;
 
-  const anchoredCount = useRef(0);
+  const boostedCount = useRef(0);
+  const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const [contextVal, setContextVal] = useState<LayoutItemContextProps>({
-    setAnchoredCount: (count) => {
-      let prevCount = anchoredCount.current;
+  const boostZIndex = useCallback(() => {
+    boostedCount.current += 1;
+    forceUpdate();
 
-      if (typeof count === 'function') {
-        count = count(prevCount);
-      }
+    return () => {
+      boostedCount.current -= 1;
+      forceUpdate();
+    };
+  }, [forceUpdate]);
 
-      let nextCount = (anchoredCount.current = count);
-
-      // rerender with popped z-index when non-zero pinned items
-      if ((prevCount === 0 && nextCount > 0) || (prevCount > 0 && nextCount === 0)) {
-        // this forces a rerender of this component by simply re-wrapping the context
-        setContextVal({ ...contextVal });
-      }
-    },
-  });
+  const ctxValue = useMemo(() => ({ boostZIndex }), [boostZIndex]);
 
   const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, descendingOrderIndex, ...divProps } = props;
   const style: CSSProperties = props.style ?? {};
@@ -435,11 +430,11 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <LayoutItemContext.Provider value={contextVal}>
+    <LayoutItemContext.Provider value={ctxValue}>
       <div
         {...divProps}
         // .context-menu-open === $zindex-dropdown === 1030 (zIndex.ts)
-        style={{ ...divProps.style, zIndex: anchoredCount.current === 0 ? descendingOrderIndex : zIndex.dropdown }}
+        style={{ ...divProps.style, zIndex: boostedCount.current === 0 ? descendingOrderIndex : zIndex.dropdown }}
         ref={ref}
       >
         {/* Pass width and height to children as render props */}
