@@ -6,18 +6,18 @@ import { guessMetricType, isLLMPluginEnabled } from './helpers';
 jest.mock('@grafana/experimental', () => ({
   llms: {
     openai: {
-      enabled: jest.fn(),
+      health: jest.fn(),
     },
     vector: {
-      enabled: jest.fn(),
+      health: jest.fn(),
     },
   },
 }));
 
 describe('isLLMPluginEnabled', () => {
   it('should return true if LLM plugin is enabled', async () => {
-    jest.mocked(llms.openai.enabled).mockResolvedValue({ ok: true, configured: true });
-    jest.mocked(llms.vector.enabled).mockResolvedValue({ ok: true, enabled: true });
+    jest.mocked(llms.openai.health).mockResolvedValue({ ok: true, configured: true });
+    jest.mocked(llms.vector.health).mockResolvedValue({ ok: true, enabled: true });
 
     const enabled = await isLLMPluginEnabled();
 
@@ -25,8 +25,8 @@ describe('isLLMPluginEnabled', () => {
   });
 
   it('should return false if LLM plugin is not enabled', async () => {
-    jest.mocked(llms.openai.enabled).mockResolvedValue({ ok: false, configured: false });
-    jest.mocked(llms.vector.enabled).mockResolvedValue({ ok: false, enabled: false });
+    jest.mocked(llms.openai.health).mockResolvedValue({ ok: false, configured: false });
+    jest.mocked(llms.vector.health).mockResolvedValue({ ok: false, enabled: false });
 
     const enabled = await isLLMPluginEnabled();
 
@@ -34,8 +34,8 @@ describe('isLLMPluginEnabled', () => {
   });
 
   it('should return false if LLM plugin is enabled but health check fails', async () => {
-    jest.mocked(llms.openai.enabled).mockResolvedValue({ ok: false, configured: true });
-    jest.mocked(llms.vector.enabled).mockResolvedValue({ ok: false, enabled: true });
+    jest.mocked(llms.openai.health).mockResolvedValue({ ok: false, configured: true });
+    jest.mocked(llms.vector.health).mockResolvedValue({ ok: false, enabled: true });
 
     const enabled = await isLLMPluginEnabled();
 

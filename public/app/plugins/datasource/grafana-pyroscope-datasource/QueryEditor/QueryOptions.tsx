@@ -5,10 +5,10 @@ import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
 
-import { QueryOptionGroup } from '../../prometheus/querybuilder/shared/QueryOptionGroup';
 import { Query } from '../types';
 
 import { EditorField } from './EditorField';
+import { QueryOptionGroup } from './QueryOptionGroup';
 import { Stack } from './Stack';
 
 export interface Props {
@@ -47,6 +47,9 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   let collapsedInfo = [`Type: ${query.queryType}`];
   if (query.groupBy?.length) {
     collapsedInfo.push(`Group by: ${query.groupBy.join(', ')}`);
+  }
+  if (query.spanSelector?.length) {
+    collapsedInfo.push(`Span ID: ${query.spanSelector.join(', ')}`);
   }
   if (query.maxNodes) {
     collapsedInfo.push(`Max nodes: ${query.maxNodes}`);
