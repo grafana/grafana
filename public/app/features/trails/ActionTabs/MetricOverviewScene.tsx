@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
-  AdHocFiltersVariable,
   QueryVariable,
   SceneComponentProps,
   SceneFlexItem,
@@ -20,8 +19,10 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
-import { trailDS, VAR_DATASOURCE, VAR_DATASOURCE_EXPR, VAR_FILTERS, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
+import { trailDS, VAR_DATASOURCE, VAR_DATASOURCE_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
 import { getMetricSceneFor } from '../utils';
+
+import { getLabelOptions } from './utils';
 
 export interface MetricOverviewSceneState extends SceneObjectState {
   labels: Array<SelectableValue<string>>;
@@ -64,7 +65,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const variable = this.getVariable();
     variable.subscribeToState((newState, oldState) => {
       if (newState.options !== oldState.options || newState.loading !== oldState.loading) {
-        const labels = this.getLabelOptions(this.getVariable()).filter((l) => l.value !== ALL_VARIABLE_VALUE);
+        const labels = getLabelOptions(this, this.getVariable()).filter((l) => l.value !== ALL_VARIABLE_VALUE);
         this.setState({ labels, loading: variable.state.loading });
       }
     });
@@ -97,26 +98,6 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
           }
         });
     }
-  }
-
-  private getLabelOptions(variable: QueryVariable) {
-    const labelFilters = sceneGraph.lookupVariable(VAR_FILTERS, this);
-    const labelOptions: Array<SelectableValue<string>> = [];
-
-    if (!(labelFilters instanceof AdHocFiltersVariable)) {
-      return [];
-    }
-
-    const filters = labelFilters.state.set.state.filters;
-
-    for (const option of variable.getOptionsForSelect()) {
-      const filterExists = filters.find((f) => f.key === option.value);
-      if (!filterExists) {
-        labelOptions.push({ label: option.label, value: String(option.value) });
-      }
-    }
-
-    return labelOptions;
   }
 
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
