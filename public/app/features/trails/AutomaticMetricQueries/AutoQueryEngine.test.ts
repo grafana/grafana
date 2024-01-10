@@ -167,4 +167,20 @@ describe('getAutoQueriesForMetric', () => {
       expect(received).toStrictEqual(expectedVariants);
     });
   });
+
+  describe('Able to handle unconventional metric names', () => {
+    it.each([['PRODUCT_High_Priority_items_', 'avg(...)', 'short', 1]])(
+      'Given metric %p expect %p with unit %p',
+      (metric, expr, unit, queryCount) => {
+        const result = getAutoQueriesForMetric(metric);
+
+        const queryDef = result.main;
+
+        const expected = { expr: expandExpr(expr), unit, queryCount };
+        const actual = { expr: queryDef.queries[0].expr, unit: queryDef.unit, queryCount: queryDef.queries.length };
+
+        expect(actual).toStrictEqual(expected);
+      }
+    );
+  });
 });
