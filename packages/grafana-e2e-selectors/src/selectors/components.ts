@@ -53,7 +53,7 @@ export const Components = {
       },
     },
     DataSourceHttpSettings: {
-      urlInput: 'Datasource HTTP settings url',
+      urlInput: 'data-testid Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
