@@ -359,7 +359,7 @@ def rgm_promotion_pipeline():
     #   left empty.
     # * ARTIFACTS = comma delimited list of artifacts (ex: "targz:grafana:linux/amd64,rpm:grafana:linux/amd64")
     # * VERSION = version string of Grafana that is being built (ex: v10.0.0)
-    # * DESTINATION = Google Cloud Storage URL to upload the built artifacts to. (ex: gs://some-bucket/path)
+    # * UPLOAD_TO = Google Cloud Storage URL to upload the built artifacts to. (ex: gs://some-bucket/path)
     build_step = {
         "name": "rgm-build",
         "image": "grafana/grafana-build:main",
