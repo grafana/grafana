@@ -3798,7 +3798,7 @@ steps:
 - commands:
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp -r dist $${DESTINATION}
+  - gcloud storage cp -r dist $${UPLOAD_TO}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4731,6 +4731,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 03e49a604b7370fed9a69d544332e889a521840493742d61625d26515e4b3342
+hmac: cd5a77cfe41eafc2b4f8d9bd88521c1c97ae5a0ec737cfbe49826ba6952c83ac
 
 ...
