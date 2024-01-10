@@ -18,7 +18,7 @@ export const AddBackupPageService = {
       if (supportedServices.includes(serviceName)) {
         result.push(
           ...newServices
-            .filter((service) => service.name.toLowerCase().includes(query))
+            .filter((service) => service.name.toLowerCase().includes(query.toLowerCase()))
             .map(
               ({ id, name, cluster }): SelectableValue<SelectableService> => ({
                 label: name,
