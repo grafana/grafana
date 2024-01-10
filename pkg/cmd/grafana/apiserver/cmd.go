@@ -4,10 +4,12 @@ import (
 	"os"
 	"path"
 
-	"github.com/grafana/grafana/pkg/aggregator"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/aggregator"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -56,7 +58,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 	// Register standard k8s flags with the command line
 	o.RecommendedOptions = options.NewRecommendedOptions(
 		defaultEtcdPathPrefix,
-		Codecs.LegacyCodec(), // the codec is passed to etcd and not used
+		grafanaapiserver.Codecs.LegacyCodec(), // the codec is passed to etcd and not used
 	)
 	o.RecommendedOptions.AddFlags(cmd.Flags())
 
@@ -111,20 +113,10 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 	}
 
 	// Install the API Group+version
-	for _, b := range serverOptions.Builders {
-		g, err := b.GetAPIGroupInfo(Scheme, Codecs, config.GenericConfig.RESTOptionsGetter)
-		if err != nil {
-			klog.Errorf("Error getting group info for prerequisite API group: %s", err)
-			return err
-		}
-		if g == nil || len(g.PrioritizedVersions) < 1 {
-			continue
-		}
-		err = aggregator.GenericAPIServer.InstallAPIGroup(g)
-		if err != nil {
-			klog.Errorf("Error installing prerequisite API groups for aggregator: %s", err)
-			return err
-		}
+	err = grafanaapiserver.InstallAPIs(aggregator.GenericAPIServer, config.GenericConfig.RESTOptionsGetter, serverOptions.Builders)
+	if err != nil {
+		klog.Errorf("Error installing apis: %s", err)
+		return err
 	}
 
 	if err := clientcmd.WriteToFile(
