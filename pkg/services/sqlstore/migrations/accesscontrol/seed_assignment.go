@@ -41,6 +41,14 @@ func AddSeedAssignmentMigrations(mg *migrator.Migrator) {
 			&migrator.Index{Cols: []string{"builtin_role", "action", "scope"}, Type: migrator.UniqueIndex}))
 
 	mg.AddMigration("add primary key to seed_assigment", &seedAssignmentPrimaryKeyMigrator{})
+
+	mg.AddMigration("add origin column to seed_assignment",
+		migrator.NewAddColumnMigration(seedAssignmentTable,
+			&migrator.Column{Name: "origin", Type: migrator.DB_Varchar, Length: 190, Nullable: true}))
+
+	mg.AddMigration("add index origin",
+		migrator.NewAddIndexMigration(seedAssignmentTable,
+			&migrator.Index{Cols: []string{"origin"}, Type: migrator.IndexType}))
 }
 
 type seedAssignmentPrimaryKeyMigrator struct {
