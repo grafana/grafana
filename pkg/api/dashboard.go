@@ -790,8 +790,8 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
-func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
 
+func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
