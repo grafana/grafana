@@ -166,7 +166,7 @@ def rgm_copy(src, dst):
       dst: destination of the files.
 
     Returns:
-      Drone steps.
+      Drone step.
     """
     commands = [
         "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
@@ -174,19 +174,13 @@ def rgm_copy(src, dst):
         "gcloud storage cp -r {} {}".format(src, dst),
     ]
 
-    if not dst.startswith("gs://"):
-        commands.insert(0, "mkdir -p {}".format(dst))
 
-    rgm_copy_step = {
+    return {
         "name": "rgm-copy",
         "image": "google/cloud-sdk:alpine",
         "commands": commands,
         "environment": rgm_env_secrets({}),
     }
-
-    return [
-        rgm_copy_step,
-    ]
 
 def rgm_publish_packages(bucket = "grafana-packages"):
     """Publish deb and rpm packages.
@@ -260,8 +254,12 @@ def rgm_version_branch():
 def rgm_nightly_build():
     src = "$${DRONE_WORKSPACE}/dist/*"
     dst = "$${DESTINATION}/$${DRONE_BUILD_EVENT}"
+    copy_step = rgm_copy(src, dst)
+    if not dst.startswith("gs://"):
+        copy_step["commands"].insert(0, "mkdir -p {}".format(dst))
 
-    copy_steps = with_deps(rgm_copy(src, dst), ["rgm-build"])
+    copy_steps = with_deps([copy_step],  ["rgm-build"])
+
 
     return pipeline(
         name = "rgm-nightly-build",
@@ -281,11 +279,13 @@ def rgm_nightly_publish():
 
     publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])
     package_steps = with_deps(rgm_publish_packages(), ["rgm-publish"])
-
+    copy_step = rgm_copy(src, dst)
+    if not dst.startswith("gs://"):
+        copy_step["commands"].insert(0, "mkdir -p {}".format(dst))
     return pipeline(
         name = "rgm-nightly-publish",
         trigger = nightly_trigger,
-        steps = rgm_copy(src, dst) + publish_steps + package_steps,
+        steps = [copy_step] + publish_steps + package_steps,
         depends_on = ["rgm-nightly-build"],
     )
 
@@ -369,14 +369,8 @@ def rgm_promotion_pipeline():
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-    publish_step = {
-        "name": "gcloud-copy",
-        "image": images["cloudsdk"],
-        "commands": [
-            "gcloud storage cp ./dist/* $${DESTINATION}",
-        ],
-        "environment": rgm_env_secrets(env),
-    }
+    publish_step = rgm_copy("dist", "${{DESTINATION}}")
+
     steps = [
         build_step,
         publish_step,

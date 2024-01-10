@@ -3796,11 +3796,12 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - gcloud storage cp ./dist/* $${DESTINATION}
+  - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gcloud storage cp -r dist ${{DESTINATION}}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    ALPINE_BASE: alpine:3.18.4
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3817,7 +3818,6 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
-    GO_VERSION: 1.21.5
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -3828,9 +3828,8 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-    UBUNTU_BASE: ubuntu:22.04
-  image: google/cloud-sdk:431.0.0
-  name: gcloud-copy
+  image: google/cloud-sdk:alpine
+  name: rgm-copy
 trigger:
   event:
   - promote
@@ -4732,6 +4731,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9e6b9193fe74a55cc31d031102728e41622221ed2e4547f9f5836c9fb0d18f4d
+hmac: d89eab5b699604717d7d04f58bccb7e9df8304bfbbec9ca5741319b09739d558
 
 ...
