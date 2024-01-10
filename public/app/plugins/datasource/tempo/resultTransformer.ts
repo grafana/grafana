@@ -1008,6 +1008,7 @@ const traceSubFrame = (
     },
   });
 
+  // TODO: this should be done in applyFieldOverrides instead recursively for the nested DataFrames
   const theme = createTheme();
   for (const field of subFrame.fields) {
     field.display = getDisplayProcessor({ field, theme });
