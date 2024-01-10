@@ -171,4 +171,5 @@ export interface FeatureToggles {
   alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
   alertingPreviewUpgrade?: boolean;
+  enablePluginsTracingByDefault?: boolean;
 }
