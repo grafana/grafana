@@ -15,6 +15,8 @@ import {
   StreamingDataFrame,
   createDataFrame,
   addRow,
+  getDisplayProcessor,
+  createTheme,
 } from '@grafana/data';
 
 import { getRandomLine } from './LogIpsum';
@@ -283,9 +285,8 @@ export function runTracesStream(
 
 function createMainTraceFrame(target: TestData, maxDataPoints = 1000) {
   const data = new CircularDataFrame({
-    append: 'tail',
-    // capacity: maxDataPoints,
-    capacity: 2,
+    append: 'head',
+    capacity: maxDataPoints,
   });
   data.refId = target.refId;
   data.name = target.alias || 'Traces ' + target.refId;
@@ -300,7 +301,7 @@ function createMainTraceFrame(target: TestData, maxDataPoints = 1000) {
 }
 
 function createTraceSubFrame() {
-  return createDataFrame({
+  const frame = createDataFrame({
     fields: [
       { name: 'SpanID', type: FieldType.string },
       { name: 'Start time', type: FieldType.time },
@@ -308,4 +309,13 @@ function createTraceSubFrame() {
       { name: 'duration', type: FieldType.number },
     ],
   });
+
+  // TODO: this should be removed later but right now there is an issue that applyFieldOverrides does not consider
+  //  nested frames.
+  for (const f of frame.fields) {
+    f.display = getDisplayProcessor({ field: f, theme });
+  }
+  return frame;
 }
+
+const theme = createTheme();
