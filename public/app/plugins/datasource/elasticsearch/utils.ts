@@ -141,7 +141,7 @@ export const logLevelMap: Record<string, LogLevel> = {
 
 export function dataFrameLogLevel(dataFrame: DataFrame): LogLevel {
   const field = dataFrame.fields.find((f) => f.type === FieldType.number);
-  const level = field?.labels?.['level'] ?? field?.labels?.['lvl'] ?? field?.labels?.['loglevel'] ?? '';
+  const level = field?.labels?.['level'] ?? '';
   if (!level) {
     return LogLevel.unknown;
   }

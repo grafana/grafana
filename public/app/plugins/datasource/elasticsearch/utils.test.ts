@@ -105,20 +105,14 @@ describe('dataFrameLogLevel', () => {
     expect(dataFrameLogLevel(dataFrame)).toBe(logLevelMap[level]);
   });
 
-  it.each(Object.keys(logLevelMap))('returns the level from the lvl field of a %s log data frame', (level: string) => {
-    const dataFrame = getLogFrame('lvl', level);
-    
-    expect(dataFrameLogLevel(dataFrame)).toBe(logLevelMap[level]);
-  });
-
-  it.each(Object.keys(logLevelMap))('returns the level from the loglevel field of a %s log data frame', (level: string) => {
-    const dataFrame = getLogFrame('loglevel', level);
-    
-    expect(dataFrameLogLevel(dataFrame)).toBe(logLevelMap[level]);
-  });
-
   it('returns unknown if the level is missing', () => {
     const dataFrame = getLogFrame('not_level', '');
+    
+    expect(dataFrameLogLevel(dataFrame)).toBe(LogLevel.unknown);
+  });
+
+  it('returns unknown if the level is empty', () => {
+    const dataFrame = getLogFrame('level', '');
     
     expect(dataFrameLogLevel(dataFrame)).toBe(LogLevel.unknown);
   });
