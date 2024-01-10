@@ -6,6 +6,7 @@ import {
   getUrlSyncManager,
   SceneFlexItem,
   SceneFlexLayout,
+  SceneGridItem,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
@@ -98,15 +99,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = this.state.dashboardRef.resolve();
     const sourcePanel = this.state.sourcePanelRef.resolve();
 
-    const panelMngr = this.state.panelRef.resolve();
-
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    const newState = sceneUtils.cloneSceneObjectState(panelMngr.state.panel.state);
-
-    sourcePanel.setState(newState);
+    const panelMngr = this.state.panelRef.resolve();
+    if (sourcePanel.parent instanceof SceneGridItem) {
+      sourcePanel.parent.setState({ body: panelMngr.state.panel });
+    }
 
     // preserve time range and variables state
     dashboard.setState({
