@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,6 +35,7 @@ type FileReader struct {
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	dashboardStore               utils.DashboardStore
 	FoldersFromFilesStructure    bool
+	folderService                folder.Service
 
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
@@ -41,7 +43,8 @@ type FileReader struct {
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService, dashboardStore utils.DashboardStore) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService,
+	dashboardStore utils.DashboardStore, folderService folder.Service) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -64,6 +67,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 		log:                          log,
 		dashboardProvisioningService: service,
 		dashboardStore:               dashboardStore,
+		folderService:                folderService,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		usageTracker:                 newUsageTracker(),
 	}, nil
@@ -333,22 +337,23 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
-		dash := &dashboards.SaveDashboardDTO{}
-		dash.Dashboard = dashboards.NewDashboardFolder(folderName)
-		dash.Dashboard.IsFolder = true
-		dash.Overwrite = true
-		dash.OrgID = cfg.OrgID
 		// set dashboard folderUid if given
 		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
 			return 0, "", dashboards.ErrFolderInvalidUID
 		}
-		dash.Dashboard.SetUID(cfg.FolderUID)
-		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
+
+		createCmd := &folder.CreateFolderCommand{
+			OrgID: cfg.OrgID,
+			UID:   cfg.FolderUID,
+			Title: folderName,
+		}
+
+		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd)
 		if err != nil {
 			return 0, "", err
 		}
-
-		return dbDash.ID, dbDash.UID, nil
+		// nolint:staticcheck
+		return f.ID, f.UID, nil
 	}
 
 	if !result.IsFolder {

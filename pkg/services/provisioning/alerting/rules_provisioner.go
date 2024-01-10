@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/util"
@@ -107,13 +108,12 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
-		dash := &dashboards.SaveDashboardDTO{}
-		dash.Dashboard = dashboards.NewDashboardFolder(folderName)
-		dash.Dashboard.IsFolder = true
-		dash.Overwrite = true
-		dash.OrgID = orgID
-		dash.Dashboard.SetUID(util.GenerateShortUID())
-		dbDash, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, dash)
+		createCmd := &folder.CreateFolderCommand{
+			OrgID: orgID,
+			UID:   util.GenerateShortUID(),
+			Title: folderName,
+		}
+		dbDash, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, createCmd)
 		if err != nil {
 			return "", err
 		}

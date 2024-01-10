@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -177,10 +178,12 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 			return folder.ErrDatabaseError.Errorf("failed to get folder: %w", err)
 		}
 		if !exists {
-			return folder.ErrFolderNotFound.Errorf("folder not found")
+			// embed dashboards.ErrFolderNotFound
+			return folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
 		}
 		return nil
 	})
+
 	return foldr.WithURL(), err
 }
 
