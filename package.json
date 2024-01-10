@@ -281,7 +281,7 @@
     "@react-aria/menu": "3.10.0",
     "@react-aria/overlays": "3.15.0",
     "@react-aria/utils": "3.18.0",
-    "@react-awesome-query-builder/core": "6.4.1",
+    "@react-awesome-query-builder/core": "6.4.2",
     "@react-awesome-query-builder/ui": "6.4.1",
     "@react-stately/collections": "3.9.0",
     "@react-stately/menu": "3.5.3",

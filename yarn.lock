@@ -6022,9 +6022,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:6.4.1, @react-awesome-query-builder/core@npm:^6.4.1":
-  version: 6.4.1
-  resolution: "@react-awesome-query-builder/core@npm:6.4.1"
+"@react-awesome-query-builder/core@npm:6.4.2, @react-awesome-query-builder/core@npm:^6.4.1":
+  version: 6.4.2
+  resolution: "@react-awesome-query-builder/core@npm:6.4.2"
   dependencies:
     clone: "npm:^2.1.2"
     immutable: "npm:^3.8.2"
@@ -6033,7 +6033,7 @@ __metadata:
     moment: "npm:^2.29.4"
     spel2js: "npm:^0.2.8"
     sqlstring: "npm:^2.3.3"
-  checksum: 1af72a5e676f1f4b9512d9fea5c5c4100f00ac04dc8c8b19dd9d08b2e53e987f307fcc1ce55296d3811ef29ffd7a69e3791e27b54062ed7a495046e9fc52c381
+  checksum: 0bffa978d7f2608ee288ce2e6f054176cb17944a4b2ac76ef386b143cf90e8234fba4295e15e4bd1eb380ce127b50a8e06372dd6d7a3e58c18acd7c5a64c3557
   languageName: node
   linkType: hard
 
@@ -17078,7 +17078,7 @@ __metadata:
     "@react-aria/menu": "npm:3.10.0"
     "@react-aria/overlays": "npm:3.15.0"
     "@react-aria/utils": "npm:3.18.0"
-    "@react-awesome-query-builder/core": "npm:6.4.1"
+    "@react-awesome-query-builder/core": "npm:6.4.2"
     "@react-awesome-query-builder/ui": "npm:6.4.1"
     "@react-stately/collections": "npm:3.9.0"
     "@react-stately/menu": "npm:3.5.3"
