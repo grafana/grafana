@@ -159,18 +159,18 @@ The grid has a negative gravity that moves panels up if there is empty space abo
 
 Usage of the fields is explained below:
 
-| Name                  | Usage                                                     |
-| --------------------- | --------------------------------------------------------- |
-| **collapse**          | whether timepicker is collapsed or not                    |
-| **enable**            | whether timepicker is enabled or not                      |
-| **notice**            |                                                           |
-| **now**               |                                                           |
-| **hidden**            | whether timepicker is hidden or not                       |
-| **nowDelay**          | override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.               |
-| **time_options**      | options available in the time picker dropdown             |
-| **refresh_intervals** | interval options available in the refresh picker dropdown |
-| **status**            |                                                           |
-| **type**              |                                                           |
+| Name                  | Usage                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **collapse**          | whether timepicker is collapsed or not                                                                                                |
+| **enable**            | whether timepicker is enabled or not                                                                                                  |
+| **notice**            |                                                                                                                                       |
+| **now**               |                                                                                                                                       |
+| **hidden**            | whether timepicker is hidden or not                                                                                                   |
+| **nowDelay**          | override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. |
+| **time_options**      | options available in the time picker dropdown                                                                                         |
+| **refresh_intervals** | interval options available in the refresh picker dropdown                                                                             |
+| **status**            |                                                                                                                                       |
+| **type**              |                                                                                                                                       |
 
 ### templating
 
