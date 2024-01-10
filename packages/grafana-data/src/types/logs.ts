@@ -229,7 +229,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
   getDataProvider(
     type: SupplementaryQueryType,
     request: DataQueryRequest<TQuery>
-  ): Observable<DataQueryResponse> | undefined;
+  ): Observable<DataQueryResponse> | DataQueryRequest<TQuery> | undefined;
   /**
    * Returns supplementary query types that data source supports.
    */

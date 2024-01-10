@@ -646,15 +646,31 @@ type LogsVolumeQueryOptions<T extends DataQuery> = {
   range: TimeRange;
 };
 
+function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
+  let valueField;
+  try {
+    valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
+  } catch {}
+  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+}
+
+function getLogLevelFromLabels(labels: Labels): LogLevel {
+  const levelLabel = labels['level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
+  return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
+}
+
 /**
  * Creates an observable, which makes requests to get logs volume and aggregates results.
  */
 export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
   datasource: DataSourceApi<TQuery, TOptions>,
   logsVolumeRequest: DataQueryRequest<TQuery>,
-  options: LogsVolumeQueryOptions<TQuery>
+  options?: LogsVolumeQueryOptions<TQuery>
 ): Observable<DataQueryResponse> {
-  const timespan = options.range.to.valueOf() - options.range.from.valueOf();
+  const range = options ? options.range : logsVolumeRequest.range;
+  const targets = options ? options.targets : logsVolumeRequest.targets;
+  const extractLevel = options ? options.extractLevel : defaultExtractLevel;
+  const timespan = range.to.valueOf() - range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
 
   logsVolumeRequest.interval = intervalInfo.interval;
@@ -705,9 +721,9 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 
             const logsVolumeCustomMetaData: LogsVolumeCustomMetaData = {
               logsVolumeType: LogsVolumeType.FullRange,
-              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              absoluteRange: { from: range.from.valueOf(), to: range.to.valueOf() },
               datasourceName: datasource.name,
-              sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
+              sourceQuery: targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
             };
 
             dataFrame.meta = {
@@ -717,7 +733,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
                 ...logsVolumeCustomMetaData,
               },
             };
-            return updateLogsVolumeConfig(dataFrame, options.extractLevel, framesByRefId[dataFrame.refId].length === 1);
+            return updateLogsVolumeConfig(dataFrame, extractLevel, framesByRefId[dataFrame.refId].length === 1);
           });
 
           observer.next({

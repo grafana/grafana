@@ -1,5 +1,5 @@
 import { cloneDeep, groupBy } from 'lodash';
-import { distinct, Observable, merge } from 'rxjs';
+import { distinct, Observable, merge, isObservable } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
@@ -18,7 +18,7 @@ import {
 import store from 'app/core/store';
 import { ExplorePanelData, SupplementaryQueries } from 'app/types';
 
-import { makeDataFramesForLogs } from '../../logs/logsModel';
+import { makeDataFramesForLogs, queryLogsSample, queryLogsVolume } from '../../logs/logsModel';
 
 export const supplementaryQueryTypes: SupplementaryQueryType[] = [
   SupplementaryQueryType.LogsVolume,
@@ -130,7 +130,11 @@ export const getSupplementaryQueryProvider = (
     dsRequest.targets = targets;
 
     if (hasSupplementaryQuerySupport(datasource, type)) {
-      return datasource.getDataProvider(type, dsRequest);
+      const provider = datasource.getDataProvider(type, dsRequest);
+      if (provider === undefined || isObservable(provider)) {
+        return provider;
+      }
+      return type === SupplementaryQueryType.LogsVolume ? queryLogsVolume(datasource, provider) : queryLogsSample(datasource, provider);
     } else {
       return getSupplementaryQueryFallback(type, explorePanelData, targets, datasource.name);
     }
