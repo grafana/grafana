@@ -137,7 +137,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
 
-  const vizPanelMgr = new VizPanelManager(panelClone, dashboard.getRef());
+  const vizPanelMgr = new VizPanelManager(panelClone);
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({

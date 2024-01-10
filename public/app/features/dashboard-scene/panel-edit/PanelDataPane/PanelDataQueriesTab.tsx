@@ -155,12 +155,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
       />
 
       {dataObj instanceof ShareQueryDataProvider ? (
-        <DashboardQueryEditor
-          queries={model.getQueries()}
-          panelData={data}
-          onChange={model.onQueriesChange}
-          onRunQueries={model.onRunQueries}
-        />
+        <DashboardQueryEditor queries={model.getQueries()} panelData={data} onChange={model.onQueriesChange} />
       ) : (
         <QueryEditorRows
           data={data}

@@ -20,8 +20,6 @@ import {
   SceneComponentProps,
   sceneUtils,
   DeepPartial,
-  SceneObjectRef,
-  SceneObject,
   SceneQueryRunner,
   sceneGraph,
   SceneDataTransformer,
@@ -36,10 +34,9 @@ import { DASHBOARD_DATASOURCE_PLUGIN_ID, DashboardQuery } from 'app/plugins/data
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { ShareQueryDataProvider, findObjectInScene } from '../scene/ShareQueryDataProvider';
-import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../utils/utils';
+import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
 interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -61,35 +58,16 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   > = {};
 
   private _dataObjectSubscription: Unsubscribable | undefined;
-  private _dashboardRef: SceneObjectRef<DashboardScene>;
 
-  public constructor(panel: VizPanel, dashboardRef: SceneObjectRef<DashboardScene>) {
+  public constructor(panel: VizPanel) {
     super({ panel });
 
-    this._dashboardRef = dashboardRef;
-    /**
-     * If the panel uses a shared query, we clone the source runner and attach it as a data provider for the shared one.
-     * This way the source panel does not to be present in the edit scene hierarchy.
-     */
-    if (panel.state.$data instanceof ShareQueryDataProvider) {
-      const sharedProvider = panel.state.$data;
-      if (sharedProvider.state.query.panelId) {
-        const keyToFind = getVizPanelKeyForPanelId(sharedProvider.state.query.panelId);
-        const source = findObjectInScene(dashboardRef.resolve(), (scene: SceneObject) => scene.state.key === keyToFind);
-        if (source) {
-          sharedProvider.setState({
-            $data: source.state.$data!.clone(),
-          });
-        }
-      }
-    }
-
+    const dataProvider = this.state.panel.state.$data;
+    dataProvider?.addActivationHandler(() => this.setupDataObjectSubscription());
     this.addActivationHandler(() => this._onActivate());
   }
 
   private _onActivate() {
-    this.setupDataObjectSubscription();
-
     this.loadDataSource();
 
     return () => {
@@ -352,23 +330,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     const dataObj = this.state.panel.state.$data;
     const runner = this.queryRunner;
 
-    // Updating Dashboard query requires a special treatment as the SharedDataProvider in edit mode contains
-    // data provider that is a clone of the source panel's data provider.
     if (dataObj instanceof ShareQueryDataProvider && queries.length > 0) {
       const dashboardQuery = queries[0] as DashboardQuery;
       if (dashboardQuery.panelId) {
-        const keyToFind = getVizPanelKeyForPanelId(dashboardQuery.panelId);
-        const source = findObjectInScene(
-          this._dashboardRef.resolve(),
-          (scene: SceneObject) => scene.state.key === keyToFind
-        );
-
-        if (source) {
-          dataObj.setState({
-            $data: source.state.$data!.clone(),
-            query: dashboardQuery,
-          });
-        }
+        dataObj.setState({
+          query: dashboardQuery,
+        });
       }
     } else {
       runner.setState({ queries });
@@ -397,5 +364,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     return dataObj as SceneQueryRunner;
+  }
+
+  get panelData(): SceneDataProvider {
+    return this.state.panel.state.$data!;
   }
 }

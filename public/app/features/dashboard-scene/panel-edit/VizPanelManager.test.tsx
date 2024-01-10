@@ -9,13 +9,13 @@ import { InspectTab } from 'app/features/inspector/types';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
+import { findVizPanelByKey } from '../utils/utils';
 
+import { buildPanelEditScene } from './PanelEditor';
 import { VizPanelManager } from './VizPanelManager';
 import { panelWithQueriesOnly, panelWithTransformations, testDashboard } from './testfiles/testDashboard';
 
@@ -150,7 +150,6 @@ describe('VizPanelManager', () => {
     });
 
     it('Should clear custom options', () => {
-      const dashboardSceneMock = new DashboardScene({});
       const overrides = [
         {
           matcher: { id: 'matcherOne' },
@@ -171,7 +170,7 @@ describe('VizPanelManager', () => {
         },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel, dashboardSceneMock.getRef());
+      const vizPanelManager = new VizPanelManager(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
       expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toBe(overrides);
@@ -184,7 +183,6 @@ describe('VizPanelManager', () => {
     });
 
     it('Should restore cached options/fieldConfig if they exist', () => {
-      const dashboardSceneMock = new DashboardScene({});
       const vizPanel = new VizPanel({
         title: 'Panel A',
         key: 'panel-1',
@@ -196,9 +194,9 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel, dashboardSceneMock.getRef());
+      const vizPanelManager = new VizPanelManager(vizPanel);
 
-      vizPanelManager.changePluginType('timeseties');
+      vizPanelManager.changePluginType('timeseries');
       //@ts-ignore
       expect(vizPanelManager.state.panel.state.options['customOption']).toBeUndefined();
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toStrictEqual({});
@@ -242,6 +240,8 @@ describe('VizPanelManager', () => {
       it('should load new data source', async () => {
         const { vizPanelManager } = setupTest('panel-1');
         vizPanelManager.activate();
+        vizPanelManager.state.panel.state.$data?.activate();
+
         await Promise.resolve();
 
         const dataObj = vizPanelManager.queryRunner;
@@ -270,6 +270,7 @@ describe('VizPanelManager', () => {
         it('should create PanelTimeRange object', async () => {
           const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
+          vizPanelManager.state.panel.state.$data?.activate();
           await Promise.resolve();
 
           const panel = vizPanelManager.state.panel;
@@ -611,6 +612,7 @@ describe('VizPanelManager', () => {
         const { vizPanelManager } = setupTest('panel-1');
 
         vizPanelManager.activate();
+        vizPanelManager.state.panel.state.$data?.activate();
 
         vizPanelManager.changeQueries([
           {
@@ -640,14 +642,13 @@ describe('VizPanelManager', () => {
 
     describe('dashboard queries', () => {
       it('should update queries', () => {
-        const { vizPanelManager, scene } = setupTest('panel-3');
+        const { scene, panel } = setupTest('panel-3');
 
+        const panelEditScene = buildPanelEditScene(scene, panel);
+
+        const vizPanelManager = panelEditScene.state.panelRef.resolve();
         vizPanelManager.activate();
-
-        let sourcePanel = findVizPanelByKey(
-          scene,
-          getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
-        );
+        vizPanelManager.state.panel.state.$data?.activate();
 
         // Changing dashboard query to a panel with transformations
         vizPanelManager.changeQueries([
@@ -659,16 +660,14 @@ describe('VizPanelManager', () => {
             panelId: panelWithTransformations.id,
           },
         ]);
-        expect(vizPanelManager.queryRunner.parent).toBeInstanceOf(ShareQueryDataProvider);
-        expect((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId).toBe(
+        expect(vizPanelManager.panelData).toBeInstanceOf(ShareQueryDataProvider);
+        expect((vizPanelManager.panelData as ShareQueryDataProvider).state.query.panelId).toBe(
           panelWithTransformations.id
         );
-        expect(vizPanelManager.queryRunner.parent?.state.$data).toBeInstanceOf(SceneDataTransformer);
-        expect(vizPanelManager.queryRunner.parent?.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
-
-        sourcePanel = findVizPanelByKey(
-          scene,
-          getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
+        expect(vizPanelManager.panelData.state.$data).toBeInstanceOf(SceneDataTransformer);
+        expect(vizPanelManager.panelData.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
+        expect((vizPanelManager.panelData.state.$data?.state.$data as SceneQueryRunner).state.queries).toEqual(
+          panelWithTransformations.targets
         );
 
         // Changing dashboard query to a panel with queries only
@@ -682,19 +681,9 @@ describe('VizPanelManager', () => {
           },
         ]);
 
-        expect(vizPanelManager.queryRunner.parent).toBeInstanceOf(ShareQueryDataProvider);
-        expect((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId).toBe(
-          panelWithQueriesOnly.id
-        );
-
-        sourcePanel = findVizPanelByKey(
-          scene,
-          getVizPanelKeyForPanelId((vizPanelManager.queryRunner.parent as ShareQueryDataProvider).state.query.panelId!)
-        );
-
-        expect(vizPanelManager.queryRunner.state.queries).toEqual(
-          (sourcePanel!.state.$data as SceneQueryRunner)?.state.queries
-        );
+        expect(vizPanelManager.panelData).toBeInstanceOf(ShareQueryDataProvider);
+        expect((vizPanelManager.panelData as ShareQueryDataProvider).state.query.panelId).toBe(panelWithQueriesOnly.id);
+        expect(vizPanelManager.queryRunner.state.queries).toEqual(panelWithQueriesOnly.targets);
       });
     });
   });
@@ -702,14 +691,13 @@ describe('VizPanelManager', () => {
 
 const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard as any, meta: {} });
+  const panel = findVizPanelByKey(scene, panelId)!;
+
+  const vizPanelManager = new VizPanelManager(panel.clone());
 
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
 
-  const panel = findVizPanelByKey(scene, panelId)!;
-
-  const vizPanelManager = new VizPanelManager(panel.clone(), scene.getRef());
-
-  return { vizPanelManager, scene };
+  return { vizPanelManager, scene, panel };
 };
