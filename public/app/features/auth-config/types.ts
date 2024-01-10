@@ -57,6 +57,7 @@ export type SSOProviderSettingsBase = {
 
 // SSO data received from the API and sent to it
 export type SSOProvider = {
+  id: string;
   provider: string;
   settings: SSOProviderSettingsBase & {
     teamIds: string;

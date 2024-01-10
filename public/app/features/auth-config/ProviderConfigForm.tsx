@@ -44,7 +44,8 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     const requestData = dtoToData(data);
     try {
       await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, {
-        ...config,
+        id: config?.id,
+        provider: config?.provider,
         settings: { ...config?.settings, ...requestData },
       });
 
