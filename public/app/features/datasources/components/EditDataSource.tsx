@@ -11,7 +11,7 @@ import {
   DataSourceJsonData,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, getPluginComponentExtensions } from '@grafana/runtime';
+import { config, getDataSourceSrv, getPluginComponentExtensions } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
@@ -119,7 +119,9 @@ export function EditDataSourceView({
   const hasDataSource = dataSource.id > 0;
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
-
+  
+  const showBlockFormFields = dataSource.type === 'cloudwatch' && config.featureToggles.awsDatasourcesNewFormStyling;
+  
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     trackDsConfigClicked('save_and_test');
@@ -204,11 +206,13 @@ export function EditDataSourceView({
       {extensions.map((extension) => {
         const Component = extension.component as React.ComponentType<{
           context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
+          showBlockFormFields?: boolean;
         }>;
 
         return (
           <div key={extension.id}>
             <Component
+              showBlockFormFields={showBlockFormFields}
               context={{
                 dataSource: omit(dataSource, ['secureJsonData']),
                 dataSourceMeta: dataSourceMeta,
