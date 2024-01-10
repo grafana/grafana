@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -792,25 +791,49 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
-	body, err := io.ReadAll(c.Req.Body)
-	if err != nil {
-		return response.Error(500, "error reading bytes", err)
+
+	//if event is a challenge
+	ack, err := isChallengeEventPayload(c)
+	if ack != nil && err == nil {
+		return response.JSON(http.StatusOK, ack)
 	}
 
-	var eventPayload SlackEventPayloadBody
-
-	err = json.Unmarshal(body, &eventPayload)
-	if err != nil {
-		return response.Error(400, "error parsing body", err)
+	//if event payload
+	resp, err := isEventPayload(c)
+	if resp != nil && err == nil {
+		return response.JSON(http.StatusOK, resp)
 	}
 
-	challenge := eventPayload.Challenge
+	//if neither
+	return response.Error(400, "error parsing body", err)
+}
 
-	resp := &PostSlackAckBody{
+func isChallengeEventPayload(c *contextmodel.ReqContext) (*EventChallengeAck, error) {
+
+	var eventChallengePayload EventChallengePayload
+
+	if err := web.Bind(c.Req, &eventChallengePayload); err != nil {
+		return nil, err
+	}
+
+	challenge := eventChallengePayload.Challenge
+
+	ack := &EventChallengeAck{
 		Challenge: challenge,
 	}
 
-	return response.JSON(http.StatusOK, resp)
+	return ack, nil
+}
+
+func isEventPayload(c *contextmodel.ReqContext) (response.Response, error) {
+	var eventPayload EventPayload
+
+	if err := web.Bind(c.Req, &eventPayload); err != nil {
+		return nil, err
+	}
+
+	// return hs.DashboardService.generateDashboardImage(eventPayload)
+	return nil, nil
 }
 
 // swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
@@ -1259,12 +1282,53 @@ type DashboardVersionResponse struct {
 	Body *dashver.DashboardVersionMeta `json:"body"`
 }
 
-type SlackEventPayloadBody struct {
-	Token     string `json:"path"`
+type EventChallengePayload struct {
+	Token     string `json:"token"`
 	Challenge string `json:"challenge"`
 	Type      string `json:"type"`
 }
 
-type PostSlackAckBody struct {
+type EventChallengeAck struct {
 	Challenge string `json:"challenge"`
+}
+
+type EventPayload struct {
+	Token              string          `json:"token"`
+	TeamID             string          `json:"team_id"`
+	APIAppID           string          `json:"api_app_id"`
+	Event              Event           `json:"event"`
+	Type               string          `json:"type"`
+	EventID            string          `json:"event_id"`
+	EventTime          int64           `json:"event_time"`
+	Authorizations     []Authorization `json:"authorizations"`
+	IsExtSharedChannel bool            `json:"is_ext_shared_channel"`
+	EventContext       string          `json:"event_context"`
+}
+
+// Event represents the "event" field in the payload
+type Event struct {
+	Type            string `json:"type"`
+	User            string `json:"user"`
+	Channel         string `json:"channel"`
+	MessageTS       string `json:"message_ts"`
+	Links           []Link `json:"links"`
+	Source          string `json:"source"`
+	UnfurlID        string `json:"unfurl_id"`
+	IsBotUserMember bool   `json:"is_bot_user_member"`
+	EventTS         string `json:"event_ts"`
+}
+
+// Link represents the "links" field in the event
+type Link struct {
+	URL    string `json:"url"`
+	Domain string `json:"domain"`
+}
+
+// Authorization represents the "authorizations" field in the payload
+type Authorization struct {
+	EnterpriseID        interface{} `json:"enterprise_id"`
+	TeamID              string      `json:"team_id"`
+	UserID              string      `json:"user_id"`
+	IsBot               bool        `json:"is_bot"`
+	IsEnterpriseInstall bool        `json:"is_enterprise_install"`
 }
