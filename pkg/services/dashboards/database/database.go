@@ -827,8 +827,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 		if query.FolderUID != "" {
 			dashboard.FolderUID = query.FolderUID
 			mustCols = append(mustCols, "folder_uid")
-			// nolint:staticcheck
-		} else if query.FolderID != nil {
+		} else if query.FolderID != nil { // nolint:staticcheck
 			// nolint:staticcheck
 			dashboard.FolderID = *query.FolderID
 			mustCols = append(mustCols, "folder_id")
