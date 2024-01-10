@@ -17,9 +17,14 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.BaseDataQuery":      schema_pkg_apis_query_v0alpha1_BaseDataQuery(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DatasourceRef":      schema_pkg_apis_query_v0alpha1_DatasourceRef(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.ExpressionInfo":     schema_pkg_apis_query_v0alpha1_ExpressionInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.ExpressionInfoList": schema_pkg_apis_query_v0alpha1_ExpressionInfoList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.Unstructured":       schema_pkg_apis_query_v0alpha1_Unstructured(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":   schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryRequest":       schema_pkg_apis_query_v0alpha1_QueryRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResult":        schema_pkg_apis_query_v0alpha1_QueryResult(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResults":       schema_pkg_apis_query_v0alpha1_QueryResults(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                         schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                     schema_pkg_apis_meta_v1_APIGroupList(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                      schema_pkg_apis_meta_v1_APIResource(ref),
@@ -72,6 +77,93 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/apimachinery/pkg/runtime.TypeMeta":                              schema_k8sio_apimachinery_pkg_runtime_TypeMeta(ref),
 		"k8s.io/apimachinery/pkg/runtime.Unknown":                               schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
 		"k8s.io/apimachinery/pkg/version.Info":                                  schema_k8sio_apimachinery_pkg_version_Info(ref),
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_BaseDataQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RefID is the unique identifier of the query, set by the frontend call.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DatasourceRef"),
+						},
+					},
+					"datasourceId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated -- use datasource ref instead",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxDataPoints is the maximum number of datapoints that should be returned from a time series query.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"intervalMs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval is the suggested duration between time points in a time series query.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+				},
+				Required: []string{"refId", "datasource"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DatasourceRef"},
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_DatasourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource plugin type",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Datasource UID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "uid"},
+			},
+		},
 	}
 }
 
@@ -172,32 +264,193 @@ func schema_pkg_apis_query_v0alpha1_ExpressionInfoList(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_Unstructured(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Unstructured allows objects that do not have Golang structs registered to be manipulated generically.",
+				Description: "This will parse",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"Object": {
+					"refId": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Object is a JSON compatible map with string, float, int, bool, []interface{}, or map[string]interface{} children.",
+							Description: "RefID is the unique identifier of the query, set by the frontend call.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DatasourceRef"),
+						},
+					},
+					"datasourceId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated -- use datasource ref instead",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxDataPoints is the maximum number of datapoints that should be returned from a time series query.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"intervalMs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval is the suggested duration between time points in a time series query.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+				},
+				Required: []string{"refId", "datasource"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DatasourceRef"},
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_QueryRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Copied from: https://github.com/grafana/grafana/blob/main/pkg/api/dtos/models.go#L62",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Description: "From Start time in epoch timestamps in milliseconds or relative using Grafana time units. required: true example: now-1h",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Description: "To End time in epoch timestamps in milliseconds or relative using Grafana time units. required: true example: now",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"queries": {
+						SchemaProps: spec.SchemaProps{
+							Description: "queries.refId – Specifies an identifier of the query. Is optional and default to “A”. queries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId. queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100. queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000. required: true example: [ { \"refId\": \"A\", \"intervalMs\": 86400000, \"maxDataPoints\": 1092, \"datasource\":{ \"uid\":\"PD8C576611E62080A\" }, \"rawSql\": \"SELECT 1 as valueOne, 2 as valueTwo\", \"format\": \"table\" } ]",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"),
+									},
+								},
+							},
+						},
+					},
+					"debug": {
+						SchemaProps: spec.SchemaProps{
+							Description: "required: false",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"from", "to", "queries"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"},
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_QueryResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Result for a single query",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"frames": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+				Required: []string{"frames"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_QueryResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"results": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The response data",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResult"),
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"Object"},
+				Required: []string{"results"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResult"},
 	}
 }
 

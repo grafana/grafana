@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type subQueryREST struct {
@@ -20,11 +22,10 @@ type subQueryREST struct {
 var _ = rest.Connecter(&subQueryREST{})
 
 func (r *subQueryREST) New() runtime.Object {
-	return &metav1.Status{}
+	return &v0alpha1.QueryResults{}
 }
 
-func (r *subQueryREST) Destroy() {
-}
+func (r *subQueryREST) Destroy() {}
 
 func (r *subQueryREST) ConnectMethods() []string {
 	return []string{"POST", "GET"}
@@ -67,7 +68,36 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, erro
 	if err != nil {
 		return nil, err
 	}
-	return readQueries(body)
+
+	// Convert query request to backend query request
+	// TODO... we should likely accept []Queries directly
+	qr := v0alpha1.QueryRequest{}
+	err = json.Unmarshal(body, &qr)
+	if err != nil {
+		return nil, err
+	}
+	tr := legacydata.NewDataTimeRange(qr.From, qr.To)
+	backendTr := backend.TimeRange{
+		From: tr.MustGetFrom(),
+		To:   tr.MustGetTo(),
+	}
+
+	bdq := []backend.DataQuery{}
+	for _, q := range qr.Queries {
+		dq := backend.DataQuery{
+			RefID:         q.RefID,
+			QueryType:     q.QueryType,
+			MaxDataPoints: q.MaxDataPoints,
+			Interval:      time.Duration(q.IntervalMS),
+			TimeRange:     backendTr,
+		}
+		dq.JSON, err = json.Marshal(q)
+		if err != nil {
+			return nil, err
+		}
+		bdq = append(bdq, dq)
+	}
+	return bdq, err
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -89,9 +119,11 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			//  Headers: // from context
 		})
 		if err != nil {
+			responder.Error(err)
 			return
 		}
 
+		// TODO: get format (maybe protobuf!!!)
 		jsonRsp, err := json.Marshal(queryResponse)
 		if err != nil {
 			responder.Error(err)

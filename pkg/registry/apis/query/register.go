@@ -1,6 +1,8 @@
 package query
 
 import (
+	"encoding/json"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,6 +13,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -72,6 +75,28 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 // Register additional routes with the server
 func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
+	querySchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryRequest"].Schema
+
+	var exampleQuery any
+	json.Unmarshal([]byte(`{
+		"queries": [
+		  {
+			"refId": "A",
+			"scenarioId": "random_walk",
+			"seriesCount": 1,
+			"datasource": {
+			  "type": "grafana-testdata-datasource",
+			  "uid": "PD8C576611E62080A"
+			},
+			"intervalMs": 60000,
+			"maxDataPoints": 462
+		  }
+		],
+		"from": "1704893381544",
+		"to": "1704914981544"
+	  }`), &exampleQuery)
+
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{},
 		Namespace: []grafanaapiserver.APIRouteHandler{
@@ -80,9 +105,51 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Summary:     "query across multiple datasources with expressions",
-							Description: "matches the legacy /ds/query endpoint",
-							Parameters:  []*spec3.Parameter{},
+							Tags:        []string{"query"},
+							Description: "query across multiple datasources with expressions.  This api matches the legacy /ds/query endpoint",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										Description: "object name and auth scope, such as for teams and projects",
+										In:          "path",
+										Required:    true,
+										Schema:      spec.StringProperty(),
+										Example:     "default",
+									},
+								},
+							},
+							RequestBody: &spec3.RequestBody{
+								RequestBodyProps: spec3.RequestBodyProps{
+									Required:    true,
+									Description: "the query array",
+									Content: map[string]*spec3.MediaType{
+										"application/json": {
+											MediaTypeProps: spec3.MediaTypeProps{
+												Schema: querySchema.WithExample(exampleQuery),
+											},
+										},
+									},
+								},
+							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "the query results",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: spec.MapProperty(spec.StringProperty()),
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},

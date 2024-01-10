@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -110,7 +111,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceConnectionList{},
 		&v0alpha1.HealthCheckResult{},
 		&unstructured.Unstructured{},
-		// Added for subresource stubs
+		// Query handler
+		&query.QueryResults{},
 		&metav1.Status{},
 	)
 }
