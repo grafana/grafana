@@ -186,7 +186,7 @@ func (ng *AlertNG) init() error {
 		case remoteSecondary:
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
-			m.Info.WithLabelValues(remote.ModeSecondary).Set(1)
+			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
 
 			// This function will be used by the MOA to create new Alertmanagers.
 			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
