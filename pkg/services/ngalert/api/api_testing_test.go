@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -264,6 +265,78 @@ func TestRouteEvalQueries(t *testing.T) {
 			require.Equal(t, http.StatusOK, response.Status())
 
 			evaluator.AssertCalled(t, "EvaluateRaw", mock.Anything, currentTime)
+		})
+	})
+
+	t.Run("when query is optimizable", func(t *testing.T) {
+		rc := &contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+		t.Run("should return warning notice on optimized queries", func(t *testing.T) {
+			queries := []models.AlertQuery{
+				models.CreatePrometheusQuery("A", "1", 1000, 43200, false, "some-ds"),
+				models.CreatePrometheusQuery("B", "1", 1000, 43200, false, "some-ds"),
+				models.CreatePrometheusQuery("C", "1", 1000, 43200, false, "some-ds"), // Not optimizable.
+				models.CreateReduceExpression("D", "A", "last"),
+				models.CreateReduceExpression("E", "B", "last"),
+			}
+
+			currentTime := time.Now()
+
+			ac := acMock.New().WithPermissions([]ac.Permission{
+				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(queries[0].DatasourceUID)},
+			})
+
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
+				{UID: queries[0].DatasourceUID},
+			}}
+
+			evaluator := &eval_mocks.ConditionEvaluatorMock{}
+			createEmptyFrameResponse := func(refId string) backend.DataResponse {
+				frame := data.NewFrame("")
+				frame.RefID = refId
+				frame.SetMeta(&data.FrameMeta{})
+				return backend.DataResponse{
+					Frames: []*data.Frame{frame},
+					Error:  nil,
+				}
+			}
+			result := &backend.QueryDataResponse{
+				Responses: map[string]backend.DataResponse{
+					"A": createEmptyFrameResponse("A"),
+					"B": createEmptyFrameResponse("B"),
+					"C": createEmptyFrameResponse("C"),
+				},
+			}
+			evaluator.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(result, nil)
+
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
+
+			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
+				Data: ApiAlertQueriesFromAlertQueries(queries),
+				Now:  currentTime,
+			})
+
+			require.Equal(t, http.StatusOK, response.Status())
+
+			evaluator.AssertCalled(t, "EvaluateRaw", mock.Anything, currentTime)
+
+			require.Equal(t, []data.Notice{{
+				Severity: data.NoticeSeverityWarning,
+				Text:     "Query optimized from Range to Instant type; all uses exclusively require the last datapoint. Consider modifying your query to Instant type to ensure accuracy.",
+			}}, result.Responses["A"].Frames[0].Meta.Notices)
+
+			require.Equal(t, []data.Notice{{
+				Severity: data.NoticeSeverityWarning,
+				Text:     "Query optimized from Range to Instant type; all uses exclusively require the last datapoint. Consider modifying your query to Instant type to ensure accuracy.",
+			}}, result.Responses["B"].Frames[0].Meta.Notices)
+
+			require.Equal(t, 0, len(result.Responses["C"].Frames[0].Meta.Notices))
 		})
 	})
 }
