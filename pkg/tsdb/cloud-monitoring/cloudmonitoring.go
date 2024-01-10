@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
@@ -335,7 +334,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	queries, err := s.buildQueryExecutors(nil, req)
+	queries, err := s.buildQueryExecutors(req)
 	if err != nil {
 		return nil, err
 	}
@@ -579,7 +578,7 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 	return dsInfo.defaultProject, nil
 }
 
-func unmarshalResponse(logger log.Logger, res *http.Response) (cloudMonitoringResponse, error) {
+func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
@@ -587,19 +586,19 @@ func unmarshalResponse(logger log.Logger, res *http.Response) (cloudMonitoringRe
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			backend.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode/100 != 2 {
-		logger.Error("Request failed", "status", res.Status, "body", string(body))
+		backend.Logger.Error("Request failed", "status", res.Status, "body", string(body))
 		return cloudMonitoringResponse{}, fmt.Errorf("query failed: %s", string(body))
 	}
 
 	var data cloudMonitoringResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body))
+		backend.Logger.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body))
 		return cloudMonitoringResponse{}, fmt.Errorf("failed to unmarshal query response: %w", err)
 	}
 

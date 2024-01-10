@@ -25,13 +25,13 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 		dr.Error = err
 		return dr, promResponse{}, "", nil
 	}
-	r, err := createRequest(ctx, promQLQ.logger, &dsInfo, path.Join("/v1/projects", projectName, "location/global/prometheus/api/v1/query_range"), nil)
+	r, err := createRequest(ctx, &dsInfo, path.Join("/v1/projects", projectName, "location/global/prometheus/api/v1/query_range"), nil)
 	if err != nil {
 		dr.Error = err
 		return dr, promResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, nil, req, dsInfo, r, "")
+	span := traceReq(ctx, req, dsInfo, r, "")
 	defer span.End()
 
 	requestBody := map[string]any{

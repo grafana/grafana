@@ -36,7 +36,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, 
 	requestBody := map[string]any{
 		"query": timeSeriesQuery.parameters.Query,
 	}
-	return runTimeSeriesRequest(ctx, timeSeriesQuery.logger, req, s, dsInfo, nil, timeSeriesQuery.parameters.ProjectName, nil, requestBody)
+	return runTimeSeriesRequest(ctx, req, s, dsInfo, nil, timeSeriesQuery.parameters.ProjectName, nil, requestBody)
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
@@ -102,7 +102,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 		timeSeriesQuery.timeRange.To.Format(time.RFC3339Nano),
 	)
 	if err != nil {
-		slog.Error(
+		backend.Logger.Error(
 			"Failed to generate deep link: unable to parse metrics explorer URL",
 			"ProjectName", timeSeriesQuery.parameters.Query,
 			"error", err,

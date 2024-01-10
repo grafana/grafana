@@ -11,7 +11,7 @@ import (
 
 func (sloQ *cloudMonitoringSLO) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, any, string, error) {
-	return runTimeSeriesRequest(ctx, sloQ.logger, req, s, dsInfo, nil, sloQ.parameters.ProjectName, sloQ.params, nil)
+	return runTimeSeriesRequest(ctx, req, s, dsInfo, nil, sloQ.parameters.ProjectName, sloQ.params, nil)
 }
 
 func (sloQ *cloudMonitoringSLO) parseResponse(queryRes *backend.DataResponse,

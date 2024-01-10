@@ -16,7 +16,7 @@ import (
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, any, string, error) {
-	return runTimeSeriesRequest(ctx, timeSeriesFilter.logger, req, s, dsInfo, nil, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
+	return runTimeSeriesRequest(ctx, req, s, dsInfo, nil, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
 }
 
 func parseTimeSeriesResponse(queryRes *backend.DataResponse,
@@ -88,7 +88,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
 		timeSeriesFilter.params.Get("interval.endTime"),
 	)
 	if err != nil {
-		slog.Error(
+		backend.Logger.Error(
 			"Failed to generate deep link: unable to parse metrics explorer URL",
 			"ProjectName", timeSeriesFilter.parameters.ProjectName,
 			"error", err,
