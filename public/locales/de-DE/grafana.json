@@ -16,6 +16,7 @@
     },
     "permissions": {
       "add-label": "Berechtigung hinzufügen",
+      "lbac-warning": "",
       "no-permissions": "Keine Berechtigungen vorhanden",
       "permissions-change-warning": "Dadurch werden die Berechtigungen für diesen Ordner und alle seine Unterordner geändert. Insgesamt betrifft dies Folgendes:",
       "role": "Rolle",

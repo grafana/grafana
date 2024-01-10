@@ -16,6 +16,7 @@
     },
     "permissions": {
       "add-label": "Ajouter une autorisation",
+      "lbac-warning": "",
       "no-permissions": "Il n'y a aucune autorisation",
       "permissions-change-warning": "Cette action modifiera les autorisations pour ce dossier et tous ses descendants. Au total, elle affectera :",
       "role": "Rôle",

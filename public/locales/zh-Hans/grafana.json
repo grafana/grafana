@@ -16,6 +16,7 @@
     },
     "permissions": {
       "add-label": "添加权限",
+      "lbac-warning": "",
       "no-permissions": "没有任何权限",
       "permissions-change-warning": "这将更改此文件夹及其所有子文件夹的权限。总体而言，这将影响：",
       "role": "角色",
