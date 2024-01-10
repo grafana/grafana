@@ -1,8 +1,8 @@
+import { ReactElement } from 'react';
 import { Validate } from 'react-hook-form';
 
 import { IconName, SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
-
 export interface AuthProviderInfo {
   id: string;
   type: string;
@@ -103,7 +103,7 @@ export interface SettingsError {
 export type FieldData = {
   label: string;
   type: string;
-  description?: string;
+  description?: string | ReactElement;
   validation?: {
     required?: boolean;
     message?: string;

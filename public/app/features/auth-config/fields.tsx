@@ -1,3 +1,7 @@
+import React from 'react';
+
+import { TextLink } from '@grafana/ui';
+
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 
@@ -185,9 +189,16 @@ export const fieldMap: Record<string, FieldData> = {
   apiUrl: {
     label: 'API Url',
     type: 'text',
-    description:
-      'The user information endpoint of your OAuth2 provider. Information returned \n' +
-      'by this endpoint must be compatible with OpenID UserInfo.',
+    description: (
+      <>
+        The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible
+        with{' '}
+        <TextLink href={'https://connect2id.com/products/server/docs/api/userinfo'} external variant={'bodySmall'}>
+          OpenID UserInfo
+        </TextLink>
+        .
+      </>
+    ),
     validation: {
       required: false,
     },
@@ -274,7 +285,15 @@ export const fieldMap: Record<string, FieldData> = {
   },
   usePkce: {
     label: 'Use Pkce',
-    description: 'If enabled, it will automatically sync the Grafana server administrator role',
+    description: (
+      <>
+        If enabled, Grafana will use{' '}
+        <TextLink external variant={'bodySmall'} href={'https://datatracker.ietf.org/doc/html/rfc7636'}>
+          Proof Key for Code Exchange (PKCE)
+        </TextLink>{' '}
+        with the OAuth2 Authorization Code Grant.
+      </>
+    ),
     type: 'checkbox',
   },
   useRefreshToken: {
