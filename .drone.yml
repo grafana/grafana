@@ -4442,6 +4442,72 @@ get:
 kind: secret
 name: gcp_grafanauploads
 ---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+  - dockerconfigjson
+kind: pipeline
+name: custom-rpm
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- environment:
+    ALPINE_BASE: alpine:3.18.4
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GO_VERSION: 1.21.5
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    UBUNTU_BASE: ubuntu:22.04
+  commands:
+  - ##### required parameters
+  - if [ -z ${DRONE_GRAFANA_BRANCH} ]; then echo 'missing DRONE_GRAFANA_BRANCH'; false; fi
+  - if [ -z ${DRONE_ENTERPRISE_BRANCH} ]; then echo 'missing DRONE_ENTERPRISE_BRANCH'; false; fi
+  - if [ -z ${DRONE_VERSION} ]; then echo 'missing DRONE_VERSION'; false; fi
+  - if [ -z ${DRONE_GCLOUD_FOLDER} ]; then echo 'missing DRONE_GCLOUD_FOLDER'; false; fi
+  - ##### build RPM from provided parameters
+  - /src/grafana-build artifacts -a rpm:enterprise:linux/amd64/dynamic --grafana-repo=https://github.com/grafana/grafana-security-mirror.git --grafana-ref=${DRONE_GRAFANA_BRANCH} --enterprise-ref=${DRONE_ENTERPRISE_BRANCH} --version=${DRONE_VERSION}
+  - ##### authenticate to gcloud
+  - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - ##### copy .rpm file from dist
+  - dist -type f | awk -F/ '{print $NF}' |  grep -i rpm$ | xargs -I{artifact} gcloud storage cp ./dist/{artifact}.rpm gs://grafana-downloads/${DRONE_GCLOUD_FOLDER}/
+  image: grafana/grafana-build:main
+  name: custom-rpm-build
+  pull: always
+  volumes:
+    - name: docker
+      path: /var/run/docker.sock
+  depends_on:
+   - compile-build-cmd
+trigger:
+  event:
+    - promote
+  target:
+    - custom-rpm
+type: docker
+volumes:
+  - host:
+      path: /var/run/docker.sock
+    name: docker
+---
 get:
   name: credentials_base64
   path: infra/data/ci/grafana-release-eng/grafanauploads
