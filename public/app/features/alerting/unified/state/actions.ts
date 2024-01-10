@@ -575,7 +575,7 @@ export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceA
         (async () => {
           await createOrUpdateSilence(alertManagerSourceName, payload);
           if (exitOnSave) {
-            locationService.push('/alerting/silences');
+            locationService.push(makeAMLink('/alerting/silences', alertManagerSourceName));
           }
         })()
       ),

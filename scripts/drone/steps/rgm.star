@@ -53,6 +53,8 @@ def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = 
             "-a docker:grafana:linux/amd64:ubuntu " +
             "-a docker:grafana:linux/arm64 " +
             "-a docker:grafana:linux/arm64:ubuntu " +
+            "-a docker:grafana:linux/arm/v7 " +
+            "-a docker:grafana:linux/arm/v7:ubuntu " +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
             "--ubuntu-base={} ".format(ubuntu) +

@@ -9,6 +9,7 @@ import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { percentChangeString } from './PercentChange';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -102,9 +103,75 @@ export abstract class BigValueLayout {
     return styles;
   }
 
+  getPercentChangeStyles(percentChange: number): PercentChangeStyles {
+    const VALUE_TO_PERCENT_CHANGE_RATIO = 2.5;
+    const valueContainerStyles = this.getValueAndTitleContainerStyles();
+    const percentFontSize = Math.max(this.valueFontSize / VALUE_TO_PERCENT_CHANGE_RATIO, 12);
+    let iconSize = Math.max(this.valueFontSize / 3, 10);
+
+    const color =
+      percentChange > 0
+        ? this.props.theme.visualization.getColorByName('green')
+        : this.props.theme.visualization.getColorByName('red');
+
+    const containerStyles: CSSProperties = {
+      fontSize: percentFontSize,
+      fontWeight: VALUE_FONT_WEIGHT,
+      lineHeight: LINE_HEIGHT,
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      gap: Math.max(percentFontSize / 3, 4),
+      zIndex: 1,
+      color,
+    };
+
+    if (this.justifyCenter) {
+      containerStyles.textAlign = 'center';
+    }
+
+    if (valueContainerStyles.flexDirection === 'column' && percentFontSize > 12) {
+      containerStyles.marginTop = -(percentFontSize / 4);
+    }
+
+    if (valueContainerStyles.flexDirection === 'row') {
+      containerStyles.alignItems = 'baseline';
+
+      // Center the percent change vertically relative to the value
+      // This approach seems to work the best for all edge cases
+      // Note: the fixed min font size causes this to be off for a few edge cases
+      containerStyles.lineHeight = LINE_HEIGHT * VALUE_TO_PERCENT_CHANGE_RATIO;
+    }
+
+    switch (this.props.colorMode) {
+      case BigValueColorMode.Background:
+      case BigValueColorMode.BackgroundSolid:
+        containerStyles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
+        break;
+    }
+
+    if (this.props.textMode === BigValueTextMode.None) {
+      containerStyles.fontSize = calculateFontSize(
+        percentChangeString(percentChange),
+        this.maxTextWidth * 0.8,
+        this.maxTextHeight * 0.8,
+        LINE_HEIGHT,
+        undefined,
+        VALUE_FONT_WEIGHT
+      );
+      iconSize = containerStyles.fontSize * 0.8;
+    }
+
+    return {
+      containerStyles,
+      iconSize: iconSize,
+    };
+  }
+
   getValueAndTitleContainerStyles() {
     const styles: CSSProperties = {
       display: 'flex',
+      flexWrap: 'wrap',
     };
 
     if (this.justifyCenter) {
@@ -118,12 +185,12 @@ export abstract class BigValueLayout {
   }
 
   getPanelStyles(): CSSProperties {
-    const { width, height, theme, colorMode } = this.props;
+    const { width, height, theme, colorMode, textMode } = this.props;
 
     const panelStyles: CSSProperties = {
       width: `${width}px`,
       height: `${height}px`,
-      padding: `${this.panelPadding}px`,
+      padding: `${textMode === BigValueTextMode.None ? 2 : this.panelPadding}px`,
       borderRadius: theme.shape.radius.default,
       position: 'relative',
       display: 'flex',
@@ -524,4 +591,9 @@ function getTextValues(props: Props): BigValueTextValues {
         valueToAlignTo,
       };
   }
+}
+
+export interface PercentChangeStyles {
+  containerStyles: CSSProperties;
+  iconSize: number;
 }

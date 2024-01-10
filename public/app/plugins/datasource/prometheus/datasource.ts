@@ -883,9 +883,14 @@ export class PrometheusDatasource
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     const variables = cloneDeep(scopedVars);
 
-    // We want to interpolate these variables on backend
-    delete variables.__interval;
-    delete variables.__interval_ms;
+    // We want to interpolate these variables on backend.
+    // The pre-calculated values are replaced withe the variable strings.
+    variables.__interval = {
+      value: '$__interval',
+    };
+    variables.__interval_ms = {
+      value: '$__interval_ms',
+    };
 
     // interpolate expression
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);

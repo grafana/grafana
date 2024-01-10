@@ -9,48 +9,50 @@ SKIP_PACKAGES=("grafana-eslint-rules" "grafana-plugin-configs")
 # Loop through the packages
 while IFS=" " read -r -a package; do
 
-    # shellcheck disable=SC2128
-    PACKAGE_PATH=$(basename "$package")
+  # shellcheck disable=SC2128
+  PACKAGE_PATH=$(basename "$package")
 
-    # Calculate current and previous package paths / names
-    PREV="./base/$PACKAGE_PATH"
-    CURRENT="./pr/$PACKAGE_PATH"
+  # Calculate current and previous package paths / names
+  PREV="./base/$PACKAGE_PATH"
+  CURRENT="./pr/$PACKAGE_PATH"
 
-    # Temporarily skipping these packages as they don't have any exposed static typing
-    if [[ ${SKIP_PACKAGES[@]} =~ "$PACKAGE_PATH" ]]; then
-        continue
-    fi
+  # Temporarily skipping these packages as they don't have any exposed static typing
+  if [[ ${SKIP_PACKAGES[@]} =~ "$PACKAGE_PATH" ]]; then
+    continue
+  fi
 
-    # Extract the npm package tarballs into separate directories e.g. ./base/@grafana-data.tgz -> ./base/grafana-data/
-    mkdir "$PREV"
-    tar -xf "./base/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$PREV"
-    mkdir "$CURRENT"
-    tar -xf "./pr/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$CURRENT"
+  # Extract the npm package tarballs into separate directories e.g. ./base/@grafana-data.tgz -> ./base/grafana-data/
+  mkdir "$PREV"
+  tar -xf "./base/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$PREV"
+  mkdir "$CURRENT"
+  tar -xf "./pr/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$CURRENT"
 
-    # Run the comparison and record the exit code
-    echo ""
-    echo ""
-    echo "${PACKAGE_PATH}"
-    echo "================================================="
-    npm exec -- @grafana/levitate compare --prev "$PREV" --current "$CURRENT"
+  # Run the comparison and record the exit code
+  echo ""
+  echo ""
+  echo "${PACKAGE_PATH}"
+  echo "================================================="
+  npm exec -- @grafana/levitate compare --prev "$PREV" --current "$CURRENT" --json >data.json
 
-    # Check if the comparison returned with a non-zero exit code
-    # Record the output, maybe with some additional information
-    STATUS=$?
+  # Check if the comparison returned with a non-zero exit code
+  # Record the output, maybe with some additional information
+  STATUS=$?
+  CURRENT_REPORT=$(node ./scripts/levitate-parse-json-report.js)
+  # Final exit code
+  # (non-zero if any of the packages failed the checks)
+  if [ $STATUS -gt 0 ]; then
+    EXIT_CODE=1
+    GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
+    GITHUB_LEVITATE_MARKDOWN+="<h3>${PACKAGE_PATH}</h3>${CURRENT_REPORT}<br>"
+  fi
 
-    # Final exit code
-    # (non-zero if any of the packages failed the checks)
-    if [ $STATUS -gt 0 ]
-    then
-        EXIT_CODE=1
-        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
-    fi
-
-done <<< "$PACKAGES"
+done <<<"$PACKAGES"
 
 # "Export" the message to an environment variable that can be used across Github Actions steps
-echo "is_breaking=$EXIT_CODE" >> "$GITHUB_OUTPUT"
-echo "message=$GITHUB_MESSAGE" >> "$GITHUB_OUTPUT"
+echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
+echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
+mkdir -p ./levitate
+echo $GITHUB_LEVITATE_MARKDOWN >./levitate/levitate.md
 
 # We will exit the workflow accordingly at another step
 exit 0

@@ -64,8 +64,8 @@ func (hs *HTTPServer) AdminGetStats(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
-	thirtyDays := 30 * 24 * time.Hour
-	devicesCount, err := hs.anonService.CountDevices(c.Req.Context(), time.Now().Add(-thirtyDays), time.Now().Add(time.Minute))
+	anonymousDeviceExpiration := 30 * 24 * time.Hour
+	devicesCount, err := hs.anonService.CountDevices(c.Req.Context(), time.Now().Add(-anonymousDeviceExpiration), time.Now().Add(time.Minute))
 	if err != nil {
 		return response.Error(500, "Failed to get anon stats from database", err)
 	}

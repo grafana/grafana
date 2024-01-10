@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -24,7 +25,7 @@ type APIGroupBuilder interface {
 	// Build the group+version behavior
 	GetAPIGroupInfo(
 		scheme *runtime.Scheme,
-		codecs serializer.CodecFactory, // pointer?
+		codecs serializer.CodecFactory,
 		optsGetter generic.RESTOptionsGetter,
 	) (*genericapiserver.APIGroupInfo, error)
 
@@ -33,6 +34,11 @@ type APIGroupBuilder interface {
 
 	// Get the API routes for each version
 	GetAPIRoutes() *APIRoutes
+
+	// Optionally add an authorization hook
+	// Standard namespace checking will happen before this is called, specifically
+	// the namespace must matches an org|stack that the user belongs to
+	GetAuthorizer() authorizer.Authorizer
 }
 
 // This is used to implement dynamic sub-resources like pods/x/logs

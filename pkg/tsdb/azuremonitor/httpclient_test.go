@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,9 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 		},
 	}
 
-	cfg := &setting.Cfg{}
+	azureSettings := &azsettings.AzureSettings{
+		Cloud: azsettings.AzurePublic,
+	}
 	provider := &fakeHttpClientProvider{}
 
 	t.Run("should have Azure middleware when scopes provided", func(t *testing.T) {
@@ -40,7 +42,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{"https://management.azure.com/.default"},
 		}
 
-		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, azureSettings, provider)
 		require.NoError(t, err)
 
 		require.NotNil(t, provider.opts)
@@ -53,7 +55,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{},
 		}
 
-		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, azureSettings, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
@@ -74,7 +76,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			"GrafanaHeader": "GrafanaValue",
 			"AzureHeader":   "AzureValue",
 		}
-		_, err := newHTTPClient(context.Background(), route, model, settings, cfg, provider)
+		_, err := newHTTPClient(context.Background(), route, model, settings, azureSettings, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)

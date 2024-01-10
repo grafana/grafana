@@ -172,7 +172,11 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     return query ? ds.getLogRowContext(row, options, query) : Promise.resolve([]);
   };
 
-  getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
+  getLogRowContextQuery = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters = true
+  ): Promise<DataQuery | null> => {
     const { logsQueries } = this.props;
 
     if (!row.dataFrame.refId || !this.state.dsInstances[row.dataFrame.refId]) {
@@ -185,7 +189,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     }
 
     const query = this.getQuery(logsQueries, row, ds);
-    return query && ds.getLogRowContextQuery ? ds.getLogRowContextQuery(row, options, query) : Promise.resolve(null);
+    return query && ds.getLogRowContextQuery
+      ? ds.getLogRowContextQuery(row, options, query, cacheFilters)
+      : Promise.resolve(null);
   };
 
   getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
