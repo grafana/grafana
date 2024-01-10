@@ -31,7 +31,6 @@ import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/p
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
@@ -311,14 +310,6 @@ export const HeatmapPanel = ({
               </VizTooltipContainer>
             )}
           </Portal>
-          {data.annotations && (
-            <AnnotationsPlugin
-              annotations={data.annotations}
-              config={builder}
-              timeZone={timeZone}
-              disableCanvasRendering={true}
-            />
-          )}
         </>
       )}
     </>
