@@ -153,3 +153,4 @@ alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-1
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,false,true
 alertingPreviewUpgrade,experimental,@grafana/alerting-squad,2024-01-03,false,false,true,false
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,2024-01-09,false,false,true,false
+cloudRBACRoles,experimental,@grafana/identity-access-team,2024-01-10,false,false,true,false
