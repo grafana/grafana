@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 // MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
@@ -26,9 +28,10 @@ type MimirClient interface {
 }
 
 type Mimir struct {
+	client   client.Requester
 	endpoint *url.URL
-	client   http.Client
 	logger   log.Logger
+	metrics  *metrics.RemoteAlertmanager
 }
 
 type Config struct {
@@ -60,21 +63,22 @@ func (e *errorResponse) Error() string {
 	return e.Error2
 }
 
-func New(cfg *Config) (*Mimir, error) {
+func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
 		Next:     http.DefaultTransport,
 	}
 
-	c := http.Client{
+	c := &http.Client{
 		Transport: rt,
 	}
 
 	return &Mimir{
 		endpoint: cfg.URL,
-		client:   c,
+		client:   client.NewTimedClient(c, metrics.RequestLatency),
 		logger:   cfg.Logger,
+		metrics:  metrics,
 	}, nil
 }
 

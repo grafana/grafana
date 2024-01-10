@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -503,7 +504,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 }
 
-func createTestLokiBackend(req Requester, met *metrics.Historian) *RemoteLokiBackend {
+func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL:   url,

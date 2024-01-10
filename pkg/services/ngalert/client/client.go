@@ -1,4 +1,4 @@
-package historian
+package client
 
 import (
 	"context"
@@ -37,6 +37,11 @@ func NewTimedClient(client Requester, collector instrument.Collector) *TimedClie
 // Do executes the request.
 func (c TimedClient) Do(r *http.Request) (*http.Response, error) {
 	return TimeRequest(r.Context(), c.operationName(r), c.collector, c.client, r)
+}
+
+// RoundTrip implements the RoundTripper interface.
+func (c TimedClient) RoundTrip(r *http.Request) (*http.Response, error) {
+	return c.Do(r)
 }
 
 func (c TimedClient) operationName(r *http.Request) string {
