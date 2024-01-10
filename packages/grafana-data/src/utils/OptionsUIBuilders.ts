@@ -1,3 +1,5 @@
+import { set } from 'lodash';
+
 import {
   numberOverrideProcessor,
   selectOverrideProcessor,
@@ -185,7 +187,22 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
   constructor(public cfg: NestedPanelOptions<TSub>) {
     this.path = cfg.path;
     this.category = cfg.category;
-    this.defaultValue = cfg.defaultValue;
+    this.defaultValue = this.getDefaultValue(cfg);
+  }
+
+  private getDefaultValue(cfg: NestedPanelOptions<TSub>) {
+    let result: any = cfg.defaultValue || {};
+
+    const builder = new PanelOptionsEditorBuilder<any>();
+    cfg.build(builder, { data: [] })
+
+    for (const item of builder.getItems()) {
+      if (item.defaultValue != null) {
+        set(result, item.path, item.defaultValue);
+      }
+    }
+
+    return result;
   }
 
   getBuilder = () => {
