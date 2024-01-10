@@ -57,8 +57,11 @@ const ArgQueryEditor = ({
     datasource
       .getSubscriptions()
       .then((results) => {
+        const selectAllSubscriptionOption = [
+          { label: 'Select all subscriptions', value: 'Select all subscriptions', description: 'Select all' },
+        ];
         const fetchedSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
-        setSubscriptions(fetchedSubscriptions);
+        setSubscriptions(selectAllSubscriptionOption.concat(fetchedSubscriptions));
         setError(ERROR_SOURCE, undefined);
 
         onChange({
