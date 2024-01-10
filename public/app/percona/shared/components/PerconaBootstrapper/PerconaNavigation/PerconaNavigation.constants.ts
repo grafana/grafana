@@ -436,6 +436,7 @@ export const PMM_NAV_MONGO: NavModelItem = {
   url: `${config.appSubUrl}/d/mongodb-instance-overview/mongodb-instances-overview`,
   sortWeight: WEIGHTS.dashboards,
   hideFromTabs: true,
+  showChildren: true,
 
   children: [
     {

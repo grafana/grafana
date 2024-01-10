@@ -37,7 +37,7 @@ export function NavBarMenuItemWrapper({
         <ul className={styles.children}>
           {link.children.map((childLink) => {
             // @PERCONA - add support for nesting
-            return childLink.children ? (
+            return childLink.showChildren ? (
               <MegaMenuItem link={childLink} onClick={onClose} activeItem={activeItem} key={childLink.text} level={1} />
             ) : (
               !childLink.isCreateAction && (

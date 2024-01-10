@@ -41,6 +41,7 @@ export interface NavModelItem extends NavLinkDTO {
   // @PERCONA
   isDivider?: boolean;
   isHeading?: boolean;
+  showChildren?: boolean;
 }
 
 /**
