@@ -105,7 +105,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const panelMngr = this.state.panelRef.resolve();
     if (sourcePanel.parent instanceof SceneGridItem) {
-      sourcePanel.parent.setState({ body: panelMngr.state.panel });
+      sourcePanel.parent.setState({ body: panelMngr.state.panel.clone() });
     }
 
     // preserve time range and variables state
