@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
@@ -39,13 +40,19 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) LoadAPIGroupBuilders(args []string) error {
+func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
 	o.builders = []grafanaAPIServer.APIGroupBuilder{}
 	for _, g := range args {
 		switch g {
 		// No dependencies for testing
 		case "example.grafana.app":
 			o.builders = append(o.builders, example.NewTestingAPIBuilder())
+		case "testdata.datasource.grafana.app":
+			ds, err := datasource.NewStandaloneDatasource(g)
+			if err != nil {
+				return err
+			}
+			o.builders = append(o.builders, ds)
 		default:
 			return fmt.Errorf("unknown group: %s", g)
 		}
