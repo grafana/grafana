@@ -76,7 +76,6 @@ describe('GrafanaModifyExport', () => {
     uid: 'test-rule-uid',
     title: 'cpu-usage',
     namespace_uid: 'folder-test-uid',
-    namespace_id: 1,
     data: [
       {
         refId: 'A',

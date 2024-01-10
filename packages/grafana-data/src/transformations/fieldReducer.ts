@@ -39,7 +39,7 @@ type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) =>
 
 export interface FieldReducerInfo extends RegistryItem {
   // Internal details
-  emptyInputResult?: any; // typically null, but some things like 'count' & 'sum' should be zero
+  emptyInputResult?: unknown; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
   reduce?: FieldReducer;
 }

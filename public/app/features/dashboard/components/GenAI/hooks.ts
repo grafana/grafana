@@ -27,6 +27,7 @@ export function useOpenAIStream(
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setStopGeneration: React.Dispatch<React.SetStateAction<boolean>>;
+  messages: Message[];
   reply: string;
   streamStatus: StreamStatus;
   error: Error | undefined;
@@ -154,6 +155,7 @@ export function useOpenAIStream(
   return {
     setMessages,
     setStopGeneration,
+    messages,
     reply,
     streamStatus,
     error,

@@ -15,6 +15,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -338,7 +339,7 @@ func validateURL(cmdType string, url string) response.Response {
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
-func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features *featuremgmt.FeatureManager) error {
+func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
 	if jsonData == nil {
 		return nil
 	}
@@ -356,7 +357,7 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 	}
 
 	// Prevent adding a data source team header with a name that matches the auth proxy header name
-	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+	if features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) {
 		err := validateTeamHTTPHeaderJSON(jsonData)
 		if err != nil {
 			return err
@@ -375,9 +376,12 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 		datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
 		return errors.New("validation error, invalid format of TeamHTTPHeaders")
 	}
+	if teamHTTPHeadersJSON == nil {
+		return nil
+	}
 	// whitelisting ValidHeaders
 	// each teams headers
-	for _, teamheaders := range teamHTTPHeadersJSON {
+	for _, teamheaders := range teamHTTPHeadersJSON.Headers {
 		for _, header := range teamheaders {
 			if !slices.ContainsFunc(validHeaders, func(v string) bool {
 				return http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(header.Header)

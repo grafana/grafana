@@ -59,7 +59,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins:maintainer",
 			DisplayName: "Plugin Maintainer",
-			Description: "Install, uninstall plugins",
+			Description: "Install, uninstall plugins. Needs to be assigned globally.",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
 				{Action: ActionInstall},

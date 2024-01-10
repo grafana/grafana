@@ -2,7 +2,7 @@
 aliases:
   - ../../features/panels/heatmap/
   - ../../visualizations/heatmap/
-description: Heatmap visualization documentation
+description: Configure options for Grafana's heatmap visualization
 keywords:
   - grafana
   - heatmap
@@ -21,7 +21,7 @@ weight: 100
 
 Heatmaps allow you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps][].
 
-![](/static/img/docs/v43/heatmap_panel_cover.jpg)
+![A heatmap visualization](/static/img/docs/v43/heatmap_panel_cover.jpg)
 
 ## Calculate from data
 
@@ -114,6 +114,7 @@ Use these settings to refine your visualization.
 
 - **Show tooltip -** Show heatmap tooltip.
 - **Show Histogram -** Show a Y-axis histogram on the tooltip. A histogram represents the distribution of the bucket values for a specific timestamp.
+- **Show color scale -** Show a color scale on the tooltip. The color scale represents the mapping between bucket value and color. This option is configurable when you enable the `newVizTooltips` feature flag.
 
 ### Legend
 

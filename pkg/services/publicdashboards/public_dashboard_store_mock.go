@@ -242,32 +242,6 @@ func (_m *FakePublicDashboardStore) FindByDashboardUid(ctx context.Context, orgI
 	return r0, r1
 }
 
-// FindDashboard provides a mock function with given fields: ctx, orgId, dashboardUid
-func (_m *FakePublicDashboardStore) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
-	ret := _m.Called(ctx, orgId, dashboardUid)
-
-	var r0 *dashboards.Dashboard
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (*dashboards.Dashboard, error)); ok {
-		return rf(ctx, orgId, dashboardUid)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *dashboards.Dashboard); ok {
-		r0 = rf(ctx, orgId, dashboardUid)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dashboards.Dashboard)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = rf(ctx, orgId, dashboardUid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetMetrics provides a mock function with given fields: ctx
 func (_m *FakePublicDashboardStore) GetMetrics(ctx context.Context) (*models.Metrics, error) {
 	ret := _m.Called(ctx)

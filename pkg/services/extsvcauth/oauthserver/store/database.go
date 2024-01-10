@@ -213,6 +213,17 @@ func getExternalServiceByName(sess *db.Session, name string) (*oauthserver.OAuth
 	return res, errPerm
 }
 
+// FIXME: If we ever do a search method remove that method
+func (s *store) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	res := []string{}
+
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(`SELECT name FROM oauth_client`).Find(&res)
+	})
+
+	return res, err
+}
+
 func (s *store) UpdateExternalServiceGrantTypes(ctx context.Context, clientID, grantTypes string) error {
 	if clientID == "" {
 		return oauthserver.ErrClientRequiredID

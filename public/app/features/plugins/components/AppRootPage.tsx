@@ -3,8 +3,17 @@ import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useLocation, useRouteMatch } from 'react-router-dom';
 
-import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, OrgRole, PluginType } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import {
+  AppEvents,
+  AppPlugin,
+  AppPluginMeta,
+  NavModel,
+  NavModelItem,
+  OrgRole,
+  PluginType,
+  PluginContextProvider,
+} from '@grafana/data';
+import { config, locationSearchToObject, logError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -12,6 +21,7 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
@@ -76,13 +86,15 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   }
 
   const pluginRoot = plugin.root && (
-    <plugin.root
-      meta={plugin.meta}
-      basename={match.url}
-      onNavChanged={onNavChanged}
-      query={queryParams}
-      path={location.pathname}
-    />
+    <PluginContextProvider meta={plugin.meta}>
+      <plugin.root
+        meta={plugin.meta}
+        basename={match.url}
+        onNavChanged={onNavChanged}
+        query={queryParams}
+        path={location.pathname}
+      />
+    </PluginContextProvider>
   );
 
   // Because of the fallback at plugin routes, we need to check
@@ -93,7 +105,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
       return true;
     }
 
-    const pluginInclude = plugin.meta?.includes.find((include) => include.path === pluginRoot.props.path);
+    const pluginInclude = plugin.meta?.includes.find((include) => include.path === location.pathname);
     // Check if include configuration contains current path
     if (!pluginInclude) {
       return true;
@@ -180,6 +192,9 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
         pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );
+    const error = err instanceof Error ? err : new Error(getMessageFromError(err));
+    logError(error);
+    console.error(error);
   }
 }
 

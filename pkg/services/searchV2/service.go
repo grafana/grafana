@@ -116,7 +116,7 @@ func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEv
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
-	return !s.features.IsEnabled(featuremgmt.FlagPanelTitleSearch)
+	return !s.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {

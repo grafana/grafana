@@ -1,16 +1,19 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Portal,
   TooltipDisplayMode,
+  TooltipPlugin2,
   UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
   VizTooltipContainer,
   ZoomPlugin,
 } from '@grafana/ui';
-import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { addTooltipSupport, HoverEvent } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
@@ -19,10 +22,12 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
+import { StatusHistoryTooltip2 } from './StatusHistoryTooltip2';
 import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
@@ -185,6 +190,8 @@ export const StatusHistoryPanel = ({
     );
   }
 
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
+
   return (
     <TimelineChart
       theme={theme}
@@ -198,10 +205,10 @@ export const StatusHistoryPanel = ({
       {...options}
       mode={TimelineMode.Samples}
     >
-      {(config, alignedFrame) => {
-        if (oldConfig.current !== config) {
+      {(builder, alignedFrame) => {
+        if (oldConfig.current !== builder && !showNewVizTooltips) {
           oldConfig.current = addTooltipSupport({
-            config,
+            config: builder,
             onUPlotClick,
             setFocusedSeriesIdx,
             setFocusedPointIdx,
@@ -215,9 +222,45 @@ export const StatusHistoryPanel = ({
 
         return (
           <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            {renderTooltip(alignedFrame)}
-            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
+            {data.annotations && (
+              <AnnotationsPlugin
+                annotations={data.annotations}
+                config={builder}
+                timeZone={timeZone}
+                disableCanvasRendering={true}
+              />
+            )}
+            {showNewVizTooltips ? (
+              <>
+                {options.tooltip.mode !== TooltipDisplayMode.None && (
+                  <TooltipPlugin2
+                    config={builder}
+                    hoverMode={TooltipHoverMode.xyOne}
+                    queryZoom={onChangeTimeRange}
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+                      return (
+                        <StatusHistoryTooltip2
+                          data={frames ?? []}
+                          dataIdxs={dataIdxs}
+                          alignedData={alignedFrame}
+                          seriesIdx={seriesIdx}
+                          timeZone={timeZone}
+                          mode={options.tooltip.mode}
+                          sortOrder={options.tooltip.sort}
+                          isPinned={isPinned}
+                        />
+                      );
+                    }}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />
+                {renderTooltip(alignedFrame)}
+                <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+              </>
+            )}
           </>
         );
       }}

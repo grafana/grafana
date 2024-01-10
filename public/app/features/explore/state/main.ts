@@ -1,10 +1,12 @@
 import { createAction } from '@reduxjs/toolkit';
+import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
 import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
@@ -76,17 +78,23 @@ export const splitOpen = createAsyncThunk(
       }
     });
 
+    const splitRange = options?.range || originState?.range.raw || DEFAULT_RANGE;
+
     await dispatch(
       createNewSplitOpenPane({
         exploreId: requestId,
         datasource: options?.datasourceUid || originState?.datasourceInstance?.getRef(),
         queries: withUniqueRefIds(queries),
-        range: options?.range || originState?.range.raw || DEFAULT_RANGE,
+        range: splitRange,
         panelsState: options?.panelsState || originState?.panelsState,
         correlationHelperData: options?.correlationHelperData,
         eventBridge: new EventBusSrv(),
       })
     );
+
+    if (originState?.range) {
+      await dispatch(syncTimesAction({ syncedTimes: isEqual(originState.range.raw, splitRange) })); // if time ranges are equal, mark times as synced
+    }
   },
   {
     idGenerator: generateExploreId,
@@ -131,6 +139,7 @@ export const navigateToExplore = (
       dsRef: panel.datasource,
       scopedVars: panel.scopedVars,
       timeRange,
+      adhocFilters: getTemplateSrv().getAdhocFilters(panel.datasource?.uid ?? '', true),
     });
 
     if (openInNewWindow && path) {

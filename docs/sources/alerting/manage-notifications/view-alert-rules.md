@@ -4,7 +4,7 @@ aliases:
   - ../view-alert-rules/
   - rule-list/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-rules/
-description: Manage alerting rules
+description: View and filter by alert rules
 keywords:
   - grafana
   - alerting

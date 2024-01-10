@@ -166,7 +166,7 @@ export const MenuItem = React.memo(
       >
         <Stack direction="row" justifyContent="flex-start" alignItems="center">
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
-          {label}
+          <span className={styles.ellipsis}>{label}</span>
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
               <div className={styles.shortcut}>
@@ -188,7 +188,7 @@ export const MenuItem = React.memo(
         </Stack>
         {description && (
           <div
-            className={cx(styles.description, {
+            className={cx(styles.description, styles.ellipsis, {
               [styles.descriptionWithIcon]: icon !== undefined,
             })}
           >
@@ -282,6 +282,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     descriptionWithIcon: css({
       marginLeft: theme.spacing(3),
+    }),
+    ellipsis: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
   };
 };

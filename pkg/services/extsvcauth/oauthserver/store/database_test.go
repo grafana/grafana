@@ -435,6 +435,32 @@ func TestStore_RemoveExternalService(t *testing.T) {
 	}
 }
 
+func Test_store_GetExternalServiceNames(t *testing.T) {
+	ctx := context.Background()
+	client1 := oauthserver.OAuthExternalService{
+		Name:                   "my-external-service",
+		ClientID:               "ClientID",
+		ImpersonatePermissions: []accesscontrol.Permission{},
+	}
+	client2 := oauthserver.OAuthExternalService{
+		Name:     "my-external-service-2",
+		ClientID: "ClientID2",
+		ImpersonatePermissions: []accesscontrol.Permission{
+			{Action: "dashboards:read", Scope: "folders:*"},
+			{Action: "dashboards:read", Scope: "dashboards:*"},
+		},
+	}
+
+	// Init store
+	s := &store{db: db.InitTestDB(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagExternalServiceAuth}})}
+	require.NoError(t, s.SaveExternalService(context.Background(), &client1))
+	require.NoError(t, s.SaveExternalService(context.Background(), &client2))
+
+	got, err := s.GetExternalServiceNames(ctx)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"my-external-service", "my-external-service-2"}, got)
+}
+
 func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.OAuthExternalService) {
 	ctx := context.Background()
 	stored, err := s.GetExternalService(ctx, wanted.ClientID)

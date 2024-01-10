@@ -46,8 +46,8 @@ func newConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *config {
 	host := fmt.Sprintf("%s:%d", ip, port)
 
 	return &config{
-		enabled:     features.IsEnabled(featuremgmt.FlagGrafanaAPIServer),
-		devMode:     cfg.Env == setting.Dev,
+		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServer),
+		devMode:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess),
 		dataPath:    filepath.Join(cfg.DataPath, "grafana-apiserver"),
 		ip:          ip,
 		port:        port,

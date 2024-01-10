@@ -74,7 +74,6 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 }
 
 func (c *K8sTestHelper) Shutdown() {
-	fmt.Printf("calling shutdown on: %s\n", c.env.Server.HTTPServer.Listener.Addr())
 	err := c.env.Server.Shutdown(context.Background(), "done")
 	require.NoError(c.t, err)
 }
@@ -132,6 +131,11 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	if anno["grafana.app/updatedTimestamp"] != "" {
 		anno["grafana.app/updatedTimestamp"] = "${updatedTimestamp}"
 	}
+	// Remove annotations that are not added by legacy storage
+	delete(anno, "grafana.app/originTimestamp")
+	delete(anno, "grafana.app/createdBy")
+	delete(anno, "grafana.app/updatedBy")
+
 	deep.SetAnnotations(anno)
 	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)

@@ -5,8 +5,8 @@ import { Provider } from 'react-redux';
 import { act } from 'react-test-renderer';
 import { byRole, byText } from 'testing-library-selector';
 
-import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps } from '@grafana/data';
-import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
+import { getPluginLinkExtensions, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/alertRuleApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
@@ -56,7 +56,15 @@ const grafanaRuleMock = {
   },
 };
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(),
+}));
 jest.mock('app/features/alerting/unified/api/alertmanager');
+
+const mocks = {
+  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
+};
 
 const fakeResponse: PromRulesResponse = {
   data: { groups: grafanaRuleMock.promRules.grafana.result[0].groups as PromRuleGroupDTO[] },
@@ -77,6 +85,19 @@ beforeEach(() => {
   );
   mockRulerRulesApiResponse(server, 'grafana', {
     'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
+  });
+  mocks.getPluginLinkExtensionsMock.mockReturnValue({
+    extensions: [
+      {
+        pluginId: 'grafana-ml-app',
+        id: '1',
+        type: PluginExtensionTypes.link,
+        title: 'Run investigation',
+        category: 'Sift',
+        description: 'Run a Sift investigation for this alert',
+        onClick: jest.fn(),
+      },
+    ],
   });
 });
 

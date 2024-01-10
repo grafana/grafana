@@ -27,8 +27,8 @@ export function AppChromeMenu({}: Props) {
   const animationSpeed = theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed);
 
-  const isOpen = state.megaMenu === 'open';
-  const onClose = () => chrome.setMegaMenu('closed');
+  const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
+  const onClose = () => chrome.setMegaMenuOpen(false);
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -57,7 +57,7 @@ export function AppChromeMenu({}: Props) {
           classNames={animationStyles.overlay}
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
-          <FocusScope contain autoFocus>
+          <FocusScope contain autoFocus restoreFocus>
             <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
           </FocusScope>
         </CSSTransition>

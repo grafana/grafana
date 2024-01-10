@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -77,7 +78,7 @@ func GetLocalPlugin(pluginDir, pluginID string) (plugins.FoundPlugin, error) {
 }
 
 func GetLocalPlugins(pluginDir string) []*plugins.FoundBundle {
-	f := finder.NewLocalFinder(true)
+	f := finder.NewLocalFinder(true, featuremgmt.WithFeatures())
 
 	res, err := f.Find(context.Background(), sources.NewLocalSource(plugins.ClassExternal, []string{pluginDir}))
 	if err != nil {

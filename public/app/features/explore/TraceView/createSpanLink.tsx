@@ -85,7 +85,7 @@ export function createSpanLinkFactory({
           profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
         }
         const hasConfiguredPyroscopeDS = profilesDataSourceSettings?.type === 'grafana-pyroscope-datasource';
-        const hasPyroscopeProfile = span.tags.filter((tag) => tag.key === 'pyroscope.profile.id').length > 0;
+        const hasPyroscopeProfile = span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey);
         const shouldCreatePyroscopeLink = hasConfiguredPyroscopeDS && hasPyroscopeProfile;
 
         let links: ExploreFieldLinkModel[] = [];
@@ -134,7 +134,8 @@ const formatDefaultKeys = (keys: string[]) => {
   }));
 };
 const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
-const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
+export const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
+export const pyroscopeProfileIdTagKey = 'pyroscope.profile.id';
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
@@ -498,7 +499,7 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
  * Creates a string representing all the tags already formatted for use in the query. The tags are filtered so that
  * only intersection of tags that exist in a span and tags that you want are serialized into the string.
  */
-function getFormattedTags(
+export function getFormattedTags(
   span: TraceSpan,
   tags: TraceToLogsTag[],
   { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}

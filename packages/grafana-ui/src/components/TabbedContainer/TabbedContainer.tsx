@@ -5,7 +5,7 @@ import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 
 import { IconButton } from '../../components/IconButton/IconButton';
 import { TabsBar, Tab, TabContent } from '../../components/Tabs';
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
@@ -23,45 +23,14 @@ export interface TabbedContainerProps {
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    container: css({
-      height: '100%',
-    }),
-    tabContent: css({
-      padding: theme.spacing(2),
-      backgroundColor: theme.colors.background.primary,
-      height: `calc(100% - ${theme.components.menuTabs.height}px)`,
-    }),
-    close: css({
-      position: 'absolute',
-      right: '16px',
-      top: '5px',
-      cursor: 'pointer',
-      fontSize: theme.typography.size.lg,
-    }),
-    tabs: css({
-      paddingTop: theme.spacing(1),
-      borderColor: theme.colors.border.weak,
-      ul: {
-        marginLeft: theme.spacing(2),
-      },
-    }),
-  };
-});
-
-export function TabbedContainer(props: TabbedContainerProps) {
-  const [activeTab, setActiveTab] = useState(
-    props.tabs.some((tab) => tab.value === props.defaultTab) ? props.defaultTab : props.tabs?.[0].value
-  );
+export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose }: TabbedContainerProps) {
+  const [activeTab, setActiveTab] = useState(tabs.some((tab) => tab.value === defaultTab) ? defaultTab : tabs[0].value);
 
   const onSelectTab = (item: SelectableValue<string>) => {
     setActiveTab(item.value!);
   };
 
-  const { tabs, onClose, closeIconTooltip } = props;
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
@@ -83,3 +52,28 @@ export function TabbedContainer(props: TabbedContainerProps) {
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    height: '100%',
+  }),
+  tabContent: css({
+    padding: theme.spacing(2),
+    backgroundColor: theme.colors.background.primary,
+    height: `calc(100% - ${theme.components.menuTabs.height}px)`,
+  }),
+  close: css({
+    position: 'absolute',
+    right: '16px',
+    top: '5px',
+    cursor: 'pointer',
+    fontSize: theme.typography.size.lg,
+  }),
+  tabs: css({
+    paddingTop: theme.spacing(1),
+    borderColor: theme.colors.border.weak,
+    ul: {
+      marginLeft: theme.spacing(2),
+    },
+  }),
+});

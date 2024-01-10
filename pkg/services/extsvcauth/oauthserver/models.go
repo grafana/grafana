@@ -49,6 +49,7 @@ type OAuth2Server interface {
 type Store interface {
 	DeleteExternalService(ctx context.Context, id string) error
 	GetExternalService(ctx context.Context, id string) (*OAuthExternalService, error)
+	GetExternalServiceNames(ctx context.Context) ([]string, error)
 	GetExternalServiceByName(ctx context.Context, name string) (*OAuthExternalService, error)
 	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)
 	RegisterExternalService(ctx context.Context, client *OAuthExternalService) error

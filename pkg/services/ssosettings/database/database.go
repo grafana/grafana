@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -25,8 +26,8 @@ func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
 
 var _ ssosettings.Store = (*SSOSettingsStore)(nil)
 
-func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SSOSetting, error) {
-	result := models.SSOSetting{Provider: provider}
+func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	result := models.SSOSettings{Provider: provider}
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		sess.Table("sso_setting")
@@ -50,8 +51,8 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 	return &result, nil
 }
 
-func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, error) {
-	result := make([]*models.SSOSetting, 0)
+func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSettings, error) {
+	result := make([]*models.SSOSettings, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("sso_setting")
 		err := sess.Where("is_deleted = ?", s.sqlStore.GetDialect().BooleanStr(false)).Find(&result)
@@ -70,34 +71,38 @@ func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, erro
 	return result, nil
 }
 
-func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		found, err := sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Exist(&models.SSOSetting{})
-
+func (s *SSOSettingsStore) Upsert(ctx context.Context, settings models.SSOSettings) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		existing := &models.SSOSettings{
+			Provider:  settings.Provider,
+			IsDeleted: false,
+		}
+		found, err := sess.UseBool("is_deleted").Exist(existing)
 		if err != nil {
 			return err
 		}
 
+		now := time.Now().UTC()
+
 		if found {
-			_, err = sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Update(&models.SSOSetting{
-				Settings: data,
-				Updated:  time.Now().UTC(),
-			})
+			updated := &models.SSOSettings{
+				Settings:  settings.Settings,
+				Updated:   now,
+				IsDeleted: false,
+			}
+			_, err = sess.UseBool("is_deleted").Update(updated, existing)
 		} else {
-			_, err = sess.Insert(&models.SSOSetting{
+			_, err = sess.Insert(&models.SSOSettings{
 				ID:       uuid.New().String(),
-				Provider: provider,
-				Settings: data,
-				Created:  time.Now().UTC(),
-				Updated:  time.Now().UTC(),
+				Provider: settings.Provider,
+				Settings: settings.Settings,
+				Created:  now,
+				Updated:  now,
 			})
 		}
 
 		return err
 	})
-
-	return err
 }
 
 func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
@@ -105,15 +110,19 @@ func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[
 }
 
 func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		existing := new(models.SSOSetting)
-		found, err := sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Get(existing)
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		existing := &models.SSOSettings{
+			Provider:  provider,
+			IsDeleted: false,
+		}
+
+		found, err := sess.UseBool("is_deleted").Get(existing)
 		if err != nil {
 			return err
 		}
 
 		if !found {
-			return nil // nothing to delete
+			return ssosettings.ErrNotFound
 		}
 
 		existing.Updated = time.Now().UTC()
@@ -122,5 +131,4 @@ func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
 		_, err = sess.ID(existing.ID).MustCols("updated", "is_deleted").Update(existing)
 		return err
 	})
-	return err
 }

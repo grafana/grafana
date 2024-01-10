@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, FieldArray, Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import TransformationsEditorRow from './TransformationEditorRow';
 
@@ -29,8 +30,14 @@ export const TransformationsEditor = (props: Props) => {
         {({ fields, append, remove }) => (
           <>
             <Stack direction="column" alignItems="flex-start">
-              <div className={styles.heading}>Transformations</div>
-              {fields.length === 0 && <div> No transformations defined.</div>}
+              <div className={styles.heading}>
+                <Trans i18nKey="correlations.transform.heading">Transformations</Trans>
+              </div>
+              {fields.length === 0 && (
+                <div>
+                  <Trans i18nKey="correlations.transform.no-transform">No transformations defined.</Trans>
+                </div>
+              )}
               {fields.length > 0 && (
                 <div>
                   {fields.map((fieldVal, index) => {
@@ -53,7 +60,7 @@ export const TransformationsEditor = (props: Props) => {
                   variant="secondary"
                   type="button"
                 >
-                  Add transformation
+                  <Trans i18nKey="correlations.transform.add-button">Add transformation</Trans>
                 </Button>
               )}
             </Stack>

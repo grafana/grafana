@@ -131,3 +131,17 @@ export interface UserListAdminState {
   isLoading: boolean;
   sort?: string;
 }
+
+export interface UserAnonymousDeviceDTO {
+  login?: string;
+  clientIp: string;
+  deviceId: string;
+  userAgent: string;
+  updatedAt: string;
+  lastSeenAt: string;
+  avatarUrl?: string;
+}
+
+export interface UserListAnonymousDevicesState {
+  devices: UserAnonymousDeviceDTO[];
+}

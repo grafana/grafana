@@ -1,10 +1,12 @@
 import { Observable } from 'rxjs';
 
 import {
+  arrayToDataFrame,
   DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  DataTopic,
   dateTimeParse,
   FieldType,
   LoadingState,
@@ -28,6 +30,7 @@ import {
   filterLogLevels,
   getSeriesProperties,
   LIMIT_LABEL,
+  logRowToSingleRowDataFrame,
   logSeriesToLogsModel,
   queryLogsSample,
   queryLogsVolume,
@@ -1281,6 +1284,33 @@ describe('logs volume', () => {
     ]);
   }
 
+  function setupLogsVolumeWithAnnotations() {
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5], 'A');
+    const loadingFrame = arrayToDataFrame([
+      {
+        time: 100,
+        timeEnd: 200,
+        isRegion: true,
+        color: 'rgba(120, 120, 120, 0.1)',
+      },
+    ]);
+    loadingFrame.name = 'annotation';
+    loadingFrame.meta = {
+      dataTopic: DataTopic.Annotations,
+    };
+
+    datasource = new MockObservableDataSourceApi('loki', [
+      {
+        state: LoadingState.Streaming,
+        data: [resultAFrame1, loadingFrame],
+      },
+      {
+        state: LoadingState.Done,
+        data: [resultAFrame1],
+      },
+    ]);
+  }
+
   function setupErrorResponse() {
     datasource = new MockObservableDataSourceApi('loki', [], undefined, 'Error message');
   }
@@ -1360,6 +1390,55 @@ describe('logs volume', () => {
         },
         'Error message',
       ]);
+    });
+  });
+
+  it('handles annotations in responses', async () => {
+    setup(setupLogsVolumeWithAnnotations);
+
+    const logVolumeCustomMeta: LogsVolumeCustomMetaData = {
+      sourceQuery: { refId: 'A', target: 'volume query 1' } as DataQuery,
+      datasourceName: 'loki',
+      logsVolumeType: LogsVolumeType.FullRange,
+      absoluteRange: {
+        from: FROM.valueOf(),
+        to: TO.valueOf(),
+      },
+    };
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
+      expect(received).toContainEqual({
+        state: LoadingState.Streaming,
+        error: undefined,
+        data: [
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              custom: logVolumeCustomMeta,
+            },
+          }),
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              dataTopic: DataTopic.Annotations,
+            },
+            name: 'annotation',
+          }),
+        ],
+      });
+      expect(received).toContainEqual({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              custom: logVolumeCustomMeta,
+            },
+          }),
+        ],
+      });
     });
   });
 });
@@ -1456,5 +1535,56 @@ describe('logs sample', () => {
         'Error message',
       ]);
     });
+  });
+});
+
+const mockLogRow = {
+  dataFrame: toDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [0, 1] },
+      {
+        name: 'Line',
+        type: FieldType.string,
+        values: ['line1', 'line2'],
+      },
+      { name: 'labels', type: FieldType.other, values: [{ app: 'app01' }, { app: 'app02' }] },
+    ],
+  }),
+  rowIndex: 0,
+} as unknown as LogRowModel;
+
+describe('logRowToDataFrame', () => {
+  it('should return a DataFrame with the values from the specified row', () => {
+    const result = logRowToSingleRowDataFrame(mockLogRow);
+
+    expect(result?.length).toBe(1);
+
+    expect(result?.fields[0].values[0]).toEqual(0);
+    expect(result?.fields[1].values[0]).toEqual('line1');
+    expect(result?.fields[2].values[0]).toEqual({ app: 'app01' });
+  });
+
+  it('should return a DataFrame with the values from the specified different row', () => {
+    const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: 1 });
+
+    expect(result?.length).toBe(1);
+
+    expect(result?.fields[0].values[0]).toEqual(1);
+    expect(result?.fields[1].values[0]).toEqual('line2');
+    expect(result?.fields[2].values[0]).toEqual({ app: 'app02' });
+  });
+
+  it('should handle an empty DataFrame', () => {
+    const emptyLogRow = { dataFrame: { fields: [] }, rowIndex: 0 } as unknown as LogRowModel;
+    const result = logRowToSingleRowDataFrame(emptyLogRow);
+
+    expect(result?.length).toBe(0);
+  });
+
+  it('should handle rowIndex exceeding array bounds', () => {
+    const invalidRowIndex = 10;
+    const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: invalidRowIndex });
+
+    expect(result).toBe(null);
   });
 });

@@ -11,6 +11,10 @@ function getStyles(theme: GrafanaTheme2) {
     labelCount: css({
       marginLeft: theme.spacing(0.5),
       marginRight: theme.spacing(0.5),
+      appearance: 'none',
+      background: 'none',
+      border: 'none',
+      fontSize: theme.typography.pxToRem(11),
     }),
     wrap: css({
       display: 'flex',
@@ -29,13 +33,11 @@ function getStyles(theme: GrafanaTheme2) {
         top: 0,
       },
       '> span': {
-        overflow: 'scroll',
-        '&::-webkit-scrollbar': {
-          display: 'none',
-        },
-        '&::-moz-scrollbar': {
-          display: 'none',
-        },
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        display: 'block',
+        maxWidth: '100%',
       },
     }),
     columnWrapper: css({
@@ -51,60 +53,19 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
+const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 function sortLabels(labels: Record<string, fieldNameMeta>) {
   return (a: string, b: string) => {
-    // First sort by active
-    if (labels[a].active && labels[b].active) {
-      // If both fields are active, sort time first
-      if (labels[a]?.type === 'TIME_FIELD') {
-        return -1;
-      }
-      if (labels[b]?.type === 'TIME_FIELD') {
-        return 1;
-      }
-      // And then line second
-      if (labels[a]?.type === 'BODY_FIELD') {
-        return -1;
-      }
-      // special fields are next
-      if (labels[b]?.type === 'BODY_FIELD') {
-        return 1;
-      }
-    }
+    const la = labels[a];
+    const lb = labels[b];
 
-    // If just one label is active, sort it first
-    if (labels[b].active) {
-      return 1;
+    if (la != null && lb != null) {
+      return (
+        Number(lb.type === 'TIME_FIELD') - Number(la.type === 'TIME_FIELD') ||
+        Number(lb.type === 'BODY_FIELD') - Number(la.type === 'BODY_FIELD') ||
+        collator.compare(a, b)
+      );
     }
-    if (labels[a].active) {
-      return -1;
-    }
-
-    // If both fields are special, and not selected, sort time first
-    if (labels[a]?.type && labels[b]?.type) {
-      if (labels[a]?.type === 'TIME_FIELD') {
-        return -1;
-      }
-      return 0;
-    }
-
-    // If only one special field, stick to the top of inactive fields
-    if (labels[a]?.type && !labels[b]?.type) {
-      return -1;
-    }
-    // if the b field is special, sort it first
-    if (!labels[a]?.type && labels[b]?.type) {
-      return 1;
-    }
-
-    // Finally sort by percent enabled, this could have conflicts with the special fields above, except they are always on 100% of logs
-    if (a < b) {
-      return -1;
-    }
-    if (a > b) {
-      return 1;
-    }
-
     // otherwise do not sort
     return 0;
   };
@@ -112,25 +73,31 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
 
 export const LogsTableNavColumn = (props: {
   labels: Record<string, fieldNameMeta>;
-  valueFilter: (value: number) => boolean;
+  valueFilter: (value: string) => boolean;
   toggleColumn: (columnName: string) => void;
 }): JSX.Element => {
   const { labels, valueFilter, toggleColumn } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labels[labelName].percentOfLinesWithLabel));
+  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
   if (labelKeys.length) {
     return (
       <div className={styles.columnWrapper}>
         {labelKeys.sort(sortLabels(labels)).map((labelName) => (
-          <div className={styles.wrap} key={labelName}>
+          <div
+            title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
+            className={styles.wrap}
+            key={labelName}
+          >
             <Checkbox
               className={styles.checkboxLabel}
               label={labelName}
               onChange={() => toggleColumn(labelName)}
               checked={labels[labelName]?.active ?? false}
             />
-            <span className={styles.labelCount}>({labels[labelName]?.percentOfLinesWithLabel}%)</span>
+            <button className={styles.labelCount} onClick={() => toggleColumn(labelName)}>
+              {labels[labelName]?.percentOfLinesWithLabel}%
+            </button>
           </div>
         ))}
       </div>

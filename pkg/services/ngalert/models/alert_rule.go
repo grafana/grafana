@@ -14,6 +14,7 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -104,6 +105,17 @@ const (
 
 	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
 	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
+
+	// MigratedLabelPrefix is a label prefix for all labels created during legacy migration.
+	MigratedLabelPrefix = "__legacy_"
+	// MigratedUseLegacyChannelsLabel is created during legacy migration to route to separate nested policies for migrated channels.
+	MigratedUseLegacyChannelsLabel = MigratedLabelPrefix + "use_channels__"
+	// MigratedContactLabelPrefix is created during legacy migration to route a migrated alert rule to a specific migrated channel.
+	MigratedContactLabelPrefix = MigratedLabelPrefix + "c_"
+	// MigratedAlertIdAnnotation is created during legacy migration to store the ID of the migrated legacy alert rule.
+	MigratedAlertIdAnnotation = "__alertId__"
+	// MigratedMessageAnnotation is created during legacy migration to store the migrated alert message.
+	MigratedMessageAnnotation = "message"
 )
 
 const (
@@ -420,6 +432,42 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 		alertRule.Data[i] = q
 	}
 	alertRule.Updated = timeNow()
+	return nil
+}
+
+// ValidateAlertRule validates various alert rule fields.
+func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSettings) error {
+	if len(alertRule.Data) == 0 {
+		return fmt.Errorf("%w: no queries or expressions are found", ErrAlertRuleFailedValidation)
+	}
+
+	if alertRule.Title == "" {
+		return fmt.Errorf("%w: title is empty", ErrAlertRuleFailedValidation)
+	}
+
+	if err := ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(cfg.BaseInterval.Seconds())); err != nil {
+		return err
+	}
+
+	if alertRule.OrgID == 0 {
+		return fmt.Errorf("%w: no organisation is found", ErrAlertRuleFailedValidation)
+	}
+
+	if alertRule.DashboardUID == nil && alertRule.PanelID != nil {
+		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
+	}
+
+	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+		return err
+	}
+
+	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+		return err
+	}
+
+	if alertRule.For < 0 {
+		return fmt.Errorf("%w: field `for` cannot be negative", ErrAlertRuleFailedValidation)
+	}
 	return nil
 }
 

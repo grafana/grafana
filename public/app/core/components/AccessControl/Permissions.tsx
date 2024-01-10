@@ -4,12 +4,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Space } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Text, Box, Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { Trans, t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
@@ -156,7 +155,7 @@ export const Permissions = ({
     <div>
       {canSetPermissions && (
         <>
-          {newBrowseDashboardsEnabled() && resource === 'folders' && (
+          {resource === 'folders' && (
             <>
               <Trans i18nKey="access-control.permissions.permissions-change-warning">
                 This will change permissions for this folder and all its descendants. In total, this will affect:
@@ -192,13 +191,9 @@ export const Permissions = ({
         </>
       )}
       {items.length === 0 && (
-        <table className="filter-table gf-form-group">
-          <tbody>
-            <tr>
-              <th>{emptyLabel}</th>
-            </tr>
-          </tbody>
-        </table>
+        <Box>
+          <Text>{emptyLabel}</Text>
+        </Box>
       )}
       <PermissionList
         title={titleRole}

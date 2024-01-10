@@ -231,6 +231,15 @@ func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFie
 			doc[k] = v
 		}
 
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
 		for key := range doc {
 			propNames[key] = true
 		}

@@ -7,6 +7,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   AbsoluteTimeRange,
+  DataFrame,
   EventBus,
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
@@ -219,15 +220,43 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string, refId?: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } }, refId);
+  onClickFilterLabel = (key: string, value: string, frame?: DataFrame) => {
+    this.onModifyQueries(
+      {
+        type: 'ADD_FILTER',
+        options: { key, value },
+        frame,
+      },
+      frame?.refId
+    );
   };
 
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string, refId?: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } }, refId);
+  onClickFilterOutLabel = (key: string, value: string, frame?: DataFrame) => {
+    this.onModifyQueries(
+      {
+        type: 'ADD_FILTER_OUT',
+        options: { key, value },
+        frame,
+      },
+      frame?.refId
+    );
+  };
+
+  /**
+   * Used by Logs Popover Menu.
+   */
+  onClickFilterValue = (value: string, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_STRING_FILTER', options: { value } }, refId);
+  };
+
+  /**
+   * Used by Logs Popover Menu.
+   */
+  onClickFilterOutValue = (value: string, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_STRING_FILTER_OUT', options: { value } }, refId);
   };
 
   onClickAddQueryRowButton = () => {
@@ -250,10 +279,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return query;
       }
       const ds = await getDataSourceSrv().get(datasource);
-      if (hasToggleableQueryFiltersSupport(ds)) {
+      const toggleableFilters = ['ADD_FILTER', 'ADD_FILTER_OUT'];
+      if (hasToggleableQueryFiltersSupport(ds) && toggleableFilters.includes(modification.type)) {
         return ds.toggleQueryFilter(query, {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},
+          frame: modification.frame,
         });
       }
       if (ds.modifyQuery) {
@@ -435,6 +466,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitOpenFn={this.onSplitOpen('logs')}
           scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
+          onClickFilterValue={this.onClickFilterValue}
+          onClickFilterOutValue={this.onClickFilterOutValue}
         />
       </ContentOutlineItem>
     );
@@ -499,7 +532,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             dataFrames={dataFrames}
             splitOpenFn={this.onSplitOpen('traceView')}
             scrollElement={this.scrollElement}
-            queryResponse={queryResponse}
           />
         </ContentOutlineItem>
       )

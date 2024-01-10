@@ -352,27 +352,27 @@ func TestExportRules(t *testing.T) {
 			expectedStatus: 400,
 		},
 		{
-			title: "unauthorized if folders are not accessible",
+			title: "forbidden if folders are not accessible",
 			params: url.Values{
 				"folderUid": []string{noAccessByFolder[0].NamespaceUID},
 			},
-			expectedStatus: 401,
+			expectedStatus: http.StatusForbidden,
 			expectedRules:  nil,
 		},
 		{
-			title: "unauthorized if group is not accessible",
+			title: "forbidden if group is not accessible",
 			params: url.Values{
 				"folderUid": []string{noAccessKey1.NamespaceUID},
 				"group":     []string{noAccessKey1.RuleGroup},
 			},
-			expectedStatus: 401,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
-			title: "unauthorized if rule's group is not accessible",
+			title: "forbidden if rule's group is not accessible",
 			params: url.Values{
 				"ruleUid": []string{noAccessRule.UID},
 			},
-			expectedStatus: 401,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			title: "return in JSON if header is specified",

@@ -28,6 +28,7 @@ import {
   usersFetchBegin,
   usersFetchEnd,
   sortChanged,
+  usersAnonymousDevicesFetched,
 } from './reducers';
 // UserAdminPage
 
@@ -331,6 +332,21 @@ export function changeSort({ sortBy }: FetchDataArgs<UserDTO>): ThunkResult<void
       dispatch(usersFetchBegin());
       dispatch(sortChanged(sort));
       dispatch(fetchUsers());
+    }
+  };
+}
+
+// UserListAnonymousPage
+
+export function fetchUsersAnonymousDevices(): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    try {
+      let url = `/api/anonymous/devices`;
+      const result = await getBackendSrv().get(url);
+      dispatch(usersAnonymousDevicesFetched({ devices: result }));
+    } catch (error) {
+      usersFetchEnd();
+      console.error(error);
     }
   };
 }

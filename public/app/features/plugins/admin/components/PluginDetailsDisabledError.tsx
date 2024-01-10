@@ -21,7 +21,7 @@ export function PluginDetailsDisabledError({ className, plugin }: Props): ReactE
       severity="error"
       title="Plugin disabled"
       className={className}
-      aria-label={selectors.pages.PluginPage.disabledInfo}
+      data-testid={selectors.pages.PluginPage.disabledInfo}
     >
       {renderDescriptionFromError(plugin.error)}
       <p>Please contact your server administrator to get this resolved.</p>

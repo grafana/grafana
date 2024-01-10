@@ -4,7 +4,7 @@ _build:
 aliases:
   - ./unified-alerting/difference-old-new/ # /docs/grafana/<GRAFANA VERSION>/alerting/unified-alerting/difference-old-new/
 canonical: https://grafana.com/docs/grafana/latest/alerting/difference-old-new/
-description: Compare new unified alerting compared to legacy dashboard alerting
+description: Learn about how Grafana Alerting compares to legacy alerting
 keywords:
   - grafana
   - alerting

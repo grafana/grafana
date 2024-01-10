@@ -12,6 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's trend visualization
 title: Trend
 weight: 100
 ---

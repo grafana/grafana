@@ -246,7 +246,7 @@ type DeleteTokenParams struct {
 // swagger:response listTokensResponse
 type ListTokensResponse struct {
 	// in:body
-	Body *TokenDTO
+	Body []TokenDTO
 }
 
 // swagger:response createTokenResponse

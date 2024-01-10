@@ -39,7 +39,7 @@ export function ControllerTestContext(this: any) {
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
       $provide.value('$sanitize', self.$sanitize);
-      each(mocks, (value: any, key: any) => {
+      each(mocks, (value, key) => {
         $provide.value(key, value);
       });
     });
@@ -101,7 +101,7 @@ export function ControllerTestContext(this: any) {
     });
   };
 
-  this.setIsUtc = (isUtc: any = false) => {
+  this.setIsUtc = (isUtc = false) => {
     self.isUtc = isUtc;
   };
 }

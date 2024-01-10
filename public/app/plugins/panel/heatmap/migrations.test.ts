@@ -1,6 +1,6 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
 
-import { heatmapChangedHandler } from './migrations';
+import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 
 describe('Heatmap Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
@@ -74,7 +74,7 @@ describe('Heatmap Migrations', () => {
           },
           "showValue": "never",
           "tooltip": {
-            "show": true,
+            "mode": "single",
             "yHistogram": true,
           },
           "yAxis": {
@@ -85,6 +85,63 @@ describe('Heatmap Migrations', () => {
             "min": 7,
             "reverse": false,
             "unit": "short",
+          },
+        },
+      }
+    `);
+  });
+
+  it('Null Options', () => {
+    const panel = {} as PanelModel;
+    panel.options = null;
+    panel.options = heatmapMigrationHandler(panel);
+    expect(panel).toMatchInlineSnapshot(`
+      {
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": [],
+        },
+        "options": {
+          "calculate": true,
+          "calculation": {},
+          "cellGap": 2,
+          "cellRadius": undefined,
+          "cellValues": {
+            "decimals": undefined,
+          },
+          "color": {
+            "exponent": 0.5,
+            "fill": undefined,
+            "max": undefined,
+            "min": undefined,
+            "mode": "scheme",
+            "reverse": false,
+            "scale": "exponential",
+            "scheme": "Oranges",
+            "steps": 128,
+          },
+          "exemplars": {
+            "color": "rgba(255,0,255,0.7)",
+          },
+          "legend": {
+            "show": false,
+          },
+          "rowsFrame": {
+            "layout": "auto",
+          },
+          "showValue": "never",
+          "tooltip": {
+            "mode": "none",
+            "yHistogram": false,
+          },
+          "yAxis": {
+            "axisPlacement": "left",
+            "axisWidth": undefined,
+            "decimals": undefined,
+            "max": undefined,
+            "min": undefined,
+            "reverse": false,
+            "unit": undefined,
           },
         },
       }

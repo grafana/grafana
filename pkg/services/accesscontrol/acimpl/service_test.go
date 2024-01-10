@@ -762,7 +762,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 			runs: []run{
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
-						OrgID:             2,
+						AssignmentOrgID:   2,
 						ServiceAccountID:  2,
 						ExternalServiceID: "App 1",
 						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
@@ -776,7 +776,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 			runs: []run{
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
-						Global:            true,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  2,
 						ExternalServiceID: "App 1",
 						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
@@ -785,7 +785,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 				},
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
-						Global:            true,
+						AssignmentOrgID:   1,
 						ServiceAccountID:  2,
 						ExternalServiceID: "App 1",
 						Permissions: []accesscontrol.Permission{
@@ -802,7 +802,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 			runs: []run{
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
-						OrgID:             2,
+						AssignmentOrgID:   2,
 						ExternalServiceID: "App 1",
 						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
 					},
@@ -825,7 +825,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 				require.NoError(t, err)
 
 				// Check that the permissions and assignment are stored correctly
-				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.OrgID, UserID: 2}, accesscontrol.Options{})
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
 				assert.ElementsMatch(t, r.cmd.Permissions, perms)
 			}
@@ -848,7 +848,7 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 		{
 			name: "handles deleting role that exists",
 			initCmd: &accesscontrol.SaveExternalServiceRoleCommand{
-				Global:            true,
+				AssignmentOrgID:   1,
 				ServiceAccountID:  2,
 				ExternalServiceID: "App 1",
 				Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
@@ -877,7 +877,7 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 
 			if tt.initCmd != nil {
 				// Check that the permissions and assignment are removed correctly
-				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.OrgID, UserID: 2}, accesscontrol.Options{})
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
 				assert.Empty(t, perms)
 			}

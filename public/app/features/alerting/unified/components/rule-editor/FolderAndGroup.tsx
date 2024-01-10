@@ -206,7 +206,7 @@ export function FolderAndGroup({
           <Field
             label="Evaluation group"
             data-testid="group-picker"
-            description="Rules within the same group are evaluated sequentially over the same time interval."
+            description="Rules within the same group are evaluated concurrently over the same time interval."
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}

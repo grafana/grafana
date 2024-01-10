@@ -69,16 +69,26 @@ describe('Loki query builder', () => {
     e2e.components.QueryBuilder.labelSelect().should('be.visible').click();
     // wait until labels are loaded and set on the component before starting to type
     cy.wait('@labelsRequest');
-    e2e.components.QueryBuilder.labelSelect().type('instance{enter}');
-    e2e.components.QueryBuilder.matchOperatorSelect().should('be.visible').click().type('=~{enter}');
+    e2e.components.QueryBuilder.labelSelect().children('div').children('input').type('instance{enter}');
+    e2e.components.QueryBuilder.matchOperatorSelect()
+      .should('be.visible')
+      .click()
+      .children('div')
+      .children('input')
+      .type('=~{enter}', { force: true });
     e2e.components.QueryBuilder.valueSelect().should('be.visible').click();
     cy.wait('@valuesRequest');
-    e2e.components.QueryBuilder.valueSelect().type('instance1{enter}').type('instance2{enter}');
+    e2e.components.QueryBuilder.valueSelect()
+      .children('div')
+      .children('input')
+      .type('instance1{enter}')
+      .type('instance2{enter}');
     cy.contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     cy.contains(finalQuery).should('be.visible');
 
     // Change to code editor
-    cy.contains('label', 'Code').click();
+    e2e.components.RadioButton.container().filter(':contains("Code")').click();
+
     // We need to test this manually because the final query is split into separate DOM elements using cy.contains(finalQuery).should('be.visible'); does not detect the query.
     cy.contains('rate').should('be.visible');
     cy.contains('instance1|instance2').should('be.visible');

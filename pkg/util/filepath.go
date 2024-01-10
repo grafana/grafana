@@ -14,11 +14,20 @@ var ErrWalkSkipDir = errors.New("skip this directory")
 // If resolvedPath != "", then we are following symbolic links.
 type WalkFunc func(resolvedPath string, info os.FileInfo, err error) error
 
+type walker struct {
+	rootDir string
+}
+
+// newWalker creates a new walker
+func newWalker(rootDir string) *walker {
+	return &walker{rootDir: rootDir}
+}
+
 // Walk walks a path, optionally following symbolic links, and for each path,
 // it calls the walkFn passed.
 //
 // It is similar to filepath.Walk, except that it supports symbolic links and
-// can detect infinite loops while following sym links.
+// can detect infinite loops while following symlinks.
 // It solves the issue where your WalkFunc needs a path relative to the symbolic link
 // (resolving links within walkfunc loses the path to the symbolic link for each traversal).
 func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, followDistFolder bool, walkFn WalkFunc) error {
@@ -34,7 +43,8 @@ func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, foll
 			symlinkPathsFollowed = make(map[string]bool, 8)
 		}
 	}
-	return walk(path, info, resolvedPath, symlinkPathsFollowed, followDistFolder, walkFn)
+
+	return newWalker(path).walk(path, info, resolvedPath, symlinkPathsFollowed, followDistFolder, walkFn)
 }
 
 // walk walks the path. It is a helper/sibling function to Walk.
@@ -43,7 +53,7 @@ func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, foll
 //
 // If resolvedPath is "", then we are not following symbolic links.
 // If symlinkPathsFollowed is not nil, then we need to detect infinite loop.
-func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollowed map[string]bool, followDistFolder bool, walkFn WalkFunc) error {
+func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollowed map[string]bool, followDistFolder bool, walkFn WalkFunc) error {
 	if info == nil {
 		return errors.New("walk: Nil FileInfo passed")
 	}
@@ -81,7 +91,7 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 		if err != nil {
 			return err
 		}
-		return walk(path, info2, path2, symlinkPathsFollowed, followDistFolder, walkFn)
+		return w.walk(path, info2, path2, symlinkPathsFollowed, followDistFolder, walkFn)
 	} else if info.IsDir() {
 		list, err := os.ReadDir(path)
 		if err != nil {
@@ -102,31 +112,41 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
 		}
 
-		if containsDistFolder(subFiles) && followDistFolder {
-			err := walk(
+		if followDistFolder && w.containsDistFolder(subFiles) {
+			err := w.walk(
 				filepath.Join(path, "dist"),
 				info,
 				filepath.Join(resolvedPath, "dist"),
 				symlinkPathsFollowed,
 				followDistFolder,
 				walkFn)
-
 			if err != nil {
 				return err
 			}
 		} else {
 			for _, p := range subFiles {
-				err = walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, followDistFolder, walkFn)
-
+				if p.isDistDir() && !followDistFolder {
+					continue
+				}
+				err = w.walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, followDistFolder, walkFn)
 				if err != nil {
 					return err
 				}
 			}
 		}
-
 		return nil
 	}
 	return nil
+}
+
+// containsDistFolder returns true if the provided subFiles is a folder named "dist".
+func (w *walker) containsDistFolder(subFiles []subFile) bool {
+	for _, p := range subFiles {
+		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" {
+			return true
+		}
+	}
+	return false
 }
 
 type subFile struct {
@@ -134,18 +154,12 @@ type subFile struct {
 	fileInfo           os.FileInfo
 }
 
-func containsDistFolder(subFiles []subFile) bool {
-	for _, p := range subFiles {
-		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" {
-			return true
-		}
-	}
-
-	return false
+func (s subFile) isDistDir() bool {
+	return s.fileInfo.IsDir() && s.fileInfo.Name() == "dist"
 }
 
 // CleanRelativePath returns the shortest path name equivalent to path
-// by purely lexical processing. It make sure the provided path is rooted
+// by purely lexical processing. It makes sure the provided path is rooted
 // and then uses filepath.Clean and filepath.Rel to make sure the path
 // doesn't include any separators or elements that shouldn't be there
 // like ., .., //.

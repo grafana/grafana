@@ -105,55 +105,54 @@ export const LayerName = ({ name, onChange, verifyLayerNameUniqueness, overrideS
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      label: Wrapper;
-      display: flex;
-      align-items: center;
-      margin-left: ${theme.spacing(0.5)};
-    `,
-    layerNameWrapper: css`
-      display: flex;
-      cursor: pointer;
-      border: 1px solid transparent;
-      border-radius: ${theme.shape.borderRadius(2)};
-      align-items: center;
-      padding: 0 0 0 ${theme.spacing(0.5)};
-      margin: 0;
-      background: transparent;
+    wrapper: css({
+      label: 'Wrapper',
+      display: 'flex',
+      alignItems: 'center',
+      marginLeft: theme.spacing(0.5),
+    }),
+    layerNameWrapper: css({
+      display: 'flex',
+      cursor: 'pointer',
+      border: '1px solid transparent',
+      borderRadius: theme.shape.radius.default,
+      alignItems: 'center',
+      padding: `0 0 0 ${theme.spacing(0.5)}`,
+      margin: 0,
+      background: 'transparent',
 
-      &:hover {
-        background: ${theme.colors.action.hover};
-        border: 1px dashed ${theme.colors.border.strong};
-      }
+      '&:hover': {
+        background: theme.colors.action.hover,
+        border: `1px dashed ${theme.colors.border.strong}`,
+      },
 
-      &:focus {
-        border: 2px solid ${theme.colors.primary.border};
-      }
+      '&:focus': {
+        border: `2px solid ${theme.colors.primary.border}`,
+      },
 
-      &:hover,
-      &:focus {
-        .query-name-edit-icon {
-          visibility: visible;
-        }
-      }
-    `,
-    layerName: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-      color: ${theme.colors.primary.text};
-      cursor: pointer;
-      overflow: hidden;
-      margin-left: ${theme.spacing(0.5)};
-    `,
+      '&:hover, &:focus': {
+        '.query-name-edit-icon': {
+          visibility: 'visible',
+        },
+      },
+    }),
+    layerName: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.primary.text,
+      cursor: 'pointer',
+      overflow: 'hidden',
+      marginLeft: theme.spacing(0.5),
+    }),
     layerEditIcon: cx(
-      css`
-        margin-left: ${theme.spacing(2)};
-        visibility: hidden;
-      `,
+      css({
+        marginLeft: theme.spacing(2),
+        visibility: 'hidden',
+      }),
       'query-name-edit-icon'
     ),
-    layerNameInput: css`
-      max-width: 300px;
-      margin: -4px 0;
-    `,
+    layerNameInput: css({
+      maxWidth: '300px',
+      margin: '-4px 0',
+    }),
   };
 };

@@ -23,6 +23,7 @@ import (
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	trace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/go-kit/log/level"
 
@@ -319,7 +320,7 @@ func initTracerProvider(exp tracesdk.SpanExporter, version string, sampler trace
 }
 
 func (ots *TracingService) initNoopTracerProvider() (tracerProvider, error) {
-	return &noopTracerProvider{TracerProvider: trace.NewNoopTracerProvider()}, nil
+	return &noopTracerProvider{TracerProvider: noop.NewTracerProvider()}, nil
 }
 
 func (ots *TracingService) initOpentelemetryTracer() error {

@@ -32,7 +32,7 @@ interface State {
 }
 
 export class QueryInspector extends PureComponent<Props, State> {
-  private formattedJson: any;
+  private formattedJson?: {};
   private subs = new Subscription();
 
   constructor(props: Props) {
@@ -146,7 +146,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     });
   }
 
-  setFormattedJson = (formattedJson: any) => {
+  setFormattedJson = (formattedJson: {}) => {
     this.formattedJson = formattedJson;
   };
 

@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
@@ -73,7 +74,7 @@ func New(
 	// standard deviation sampler is the default for backwards compatibility
 	exemplarSampler := exemplar.NewStandardDeviationSampler
 
-	if features.IsEnabled(featuremgmt.FlagDisablePrometheusExemplarSampling) {
+	if features.IsEnabledGlobally(featuremgmt.FlagDisablePrometheusExemplarSampling) {
 		exemplarSampler = exemplar.NewNoOpSampler
 	}
 
@@ -85,7 +86,7 @@ func New(
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
-		enableDataplane:    features.IsEnabled(featuremgmt.FlagPrometheusDataplane),
+		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
 	}, nil
 }

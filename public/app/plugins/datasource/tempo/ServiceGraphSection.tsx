@@ -50,7 +50,7 @@ export function ServiceGraphSection({
     return null;
   }
 
-  const ds = dsState.value as PrometheusDatasource;
+  const ds = dsState.value;
 
   if (!graphDatasourceUid) {
     return getWarning(

@@ -6,6 +6,14 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+
+# ## 5.1.2 (2023-11-08)
+#
+# ### Added
+#
+# - Hide manual_mount warning messages from non-debug output.
+#   Set the DEBUG environment variable to see all hidden messages.
+#
 # ## 5.1.1 (2023-10-30)
 #
 # ### Added
@@ -779,7 +787,8 @@ EOF
               -e '/website-proxy/ d' \
               -e '/rm -rf dist*/ d' \
               -e '/Press Ctrl+C to stop/ d' \
-              -e '/make/ d'
+              -e '/make/ d' \
+              -e '/WARNING: The manual_mount source directory/ d'
     fi
     ;;
 esac

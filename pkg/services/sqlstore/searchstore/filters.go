@@ -13,6 +13,7 @@ const (
 	TypeFolder      = "dash-folder"
 	TypeDashboard   = "dash-db"
 	TypeAlertFolder = "dash-folder-alerting"
+	TypeAnnotation  = "dash-annotation"
 )
 
 type TypeFilter struct {

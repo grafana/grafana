@@ -1,5 +1,3 @@
-import { some } from 'lodash';
-
 import {
   AppEvents,
   DataSourceApi,
@@ -7,6 +5,7 @@ import {
   DataSourceRef,
   DataSourceSelectItem,
   ScopedVars,
+  matchPluginId,
 } from '@grafana/data';
 import {
   DataSourceSrv as DataSourceService,
@@ -224,10 +223,7 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.alerting && !x.meta.alerting) {
         return false;
       }
-      if (
-        filters.pluginId &&
-        !(x.meta.id === filters.pluginId || some(x.meta.aliasIDs, (id) => id === filters.pluginId))
-      ) {
+      if (filters.pluginId && !matchPluginId(filters.pluginId, x.meta)) {
         return false;
       }
       if (filters.filter && !filters.filter(x)) {
@@ -360,7 +356,7 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
   return isString ? ref : ref?.uid;
 }
 
-export function variableInterpolation(value: any[]) {
+export function variableInterpolation<T>(value: T | T[]) {
   if (Array.isArray(value)) {
     return value[0];
   }

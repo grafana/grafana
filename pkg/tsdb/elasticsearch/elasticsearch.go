@@ -120,11 +120,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			interval = ""
 		}
 
-		timeInterval, ok := jsonData["timeInterval"].(string)
-		if !ok {
-			timeInterval = ""
-		}
-
 		index, ok := jsonData["index"].(string)
 		if !ok {
 			index = ""
@@ -171,7 +166,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
-			TimeInterval:               timeInterval,
 			IncludeFrozen:              includeFrozen,
 			XPack:                      xpack,
 		}

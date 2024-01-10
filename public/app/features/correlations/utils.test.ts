@@ -19,6 +19,7 @@ describe('correlations utils', () => {
           datasourceUid: prometheus.uid,
           datasourceName: prometheus.name,
           query: {
+            datasource: { uid: prometheus.uid },
             expr: 'target Prometheus query',
           },
         },
@@ -29,6 +30,7 @@ describe('correlations utils', () => {
           datasourceUid: elastic.uid,
           datasourceName: elastic.name,
           query: {
+            datasource: { uid: elastic.uid },
             expr: 'target Elastic query',
           },
         },
