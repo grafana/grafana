@@ -6194,18 +6194,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/overlays@npm:3.8.0":
-  version: 3.8.0
-  resolution: "@react-types/overlays@npm:3.8.0"
-  dependencies:
-    "@react-types/shared": "npm:^3.18.1"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 9b226ade8f8db2e83602fbed838230a54e0eda7af513e6a32922a5f36b52f650c39c27f6ad3c72bf8403c73fe307fe5fe65d835385d759e0106622a7ed07eee4
-  languageName: node
-  linkType: hard
-
-"@react-types/overlays@npm:^3.8.0, @react-types/overlays@npm:^3.8.4":
+"@react-types/overlays@npm:3.8.4, @react-types/overlays@npm:^3.8.0, @react-types/overlays@npm:^3.8.4":
   version: 3.8.4
   resolution: "@react-types/overlays@npm:3.8.4"
   dependencies:
@@ -17105,7 +17094,7 @@ __metadata:
     "@react-stately/tree": "npm:3.7.0"
     "@react-types/button": "npm:3.9.1"
     "@react-types/menu": "npm:3.9.6"
-    "@react-types/overlays": "npm:3.8.0"
+    "@react-types/overlays": "npm:3.8.4"
     "@react-types/shared": "npm:3.21.0"
     "@reduxjs/toolkit": "npm:1.9.5"
     "@remix-run/router": "npm:^1.5.0"
