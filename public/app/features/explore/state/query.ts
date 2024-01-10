@@ -768,11 +768,6 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
 
     newQuerySource.subscribe({
       next(data) {
-        if (data.logsResult !== null && data.state === LoadingState.Done) {
-          reportInteraction('grafana_explore_logs_scrolled', {
-            datasourceType: datasourceInstance.type,
-          });
-        }
         dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
       },
       error(error) {

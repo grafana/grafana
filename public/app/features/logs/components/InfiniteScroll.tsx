@@ -5,6 +5,7 @@ import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Spinner } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
 
 export type Props = {
   children: ReactNode;
@@ -78,6 +79,10 @@ export const InfiniteScroll = ({
           : getPrevRange(getVisibleRange(rows), range);
       loadMoreLogs?.(newRange);
       setUpperLoading(true);
+      reportInteraction('grafana_logs_infinite_scrolling', {
+        direction: 'top',
+        sort_order: sortOrder,
+      });
     }
 
     function scrollBottom() {
@@ -92,6 +97,10 @@ export const InfiniteScroll = ({
           : getNextRange(getVisibleRange(rows), range, timeZone);
       loadMoreLogs?.(newRange);
       setLowerLoading(true);
+      reportInteraction('grafana_logs_infinite_scrolling', {
+        direction: 'bottom',
+        sort_order: sortOrder,
+      });
     }
 
     scrollElement.addEventListener('scroll', handleScroll);
