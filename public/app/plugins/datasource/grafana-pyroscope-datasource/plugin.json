@@ -2,7 +2,7 @@
   "type": "datasource",
   "name": "Grafana Pyroscope",
   "id": "grafana-pyroscope-datasource",
-  "executable": "gpx_pyroscope",
+  "executable": "gpx_grafana-pyroscope-datasource",
   "aliasIDs": ["phlare"],
   "category": "profiling",
 
