@@ -6148,14 +6148,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/button@npm:3.9.0, @react-types/button@npm:^3.7.3":
-  version: 3.9.0
-  resolution: "@react-types/button@npm:3.9.0"
+"@react-types/button@npm:3.9.1, @react-types/button@npm:^3.7.3":
+  version: 3.9.1
+  resolution: "@react-types/button@npm:3.9.1"
   dependencies:
-    "@react-types/shared": "npm:^3.21.0"
+    "@react-types/shared": "npm:^3.22.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 91e356e7583f2c51646ea9bf314245117d47fbdd514b8e8df84c42ded9e80dce74e84cb032ff14dbf71d9c0db2b931f41be242d476d2203f7071d2d04a6f2983
+  checksum: 712eb4dbd3bf1afe96a4d1438c95e54b44117bb1cef31a1984d678ef716672d47ebbbbbb1736a2083e47e435e652aa70384f4cf9e9e302d7f1d0878d176ace68
   languageName: node
   linkType: hard
 
@@ -6205,12 +6205,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.21.0, @react-types/shared@npm:^3.18.1, @react-types/shared@npm:^3.21.0":
+"@react-types/shared@npm:3.21.0":
   version: 3.21.0
   resolution: "@react-types/shared@npm:3.21.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
   checksum: e74330bb17e6315869cbb61654d197705b18d62d26c0857f4a65893b24ba84b8b858397debca59aa22528260da3751de3a89ff150fc5e0648a623a32d72260c5
+  languageName: node
+  linkType: hard
+
+"@react-types/shared@npm:^3.18.1, @react-types/shared@npm:^3.22.0":
+  version: 3.22.0
+  resolution: "@react-types/shared@npm:3.22.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+  checksum: 83ccac6c0e73573232f3c336187ff678f8c3041db36c64f6c0d626798f34e489dee502193b3fbfb323b8fca376cf4cdafe8aad2d93aa2bd90531b9ffe55dc3e7
   languageName: node
   linkType: hard
 
@@ -17083,7 +17092,7 @@ __metadata:
     "@react-stately/collections": "npm:3.9.0"
     "@react-stately/menu": "npm:3.5.3"
     "@react-stately/tree": "npm:3.7.0"
-    "@react-types/button": "npm:3.9.0"
+    "@react-types/button": "npm:3.9.1"
     "@react-types/menu": "npm:3.9.2"
     "@react-types/overlays": "npm:3.8.0"
     "@react-types/shared": "npm:3.21.0"
