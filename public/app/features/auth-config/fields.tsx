@@ -42,6 +42,7 @@ export const sectionFields: Section = {
         'name',
         'clientId',
         'clientSecret',
+        'authStyle',
         'scopes',
         'authUrl',
         'tokenUrl',
@@ -98,7 +99,7 @@ export const fieldMap: Record<string, FieldData> = {
   clientId: {
     label: 'Client Id',
     type: 'text',
-    description: 'These values must match the client ID from your OAuth2 app.',
+    description: 'The client ID of your OAuth2 app.',
     validation: {
       required: true,
       message: 'This field is required',
@@ -107,7 +108,7 @@ export const fieldMap: Record<string, FieldData> = {
   clientSecret: {
     label: 'Client Secret',
     type: 'secret',
-    description: 'These values must match the client secret from your OAuth2 app.',
+    description: 'The client secret of your OAuth2 app.',
   },
   teamIds: {
     label: 'Team Ids',
@@ -147,7 +148,7 @@ export const fieldMap: Record<string, FieldData> = {
     label: 'Allowed Domains',
     type: 'select',
     description:
-      'List comma- or space-separated domains. The user should belong to at least \n' + 'one domain to log in.',
+      'List of comma- or space-separated domains. The user should belong to at least \n' + 'one domain to log in.',
     multi: true,
     allowCustomValue: true,
     options: [],
@@ -160,10 +161,19 @@ export const fieldMap: Record<string, FieldData> = {
       required: false,
     },
   },
+  authStyle: {
+    label: 'Auth Style',
+    type: 'select',
+    description:
+      'It determines how client_id and client_secret are sent to Oauth2 provider.',
+    multi: false,
+    options: [ {value: 'AutoDetect', label: 'AutoDetect'}, {value: 'InParams', label: 'InParams'}, {value: 'InHeader', label: 'InHeader'}],
+    defaultValue: 'AutoDetect'
+  },
   tokenUrl: {
     label: 'Token Url',
     type: 'text',
-    description: 'Endpoint used to obtain the OAuth2 access token.',
+    description: 'The token endpoint of your OAuth2 provider.',
     validation: {
       required: false,
     },
@@ -214,21 +224,22 @@ export const fieldMap: Record<string, FieldData> = {
   },
   name: {
     label: 'Display name',
-    description: 'Helpful if you use more than one identity providers or SSO protocols',
+    description: 'Helpful if you use more than one identity providers or SSO protocols.',
     type: 'text',
   },
   allowSignUp: {
     label: 'Allow sign up',
-    description: 'If not enabled, only existing Grafana users can log in using OAuth',
+    description: 'If not enabled, only existing Grafana users can log in using OAuth.',
     type: 'switch',
   },
   autoLogin: {
     label: 'Auto login',
-    description: 'Log in automatically, skipping the login screen',
+    description: 'Log in automatically, skipping the login screen.',
     type: 'switch',
   },
   signoutRedirectUrl: {
     label: 'Sign out redirect URL',
+    description: 'The URL to redirect the user to after signing out from Grafana.',
     type: 'text',
     validation: {
       required: false,
@@ -263,17 +274,17 @@ export const fieldMap: Record<string, FieldData> = {
   },
   roleAttributeStrict: {
     label: 'Role attribute strict mode',
-    description: 'If enabled, denies user login if the Grafana role cannot be extracted using Role attribute path',
+    description: 'If enabled, denies user login if the Grafana role cannot be extracted using Role attribute path.',
     type: 'switch',
   },
   allowAssignGrafanaAdmin: {
     label: 'Allow assign Grafana admin',
-    description: 'If enabled, it will automatically sync the Grafana server administrator role',
+    description: 'If enabled, it will automatically sync the Grafana server administrator role.',
     type: 'switch',
   },
   skipOrgRoleSync: {
     label: 'Skip organization role sync',
-    description: 'Prevent synchronizing users’ organization roles from your IdP',
+    description: 'Prevent synchronizing users’ organization roles from your IdP.',
     type: 'switch',
   },
   defineAllowedGroups: {
@@ -299,7 +310,7 @@ export const fieldMap: Record<string, FieldData> = {
   },
   useRefreshToken: {
     label: 'Use Refresh Token',
-    description: 'If enabled, it will automatically sync the Grafana server administrator role',
+    description: 'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.',
     type: 'checkbox',
   },
   configureTLS: {
@@ -308,7 +319,7 @@ export const fieldMap: Record<string, FieldData> = {
   },
   tlsClientCa: {
     label: 'TLS Client CA',
-    description: 'The path to the trusted certificate authority list',
+    description: 'The path to the trusted certificate authority list.',
     type: 'text',
   },
   tlsClientCert: {

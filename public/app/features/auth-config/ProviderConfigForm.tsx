@@ -37,7 +37,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
   const sections = sectionFields[provider];
-  const [deleteConfig, setDeleteConfig] = useState(false);
+  const [resetConfig, setResetConfig] = useState(false);
 
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
@@ -76,12 +76,12 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     }
   };
 
-  const onDeleteConfig = async () => {
+  const onResetConfig = async () => {
     try {
       await getBackendSrv().delete(`/api/v1/sso-settings/${provider}`);
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Settings deleted'],
+        payload: ['Settings resetted to defaults'],
       });
       setTimeout(() => {
         locationService.push(`/admin/authentication`);
@@ -171,36 +171,36 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             </Field>
             <Field>
               <Button
-                variant={'destructive'}
+                variant={'secondary'}
                 onClick={(event) => {
-                  setDeleteConfig(true);
+                  setResetConfig(true);
                 }}
               >
-                Delete
+                Reset
               </Button>
             </Field>
           </Box>
         </>
       </form>
-      {deleteConfig && (
+      {resetConfig && (
         <ConfirmModal
           isOpen
           icon="trash-alt"
-          title="Delete"
+          title="Reset"
           body={
             <Stack direction={'column'} gap={3}>
-              <span>Are you sure you want to delete this configuration?</span>
+              <span>Are you sure you want to reset this configuration?</span>
               <small>
-                After removing these settings Grafana will use the provider configuration from the system (config
+                After resetting these settings Grafana will use the provider configuration from the system (config
                 file/environment variables) if any.
               </small>
             </Stack>
           }
-          confirmText="Delete"
-          onDismiss={() => setDeleteConfig(false)}
+          confirmText="Reset"
+          onDismiss={() => setResetConfig(false)}
           onConfirm={async () => {
-            await onDeleteConfig();
-            setDeleteConfig(false);
+            await onResetConfig();
+            setResetConfig(false);
           }}
         />
       )}
