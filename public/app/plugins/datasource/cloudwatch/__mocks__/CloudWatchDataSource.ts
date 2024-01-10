@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { getBackendSrv, setBackendSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
 
-import { initialCustomVariableModelState } from '../__mocks__/variables';
+import { initialCustomVariableModelState } from '../__mocks__/CloudWatchVariables';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData } from '../types';
 import { getVariableName } from '../utils/templateVariableUtils';

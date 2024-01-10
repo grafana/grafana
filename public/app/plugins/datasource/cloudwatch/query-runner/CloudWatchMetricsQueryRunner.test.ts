@@ -14,9 +14,9 @@ import {
   periodIntervalVariable,
   accountIdVariable,
 } from '../__mocks__/CloudWatchDataSource';
+import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
 import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
 import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
-import { initialVariableModelState } from '../__mocks__/variables';
 import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery, DataQueryError } from '../types';
 
 describe('CloudWatchMetricsQueryRunner', () => {
