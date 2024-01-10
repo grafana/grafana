@@ -5,7 +5,6 @@ services:
       - ./grafana/provisioning/:/etc/grafana/provisioning/
     environment:
       - VIRTUAL_HOST=grafana.loc
-      - GF_FEATURE_TOGGLES_ENABLE=ngalert
       - GF_UNIFIED_ALERTING_HA_PEERS=ha-test-unified-alerting-grafana2-1:9094,ha-test-unified-alerting-grafana1-1:9094,ha-test-unified-alerting-grafana3-1:9094,ha-test-unified-alerting-grafana4-1:9094
       - GF_SERVER_ROOT_URL=http://grafana.loc
       - GF_DATABASE_NAME=grafana
