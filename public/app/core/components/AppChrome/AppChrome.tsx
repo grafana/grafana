@@ -134,7 +134,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'none',
       zIndex: theme.zIndex.navbarFixed,
 
-      [theme.breakpoints.up('xl')]: {
+      [theme.breakpoints.up('xxl')]: {
         display: 'block',
       },
     }),
