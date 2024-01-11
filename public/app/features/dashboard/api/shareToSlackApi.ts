@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
 
-import { createErrorNotification, createSuccessNotification } from '../../../core/copy/appNotification';
+import { createSuccessNotification } from '../../../core/copy/appNotification';
 import { notifyApp } from '../../../core/reducers/appNotification';
 
 export interface ChannelRS {
