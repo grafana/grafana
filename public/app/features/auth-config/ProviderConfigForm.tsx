@@ -81,7 +81,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       await getBackendSrv().delete(`/api/v1/sso-settings/${provider}`);
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Settings resetted to defaults'],
+        payload: ['Settings reset to defaults'],
       });
       setTimeout(() => {
         locationService.push(`/admin/authentication`);

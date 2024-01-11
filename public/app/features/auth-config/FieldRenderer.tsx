@@ -98,7 +98,11 @@ export const FieldRenderer = ({
       );
     case 'select':
       const watchOptions = watch(name);
-      const options = isSelectableValue(watchOptions) ? watchOptions : [{ label: '', value: '' }];
+      let options = fieldData.options;
+
+      if (!fieldData.options?.length) {
+        options = isSelectableValue(watchOptions) ? watchOptions : [{ label: '', value: '' }];
+      }
       return (
         <Field {...fieldProps} htmlFor={name}>
           <InputControl
@@ -114,11 +118,11 @@ export const FieldRenderer = ({
                   invalid={invalid}
                   inputId={name}
                   options={options}
-                  allowCustomValue
+                  allowCustomValue={!!fieldData.allowCustomValue}
                   onChange={onChange}
                   onCreateOption={(v) => {
                     const customValue = { value: v, label: v };
-                    onChange([...options, customValue]);
+                    onChange([...(options || []), customValue]);
                   }}
                 />
               );
