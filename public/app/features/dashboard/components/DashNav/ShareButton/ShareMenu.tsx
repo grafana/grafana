@@ -28,11 +28,11 @@ export function ShareMenu({ dashboard }: { dashboard: DashboardModel }) {
       <Menu.Item
         key="share-to-slack"
         icon="slack"
-        label="Share to slack"
+        label="Share to Slack"
         onClick={() => {
           showModal(ShareSlackModal, {
             dashboardUid: dashboard.uid,
-            dashboardUrl: `${location.pathname}${location.search}${location.hash}`,
+            dashboardUrl: `${location.pathname}${location.search}${location.hash}`.substring(1),
             onDismiss: hideModal,
           });
         }}

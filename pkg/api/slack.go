@@ -294,10 +294,10 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 }
 
 type PreviewRequest struct {
-	DashboardURL string `json:"dashboard_url"`
+	DashboardURL string `json:"dashboardUrl"`
 }
 type PreviewResponse struct {
-	PreviewURL string `json:"preview_url"`
+	PreviewURL string `json:"previewUrl"`
 }
 
 type EventChallengeAck struct {

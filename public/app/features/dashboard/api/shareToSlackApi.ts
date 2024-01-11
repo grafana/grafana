@@ -46,7 +46,6 @@ export const shareToSlackApi = createApi({
   reducerPath: 'shareToSlackApi',
   baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
   tagTypes: ['channels', 'preview'],
-  refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
     getChannels: builder.query<Channel[], void>({
       query: () => ({
