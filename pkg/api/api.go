@@ -617,8 +617,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// rendering
 	r.Get("/render/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.RenderToPng)
-	// TODO: only for testing, this method will be called from AcknowledgeSlackEvent
-	r.Post("/api/render/unfurl", hs.RenderAndPostToSlack)
 
 	// grafana.net proxy
 	r.Any("/api/gnet/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.ProxyGnetRequest)
