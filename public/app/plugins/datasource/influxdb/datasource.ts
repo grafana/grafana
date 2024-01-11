@@ -172,6 +172,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
+    debugger;
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
@@ -264,35 +265,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    if (expandedQuery.tags) {
-      expandedQuery.tags = expandedQuery.tags.map((tag) => {
-        // debugger;
-        // If tag value contains special chars we need to escape before sending to influx backend, but the regex delimiter and operators should not be escaped
-        if (isRegex(tag.value)) {
-          const firstChars = tag.value.slice(0, 2); // `/^`
-          const lastChars = tag.value.slice(tag.value.length - 2, tag.value.length); // `$/`
-          const middleChars = tag.value.slice(2, tag.value.length - 2);
-
-          // regex escape doesn't catch `/`, I would assume so it doesn't mangle the regex delimiter, so we need to escape it manually
-          // what about `$` and `^`
-          // Also we only want 2 escape chars `\\` for regex?
-          const escapedMiddleChars = middleChars.replaceAll(`\\\\`, `\\`).replaceAll(`/`, '\\/');
-
-          // Do we want to remove empty regex matches?
-          if (escapedMiddleChars) {
-            return {
-              ...tag,
-              value: firstChars + escapedMiddleChars + lastChars,
-            };
-          }
-        }
-        return {
-          ...tag,
-          value: tag.value,
-        };
-      });
-    }
-
     return {
       ...expandedQuery,
       adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
@@ -308,6 +280,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: Partial<CustomFormatterVariable>) {
+    debugger;
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return influxRegularEscape(value);
@@ -826,5 +799,5 @@ export function influxRegularEscape(value: string | string[]) {
 }
 
 export function influxSpecialRegexEscape(value: string | string[]) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|\/]/g, '\\$&') : value;
 }

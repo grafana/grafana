@@ -1,9 +1,17 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceInstanceSettings, dateTime, ScopedVars } from '@grafana/data/src';
+import {
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  dateTime,
+  ScopedVars,
+  TypedVariableModel,
+} from '@grafana/data/src';
 import { FetchResponse, setDataSourceSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
+import { convertToStoreState } from '../../../../test/helpers/convertToStoreState';
+import { getTemplateSrvDependencies } from '../../../../test/helpers/getTemplateSrvDependencies';
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import InfluxDatasource from './datasource';
@@ -219,10 +227,31 @@ describe('InfluxDataSource Backend Mode', () => {
     });
   });
 
-  describe('variable interpolation with chained variables with backend mode', () => {
-    const mockTemplateService = new TemplateSrv();
+  describe('variable interpolation with chained multi variables with backend mode', () => {
+    let mockTemplateService = new TemplateSrv();
+    let datasourceSettings = getMockDSInstanceSettings();
+    const variables = [
+      {
+        type: 'query',
+        name: 'var1',
+        multi: true,
+      },
+    ] as TypedVariableModel[];
+    const state = convertToStoreState('var1', variables);
+
+    setDataSourceSrv({
+      ...getTemplateSrvDependencies(state),
+      getInstanceSettings: () => datasourceSettings,
+      getList: () => [datasourceSettings],
+      get: () => Promise.resolve(ds),
+      reload: () => {},
+    });
+    mockTemplateService.init(variables);
+
     mockTemplateService.getAdhocFilters = jest.fn((_: string) => []);
     let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
+    ds.version = InfluxVersion.InfluxQL;
+    ds.access = 'proxy';
     const fetchMockImpl = () =>
       of({
         data: {
@@ -246,19 +275,14 @@ describe('InfluxDataSource Backend Mode', () => {
       fetchMock.mockImplementation(fetchMockImpl);
     });
 
-    it('should render chained regex variables with floating point number', () => {
-      ds.metricFindQuery(`SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED`, {
-        ...queryOptions,
-        scopedVars: { maxSED: { text: '8.1', value: '8.1' } },
-      });
-      const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1`;
-      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
-      expect(qData).toBe(qe);
-    });
+    // These tests are passing but this is NOT the functionality we see in the frontend.
+    // SELECT "used_percent" FROM "disk" WHERE ("path"::tag =~ /^$path$/) AND $timeFilter
+    // Becomes
+    // SELECT \"used_percent\" FROM \"disk\" WHERE (\"path\"::tag =~ /^/etc/telegraf/telegraf\\\\.conf$/) AND $timeFilter
+    // Something is still wrong with our tests!
 
-    // in #80003 it was reported that non-regex values were also being escaped improperly as of 10.2.2
-    it('should render variables with URL (single quote)', () => {
-      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = \'$var1\'', {
+    it('should render variables with URL', () => {
+      ds.metricFindQuery('SELECT "used_percent" FROM "disk" WHERE ("path"::tag =~ /^$var1$/) AND $timeFilter', {
         ...queryOptions,
         scopedVars: {
           var1: {
@@ -267,28 +291,12 @@ describe('InfluxDataSource Backend Mode', () => {
           },
         },
       });
-      // this is the desired result AFAIK?
-      // const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg'`;
 
-      // And this is what we're currently returning
-      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = 'https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg'`;
+      // This is what is returned on the frontend, but this test has the values escaped
+      // Scoped var is probably not marked as multi
+      const qe =
+        'SELECT "used_percent" FROM "disk" WHERE ("path"::tag =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/) AND $timeFilter';
 
-      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
-      expect(qData).toBe(qe);
-    });
-
-    // Users posted a workaround which is to denote the variable as raw, which will prevent escaping that breaks single quoted values
-    it('should render variables with URL (workaround)', () => {
-      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = "${var1:raw}"', {
-        ...queryOptions,
-        scopedVars: {
-          var1: {
-            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
-            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
-          },
-        },
-      });
-      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = "https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg"`;
       const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
       expect(qData).toBe(qe);
     });
@@ -323,6 +331,154 @@ describe('InfluxDataSource Backend Mode', () => {
         }
       );
       const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+  });
+
+  describe('variable interpolation with single variables with backend mode', () => {
+    let mockTemplateService = new TemplateSrv();
+    let datasourceSettings = getMockDSInstanceSettings();
+    const variables = [
+      {
+        type: 'query',
+        name: 'var1',
+        multi: false,
+      },
+    ] as TypedVariableModel[];
+    const state = convertToStoreState('var1', variables);
+    setDataSourceSrv({
+      ...getTemplateSrvDependencies(state),
+      getInstanceSettings: () => datasourceSettings,
+      getList: () => [datasourceSettings],
+      get: () => Promise.resolve(ds),
+      reload: () => {},
+    });
+    mockTemplateService.init(variables);
+
+    let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
+    ds.version = InfluxVersion.InfluxQL;
+    ds.access = 'proxy';
+    const fetchMockImpl = () =>
+      of({
+        data: {
+          status: 'success',
+          results: [
+            {
+              series: [
+                {
+                  name: 'measurement',
+                  columns: ['name'],
+                  values: [['cpu']],
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      fetchMock.mockImplementation(fetchMockImpl);
+    });
+
+    it('should render variables with floating point number', () => {
+      ds.metricFindQuery(`SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED`, {
+        ...queryOptions,
+        scopedVars: { maxSED: { text: '8.1', value: '8.1' } },
+      });
+      const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1`;
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    // in #80003 it was reported that non-regex values were also being escaped improperly as of 10.2.2
+    it('should render variables with URL (single quote)', () => {
+      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = \'$var1\'', {
+        ...queryOptions,
+        scopedVars: {
+          var1: {
+            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+          },
+        },
+      });
+      // this is the desired result AFAIK?
+      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg'`;
+
+      // And this is what we're currently returning
+      // const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = 'https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg'`;
+
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    it('should render variables with URL (2)', () => {
+      ds.metricFindQuery('SELECT "used_percent" FROM "disk" WHERE ("path"::tag = \'$var1\') AND $timeFilter', {
+        ...queryOptions,
+        scopedVars: {
+          var1: {
+            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+          },
+        },
+      });
+
+      // This is what is returned on the frontend, but this test has the values escaped
+      // Scoped var is probably not marked as multi
+      const qe =
+        'SELECT "used_percent" FROM "disk" WHERE ("path"::tag = \'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg\') AND $timeFilter';
+
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    // Users posted a workaround which is to denote the variable as raw, which will prevent escaping that breaks single quoted values
+    it('should render single variables with URL (workaround)', () => {
+      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = "${var1:raw}"', {
+        ...queryOptions,
+        scopedVars: {
+          var1: {
+            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+          },
+        },
+      });
+      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = "https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg"`;
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    it('should render single variables ', () => {
+      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = \'$var1\'', {
+        ...queryOptions,
+        scopedVars: {
+          var1: {
+            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+          },
+        },
+      });
+      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg'`;
+      const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
+      expect(qData).toBe(qe);
+    });
+
+    it('should render chained variables with floating point number and url', () => {
+      ds.metricFindQuery(
+        'SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED AND agent_url = \'$var1\'',
+        {
+          ...queryOptions,
+          scopedVars: {
+            var1: {
+              text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+              value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+            },
+            maxSED: { text: '8.1', value: '8.1' },
+          },
+        }
+      );
+      const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg'`;
       const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
       expect(qData).toBe(qe);
     });
@@ -403,7 +559,18 @@ describe('applyVariables', () => {
     ds.version = InfluxVersion.InfluxQL;
     ds.access = 'proxy';
 
+    const state = convertToStoreState('var1', [
+      {
+        type: 'query',
+        name: 'var1',
+        multi: true,
+        current: { value: ['value1', 'value2'] },
+        options: [{ value: 'value1' }, { value: 'value2' }],
+      },
+    ] as TypedVariableModel[]);
+
     setDataSourceSrv({
+      ...getTemplateSrvDependencies(state),
       getInstanceSettings: () => datasourceSettings,
       getList: () => [datasourceSettings],
       get: () => Promise.resolve(ds),
@@ -411,7 +578,7 @@ describe('applyVariables', () => {
     });
   });
 
-  it('Should interpolate and escape delimiter', () => {
+  it('Should interpolate and escape dots and slashes', () => {
     const query: InfluxQuery = ds.applyTemplateVariables(
       {
         ...mockInfluxQueryWithTemplateVars([]),
@@ -436,7 +603,7 @@ describe('applyVariables', () => {
     }
     expect(query.tags[0].value).toBe('/^\\\\/etc\\\\/resolv\\.conf$/');
   });
-  it('Should interpolate and escape delimiter 2', () => {
+  it('Should interpolate and escape dots and slashes, not dash', () => {
     const query: InfluxQuery = ds.applyTemplateVariables(
       {
         ...mockInfluxQueryWithTemplateVars([]),
@@ -469,11 +636,16 @@ describe('applyVariables', () => {
           {
             key: 'path::tag',
             operator: '=~',
-            value: `/^\\/var\\/log\\/host\\/system\\.log$/`,
+            value: `/^$path$/`,
           },
         ],
       },
-      {}
+      {
+        path: {
+          text: '/var/log/host/system.log',
+          value: '/var/log/host/system.log',
+        },
+      }
     );
     if (!query.tags) {
       throw new Error('Tags are not defined');
@@ -489,11 +661,16 @@ describe('applyVariables', () => {
           {
             key: 'cpu',
             operator: '=~',
-            value: `/^value \\\\(1\\\\)$/`,
+            value: `/^$var$/`,
           },
         ],
       },
-      {}
+      {
+        var: {
+          text: 'value (1)',
+          value: 'value (1)',
+        },
+      }
     );
     if (!query.tags) {
       throw new Error('Tags are not defined');
@@ -508,11 +685,16 @@ describe('applyVariables', () => {
           {
             key: 'var',
             operator: '=',
-            value: '/var/log/host/system.log',
+            value: '$var',
           },
         ],
       },
-      {}
+      {
+        var: {
+          text: '/var/log/host/system.log',
+          value: '/var/log/host/system.log',
+        },
+      }
     );
     if (!query.tags) {
       throw new Error('Tags are not defined');
