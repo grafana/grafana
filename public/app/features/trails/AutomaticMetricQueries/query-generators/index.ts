@@ -7,8 +7,5 @@ const SUFFIX_TO_ALTERNATIVE_GENERATOR: Record<string, MetricQueriesGenerator> = 
 };
 
 export function getQueryGeneratorFor(suffix?: string) {
-  if (!suffix || suffix === '') {
-    return null;
-  }
-  return SUFFIX_TO_ALTERNATIVE_GENERATOR[suffix] || general.generator;
+  return (suffix && SUFFIX_TO_ALTERNATIVE_GENERATOR[suffix]) || general.generator;
 }
