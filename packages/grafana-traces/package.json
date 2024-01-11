@@ -15,20 +15,8 @@
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/esm/index.js",
-    "types": "dist/index.d.ts",
-    "access": "public"
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
     "@emotion/css": "11.11.2",
@@ -44,6 +32,8 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
+    "@testing-library/react": "14.0.0",
+    "@testing-library/user-event": "14.5.2",
     "@types/react": "18.2.46",
     "react": "18.2.0",
     "typescript": "5.2.2"
