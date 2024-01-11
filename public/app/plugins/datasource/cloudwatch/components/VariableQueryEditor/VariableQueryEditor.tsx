@@ -114,7 +114,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.DimensionValues,
   ].includes(parsedQuery.queryType);
   return (
-    <div className="width-15">
+    <div className={newFormStylingEnabled ? 'width-15' : ''}>
       <VariableQueryField
         value={parsedQuery.queryType}
         options={queryTypes}
