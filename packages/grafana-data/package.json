@@ -69,7 +69,7 @@
     "@testing-library/dom": "9.3.4",
     "@testing-library/jest-dom": "6.1.4",
     "@testing-library/react": "14.0.0",
-    "@testing-library/user-event": "14.5.1",
+    "@testing-library/user-event": "14.5.2",
     "@types/dompurify": "^2",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.4",
