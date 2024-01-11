@@ -50,13 +50,13 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 | DELETE | /api/v1/provisioning/alert-rules/:uid                             | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
 | GET    | /api/v1/provisioning/alert-rules/:uid                             | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                       |
 | GET    | /api/v1/provisioning/alert-rules/:uid/export                      | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.       |
-| GET    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                       |
-| GET    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format. |
+| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                       |
+| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format. |
 | GET    | /api/v1/provisioning/alert-rules                                   | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                |
 | GET    | /api/v1/provisioning/alert-rules/export                            | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.     |
 | POST   | /api/v1/provisioning/alert-rules                                   | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                |
 | PUT    | /api/v1/provisioning/alert-rules/:uid                             | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
-| PUT    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group.                    |
+| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group.                    |
 
 ### Contact points
 
@@ -296,7 +296,7 @@ Status: Not Found
 ### <span id="route-get-alert-rule-group"></span> Get a rule group. (_RouteGetAlertRuleGroup_)
 
 ```
-GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
+GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
 #### Parameters
@@ -332,7 +332,7 @@ Status: Not Found
 ### <span id="route-get-alert-rule-group-export"></span> Export an alert rule group in provisioning file format. (_RouteGetAlertRuleGroupExport_)
 
 ```
-GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export
+GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export
 ```
 
 #### Produces
@@ -861,7 +861,7 @@ Status: Bad Request
 ### <span id="route-put-alert-rule-group"></span> Update the interval of a rule group. (_RoutePutAlertRuleGroup_)
 
 ```
-PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
+PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
 #### Consumes
