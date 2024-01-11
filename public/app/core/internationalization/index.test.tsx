@@ -6,21 +6,21 @@ import { Trans } from './index';
 describe('internationalization', () => {
   describe('Trans component', () => {
     it('should interpolate strings without escaping dangerous characters', () => {
-      const label='<script></script>'
-      const { getByText } = render(
-          <Trans>{{label}}</Trans>
-      );
-  
-      expect(getByText('<script></script>')).toBeInTheDocument();
+      const name = '<script></script>';
+      const { getByText } = render(<Trans i18nKey="explore.table.title-with-name">Table - {{ name }}</Trans>);
+
+      expect(getByText('Table - <script></script>')).toBeInTheDocument();
     });
 
     it('should escape dangerous characters when shouldUnescape is false', () => {
-      const label='<script></script>'
+      const name = '<script></script>';
       const { getByText } = render(
-          <Trans shouldUnescape={false}>{{label}}</Trans>
+        <Trans i18nKey="explore.table.title-with-name" shouldUnescape={false}>
+          Table - {{ name }}
+        </Trans>
       );
-  
-      expect(getByText('&lt;script&gt;&lt;&#x2F;script&gt;')).toBeInTheDocument();
+
+      expect(getByText('Table - &lt;script&gt;&lt;&#x2F;script&gt;')).toBeInTheDocument();
     });
   });
-})
+});
