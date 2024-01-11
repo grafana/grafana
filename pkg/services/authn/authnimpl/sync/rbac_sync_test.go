@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPermissionsSync_SyncPermission(t *testing.T) {
+func TestRBACSync_SyncPermission(t *testing.T) {
 	type testCase struct {
 		name                string
 		identity            *authn.Identity
@@ -49,7 +49,7 @@ func TestPermissionsSync_SyncPermission(t *testing.T) {
 	}
 }
 
-func setupTestEnv() *PermissionsSync {
+func setupTestEnv() *RBACSync {
 	acMock := &acmock.Mock{
 		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
 			return []accesscontrol.Permission{
@@ -57,7 +57,7 @@ func setupTestEnv() *PermissionsSync {
 			}, nil
 		},
 	}
-	s := &PermissionsSync{
+	s := &RBACSync{
 		ac:  acMock,
 		log: log.NewNopLogger(),
 	}

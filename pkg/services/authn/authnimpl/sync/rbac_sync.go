@@ -13,19 +13,19 @@ var (
 	errSyncPermissionsForbidden = errutil.Forbidden("permissions.sync.forbidden")
 )
 
-func ProvidePermissionsSync(acService accesscontrol.Service) *PermissionsSync {
-	return &PermissionsSync{
+func ProvideRBACSync(acService accesscontrol.Service) *RBACSync {
+	return &RBACSync{
 		ac:  acService,
 		log: log.New("permissions.sync"),
 	}
 }
 
-type PermissionsSync struct {
+type RBACSync struct {
 	ac  accesscontrol.Service
 	log log.Logger
 }
 
-func (s *PermissionsSync) SyncPermissionsHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+func (s *RBACSync) SyncPermissionsHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	if !identity.ClientParams.SyncPermissions {
 		return nil
 	}
