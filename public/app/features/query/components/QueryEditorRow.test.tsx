@@ -271,3 +271,50 @@ describe('frame results with warnings', () => {
     });
   });
 });
+describe('QueryEditorRow', () => {
+  const props = (data: PanelData): Props<DataQuery> => ({
+    dataSource: mockDS,
+    query: { refId: 'B' },
+    data,
+    queries: [{ refId: 'B' }],
+    id: 'test',
+    onAddQuery: jest.fn(),
+    onRunQuery: jest.fn(),
+    onChange: jest.fn(),
+    onRemoveQuery: jest.fn(),
+    index: 0,
+  });
+  it('should display error message in corresponding panel', async () => {
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      errors: [{ message: 'Error!!', refId: 'B' }],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
+    expect(await screen.findByText('Error!!')).toBeInTheDocument();
+  });
+  it('should display error message in corresponding panel if only error field is provided', async () => {
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      error: { message: 'Error!!', refId: 'B' },
+      errors: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
+    expect(await screen.findByText('Error!!')).toBeInTheDocument();
+  });
+  it('should not display error message if error.refId doesnt match', async () => {
+    const data = {
+      state: LoadingState.Error,
+      series: [],
+      errors: [{ message: 'Error!!', refId: 'A' }],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    render(<QueryEditorRow {...props(data)} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
+    });
+  });
+});

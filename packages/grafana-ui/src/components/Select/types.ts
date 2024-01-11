@@ -18,6 +18,7 @@ export type LoadOptionsCallback<T> = (options: Array<SelectableValue<T>>) => voi
 export interface SelectCommonProps<T> {
   /** Aria label applied to the input field */
   ['aria-label']?: string;
+  ['data-testid']?: string;
   allowCreateWhileLoading?: boolean;
   allowCustomValue?: boolean;
   /** Focus is set to the Select when rendered*/

@@ -399,7 +399,7 @@ export function graphToTimeseriesOptions(angular: any): {
 
   // timeRegions migration
   if (angular.timeRegions?.length) {
-    let regions: any[] = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
+    let regions = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
       name: `T${idx + 1}`,
       color: old.colorMode !== 'custom' ? old.colorMode : old.fillColor,
       line: old.line,
@@ -684,7 +684,7 @@ function validNumber(val: unknown): number | undefined {
   return undefined;
 }
 
-function getReducersFromLegend(obj: Record<string, any>): string[] {
+function getReducersFromLegend(obj: Record<string, unknown>): string[] {
   const ids: string[] = [];
   for (const key of Object.keys(obj)) {
     const r = fieldReducers.getIfExists(key);

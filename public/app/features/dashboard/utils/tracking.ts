@@ -28,6 +28,8 @@ export function trackDashboardLoaded(dashboard: DashboardModel, versionBeforeMig
     panels_count: dashboard.panels.length,
     ...panels,
     ...variables,
+    settings_nowdelay: dashboard.timepicker.nowDelay,
+    settings_livenow: !!dashboard.liveNow,
   });
 }
 

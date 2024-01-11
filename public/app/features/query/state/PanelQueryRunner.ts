@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, merge } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
@@ -28,6 +28,7 @@ import {
   preProcessPanelData,
   ApplyFieldOverrideOptions,
   StreamingDataFrame,
+  DataTopic,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
@@ -221,8 +222,18 @@ export class PanelQueryRunner {
       interpolate: (v: string) => this.templateSrv.replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(
-      map((series) => ({ ...data, series })),
+    let seriesTransformations = transformations.filter((t) => t.topic == null || t.topic === DataTopic.Series);
+    let annotationsTransformations = transformations.filter((t) => t.topic === DataTopic.Annotations);
+
+    let seriesStream = transformDataFrame(seriesTransformations, data.series, ctx);
+    let annotationsStream = transformDataFrame(annotationsTransformations, data.annotations ?? [], ctx);
+
+    return merge(seriesStream, annotationsStream).pipe(
+      map((frames) => {
+        let isAnnotations = frames.some((f) => f.meta?.dataTopic === DataTopic.Annotations);
+        let transformed = isAnnotations ? { annotations: frames } : { series: frames };
+        return { ...data, ...transformed };
+      }),
       catchError((err) => {
         console.warn('Error running transformation:', err);
         return of({
@@ -339,7 +350,7 @@ export class PanelQueryRunner {
         const last = this.lastResult;
         const next = skipPreProcess ? data : preProcessPanelData(data, last);
 
-        if (last != null) {
+        if (last != null && next.state !== LoadingState.Streaming) {
           let sameSeries = compareArrayValues(last.series ?? [], next.series ?? [], (a, b) => a === b);
           let sameAnnotations = compareArrayValues(last.annotations ?? [], next.annotations ?? [], (a, b) => a === b);
           let sameState = last.state === next.state;

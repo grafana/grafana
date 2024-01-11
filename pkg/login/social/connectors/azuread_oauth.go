@@ -72,10 +72,10 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
+func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
 	config := createOAuthConfig(info, cfg, social.AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, *features),
+		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, features),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
@@ -163,6 +163,18 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 }
 
 func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	err = validateInfo(info)
+	if err != nil {
+		return err
+	}
+
+	// add specific validation rules for AzureAD
+
 	return nil
 }
 

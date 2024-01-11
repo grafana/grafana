@@ -14,10 +14,10 @@ import {
   periodIntervalVariable,
   accountIdVariable,
 } from '../__mocks__/CloudWatchDataSource';
+import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
 import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
 import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
-import { initialVariableModelState } from '../__mocks__/variables';
-import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../types';
+import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery, DataQueryError } from '../types';
 
 describe('CloudWatchMetricsQueryRunner', () => {
   describe('performTimeSeriesQuery', () => {
@@ -416,7 +416,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
 
     it('interpolates variables correctly', async () => {
       const { runner, queryMock, request } = setupMockedMetricsQueryRunner({
-        variables: [namespaceVariable, metricVariable, labelsVariable, limitVariable],
+        variables: [namespaceVariable, metricVariable, limitVariable],
       });
       runner.handleMetricQueries(
         [
@@ -434,7 +434,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
             expression: '',
             metricQueryType: MetricQueryType.Query,
             metricEditorMode: MetricEditorMode.Code,
-            sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY ${labels:raw} LIMIT $limit',
+            sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY InstanceId,InstanceType LIMIT $limit',
           },
         ],
         request,
@@ -759,6 +759,58 @@ describe('CloudWatchMetricsQueryRunner', () => {
     });
   });
 
+  describe('debouncedCustomAlert', () => {
+    const debouncedAlert = jest.fn();
+    beforeEach(() => {
+      const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
+        variables: [
+          { ...namespaceVariable, multi: true },
+          { ...metricVariable, multi: true },
+        ],
+      });
+      runner.debouncedCustomAlert = debouncedAlert;
+      runner.performTimeSeriesQuery = jest.fn().mockResolvedValue([]);
+      runner.handleMetricQueries(
+        [
+          {
+            queryMode: 'Metrics',
+            id: '',
+            region: 'us-east-2',
+            namespace: '$' + namespaceVariable.name,
+            metricName: '$' + metricVariable.name,
+            period: '',
+            alias: '',
+            dimensions: {},
+            matchExact: true,
+            statistic: '',
+            refId: '',
+            expression: 'x * 2',
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Code,
+          },
+        ],
+        request,
+        queryMock
+      );
+    });
+    it('should show debounced alert for namespace and metric name', async () => {
+      expect(debouncedAlert).toHaveBeenCalledWith(
+        'CloudWatch templating error',
+        'Multi template variables are not supported for namespace'
+      );
+      expect(debouncedAlert).toHaveBeenCalledWith(
+        'CloudWatch templating error',
+        'Multi template variables are not supported for metric name'
+      );
+    });
+
+    it('should not show debounced alert for region', async () => {
+      expect(debouncedAlert).not.toHaveBeenCalledWith(
+        'CloudWatch templating error',
+        'Multi template variables are not supported for region'
+      );
+    });
+  });
   describe('interpolateMetricsQueryVariables', () => {
     it('interpolates values correctly', () => {
       const testQuery = {
@@ -770,7 +822,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         sqlExpression: 'select SUM(CPUUtilization) from $datasource',
         dimensions: { InstanceId: '$dimension' },
       };
-      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable], mockGetVariableName: false });
+      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable] });
       const result = runner.interpolateMetricsQueryVariables(testQuery, {
         datasource: { text: 'foo', value: 'foo' },
         dimension: { text: 'foo', value: 'foo' },
@@ -790,7 +842,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
   describe('convertMultiFiltersFormat', () => {
     const { runner } = setupMockedMetricsQueryRunner({
       variables: [labelsVariable, dimensionVariable],
-      mockGetVariableName: false,
     });
     it('converts keys and values correctly', () => {
       const filters = { $dimension: ['b'], a: ['$labels', 'bar'] };

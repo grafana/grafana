@@ -152,6 +152,34 @@ describe('Regression transformation', () => {
     expect(result[1].fields[0].values[8]).toBeCloseTo(3.55, 1);
     expect(result[1].fields[0].values[9]).toBe(4);
   });
+
+  it('should filter NaNs', () => {
+    const source = [
+      toDataFrame({
+        name: 'data',
+        refId: 'A',
+        fields: [
+          { name: 'y', type: FieldType.number, values: [0, 1, 2, 3, NaN] },
+          { name: 'x', type: FieldType.number, values: [0, 1, 2, 3, 4] },
+        ],
+      }),
+    ];
+
+    const config: RegressionTransformerOptions = {
+      modelType: ModelType.linear,
+      predictionCount: 5,
+      xFieldName: 'x',
+      yFieldName: 'y',
+    };
+
+    const result = RegressionTransformer.transformer(config, {} as DataTransformContext)(source);
+
+    expect(result[1].fields[1].values[0]).toBe(0);
+    expect(result[1].fields[1].values[1]).toBe(1);
+    expect(result[1].fields[1].values[2]).toBe(2);
+    expect(result[1].fields[1].values[3]).toBe(3);
+    expect(result[1].fields[1].values[4]).toBe(4);
+  });
 });
 
 function toEquableDataFrame(source: DataFrame): DataFrame {

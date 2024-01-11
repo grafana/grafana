@@ -25,6 +25,10 @@ describe('trackDashboardLoaded', () => {
           { type: 'query', name: 'Query 2' },
         ],
       },
+      timepicker: {
+        nowDelay: '1m',
+      },
+      liveNow: true,
     };
     const model = getDashboardModel(dashboardJSON);
     const reportInteractionSpy = jest.spyOn(runtime, 'reportInteraction');
@@ -45,6 +49,8 @@ describe('trackDashboardLoaded', () => {
       panel_type_timeseries_count: 1,
       'panel_type_grafana-worldmap-panel_count': 1,
       panel_type_geomap_count: 1,
+      settings_nowdelay: '1m',
+      settings_livenow: true,
     });
   });
 });

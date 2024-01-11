@@ -11,9 +11,10 @@ import { LabelValue } from './types';
 interface Props {
   contentLabelValue: LabelValue[];
   customContent?: ReactElement[];
+  isPinned: boolean;
 }
 
-export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) => {
+export const VizTooltipContent = ({ contentLabelValue, customContent, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -31,6 +32,7 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
               colorPlacement={colorPlacement}
               isActive={isActive}
               justify={'space-between'}
+              isPinned={isPinned}
             />
           );
         })}

@@ -263,7 +263,7 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint)
 	s.postAuthHooks.insert(hook, priority)
 }
 
-func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
+func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (id *authn.Identity, err error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Login", trace.WithAttributes(
 		attribute.String(attributeKeyClient, client),
 	))
@@ -273,7 +273,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {
-			hook.v(ctx, identity, r, err)
+			hook.v(ctx, id, r, err)
 		}
 	}()
 
@@ -284,36 +284,40 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	}
 
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
-	identity, err = s.authenticate(ctx, c, r)
+	id, err = s.authenticate(ctx, c, r)
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, err
 	}
 
-	namespace, id := identity.NamespacedID()
-
+	namespace, namespaceID := id.GetNamespacedID()
 	// Login is only supported for users
-	if namespace != authn.NamespaceUser || id <= 0 {
+	if namespace != authn.NamespaceUser {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
+	}
+
+	intId, err := identity.IntIdentifier(namespace, namespaceID)
+	if err != nil {
+		return nil, err
 	}
 
 	addr := web.RemoteAddr(r.HTTPRequest)
 	ip, err := network.GetIPFromAddress(addr)
 	if err != nil {
-		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", identity.ID, "addr", addr, "error", err)
+		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", id.ID, "addr", addr, "error", err)
 	}
 
-	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
+	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: intId}, ip, r.HTTPRequest.UserAgent())
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
-		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", identity.ID, "err", err)
+		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", id.ID, "err", err)
 		return nil, err
 	}
 
 	s.metrics.successfulLogin.WithLabelValues(client).Inc()
-	identity.SessionToken = sessionToken
-	return identity, nil
+	id.SessionToken = sessionToken
+	return id, nil
 }
 
 func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uint) {

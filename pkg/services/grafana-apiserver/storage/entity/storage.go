@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -17,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
@@ -138,9 +140,9 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
 func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	previousVersion := ""
+	previousVersion := int64(0)
 	if preconditions != nil && preconditions.ResourceVersion != nil {
-		previousVersion = *preconditions.ResourceVersion
+		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 	}
 
 	rsp, err := s.store.Delete(ctx, &entityStore.DeleteEntityRequest{
@@ -217,14 +219,53 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
-	rsp, err := s.store.List(ctx, &entityStore.EntityListRequest{
+	req := &entityStore.EntityListRequest{
 		Key:           []string{key},
 		WithBody:      true,
 		WithStatus:    true,
 		NextPageToken: opts.Predicate.Continue,
 		Limit:         opts.Predicate.Limit,
+		Labels:        map[string]string{},
 		// TODO push label/field matching down to storage
+	}
+
+	// translate "equals" label selectors to storage label conditions
+	requirements, selectable := opts.Predicate.Label.Requirements()
+	if !selectable {
+		return apierrors.NewBadRequest("label selector is not selectable")
+	}
+
+	for _, r := range requirements {
+		if r.Operator() == selection.Equals {
+			req.Labels[r.Key()] = r.Values().List()[0]
+		}
+	}
+
+	// translate grafana.app/folder field selector to folder condition
+	fields := opts.Predicate.Field.Requirements()
+	for _, f := range fields {
+		if f.Field == "grafana.app/folder" {
+			if f.Operator != selection.Equals {
+				return apierrors.NewBadRequest("grafana.app/folder field selector only supports equality")
+			}
+
+			// select items in the spcified folder
+			req.Folder = f.Value
+		}
+	}
+
+	// use Transform function to remove grafana.app/folder field selector
+	opts.Predicate.Field, err = opts.Predicate.Field.Transform(func(field, value string) (string, string, error) {
+		if field == "grafana.app/folder" {
+			return "", "", nil
+		}
+		return field, value, nil
 	})
+	if err != nil {
+		return err
+	}
+
+	rsp, err := s.store.List(ctx, req)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -313,6 +354,15 @@ func (s *Storage) guaranteedUpdate(
 		return err
 	}
 
+	accessor, err := meta.Accessor(destination)
+	if err != nil {
+		return err
+	}
+	previousVersion, _ := strconv.ParseInt(accessor.GetResourceVersion(), 10, 64)
+	if preconditions != nil && preconditions.ResourceVersion != nil {
+		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
+	}
+
 	res := &storage.ResponseMeta{}
 	updatedObj, _, err := tryUpdate(destination, *res)
 	if err != nil {
@@ -330,11 +380,6 @@ func (s *Storage) guaranteedUpdate(
 	e, err := resourceToEntity(key, updatedObj, requestInfo, s.codec)
 	if err != nil {
 		return err
-	}
-
-	previousVersion := ""
-	if preconditions != nil && preconditions.ResourceVersion != nil {
-		previousVersion = *preconditions.ResourceVersion
 	}
 
 	req := &entityStore.UpdateEntityRequest{
