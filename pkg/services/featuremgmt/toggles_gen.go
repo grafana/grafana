@@ -618,4 +618,16 @@ const (
 	// FlagAlertingPreviewUpgrade
 	// Show Unified Alerting preview and upgrade page in legacy alerting
 	FlagAlertingPreviewUpgrade = "alertingPreviewUpgrade"
+
+	// FlagEnablePluginsTracingByDefault
+	// Enable plugin tracing for all external plugins
+	FlagEnablePluginsTracingByDefault = "enablePluginsTracingByDefault"
+
+	// FlagCloudRBACRoles
+	// Enabled grafana cloud specific RBAC roles
+	FlagCloudRBACRoles = "cloudRBACRoles"
+
+	// FlagAlertingQueryOptimization
+	// Optimizes eligible queries in order to reduce load on datasources
+	FlagAlertingQueryOptimization = "alertingQueryOptimization"
 )
