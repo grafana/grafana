@@ -35,7 +35,6 @@ type Calls struct {
 }
 
 type Mock struct {
-	accesscontrol.Service
 	// Unless an override is provided, permissions will be returned by GetUserPermissions
 	permissions []accesscontrol.Permission
 	// Unless an override is provided, builtInRoles will be returned by GetUserBuiltInRoles
@@ -58,6 +57,7 @@ type Mock struct {
 	SearchUserPermissionsFunc          func(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error)
 	SaveExternalServiceRoleFunc        func(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
 	DeleteExternalServiceRoleFunc      func(ctx context.Context, externalServiceID string) error
+	SyncUserRoleFunc                   func(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRoleCommand) error
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -233,6 +233,13 @@ func (m *Mock) DeleteExternalServiceRole(ctx context.Context, externalServiceID 
 	// Use override if provided
 	if m.DeleteExternalServiceRoleFunc != nil {
 		return m.DeleteExternalServiceRoleFunc(ctx, externalServiceID)
+	}
+	return nil
+}
+
+func (m *Mock) SyncUserRole(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRoleCommand) error {
+	if m.SyncUserRoleFunc != nil {
+		return m.SyncUserRoleFunc(ctx, orgID, cmd)
 	}
 	return nil
 }

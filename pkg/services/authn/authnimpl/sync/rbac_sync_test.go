@@ -9,6 +9,8 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,6 +47,96 @@ func TestRBACSync_SyncPermission(t *testing.T) {
 
 			assert.Equal(t, 1, len(tt.identity.Permissions))
 			assert.Equal(t, accesscontrol.GroupScopesByAction(tt.expectedPermissions), tt.identity.Permissions[tt.identity.OrgID])
+		})
+	}
+}
+
+func TestRBACSync_SyncCloudRoles(t *testing.T) {
+	type testCase struct {
+		desc           string
+		module         string
+		identity       *authn.Identity
+		expectedErr    error
+		expectedCalled bool
+	}
+
+	tests := []testCase{
+		{
+			desc:   "should call sync when authenticated with grafana com and has viewer role",
+			module: login.GrafanaComAuthModule,
+			identity: &authn.Identity{
+				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+			},
+			expectedErr:    nil,
+			expectedCalled: true,
+		},
+		{
+			desc:   "should call sync when authenticated with grafana com and has editor role",
+			module: login.GrafanaComAuthModule,
+			identity: &authn.Identity{
+				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+			},
+			expectedErr:    nil,
+			expectedCalled: true,
+		},
+		{
+			desc:   "should call sync when authenticated with grafana com and has admin role",
+			module: login.GrafanaComAuthModule,
+			identity: &authn.Identity{
+				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+			},
+			expectedErr:    nil,
+			expectedCalled: true,
+		},
+		{
+			desc:   "should not call sync when authenticated with grafana com and has invalid role",
+			module: login.GrafanaComAuthModule,
+			identity: &authn.Identity{
+				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleType("something else")},
+			},
+			expectedErr:    errInvalidCloudRole,
+			expectedCalled: false,
+		},
+		{
+			desc:   "should not call sync when authenticated when not authenticated with grafana com",
+			module: login.LDAPAuthModule,
+			identity: &authn.Identity{
+				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+			},
+			expectedErr:    nil,
+			expectedCalled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var called bool
+			s := &RBACSync{
+				ac: &acmock.Mock{
+					SyncUserRoleFunc: func(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRoleCommand) error {
+						called = true
+						return nil
+					},
+				},
+				log: log.NewNopLogger(),
+			}
+
+			req := &authn.Request{}
+			req.SetMeta(authn.MetaKeyAuthModule, tt.module)
+
+			err := s.SyncCloudRoles(context.Background(), tt.identity, req)
+			assert.ErrorIs(t, err, tt.expectedErr)
+			assert.Equal(t, tt.expectedCalled, called)
 		})
 	}
 }

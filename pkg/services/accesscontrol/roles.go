@@ -35,12 +35,6 @@ const (
 	FixedCloudAdminRole  = "fixed:cloud:admin"
 )
 
-var AllFixedCloudRoles = map[string]struct{}{
-	FixedCloudViewerRole: struct{}{},
-	FixedCloudEditorRole: struct{}{},
-	FixedCloudAdminRole:  struct{}{},
-}
-
 // Roles definition
 var (
 	ldapReaderRole = RoleDTO{
