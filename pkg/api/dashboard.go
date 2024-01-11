@@ -868,7 +868,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 	bodyReader := bytes.NewReader(b)
 	req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/chat.unfurl", bodyReader)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer <Slack Bot Token>")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
 	if err != nil {
 		return fmt.Errorf("client: could not create request: %w", err)
 	}
