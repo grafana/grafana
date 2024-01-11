@@ -170,10 +170,22 @@ type ImageAccessory struct {
 	AltText  string `json:"alt_text"`
 }
 
+type Element struct {
+	Type     string `json:"type"`
+	Text     Text   `json:"text"`
+	Style    string `json:"style"`
+	Value    string `json:"value"`
+	ActionID string `json:"action_id"`
+}
+
 type Block struct {
 	Type      string         `json:"type"`
 	Text      Text           `json:"text"`
 	Accessory ImageAccessory `json:"accessory"`
+	ImageURL  string         `json:"image_url"`
+	Title     Text           `json:"title"`
+	AltText   string         `json:"alt_text"`
+	Elements  []Element      `json:"elements"`
 }
 
 type Unfurl struct {

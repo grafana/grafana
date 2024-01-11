@@ -847,6 +847,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 					Type: "header",
 					Text: Text{
 						Type: "plain_text",
+						// TODO: need to fetch the dashboard to get the title
 						Text: "<Dashboard title>",
 					},
 				},
@@ -856,15 +857,28 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 						Type: "plain_text",
 						Text: "Here is the dashboard that I wanted to show you",
 					},
-					Accessory: ImageAccessory{
-						Type: "image",
-						Title: Text{
-							Type: "plain_text",
-							Text: "Dashboard preview",
-						},
-						ImageURL: imageURL,
-						AltText:  "Fake Image",
+				},
+				{
+					Type: "image",
+					Title: Text{
+						Type: "plain_text",
+						Text: "Dashboard preview",
 					},
+					ImageURL: imageURL,
+					AltText:  "dashboard preview",
+				},
+				{
+					Type: "actions",
+					Elements: []Element{{
+						Type: "button",
+						Text: Text{
+							Type: "plain_text",
+							Text: "View Dashboard",
+						},
+						Style:    "primary",
+						Value:    link.URL,
+						ActionID: "view",
+					}},
 				},
 			},
 		}
