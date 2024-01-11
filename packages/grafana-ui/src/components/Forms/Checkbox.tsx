@@ -12,7 +12,7 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   /** Label to display next to checkbox */
   label?: string;
   /** Description to display under the label */
-  description?: string;
+  description?: string | React.ReactElement;
   /** Current value of the checkbox */
   value?: boolean;
   /** htmlValue allows to specify the input "value" attribute */
