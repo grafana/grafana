@@ -5,24 +5,48 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"io"
 	"net/http"
 	"path/filepath"
 	"regexp"
 	"time"
 
+	dtos "github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) {
+func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Response {
+	req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/conversations.list", nil)
+	req.Header.Add("Content-Type", "application/json; charset=utf-8")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
 
+	if err != nil {
+		fmt.Errorf("client: could not create request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Errorf("client: error making http request: %w", err)
+	}
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Errorf("client: could not read response body: %w", err)
+	}
+
+	var result dtos.SlackChannels
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		fmt.Errorf("client: could not unmarshall response: %w", err)
+	}
+
+	return response.JSON(http.StatusOK, result.Channels)
 }
 
 func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
@@ -246,6 +270,34 @@ func (hs *HTTPServer) renderDashboard(ctx context.Context, renderPath string) (s
 	}
 
 	return result.FilePath, nil
+}
+
+func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Response {
+	var previewRequest PreviewRequest
+	if err := web.Bind(c.Req, &previewRequest); err != nil {
+		return response.Error(http.StatusBadRequest, "error parsing body", err)
+	}
+
+	hs.log.Info("Generating preview", "dashboard_url", previewRequest.DashboardURL)
+
+	filePath, err := hs.renderDashboard(c.Req.Context(), previewRequest.DashboardURL)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
+	}
+
+	imageFileName := filepath.Base(filePath)
+	imageURL := hs.getImageURL(imageFileName)
+
+	return response.JSON(http.StatusOK, &PreviewResponse{
+		PreviewURL: imageURL,
+	})
+}
+
+type PreviewRequest struct {
+	DashboardURL string `json:"dashboard_url"`
+}
+type PreviewResponse struct {
+	PreviewURL string `json:"preview_url"`
 }
 
 type EventChallengeAck struct {

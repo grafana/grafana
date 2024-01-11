@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { Button, Field, Modal, MultiSelect, TextArea, useStyles2 } from '@grafana/ui';
 
-const chanelOptions = [
-  { value: 'general', label: 'general' },
-  { value: 'grafana', label: 'grafana' },
-];
+import { useGetChannelsQuery } from '../../../api/shareToSlackApi';
+
 export function ShareSlackModal({ onDismiss }: { onDismiss(): void }) {
-  const [value, setValue] = useState<string[]>();
+  const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
+  const { data: channels, isLoading } = useGetChannelsQuery();
 
   const styles = useStyles2(getStyles);
 
@@ -17,11 +17,12 @@ export function ShareSlackModal({ onDismiss }: { onDismiss(): void }) {
       <div>
         <Field label="Select channel">
           <MultiSelect
+            isLoading={isLoading}
             placeholder="Select channel"
-            options={chanelOptions}
+            options={channels}
             value={value}
             onChange={(v) => {
-              setValue(v.map((v) => v.value!));
+              setValue(v);
             }}
           />
         </Field>

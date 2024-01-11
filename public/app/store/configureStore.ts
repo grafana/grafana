@@ -9,6 +9,7 @@ import { StoreState } from 'app/types/store';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
+import { shareToSlackApi } from '../features/dashboard/api/shareToSlackApi';
 
 import { setStore } from './store';
 
@@ -30,7 +31,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         alertingApi.middleware,
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
-        togglesApi.middleware
+        togglesApi.middleware,
+        shareToSlackApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
