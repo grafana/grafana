@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { DashboardCursorSync } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -11,6 +12,7 @@ import {
   SceneObjectUrlValues,
   PanelBuilders,
   sceneGraph,
+  behaviors,
 } from '@grafana/scenes';
 import { ToolbarButton, Box, Stack, Icon } from '@grafana/ui';
 
@@ -159,6 +161,7 @@ function buildGraphScene(metric: string) {
 
   return new SceneFlexLayout({
     direction: 'column',
+    $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
     children: [
       new SceneFlexItem({
         minHeight: MAIN_PANEL_MIN_HEIGHT,
