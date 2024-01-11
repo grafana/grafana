@@ -112,7 +112,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
                   key={l.label}
                   href={sceneGraph.interpolate(
                     model,
-                    `/data-trails/trail$\{__url.params:exclude:actionView}&actionView=breakdown&var-groupby=${encodeURIComponent(
+                    `/data-trails/trail$\{__url.params:exclude:actionView,var-groupby}&actionView=breakdown&var-groupby=${encodeURIComponent(
                       l.value!
                     )}`
                   )}
