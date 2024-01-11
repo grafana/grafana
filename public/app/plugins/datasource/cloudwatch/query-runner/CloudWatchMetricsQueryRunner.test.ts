@@ -17,7 +17,7 @@ import {
 import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
 import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
 import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
-import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery, DataQueryError } from '../types';
+import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../types';
 
 describe('CloudWatchMetricsQueryRunner', () => {
   describe('performTimeSeriesQuery', () => {
@@ -650,58 +650,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
         });
       });
-    });
-  });
-  describe('debouncedCustomAlert', () => {
-    const debouncedAlert = jest.fn();
-    beforeEach(() => {
-      const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
-        variables: [
-          { ...namespaceVariable, multi: true },
-          { ...metricVariable, multi: true },
-        ],
-      });
-      runner.debouncedCustomAlert = debouncedAlert;
-      runner.performTimeSeriesQuery = jest.fn().mockResolvedValue([]);
-      runner.handleMetricQueries(
-        [
-          {
-            queryMode: 'Metrics',
-            id: '',
-            region: 'us-east-2',
-            namespace: namespaceVariable.id,
-            metricName: metricVariable.id,
-            period: '',
-            alias: '',
-            dimensions: {},
-            matchExact: true,
-            statistic: '',
-            refId: '',
-            expression: 'x * 2',
-            metricQueryType: MetricQueryType.Search,
-            metricEditorMode: MetricEditorMode.Code,
-          },
-        ],
-        request,
-        queryMock
-      );
-    });
-    it('should show debounced alert for namespace and metric name', async () => {
-      expect(debouncedAlert).toHaveBeenCalledWith(
-        'CloudWatch templating error',
-        'Multi template variables are not supported for namespace'
-      );
-      expect(debouncedAlert).toHaveBeenCalledWith(
-        'CloudWatch templating error',
-        'Multi template variables are not supported for metric name'
-      );
-    });
-
-    it('should not show debounced alert for region', async () => {
-      expect(debouncedAlert).not.toHaveBeenCalledWith(
-        'CloudWatch templating error',
-        'Multi template variables are not supported for region'
-      );
     });
   });
 
