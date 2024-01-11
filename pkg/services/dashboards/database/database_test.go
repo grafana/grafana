@@ -99,6 +99,23 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.ErrorIs(t, err, dashboards.ErrDashboardIdentifierNotSet)
 	})
 
+	t.Run("Should be able to get dashboard by title and folderUID", func(t *testing.T) {
+		setup()
+		query := dashboards.GetDashboardQuery{
+			Title:     util.Pointer("test dash 23"),
+			FolderUID: savedFolder.UID,
+			OrgID:     1,
+		}
+		queryResult, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.NoError(t, err)
+
+		require.Equal(t, queryResult.Title, "test dash 23")
+		require.Equal(t, queryResult.Slug, "test-dash-23")
+		require.Equal(t, queryResult.ID, savedDash.ID)
+		require.Equal(t, queryResult.UID, savedDash.UID)
+		require.False(t, queryResult.IsFolder)
+	})
+
 	t.Run("Should be able to get dashboard by uid", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
@@ -132,6 +149,18 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.Equal(t, err, dashboards.ErrDashboardIdentifierNotSet)
+	})
+
+	t.Run("Folder=0 should not be able to get a dashboard in a folder", func(t *testing.T) {
+		setup()
+		query := dashboards.GetDashboardQuery{
+			Title:     util.Pointer("test dash 23"),
+			FolderUID: "",
+			OrgID:     1,
+		}
+
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.Error(t, err, dashboards.ErrDashboardNotFound)
 	})
 
 	t.Run("Should be able to get dashboards by IDs & UIDs", func(t *testing.T) {
