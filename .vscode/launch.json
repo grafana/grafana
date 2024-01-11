@@ -12,14 +12,14 @@
       "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
     {
-      "name": "Run API Server (k8s)",
+      "name": "Run API Server (testdata)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["apiserver", "example.grafana.app"]
+      "args": ["apiserver", "testdata.datasource.grafana.app"]
     },
     {
       "name": "Attach to Chrome",

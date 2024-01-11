@@ -244,6 +244,14 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     );
   };
 
+  addResultsToCache = () => {
+    this.props.addResultsToCache(this.props.exploreId);
+  };
+
+  clearCache = () => {
+    this.props.clearCache(this.props.exploreId);
+  };
+
   render() {
     const {
       loading,
@@ -267,8 +275,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       splitOpenFn,
       isLive,
       exploreId,
-      addResultsToCache,
-      clearCache,
       logsVolume,
       scrollElement,
     } = this.props;
@@ -330,8 +336,8 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             getRowContextQuery={this.getLogRowContextQuery}
             getLogRowContextUi={this.getLogRowContextUi}
             getFieldLinks={this.getFieldLinks}
-            addResultsToCache={() => addResultsToCache(exploreId)}
-            clearCache={() => clearCache(exploreId)}
+            addResultsToCache={this.addResultsToCache}
+            clearCache={this.clearCache}
             eventBus={this.props.eventBus}
             panelState={this.props.panelState}
             logsFrames={this.props.logsFrames}

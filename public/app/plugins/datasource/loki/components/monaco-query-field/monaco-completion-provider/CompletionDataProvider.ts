@@ -1,9 +1,9 @@
 import { chain } from 'lodash';
 
 import { HistoryItem, TimeRange } from '@grafana/data';
-import { escapeLabelValueInExactSelector } from 'app/plugins/datasource/prometheus/language_utils';
 
 import LanguageProvider from '../../../LanguageProvider';
+import { escapeLabelValueInExactSelector } from '../../../languageUtils';
 import { ParserAndLabelKeysResult, LokiQuery } from '../../../types';
 
 import { Label } from './situation';

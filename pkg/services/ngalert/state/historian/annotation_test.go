@@ -47,6 +47,25 @@ func TestAnnotationHistorian(t *testing.T) {
 		}
 	})
 
+	t.Run("annotation queries send expected item query", func(t *testing.T) {
+		store := &interceptingAnnotationStore{}
+		anns := createTestAnnotationSutWithStore(t, store)
+		now := time.Now().UTC()
+
+		q := models.HistoryQuery{
+			RuleUID: "my-rule",
+			OrgID:   1,
+			From:    now.Add(-10 * time.Second),
+			To:      now,
+		}
+		_, err := anns.Query(context.Background(), q)
+
+		require.NoError(t, err)
+		query := store.lastQuery
+		require.Equal(t, now.UnixMilli(), query.To)
+		require.Equal(t, now.Add(-10*time.Second).UnixMilli(), query.From)
+	})
+
 	t.Run("writing state transitions as annotations succeeds", func(t *testing.T) {
 		anns := createTestAnnotationBackendSut(t)
 		rule := createTestRule()
@@ -102,6 +121,16 @@ grafana_alerting_state_history_writes_total{backend="annotations",org="1"} 2
 
 func createTestAnnotationBackendSut(t *testing.T) *AnnotationBackend {
 	return createTestAnnotationBackendSutWithMetrics(t, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+}
+
+func createTestAnnotationSutWithStore(t *testing.T, annotations AnnotationStore) *AnnotationBackend {
+	t.Helper()
+	met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+	rules := fakes.NewRuleStore(t)
+	rules.Rules[1] = []*models.AlertRule{
+		models.AlertRuleGen(withOrgID(1), withUID("my-rule"))(),
+	}
+	return NewAnnotationBackend(annotations, rules, met)
 }
 
 func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Historian) *AnnotationBackend {
@@ -212,4 +241,17 @@ func assertValidJSON(t *testing.T, j *simplejson.Json) string {
 	ser, err := json.Marshal(j)
 	require.NoError(t, err)
 	return string(ser)
+}
+
+type interceptingAnnotationStore struct {
+	lastQuery *annotations.ItemQuery
+}
+
+func (i *interceptingAnnotationStore) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	i.lastQuery = query
+	return []*annotations.ItemDTO{}, nil
+}
+
+func (i *interceptingAnnotationStore) Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
+	return nil
 }
