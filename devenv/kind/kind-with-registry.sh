@@ -18,6 +18,14 @@
 # limitations under the License.
 
 set -o errexit
+set -o nounset
+set -o pipefail
+
+cd $(dirname $0)
+
+DATA_DIR="../../data"
+
+mkdir -p $DATA_DIR/devenv-kind
 
 # desired cluster name; default is "kind"
 KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-kind}"
@@ -30,7 +38,7 @@ fi
 kind_version=$(kind version)
 kind_network='kind'
 reg_name='kind-registry'
-reg_port='5000'
+reg_port='6000'
 case "${kind_version}" in
   "kind v0.7."* | "kind v0.6."* | "kind v0.5."*)
     kind_network='bridge'
@@ -51,8 +59,10 @@ if [ "${kind_network}" = "bridge" ]; then
 fi
 echo "Registry Host: ${reg_host}"
 
-# create a cluster with the local registry enabled in containerd
-cat <<EOF | kind create cluster ${KIND_CLUSTER_OPTS} --config=-
+CLUSTER_EXISTS=$(kind get clusters)
+if [ "$CLUSTER_EXISTS" != "kind" ]; then
+  # create a cluster with the local registry enabled in containerd
+  cat <<EOF | kind create cluster ${KIND_CLUSTER_OPTS} --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:
@@ -61,10 +71,15 @@ containerdConfigPatches:
     endpoint = ["http://${reg_host}:5000"]
 nodes:
 - role: control-plane
-  image: kindest/node:v1.27.1@sha256:9915f5629ef4d29f35b478e819249e89cfaffcbfeebda4324e5c01d53d937b09
+  image: kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
 - role: worker
-  image: kindest/node:v1.27.1@sha256:9915f5629ef4d29f35b478e819249e89cfaffcbfeebda4324e5c01d53d937b09
+  image: kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
 EOF
+fi
+
+rm -f $DATA_DIR/devenv-kind/requestheader-client-ca-file
+kubectl -n kube-system get cm extension-apiserver-authentication -o json | jq -r '.data["requestheader-client-ca-file"]' > $DATA_DIR/devenv-kind/requestheader-client-ca-file
+
 
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -90,3 +105,4 @@ if [ "${kind_network}" != "bridge" ]; then
     docker network connect "${kind_network}" "${reg_name}" || true
   fi
 fi
+

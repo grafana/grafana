@@ -22,10 +22,10 @@ print("""
 """)
 
 
-local("devenv/kind-with-registry.sh || true")
+local("devenv/kind/kind-with-registry.sh || true")
 
 os = str(local('uname -s')).strip().lower()
 
 local("devenv/velero/setup-with-minio.sh || true")
 
-k8s_yaml(kustomize('devenv/aggregation-to-kind/%s' % os))
+k8s_yaml(kustomize('devenv/aggregate-to-kind/%s' % os))

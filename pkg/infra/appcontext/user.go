@@ -46,6 +46,10 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 	// Find the kubernetes user info
 	k8sUserInfo, ok := request.UserFrom(ctx)
 	if ok {
+		if k8sUserInfo.GetName() == "kubernetes-admin" {
+			fmt.Println("Potato", k8sUserInfo.GetGroups())
+		}
+
 		for _, group := range k8sUserInfo.GetGroups() {
 			switch group {
 			case k8suser.APIServerUser:

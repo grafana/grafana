@@ -233,8 +233,14 @@ func (s *service) start(ctx context.Context) error {
 	o := options.NewRecommendedOptions("/registry/grafana.app", Codecs.LegacyCodec(groupVersions...))
 	o.SecureServing.BindAddress = s.config.ip
 	o.SecureServing.BindPort = s.config.port
+
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
+
+	if s.config.aggregationEnabled {
+		o.Authentication.SkipInClusterLookup = true
+		o.Authentication.RequestHeader.ClientCAFile = s.config.requestHeaderClientCAFile
+	}
 
 	o.Admission = nil
 	o.CoreAPI = nil

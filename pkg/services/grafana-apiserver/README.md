@@ -14,6 +14,15 @@ Start Grafana:
 make run
 ```
 
+## Enable aggregation to a standard K8s server
+Tip: use `tilt up` to run a Kind server locally to aggregate to.
+```ini
+[grafana-apiserver]
+aggregation_enabled = true
+; optional - request_header_client_ca_file defaults to the retrieved value from kind cluster in local dev mode
+request_header_client_ca_file = "data/devenv-kind/requestheader-client-ca-file" 
+```
+
 ## Enable dual write to `etcd`
 
 Start `etcd`:

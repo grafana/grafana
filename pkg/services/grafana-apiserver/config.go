@@ -24,6 +24,9 @@ type config struct {
 	etcdServers []string
 	dataPath    string
 
+	aggregationEnabled        bool
+	requestHeaderClientCAFile string
+
 	logLevel int
 }
 
@@ -46,15 +49,17 @@ func newConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *config {
 	host := fmt.Sprintf("%s:%d", ip, port)
 
 	return &config{
-		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServer),
-		devMode:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess),
-		dataPath:    filepath.Join(cfg.DataPath, "grafana-apiserver"),
-		ip:          ip,
-		port:        port,
-		host:        host,
-		logLevel:    cfg.SectionWithEnvOverrides("grafana-apiserver").Key("log_level").MustInt(defaultLogLevel),
-		etcdServers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
-		storageType: StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").MustString(string(StorageTypeLegacy))),
-		apiURL:      apiURL,
+		enabled:                   features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServer),
+		devMode:                   features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess),
+		dataPath:                  filepath.Join(cfg.DataPath, "grafana-apiserver"),
+		aggregationEnabled:        cfg.SectionWithEnvOverrides("grafana-apiserver").Key("aggregation_enabled").MustBool(),
+		requestHeaderClientCAFile: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("request_header_client_ca_file").MustString(filepath.Join(cfg.DataPath, "devenv-kind", "requestheader-client-ca-file")),
+		ip:                        ip,
+		port:                      port,
+		host:                      host,
+		logLevel:                  cfg.SectionWithEnvOverrides("grafana-apiserver").Key("log_level").MustInt(defaultLogLevel),
+		etcdServers:               cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
+		storageType:               StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").MustString(string(StorageTypeLegacy))),
+		apiURL:                    apiURL,
 	}
 }
