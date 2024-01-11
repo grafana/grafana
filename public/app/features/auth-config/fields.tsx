@@ -164,7 +164,7 @@ export const fieldMap: Record<string, FieldData> = {
   authStyle: {
     label: 'Auth Style',
     type: 'select',
-    description: 'It determines how client_id and client_secret are sent to Oauth2 provider.',
+    description: 'It determines how client_id and client_secret are sent to Oauth2 provider. Default is AutoDetect.',
     multi: false,
     options: [
       { value: 'AutoDetect', label: 'AutoDetect' },

@@ -59,6 +59,7 @@ export const FieldRenderer = ({
     error: fieldData.validation?.message,
     key: name,
     description: fieldData.description,
+    defaultValue: fieldData.defaultValue,
   };
 
   switch (fieldData.type) {
@@ -119,6 +120,7 @@ export const FieldRenderer = ({
                   inputId={name}
                   options={options}
                   allowCustomValue={!!fieldData.allowCustomValue}
+                  defaultValue={fieldData.defaultValue}
                   onChange={onChange}
                   onCreateOption={(v) => {
                     const customValue = { value: v, label: v };
