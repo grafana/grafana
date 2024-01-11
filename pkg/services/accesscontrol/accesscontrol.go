@@ -40,6 +40,8 @@ type Service interface {
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	// DeleteExternalServiceRole removes an external service's role and its assignment.
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
+	// SyncUserRole
+	SyncUserRole(ctx context.Context, orgID int64, cmd SyncUserRoleCommand) error
 }
 
 type RoleRegistry interface {
@@ -56,6 +58,11 @@ type SearchOptions struct {
 	Action       string
 	Scope        string
 	UserID       int64 // ID for the user for which to return information, if none is specified information is returned for all users.
+}
+
+type SyncUserRoleCommand struct {
+	UserID int64
+	Roles  []string
 }
 
 type TeamPermissionsService interface {

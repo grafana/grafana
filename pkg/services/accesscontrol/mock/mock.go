@@ -35,6 +35,7 @@ type Calls struct {
 }
 
 type Mock struct {
+	accesscontrol.Service
 	// Unless an override is provided, permissions will be returned by GetUserPermissions
 	permissions []accesscontrol.Permission
 	// Unless an override is provided, builtInRoles will be returned by GetUserBuiltInRoles
