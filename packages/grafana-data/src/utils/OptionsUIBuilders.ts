@@ -191,7 +191,7 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
   }
 
   private getDefaultValue(cfg: NestedPanelOptions<TSub>): TSub {
-    let result = cloneDeep(cfg.defaultValue) || {};
+    let result = isObject(cfg.defaultValue) ? cloneDeep(cfg.defaultValue) : {};
 
     const builder = new PanelOptionsEditorBuilder<TSub>();
     cfg.build(builder, { data: [] });
