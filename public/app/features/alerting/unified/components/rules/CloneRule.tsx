@@ -5,7 +5,6 @@ import { Button, ConfirmModal } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
-import { createUrl } from '../../utils/url';
 
 interface ConfirmCloneRuleModalProps {
   identifier: RuleIdentifier;
@@ -29,12 +28,12 @@ export function RedirectToCloneRule({
     const copyFrom = ruleId.stringifyIdentifier(identifier);
     const returnTo = location.pathname + location.search;
 
-    const cloneUrl = createUrl(`/alerting/new`, {
+    const queryParams = new URLSearchParams({
       copyFrom,
       returnTo: redirectTo ? returnTo : '',
     });
 
-    return <Redirect to={cloneUrl} push />;
+    return <Redirect to={`/alerting/new?` + queryParams.toString()} push />;
   }
 
   return (
