@@ -28,22 +28,26 @@ func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Resp
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
 
 	if err != nil {
-		fmt.Errorf("client: could not create request: %w", err)
+		hs.log.Error("client: could not create request: %w", err)
+		return response.JSON(http.StatusInternalServerError, nil)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Errorf("client: error making http request: %w", err)
+		hs.log.Error("client: error making http request: %w", err)
+		return response.JSON(http.StatusInternalServerError, nil)
 	}
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Errorf("client: could not read response body: %w", err)
+		hs.log.Error("client: could not read response body: %w", err)
+		return response.JSON(http.StatusInternalServerError, nil)
 	}
 
 	var result dtos.SlackChannels
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		fmt.Errorf("client: could not unmarshall response: %w", err)
+		hs.log.Error("client: could not unmarshall response: %w", err)
+		return response.JSON(http.StatusInternalServerError, nil)
 	}
 
 	return response.JSON(http.StatusOK, result.Channels)
