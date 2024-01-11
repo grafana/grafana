@@ -37,7 +37,7 @@ export type Props = {
   resource: string;
   resourceId: ResourceId;
   canSetPermissions: boolean;
-  teamLBACTeamsConfigured?: number[];
+  getWarnings?: (items: ResourcePermission[]) => ResourcePermission[];
 };
 
 export const Permissions = ({
@@ -48,7 +48,7 @@ export const Permissions = ({
   resourceId,
   canSetPermissions,
   addPermissionTitle,
-  teamLBACTeamsConfigured,
+  getWarnings,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useState(false);
@@ -57,11 +57,11 @@ export const Permissions = ({
 
   const fetchItems = useCallback(async () => {
     let items = await getPermissions(resource, resourceId);
-    if (teamLBACTeamsConfigured) {
-      items = addTeamLBACWarnings(teamLBACTeamsConfigured, items);
+    if (getWarnings) {
+      items = getWarnings(items);
     }
     setItems(items);
-  }, [resource, resourceId, teamLBACTeamsConfigured]);
+  }, [resource, resourceId, getWarnings]);
 
   useEffect(() => {
     getDescription(resource).then((r) => {
@@ -271,31 +271,6 @@ const setPermission = (
   permission: string
 ): Promise<void> =>
   getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}`, { permission });
-
-const addTeamLBACWarnings = (teams: number[], items: ResourcePermission[]) => {
-  const warningServiceAccount = t(
-    'access-control.permissions.lbac-warning-service-account',
-    'Warning: This service account has full data access with no Team LBAC rules applied.'
-  );
-  const warningTeam = t(
-    'access-control.permissions.lbac-warning-team',
-    'Warning: This team has full data access with no Team LBAC rules applied.'
-  );
-  return items.map((item) => {
-    if (item.builtInRole && item.permission !== 'Admin') {
-      const warningBasicRole = t(
-        'access-control.permissions.lbac-warning-basic-role',
-        `Warning: ${item.builtInRole} may have full data access with no Team LBAC rules applied.`
-      );
-      item.warning = warningBasicRole;
-    } else if (item.isServiceAccount && item.userId) {
-      item.warning = warningServiceAccount;
-    } else if (item.teamId && !teams.includes(item.teamId)) {
-      item.warning = warningTeam;
-    }
-    return { ...item };
-  });
-};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   breakdown: css({
