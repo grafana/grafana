@@ -238,7 +238,7 @@ export const Table = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
-  useResetVariableListSizeCache(extendedState, listRef, data);
+  useResetVariableListSizeCache(extendedState, listRef, data, uniqueField);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
   const onNavigate = useCallback(
