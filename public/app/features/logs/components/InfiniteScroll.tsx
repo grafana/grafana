@@ -134,7 +134,7 @@ const styles = {
   }),
 };
 
-const outOfRangeMessage = <div className={styles.limitReached}>Limit reached for the current time range.</div>;
+const outOfRangeMessage = <div className={styles.limitReached}>End of the selected time range.</div>;
 const loadingMessage = (
   <div className={styles.limitReached}>
     <Spinner />
