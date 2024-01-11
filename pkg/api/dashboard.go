@@ -839,18 +839,30 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 	}
 
 	imageFileName := filepath.Base(imagePath)
+	imageURL := hs.getImageURL(imageFileName)
 	for _, link := range linkEvent.Event.Links {
 		eventPayload.Unfurls[link.URL] = Unfurl{
 			Blocks: []Block{
 				{
+					Type: "header",
+					Text: Text{
+						Type: "plain_text",
+						Text: "<Dashboard title>",
+					},
+				},
+				{
 					Type: "section",
 					Text: Text{
-						Type: "mrkdwn",
-						Text: "This is a fake event payload!",
+						Type: "plain_text",
+						Text: "Here is the dashboard that I wanted to show you",
 					},
 					Accessory: ImageAccessory{
-						Type:     "image",
-						ImageURL: hs.getImageURL(imageFileName),
+						Type: "image",
+						Title: Text{
+							Type: "plain_text",
+							Text: "Dashboard preview",
+						},
+						ImageURL: imageURL,
 						AltText:  "Fake Image",
 					},
 				},
@@ -858,7 +870,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 		}
 	}
 
-	hs.log.Info("Posting to slack api", "eventPayload", eventPayload)
+	hs.log.Info("Posting to slack api", "image URL", imageURL)
 
 	b, err := json.Marshal(eventPayload)
 	if err != nil {

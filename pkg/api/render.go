@@ -165,6 +165,7 @@ type Text struct {
 
 type ImageAccessory struct {
 	Type     string `json:"type"`
+	Title    Text   `json:"title"`
 	ImageURL string `json:"image_url"`
 	AltText  string `json:"alt_text"`
 }
