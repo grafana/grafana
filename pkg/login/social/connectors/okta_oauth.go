@@ -44,10 +44,10 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	config := createOAuthConfig(info, cfg, social.OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, *features),
+		SocialBase: newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, features),
 	}
 
 	if info.UseRefreshToken {

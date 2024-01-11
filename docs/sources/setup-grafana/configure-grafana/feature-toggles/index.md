@@ -58,6 +58,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `logRowsPopoverMenu`                 | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                          | Yes                |
 | `displayAnonymousStats`              | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
+| `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 
 ## Preview feature toggles
 
@@ -169,6 +170,7 @@ Experimental features might be changed or removed without prior notice.
 | `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `tableSharedCrosshair`                      | Enables shared crosshair in table panel                                                                                                                                                                                                                                           |
+| `enablePluginsTracingByDefault`             | Enable plugin tracing for all external plugins                                                                                                                                                                                                                                    |
 
 ## Development feature toggles
 

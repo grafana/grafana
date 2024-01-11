@@ -8,6 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -16,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetFeatureToggles(t *testing.T) {
@@ -405,13 +406,16 @@ func runGetScenario(
 	cfg := setting.NewCfg()
 	cfg.FeatureManagement = settings
 
+	fm := featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
+		Name:    featuremgmt.FlagFeatureToggleAdminPage,
+		Enabled: true,
+		Stage:   featuremgmt.FeatureStageGeneralAvailability,
+	}}, features...))
+
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.Features = featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
-			Name:    featuremgmt.FlagFeatureToggleAdminPage,
-			Enabled: true,
-			Stage:   featuremgmt.FeatureStageGeneralAvailability,
-		}}, features...))
+		hs.Features = fm
+		hs.featureManager = fm
 		hs.orgService = orgtest.NewOrgServiceFake()
 		hs.userService = &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 1},
@@ -469,13 +473,16 @@ func runSetScenario(
 	cfg := setting.NewCfg()
 	cfg.FeatureManagement = settings
 
+	features := featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
+		Name:    featuremgmt.FlagFeatureToggleAdminPage,
+		Enabled: true,
+		Stage:   featuremgmt.FeatureStageGeneralAvailability,
+	}}, serverFeatures...))
+
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.Features = featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
-			Name:    featuremgmt.FlagFeatureToggleAdminPage,
-			Enabled: true,
-			Stage:   featuremgmt.FeatureStageGeneralAvailability,
-		}}, serverFeatures...))
+		hs.Features = features
+		hs.featureManager = features
 		hs.orgService = orgtest.NewOrgServiceFake()
 		hs.userService = &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 1},

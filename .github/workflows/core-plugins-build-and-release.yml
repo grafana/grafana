@@ -6,7 +6,9 @@ on:
         required: true
         type: choice
         options:
+          - grafana-azure-monitor-datasource
           - grafana-testdata-datasource
+          - parca
           - tempo
 
 concurrency:
