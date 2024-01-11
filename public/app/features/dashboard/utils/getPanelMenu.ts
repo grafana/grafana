@@ -20,6 +20,7 @@ import {
   duplicatePanel,
   removePanel,
   sharePanel,
+  shareToSlack,
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
@@ -60,6 +61,11 @@ export function getPanelMenu(
     event.preventDefault();
     sharePanel(dashboard, panel);
     DashboardInteractions.panelMenuItemClicked('share');
+  };
+
+  const onShareToSlack = (event: React.MouseEvent) => {
+    event.preventDefault();
+    shareToSlack(dashboard, panel);
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
@@ -145,10 +151,22 @@ export function getPanelMenu(
   }
 
   menu.push({
+    type: 'submenu',
     text: t('panel.header-menu.share', `Share`),
     iconClassName: 'share-alt',
-    onClick: onSharePanel,
     shortcut: 'p s',
+    subMenu: [
+      {
+        text: 'Share panel',
+        iconClassName: 'share-alt',
+        onClick: onSharePanel,
+      },
+      {
+        text: 'Share to Slack',
+        iconClassName: 'slack',
+        onClick: onShareToSlack,
+      },
+    ],
   });
 
   if (

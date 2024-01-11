@@ -15,6 +15,7 @@ import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { dispatch } from 'app/store/store';
 
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
+import { ShareSlackModal } from '../components/DashNav/ShareButton/ShareSlackModal';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -64,6 +65,20 @@ export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
       props: {
         dashboard: dashboard,
         panel: panel,
+      },
+    })
+  );
+};
+
+export const shareToSlack = (dashboard: DashboardModel, panel: PanelModel) => {
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: ShareSlackModal,
+      props: {
+        resourceUid: dashboard.uid,
+        dashboardUrl:
+          'd/fa5ee233-af52-4b07-9c27-a82ee1a33a3c1/panel-overlapping-issue-with-modification-in-size?orgId=1&viewPanel=10',
+        onDismiss: () => {},
       },
     })
   );

@@ -4,15 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Button, Field, Modal, MultiSelect, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 
-import { useCreateDashboardPreviewQuery, useGetChannelsQuery, useShareMutation } from '../../../api/shareToSlackApi';
+import { useCreatePreviewQuery, useGetChannelsQuery, useShareMutation } from '../../../api/shareToSlackApi';
 
 export function ShareSlackModal({
-  dashboardUid,
-  dashboardUrl,
+  resourceUid,
+  resourceUrl,
   onDismiss,
 }: {
-  dashboardUid: string;
-  dashboardUrl: string;
+  resourceUid: string;
+  resourceUrl: string;
   onDismiss(): void;
 }) {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
@@ -26,7 +26,7 @@ export function ShareSlackModal({
     isLoading: isPreviewLoading,
     refetch,
     isFetching: isPreviewFetching,
-  } = useCreateDashboardPreviewQuery({ dashboardUid, dashboardUrl }, { refetchOnMountOrArgChange: false });
+  } = useCreatePreviewQuery({ resourceUid, resourceUrl }, { refetchOnMountOrArgChange: false });
   const [share, { isLoading: isShareLoading, isSuccess: isShareSuccess }] = useShareMutation();
 
   const disableShareButton = isChannelsLoading || isChannelsFetching || isPreviewLoading || isPreviewFetching;
@@ -35,15 +35,15 @@ export function ShareSlackModal({
     if (isShareSuccess) {
       onDismiss();
     }
-  }, [isShareSuccess]);
+  }, [isShareSuccess, onDismiss]);
 
   const onShareClick = () => {
     share({
       channelIds: value.map((v) => v.value!),
       message: description,
       imagePreviewUrl: preview!.previewUrl,
-      dashboardUid: dashboardUid,
-      dashboardPath: dashboardUrl,
+      dashboardUid: resourceUid,
+      dashboardPath: resourceUrl,
     });
   };
 

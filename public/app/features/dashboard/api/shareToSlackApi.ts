@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
 
-import { createErrorNotification, createSuccessNotification } from '../../../core/copy/appNotification';
+import { createSuccessNotification } from '../../../core/copy/appNotification';
 import { notifyApp } from '../../../core/reducers/appNotification';
 
 export interface ChannelRS {
@@ -24,8 +24,8 @@ export interface SlackShareContent {
 }
 
 interface DashboardPreview {
-  dashboardUid: string;
-  dashboardUrl: string;
+  resourceUid: string; //dashboard uid or panel id
+  resourceUrl: string; //dashboard url or panel url
 }
 
 const backendSrvBaseQuery =
@@ -59,13 +59,13 @@ export const shareToSlackApi = createApi({
       },
       providesTags: (result, error, dashboardUid) => ['channels'],
     }),
-    createDashboardPreview: builder.query<{ previewUrl: string }, DashboardPreview>({
-      query: ({ dashboardUrl }) => ({
+    createPreview: builder.query<{ previewUrl: string }, DashboardPreview>({
+      query: ({ resourceUrl }) => ({
         url: `/dashboards/preview`,
         method: 'POST',
-        data: { dashboardUrl },
+        data: { resourceUrl },
       }),
-      providesTags: (result, error, { dashboardUid }) => [{ type: 'preview', id: dashboardUid }],
+      providesTags: (result, error, { resourceUid }) => [{ type: 'preview', id: resourceUid }],
     }),
     share: builder.mutation<
       void,
@@ -91,4 +91,4 @@ export const shareToSlackApi = createApi({
   }),
 });
 
-export const { useGetChannelsQuery, useCreateDashboardPreviewQuery, useShareMutation } = shareToSlackApi;
+export const { useGetChannelsQuery, useCreatePreviewQuery, useShareMutation } = shareToSlackApi;
