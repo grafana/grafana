@@ -32,7 +32,7 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
   return type !== 'system';
 }
 
-const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> = {
+export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> = {
   custom: {
     name: 'Custom',
     description: 'Define variable values manually',
@@ -70,7 +70,7 @@ const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> =
   },
 };
 
-const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
+export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'query',
   'custom',
   'textbox',
@@ -93,7 +93,7 @@ export function getVariableEditor(type: EditableVariableType) {
 }
 
 interface CommonVariableProperties {
-  name?: string;
+  name: string;
   label?: string;
 }
 
@@ -110,14 +110,15 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      return new AdHocFilterSet(initialState);
+      // TODO: Initialize properly AdHocFilterSet with initialState
+      return new AdHocFilterSet({ name: initialState.name });
     case 'textbox':
-      return new TextBoxVariable({});
+      return new TextBoxVariable(initialState);
   }
 }
 
 export function hasVariableOptions(
   variable: SceneVariable
 ): variable is SceneVariable & { options: VariableValueOption[] } {
-  return 'options' in variable;
+  return 'options' in variable.state;
 }

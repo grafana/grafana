@@ -5,13 +5,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
 import { HorizontalGroup, Button } from '@grafana/ui';
+import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
+import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
+import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
+import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { ConfirmDeleteModal } from 'app/features/variables/editor/ConfirmDeleteModal';
-// import { VariableHideSelect } from 'app/features/variables/editor/VariableHideSelect';
-import { VariableHideSelect } from 'app/features/variables/editor/VariableHideSelect';
-import { VariableLegend } from 'app/features/variables/editor/VariableLegend';
-import { VariableTextAreaField } from 'app/features/variables/editor/VariableTextAreaField';
-import { VariableTextField } from 'app/features/variables/editor/VariableTextField';
-import { VariableValuesPreview } from 'app/features/variables/editor/VariableValuesPreview';
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
@@ -31,11 +30,9 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
   const [label, setLabel] = React.useState(initialLabel ?? '');
   const [description, setDescription] = React.useState(initialDescription ?? '');
 
-  const onVariableTypeChange = (option: SelectableValue<VariableType>) => {
-    const variableType = option.value && isEditableVariableType(option.value) ? option.value : undefined;
-
-    if (variableType) {
-      onTypeChange(variableType);
+  const onVariableTypeChange = (option: SelectableValue<EditableVariableType>) => {
+    if (option.value) {
+      onTypeChange(option.value);
     }
   };
 
