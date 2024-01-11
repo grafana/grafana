@@ -56,7 +56,7 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 | GET    | /api/v1/provisioning/alert-rules/export                            | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.     |
 | POST   | /api/v1/provisioning/alert-rules                                   | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                |
 | PUT    | /api/v1/provisioning/alert-rules/:uid                             | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
-| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group.                    |
+| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group or modify the rules of the group.                    |
 
 ### Contact points
 
@@ -854,7 +854,7 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-put-alert-rule-group"></span> Update the interval of a rule group. (_RoutePutAlertRuleGroup_)
+### <span id="route-put-alert-rule-group"></span> Update the interval or alert rules of a rule group. (_RoutePutAlertRuleGroup_)
 
 ```
 PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
@@ -873,7 +873,7 @@ PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 | FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
 | Group                | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
 | X-Disable-Provenance | `header` | string                              | `string`                |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |                                                           |
+| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         | This action is idempotent and rules included in this body will overwrite configured rules for the group |
 
 {{% /responsive-table %}}
 
