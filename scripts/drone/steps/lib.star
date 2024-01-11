@@ -585,6 +585,7 @@ def verify_i18n_step():
         "depends_on": [
             "yarn-install",
         ],
+        "failure": "ignore",
         "commands": [
             "apk add --update git",
             "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),

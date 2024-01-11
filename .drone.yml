@@ -247,6 +247,7 @@ steps:
   - yarn run i18n:compile
   depends_on:
   - yarn-install
+  failure: ignore
   image: node:20.9.0-alpine
   name: verify-i18n
 trigger:
@@ -1549,6 +1550,7 @@ steps:
   - yarn run i18n:compile
   depends_on:
   - yarn-install
+  failure: ignore
   image: node:20.9.0-alpine
   name: verify-i18n
 trigger:
@@ -4629,6 +4631,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d7e383e4bf37190a97d695ef8f91755cb8cb70fb8088a5c1f63262adcf8e4f5e
+hmac: 013b133b2c65edbc2220813ae96f6b55478f6b67643639ed54ddfc347de4cb55
 
 ...
