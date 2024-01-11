@@ -1,8 +1,8 @@
 import React, { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { VariableLegend } from 'app/features/variables/editor/VariableLegend';
-import { VariableTextField } from 'app/features/variables/editor/VariableTextField';
+import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
 
 interface TextBoxVariableFormProps {
   value: string;

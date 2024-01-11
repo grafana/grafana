@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { SelectableValue, VariableType } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
