@@ -848,7 +848,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 					Text: Text{
 						Type: "plain_text",
 						// TODO: need to fetch the dashboard to get the title
-						Text: "<Dashboard title>",
+						Text: "Dashboard title",
 					},
 				},
 				{
@@ -884,12 +884,11 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 		}
 	}
 
-	hs.log.Info("Posting to slack api", "image URL", imageURL)
-
 	b, err := json.Marshal(eventPayload)
 	if err != nil {
 		return fmt.Errorf("client: could not create body: %w", err)
 	}
+	hs.log.Info("Posting to slack api", "eventPayload", b)
 
 	bodyReader := bytes.NewReader(b)
 	req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/chat.unfurl", bodyReader)
