@@ -115,7 +115,7 @@ describe('browse-dashboards DashboardsTree', () => {
     expect(screen.queryByText(folder.item.title)).toHaveAttribute('href', folder.item.url);
   });
 
-  it("renders a doesn't link to the sharedwithme pseudo-folder", () => {
+  it("doesn't link to the sharedwithme pseudo-folder", () => {
     const sharedWithMe = sharedWithMeFolder(2);
 
     render(
@@ -134,6 +134,29 @@ describe('browse-dashboards DashboardsTree', () => {
     );
 
     expect(screen.queryByText(sharedWithMe.item.title)).not.toHaveAttribute('href');
+  });
+
+  it("doesn't render a checkbox for the sharedwithme pseudo-folder", () => {
+    const sharedWithMe = sharedWithMeFolder(2);
+
+    render(
+      <DashboardsTree
+        canSelect
+        items={[sharedWithMe, folder]}
+        isSelected={isSelected}
+        width={WIDTH}
+        height={HEIGHT}
+        onFolderClick={noop}
+        onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
+      />
+    );
+
+    expect(
+      screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(sharedWithMe.item.uid))
+    ).not.toBeInTheDocument();
   });
 
   it('calls onFolderClick when a folder button is clicked', async () => {
