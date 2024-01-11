@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { DashboardCursorSync } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -13,6 +14,7 @@ import {
   sceneGraph,
   SceneVariableSet,
   QueryVariable,
+  behaviors,
 } from '@grafana/scenes';
 import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
 
@@ -207,6 +209,7 @@ function buildGraphScene(metric: string) {
 
   return new SceneFlexLayout({
     direction: 'column',
+    $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
     children: [
       new SceneFlexItem({
         minHeight: MAIN_PANEL_MIN_HEIGHT,
