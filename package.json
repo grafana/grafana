@@ -105,7 +105,7 @@
     "@types/d3": "7.4.3",
     "@types/d3-force": "^3.0.0",
     "@types/d3-scale-chromatic": "3.0.3",
-    "@types/debounce-promise": "3.1.6",
+    "@types/debounce-promise": "3.1.9",
     "@types/diff": "^5",
     "@types/eslint": "8.44.0",
     "@types/file-saver": "2.0.5",

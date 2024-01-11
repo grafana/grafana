@@ -8122,9 +8122,9 @@ __metadata:
   linkType: hard
 
 "@types/chance@npm:^1.1.3":
-  version: 1.1.3
-  resolution: "@types/chance@npm:1.1.3"
-  checksum: 5fffaa9f1a54690cb1236aeda31fdc833e3c5e6049c1e70e6d94c6b41d8f590088bf61a8a45934d1ea9cfde001ec90857363bd35b1775b523098d51da2e444bc
+  version: 1.1.6
+  resolution: "@types/chance@npm:1.1.6"
+  checksum: f4366f1b3144d143af3e6f0fad2ed1db7b9bdfa7d82d40944e9619d57fe7e6b60e8c1452f47a8ededa6b2188932879518628ecd9aac81c40384ded39c26338ba
   languageName: node
   linkType: hard
 
@@ -8138,9 +8138,9 @@ __metadata:
   linkType: hard
 
 "@types/common-tags@npm:^1.8.0":
-  version: 1.8.1
-  resolution: "@types/common-tags@npm:1.8.1"
-  checksum: 0800298cca3be151b26cedbb8d69d686140f98fd68decb4069c29611ccb7c0572d1e8ffca55e5a6dd7615a15c897337fe1c983d36d92a4a50b5664a2b03ed01b
+  version: 1.8.4
+  resolution: "@types/common-tags@npm:1.8.4"
+  checksum: 40c95a2f6388beb1cdeed3c9986ac0d6a3a551fce706e3e364a00ded48ab624b06b1ac8b94679bb2da9653e5eb3e450bad26873f5189993a5d8e8bdace74cbb2
   languageName: node
   linkType: hard
 
@@ -8483,10 +8483,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/debounce-promise@npm:3.1.6":
-  version: 3.1.6
-  resolution: "@types/debounce-promise@npm:3.1.6"
-  checksum: db1e5bf86215dfcdd0b0f94497269b0be5b27e0b9622bbad53c7a24de078229b97927f848549bb661795575d80615fd935f8357d8f23928c0526b158b51fa122
+"@types/debounce-promise@npm:3.1.9":
+  version: 3.1.9
+  resolution: "@types/debounce-promise@npm:3.1.9"
+  checksum: ea6c38c8d4b6006aea25fb9891281b0ea908aab7ae32755e85dfda1ae78331dab1884da7143aa4ca5166741884bc9f7665391072ddce800b5d2c1f44d4a11b9d
   languageName: node
   linkType: hard
 
@@ -17219,7 +17219,7 @@ __metadata:
     "@types/d3": "npm:7.4.3"
     "@types/d3-force": "npm:^3.0.0"
     "@types/d3-scale-chromatic": "npm:3.0.3"
-    "@types/debounce-promise": "npm:3.1.6"
+    "@types/debounce-promise": "npm:3.1.9"
     "@types/diff": "npm:^5"
     "@types/eslint": "npm:8.44.0"
     "@types/file-saver": "npm:2.0.5"
