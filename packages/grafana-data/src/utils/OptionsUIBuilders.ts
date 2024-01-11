@@ -1,4 +1,4 @@
-import { set } from 'lodash';
+import { set, cloneDeep } from 'lodash';
 
 import {
   numberOverrideProcessor,
@@ -191,7 +191,7 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
   }
 
   private getDefaultValue(cfg: NestedPanelOptions<TSub>) {
-    let result = cfg.defaultValue || {};
+    let result = cloneDeep(cfg.defaultValue) || {};
 
     const builder = new PanelOptionsEditorBuilder<TSub>();
     cfg.build(builder, { data: [] })
