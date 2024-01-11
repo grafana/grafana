@@ -114,7 +114,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
 
-	addKVStoreValueTypeLongTextMigration(mg)
+	addKVStoreMySQLValueTypeLongTextMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
