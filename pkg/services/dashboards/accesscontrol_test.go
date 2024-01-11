@@ -26,7 +26,6 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 	t.Run("resolver should convert to uid scope", func(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
-		// nolint:staticcheck
 		db := &folder.Folder{Title: title, UID: util.GenerateShortUID()}
 		folderStore := foldertest.NewFakeFolderStore(t)
 		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
@@ -44,7 +43,6 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
 
-		// nolint:staticcheck
 		db := &folder.Folder{Title: title, UID: util.GenerateShortUID()}
 
 		folderStore := foldertest.NewFakeFolderStore(t)
