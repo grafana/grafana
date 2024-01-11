@@ -689,13 +689,6 @@ export class Scene {
             e.stopPropagation();
           }
         }}
-        onMouseUp={(e) => {
-          if (this.isPanelEditing && e.button === 2 && !e.ctrlKey) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('right click up');
-          }
-        }}
       >
         {this.connections.render()}
         {this.root.render()}
