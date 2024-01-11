@@ -55,7 +55,7 @@ export function createSpanLinkFactory({
     return undefined;
   }
 
-  let scopedVars = scopedVarsFromTrace(trace);
+  let scopedVars = scopedVarsFromTrace(trace.duration, trace.traceName, trace.traceID);
   const hasLinks = dataFrame.fields.some((f) => Boolean(f.config.links?.length));
 
   const createSpanLinks = legacyCreateSpanLinkFactory(
@@ -596,14 +596,14 @@ function buildMetricsQuery(
  * Variables from trace that can be used in the query
  * @param trace
  */
-function scopedVarsFromTrace(trace: Trace): ScopedVars {
+export function scopedVarsFromTrace(duration: number, name: string, traceId: string): ScopedVars {
   return {
     __trace: {
       text: 'Trace',
       value: {
-        duration: trace.duration,
-        name: trace.traceName,
-        traceId: trace.traceID,
+        duration,
+        name,
+        traceId,
       },
     },
   };
@@ -613,7 +613,7 @@ function scopedVarsFromTrace(trace: Trace): ScopedVars {
  * Variables from span that can be used in the query
  * @param span
  */
-function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
+export function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
   const tags: ScopedVars = {};
 
   // We put all these tags together similar way we do for the __tags variable. This means there can be some overriding
@@ -643,7 +643,10 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
  * Variables from tags that can be used in the query
  * @param span
  */
-function scopedVarsFromTags(span: TraceSpan, traceToProfilesOptions: TraceToProfilesOptions | undefined): ScopedVars {
+export function scopedVarsFromTags(
+  span: TraceSpan,
+  traceToProfilesOptions: TraceToProfilesOptions | undefined
+): ScopedVars {
   let tags: ScopedVars = {};
 
   if (traceToProfilesOptions) {
