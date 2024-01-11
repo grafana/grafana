@@ -97,6 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       padding: theme.spacing(0, 1, 0, 2),
       alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     menuButton: css({
       display: 'flex',
