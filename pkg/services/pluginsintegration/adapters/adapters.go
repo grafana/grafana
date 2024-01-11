@@ -50,9 +50,10 @@ func BackendUserFromSignedInUser(requester identity.Requester) *backend.User {
 		return nil
 	}
 	return &backend.User{
-		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
-		Email: requester.GetEmail(),
-		Role:  string(requester.GetOrgRole()),
+		Login:           requester.GetLogin(),
+		Name:            requester.GetDisplayName(),
+		Email:           requester.GetEmail(),
+		Role:            string(requester.GetOrgRole()),
+		AuthenticatedBy: requester.GetAuthenticatedBy(),
 	}
 }

@@ -16,9 +16,9 @@ type SignedInUser struct {
 	Login            string
 	Name             string
 	Email            string
-	AuthenticatedBy  string
-	ApiKeyID         int64 `xorm:"api_key_id"`
-	IsServiceAccount bool  `xorm:"is_service_account"`
+	AuthenticatedBy  string `xorm:"authenticated_by"`
+	ApiKeyID         int64  `xorm:"api_key_id"`
+	IsServiceAccount bool   `xorm:"is_service_account"`
 	IsGrafanaAdmin   bool
 	IsAnonymous      bool
 	IsDisabled       bool
