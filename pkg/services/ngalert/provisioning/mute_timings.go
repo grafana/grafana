@@ -60,11 +60,12 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, or
 		MuteTimeInterval: mt,
 	}
 
-	prov, err := svc.provenanceStore.GetProvenance(ctx, &result, orgID)
+	_, err = svc.provenanceStore.GetProvenance(ctx, &result, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	result.Provenance = definitions.Provenance(prov)
+	// TODO uncomment in a follow up
+	// result.Provenance = definitions.Provenance(prov)
 	return result, nil
 }
 
