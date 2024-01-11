@@ -256,6 +256,34 @@ func (hs *HTTPServer) renderDashboard(ctx context.Context, dashboardURL string) 
 	return result.FilePath, nil
 }
 
+func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Response {
+	var previewRequest PreviewRequest
+	if err := web.Bind(c.Req, &previewRequest); err != nil {
+		return response.Error(http.StatusBadRequest, "error parsing body", err)
+	}
+
+	hs.log.Info("Generating preview", "dashboard_url", previewRequest.DashboardURL)
+
+	filePath, err := hs.renderDashboard(c.Req.Context(), previewRequest.DashboardURL)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
+	}
+
+	imageFileName := filepath.Base(filePath)
+	imageURL := hs.getImageURL(imageFileName)
+
+	return response.JSON(http.StatusOK, &PreviewResponse{
+		PreviewURL: imageURL,
+	})
+}
+
+type PreviewRequest struct {
+	DashboardURL string `json:"dashboard_url"`
+}
+type PreviewResponse struct {
+	PreviewURL string `json:"preview_url"`
+}
+
 type EventChallengeAck struct {
 	Challenge string `json:"challenge"`
 }
