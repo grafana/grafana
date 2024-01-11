@@ -60,10 +60,6 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 
 ### Contact points
 
-**Note:**
-
-Contact point provisioning is for Grafana-managed alerts only.
-
 | Method | URI                                        | Name                                                              | Summary                                                |
 | ------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |
 | DELETE | /api/v1/provisioning/contact-points/:uid  | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
