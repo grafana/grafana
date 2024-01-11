@@ -34,6 +34,7 @@ jest.mock('app/core/components/FormPrompt/FormPrompt', () => ({
 }));
 
 const testConfig: SSOProvider = {
+  id: '300f9b7c-0488-40db-9763-a22ce8bf6b3e',
   provider: 'github',
   settings: {
     ...emptySettings,

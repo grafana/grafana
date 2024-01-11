@@ -14,9 +14,9 @@ import {
   periodIntervalVariable,
   accountIdVariable,
 } from '../__mocks__/CloudWatchDataSource';
+import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
 import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
 import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
-import { initialVariableModelState } from '../__mocks__/variables';
 import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery, DataQueryError } from '../types';
 
 describe('CloudWatchMetricsQueryRunner', () => {
@@ -358,7 +358,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
 
     it('interpolates variables correctly', async () => {
       const { runner, queryMock, request } = setupMockedMetricsQueryRunner({
-        variables: [namespaceVariable, metricVariable, labelsVariable, limitVariable],
+        variables: [namespaceVariable, metricVariable, limitVariable],
       });
       runner.handleMetricQueries(
         [
@@ -376,7 +376,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
             expression: '',
             metricQueryType: MetricQueryType.Query,
             metricEditorMode: MetricEditorMode.Code,
-            sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY ${labels:raw} LIMIT $limit',
+            sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY InstanceId,InstanceType LIMIT $limit',
           },
         ],
         request,
@@ -666,8 +666,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
             queryMode: 'Metrics',
             id: '',
             region: 'us-east-2',
-            namespace: namespaceVariable.id,
-            metricName: metricVariable.id,
+            namespace: '$' + namespaceVariable.name,
+            metricName: '$' + metricVariable.name,
             period: '',
             alias: '',
             dimensions: {},
@@ -712,7 +712,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         sqlExpression: 'select SUM(CPUUtilization) from $datasource',
         dimensions: { InstanceId: '$dimension' },
       };
-      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable], mockGetVariableName: false });
+      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable] });
       const result = runner.interpolateMetricsQueryVariables(testQuery, {
         datasource: { text: 'foo', value: 'foo' },
         dimension: { text: 'foo', value: 'foo' },
@@ -732,7 +732,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
   describe('convertMultiFiltersFormat', () => {
     const { runner } = setupMockedMetricsQueryRunner({
       variables: [labelsVariable, dimensionVariable],
-      mockGetVariableName: false,
     });
     it('converts keys and values correctly', () => {
       const filters = { $dimension: ['b'], a: ['$labels', 'bar'] };
