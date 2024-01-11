@@ -111,6 +111,6 @@ describe('Prometheus config', () => {
   // exemplars tested in exemplar.spec
 });
 
-function selectOption(option: string) {
+export function selectOption(option: string) {
   cy.get("[aria-label='Select option']").contains(option).should('be.visible').click();
 }
