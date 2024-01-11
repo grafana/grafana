@@ -30,11 +30,9 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
   const [label, setLabel] = React.useState(initialLabel ?? '');
   const [description, setDescription] = React.useState(initialDescription ?? '');
 
-  const onVariableTypeChange = (option: SelectableValue<VariableType>) => {
-    const variableType = option.value && isEditableVariableType(option.value) ? option.value : undefined;
-
-    if (variableType) {
-      onTypeChange(variableType);
+  const onVariableTypeChange = (option: SelectableValue<EditableVariableType>) => {
+    if (option.value) {
+      onTypeChange(option.value);
     }
   };
 
