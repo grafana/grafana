@@ -619,6 +619,7 @@ export interface DataSourceJsonData {
   profile?: string;
   manageAlerts?: boolean;
   alertmanagerUid?: string;
+  disableGrafanaCache?: boolean;
 }
 
 /**
