@@ -35,7 +35,7 @@ export function ShareSlackModal({
     if (isShareSuccess) {
       onDismiss();
     }
-  }, [isShareSuccess]);
+  }, [isShareSuccess, onDismiss]);
 
   const onShareClick = () => {
     share({
