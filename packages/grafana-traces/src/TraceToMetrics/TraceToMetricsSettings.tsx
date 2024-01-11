@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import {
   DataSourceInstanceSettings,
@@ -223,17 +223,17 @@ export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePl
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
-  queryRow: css`
-    label: queryRow;
-    display: flex;
-    flex-flow: wrap;
-  `,
+  infoText: {
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  },
+  row: css({
+    label: 'row',
+    alignItems: 'baseline',
+  }),
+  queryRow: css({
+    label: 'queryRow',
+    display: 'flex',
+    flexFlow: 'wrap',
+  }),
 });

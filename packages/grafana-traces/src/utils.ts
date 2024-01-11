@@ -37,7 +37,7 @@ export function getNonOverlappingDuration(ranges: Array<[number, number]>): numb
  * both arrays and dataframe views.
  */
 export function makeSpanMap<T>(getSpan: (index: number) => { span: T; id: string; parentIds: string[] } | undefined): {
-  [id: string]: { span: T; children: string[] };
+  [id: string]: { span?: T; children: string[] };
 } {
   const spanMap: { [id: string]: { span?: T; children: string[] } } = {};
 
@@ -65,7 +65,7 @@ export function makeSpanMap<T>(getSpan: (index: number) => { span: T; id: string
       }
     }
   }
-  return spanMap as { [id: string]: { span: T; children: string[] } };
+  return spanMap;
 }
 
 export function getStats(duration: number, traceDuration: number, selfDuration: number) {
