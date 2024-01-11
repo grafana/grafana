@@ -29,7 +29,7 @@ export function AppChrome({ children }: Props) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const dockedMenuBreakpoint = theme.breakpoints.values.xxl;
+  const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
@@ -134,7 +134,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'none',
       zIndex: theme.zIndex.navbarFixed,
 
-      [theme.breakpoints.up('xxl')]: {
+      [theme.breakpoints.up('xl')]: {
         display: 'block',
       },
     }),
