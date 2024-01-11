@@ -1,4 +1,4 @@
-package historian
+package client
 
 import (
 	"context"
