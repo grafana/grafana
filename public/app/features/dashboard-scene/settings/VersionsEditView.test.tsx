@@ -20,8 +20,7 @@ describe('VersionsEditView', () => {
     } as unknown as React.FormEvent<HTMLInputElement>;
 
     beforeEach(async () => {
-      // @ts-ignore
-      historySrv.getHistoryList.mockResolvedValue(getVersions());
+      jest.mocked(historySrv.getHistoryList).mockResolvedValue(getVersions());
 
       const result = await buildTestScene();
       dashboard = result.dashboard;

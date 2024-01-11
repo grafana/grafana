@@ -244,7 +244,7 @@ describe('CloudWatchLogsQueryRunner', () => {
     id: '',
     region: '$' + regionVariable.name,
     refId: 'A',
-    expression: `stats count(*) by queryType, bin($__interval)`,
+    expression: `stats count(*) by queryType, bin(20s)`,
   };
 
   describe('handleLogQueries', () => {
