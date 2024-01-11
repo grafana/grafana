@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -99,32 +100,45 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 // TODO: this method should be splitted to reuse the service call
 func (hs *HTTPServer) RenderAndPostToSlack(c *contextmodel.ReqContext) response.Response {
 	// TODO: hardcoded for now, the input of this method should be the event payload
-	source := "conversations_history"
-	unfurlID := "12345"
+	//source := "conversations_history"
+	//unfurlID := "12345"
 	rawURL := "http://localhost:3000/render/d/RvNCUVm4z/dashboard-with-expressions?orgId=1&from=1704891104021&to=1704912704021&width=1000&height=500&tz=America%2FBuenos_Aires"
 
+	imagePath, err := hs.renderDashboard(c.Req.Context(), rawURL)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
+	}
+
+	// post to slack api
+	err = hs.sendUnfurlEvent(c.Req.Context(), EventPayload{}, imagePath)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Fail to send unfurl event to Slack", err)
+	}
+
+	return response.Empty(http.StatusOK)
+}
+
+func (hs *HTTPServer) renderDashboard(ctx context.Context, dashboardURL string) (string, error) {
 	var renderPath string
 	// Find the index of "/d/"
-	index := strings.Index(rawURL, "/d/")
+	index := strings.Index(dashboardURL, "/d/")
 
 	// Check if "/d/" was found
 	if index != -1 {
 		// Extract the substring including "/d/"
-		renderPath = rawURL[index+1:]
+		renderPath = dashboardURL[index+1:]
 		fmt.Println(renderPath)
 	} else {
-		return response.Error(http.StatusBadRequest, "Invalid dashboard url", fmt.Errorf("Invalid dashboard url"))
+		return "", fmt.Errorf("Invalid dashboard url")
 	}
 
-	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
+	result, err := hs.RenderService.Render(ctx, rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout: time.Duration(60) * time.Second,
 		},
 		AuthOpts: rendering.AuthOpts{
 			// TODO: get the org id from the URL
-			OrgID: 1,
-			// TODO:  which user should we use here?
-			UserID:  1,
+			OrgID:   1,
 			OrgRole: roletype.RoleAdmin,
 		},
 		Width:  1600,
@@ -138,43 +152,10 @@ func (hs *HTTPServer) RenderAndPostToSlack(c *contextmodel.ReqContext) response.
 		Theme:             models.ThemeDark,
 	}, nil)
 	if err != nil {
-		if errors.Is(err, rendering.ErrTimeout) {
-			return response.Error(http.StatusInternalServerError, err.Error(), err)
-		}
-
-		c.Handle(hs.Cfg, 500, "Rendering failed.", err)
-		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
+		return "", err
 	}
 
-	// build the request
-	eventPayload := &SlackEventPayload{
-		Source:   source,
-		UnfurlID: unfurlID,
-		Unfurls: Unfurls{
-			rawURL: {
-				Blocks: []Block{
-					{
-						Type: "section",
-						Text: Text{
-							Type: "mrkdwn",
-							Text: "This is a fake event payload!",
-						},
-						Accessory: ImageAccessory{
-							Type:     "image",
-							ImageURL: result.FilePath,
-							AltText:  "Fake Image",
-						},
-					},
-				},
-			},
-			// Add more fake unfurls as needed
-		},
-	}
-	// post to slack api
-	hs.log.Info("Posting to slack api", "eventPayload", eventPayload)
-
-	// TODO: this is for testing purposes but it should not return the payload
-	return response.JSON(http.StatusOK, eventPayload)
+	return result.FilePath, nil
 }
 
 type Text struct {
@@ -200,8 +181,11 @@ type Unfurl struct {
 
 type Unfurls map[string]Unfurl
 
-type SlackEventPayload struct {
-	Source   string  `json:"source"`
-	UnfurlID string  `json:"unfurl_id"`
-	Unfurls  Unfurls `json:"unfurls"`
+type UnfurlEventPayload struct {
+	//Source   string  `json:"source"`
+	//UnfurlID string  `json:"unfurl_id"`
+	//Token    string  `json:"token"`
+	Channel string  `json:"channel"`
+	TS      string  `json:"ts"`
+	Unfurls Unfurls `json:"unfurls"`
 }

@@ -1,10 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -791,47 +793,96 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
-	//if event is a challenge
-	ack, err := isChallengeEventPayload(c)
-	if ack != nil && err == nil {
-		return response.JSON(http.StatusOK, ack)
-	}
-
-	//if event payload
-	resp, err := isEventPayload(c)
-	if resp != nil && err == nil {
-		return response.JSON(http.StatusOK, resp)
-	}
-
-	//if neither
-	return response.Error(400, "error parsing body", err)
-}
-
-func isChallengeEventPayload(c *contextmodel.ReqContext) (*EventChallengeAck, error) {
-	var eventChallengePayload EventChallengePayload
-
-	if err := web.Bind(c.Req, &eventChallengePayload); err != nil {
-		return nil, err
-	}
-
-	challenge := eventChallengePayload.Challenge
-
-	ack := &EventChallengeAck{
-		Challenge: challenge,
-	}
-
-	return ack, nil
-}
-
-func isEventPayload(c *contextmodel.ReqContext) (response.Response, error) {
 	var eventPayload EventPayload
-
 	if err := web.Bind(c.Req, &eventPayload); err != nil {
-		return nil, err
+		return response.Error(400, "error parsing body", err)
 	}
 
-	// return hs.DashboardService.generateDashboardImage(eventPayload)
-	return nil, nil
+	switch eventPayload.Type {
+	case "url_verification":
+		return response.JSON(http.StatusOK, &EventChallengeAck{
+			Challenge: eventPayload.Challenge,
+		})
+	case "event_callback":
+		if eventPayload.Event.Type != "link_shared" {
+			break
+		}
+
+		defer hs.handleLinkSharedEvent(eventPayload)
+		return response.Empty(http.StatusOK)
+	}
+
+	return response.Error(400, "not handling this event type", fmt.Errorf("not handling this event type"))
+}
+
+func (hs *HTTPServer) handleLinkSharedEvent(event EventPayload) {
+	ctx := context.Background()
+	// TODO: handle multiple links
+	imagePath, err := hs.renderDashboard(ctx, event.Event.Links[0].URL)
+	if err != nil {
+		hs.log.Error("fail to render dashboard for Slack preview", "err", err)
+		return
+	}
+
+	err = hs.sendUnfurlEvent(ctx, event, imagePath)
+	if err != nil {
+		hs.log.Error("fail to send unfurl event to Slack", "err", err)
+	}
+}
+
+func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload, imagePath string) error {
+	eventPayload := &UnfurlEventPayload{
+		Channel: linkEvent.Event.Channel,
+		TS:      linkEvent.Event.MessageTS,
+		Unfurls: make(Unfurls),
+	}
+
+	for _, link := range linkEvent.Event.Links {
+		eventPayload.Unfurls[link.URL] = Unfurl{
+			Blocks: []Block{
+				{
+					Type: "section",
+					Text: Text{
+						Type: "mrkdwn",
+						Text: "This is a fake event payload!",
+					},
+					Accessory: ImageAccessory{
+						Type:     "image",
+						ImageURL: imagePath,
+						AltText:  "Fake Image",
+					},
+				},
+			},
+		}
+	}
+
+	hs.log.Info("Posting to slack api", "eventPayload", eventPayload)
+
+	b, err := json.Marshal(eventPayload)
+	if err != nil {
+		return fmt.Errorf("client: could not create body: %w", err)
+	}
+
+	bodyReader := bytes.NewReader(b)
+	req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/chat.unfurl", bodyReader)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer <Slack Bot Token>")
+	if err != nil {
+		return fmt.Errorf("client: could not create request: %w", err)
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("client: error making http request: %w", err)
+	}
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("client: could not read response body: %w", err)
+	}
+
+	hs.log.Info("successfully sent unfurl event payload", "body", resBody)
+	return nil
 }
 
 // swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
@@ -1280,12 +1331,6 @@ type DashboardVersionResponse struct {
 	Body *dashver.DashboardVersionMeta `json:"body"`
 }
 
-type EventChallengePayload struct {
-	Token     string `json:"token"`
-	Challenge string `json:"challenge"`
-	Type      string `json:"type"`
-}
-
 type EventChallengeAck struct {
 	Challenge string `json:"challenge"`
 }
@@ -1301,6 +1346,7 @@ type EventPayload struct {
 	Authorizations     []Authorization `json:"authorizations"`
 	IsExtSharedChannel bool            `json:"is_ext_shared_channel"`
 	EventContext       string          `json:"event_context"`
+	Challenge          string          `json:"challenge"`
 }
 
 // Event represents the "event" field in the payload
