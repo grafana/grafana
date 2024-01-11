@@ -611,24 +611,6 @@ func asAny(vs []int64) []any {
 	return r
 }
 
-// executeSQLUntilDoneOrCancelled repeatedly executes a SQL statement until it affects no rows, produces an error, or the context is cancelled.
-// It operates in a similar way to untilDoneOrCancelled.
-func (r *xormRepositoryImpl) executeSQLUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
-	return untilDoneOrCancelled(ctx, func() (int64, error) {
-		var affected int64
-		err := r.db.WithDbSession(ctx, func(session *db.Session) error {
-			res, err := session.Exec(sql)
-			if err != nil {
-				return err
-			}
-
-			affected, err = res.RowsAffected()
-			return err
-		})
-		return affected, err
-	})
-}
-
 // untilDoneOrCancelled repeatedly executes batched work until that work is either done (i.e., returns zero affected objects),
 // a batch produces an error, or the provided context is cancelled.
 // The work to be done is given as a callback that returns the number of affected objects for each batch, plus that batch's errors.
