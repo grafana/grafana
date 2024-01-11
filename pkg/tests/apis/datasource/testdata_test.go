@@ -108,7 +108,7 @@ func TestTestDatasource(t *testing.T) {
 	})
 
 	t.Run("Call subresources", func(t *testing.T) {
-		client := helper.Org1.Admin.Client.Resource(schema.GroupVersionResource{
+		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
 			Group:    "testdata.datasource.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "connections",
