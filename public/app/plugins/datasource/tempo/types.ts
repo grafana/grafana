@@ -55,7 +55,7 @@ export type TraceSearchMetadata = {
   rootTraceName: string;
   startTimeUnixNano?: string;
   durationMs?: number;
-  spanSet?: Spanset;
+  spanSet?: Spanset; // deprecated in Tempo, https://github.com/grafana/tempo/blob/3cc44fca03ba7d676dc77da6a18b8222546ede3c/docs/sources/tempo/api_docs/_index.md?plain=1#L619
   spanSets?: Spanset[];
 };
 

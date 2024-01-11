@@ -27,7 +27,7 @@ type Api struct {
 
 	accessControl accesscontrol.AccessControl
 	cfg           *setting.Cfg
-	features      *featuremgmt.FeatureManager
+	features      featuremgmt.FeatureToggles
 	log           log.Logger
 	routeRegister routing.RouteRegister
 }
@@ -36,7 +36,7 @@ func ProvideApi(
 	pd publicdashboards.Service,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	md publicdashboards.Middleware,
 	cfg *setting.Cfg,
 ) *Api {
@@ -297,7 +297,7 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 }
 
 // Copied from pkg/api/metrics.go
-func toJsonStreamingResponse(ctx context.Context, features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
+func toJsonStreamingResponse(ctx context.Context, features featuremgmt.FeatureToggles, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
 	if features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus

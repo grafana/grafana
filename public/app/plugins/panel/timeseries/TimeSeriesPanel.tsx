@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { PanelProps, DataFrameType } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlugin } from '@grafana/ui';
@@ -64,6 +64,7 @@ export const TimeSeriesPanel = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
 
   return (
     <TimeSeries
@@ -92,7 +93,7 @@ export const TimeSeriesPanel = ({
             <KeyboardPlugin config={uplotConfig} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <>
-                {config.featureToggles.newVizTooltips ? (
+                {showNewVizTooltips ? (
                   <TooltipPlugin2
                     config={uplotConfig}
                     hoverMode={
@@ -135,7 +136,7 @@ export const TimeSeriesPanel = ({
               <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
             )}
             {/*Enables annotations creation*/}
-            {!config.featureToggles.newVizTooltips ? (
+            {!showNewVizTooltips ? (
               enableAnnotationCreation ? (
                 <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={uplotConfig}>
                   {({ startAnnotating }) => {

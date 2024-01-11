@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import { DataQueryResponse, QueryResultMetaStat, DataFrame, FieldType } from '@grafana/data';
 
-import { getMockFrames } from './mocks';
+import { getMockFrames } from './__mocks__/frames';
 import {
   dataFrameHasLevelLabel,
   dataFrameHasLokiError,

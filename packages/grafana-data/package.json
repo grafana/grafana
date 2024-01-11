@@ -58,7 +58,7 @@
     "string-hash": "^1.1.3",
     "tinycolor2": "1.6.0",
     "tslib": "2.6.0",
-    "uplot": "1.6.27",
+    "uplot": "1.6.28",
     "xss": "^1.0.14"
   },
   "devDependencies": {
@@ -66,10 +66,10 @@
     "@rollup/plugin-commonjs": "25.0.2",
     "@rollup/plugin-json": "6.0.0",
     "@rollup/plugin-node-resolve": "15.2.3",
-    "@testing-library/dom": "9.3.3",
+    "@testing-library/dom": "9.3.4",
     "@testing-library/jest-dom": "6.1.4",
     "@testing-library/react": "14.0.0",
-    "@testing-library/user-event": "14.5.1",
+    "@testing-library/user-event": "14.5.2",
     "@types/dompurify": "^2",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.4",

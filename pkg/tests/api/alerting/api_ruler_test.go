@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1314,4 +1315,78 @@ func TestIntegrationRulePause(t *testing.T) {
 			require.Equal(t, tc.expectedIsPausedInDb, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
 		})
 	}
+}
+
+func TestIntegrationHysteresisRule(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting:        true,
+		EnableUnifiedAlerting:        true,
+		DisableAnonymous:             true,
+		AppModeProduction:            true,
+		NGAlertSchedulerBaseInterval: 1 * time.Second,
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagRecoveryThreshold},
+	})
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
+
+	// Create a user to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
+	folder := "hysteresis"
+	testDs := apiClient.CreateTestDatasource(t)
+	apiClient.CreateFolder(t, folder, folder)
+
+	bodyRaw, err := testData.ReadFile("test-data/hysteresis_rule.json")
+	require.NoError(t, err)
+
+	var postData apimodels.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(bodyRaw, &postData))
+	for _, rule := range postData.Rules {
+		for i := range rule.GrafanaManagedAlert.Data {
+			rule.GrafanaManagedAlert.Data[i].DatasourceUID = strings.ReplaceAll(rule.GrafanaManagedAlert.Data[i].DatasourceUID, "REPLACE_ME", testDs.Body.Datasource.UID)
+		}
+	}
+	changes, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &postData)
+	require.Equalf(t, http.StatusAccepted, status, body)
+	require.Len(t, changes.Created, 1)
+	ruleUid := changes.Created[0]
+
+	var frame data.Frame
+	require.Eventuallyf(t, func() bool {
+		frame, status, body = apiClient.GetRuleHistoryWithStatus(t, ruleUid)
+		require.Equalf(t, http.StatusOK, status, body)
+		return frame.Rows() > 1
+	}, 15*time.Second, 1*time.Second, "Alert state history expected to have more than one record but got %d. Body: %s", frame.Rows(), body)
+
+	f, _ := frame.FieldByName("next")
+
+	alertingIdx := 0
+	normalIdx := 1
+	if f.At(alertingIdx).(string) != "Alerting" {
+		alertingIdx = 1
+		normalIdx = 0
+	}
+
+	assert.Equalf(t, "Alerting", f.At(alertingIdx).(string), body)
+	assert.Equalf(t, "Normal", f.At(normalIdx).(string), body)
+
+	type HistoryData struct {
+		Values map[string]int64
+	}
+
+	f, _ = frame.FieldByName("data")
+	var d HistoryData
+	require.NoErrorf(t, json.Unmarshal([]byte(f.At(alertingIdx).(string)), &d), body)
+	assert.EqualValuesf(t, 5, d.Values["B"], body)
+	require.NoErrorf(t, json.Unmarshal([]byte(f.At(normalIdx).(string)), &d), body)
+	assert.EqualValuesf(t, 1, d.Values["B"], body)
 }
