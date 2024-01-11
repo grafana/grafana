@@ -98,7 +98,12 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
     ) => {
       let labelSelector = '{}';
       if (traceToProfilesOptions.customQuery && traceToProfilesOptions.query) {
-        labelSelector = traceToProfilesOptions.query;
+        const scopedVars = {
+          ...scopedVarsFromTrace(traceDuration, traceName, span.traceID),
+          ...scopedVarsFromSpan(span),
+          ...scopedVarsFromTags(span, traceToProfilesOptions),
+        };
+        labelSelector = getTemplateSrv().replace(traceToProfilesOptions.query, scopedVars);
       } else {
         const tags =
           traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
@@ -106,13 +111,6 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
             : defaultProfilingKeys;
         labelSelector = `{${getFormattedTags(span, tags)}}`;
       }
-
-      const scopedVars = {
-        ...scopedVarsFromTrace(traceDuration, traceName, span.traceID),
-        ...scopedVarsFromSpan(span),
-        ...scopedVarsFromTags(span, traceToProfilesOptions),
-      };
-      labelSelector = getTemplateSrv().replace(labelSelector, scopedVars);
 
       const request = {
         requestId: 'span-flamegraph-requestId',
