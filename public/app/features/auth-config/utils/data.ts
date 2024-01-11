@@ -40,7 +40,7 @@ export const emptySettings: SSOProviderDTO = {
   tlsSkipVerify: false,
   tokenUrl: '',
   type: '',
-  usePKCE: false,
+  usePkce: false,
   useRefreshToken: false,
 };
 
@@ -79,9 +79,14 @@ export function dtoToData(dto: SSOProviderDTO) {
 
   for (const field of arrayFields) {
     const value = dto[field];
-    if (value && isSelectableValue(value)) {
-      //@ts-expect-error
-      settings[field] = valuesToString(value);
+    if (value) {
+      if (isSelectableValue(value)) {
+        //@ts-expect-error
+        settings[field] = valuesToString(value);
+      } else if (isSelectableValue([value])) {
+        //@ts-expect-error
+        settings[field] = value.value;
+      }
     }
   }
   return settings;
@@ -89,6 +94,6 @@ export function dtoToData(dto: SSOProviderDTO) {
 
 export function getArrayFields(obj: Record<string, FieldData>): Array<keyof SSOProviderDTO> {
   return Object.entries(obj)
-    .filter(([_, value]) => value.type === 'select' && value.multi === true)
+    .filter(([_, value]) => value.type === 'select')
     .map(([key]) => key as keyof SSOProviderDTO);
 }
