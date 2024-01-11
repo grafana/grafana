@@ -7943,12 +7943,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/angular-route@npm:1.7.3":
-  version: 1.7.3
-  resolution: "@types/angular-route@npm:1.7.3"
+"@types/angular-route@npm:1.7.6":
+  version: 1.7.6
+  resolution: "@types/angular-route@npm:1.7.6"
   dependencies:
     "@types/angular": "npm:*"
-  checksum: 42dfffbaa41a721ef186ba76c1e248ffb5d5d2511ac247fae563a730a90b1d0831700f1fb047a425179c0c741a09bc533f4255eabbcc26fde784f9b61617c39d
+  checksum: a7b8aede9584b948edefdbedb831aab60ae5b9dba9174f6dc5cbfe4bb75c761ed1fe339e450f4470f9cf6eb63fcd84dd51605da9d7442cf33a4c160c3b9fe5b6
   languageName: node
   linkType: hard
 
@@ -17107,7 +17107,7 @@ __metadata:
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/angular": "npm:1.8.9"
-    "@types/angular-route": "npm:1.7.3"
+    "@types/angular-route": "npm:1.7.6"
     "@types/chance": "npm:^1.1.3"
     "@types/common-tags": "npm:^1.8.0"
     "@types/d3": "npm:7.4.3"
