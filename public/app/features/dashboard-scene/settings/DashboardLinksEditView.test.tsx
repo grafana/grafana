@@ -11,7 +11,6 @@ import {
   SceneTimePicker,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { newLink } from 'app/features/dashboard/components/LinksSettings';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
@@ -19,6 +18,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardLinksEditView } from './DashboardLinksEditView';
+import { NEW_LINK } from './links/utils';
 
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
@@ -66,42 +66,42 @@ describe('DashboardLinksEditView', () => {
     it('should update dashboard state when adding a link', () => {
       settings.onNewLink();
 
-      expect(dashboard.state.links[0]).toEqual(newLink);
+      expect(dashboard.state.links[0]).toEqual(NEW_LINK);
     });
 
     it('should update dashboard state when deleting a link', () => {
-      dashboard.setState({ links: [newLink] });
+      dashboard.setState({ links: [NEW_LINK] });
       settings.onDelete(0);
 
       expect(dashboard.state.links).toEqual([]);
     });
 
     it('should update dashboard state when duplicating a link', () => {
-      dashboard.setState({ links: [newLink] });
-      settings.onDuplicate(newLink);
+      dashboard.setState({ links: [NEW_LINK] });
+      settings.onDuplicate(NEW_LINK);
 
-      expect(dashboard.state.links).toEqual([newLink, newLink]);
+      expect(dashboard.state.links).toEqual([NEW_LINK, NEW_LINK]);
     });
 
     it('should update dashboard state when reordering a link', () => {
       dashboard.setState({
         links: [
-          { ...newLink, title: 'link-1' },
-          { ...newLink, title: 'link-2' },
+          { ...NEW_LINK, title: 'link-1' },
+          { ...NEW_LINK, title: 'link-2' },
         ],
       });
       settings.onOrderChange(0, 1);
 
       expect(dashboard.state.links).toEqual([
-        { ...newLink, title: 'link-2' },
-        { ...newLink, title: 'link-1' },
+        { ...NEW_LINK, title: 'link-2' },
+        { ...NEW_LINK, title: 'link-1' },
       ]);
     });
 
     it('should update dashboard state when editing a link', () => {
-      dashboard.setState({ links: [{ ...newLink, title: 'old title' }] });
+      dashboard.setState({ links: [{ ...NEW_LINK, title: 'old title' }] });
       settings.setState({ editIndex: 0 });
-      settings.onUpdateLink({ ...newLink, title: 'new title' });
+      settings.onUpdateLink({ ...NEW_LINK, title: 'new title' });
 
       expect(dashboard.state.links[0].title).toEqual('new title');
     });
@@ -118,23 +118,23 @@ describe('DashboardLinksEditView', () => {
     });
 
     it('should set editIndex when editing a link', () => {
-      dashboard.setState({ links: [{ ...newLink, title: 'old title' }] });
+      dashboard.setState({ links: [{ ...NEW_LINK, title: 'old title' }] });
       settings.onEdit(0);
 
       expect(settings.state.editIndex).toEqual(0);
     });
 
     it('should set editIndex when editing a link that does not exist', () => {
-      dashboard.setState({ links: [{ ...newLink, title: 'old title' }] });
+      dashboard.setState({ links: [{ ...NEW_LINK, title: 'old title' }] });
       settings.onEdit(1);
 
       expect(settings.state.editIndex).toBe(1);
     });
 
     it('should update dashboard state when editing a link', () => {
-      dashboard.setState({ links: [{ ...newLink, title: 'old title' }] });
+      dashboard.setState({ links: [{ ...NEW_LINK, title: 'old title' }] });
       settings.setState({ editIndex: 0 });
-      settings.onUpdateLink({ ...newLink, title: 'new title' });
+      settings.onUpdateLink({ ...NEW_LINK, title: 'new title' });
 
       expect(dashboard.state.links[0].title).toEqual('new title');
     });
@@ -178,8 +178,8 @@ describe('DashboardLinksEditView', () => {
     it('should render the list of link when there are links', () => {
       dashboard.setState({
         links: [
-          { ...newLink, title: 'link-1' },
-          { ...newLink, title: 'link-2' },
+          { ...NEW_LINK, title: 'link-1' },
+          { ...NEW_LINK, title: 'link-2' },
         ],
       });
       const { getByText } = render(<settings.Component model={settings} />);
@@ -192,8 +192,8 @@ describe('DashboardLinksEditView', () => {
     it('should render the list of link when the editing link does not exist', () => {
       dashboard.setState({
         links: [
-          { ...newLink, title: 'link-1' },
-          { ...newLink, title: 'link-2' },
+          { ...NEW_LINK, title: 'link-1' },
+          { ...NEW_LINK, title: 'link-2' },
         ],
       });
       settings.setState({ editIndex: 2 });
@@ -207,8 +207,8 @@ describe('DashboardLinksEditView', () => {
     it('should render the link form when the editing link does exist', () => {
       dashboard.setState({
         links: [
-          { ...newLink, title: 'link-1' },
-          { ...newLink, title: 'link-2' },
+          { ...NEW_LINK, title: 'link-1' },
+          { ...NEW_LINK, title: 'link-2' },
         ],
       });
       settings.setState({ editIndex: 1 });

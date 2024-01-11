@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 
 import { DashboardLink } from '@grafana/schema';
+import { DashboardLinkForm } from 'app/features/dashboard-scene/settings/links/DashboardLinkForm';
+import { NEW_LINK } from 'app/features/dashboard-scene/settings/links/utils';
 
 import { DashboardModel } from '../../state/DashboardModel';
-
-import { DashboardLinkForm } from './DashboardLinkForm';
-import { newLink } from './utils';
 
 type LinkSettingsEditProps = {
   editLinkIdx: number;
@@ -14,7 +13,7 @@ type LinkSettingsEditProps = {
 };
 
 export const LinkSettingsEdit = ({ editLinkIdx, dashboard, onGoBack }: LinkSettingsEditProps) => {
-  const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : newLink);
+  const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : NEW_LINK);
 
   const onUpdate = (link: DashboardLink) => {
     const links = [...dashboard.links];

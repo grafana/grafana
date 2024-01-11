@@ -4,14 +4,14 @@ import { SelectableValue } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
 import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button } from '@grafana/ui';
 
-import { linkIconMap, newLink } from './utils';
+import { LINK_ICON_MAP, NEW_LINK } from './utils';
 
 const linkTypeOptions = [
   { value: 'dashboards', label: 'Dashboards' },
   { value: 'link', label: 'Link' },
 ];
 
-const linkIconOptions = Object.keys(linkIconMap).map((key) => ({ label: key, value: key }));
+const linkIconOptions = Object.keys(LINK_ICON_MAP).map((key) => ({ label: key, value: key }));
 
 interface DashboardLinkFormProps {
   link: DashboardLink;
@@ -50,7 +50,7 @@ export function DashboardLinkForm({ link, onUpdate, onGoBack }: DashboardLinkFor
     });
   };
 
-  const isNew = link.title === newLink.title;
+  const isNew = link.title === NEW_LINK.title;
 
   return (
     <div style={{ maxWidth: '600px' }}>

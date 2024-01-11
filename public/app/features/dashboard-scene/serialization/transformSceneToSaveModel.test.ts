@@ -25,13 +25,13 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
-import { newLink } from 'app/features/dashboard/components/LinksSettings';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -186,7 +186,7 @@ describe('transformSceneToSaveModel', () => {
           time_options: ['5m', '15m', '30m'],
           hidden: true,
         },
-        links: [{ ...newLink, title: 'Link 1' }],
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
       };
       const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);

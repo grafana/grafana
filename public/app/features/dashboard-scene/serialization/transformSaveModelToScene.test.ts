@@ -34,7 +34,6 @@ import {
   RowPanel,
   VariableType,
 } from '@grafana/schema';
-import { newLink } from 'app/features/dashboard/components/LinksSettings';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -46,6 +45,7 @@ import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -72,7 +72,7 @@ describe('transformSaveModelToScene', () => {
           ...defaultTimePickerConfig,
           hidden: true,
         },
-        links: [{ ...newLink, title: 'Link 1' }],
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
         templating: {
           list: [
             {

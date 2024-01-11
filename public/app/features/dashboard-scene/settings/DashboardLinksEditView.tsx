@@ -4,11 +4,12 @@ import { NavModel, NavModelItem, PageLayoutType, arrayUtils } from '@grafana/dat
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Page } from 'app/core/components/Page/Page';
-import { DashboardLinkEdit, newLink } from 'app/features/dashboard/components/LinksSettings';
-import { DashboardLinkList } from 'app/features/dashboard/components/LinksSettings/DashboardLinkList';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { DashboardLinkForm } from '../settings/links/DashboardLinkForm';
+import { DashboardLinkList } from '../settings/links/DashboardLinkList';
+import { NEW_LINK } from '../settings/links/utils';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
@@ -38,7 +39,7 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
   }
 
   public onNewLink = () => {
-    this.links = [...this.links, newLink];
+    this.links = [...this.links, NEW_LINK];
     this.setState({ editIndex: this.links.length - 1 });
   };
 
@@ -133,7 +134,7 @@ function EditLinkView({ pageNav, link, navModel, dashboard, onChange, onGoBack }
   return (
     <Page navModel={navModel} pageNav={editLinkPageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <DashboardLinkEdit link={link!} onUpdate={onChange} onGoBack={onGoBack} />
+      <DashboardLinkForm link={link!} onUpdate={onChange} onGoBack={onGoBack} />
       {overlay && <overlay.Component model={overlay} />}
     </Page>
   );

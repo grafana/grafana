@@ -5,7 +5,7 @@ import { DashboardLink } from '@grafana/schema';
 import { DeleteButton, HorizontalGroup, Icon, IconButton, TagList, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
-import { ListNewButton } from '../DashboardSettings/ListNewButton';
+import { ListNewButton } from '../../../dashboard/components/DashboardSettings/ListNewButton';
 
 interface DashboardLinkListProps {
   links: DashboardLink[];
