@@ -56,7 +56,7 @@ func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Resp
 func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
 	var eventPayload EventPayload
 	if err := web.Bind(c.Req, &eventPayload); err != nil {
-		return response.Error(400, "error parsing body", err)
+		return response.Error(http.StatusBadRequest, "error parsing body", err)
 	}
 
 	switch eventPayload.Type {
@@ -65,15 +65,13 @@ func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response
 			Challenge: eventPayload.Challenge,
 		})
 	case "event_callback":
-		if eventPayload.Event.Type != "link_shared" {
-			break
+		if eventPayload.Event.Type == "link_shared" && eventPayload.Event.Source == "conversations_history" {
+			defer hs.handleLinkSharedEvent(eventPayload)
+			return response.Empty(http.StatusOK)
 		}
-
-		defer hs.handleLinkSharedEvent(eventPayload)
-		return response.Empty(http.StatusOK)
 	}
 
-	return response.Error(400, "not handling this event type", fmt.Errorf("not handling this event type"))
+	return response.Error(http.StatusBadRequest, "not handling this event type", fmt.Errorf("not handling this event type"))
 }
 
 func (hs *HTTPServer) handleLinkSharedEvent(event EventPayload) {
@@ -224,30 +222,30 @@ func extractURLInfo(dashboardURL string) (string, string) {
 	return res[1], res[2]
 }
 
-func (hs *HTTPServer) RenderAndPostToSlack(c *contextmodel.ReqContext) response.Response {
-	// TODO: hardcoded for now, the input of this method should be the event payload
-	//source := "conversations_history"
-	//unfurlID := "12345"
-	rawURL := "http://localhost:3000/render/d/RvNCUVm4z/dashboard-with-expressions?orgId=1&from=1704891104021&to=1704912704021&width=1000&height=500&tz=America%2FBuenos_Aires"
-	renderPath, _ := extractURLInfo(rawURL)
-	if renderPath == "" {
-		hs.log.Error("fail to extract render path from link")
-		return response.Error(http.StatusInternalServerError, "fail to extract render path from link", fmt.Errorf("fail to extract render path from link"))
-	}
-
-	imagePath, err := hs.renderDashboard(c.Req.Context(), renderPath)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
-	}
-
-	// post to slack api
-	err = hs.sendUnfurlEvent(c.Req.Context(), EventPayload{}, imagePath, "Dashboard with expressions")
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Fail to send unfurl event to Slack", err)
-	}
-
-	return response.Empty(http.StatusOK)
-}
+//func (hs *HTTPServer) RenderAndPostToSlack(c *contextmodel.ReqContext) response.Response {
+//	// TODO: hardcoded for now, the input of this method should be the event payload
+//	//source := "conversations_history"
+//	//unfurlID := "12345"
+//	rawURL := "http://localhost:3000/render/d/RvNCUVm4z/dashboard-with-expressions?orgId=1&from=1704891104021&to=1704912704021&width=1000&height=500&tz=America%2FBuenos_Aires"
+//	renderPath, _ := extractURLInfo(rawURL)
+//	if renderPath == "" {
+//		hs.log.Error("fail to extract render path from link")
+//		return response.Error(http.StatusInternalServerError, "fail to extract render path from link", fmt.Errorf("fail to extract render path from link"))
+//	}
+//
+//	imagePath, err := hs.renderDashboard(c.Req.Context(), renderPath)
+//	if err != nil {
+//		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
+//	}
+//
+//	// post to slack api
+//	err = hs.sendUnfurlEvent(c.Req.Context(), EventPayload{}, imagePath, "Dashboard with expressions")
+//	if err != nil {
+//		return response.Error(http.StatusInternalServerError, "Fail to send unfurl event to Slack", err)
+//	}
+//
+//	return response.Empty(http.StatusOK)
+//}
 
 func (hs *HTTPServer) renderDashboard(ctx context.Context, renderPath string) (string, error) {
 	result, err := hs.RenderService.Render(ctx, rendering.Opts{
