@@ -21,7 +21,6 @@
     "@opentelemetry/semantic-conventions": "1.17.1",
     "@reduxjs/toolkit": "1.9.5",
     "buffer": "6.0.3",
-    "css-loader": "6.8.1",
     "events": "3.3.0",
     "i18next": "^22.0.0",
     "lodash": "4.17.21",
@@ -37,7 +36,6 @@
     "semver": "7.5.4",
     "stream-browserify": "3.0.0",
     "string_decoder": "1.2.0",
-    "style-loader": "3.3.3",
     "tslib": "2.6.0",
     "uuid": "9.0.0"
   },
@@ -59,11 +57,9 @@
     "@types/uuid": "9.0.2",
     "copy-webpack-plugin": "11.0.0",
     "eslint-webpack-plugin": "4.0.1",
-    "fork-ts-checker-webpack-plugin": "8.0.0",
     "glob": "10.3.3",
     "react-select-event": "5.5.1",
     "replace-in-file-webpack-plugin": "1.0.6",
-    "swc-loader": "0.2.3",
     "ts-node": "10.9.1",
     "typescript": "5.2.2",
     "webpack": "5.89.0"
