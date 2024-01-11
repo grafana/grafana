@@ -108,7 +108,7 @@
     "@types/debounce-promise": "3.1.9",
     "@types/diff": "^5",
     "@types/eslint": "8.44.0",
-    "@types/file-saver": "2.0.5",
+    "@types/file-saver": "2.0.7",
     "@types/glob": "^8.0.0",
     "@types/google.analytics": "^0.0.42",
     "@types/gtag.js": "^0.0.12",
