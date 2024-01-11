@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -40,5 +41,14 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, identity *authn.Iden
 		identity.Permissions = make(map[int64]map[string][]string)
 	}
 	identity.Permissions[identity.OrgID] = accesscontrol.GroupScopesByAction(permissions)
+	return nil
+}
+
+func (s *RBACSync) SyncCloudRoles(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	// we only want to run this hook during login and if the module used is grafana com
+	if r.GetMeta(authn.MetaKeyAuthModule) != login.GrafanaComAuthModule {
+		return nil
+	}
+
 	return nil
 }
