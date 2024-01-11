@@ -3833,7 +3833,7 @@ steps:
 trigger:
   event:
   - promote
-  target: rgm
+  target: upload-packages
 type: docker
 volumes:
 - host:
@@ -4731,6 +4731,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e29f9b368010e0e50c65232dd056394f55f61953bb0b01bd7f85aac05fad838c
+hmac: 5a32e13ad67622913b4ce5c63931d2fc6ba0c118b4f32452724c441aaabf53c5
 
 ...

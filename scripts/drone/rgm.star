@@ -344,7 +344,7 @@ def rgm_promotion_pipeline():
     """
     promotion_trigger = {
         "event": ["promote"],
-        "target": "rgm",
+        "target": "upload-packages",
     }
 
     env = {
