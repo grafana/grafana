@@ -587,6 +587,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           timeZone={timeZone}
           tagsToggle={detailTagsToggle}
           traceStartTime={trace.startTime}
+          traceDuration={trace.duration}
+          traceName={trace.traceName}
           hoverIndentGuideIds={hoverIndentGuideIds}
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}

@@ -90,6 +90,8 @@ export type SpanDetailRowProps = {
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
+  traceDuration: number;
+  traceName: string;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -131,6 +133,8 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       timeZone,
       tagsToggle,
       traceStartTime,
+      traceDuration,
+      traceName,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -181,6 +185,8 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               timeZone={timeZone}
               tagsToggle={tagsToggle}
               traceStartTime={traceStartTime}
+              traceDuration={traceDuration}
+              traceName={traceName}
               createSpanLink={createSpanLink}
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
