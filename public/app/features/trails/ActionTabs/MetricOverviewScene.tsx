@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   QueryVariable,
   SceneComponentProps,
@@ -10,31 +10,33 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneVariableSet,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2, TextLink } from '@grafana/ui';
 
 import PrometheusLanguageProvider from '../../../plugins/datasource/prometheus/language_provider';
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
-import { MetricScene } from '../MetricScene';
 import { trailDS, VAR_DATASOURCE_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
 import { getMetricSceneFor } from '../utils';
 
 import { getLabelOptions } from './utils';
 
 export interface MetricOverviewSceneState extends SceneObjectState {
-  labels: Array<SelectableValue<string>>;
   metadata?: PromMetricsMetadataItem;
-  languageProvider?: PrometheusLanguageProvider;
   loading?: boolean;
 }
 
 export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneState> {
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [VAR_DATASOURCE_EXPR],
+    onReferencedVariableValueChanged: this.onReferencedVariableValueChanged.bind(this)
+  });
+
   constructor(state: Partial<MetricOverviewSceneState>) {
     super({
       $variables: state.$variables ?? getVariableSet(),
-      labels: state.labels ?? [],
       ...state,
     });
 
@@ -51,13 +53,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   }
 
   private _onActivate() {
-    this.updateLanguageProvider();
-
-    this.subscribeToState((newState, oldState) => {
-      if (newState.languageProvider !== oldState.languageProvider) {
-        this.updateMetadata();
-      }
-    });
+    this.updateMetadata();
 
     const metricScene = getMetricSceneFor(this);
     metricScene.subscribeToState((newState, oldState) => {
@@ -65,49 +61,40 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
         this.updateMetadata();
       }
     });
-
-    const variable = this.getVariable();
-    variable.subscribeToState((newState, oldState) => {
-      if (newState.options !== oldState.options || newState.loading !== oldState.loading) {
-        const labels = getLabelOptions(this, this.getVariable()).filter((l) => l.value !== ALL_VARIABLE_VALUE);
-        this.setState({ labels, loading: variable.state.loading });
-      }
-    });
-
-    this.setState({ loading: variable.state.loading });
   }
 
-  private async updateLanguageProvider() {
+  private onReferencedVariableValueChanged() {
+    this.updateMetadata();
+  }
+
+  private async updateMetadata() {
     const ds = await getDatasourceSrv().get(VAR_DATASOURCE_EXPR, { __sceneObject: { value: this } });
 
     const languageProvider: PrometheusLanguageProvider = ds.languageProvider;
-    this.setState({ languageProvider });
-  }
 
-  private updateMetadata() {
+    if (!languageProvider) {
+      return;
+    }
+
     const metricScene = getMetricSceneFor(this);
     const metric = metricScene.state.metric;
-    if (this.state.languageProvider?.metricsMetadata) {
-      this.setState({ metadata: this.state.languageProvider.metricsMetadata[metric] });
-    } else {
-      this.state.languageProvider?.start().then(() => {
-        this.setState({ metadata: this.state.languageProvider?.metricsMetadata?.[metric] });
-      });
+
+    if (languageProvider.metricsMetadata) {
+      this.setState({ metadata: languageProvider.metricsMetadata[metric] });
+      return;
     }
+
+    await languageProvider.start();
+
+    this.setState({ metadata: languageProvider.metricsMetadata?.[metric] });
   }
 
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
-    const { loading, metadata, labels } = model.useState();
+    const { metadata } = model.useState();
     const styles = useStyles2(getStyles);
-    const metricScene = sceneGraph.getAncestor(model, MetricScene);
-    const labelVariable = model.getVariable();
-
-    const labelOnClick = (label?: string) => {
-      if (label) {
-        metricScene.setActionView('breakdown');
-        labelVariable?.changeValueTo(label);
-      }
-    };
+    const variable = model.getVariable();
+    const { loading } = variable.useState();
+    const labelOptions = getLabelOptions(model, variable).filter((l) => l.value !== ALL_VARIABLE_VALUE);
 
     return (
       <Stack gap={6}>
@@ -129,10 +116,10 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             </Stack>
             <Stack direction="column" gap={0.5}>
               <div className={styles.label}>Labels</div>
-              {labels.map((l) => (
-                <button key={l.label} className={styles.labelButton} onClick={() => labelOnClick(l.value)}>
-                  {l.label}
-                </button>
+              {labelOptions.map((l) => (
+                <TextLink key={l.label} href={sceneGraph.interpolate(model, `/data-trails/trail$\{__url.params:exclude:actionView}&actionView=breakdown&var-groupby=${encodeURIComponent(l.value!)}`)} title="View breakdown">
+                  {l.label!}
+                </TextLink>
               ))}
             </Stack>
           </>
