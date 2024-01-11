@@ -97,7 +97,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
               <Button
                 className={cx(styles.backForwardButtons, styles.previous)}
                 onClick={this.onPreviousClick}
-                aria-label="To advanced tutorials"
+                aria-label="To basic tutorials"
                 icon="angle-left"
                 variant="secondary"
               />
@@ -109,7 +109,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
               <Button
                 className={cx(styles.backForwardButtons, styles.forward)}
                 onClick={this.onForwardClick}
-                aria-label="To basic tutorials"
+                aria-label="To advanced tutorials"
                 icon="angle-right"
                 variant="secondary"
               />
