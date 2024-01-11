@@ -826,11 +826,11 @@ var (
 		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
-			Stage:           FeatureStagePrivatePreview,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
-			Enabled:         true,
+			Expression:      "true", // enabled by default
 			Created:         time.Date(2023, time.August, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
