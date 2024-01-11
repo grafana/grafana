@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { ConfigSection, ConfigDescriptionLink } from '@grafana/experimental';
+import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
-import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
-import { DataSourcePicker } from '../DataSourcePicker';
 import { IntervalInput } from '../IntervalInput/IntervalInput';
 
 import { TagMappingInput } from './TagMappingInput';
@@ -108,8 +106,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     [onOptionsChange, options, traceToLogs]
   );
 
-  const [dataSourceSrv, _] = useState(getDataSourceSrv());
-
   return (
     <div className={css({ width: '100%' })}>
       <InlineFieldRow>
@@ -129,7 +125,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
                 datasourceUid: ds.uid,
               })
             }
-            dataSourceSrv={dataSourceSrv || getDataSourceSrv()}
           />
         </InlineField>
       </InlineFieldRow>
