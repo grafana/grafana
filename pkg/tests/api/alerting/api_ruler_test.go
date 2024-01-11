@@ -636,7 +636,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
 				FolderUID:         []string{"folder2"},
 			})
-			assert.Equal(t, http.StatusUnauthorized, status)
+			assert.Equal(t, http.StatusForbidden, status)
 		})
 
 		t.Run("Export from one group", func(t *testing.T) {
