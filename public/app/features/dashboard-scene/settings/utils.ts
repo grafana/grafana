@@ -62,7 +62,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
         active: currentEditView === 'versions',
       },
       {
-        text: t('dashboard-settings.json-model.title', 'JSON Model'),
+        text: t('dashboard-settings.json-editor.title', 'JSON Model'),
         url: locationUtil.getUrlForPartial(location, { editview: 'json-model', editIndex: null }),
         active: currentEditView === 'json-model',
       },
