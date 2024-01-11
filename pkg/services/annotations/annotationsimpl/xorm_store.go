@@ -583,11 +583,11 @@ func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids 
 		return 0, nil
 	}
 
-	deleteQuery := `DELETE FROM annotation WHERE id IN (%s)`
-	sql := fmt.Sprintf(deleteQuery, commaSeparated(ids))
+	placeholders := "?" + strings.Repeat(",?", len(ids)-1)
+	sql := fmt.Sprintf(`DELETE FROM annotation WHERE id IN (%s)`, placeholders)
 	var affected int64
 	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
-		res, err := session.Exec(sql)
+		res, err := session.Exec(append([]any{sql}, asAny(ids)...)...)
 		if err != nil {
 			return err
 		}
@@ -597,15 +597,12 @@ func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids 
 	return affected, err
 }
 
-func commaSeparated(vs []int64) string {
-	if len(vs) == 0 {
-		return ""
+func asAny(vs []int64) []any {
+	r := make([]any, len(vs))
+	for i, v := range vs {
+		r[i] = v
 	}
-	res := fmt.Sprint(vs[0])
-	for _, v := range vs[1:] {
-		res = fmt.Sprintf("%s, %d", res, v)
-	}
-	return res
+	return r
 }
 
 // executeSQLUntilDoneOrCancelled repeatedly executes a SQL statement until it affects no rows, produces an error, or the context is cancelled.
