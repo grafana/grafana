@@ -14,8 +14,7 @@ describe('VersionsEditView', () => {
     let versionsView: VersionsEditView;
 
     beforeEach(async () => {
-      // @ts-ignore
-      historySrv.getHistoryList.mockResolvedValue(getVersions());
+      jest.mocked(historySrv.getHistoryList).mockResolvedValue(getVersions());
 
       const result = await buildTestScene();
       dashboard = result.dashboard;

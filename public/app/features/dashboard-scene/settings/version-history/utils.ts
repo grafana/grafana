@@ -3,6 +3,8 @@ import { compare, Operation } from 'fast-json-patch';
 import jsonMap from 'json-source-map';
 import { flow, get, isArray, isEmpty, last, sortBy, tail, toNumber, isNaN } from 'lodash';
 
+import { Dashboard } from '@grafana/schema';
+
 export type Diff = {
   op: 'add' | 'replace' | 'remove' | 'copy' | 'test' | '_get' | 'move';
   value: unknown;
@@ -15,7 +17,9 @@ export type Diffs = {
   [key: string]: Diff[];
 };
 
-export const jsonDiff = (lhs: any, rhs: any): Diffs => {
+export type JSONValue = string | Dashboard;
+
+export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
   const diffs = compare(lhs, rhs);
   const lhsMap = jsonMap.stringify(lhs, null, 2);
   const rhsMap = jsonMap.stringify(rhs, null, 2);
