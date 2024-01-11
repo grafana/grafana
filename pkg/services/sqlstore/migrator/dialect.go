@@ -86,11 +86,11 @@ type Dialect interface {
 	UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error)
 	// Insert accepts a table name and a map of column names to insert.
 	// The insert is executed as part of the provided session.
-	Insert(ctx context.Context, tableName string, row map[string]any, tx *session.SessionTx) error
+	Insert(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any) error
 	// Update accepts a table name, a map of column names to values to update, and a map of
 	// column names to values to use in the where clause.
 	// The update is executed as part of the provided session.
-	Update(ctx context.Context, tableName string, row map[string]any, where map[string]any, tx *session.SessionTx) error
+	Update(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any, where map[string]any) error
 }
 
 type LockCfg struct {
@@ -431,7 +431,7 @@ func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where ma
 	return fmt.Sprintf("UPDATE %s SET %s WHERE %s", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Join(whereCols, " AND ")), vals, nil
 }
 
-func (b *BaseDialect) Insert(ctx context.Context, tableName string, row map[string]any, tx *session.SessionTx) error {
+func (b *BaseDialect) Insert(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any) error {
 	query, args, err := b.InsertQuery(tableName, row)
 	if err != nil {
 		return err
@@ -441,7 +441,7 @@ func (b *BaseDialect) Insert(ctx context.Context, tableName string, row map[stri
 	return err
 }
 
-func (b *BaseDialect) Update(ctx context.Context, tableName string, row map[string]any, where map[string]any, tx *session.SessionTx) error {
+func (b *BaseDialect) Update(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any, where map[string]any) error {
 	query, args, err := b.UpdateQuery(tableName, row, where)
 	if err != nil {
 		return err

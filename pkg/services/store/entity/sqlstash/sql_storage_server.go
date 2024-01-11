@@ -441,13 +441,13 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		// 1. Add row to the `entity_history` values
-		if err := s.dialect.Insert(ctx, "entity_history", values, tx); err != nil {
+		if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
 			s.log.Error("error inserting entity history", "msg", err.Error())
 			return err
 		}
 
 		// 2. Add row to the main `entity` table
-		if err := s.dialect.Insert(ctx, "entity", values, tx); err != nil {
+		if err := s.dialect.Insert(ctx, tx, "entity", values); err != nil {
 			s.log.Error("error inserting entity", "msg", err.Error())
 			return err
 		}
@@ -646,7 +646,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		// 1. Add the `entity_history` values
-		if err := s.dialect.Insert(ctx, "entity_history", values, tx); err != nil {
+		if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
 			s.log.Error("error inserting entity history", "msg", err.Error())
 			return err
 		}
@@ -665,12 +665,12 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		err = s.dialect.Update(
 			ctx,
+			tx,
 			"entity",
 			values,
 			map[string]any{
 				"guid": current.Guid,
 			},
-			tx,
 		)
 		if err != nil {
 			s.log.Error("error updating entity", "msg", err.Error())
