@@ -1,0 +1,55 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/traces",
+  "private": true,
+  "description": "Library to manage traces in Grafana.",
+  "keywords": [
+    "typescript"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-traces"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
+  },
+  "dependencies": {
+    "@emotion/css": "11.11.2",
+    "@grafana/data": "workspace:*",
+    "@grafana/e2e-selectors": "workspace:*",
+    "@grafana/experimental": "1.7.4",
+    "@grafana/runtime": "workspace:*",
+    "@grafana/schema": "workspace:*",
+    "@grafana/ui": "workspace:*",
+    "react-use": "17.4.0",
+    "rxjs": "7.8.1",
+    "tslib": "2.6.0"
+  },
+  "devDependencies": {
+    "@grafana/tsconfig": "^1.2.0-rc1",
+    "@types/react": "18.2.46",
+    "react": "18.2.0",
+    "typescript": "5.2.2"
+  },
+  "peerDependencies": {
+    "react": "^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0"
+  }
+}

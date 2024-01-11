@@ -3328,6 +3328,30 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/traces@workspace:packages/grafana-traces":
+  version: 0.0.0-use.local
+  resolution: "@grafana/traces@workspace:packages/grafana-traces"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
+    "@grafana/experimental": "npm:1.7.4"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
+    "@grafana/tsconfig": "npm:^1.2.0-rc1"
+    "@grafana/ui": "workspace:*"
+    "@types/react": "npm:18.2.46"
+    react: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    tslib: "npm:2.6.0"
+    typescript: "npm:5.2.2"
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
+  languageName: unknown
+  linkType: soft
+
 "@grafana/tsconfig@npm:^1.2.0-rc1":
   version: 1.2.0-rc1
   resolution: "@grafana/tsconfig@npm:1.2.0-rc1"
@@ -9209,6 +9233,17 @@ __metadata:
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
   checksum: 7a752e6c5e76139f258bc14827d2c574bb76d6e7eb1b240f24f79b269153cb88668c34ba7078d3de99ec1973b7022e1f788e71117bd52a287f382d24bb80be40
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:18.2.46":
+  version: 18.2.46
+  resolution: "@types/react@npm:18.2.46"
+  dependencies:
+    "@types/prop-types": "npm:*"
+    "@types/scheduler": "npm:*"
+    csstype: "npm:^3.0.2"
+  checksum: 10fb28a5b8504106512ce3b154c45d1ac045c31633786773a29f003b3079b434060368bb56f95ef6c39510835ceec4fb8fdc271d6ca2b9cdd979379cf53f126b
   languageName: node
   linkType: hard
 
