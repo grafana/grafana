@@ -39,15 +39,3 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 
 Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets
 -->
-
-## Dashboards and visualizations
-
-### Plot enum values in your time series visualizations
-
-<!-- Nathan Marrs -->
-
-_Generally available in all editions of Grafana_
-
-You can now plot enum values in your time series visualizations. This feature is useful when you want to visualize the state of a system, such as the status of a service or the health of a device. For example, you can use this feature to visualize the status of a service as `OK`, `WARNING`, or `ERROR`. To display enum values you can [use the convert field transform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/#convert-field-type).
-
-<!-- TODO: Image from gdev dashboard / link to gdev dashboard in play  -->
