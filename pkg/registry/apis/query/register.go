@@ -43,8 +43,11 @@ func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.ExpressionInfo{},
-		&v0alpha1.ExpressionInfoList{},
+		&v0alpha1.DataSource{},
+		&v0alpha1.DataSourceList{},
+		&v0alpha1.DataSourcePlugin{},
+		&v0alpha1.DataSourcePluginList{},
+		&v0alpha1.QueryResults{},
 	)
 }
 
@@ -62,9 +65,13 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	gv := v0alpha1.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
 
-	expr := newExpressionStorage(scheme)
+	ds := newDataSourceStorage()
+	plugins := newPluginsStorage()
+
 	storage := map[string]rest.Storage{}
-	storage[expr.resourceInfo.StoragePath()] = expr
+	storage[ds.resourceInfo.StoragePath()] = ds
+	storage[plugins.resourceInfo.StoragePath()] = plugins
+
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil
 }

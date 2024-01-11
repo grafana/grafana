@@ -13,11 +13,16 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-// Mainly here so there is a resource (otherwise k8s is not happy)
-var ExpressionResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"expressions", "expression", "ExpressionInfo",
-	func() runtime.Object { return &ExpressionInfo{} },
-	func() runtime.Object { return &ExpressionInfoList{} },
+var DataSourceResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"datasources", "datasource", "DataSource",
+	func() runtime.Object { return &DataSource{} },
+	func() runtime.Object { return &DataSourceList{} },
+)
+
+var DataSourcePluginResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+	"plugins", "plugin", "DataSourcePlugin",
+	func() runtime.Object { return &DataSourcePlugin{} },
+	func() runtime.Object { return &DataSourcePluginList{} },
 )
 
 var (

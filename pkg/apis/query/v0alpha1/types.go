@@ -4,23 +4,72 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// The data source resource is a reflection of the individual datasource instances
+// that are exposed in the groups: {datasource}.datasource.grafana.app
+// The status is updated periodically.
+//
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ExpressionInfo struct {
+type DataSource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The display name
 	Title string `json:"title"`
 
-	// Optional description for the data source (does not exist yet)
-	Description string `json:"description,omitempty"`
+	// The plugin type ID
+	PluginID string `json:"string"`
+
+	// Health check (run periodically after requests?)
+	Health *HealthCheck `json:"health,omitempty"`
 }
 
+type HealthCheck struct {
+	// The display name
+	Status string `json:"status"`
+
+	// Timestamp when the health was last checked
+	Checked int64 `json:"checked"`
+}
+
+// List of datasource and their status
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ExpressionInfoList struct {
+type DataSourceList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ExpressionInfo `json:"items,omitempty"`
+	Items []DataSource `json:"items,omitempty"`
+}
+
+// The data source resource is a reflection of the individual datasource instances
+// that are exposed in the groups: {datasource}.datasource.grafana.app
+// The status is updated periodically.
+//
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DataSourcePlugin struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// The display name
+	Title string `json:"title"`
+
+	// Describe the plugin
+	Description string `json:"description"`
+
+	// The apiserver group+version
+	GroupVersion string `json:"groupVersion"`
+
+	// Supported operations of this plugin type
+	Capabilities []string `json:"capabilities"`
+
+	// SVG icon for this plugin
+	IconURL string `json:"icon"`
+}
+
+// List of datasource plugins
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DataSourcePluginList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []DataSourcePlugin `json:"items,omitempty"`
 }
