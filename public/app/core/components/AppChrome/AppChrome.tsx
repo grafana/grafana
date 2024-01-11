@@ -118,12 +118,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2 + 1,
       flexGrow: 1,
       height: '100%',
     }),
     contentNoSearchBar: css({
-      paddingTop: TOP_BAR_LEVEL_HEIGHT,
+      paddingTop: TOP_BAR_LEVEL_HEIGHT + 1,
     }),
     contentChromeless: css({
       paddingTop: 0,
