@@ -34,35 +34,35 @@ export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }:
     defaultQueryString && defaultQueryString.length > 3 ? parseMatchers(defaultQueryString).length === 0 : false;
 
   return (
-    <Field
-      invalid={inputInvalid || undefined}
-      error={inputInvalid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
-      label={
-        <Label>
-          <Stack gap={0.5}>
-            <span>Search by label</span>
-            <Tooltip
-              content={
-                <div>
-                  Filter alerts using label querying without spaces, ex:
-                  <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
-                  Invalid use of spaces:
-                  <pre>{`{severity= "critical"}`}</pre>
-                  <pre>{`{severity ="critical"}`}</pre>
-                  Valid use of spaces:
-                  <pre>{`{severity=" critical"}`}</pre>
-                  Filter alerts using label querying without braces, ex:
-                  <pre>{`severity="critical", instance=~"cluster-us-.+"`}</pre>
-                </div>
-              }
-            >
-              <Icon className={styles.icon} name="info-circle" size="sm" />
-            </Tooltip>
-          </Stack>
-        </Label>
-      }
-    >
-      <div className={className}>
+    <div className={className}>
+      <Field
+        invalid={inputInvalid || undefined}
+        error={inputInvalid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
+        label={
+          <Label>
+            <Stack gap={0.5}>
+              <span>Search by label</span>
+              <Tooltip
+                content={
+                  <div>
+                    Filter alerts using label querying without spaces, ex:
+                    <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
+                    Invalid use of spaces:
+                    <pre>{`{severity= "critical"}`}</pre>
+                    <pre>{`{severity ="critical"}`}</pre>
+                    Valid use of spaces:
+                    <pre>{`{severity=" critical"}`}</pre>
+                    Filter alerts using label querying without braces, ex:
+                    <pre>{`severity="critical", instance=~"cluster-us-.+"`}</pre>
+                  </div>
+                }
+              >
+                <Icon className={styles.icon} name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
+        }
+      >
         <Input
           placeholder="Search"
           defaultValue={defaultQueryString ?? ''}
@@ -71,8 +71,8 @@ export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }:
           prefix={searchIcon}
           className={styles.inputWidth}
         />
-      </div>
-    </Field>
+      </Field>
+    </div>
   );
 };
 
