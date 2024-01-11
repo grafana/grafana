@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import {
   PanelProps,
@@ -11,9 +12,15 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   CoreApp,
+  DataQueryResponse,
+  LogRowContextOptions,
+  hasLogsContextSupport,
+  DataSourceApi,
 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { LogLabels } from '../../../features/logs/components/LogLabels';
@@ -45,6 +52,28 @@ export const LogsPanel = ({
   const style = useStyles2(getStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
+  const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
+  const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
+
+  // create a map of refid -> datasource
+  const { value: dataSourcesMap } = useAsync(async (): Promise<Map<string, DataSourceApi>> => {
+    if (!data.request?.targets) {
+      return new Map();
+    }
+
+    // resolve all datasources for every query feeding this panel
+    const raw = await Promise.all(
+      data.request.targets
+        .filter((target) => !!target.datasource?.uid)
+        .map((target) =>
+          getDataSourceSrv()
+            .get(target.datasource?.uid)
+            .then((ds) => ({ key: target.refId, ds }))
+        )
+    );
+
+    return new Map(raw.map(({ key, ds }) => [key, ds]));
+  });
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -62,6 +91,51 @@ export const LogsPanel = ({
       }
     },
     [eventBus]
+  );
+
+  const onCloseContext = useCallback(() => {
+    setContextRow(null);
+    if (closeCallback) {
+      closeCallback();
+    }
+  }, [closeCallback]);
+
+  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
+    setContextRow(row);
+    setCloseCallback(onClose);
+  }, []);
+
+  const showContextToggle = useCallback(
+    (row: LogRowModel): boolean => {
+      if (!row.dataFrame.refId || !dataSourcesMap) {
+        return false;
+      }
+
+      const dataSource = dataSourcesMap.get(row.dataFrame.refId);
+      return hasLogsContextSupport(dataSource);
+    },
+    [dataSourcesMap]
+  );
+
+  const getLogRowContext = useCallback(
+    async (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions): Promise<DataQueryResponse> => {
+      if (!origRow.dataFrame.refId || !dataSourcesMap) {
+        return Promise.resolve({ data: [] });
+      }
+
+      const query = data.request?.targets[0];
+      if (!query) {
+        return Promise.resolve({ data: [] });
+      }
+
+      const dataSource = dataSourcesMap.get(origRow.dataFrame.refId);
+      if (!hasLogsContextSupport(dataSource)) {
+        return Promise.resolve({ data: [] });
+      }
+
+      return dataSource.getLogRowContext(row, options, query);
+    },
+    [data.request?.targets, dataSourcesMap]
   );
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
@@ -102,28 +176,43 @@ export const LogsPanel = ({
   );
 
   return (
-    <CustomScrollbar autoHide scrollTop={scrollTop}>
-      <div className={style.container} ref={logsContainerRef}>
-        {showCommonLabels && !isAscending && renderCommonLabels()}
-        <LogRows
-          logRows={logRows}
-          deduplicatedRows={deduplicatedRows}
-          dedupStrategy={dedupStrategy}
-          showLabels={showLabels}
-          showTime={showTime}
-          wrapLogMessage={wrapLogMessage}
-          prettifyLogMessage={prettifyLogMessage}
-          timeZone={timeZone}
-          getFieldLinks={getFieldLinks}
+    <>
+      {contextRow && (
+        <LogRowContextModal
+          open={contextRow !== null}
+          row={contextRow}
+          onClose={onCloseContext}
+          getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           logsSortOrder={sortOrder}
-          enableLogDetails={enableLogDetails}
-          previewLimit={isAscending ? logRows.length : undefined}
-          onLogRowHover={onLogRowHover}
-          app={CoreApp.Dashboard}
+          timeZone={timeZone}
         />
-        {showCommonLabels && isAscending && renderCommonLabels()}
-      </div>
-    </CustomScrollbar>
+      )}
+      <CustomScrollbar autoHide scrollTop={scrollTop}>
+        <div className={style.container} ref={logsContainerRef}>
+          {showCommonLabels && !isAscending && renderCommonLabels()}
+          <LogRows
+            logRows={logRows}
+            // always return true for now as this propery will
+            showContextToggle={showContextToggle}
+            deduplicatedRows={deduplicatedRows}
+            dedupStrategy={dedupStrategy}
+            showLabels={showLabels}
+            showTime={showTime}
+            wrapLogMessage={wrapLogMessage}
+            prettifyLogMessage={prettifyLogMessage}
+            timeZone={timeZone}
+            getFieldLinks={getFieldLinks}
+            logsSortOrder={sortOrder}
+            enableLogDetails={enableLogDetails}
+            previewLimit={isAscending ? logRows.length : undefined}
+            onLogRowHover={onLogRowHover}
+            app={CoreApp.Dashboard}
+            onOpenContext={onOpenContext}
+          />
+          {showCommonLabels && isAscending && renderCommonLabels()}
+        </div>
+      </CustomScrollbar>
+    </>
   );
 };
 
