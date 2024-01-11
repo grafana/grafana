@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
-import { HorizontalGroup, Spinner } from '@grafana/ui';
+import { HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -180,6 +181,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 }
 
 function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsEditView>) {
+  const styles = useStyles2(getStyles);
   const dashboard = model.getDashboard();
   const { isLoading, isAppending, viewMode, baseInfo, newInfo, isNewLatest } = model.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
@@ -213,12 +215,14 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-      {isLoading ? (
-        <VersionsHistorySpinner msg="Fetching history list&hellip;" />
-      ) : (
-        <VersionHistoryTable versions={model.versions} onCheck={model.onCheck} canCompare={canCompare} />
-      )}
-      {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
+      <div className={styles.margin}>
+        {isLoading ? (
+          <VersionsHistorySpinner msg="Fetching history list&hellip;" />
+        ) : (
+          <VersionHistoryTable versions={model.versions} onCheck={model.onCheck} canCompare={canCompare} />
+        )}
+        {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
+      </div>
       {showButtons && (
         <VersionsHistoryButtons
           hasMore={hasMore}
@@ -238,3 +242,11 @@ export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
     <em>{msg}</em>
   </HorizontalGroup>
 );
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    margin: css({
+      'margin-bottom': theme.spacing(4),
+    }),
+  };
+}
