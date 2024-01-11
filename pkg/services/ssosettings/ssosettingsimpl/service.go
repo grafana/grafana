@@ -65,24 +65,44 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
 func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	storeSettings, err := s.store.Get(ctx, provider)
-
-	if errors.Is(err, ssosettings.ErrNotFound) {
-		settings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
-		if err != nil {
-			return nil, err
-		}
-
-		return settings, nil
+	dbSettings, err := s.store.Get(ctx, provider)
+	if err != nil && !errors.Is(err, ssosettings.ErrNotFound) {
+		return nil, err
 	}
 
+	systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 	if err != nil {
 		return nil, err
 	}
 
-	storeSettings.Source = models.DB
+	// storedSettings := map[string]any{}
+	// if dbSettings != nil {
+	// 	storedSettings = dbSettings.Settings
+	// }
 
-	return storeSettings, nil
+	// finalSettings := mergeSettings(storedSettings, systemSettings.Settings)
+
+	// if dataFromDB {
+	// 	dbSettings.Settings = finalSettings
+	// 	return dbSettings, nil
+	// }
+
+	// // if errors.Is(err, ssosettings.ErrNotFound) {
+	// // 	settings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+	// // 	if err != nil {
+	// // 		return nil, err
+	// // 	}
+
+	// // 	return settings, nil
+	// // }
+
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// storeSettings.Source = models.DB
+
+	return mergeSSOSettings(dbSettings, systemSettings), nil
 }
 
 func (s *SSOSettingsService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
@@ -109,17 +129,13 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 	}
 
 	for _, provider := range ssosettings.AllOAuthProviders {
-		settings := getSettingsByProvider(provider, storedSettings)
-		if len(settings) == 0 {
-			// If there is no data in the DB then we need to load the settings using the fallback strategy
-			fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
-			if err != nil {
-				return nil, err
-			}
-
-			settings = append(settings, fallbackSettings)
+		dbSettings := getSettingByProvider(provider, storedSettings)
+		fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+		if err != nil {
+			return nil, err
 		}
-		result = append(result, settings...)
+
+		result = append(result, mergeSSOSettings(dbSettings, fallbackSettings))
 	}
 
 	return result, nil
@@ -140,14 +156,14 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 		return err
 	}
 
-	systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, settings.Provider)
-	if err != nil {
-		return err
-	}
+	// systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, settings.Provider)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// add the SSO settings from system that are not available in the user input
 	// in order to have a complete set of SSO settings for every provider in the database
-	settings.Settings = mergeSettings(settings.Settings, systemSettings.Settings)
+	// settings.Settings = mergeSettings(settings.Settings, systemSettings.Settings)
 
 	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
 	if err != nil {
@@ -210,14 +226,13 @@ func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Conte
 	}, nil
 }
 
-func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*models.SSOSettings {
-	result := make([]*models.SSOSettings, 0)
+func getSettingByProvider(provider string, settings []*models.SSOSettings) *models.SSOSettings {
 	for _, item := range settings {
 		if item.Provider == provider {
-			result = append(result, item)
+			return item
 		}
 	}
-	return result
+	return nil
 }
 
 func (s *SSOSettingsService) getFallbackStrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
@@ -277,14 +292,12 @@ func (s *SSOSettingsService) doReload(ctx context.Context) {
 	}
 
 	for provider, connector := range s.reloadables {
-		settings := getSettingsByProvider(provider, settingsList)
+		setting := getSettingByProvider(provider, settingsList)
 
-		if len(settings) > 0 {
-			err = connector.Reload(ctx, *settings[0])
-			if err != nil {
-				s.log.Error("failed to reload SSO Settings", "provider", provider, "err", err)
-				continue
-			}
+		err = connector.Reload(ctx, *setting)
+		if err != nil {
+			s.log.Error("failed to reload SSO Settings", "provider", provider, "err", err)
+			continue
 		}
 	}
 }
@@ -314,6 +327,26 @@ func mergeSettings(apiSettings, systemSettings map[string]any) map[string]any {
 	}
 
 	return settings
+}
+
+func mergeSSOSettings(dbSettings, systemSettings *models.SSOSettings) *models.SSOSettings {
+	storedSettings := map[string]any{}
+	if dbSettings != nil {
+		storedSettings = dbSettings.Settings
+	}
+
+	finalSettings := mergeSettings(storedSettings, systemSettings.Settings)
+
+	if dbSettings != nil {
+		dbSettings.Settings = finalSettings
+		return dbSettings
+	}
+
+	return &models.SSOSettings{
+		Provider: systemSettings.Provider,
+		Settings: finalSettings,
+		Source:   models.System,
+	}
 }
 
 func isProviderConfigurable(provider string) bool {
