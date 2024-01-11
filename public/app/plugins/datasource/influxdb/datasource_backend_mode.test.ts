@@ -595,7 +595,7 @@ describe('applyVariables', () => {
     if (!query.tags) {
       throw new Error('Tags are not defined');
     }
-    expect(query.tags[0].value).toBe('/^\\\\/etc\\\\/resolv\\.conf$/');
+    expect(query.tags[0].value).toBe('/^\\/etc\\/resolv\\.conf$/');
   });
   it('Should interpolate and escape dots and slashes, not dash', () => {
     const query: InfluxQuery = ds.applyTemplateVariables(
@@ -620,7 +620,7 @@ describe('applyVariables', () => {
     if (!query.tags) {
       throw new Error('Tags are not defined');
     }
-    expect(query.tags[0].value).toBe('/^script\\\\/acme\\.sh:latest-amd64$/');
+    expect(query.tags[0].value).toBe('/^script\\/acme\\.sh:latest-amd64$/');
   });
   it('Should escape single variable', () => {
     const query: InfluxQuery = ds.applyTemplateVariables(
@@ -645,7 +645,7 @@ describe('applyVariables', () => {
       throw new Error('Tags are not defined');
     }
     // This seems off, but it's working in influx
-    expect(query.tags[0].value).toBe(`/^\\\\/var\\\\/log\\\\/host\\\\/system\\.log$/`);
+    expect(query.tags[0].value).toBe(`/^\\/var\\/log\\/host\\/system\\.log$/`);
   });
   it('Should remove extra escape chars for hardcoded variable value', () => {
     const query: InfluxQuery = ds.applyTemplateVariables(

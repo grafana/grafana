@@ -277,6 +277,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
+  // This doesn't work with influxQL queries
   interpolateQueryExpr(value: string | string[] = [], variable: Partial<CustomFormatterVariable>) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
@@ -796,5 +797,5 @@ export function influxRegularEscape(value: string | string[]) {
 }
 
 export function influxSpecialRegexEscape(value: string | string[]) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|\/]/g, '\\$&') : value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]'+?.()|\/]/g, '\\$&') : value;
 }
