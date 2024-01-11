@@ -1,4 +1,3 @@
-import { CSSObject } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
@@ -55,14 +54,14 @@ export const focusCss = (theme: GrafanaTheme | GrafanaTheme2) => {
   transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);`;
 };
 
-export function getMouseFocusStyles(theme: GrafanaTheme | GrafanaTheme2): CSSObject {
+export function getMouseFocusStyles(theme: GrafanaTheme | GrafanaTheme2) {
   return {
     outline: 'none',
     boxShadow: `none`,
   };
 }
 
-export function getFocusStyles(theme: GrafanaTheme2): CSSObject {
+export function getFocusStyles(theme: GrafanaTheme2) {
   return {
     outline: '2px dotted transparent',
     outlineOffset: '2px',
@@ -74,7 +73,7 @@ export function getFocusStyles(theme: GrafanaTheme2): CSSObject {
 }
 
 // max-width is set up based on .grafana-tooltip class that's used in dashboard
-export const getTooltipContainerStyles = (theme: GrafanaTheme2): CSSObject => ({
+export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
   overflow: 'hidden',
   background: theme.colors.background.secondary,
   boxShadow: theme.shadows.z2,

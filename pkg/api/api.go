@@ -47,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 var plog = log.New("api")
@@ -416,6 +415,8 @@ func (hs *HTTPServer) registerRoutes() {
 		}
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
+		apiRoute.Get("/frontend/assets", hs.GetFrontendAssets)
+
 		apiRoute.Any("/datasources/proxy/:id/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 		apiRoute.Any("/datasources/proxy/:id", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
@@ -512,15 +513,14 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
 		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
-		var notifiersAuthHandler web.Handler
-		if hs.Cfg.UnifiedAlerting.IsEnabled() {
-			notifiersAuthHandler = reqSignedIn
-		} else {
-			notifiersAuthHandler = reqEditorRole
-		}
+		// Unified Alerting
+		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
+			hs.GetAlertNotifiers()),
+		)
 
-		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
-			hs.GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
+		// Legacy
+		apiRoute.Get("/alert-notifiers-legacy", reqEditorRole, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
+			hs.GetLegacyAlertNotifiers()),
 		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {

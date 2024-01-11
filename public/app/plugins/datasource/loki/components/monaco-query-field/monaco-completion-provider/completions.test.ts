@@ -2,8 +2,8 @@ import { dateTime } from '@grafana/data';
 import { Monaco, monacoTypes } from '@grafana/ui/src';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
+import { createLokiDatasource } from '../../../__mocks__/datasource';
 import { LokiDatasource } from '../../../datasource';
-import { createLokiDatasource } from '../../../mocks';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
 import { calculateRange } from './completionUtils';

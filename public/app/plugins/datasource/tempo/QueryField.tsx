@@ -193,6 +193,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             query={query}
             onChange={onChange}
             onBlur={this.props.onBlur}
+            app={app}
+            onClearResults={this.onClearResults}
           />
         )}
         {query.queryType === 'serviceMap' && (
