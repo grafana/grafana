@@ -180,9 +180,9 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// Summary
-	resourceInfo = v0alpha1.DashboardSummaryResourceInfo
-	storage[resourceInfo.StoragePath()] = &summaryStorage{
-		resource:       resourceInfo,
+	resourceInfo2 := v0alpha1.DashboardSummaryResourceInfo
+	storage[resourceInfo2.StoragePath()] = &summaryStorage{
+		resource:       resourceInfo2,
 		access:         b.access,
 		tableConverter: store.TableConvertor,
 	}
