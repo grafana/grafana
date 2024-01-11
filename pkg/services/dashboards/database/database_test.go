@@ -108,6 +108,23 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.False(t, queryResult.IsFolder)
 	})
 
+	t.Run("Should be able to get dashboard by title and folderUID", func(t *testing.T) {
+		setup()
+		query := dashboards.GetDashboardQuery{
+			Title:     util.Pointer("test dash 23"),
+			FolderUID: savedFolder.UID,
+			OrgID:     1,
+		}
+		queryResult, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.NoError(t, err)
+
+		require.Equal(t, queryResult.Title, "test dash 23")
+		require.Equal(t, queryResult.Slug, "test-dash-23")
+		require.Equal(t, queryResult.ID, savedDash.ID)
+		require.Equal(t, queryResult.UID, savedDash.UID)
+		require.False(t, queryResult.IsFolder)
+	})
+
 	t.Run("Should not be able to get dashboard by title alone", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
