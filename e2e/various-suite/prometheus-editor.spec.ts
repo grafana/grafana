@@ -45,7 +45,7 @@ function navigateToEditor(editorType: editorType, name: string): void {
   cy.contains(name).scrollIntoView().should('be.visible').click();
 }
 
-describe('Prometheus config', () => {
+describe('Prometheus query editor', () => {
   describe('Code editor', () => {
     it('navigates to the code editor with editor type as code', () => {
       navigateToEditor('Code', 'prometheusCode');
@@ -53,7 +53,7 @@ describe('Prometheus config', () => {
   });
 
   describe('Query builder', () => {
-    it('navigates to the code editor with editor type as code', () => {
+    it('navigates to the query builder with editor type as code', () => {
       navigateToEditor('Builder', 'prometheusBuilder');
     });
   });
