@@ -546,6 +546,9 @@ type Cfg struct {
 
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
+
+	// Slack
+	SlackToken string
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1265,6 +1268,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
+	cfg.readSlackSettings()
 
 	return nil
 }
@@ -1980,4 +1984,9 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 func (cfg *Cfg) readPublicDashboardsSettings() {
 	publicDashboards := cfg.Raw.Section("public_dashboards")
 	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
+}
+
+func (cfg *Cfg) readSlackSettings() {
+	slack := cfg.Raw.Section("slack")
+	cfg.SlackToken = slack.Key("token").MustString("")
 }

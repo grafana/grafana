@@ -461,7 +461,6 @@ func (hs *HTTPServer) registerRoutes() {
 				dashUidRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
 				dashUidRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDashboardVersion))
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
-				dashUidRoute.Post("/slack", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.AcknowledgeSlackEvent))
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
@@ -617,6 +616,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// rendering
 	r.Get("/render/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.RenderToPng)
+	// TODO: only for testing, this method will be called from AcknowledgeSlackEvent
+	r.Post("/api/render/unfurl", hs.RenderAndPostToSlack)
 
 	// grafana.net proxy
 	r.Any("/api/gnet/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.ProxyGnetRequest)
@@ -630,6 +631,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
+
+	r.Post("/api/unfurl-url", routing.Wrap(hs.AcknowledgeSlackEvent))
 }
 
 func evalAuthenticationSettings() ac.Evaluator {
