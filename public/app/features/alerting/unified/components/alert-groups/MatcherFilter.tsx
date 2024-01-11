@@ -30,8 +30,7 @@ export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }:
   useEffect(() => onSearchInputChanged.cancel(), [onSearchInputChanged]);
 
   const searchIcon = <Icon name={'search'} />;
-  const inputInvalid =
-    defaultQueryString && defaultQueryString.length > 3 ? parseMatchers(defaultQueryString).length === 0 : false;
+  const inputInvalid = defaultQueryString ? parseMatchers(defaultQueryString).length === 0 : false;
 
   return (
     <div className={className}>
