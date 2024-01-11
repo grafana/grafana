@@ -8388,10 +8388,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/debounce-promise@npm:3.1.6":
-  version: 3.1.6
-  resolution: "@types/debounce-promise@npm:3.1.6"
-  checksum: db1e5bf86215dfcdd0b0f94497269b0be5b27e0b9622bbad53c7a24de078229b97927f848549bb661795575d80615fd935f8357d8f23928c0526b158b51fa122
+"@types/debounce-promise@npm:3.1.9":
+  version: 3.1.9
+  resolution: "@types/debounce-promise@npm:3.1.9"
+  checksum: ea6c38c8d4b6006aea25fb9891281b0ea908aab7ae32755e85dfda1ae78331dab1884da7143aa4ca5166741884bc9f7665391072ddce800b5d2c1f44d4a11b9d
   languageName: node
   linkType: hard
 
@@ -8412,9 +8412,9 @@ __metadata:
   linkType: hard
 
 "@types/diff@npm:^5":
-  version: 5.0.5
-  resolution: "@types/diff@npm:5.0.5"
-  checksum: d3b2f90dcc511a2034ec0eb76f24b36ae8dca93e629742d72af01a9b9e38ec627207ca93e8601608698c6b6126a73247b340e6ef9c285e88eb0cca380a67ac5d
+  version: 5.0.9
+  resolution: "@types/diff@npm:5.0.9"
+  checksum: 6924740cb67a49771ea3753ee9b15c676860a6227b2bf0200ed9cef4111ff0f59fec8c51c1170bd30a8c7370b32673b308a9cd2da28525130f842194a822ef42
   languageName: node
   linkType: hard
 
@@ -8519,10 +8519,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/file-saver@npm:2.0.5":
-  version: 2.0.5
-  resolution: "@types/file-saver@npm:2.0.5"
-  checksum: a31d6ee2abf99598647139f8f35b37b6e1bacf6c7ddf05c66651b9b0e6e53381aa0e8ed13f37faa6e496e0eb1da87c97e6c70fd589d5b83b0c95c57cb64ce92a
+"@types/file-saver@npm:2.0.7":
+  version: 2.0.7
+  resolution: "@types/file-saver@npm:2.0.7"
+  checksum: c3d1cd80eab1214767922cabac97681f3fb688e82b74890450d70deaca49537949bbc96d80d363d91e8f0a4752c7164909cc8902d9721c5c4809baafc42a3801
   languageName: node
   linkType: hard
 
@@ -17113,10 +17113,10 @@ __metadata:
     "@types/d3": "npm:7.4.3"
     "@types/d3-force": "npm:^3.0.0"
     "@types/d3-scale-chromatic": "npm:3.0.3"
-    "@types/debounce-promise": "npm:3.1.6"
+    "@types/debounce-promise": "npm:3.1.9"
     "@types/diff": "npm:^5"
     "@types/eslint": "npm:8.44.0"
-    "@types/file-saver": "npm:2.0.5"
+    "@types/file-saver": "npm:2.0.7"
     "@types/glob": "npm:^8.0.0"
     "@types/google.analytics": "npm:^0.0.42"
     "@types/gtag.js": "npm:^0.0.12"
