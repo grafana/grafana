@@ -282,6 +282,9 @@ func (ng *AlertNG) init() error {
 	if err != nil {
 		return err
 	}
+	statePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.persist"),
+		ng.store, ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
+		ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency)
 	cfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
 		ExternalURL:                    appUrl,
@@ -290,8 +293,8 @@ func (ng *AlertNG) init() error {
 		Clock:                          clk,
 		Historian:                      history,
 		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
-		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
+		StatePersister:                 statePersister,
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
