@@ -31,7 +31,7 @@ export interface MetricOverviewSceneState extends SceneObjectState {
 export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE_EXPR],
-    onReferencedVariableValueChanged: this.onReferencedVariableValueChanged.bind(this)
+    onReferencedVariableValueChanged: this.onReferencedVariableValueChanged.bind(this),
   });
 
   constructor(state: Partial<MetricOverviewSceneState>) {
@@ -54,13 +54,6 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 
   private _onActivate() {
     this.updateMetadata();
-
-    const metricScene = getMetricSceneFor(this);
-    metricScene.subscribeToState((newState, oldState) => {
-      if (newState.metric !== oldState.metric) {
-        this.updateMetadata();
-      }
-    });
   }
 
   private onReferencedVariableValueChanged() {
@@ -117,7 +110,16 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             <Stack direction="column" gap={0.5}>
               <div className={styles.label}>Labels</div>
               {labelOptions.map((l) => (
-                <TextLink key={l.label} href={sceneGraph.interpolate(model, `/data-trails/trail$\{__url.params:exclude:actionView}&actionView=breakdown&var-groupby=${encodeURIComponent(l.value!)}`)} title="View breakdown">
+                <TextLink
+                  key={l.label}
+                  href={sceneGraph.interpolate(
+                    model,
+                    `/data-trails/trail$\{__url.params:exclude:actionView}&actionView=breakdown&var-groupby=${encodeURIComponent(
+                      l.value!
+                    )}`
+                  )}
+                  title="View breakdown"
+                >
                   {l.label!}
                 </TextLink>
               ))}
