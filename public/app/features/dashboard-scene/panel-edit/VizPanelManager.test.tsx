@@ -244,15 +244,10 @@ describe('VizPanelManager', () => {
 
         await Promise.resolve();
 
-        const dataObj = vizPanelManager.queryRunner;
-        dataObj.setState({
-          datasource: {
-            type: 'grafana-prometheus-datasource',
-            uid: 'gdev-prometheus',
-          },
-        });
-
-        await Promise.resolve();
+        await vizPanelManager.changePanelDataSource(
+          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as any,
+          []
+        );
 
         expect(store.setObject).toHaveBeenCalledTimes(2);
         expect(store.setObject).toHaveBeenLastCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {

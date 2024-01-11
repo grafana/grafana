@@ -1,5 +1,4 @@
 import React from 'react';
-import { Unsubscribable } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -57,40 +56,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
   > = {};
 
-  private _dataObjectSubscription: Unsubscribable | undefined;
-
   public constructor(panel: VizPanel) {
     super({ panel });
 
-    const dataProvider = this.state.panel.state.$data;
-    dataProvider?.addActivationHandler(() => this.setupDataObjectSubscription());
     this.addActivationHandler(() => this._onActivate());
   }
 
   private _onActivate() {
     this.loadDataSource();
-
-    return () => {
-      this._dataObjectSubscription?.unsubscribe();
-    };
-  }
-
-  /**
-   * The subscription is updated whenever the data source type is changed so that we can update manager's stored
-   * data source and data source instance settings, which are needed for the query options and editors
-   */
-  private setupDataObjectSubscription() {
-    const runner = this.queryRunner;
-
-    if (this._dataObjectSubscription) {
-      this._dataObjectSubscription.unsubscribe();
-    }
-
-    this._dataObjectSubscription = runner.subscribeToState((n, p) => {
-      if (n.datasource !== p.datasource) {
-        this.loadDataSource();
-      }
-    });
   }
 
   private async loadDataSource() {
@@ -187,7 +160,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     this.setState({ panel: newPanel });
-    this.setupDataObjectSubscription();
   }
 
   public async changePanelDataSource(
@@ -229,8 +201,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           },
         });
         panel.setState({ $data: sharedProvider });
-        this.setupDataObjectSubscription();
-        this.loadDataSource();
       } else {
         dataObj.setState({
           datasource: {
@@ -252,8 +222,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         queries,
       });
       panel.setState({ $data: dataProvider });
-      this.setupDataObjectSubscription();
-      this.loadDataSource();
     } else if (dataObj instanceof SceneDataTransformer) {
       const data = dataObj.clone();
 
@@ -284,10 +252,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
 
       panel.setState({ $data: data });
-
-      this.setupDataObjectSubscription();
-      this.loadDataSource();
     }
+    this.loadDataSource();
   }
 
   public changeQueryOptions(options: QueryGroupOptions) {
