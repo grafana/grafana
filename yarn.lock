@@ -3069,7 +3069,7 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "workspace:*"
-    "@lezer/common": "npm:1.0.2"
+    "@lezer/common": "npm:1.2.0"
     "@lezer/lr": "npm:1.3.3"
     "@opentelemetry/api": "npm:1.6.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
@@ -4323,13 +4323,6 @@ __metadata:
     yargs: "npm:16.2.0"
     yargs-parser: "npm:20.2.4"
   checksum: b475e41761a77c519d84711d80799db97c2844d1d100c91e0a7c9d8c500c3f34654d4915d7bbb08cd1c95d703a8b2b8cc92257ee14aaa64474ce8662977a4bcd
-  languageName: node
-  linkType: hard
-
-"@lezer/common@npm:1.0.2":
-  version: 1.0.2
-  resolution: "@lezer/common@npm:1.0.2"
-  checksum: 7e2977818769720267df3b03a682c5e453476c38ca27b1428eb4e3b8a5ea61629079066c13d546469c11b5b82d63154442b8f4d34cb2e7562a319e92f1af23c2
   languageName: node
   linkType: hard
 
