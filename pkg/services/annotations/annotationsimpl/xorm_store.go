@@ -545,7 +545,7 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 			cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
 			ids, err := r.fetchIDs(ctx, "annotation", cond)
 			if err != nil {
-				return totalAffected, err
+				return 0, err
 			}
 
 			return r.deleteByIDs(ctx, "annotation", ids)
@@ -560,9 +560,15 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 }
 
 func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
-	deleteQuery := `DELETE FROM annotation_tag WHERE id IN ( SELECT id FROM (SELECT id FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s) a)`
-	sql := fmt.Sprintf(deleteQuery, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
-	return r.executeSQLUntilDoneOrCancelled(ctx, sql)
+	return untilDoneOrCancelled(ctx, func() (int64, error) {
+		cond := fmt.Sprintf(`NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s`, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+		ids, err := r.fetchIDs(ctx, "annotation_tag", cond)
+		if err != nil {
+			return 0, err
+		}
+
+		return r.deleteByIDs(ctx, "annotation_tag", ids)
+	})
 }
 
 func (r *xormRepositoryImpl) fetchIDs(ctx context.Context, table, condition string) ([]int64, error) {
@@ -584,7 +590,7 @@ func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids 
 	}
 
 	placeholders := "?" + strings.Repeat(",?", len(ids)-1)
-	sql := fmt.Sprintf(`DELETE FROM annotation WHERE id IN (%s)`, placeholders)
+	sql := fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, placeholders)
 	var affected int64
 	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
 		res, err := session.Exec(append([]any{sql}, asAny(ids)...)...)
