@@ -3420,7 +3420,7 @@ __metadata:
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/angular": "npm:1.8.5"
+    "@types/angular": "npm:1.8.9"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.4"
     "@types/lodash": "npm:4.14.195"
@@ -7952,10 +7952,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/angular@npm:*, @types/angular@npm:1.8.5":
-  version: 1.8.5
-  resolution: "@types/angular@npm:1.8.5"
-  checksum: 5785c4aae2ae789165c87f9cee15b990a1e2025ea6e572f15048087dfc9005f280d93dbfd7183400a416ac71df9d719de89c9f39101c5cff6e589fadc9cea0f1
+"@types/angular@npm:*, @types/angular@npm:1.8.9":
+  version: 1.8.9
+  resolution: "@types/angular@npm:1.8.9"
+  checksum: dc8823c30f4caafbd28333777b9232cb9e67b000c88741a718c911d33254e3affa706d7290851c22e4ee5dac2f675b8e2a93a5f0e3eab5180fa271d2673ffc50
   languageName: node
   linkType: hard
 
@@ -17106,7 +17106,7 @@ __metadata:
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/angular": "npm:1.8.5"
+    "@types/angular": "npm:1.8.9"
     "@types/angular-route": "npm:1.7.3"
     "@types/chance": "npm:^1.1.3"
     "@types/common-tags": "npm:^1.8.0"
