@@ -241,35 +241,6 @@ describe('frame results with warnings', () => {
     const warningsComponent = editorRow.renderWarnings();
     expect(warningsComponent).toBe(null);
   });
-  describe('QueryEditorRow', () => {
-    const props = (errorRefId: string): Props<DataQuery> => ({
-      dataSource: mockDS,
-      query: { refId: 'B' },
-      data: {
-        state: LoadingState.Error,
-        series: [],
-        errors: [{ message: 'Error!!', refId: errorRefId }],
-        timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
-      },
-      queries: [{ refId: 'B' }],
-      id: 'test',
-      onAddQuery: jest.fn(),
-      onRunQuery: jest.fn(),
-      onChange: jest.fn(),
-      onRemoveQuery: jest.fn(),
-      index: 0,
-    });
-    it('should display error message in corresponding panel', async () => {
-      render(<QueryEditorRow {...props('B')} />);
-      expect(await screen.findByText('Error!!')).toBeInTheDocument();
-    });
-    it('should not display error message if error.refId doesnt match', async () => {
-      await waitFor(() => {
-        render(<QueryEditorRow {...props('A')} />);
-        expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
-      });
-    });
-  });
 });
 describe('QueryEditorRow', () => {
   const props = (data: PanelData): Props<DataQuery> => ({
