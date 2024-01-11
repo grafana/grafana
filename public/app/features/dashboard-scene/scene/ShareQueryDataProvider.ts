@@ -25,7 +25,6 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
   private _results = new ReplaySubject<SceneDataProviderResult>();
   private _sourceProvider?: SceneDataProvider;
   private _passContainerWidth = false;
-  private _shouldUnwireClonedData = false;
 
   constructor(state: ShareQueryDataProviderState) {
     super({
@@ -39,8 +38,6 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
   // Will detect the root of the scene and if it's a PanelEditor, it will clone the data from the source panel.
   // We are doing it because the source panel's original scene (dashboard) does not exist in the edit mode.
   private _setupEditMode(panelId: number, root: PanelEditor) {
-    this._shouldUnwireClonedData = false;
-
     const keyToFind = getVizPanelKeyForPanelId(panelId);
     const source = findObjectInScene(
       root.state.dashboardRef.resolve(),
@@ -50,7 +47,6 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
     if (source) {
       // Indicate that when de-activated, i.e. navigating back to dashboard, the cloned$data state needs to be removed
       // so that the panel on the dashboar can use data from the actual source panel.
-      this._shouldUnwireClonedData = true;
       this.setState({
         $data: source.state.$data!.clone(),
       });
@@ -78,12 +74,6 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       if (this._sourceDataDeactivationHandler) {
         this._sourceDataDeactivationHandler();
         this._sourceDataDeactivationHandler = undefined;
-      }
-
-      if (this._shouldUnwireClonedData) {
-        this.setState({
-          $data: undefined,
-        });
       }
     };
   };
