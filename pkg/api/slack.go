@@ -35,6 +35,12 @@ func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Resp
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "error making http request", err)
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			hs.log.Error("failed to close response body", "err", err)
+		}
+	}()
+
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not read response body", err)
@@ -168,6 +174,11 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 	if err != nil {
 		return fmt.Errorf("client: error making http request: %w", err)
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			hs.log.Error("failed to close response body", "err", err)
+		}
+	}()
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -209,7 +220,7 @@ func (hs *HTTPServer) getImageURL(imageName string) string {
 
 // extractURLInfo returns the render path and the dashboard UID
 func extractURLInfo(dashboardURL string) (string, string) {
-	re := regexp.MustCompile(".*(\\/d\\/([^\\/]*)\\/.*)")
+	re := regexp.MustCompile(`.*(\/d\/([^\/]*)\/.*)`)
 	res := re.FindStringSubmatch(dashboardURL)
 	if len(res) != 3 {
 		return "", ""
