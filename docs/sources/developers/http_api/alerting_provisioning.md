@@ -79,22 +79,22 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 
 ### Mute timings
 
-| Method | URI                                      | Name                                                  | Summary                          |
-| ------ | ---------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| DELETE | /api/v1/provisioning/mute-timings/{name} | [route delete mute timing](#route-delete-mute-timing) | Delete a mute timing.            |
-| GET    | /api/v1/provisioning/mute-timings/{name} | [route get mute timing](#route-get-mute-timing)       | Get a mute timing.               |
-| GET    | /api/v1/provisioning/mute-timings        | [route get mute timings](#route-get-mute-timings)     | Get all the mute timings.        |
-| POST   | /api/v1/provisioning/mute-timings        | [route post mute timing](#route-post-mute-timing)     | Create a new mute timing.        |
-| PUT    | /api/v1/provisioning/mute-timings/{name} | [route put mute timing](#route-put-mute-timing)       | Replace an existing mute timing. |
+| Method | URI                                     | Name                                                  | Summary                          |
+| ------ | --------------------------------------- | ----------------------------------------------------- | -------------------------------- |
+| DELETE | /api/v1/provisioning/mute-timings/:name | [route delete mute timing](#route-delete-mute-timing) | Delete a mute timing.            |
+| GET    | /api/v1/provisioning/mute-timings/:name | [route get mute timing](#route-get-mute-timing)       | Get a mute timing.               |
+| GET    | /api/v1/provisioning/mute-timings       | [route get mute timings](#route-get-mute-timings)     | Get all the mute timings.        |
+| POST   | /api/v1/provisioning/mute-timings       | [route post mute timing](#route-post-mute-timing)     | Create a new mute timing.        |
+| PUT    | /api/v1/provisioning/mute-timings/:name | [route put mute timing](#route-put-mute-timing)       | Replace an existing mute timing. |
 
 ### Templates
 
-| Method | URI                                   | Name                                            | Summary                                    |
-| ------ | ------------------------------------- | ----------------------------------------------- | ------------------------------------------ |
-| DELETE | /api/v1/provisioning/templates/{name} | [route delete template](#route-delete-template) | Delete a template.                         |
-| GET    | /api/v1/provisioning/templates/{name} | [route get template](#route-get-template)       | Get a notification template.               |
-| GET    | /api/v1/provisioning/templates        | [route get templates](#route-get-templates)     | Get all notification templates.            |
-| PUT    | /api/v1/provisioning/templates/{name} | [route put template](#route-put-template)       | Updates an existing notification template. |
+| Method | URI                                  | Name                                            | Summary                                    |
+| ------ | ------------------------------------ | ----------------------------------------------- | ------------------------------------------ |
+| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a template.                         |
+| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.               |
+| GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.            |
+| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Updates an existing notification template. |
 
 ## Paths
 
@@ -162,7 +162,7 @@ Status: No Content
 ### <span id="route-delete-mute-timing"></span> Delete a mute timing. (_RouteDeleteMuteTiming_)
 
 ```
-DELETE /api/v1/provisioning/mute-timings/{name}
+DELETE /api/v1/provisioning/mute-timings/:name
 ```
 
 #### Parameters
@@ -188,7 +188,7 @@ Status: No Content
 ### <span id="route-delete-template"></span> Delete a template. (_RouteDeleteTemplate_)
 
 ```
-DELETE /api/v1/provisioning/templates/{name}
+DELETE /api/v1/provisioning/templates/:name
 ```
 
 #### Parameters
@@ -498,7 +498,7 @@ Status: Forbidden
 ### <span id="route-get-mute-timing"></span> Get a mute timing. (_RouteGetMuteTiming_)
 
 ```
-GET /api/v1/provisioning/mute-timings/{name}
+GET /api/v1/provisioning/mute-timings/:name
 ```
 
 #### Parameters
@@ -608,7 +608,7 @@ Status: Not Found
 ### <span id="route-get-template"></span> Get a notification template. (_RouteGetTemplate_)
 
 ```
-GET /api/v1/provisioning/templates/{name}
+GET /api/v1/provisioning/templates/:name
 ```
 
 #### Parameters
@@ -952,7 +952,7 @@ Status: Bad Request
 ### <span id="route-put-mute-timing"></span> Replace an existing mute timing. (_RoutePutMuteTiming_)
 
 ```
-PUT /api/v1/provisioning/mute-timings/{name}
+PUT /api/v1/provisioning/mute-timings/:name
 ```
 
 #### Consumes
@@ -1045,7 +1045,7 @@ Status: Bad Request
 ### <span id="route-put-template"></span> Updates an existing notification template. (_RoutePutTemplate_)
 
 ```
-PUT /api/v1/provisioning/templates/{name}
+PUT /api/v1/provisioning/templates/:name
 ```
 
 #### Consumes
