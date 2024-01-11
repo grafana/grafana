@@ -45,28 +45,28 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 
 ### Alert rules
 
-| Method | URI                                                                | Name                                                                    | Summary                                                 |
-| ------ | ------------------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------- |
-| DELETE | /api/v1/provisioning/alert-rules/:uid                             | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
-| GET    | /api/v1/provisioning/alert-rules/:uid                             | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                       |
-| GET    | /api/v1/provisioning/alert-rules/:uid/export                      | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.       |
-| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                       |
-| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format. |
-| GET    | /api/v1/provisioning/alert-rules                                   | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                |
-| GET    | /api/v1/provisioning/alert-rules/export                            | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.     |
-| POST   | /api/v1/provisioning/alert-rules                                   | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                |
-| PUT    | /api/v1/provisioning/alert-rules/:uid                             | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
-| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group or modify the rules of the group.                    |
+| Method | URI                                                              | Name                                                                    | Summary                                                               |
+| ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                                  |
+| GET    | /api/v1/provisioning/alert-rules/:uid                            | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                                     |
+| GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.                     |
+| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                                     |
+| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format.               |
+| GET    | /api/v1/provisioning/alert-rules                                 | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                              |
+| GET    | /api/v1/provisioning/alert-rules/export                          | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.                   |
+| POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                              |
+| PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                                        |
+| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group or modify the rules of the group. |
 
 ### Contact points
 
 | Method | URI                                        | Name                                                              | Summary                                                |
 | ------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |
-| DELETE | /api/v1/provisioning/contact-points/:uid  | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
+| DELETE | /api/v1/provisioning/contact-points/:uid   | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
 | GET    | /api/v1/provisioning/contact-points        | [route get contactpoints](#route-get-contactpoints)               | Get all the contact points.                            |
 | GET    | /api/v1/provisioning/contact-points/export | [route get contactpoints export](#route-get-contactpoints-export) | Export all contact points in provisioning file format. |
 | POST   | /api/v1/provisioning/contact-points        | [route post contactpoints](#route-post-contactpoints)             | Create a contact point.                                |
-| PUT    | /api/v1/provisioning/contact-points/:uid  | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
+| PUT    | /api/v1/provisioning/contact-points/:uid   | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
 
 ### Notification policies
 
@@ -868,11 +868,11 @@ PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description                                               |
-| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
-| Group                | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
-| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description                                                                                             |
+| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------- |
+| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |                                                                                                         |
+| Group                | `path`   | string                              | `string`                |           |    ✓     |         |                                                                                                         |
+| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         | Allows editing of provisioned resources in the Grafana UI                                               |
 | Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         | This action is idempotent and rules included in this body will overwrite configured rules for the group |
 
 {{% /responsive-table %}}
