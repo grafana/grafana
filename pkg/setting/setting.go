@@ -1627,7 +1627,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
 	// SSO Settings
-	ssoSettings := iniFile.Section("auth.sso_settings")
+	ssoSettings := iniFile.Section("sso_settings")
 	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)
 
 	return nil
