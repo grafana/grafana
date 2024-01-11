@@ -2944,7 +2944,7 @@ __metadata:
     "@grafana/ui": "npm:10.3.0-pre"
     "@kusto/monaco-kusto": "npm:^7.4.0"
     "@testing-library/react": "npm:14.0.0"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.4"
     "@types/lodash": "npm:4.14.195"
     "@types/node": "npm:20.8.10"
@@ -2983,7 +2983,7 @@ __metadata:
     "@grafana/schema": "npm:10.3.0-pre"
     "@grafana/ui": "npm:10.3.0-pre"
     "@testing-library/react": "npm:14.0.0"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.4"
     "@types/lodash": "npm:4.14.195"
     "@types/node": "npm:20.8.10"
@@ -3036,7 +3036,7 @@ __metadata:
     "@grafana/schema": "npm:10.3.0-pre"
     "@grafana/ui": "npm:10.3.0-pre"
     "@testing-library/react": "npm:14.0.0"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/lodash": "npm:4.14.195"
     "@types/react": "npm:18.2.15"
     lodash: "npm:4.17.21"
@@ -3084,7 +3084,7 @@ __metadata:
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/dompurify": "npm:^2"
     "@types/history": "npm:4.7.11"
@@ -3321,7 +3321,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:14.0.0"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/d3": "npm:^7"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.14.195"
@@ -3419,7 +3419,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/react": "npm:14.0.0"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/angular": "npm:1.8.5"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.4"
@@ -3544,7 +3544,7 @@ __metadata:
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/common-tags": "npm:^1.8.0"
     "@types/d3": "npm:7.4.3"
     "@types/hoist-non-react-statics": "npm:3.3.1"
@@ -7868,12 +7868,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:14.5.1":
-  version: 14.5.1
-  resolution: "@testing-library/user-event@npm:14.5.1"
+"@testing-library/user-event@npm:14.5.2":
+  version: 14.5.2
+  resolution: "@testing-library/user-event@npm:14.5.2"
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
-  checksum: 696e1328c230b0a7063a41d82b5350c6be926696106809a4d79d446d190ff56bebb850fe564ff0952cb74ae81e59a6f10534a88ecbb3792083271a249e04e728
+  checksum: 49821459d81c6bc435d97128d6386ca24f1e4b3ba8e46cb5a96fe3643efa6e002d88c1b02b7f2ec58da593e805c59b78d7fdf0db565c1f02ba782f63ee984040
   languageName: node
   linkType: hard
 
@@ -17105,7 +17105,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/react-hooks": "npm:^8.0.1"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/angular": "npm:1.8.5"
     "@types/angular-route": "npm:1.7.3"
     "@types/chance": "npm:^1.1.3"

@@ -21,7 +21,7 @@
     "@grafana/e2e-selectors": "10.3.0-pre",
     "@grafana/plugin-configs": "10.3.0-pre",
     "@testing-library/react": "14.0.0",
-    "@testing-library/user-event": "14.5.1",
+    "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.4",
     "@types/lodash": "4.14.195",
     "@types/node": "20.8.10",
