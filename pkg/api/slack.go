@@ -5,17 +5,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	dtos "github.com/grafana/grafana/pkg/api/dtos"
 	"io"
 	"net/http"
 	"path/filepath"
-	"strings"
+	"regexp"
 	"time"
 
+	dtos "github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -73,20 +74,33 @@ func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response
 
 func (hs *HTTPServer) handleLinkSharedEvent(event EventPayload) {
 	ctx := context.Background()
+
 	// TODO: handle multiple links
-	imagePath, err := hs.renderDashboard(ctx, event.Event.Links[0].URL)
+	renderPath, dashboardUID := extractURLInfo(event.Event.Links[0].URL)
+	if renderPath == "" {
+		hs.log.Error("fail to extract render path from link")
+		return
+	}
+
+	dashboard, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUID})
+	if err != nil {
+		hs.log.Error("fail to get dashboard", "err", err, "dashboard UID", dashboardUID)
+		return
+	}
+
+	imagePath, err := hs.renderDashboard(ctx, renderPath)
 	if err != nil {
 		hs.log.Error("fail to render dashboard for Slack preview", "err", err)
 		return
 	}
 
-	err = hs.sendUnfurlEvent(ctx, event, imagePath)
+	err = hs.sendUnfurlEvent(ctx, event, imagePath, dashboard.Title)
 	if err != nil {
 		hs.log.Error("fail to send unfurl event to Slack", "err", err)
 	}
 }
 
-func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload, imagePath string) error {
+func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload, imagePath string, dashboardTitle string) error {
 	eventPayload := &UnfurlEventPayload{
 		Channel: linkEvent.Event.Channel,
 		TS:      linkEvent.Event.MessageTS,
@@ -102,8 +116,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 					Type: "header",
 					Text: &Text{
 						Type: "plain_text",
-						// TODO: need to fetch the dashboard to get the title
-						Text: "Dashboard title",
+						Text: dashboardTitle,
 					},
 				},
 				{
@@ -196,19 +209,35 @@ func (hs *HTTPServer) getImageURL(imageName string) string {
 	return fmt.Sprintf("%s://%s:%s%s/%s/%s", protocol, domain, hs.Cfg.HTTPPort, subPath, "public/img/attachments", imageName)
 }
 
+// extractURLInfo returns the render path and the dashboard UID
+func extractURLInfo(dashboardURL string) (string, string) {
+	re := regexp.MustCompile(".*(\\/d\\/([^\\/]*)\\/.*)")
+	res := re.FindStringSubmatch(dashboardURL)
+	if len(res) != 3 {
+		return "", ""
+	}
+
+	return res[1], res[2]
+}
+
 func (hs *HTTPServer) RenderAndPostToSlack(c *contextmodel.ReqContext) response.Response {
 	// TODO: hardcoded for now, the input of this method should be the event payload
 	//source := "conversations_history"
 	//unfurlID := "12345"
 	rawURL := "http://localhost:3000/render/d/RvNCUVm4z/dashboard-with-expressions?orgId=1&from=1704891104021&to=1704912704021&width=1000&height=500&tz=America%2FBuenos_Aires"
+	renderPath, _ := extractURLInfo(rawURL)
+	if renderPath == "" {
+		hs.log.Error("fail to extract render path from link")
+		return response.Error(http.StatusInternalServerError, "fail to extract render path from link", fmt.Errorf("fail to extract render path from link"))
+	}
 
-	imagePath, err := hs.renderDashboard(c.Req.Context(), rawURL)
+	imagePath, err := hs.renderDashboard(c.Req.Context(), renderPath)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
 	}
 
 	// post to slack api
-	err = hs.sendUnfurlEvent(c.Req.Context(), EventPayload{}, imagePath)
+	err = hs.sendUnfurlEvent(c.Req.Context(), EventPayload{}, imagePath, "Dashboard with expressions")
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Fail to send unfurl event to Slack", err)
 	}
@@ -216,20 +245,7 @@ func (hs *HTTPServer) RenderAndPostToSlack(c *contextmodel.ReqContext) response.
 	return response.Empty(http.StatusOK)
 }
 
-func (hs *HTTPServer) renderDashboard(ctx context.Context, dashboardURL string) (string, error) {
-	var renderPath string
-	// Find the index of "/d/"
-	index := strings.Index(dashboardURL, "/d/")
-
-	// Check if "/d/" was found
-	if index != -1 {
-		// Extract the substring including "/d/"
-		renderPath = dashboardURL[index+1:]
-		fmt.Println(renderPath)
-	} else {
-		return "", fmt.Errorf("Invalid dashboard url")
-	}
-
+func (hs *HTTPServer) renderDashboard(ctx context.Context, renderPath string) (string, error) {
 	result, err := hs.RenderService.Render(ctx, rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout: time.Duration(60) * time.Second,
@@ -254,6 +270,34 @@ func (hs *HTTPServer) renderDashboard(ctx context.Context, dashboardURL string) 
 	}
 
 	return result.FilePath, nil
+}
+
+func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Response {
+	var previewRequest PreviewRequest
+	if err := web.Bind(c.Req, &previewRequest); err != nil {
+		return response.Error(http.StatusBadRequest, "error parsing body", err)
+	}
+
+	hs.log.Info("Generating preview", "dashboard_url", previewRequest.DashboardURL)
+
+	filePath, err := hs.renderDashboard(c.Req.Context(), previewRequest.DashboardURL)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
+	}
+
+	imageFileName := filepath.Base(filePath)
+	imageURL := hs.getImageURL(imageFileName)
+
+	return response.JSON(http.StatusOK, &PreviewResponse{
+		PreviewURL: imageURL,
+	})
+}
+
+type PreviewRequest struct {
+	DashboardURL string `json:"dashboard_url"`
+}
+type PreviewResponse struct {
+	PreviewURL string `json:"preview_url"`
 }
 
 type EventChallengeAck struct {
