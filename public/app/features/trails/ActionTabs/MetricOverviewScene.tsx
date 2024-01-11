@@ -9,7 +9,6 @@ import {
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Stack, useStyles2, TextLink } from '@grafana/ui';
@@ -18,7 +17,7 @@ import PrometheusLanguageProvider from '../../../plugins/datasource/prometheus/l
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
-import { trailDS, VAR_DATASOURCE_EXPR, VAR_GROUP_BY, VAR_METRIC_EXPR } from '../shared';
+import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor } from '../utils';
 
 import { getLabelOptions } from './utils';
@@ -36,7 +35,6 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 
   constructor(state: Partial<MetricOverviewSceneState>) {
     super({
-      $variables: state.$variables ?? getVariableSet(),
       ...state,
     });
 
@@ -152,22 +150,5 @@ function getStyles(theme: GrafanaTheme2) {
 export function buildMetricOverviewScene() {
   return new SceneFlexItem({
     body: new MetricOverviewScene({}),
-  });
-}
-
-function getVariableSet() {
-  return new SceneVariableSet({
-    variables: [
-      new QueryVariable({
-        name: VAR_GROUP_BY,
-        label: 'Group by',
-        datasource: trailDS,
-        includeAll: true,
-        defaultToAll: true,
-        query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
-        value: '',
-        text: '',
-      }),
-    ],
   });
 }

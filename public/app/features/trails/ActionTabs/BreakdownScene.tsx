@@ -17,7 +17,6 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneQueryRunner,
-  SceneVariableSet,
 } from '@grafana/scenes';
 import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -25,7 +24,7 @@ import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { MetricScene } from '../MetricScene';
-import { trailDS, VAR_GROUP_BY, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../shared';
+import { trailDS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
@@ -43,7 +42,6 @@ export interface BreakdownSceneState extends SceneObjectState {
 export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
   constructor(state: Partial<BreakdownSceneState>) {
     super({
-      $variables: state.$variables ?? getVariableSet(),
       labels: state.labels ?? [],
       ...state,
     });
@@ -221,23 +219,6 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
 }
 
 const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
-
-function getVariableSet() {
-  return new SceneVariableSet({
-    variables: [
-      new QueryVariable({
-        name: VAR_GROUP_BY,
-        label: 'Group by',
-        datasource: trailDS,
-        includeAll: true,
-        defaultToAll: true,
-        query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
-        value: '',
-        text: '',
-      }),
-    ],
-  });
-}
 
 function buildNormalLayout(queryDef: AutoQueryDef) {
   return new LayoutSwitcher({

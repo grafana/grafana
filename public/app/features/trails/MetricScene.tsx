@@ -11,6 +11,8 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   sceneGraph,
+  SceneVariableSet,
+  QueryVariable,
 } from '@grafana/scenes';
 import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
 
@@ -27,6 +29,9 @@ import {
   getVariablesWithMetricConstant,
   MakeOptional,
   OpenEmbeddedTrailEvent,
+  trailDS,
+  VAR_GROUP_BY,
+  VAR_METRIC_EXPR,
 } from './shared';
 import { getTrailFor } from './utils';
 
@@ -41,7 +46,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   public constructor(state: MakeOptional<MetricSceneState, 'body'>) {
     super({
-      $variables: state.$variables ?? getVariablesWithMetricConstant(state.metric),
+      $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? buildGraphScene(state.metric),
       ...state,
     });
@@ -173,6 +178,24 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
   };
+}
+
+function getVariableSet(metric: string) {
+  return new SceneVariableSet({
+    variables: [
+      ...getVariablesWithMetricConstant(metric),
+      new QueryVariable({
+        name: VAR_GROUP_BY,
+        label: 'Group by',
+        datasource: trailDS,
+        includeAll: true,
+        defaultToAll: true,
+        query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
+        value: '',
+        text: '',
+      }),
+    ],
+  });
 }
 
 const MAIN_PANEL_MIN_HEIGHT = 280;
