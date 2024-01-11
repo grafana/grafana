@@ -38,7 +38,6 @@ import { QueryFormat, SQLQuery } from '../../../features/plugins/sql';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
-import { isRegex } from './components/editor/query/influxql/utils/tagUtils';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import { toRawSql } from './fsql/sqlUtil';
 import InfluxQueryModel from './influx_query_model';
