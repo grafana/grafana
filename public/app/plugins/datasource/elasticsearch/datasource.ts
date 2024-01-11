@@ -631,7 +631,9 @@ export class ElasticDatasource
     }
   }
 
-  private getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): DataQueryRequest<ElasticsearchQuery> | undefined {
+  private getLogsVolumeDataProvider(
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): DataQueryRequest<ElasticsearchQuery> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
       .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
@@ -644,7 +646,9 @@ export class ElasticDatasource
     return { ...logsVolumeRequest, targets };
   }
 
-  private getLogsSampleDataProvider(request: DataQueryRequest<ElasticsearchQuery>): DataQueryRequest<ElasticsearchQuery> | undefined {
+  private getLogsSampleDataProvider(
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): DataQueryRequest<ElasticsearchQuery> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets;
     const queries = targets.map((query) => {

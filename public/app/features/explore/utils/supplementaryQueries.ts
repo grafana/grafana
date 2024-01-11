@@ -134,7 +134,9 @@ export const getSupplementaryQueryProvider = (
       if (provider === undefined || isObservable(provider)) {
         return provider;
       }
-      return type === SupplementaryQueryType.LogsVolume ? queryLogsVolume(datasource, provider) : queryLogsSample(datasource, provider);
+      return type === SupplementaryQueryType.LogsVolume
+        ? queryLogsVolume(datasource, provider)
+        : queryLogsSample(datasource, provider);
     } else {
       return getSupplementaryQueryFallback(type, explorePanelData, targets, datasource.name);
     }
