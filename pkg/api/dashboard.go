@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"io"
 	"net/http"
 	"os"
@@ -837,6 +838,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 		Unfurls: make(Unfurls),
 	}
 
+	imageFileName := filepath.Base(imagePath)
 	for _, link := range linkEvent.Event.Links {
 		eventPayload.Unfurls[link.URL] = Unfurl{
 			Blocks: []Block{
@@ -848,7 +850,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 					},
 					Accessory: ImageAccessory{
 						Type:     "image",
-						ImageURL: imagePath,
+						ImageURL: hs.getImageURL(imageFileName),
 						AltText:  "Fake Image",
 					},
 				},
@@ -883,6 +885,31 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 
 	hs.log.Info("successfully sent unfurl event payload", "body", resBody)
 	return nil
+}
+
+// TODO: Duplicated from the rendering service - maybe we can do this in another way to not duplicate this
+func (hs *HTTPServer) getImageURL(imageName string) string {
+	protocol := hs.Cfg.Protocol
+	switch protocol {
+	case setting.HTTPScheme:
+		protocol = "http"
+	case setting.HTTP2Scheme, setting.HTTPSScheme:
+		protocol = "https"
+	default:
+		// TODO: Handle other schemes?
+	}
+
+	subPath := ""
+	if hs.Cfg.ServeFromSubPath {
+		subPath = hs.Cfg.AppSubURL
+	}
+
+	domain := "localhost"
+	if hs.Cfg.HTTPAddr != "0.0.0.0" {
+		domain = hs.Cfg.HTTPAddr
+	}
+
+	return fmt.Sprintf("%s://%s:%s%s/%s/%s", protocol, domain, hs.Cfg.HTTPPort, subPath, "public/img/attachments", imageName)
 }
 
 // swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
