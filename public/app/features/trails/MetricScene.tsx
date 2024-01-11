@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { DashboardCursorSync } from '@grafana/data';
+import { DashboardCursorSync, GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
