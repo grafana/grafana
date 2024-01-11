@@ -76,7 +76,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 			Blocks: []Block{
 				{
 					Type: "header",
-					Text: Text{
+					Text: &Text{
 						Type: "plain_text",
 						// TODO: need to fetch the dashboard to get the title
 						Text: "Dashboard title",
@@ -84,14 +84,14 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 				},
 				{
 					Type: "section",
-					Text: Text{
+					Text: &Text{
 						Type: "plain_text",
 						Text: "Here is the dashboard that I wanted to show you",
 					},
 				},
 				{
 					Type: "image",
-					Title: Text{
+					Title: &Text{
 						Type: "plain_text",
 						Text: "Dashboard preview",
 					},
@@ -102,7 +102,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 					Type: "actions",
 					Elements: []Element{{
 						Type: "button",
-						Text: Text{
+						Text: &Text{
 							Type: "plain_text",
 							Text: "View Dashboard",
 						},
@@ -119,7 +119,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 	if err != nil {
 		return fmt.Errorf("client: could not create body: %w", err)
 	}
-	hs.log.Info("Posting to slack api", "eventPayload", b)
+	hs.log.Info("Posting to slack api", "eventPayload", string(b))
 
 	bodyReader := bytes.NewReader(b)
 	req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/chat.unfurl", bodyReader)
@@ -139,7 +139,7 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 		return fmt.Errorf("client: could not read response body: %w", err)
 	}
 
-	hs.log.Info("successfully sent unfurl event payload", "body", resBody)
+	hs.log.Info("successfully sent unfurl event payload", "body", string(resBody))
 	return nil
 }
 
@@ -276,27 +276,27 @@ type Text struct {
 
 type ImageAccessory struct {
 	Type     string `json:"type,omitempty"`
-	Title    Text   `json:"title,omitempty"`
+	Title    *Text  `json:"title,omitempty"`
 	ImageURL string `json:"image_url,omitempty"`
 	AltText  string `json:"alt_text,omitempty"`
 }
 
 type Element struct {
 	Type     string `json:"type,omitempty"`
-	Text     Text   `json:"text,omitempty"`
+	Text     *Text  `json:"text,omitempty"`
 	Style    string `json:"style,omitempty"`
 	Value    string `json:"value,omitempty"`
 	ActionID string `json:"action_id,omitempty"`
 }
 
 type Block struct {
-	Type      string         `json:"type,omitempty"`
-	Text      Text           `json:"text,omitempty"`
-	Accessory ImageAccessory `json:"accessory,omitempty"`
-	ImageURL  string         `json:"image_url,omitempty"`
-	Title     Text           `json:"title,omitempty"`
-	AltText   string         `json:"alt_text,omitempty"`
-	Elements  []Element      `json:"elements,omitempty"`
+	Type      string          `json:"type,omitempty"`
+	Text      *Text           `json:"text,omitempty"`
+	Accessory *ImageAccessory `json:"accessory,omitempty"`
+	ImageURL  string          `json:"image_url,omitempty"`
+	Title     *Text           `json:"title,omitempty"`
+	AltText   string          `json:"alt_text,omitempty"`
+	Elements  []Element       `json:"elements,omitempty"`
 }
 
 type Unfurl struct {
