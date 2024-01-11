@@ -26,7 +26,8 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check license validation", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
+			flags:    map[string]*FeatureFlag{},
+			warnings: map[string]string{},
 		}
 		ft.registerFlags(FeatureFlag{
 			Name:            "a",
