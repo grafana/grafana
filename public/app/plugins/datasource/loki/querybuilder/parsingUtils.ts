@@ -28,7 +28,7 @@ export function makeError(expr: string, node: SyntaxNode) {
  * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
  * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
  */
-const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
+export const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 /**
  * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at
