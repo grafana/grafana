@@ -3741,6 +3741,106 @@ volumes:
   name: docker
 ---
 clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-promotion
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - 'dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
+    --enterprise-ref=$${ENTERPRISE_REF} --version=$${VERSION} '
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    ALPINE_BASE: alpine:3.18.4
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GO_VERSION: 1.21.5
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    NPM_TOKEN:
+      from_secret: npm_token
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+    UBUNTU_BASE: ubuntu:22.04
+  image: grafana/grafana-build:main
+  name: rgm-build
+  pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gcloud storage cp -r dist/* $${UPLOAD_TO}
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    NPM_TOKEN:
+      from_secret: npm_token
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: google/cloud-sdk:alpine
+  name: rgm-copy
+trigger:
+  event:
+  - promote
+  target: upload-packages
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
   disable: true
 depends_on: []
 environment:
@@ -4631,6 +4731,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 013b133b2c65edbc2220813ae96f6b55478f6b67643639ed54ddfc347de4cb55
+hmac: 5a32e13ad67622913b4ce5c63931d2fc6ba0c118b4f32452724c441aaabf53c5
 
 ...
