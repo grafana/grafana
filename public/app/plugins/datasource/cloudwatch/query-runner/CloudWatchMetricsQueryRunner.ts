@@ -4,6 +4,7 @@ import { catchError, map, Observable, of } from 'rxjs';
 
 import {
   DataFrame,
+  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -40,7 +41,7 @@ const displayAlert = (datasourceName: string, region: string) =>
 
 // This class handles execution of CloudWatch metrics query data queries
 export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
-  debouncedAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
+  debouncedThrottlingAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
     displayAlert,
     AppNotificationTimeout.Error
   );
@@ -122,26 +123,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         });
 
         if (res.errors?.length) {
-          if (
-            res.errors.some(
-              (err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message))
-            )
-          ) {
-            const failedRefIds = res.errors.map((error) => error.refId).filter((refId) => refId);
-            if (failedRefIds.length > 0) {
-              const regionsAffected = Object.values(request.targets).reduce(
-                (res: string[], { refId, region }) =>
-                  (refId && !failedRefIds.includes(refId)) || res.includes(region) ? res : [...res, region],
-                []
-              );
-              regionsAffected.forEach((region) => {
-                const actualRegion = this.getActualRegion(region);
-                if (actualRegion) {
-                  this.debouncedAlert(this.instanceSettings.name, actualRegion);
-                }
-              });
-            }
-          }
+          this.alertOnErrors(res.errors, request)
         }
 
         return {
@@ -158,6 +140,26 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         }
       })
     );
+  }
+
+  alertOnErrors(errors: DataQueryError[], request: DataQueryRequest<CloudWatchQuery>) {
+    const hasThrottlingError = errors.some((err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message)))
+    if(hasThrottlingError) {
+      const failedRefIds = errors.map((error) => error.refId).filter((refId) => refId);
+      if (failedRefIds.length > 0) {
+        const regionsAffected = Object.values(request.targets).reduce(
+          (res: string[], { refId, region }) =>
+            (refId && !failedRefIds.includes(refId)) || res.includes(region) ? res : [...res, region],
+          []
+        );
+        regionsAffected.forEach((region) => {
+          const actualRegion = this.getActualRegion(region);
+          if (actualRegion) {
+            this.debouncedThrottlingAlert(this.instanceSettings.name, actualRegion)
+            }
+        });
+      }
+    }
   }
 
   filterMetricQuery(query: CloudWatchMetricsQuery): boolean {

@@ -196,8 +196,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
 
         await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
           const result = received[0];
-          expect(getFrameDisplayName(result.data[0])).toBe(1 && 'CPUUtilization_Average');
-          expect(result.data[0].fields[1].values[0]).toBe(1 && 1);
+          expect(getFrameDisplayName(result.data[0])).toBe('CPUUtilization_Average');
+          expect(result.data[0].fields[1].values[0]).toBe(1);
         });
       });
     });
@@ -286,7 +286,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
           response: toDataQueryResponse(dataWithThrottlingError),
         });
-        const memoizedDebounceSpy = jest.spyOn(runner, 'debouncedAlert');
+        const memoizedDebounceSpy = jest.spyOn(runner, 'debouncedThrottlingAlert');
 
         await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
           expect(received[0].errors).toHaveLength(5);
@@ -650,6 +650,58 @@ describe('CloudWatchMetricsQueryRunner', () => {
           expect(queryMock.mock.calls[0][0].targets[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
         });
       });
+    });
+  });
+  describe('debouncedCustomAlert', () => {
+    const debouncedAlert = jest.fn();
+    beforeEach(() => {
+      const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
+        variables: [
+          { ...namespaceVariable, multi: true },
+          { ...metricVariable, multi: true },
+        ],
+      });
+      runner.debouncedCustomAlert = debouncedAlert;
+      runner.performTimeSeriesQuery = jest.fn().mockResolvedValue([]);
+      runner.handleMetricQueries(
+        [
+          {
+            queryMode: 'Metrics',
+            id: '',
+            region: 'us-east-2',
+            namespace: namespaceVariable.id,
+            metricName: metricVariable.id,
+            period: '',
+            alias: '',
+            dimensions: {},
+            matchExact: true,
+            statistic: '',
+            refId: '',
+            expression: 'x * 2',
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Code,
+          },
+        ],
+        request,
+        queryMock
+      );
+    });
+    it('should show debounced alert for namespace and metric name', async () => {
+      expect(debouncedAlert).toHaveBeenCalledWith(
+        'CloudWatch templating error',
+        'Multi template variables are not supported for namespace'
+      );
+      expect(debouncedAlert).toHaveBeenCalledWith(
+        'CloudWatch templating error',
+        'Multi template variables are not supported for metric name'
+      );
+    });
+
+    it('should not show debounced alert for region', async () => {
+      expect(debouncedAlert).not.toHaveBeenCalledWith(
+        'CloudWatch templating error',
+        'Multi template variables are not supported for region'
+      );
     });
   });
 
