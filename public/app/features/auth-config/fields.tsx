@@ -164,11 +164,14 @@ export const fieldMap: Record<string, FieldData> = {
   authStyle: {
     label: 'Auth Style',
     type: 'select',
-    description:
-      'It determines how client_id and client_secret are sent to Oauth2 provider.',
+    description: 'It determines how client_id and client_secret are sent to Oauth2 provider.',
     multi: false,
-    options: [ {value: 'AutoDetect', label: 'AutoDetect'}, {value: 'InParams', label: 'InParams'}, {value: 'InHeader', label: 'InHeader'}],
-    defaultValue: 'AutoDetect'
+    options: [
+      { value: 'AutoDetect', label: 'AutoDetect' },
+      { value: 'InParams', label: 'InParams' },
+      { value: 'InHeader', label: 'InHeader' },
+    ],
+    defaultValue: 'AutoDetect',
   },
   tokenUrl: {
     label: 'Token Url',
@@ -310,7 +313,8 @@ export const fieldMap: Record<string, FieldData> = {
   },
   useRefreshToken: {
     label: 'Use Refresh Token',
-    description: 'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.',
+    description:
+      'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.',
     type: 'checkbox',
   },
   configureTLS: {
