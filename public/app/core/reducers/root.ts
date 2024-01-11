@@ -28,6 +28,7 @@ import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
+import { shareToSlackApi } from '../../features/dashboard/api/shareToSlackApi';
 import { cleanUpAction } from '../actions/cleanUp';
 
 const rootReducers = {
@@ -57,6 +58,7 @@ const rootReducers = {
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [togglesApi.reducerPath]: togglesApi.reducer,
+  [shareToSlackApi.reducerPath]: shareToSlackApi.reducer,
 };
 
 const addedReducers = {};
