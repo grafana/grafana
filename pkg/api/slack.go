@@ -141,9 +141,9 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 							Type: "plain_text",
 							Text: "View Dashboard",
 						},
-						Style:    "primary",
-						Value:    link.URL,
-						ActionID: "view",
+						Style: "primary",
+						Value: link.URL,
+						URL:   link.URL,
 					}},
 				},
 			},
@@ -348,11 +348,11 @@ type ImageAccessory struct {
 }
 
 type Element struct {
-	Type     string `json:"type,omitempty"`
-	Text     *Text  `json:"text,omitempty"`
-	Style    string `json:"style,omitempty"`
-	Value    string `json:"value,omitempty"`
-	ActionID string `json:"action_id,omitempty"`
+	Type  string `json:"type,omitempty"`
+	Text  *Text  `json:"text,omitempty"`
+	Style string `json:"style,omitempty"`
+	Value string `json:"value,omitempty"`
+	URL   string `json:"url,omitempty"`
 }
 
 type Block struct {
