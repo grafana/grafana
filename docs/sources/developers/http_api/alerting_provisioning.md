@@ -19,11 +19,13 @@ title: 'Alerting Provisioning HTTP API '
 
 # Alerting provisioning HTTP API
 
+The Alerting provisioning API can be used to create, modify and delete resources relevant to [Grafana Managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}). And is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+For managing resources related to [data source-managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}) including Recording Rules, you can use [Mimir tool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) and [Cortex tool](https://github.com/grafana/cortex-tools#cortextool) respectively.
+
 ## Information
 
 ### Version
-
-test
 
 1.1.0
 
