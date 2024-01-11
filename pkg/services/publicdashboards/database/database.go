@@ -283,6 +283,19 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int6
 	return affectedRows, err
 }
 
+func (d *PublicDashboardStoreImpl) FindByFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error) {
+	var pubdashes []*PublicDashboard
+
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.SQL("SELECT * from dashboard_public WHERE dashboard_uid = ? AND org_id = ?", dashboard.UID, dashboard.OrgID).Find(&pubdashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return pubdashes, nil
+}
+
 func (d *PublicDashboardStoreImpl) FindByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error) {
 	if dashboard == nil || !dashboard.IsFolder {
 		return nil, nil
