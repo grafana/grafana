@@ -47,15 +47,15 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 
 | Method | URI                                                                | Name                                                                    | Summary                                                 |
 | ------ | ------------------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------- |
-| DELETE | /api/v1/provisioning/alert-rules/{UID}                             | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
-| GET    | /api/v1/provisioning/alert-rules/{UID}                             | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                       |
-| GET    | /api/v1/provisioning/alert-rules/{UID}/export                      | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.       |
+| DELETE | /api/v1/provisioning/alert-rules/:uid                             | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
+| GET    | /api/v1/provisioning/alert-rules/:uid                             | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                       |
+| GET    | /api/v1/provisioning/alert-rules/:uid/export                      | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.       |
 | GET    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                       |
 | GET    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format. |
 | GET    | /api/v1/provisioning/alert-rules                                   | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                |
 | GET    | /api/v1/provisioning/alert-rules/export                            | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.     |
 | POST   | /api/v1/provisioning/alert-rules                                   | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                |
-| PUT    | /api/v1/provisioning/alert-rules/{UID}                             | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
+| PUT    | /api/v1/provisioning/alert-rules/:uid                             | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
 | PUT    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group.                    |
 
 ### Contact points
@@ -66,11 +66,11 @@ Contact point provisioning is for Grafana-managed alerts only.
 
 | Method | URI                                        | Name                                                              | Summary                                                |
 | ------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |
-| DELETE | /api/v1/provisioning/contact-points/{UID}  | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
+| DELETE | /api/v1/provisioning/contact-points/:uid  | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
 | GET    | /api/v1/provisioning/contact-points        | [route get contactpoints](#route-get-contactpoints)               | Get all the contact points.                            |
 | GET    | /api/v1/provisioning/contact-points/export | [route get contactpoints export](#route-get-contactpoints-export) | Export all contact points in provisioning file format. |
 | POST   | /api/v1/provisioning/contact-points        | [route post contactpoints](#route-post-contactpoints)             | Create a contact point.                                |
-| PUT    | /api/v1/provisioning/contact-points/{UID}  | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
+| PUT    | /api/v1/provisioning/contact-points/:uid  | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
 
 ### Notification policies
 
@@ -105,7 +105,7 @@ Contact point provisioning is for Grafana-managed alerts only.
 ### <span id="route-delete-alert-rule"></span> Delete a specific alert rule by UID. (_RouteDeleteAlertRule_)
 
 ```
-DELETE /api/v1/provisioning/alert-rules/{UID}
+DELETE /api/v1/provisioning/alert-rules/:uid
 ```
 
 #### Parameters
@@ -136,7 +136,7 @@ Status: No Content
 ### <span id="route-delete-contactpoints"></span> Delete a contact point. (_RouteDeleteContactpoints_)
 
 ```
-DELETE /api/v1/provisioning/contact-points/{UID}
+DELETE /api/v1/provisioning/contact-points/:uid
 ```
 
 #### Consumes
@@ -218,7 +218,7 @@ Status: No Content
 ### <span id="route-get-alert-rule"></span> Get a specific alert rule by UID. (_RouteGetAlertRule_)
 
 ```
-GET /api/v1/provisioning/alert-rules/{UID}
+GET /api/v1/provisioning/alert-rules/:uid
 ```
 
 #### Parameters
@@ -253,7 +253,7 @@ Status: Not Found
 ### <span id="route-get-alert-rule-export"></span> Export an alert rule in provisioning file format. (_RouteGetAlertRuleExport_)
 
 ```
-GET /api/v1/provisioning/alert-rules/{UID}/export
+GET /api/v1/provisioning/alert-rules/:uid/export
 ```
 
 #### Produces
@@ -814,7 +814,7 @@ Status: Bad Request
 ### <span id="route-put-alert-rule"></span> Update an existing alert rule. (_RoutePutAlertRule_)
 
 ```
-PUT /api/v1/provisioning/alert-rules/{UID}
+PUT /api/v1/provisioning/alert-rules/:uid
 ```
 
 #### Consumes
@@ -909,7 +909,7 @@ Status: Bad Request
 ### <span id="route-put-contactpoint"></span> Update an existing contact point. (_RoutePutContactpoint_)
 
 ```
-PUT /api/v1/provisioning/contact-points/{UID}
+PUT /api/v1/provisioning/contact-points/:uid
 ```
 
 #### Consumes
