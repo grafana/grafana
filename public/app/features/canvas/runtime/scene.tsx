@@ -694,9 +694,15 @@ export class Scene {
       >
         {this.connections.render()}
         {this.root.render()}
-        <Portal>
-          <CanvasContextMenu scene={this} panel={this.panel} onVisibilityChange={this.contextMenuOnVisibilityChange} />
-        </Portal>
+        {this.isEditingEnabled && (
+          <Portal>
+            <CanvasContextMenu
+              scene={this}
+              panel={this.panel}
+              onVisibilityChange={this.contextMenuOnVisibilityChange}
+            />
+          </Portal>
+        )}
         {canShowElementTooltip && (
           <Portal>
             <CanvasTooltip scene={this} />
