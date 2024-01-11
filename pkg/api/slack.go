@@ -35,6 +35,12 @@ func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Resp
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "error making http request", err)
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			hs.log.Error("failed to close response body", "err", err)
+		}
+	}()
+
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not read response body", err)
@@ -141,9 +147,9 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 							Type: "plain_text",
 							Text: "View Dashboard",
 						},
-						Style:    "primary",
-						Value:    link.URL,
-						ActionID: "view",
+						Style: "primary",
+						Value: link.URL,
+						URL:   link.URL,
 					}},
 				},
 			},
@@ -168,6 +174,11 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 	if err != nil {
 		return fmt.Errorf("client: error making http request: %w", err)
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			hs.log.Error("failed to close response body", "err", err)
+		}
+	}()
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -209,7 +220,7 @@ func (hs *HTTPServer) getImageURL(imageName string) string {
 
 // extractURLInfo returns the render path and the dashboard UID
 func extractURLInfo(dashboardURL string) (string, string) {
-	re := regexp.MustCompile(".*(\\/d\\/([^\\/]*)\\/.*)")
+	re := regexp.MustCompile(`.*(\/d\/([^\/]*)\/.*)`)
 	res := re.FindStringSubmatch(dashboardURL)
 	if len(res) != 3 {
 		return "", ""
@@ -217,31 +228,6 @@ func extractURLInfo(dashboardURL string) (string, string) {
 
 	return res[1], res[2]
 }
-
-//func (hs *HTTPServer) RenderAndPostToSlack(c *contextmodel.ReqContext) response.Response {
-//	// TODO: hardcoded for now, the input of this method should be the event payload
-//	//source := "conversations_history"
-//	//unfurlID := "12345"
-//	rawURL := "http://localhost:3000/render/d/RvNCUVm4z/dashboard-with-expressions?orgId=1&from=1704891104021&to=1704912704021&width=1000&height=500&tz=America%2FBuenos_Aires"
-//	renderPath, _ := extractURLInfo(rawURL)
-//	if renderPath == "" {
-//		hs.log.Error("fail to extract render path from link")
-//		return response.Error(http.StatusInternalServerError, "fail to extract render path from link", fmt.Errorf("fail to extract render path from link"))
-//	}
-//
-//	imagePath, err := hs.renderDashboard(c.Req.Context(), renderPath)
-//	if err != nil {
-//		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
-//	}
-//
-//	// post to slack api
-//	err = hs.sendUnfurlEvent(c.Req.Context(), EventPayload{}, imagePath, "Dashboard with expressions")
-//	if err != nil {
-//		return response.Error(http.StatusInternalServerError, "Fail to send unfurl event to Slack", err)
-//	}
-//
-//	return response.Empty(http.StatusOK)
-//}
 
 func (hs *HTTPServer) renderDashboard(ctx context.Context, renderPath string) (string, error) {
 	result, err := hs.RenderService.Render(ctx, rendering.Opts{
@@ -348,11 +334,11 @@ type ImageAccessory struct {
 }
 
 type Element struct {
-	Type     string `json:"type,omitempty"`
-	Text     *Text  `json:"text,omitempty"`
-	Style    string `json:"style,omitempty"`
-	Value    string `json:"value,omitempty"`
-	ActionID string `json:"action_id,omitempty"`
+	Type  string `json:"type,omitempty"`
+	Text  *Text  `json:"text,omitempty"`
+	Style string `json:"style,omitempty"`
+	Value string `json:"value,omitempty"`
+	URL   string `json:"url,omitempty"`
 }
 
 type Block struct {
