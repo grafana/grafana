@@ -1221,6 +1221,12 @@
       "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "close": "Cľőşę",
+      "title": "ßäčĸ ŧő {{shortTitle}}"
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Ĩŉčľūđę päŉęľş",

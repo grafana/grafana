@@ -1221,6 +1221,12 @@
       "turned-off": "Automatische Aktualisierung aus"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "close": "",
+      "title": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Panels einschließen",

@@ -14,17 +14,13 @@ export const ReturnToPreviousWrapper = () => {
 
   const [paramsExist, setParamsExist] = React.useState(params?.__returnToTitle && params?.__returnToUrl);
   // Don't show the button whether if there is no params or the URL param matches the current URL
-  const showReturnToPrevious: boolean = paramsExist && location.pathname !== params.__returnToUrl ? true : false;
+  const showReturnToPrevious = Boolean(paramsExist && location.pathname !== params.__returnToUrl);
 
   // Only show the button on large screens
   const isLargeScreen = window.innerWidth >= theme.breakpoints.values.xl;
 
   React.useEffect(() => {
-    if (params?.__returnToTitle && params?.__returnToUrl) {
-      setParamsExist(true);
-    } else {
-      setParamsExist(false);
-    }
+    setParamsExist(params?.__returnToTitle && params?.__returnToUrl);
   }, [params]);
 
   return showReturnToPrevious && isLargeScreen ? (

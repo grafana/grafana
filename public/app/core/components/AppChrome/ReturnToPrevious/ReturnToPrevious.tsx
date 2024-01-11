@@ -5,6 +5,7 @@ import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans, t } from 'app/core/internationalization';
 
 export interface ReturnToPreviousProps {
   href: UrlQueryValue;
@@ -30,6 +31,8 @@ export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProp
     return title && title.toString().length > titleLength ? title.toString().substring(0, titleLength) + '...' : title;
   };
 
+  const shortTitle = shortenTitle(title);
+
   return (
     <ButtonGroup className={styles.wrapper}>
       <Button
@@ -41,9 +44,16 @@ export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProp
         title={title?.toString()}
         className={styles.returnToPrevious}
       >
-        Back to {shortenTitle(children)}
+        <Trans i18nKey="return-to-previous.button.title">Back to {{ shortTitle }}</Trans>
       </Button>
-      <Button icon="times" aria-label="Close" variant="primary" fill="outline" size="sm" onClick={closeButton} />
+      <Button
+        icon="times"
+        aria-label={t('return-to-previous.button.close', 'Close')}
+        variant="primary"
+        fill="outline"
+        size="sm"
+        onClick={closeButton}
+      />
     </ButtonGroup>
   );
 };

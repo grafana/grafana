@@ -1227,6 +1227,12 @@
       "turned-off": "Actualisation automatique désactivée"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "close": "",
+      "title": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Inclure des panneaux",

@@ -1221,6 +1221,12 @@
       "turned-off": "Auto refresh off"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "close": "Close",
+      "title": "Back to {{shortTitle}}"
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Include panels",
