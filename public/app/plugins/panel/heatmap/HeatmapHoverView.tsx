@@ -397,6 +397,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
-    width: '280px',
   }),
 });

@@ -276,6 +276,7 @@ export const CandlestickPanel = ({
                     />
                   );
                 }}
+                tooltipOptions={options.tooltip}
               />
             ) : (
               <>

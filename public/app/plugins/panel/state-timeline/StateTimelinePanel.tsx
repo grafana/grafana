@@ -218,6 +218,7 @@ export const StateTimelinePanel = ({
                         />
                       );
                     }}
+                    tooltipOptions={options.tooltip}
                   />
                 )}
               </>

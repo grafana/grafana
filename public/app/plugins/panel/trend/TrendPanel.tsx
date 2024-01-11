@@ -143,6 +143,7 @@ export const TrendPanel = ({
                         />
                       );
                     }}
+                    tooltipOptions={options.tooltip}
                   />
                 ) : (
                   <TooltipPlugin

@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { VizTooltipOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -41,7 +40,10 @@ interface TooltipPlugin2Props {
     dismiss: () => void
   ) => React.ReactNode;
 
-  tooltipOptions?: VizTooltipOptions;
+  tooltipOptions?: {
+    maxTooltipWidth?: number;
+    maxTooltipHeight?: number;
+  };
 }
 
 interface TooltipContainerState {
@@ -464,6 +466,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth: number | undefined, maxHeight
     width: `${maxWidth}px`,
     maxHeight: `${maxHeight}px`,
     height: 'auto',
+    overflowY: 'auto',
   }),
   pinned: css({
     boxShadow: theme.shadows.z3,

@@ -114,6 +114,7 @@ export const TimeSeriesPanel = ({
                         />
                       );
                     }}
+                    tooltipOptions={options.tooltip}
                   />
                 ) : (
                   <>

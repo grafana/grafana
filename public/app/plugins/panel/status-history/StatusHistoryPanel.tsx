@@ -251,6 +251,7 @@ export const StatusHistoryPanel = ({
                         />
                       );
                     }}
+                    tooltipOptions={options.tooltip}
                   />
                 )}
               </>

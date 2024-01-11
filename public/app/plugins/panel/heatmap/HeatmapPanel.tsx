@@ -256,6 +256,7 @@ export const HeatmapPanel = ({
                     />
                   );
                 }}
+                tooltipOptions={options.tooltip}
               />
             )}
             {data.annotations && (
