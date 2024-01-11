@@ -127,10 +127,7 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
                 <Menu.Item
                   label="Export"
                   icon="download-alt"
-                  childItems={[
-                    // <Menu.Item key="export-no-modifications" label="Without modifications" icon="file-blank" url={} />,
-                    <ExportMenuItem key="export-with-modifications" identifier={identifier} />,
-                  ]}
+                  childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
                 />
               )}
               {canDelete && (
