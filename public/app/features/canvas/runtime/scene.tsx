@@ -665,34 +665,36 @@ export class Scene {
   };
 
   render() {
-    const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
+    const onSceneContainerMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      // If pan and zoom is disabled or context menu is visible, don't pan
+      if ((!this.shouldPanZoom || this.contextMenuVisible) && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
+      if (!this.contextMenuVisible && !this.isPanelEditing && e.button === 2 && !e.ctrlKey) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
     const sceneDiv = (
-      // TODO: Address this eslint error
+      // The <div> element has child elements that allow for mouse events, so we need to disable the linter rule
       // eslint-disable-next-line jsx-a11y/no-static-element-interactions
       <div
         key={this.revId}
         className={this.styles.wrap}
         style={this.style}
         ref={this.setRef}
-        onMouseDown={(e) => {
-          // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
-          if ((!this.shouldPanZoom || this.contextMenuVisible) && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
-          if (!this.contextMenuVisible && e.button === 2 && !e.ctrlKey) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        }}
+        onMouseDown={onSceneContainerMouseDown}
       >
         {this.connections.render()}
         {this.root.render()}
-        {canShowContextMenu && (
+        {this.isEditingEnabled && (
           <Portal>
             <CanvasContextMenu
               scene={this}
