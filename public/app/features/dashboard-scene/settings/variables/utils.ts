@@ -112,7 +112,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       return new AdHocFilterSet(initialState);
     case 'textbox':
-      return new TextBoxVariable({});
+      return new TextBoxVariable(initialState);
   }
 }
 
