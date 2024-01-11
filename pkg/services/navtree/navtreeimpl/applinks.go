@@ -329,15 +329,10 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
+		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDCfg, Text: "Adaptive Metrics"},
+		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
 		"k6-app":                           k6Cfg,
-	}
-
-	if s.features.IsEnabledGlobally(featuremgmt.FlagCostManagementUi) {
-		// if cost management is enabled we want to nest adaptive metrics and log volume explorer under that plugin
-		// in the admin section
-		s.navigationAppConfig["grafana-adaptive-metrics-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg}
-		s.navigationAppConfig["grafana-logvolumeexplorer-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg}
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
