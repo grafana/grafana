@@ -6,7 +6,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { Card } from '../types';
 
-import { cardContent, cardStyle, iconStyle } from './sharedStyles';
+import { cardContent, cardStyle } from './sharedStyles';
 
 interface Props {
   card: Card;
@@ -14,7 +14,6 @@ interface Props {
 
 export const DocsCard = ({ card }: Props) => {
   const styles = useStyles2(getStyles, card.done);
-  const iconStyles = useStyles2(iconStyle, card.done);
 
   return (
     <div className={styles.card}>
@@ -22,9 +21,6 @@ export const DocsCard = ({ card }: Props) => {
         <a href={`${card.href}?utm_source=grafana_gettingstarted`} className={styles.url}>
           <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
           <h4 className={styles.title}>{card.title}</h4>
-          <div>
-            <Icon className={iconStyles} name={card.icon} size="xxl" />
-          </div>
         </a>
       </div>
       <a

@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import React, { MouseEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { TutorialCardType } from '../types';
 
-import { cardContent, cardStyle, iconStyle } from './sharedStyles';
+import { cardContent, cardStyle } from './sharedStyles';
 
 interface Props {
   card: TutorialCardType;
@@ -15,7 +15,6 @@ interface Props {
 
 export const TutorialCard = ({ card }: Props) => {
   const styles = useStyles2(getStyles, card.done);
-  const iconStyles = useStyles2(iconStyle, card.done);
 
   return (
     <a
@@ -30,7 +29,6 @@ export const TutorialCard = ({ card }: Props) => {
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
         <h4 className={styles.cardTitle}>{card.title}</h4>
         <div className={styles.info}>{card.info}</div>
-        <Icon className={iconStyles} name={card.icon} size="xxl" />
       </div>
     </a>
   );
