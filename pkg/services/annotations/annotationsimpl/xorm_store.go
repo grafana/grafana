@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -530,8 +531,11 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 			if err != nil {
 				return 0, err
 			}
+			r.log.Error("Annotations to clean by time", "count", len(ids), "ids", ids, "cond", cond, "err", err)
 
-			return r.deleteByIDs(ctx, "annotation", ids)
+			x, y := r.deleteByIDs(ctx, "annotation", ids)
+			r.log.Error("cleaned annotations by time", "count", len(ids), "affected", x, "err", y)
+			return x, y
 		})
 		totalAffected += affected
 		if err != nil {
@@ -547,8 +551,11 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 			if err != nil {
 				return 0, err
 			}
+			r.log.Error("Annotations to clean by count", "count", len(ids), "ids", ids, "cond", cond, "err", err)
 
-			return r.deleteByIDs(ctx, "annotation", ids)
+			x, y := r.deleteByIDs(ctx, "annotation", ids)
+			r.log.Error("cleaned annotations by count", "count", len(ids), "affected", x, "err", y)
+			return x, y
 		})
 		totalAffected += affected
 		if err != nil {
@@ -566,8 +573,11 @@ func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (i
 		if err != nil {
 			return 0, err
 		}
+		r.log.Error("Tags to clean", "count", len(ids), "ids", ids, "cond", cond, "err", err)
 
-		return r.deleteByIDs(ctx, "annotation_tag", ids)
+		x, y := r.deleteByIDs(ctx, "annotation_tag", ids)
+		r.log.Error("cleaned tags", "count", len(ids), "affected", x, "err", y)
+		return x, y
 	})
 }
 
@@ -589,11 +599,27 @@ func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids 
 		return 0, nil
 	}
 
-	placeholders := "?" + strings.Repeat(",?", len(ids)-1)
-	sql := fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, placeholders)
+	sql := ""
+	args := make([]any, 0)
+
+	// SQLite has a parameter limit of 999.
+	// If the batch size is bigger than that, and we're on SQLite, we have to put the IDs directly into the statement.
+	const sqliteParameterLimit = 999
+	if r.db.GetDBType() == migrator.SQLite && r.cfg.AnnotationCleanupJobBatchSize > sqliteParameterLimit {
+		values := fmt.Sprint(ids[0])
+		for _, v := range ids[1:] {
+			values = fmt.Sprintf("%s, %d", values, v)
+		}
+		sql = fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, values)
+	} else {
+		placeholders := "?" + strings.Repeat(",?", len(ids)-1)
+		sql = fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, placeholders)
+		args = asAny(ids)
+	}
+
 	var affected int64
 	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
-		res, err := session.Exec(append([]any{sql}, asAny(ids)...)...)
+		res, err := session.Exec(append([]any{sql}, args...)...)
 		if err != nil {
 			return err
 		}
