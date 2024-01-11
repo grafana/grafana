@@ -106,14 +106,16 @@ export class BigValue extends PureComponent<Props> {
         <PercentChange percentChange={percentChange} styles={layout.getPercentChangeStyles(percentChange)} />
       </div>
     );
-
     const renderValueAndPercentChange = () => {
       if (showPercentChange && valueAndTitleContainerStyles.flexDirection === 'row') {
         return rowValuePercentChangeFragment;
       } else if (showPercentChange) {
         return (
           <>
-            <FormattedValueDisplay value={textValues} style={valueStyles} />
+            <FormattedValueDisplay
+              value={textValues}
+              style={{ ...valueStyles, fontSize: Number(valueStyles.fontSize) * 0.8 }}
+            />
             <PercentChange percentChange={percentChange} styles={layout.getPercentChangeStyles(percentChange)} />
           </>
         );
