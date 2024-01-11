@@ -24,7 +24,7 @@ import (
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
 type SSOSettingsService struct {
-	log     log.Logger
+	logger  log.Logger
 	cfg     *setting.Cfg
 	store   ssosettings.Store
 	ac      ac.AccessControl
@@ -45,7 +45,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	store := database.ProvideStore(sqlStore)
 
 	svc := &SSOSettingsService{
-		log:          log.New("ssosettings.service"),
+		logger:       log.New("ssosettings.service"),
 		cfg:          cfg,
 		store:        store,
 		ac:           ac,
@@ -75,34 +75,7 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 		return nil, err
 	}
 
-	// storedSettings := map[string]any{}
-	// if dbSettings != nil {
-	// 	storedSettings = dbSettings.Settings
-	// }
-
-	// finalSettings := mergeSettings(storedSettings, systemSettings.Settings)
-
-	// if dataFromDB {
-	// 	dbSettings.Settings = finalSettings
-	// 	return dbSettings, nil
-	// }
-
-	// // if errors.Is(err, ssosettings.ErrNotFound) {
-	// // 	settings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
-	// // 	if err != nil {
-	// // 		return nil, err
-	// // 	}
-
-	// // 	return settings, nil
-	// // }
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// storeSettings.Source = models.DB
-
-	return mergeSSOSettings(dbSettings, systemSettings), nil
+	return s.mergeSSOSettings(dbSettings, systemSettings), nil
 }
 
 func (s *SSOSettingsService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
@@ -113,7 +86,7 @@ func (s *SSOSettingsService) GetForProviderWithRedactedSecrets(ctx context.Conte
 
 	for k, v := range storeSettings.Settings {
 		if isSecret(k) && v != "" {
-			storeSettings.Settings[k] = "*********"
+			storeSettings.Settings[k] = setting.RedactedPassword
 		}
 	}
 
@@ -135,7 +108,7 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 			return nil, err
 		}
 
-		result = append(result, mergeSSOSettings(dbSettings, fallbackSettings))
+		result = append(result, s.mergeSSOSettings(dbSettings, fallbackSettings))
 	}
 
 	return result, nil
@@ -156,15 +129,6 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 		return err
 	}
 
-	// systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, settings.Provider)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// add the SSO settings from system that are not available in the user input
-	// in order to have a complete set of SSO settings for every provider in the database
-	// settings.Settings = mergeSettings(settings.Settings, systemSettings.Settings)
-
 	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
 	if err != nil {
 		return err
@@ -178,7 +142,7 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 	go func() {
 		err = social.Reload(context.Background(), settings)
 		if err != nil {
-			s.log.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
+			s.logger.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
 		}
 	}()
 
@@ -283,11 +247,11 @@ func (s *SSOSettingsService) Run(ctx context.Context) error {
 }
 
 func (s *SSOSettingsService) doReload(ctx context.Context) {
-	s.log.Debug("reloading SSO Settings for all providers")
+	s.logger.Debug("reloading SSO Settings for all providers")
 
 	settingsList, err := s.List(ctx)
 	if err != nil {
-		s.log.Error("failed to fetch SSO Settings for all providers", "err", err)
+		s.logger.Error("failed to fetch SSO Settings for all providers", "err", err)
 		return
 	}
 
@@ -296,27 +260,34 @@ func (s *SSOSettingsService) doReload(ctx context.Context) {
 
 		err = connector.Reload(ctx, *setting)
 		if err != nil {
-			s.log.Error("failed to reload SSO Settings", "provider", provider, "err", err)
+			s.logger.Error("failed to reload SSO Settings", "provider", provider, "err", err)
 			continue
 		}
 	}
 }
 
-func isSecret(fieldName string) bool {
-	secretFieldPatterns := []string{"secret"}
-
-	for _, v := range secretFieldPatterns {
-		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
-			return true
-		}
+// mergeSSOSettings merges the settings from the database with the system settings
+// Required because it is possible that the user has configured some of the settings (current Advanced OAuth settings)
+// and the rest of the settings are loaded from the system settings
+func (s *SSOSettingsService) mergeSSOSettings(dbSettings, systemSettings *models.SSOSettings) *models.SSOSettings {
+	if dbSettings == nil {
+		s.logger.Debug("No SSO Settings found in the database, using system settings")
+		return systemSettings
 	}
-	return false
+
+	s.logger.Debug("Merging SSO Settings", "dbSettings", dbSettings.Settings, "systemSettings", systemSettings.Settings)
+
+	finalSettings := mergeSettings(dbSettings.Settings, systemSettings.Settings)
+
+	dbSettings.Settings = finalSettings
+
+	return dbSettings
 }
 
-func mergeSettings(apiSettings, systemSettings map[string]any) map[string]any {
+func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
-	for k, v := range apiSettings {
+	for k, v := range storedSettings {
 		settings[k] = v
 	}
 
@@ -329,24 +300,15 @@ func mergeSettings(apiSettings, systemSettings map[string]any) map[string]any {
 	return settings
 }
 
-func mergeSSOSettings(dbSettings, systemSettings *models.SSOSettings) *models.SSOSettings {
-	storedSettings := map[string]any{}
-	if dbSettings != nil {
-		storedSettings = dbSettings.Settings
-	}
+func isSecret(fieldName string) bool {
+	secretFieldPatterns := []string{"secret"}
 
-	finalSettings := mergeSettings(storedSettings, systemSettings.Settings)
-
-	if dbSettings != nil {
-		dbSettings.Settings = finalSettings
-		return dbSettings
+	for _, v := range secretFieldPatterns {
+		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+			return true
+		}
 	}
-
-	return &models.SSOSettings{
-		Provider: systemSettings.Provider,
-		Settings: finalSettings,
-		Source:   models.System,
-	}
+	return false
 }
 
 func isProviderConfigurable(provider string) bool {
