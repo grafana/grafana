@@ -3,6 +3,9 @@ import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
 
+import { createErrorNotification, createSuccessNotification } from '../../../core/copy/appNotification';
+import { notifyApp } from '../../../core/reducers/appNotification';
+
 export interface ChannelRS {
   id: string;
   name: string;
@@ -64,7 +67,28 @@ export const shareToSlackApi = createApi({
       }),
       providesTags: (result, error, { dashboardUid }) => [{ type: 'preview', id: dashboardUid }],
     }),
+    share: builder.mutation<
+      void,
+      {
+        channelIds: string[];
+        message?: string;
+        imagePreviewUrl: string;
+        dashboardUid: string;
+        panelId?: string;
+        dashboardPath: string;
+      }
+    >({
+      query: (payload) => ({
+        url: `/api/share/${payload.dashboardUid}/slack`,
+        method: 'POST',
+        data: payload,
+      }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(notifyApp(createSuccessNotification('Shared to slack')));
+      },
+    }),
   }),
 });
 
-export const { useGetChannelsQuery, useCreateDashboardPreviewQuery } = shareToSlackApi;
+export const { useGetChannelsQuery, useCreateDashboardPreviewQuery, useShareMutation } = shareToSlackApi;

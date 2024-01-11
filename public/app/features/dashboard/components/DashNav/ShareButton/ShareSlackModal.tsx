@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Button, Field, Modal, MultiSelect, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Field, Modal, MultiSelect, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 
-import { useCreateDashboardPreviewQuery, useGetChannelsQuery } from '../../../api/shareToSlackApi';
+import { useCreateDashboardPreviewQuery, useGetChannelsQuery, useShareMutation } from '../../../api/shareToSlackApi';
 
 export function ShareSlackModal({
   dashboardUid,
@@ -27,13 +27,30 @@ export function ShareSlackModal({
     refetch,
     isFetching: isPreviewFetching,
   } = useCreateDashboardPreviewQuery({ dashboardUid, dashboardUrl }, { refetchOnMountOrArgChange: false });
+  const [share, { isLoading: isShareLoading, isSuccess: isShareSuccess }] = useShareMutation();
 
   const disableShareButton = isChannelsLoading || isChannelsFetching || isPreviewLoading || isPreviewFetching;
+
+  useEffect(() => {
+    if (isShareSuccess) {
+      onDismiss();
+    }
+  }, [isShareSuccess]);
+
+  const onShareClick = () => {
+    share({
+      channelIds: value.map((v) => v.value!),
+      message: description,
+      imagePreviewUrl: preview!.previewUrl,
+      dashboardUid: dashboardUid,
+      dashboardPath: dashboardUrl,
+    });
+  };
 
   return (
     <Modal className={styles.modal} isOpen title="Share to Slack" onDismiss={onDismiss}>
       <div>
-        <Field label="Select channel">
+        <Field label="Select channel *">
           <MultiSelect
             isLoading={isChannelsLoading || isChannelsFetching}
             placeholder="Select channel"
@@ -74,10 +91,13 @@ export function ShareSlackModal({
         )}
       </div>
       <Modal.ButtonRow>
+        {isShareLoading && <Spinner size="lg" />}
         <Button variant="secondary" fill="outline" onClick={onDismiss}>
           Cancel
         </Button>
-        <Button disabled={!value.length || disableShareButton}>Share</Button>
+        <Button disabled={!value.length || disableShareButton || isShareLoading} onClick={onShareClick}>
+          Share
+        </Button>
       </Modal.ButtonRow>
     </Modal>
   );
