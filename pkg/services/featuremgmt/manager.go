@@ -22,6 +22,8 @@ type FeatureManager struct {
 	enabled         map[string]bool // only the "on" values
 	config          string          // path to config file
 	vars            map[string]any
+	startup         map[string]bool   // the explicit values registered at startup
+	warnings        map[string]string // potential warnings about the flag
 	log             log.Logger
 }
 
@@ -73,16 +75,16 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 }
 
 // meetsRequirements checks if grafana is able to run the given feature due to dev mode or licensing requirements
-func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) bool {
+func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) (bool, string) {
 	if ff.RequiresDevMode && !fm.isDevMod {
-		return false
+		return false, "requires dev mode"
 	}
 
 	if ff.RequiresLicense && (fm.licensing == nil || !fm.licensing.FeatureEnabled(ff.Name)) {
-		return false
+		return false, "license requirement"
 	}
 
-	return true
+	return true, ""
 }
 
 // Update
@@ -90,14 +92,16 @@ func (fm *FeatureManager) update() {
 	enabled := make(map[string]bool)
 	for _, flag := range fm.flags {
 		// if grafana cannot run the feature, omit metrics around it
-		if !fm.meetsRequirements(flag) {
+		ok, reason := fm.meetsRequirements(flag)
+		if !ok {
+			fm.warnings[flag.Name] = reason
 			continue
 		}
 
 		// Update the registry
 		track := 0.0
-		// TODO: CEL - expression
-		if flag.Expression == "true" {
+
+		if flag.Expression == "true" || (fm.startup[flag.Name]) {
 			track = 1
 			enabled[flag.Name] = true
 		}
@@ -196,30 +200,35 @@ func WithManager(spec ...any) *FeatureManager {
 			idx++
 		}
 
-		features[key] = &FeatureFlag{Name: key, Enabled: val}
+		features[key] = &FeatureFlag{Name: key}
 		if val {
 			enabled[key] = true
 		}
 	}
 
-	return &FeatureManager{enabled: enabled, flags: features}
+	return &FeatureManager{enabled: enabled, flags: features, startup: enabled, warnings: map[string]string{}}
 }
 
-// WithFeatureFlags is used to define feature toggles for testing.
+// WithFeatureManager is used to define feature toggle manager for testing.
 // It should be used when your test feature toggles require metadata beyond `Name` and `Enabled`.
 // You should provide a feature toggle Name at a minimum.
-func WithFeatureFlags(flags []*FeatureFlag) *FeatureManager {
+func WithFeatureManager(flags []*FeatureFlag, disabled ...string) *FeatureManager {
 	count := len(flags)
 	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)
+
+	dis := make(map[string]bool)
+	for _, v := range disabled {
+		dis[v] = true
+	}
 
 	for _, f := range flags {
 		if f.Name == "" {
 			continue
 		}
 		features[f.Name] = f
-		enabled[f.Name] = f.Enabled
+		enabled[f.Name] = !dis[f.Name]
 	}
 
-	return &FeatureManager{enabled: enabled, flags: features}
+	return &FeatureManager{enabled: enabled, flags: features, startup: enabled, warnings: map[string]string{}}
 }

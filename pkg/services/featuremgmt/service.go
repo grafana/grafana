@@ -1,7 +1,6 @@
 package featuremgmt
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -28,6 +27,8 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 		licensing:    licensing,
 		flags:        make(map[string]*FeatureFlag, 30),
 		enabled:      make(map[string]bool),
+		startup:      make(map[string]bool),
+		warnings:     make(map[string]string),
 		allowEditing: cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateWebhook != "",
 		log:          log.New("featuremgmt"),
 	}
@@ -41,21 +42,21 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 		return mgmt, err
 	}
 	for key, val := range flags {
-		flag, ok := mgmt.flags[key]
+		_, ok := mgmt.flags[key]
 		if !ok {
 			switch key {
 			// renamed the flag so it supports more panels
 			case "autoMigrateGraphPanels":
-				flag = mgmt.flags[FlagAutoMigrateOldPanels]
+				key = FlagAutoMigrateOldPanels
 			default:
-				flag = &FeatureFlag{
+				mgmt.flags[key] = &FeatureFlag{
 					Name:  key,
 					Stage: FeatureStageUnknown,
 				}
-				mgmt.flags[key] = flag
+				mgmt.warnings[key] = "unknown flag in config"
 			}
 		}
-		flag.Expression = fmt.Sprintf("%t", val) // true | false
+		mgmt.startup[key] = val
 	}
 
 	// Load config settings

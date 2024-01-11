@@ -95,7 +95,7 @@ permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,2023-08-0
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,2023-07-21,false,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,2023-07-26,false,false,true,false
 influxdbSqlSupport,GA,@grafana/observability-metrics,2023-08-02,false,false,true,false
-alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,2023-08-15,false,false,true,false
+alertingNoDataErrorExecution,GA,@grafana/alerting-squad,2023-08-15,false,false,true,false
 angularDeprecationUI,experimental,@grafana/plugins-platform-backend,2023-08-29,false,false,false,true
 dashgpt,preview,@grafana/dashboards-squad,2023-11-17,false,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,2023-08-31,false,false,true,false
