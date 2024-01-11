@@ -403,7 +403,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
 
         {config.secureSocksDSProxyEnabled && (
-          <SecureSocksProxySettings options={options} onOptionsChange={() => onOptionsChange(options)} />
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
       </ConfigSection>
     </>
