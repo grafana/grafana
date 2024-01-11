@@ -252,14 +252,10 @@ BarGaugeNamePlacement: "auto" | "top" | "left" @cuetsy(kind="enum")
 // Allows for the bar gauge size to be set explicitly
 BarGaugeSizing: "auto" | "manual" @cuetsy(kind="enum")
 
-// Allows for the tooltip size to be set explicitly
-TooltipSizing: "auto" | "manual" @cuetsy(kind="enum")
-
 // TODO docs
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
-  sizing: TooltipSizing
 	maxTooltipWidth?: number
 	maxTooltipHeight?: number
 } @cuetsy(kind="interface")

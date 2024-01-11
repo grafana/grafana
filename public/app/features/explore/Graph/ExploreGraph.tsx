@@ -23,7 +23,6 @@ import {
   LegendDisplayMode,
   TooltipDisplayMode,
   SortOrder,
-  TooltipSizing,
   GraphThresholdsStyleConfig,
   TimeZone,
 } from '@grafana/schema';
@@ -175,7 +174,7 @@ export function ExploreGraph({
 
   const panelOptions: TimeSeriesOptions = useMemo(
     () => ({
-      tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None, sizing: TooltipSizing.Auto },
+      tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
       legend: {
         displayMode: LegendDisplayMode.List,
         showLegend: true,

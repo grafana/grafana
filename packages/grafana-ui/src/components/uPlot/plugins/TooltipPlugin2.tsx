@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { VizTooltipOptions, TooltipSizing } from '@grafana/schema';
+import { VizTooltipOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -101,9 +101,8 @@ export const TooltipPlugin2 = ({
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  const isTooltipAutoSizing = tooltipOptions?.sizing === TooltipSizing.Auto;
-  const maxWidth = isTooltipAutoSizing ? DEFAULT_TOOLTIP_WIDTH : tooltipOptions?.maxTooltipWidth;
-  const maxHeight = isTooltipAutoSizing ? 'auto' : tooltipOptions?.maxTooltipHeight;
+  const maxWidth = tooltipOptions?.maxTooltipWidth || DEFAULT_TOOLTIP_WIDTH;
+  const maxHeight = tooltipOptions?.maxTooltipHeight || DEFAULT_TOOLTIP_HEIGHT;
   const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
   const renderRef = useRef(render);
@@ -450,7 +449,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, width: number | undefined, height: number | string | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth: number | undefined, maxHeight: number | undefined) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -462,9 +461,8 @@ const getStyles = (theme: GrafanaTheme2, width: number | undefined, height: numb
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
-    maxWidth: `${width}px`,
-    maxHeight: `${height}px`,
-    width: DEFAULT_TOOLTIP_WIDTH,
+    width: `${maxWidth}px`,
+    maxHeight: `${maxHeight}px`,
     height: 'auto',
   }),
   pinned: css({

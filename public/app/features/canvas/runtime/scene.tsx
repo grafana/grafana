@@ -665,7 +665,6 @@ export class Scene {
   };
 
   render() {
-    // console.log({isPanelEditing: this.isPanelEditing, isEditingEnabled: this.isEditingEnabled});
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
@@ -689,12 +688,6 @@ export class Scene {
             e.preventDefault();
             e.stopPropagation();
           }
-          // console.log(this.isPanelEditing, e.button === 2, !e.ctrlKey);
-          // if (this.isPanelEditing && e.button === 2 && !e.ctrlKey) {
-          //   e.preventDefault();
-          //   // e.stopPropagation();
-          //   console.log('right click down');
-          // }
         }}
         onMouseUp={(e) => {
           if (this.isPanelEditing && e.button === 2 && !e.ctrlKey) {
@@ -703,13 +696,6 @@ export class Scene {
             console.log('right click up');
           }
         }}
-        // onContextMenu={(e) => {
-        //   e.preventDefault();
-        //   // e.stopPropagation();
-        //   console.log('context menu');
-        //   // return false;
-        // }}
-        // onContextMenu={(e)=> e.preventDefault()}
       >
         {this.connections.render()}
         {this.root.render()}

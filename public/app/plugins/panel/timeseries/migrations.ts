@@ -30,7 +30,6 @@ import {
   ScaleDistribution,
   StackingMode,
   SortOrder,
-  TooltipSizing,
   GraphTransform,
   AnnotationQuery,
   ComparisonOperation,
@@ -364,7 +363,6 @@ export function graphToTimeseriesOptions(angular: any): {
     tooltip: {
       mode: TooltipDisplayMode.Single,
       sort: SortOrder.None,
-      sizing: TooltipSizing.Auto,
     },
   };
 
