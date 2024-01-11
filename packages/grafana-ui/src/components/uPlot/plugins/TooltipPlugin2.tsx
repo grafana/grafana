@@ -451,7 +451,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth: number | undefined, maxHeight: number | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth: number, maxHeight: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
