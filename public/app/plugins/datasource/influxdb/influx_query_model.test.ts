@@ -7,7 +7,7 @@ describe('InfluxQuery', () => {
 
   describe('interpolateQueryStr', () => {
     // This is not the desired functionality!
-    it('should not escape', () => {
+    it('does escape multi', () => {
       const query = new InfluxQueryModel(
         {
           refId: 'A',
@@ -29,6 +29,27 @@ describe('InfluxQuery', () => {
       expect(result).toEqual(
         '(www\\.example\\.com|www\\.example2\\.com|http:\\/\\/www\\.grafana\\.com\\/test\\/test\\.php)'
       );
+    });
+    it('does not escape single variable', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+        },
+        templateSrv,
+        {}
+      );
+
+      const result = query.interpolateQueryStr(
+        ['http://www.grafana.com/test/test.php|'],
+        {
+          multi: false,
+          includeAll: false,
+        },
+        undefined
+      );
+      expect(result).toEqual(['http://www.grafana.com/test/test.php|']);
     });
   });
 
