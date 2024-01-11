@@ -1,5 +1,5 @@
 import { isEmpty, truncate } from 'lodash';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, Button, Dropdown, LinkButton, Menu, Stack, TabContent, Text, TextLink } from '@grafana/ui';
@@ -29,6 +29,7 @@ import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
+import { RedirectToCloneRule } from '../../rules/CloneRule';
 import { Details } from '../tabs/Details';
 import { History } from '../tabs/History';
 import { InstancesList } from '../tabs/Instances';
@@ -76,6 +77,11 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
+  // this will be used to track if we are in the process of cloning a rule
+  // we want to be able to show a modal if the rule has been provisioned explain the limitations
+  // of duplicating provisioned alert rules
+  const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
+
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
    * We should show it in development mode
@@ -112,7 +118,9 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
                 />
               )}
               {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
-              {canDuplicate && <Menu.Item label="Duplicate" icon="copy" />}
+              {canDuplicate && (
+                <Menu.Item label="Duplicate" icon="copy" onClick={() => setDuplicateRuleIdentifier(identifier)} />
+              )}
               <Menu.Divider />
               <Menu.Item label="Copy link" icon="share-alt" onClick={copyShareUrl} />
               {canExport && (
@@ -167,6 +175,14 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
         </Stack>
       </Stack>
       {deleteModal}
+      {duplicateRuleIdentifier && (
+        <RedirectToCloneRule
+          redirectTo={true}
+          identifier={duplicateRuleIdentifier}
+          isProvisioned={isProvisioned}
+          onDismiss={() => setDuplicateRuleIdentifier(undefined)}
+        />
+      )}
     </AlertingPageWrapper>
   );
 };
@@ -196,7 +212,7 @@ const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
     returnTo,
   });
 
-  return <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" url={url} />;
+  return <Menu.Item key="with-modifications" label="With modifications" icon="file-edit-alt" url={url} />;
 };
 
 const createMetadata = (rule: CombinedRule): PageInfoItem[] => {

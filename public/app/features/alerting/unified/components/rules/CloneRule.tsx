@@ -1,28 +1,39 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import { Redirect } from 'react-router-dom';
+import { Redirect, useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
+import { createUrl } from '../../utils/url';
 
 interface ConfirmCloneRuleModalProps {
   identifier: RuleIdentifier;
   isProvisioned: boolean;
+  redirectTo?: boolean;
   onDismiss: () => void;
 }
 
-export function RedirectToCloneRule({ identifier, isProvisioned, onDismiss }: ConfirmCloneRuleModalProps) {
-  const styles = useStyles2(getStyles);
-
+export function RedirectToCloneRule({
+  identifier,
+  isProvisioned,
+  redirectTo = false,
+  onDismiss,
+}: ConfirmCloneRuleModalProps) {
   // For provisioned rules an additional confirmation step is required
   // Users have to be aware that the cloned rule will NOT be marked as provisioned
+  const location = useLocation();
   const [stage, setStage] = useState<'redirect' | 'confirm'>(isProvisioned ? 'confirm' : 'redirect');
 
   if (stage === 'redirect') {
-    const cloneUrl = `/alerting/new?copyFrom=${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}`;
+    const copyFrom = ruleId.stringifyIdentifier(identifier);
+    const returnTo = location.pathname + location.search;
+
+    const cloneUrl = createUrl(`/alerting/new`, {
+      copyFrom,
+      returnTo: redirectTo ? returnTo : '',
+    });
+
     return <Redirect to={cloneUrl} push />;
   }
 
@@ -33,7 +44,7 @@ export function RedirectToCloneRule({ identifier, isProvisioned, onDismiss }: Co
       body={
         <div>
           <p>
-            The new rule will <span className={styles.bold}>NOT</span> be marked as a provisioned rule.
+            The new rule will <strong>not</strong> be marked as a provisioned rule.
           </p>
           <p>
             You will need to set a new evaluation group for the copied rule because the original one has been
@@ -87,9 +98,3 @@ export const CloneRuleButton = React.forwardRef<HTMLButtonElement, CloneRuleButt
 );
 
 CloneRuleButton.displayName = 'CloneRuleButton';
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  bold: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-});
