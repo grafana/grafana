@@ -28,7 +28,18 @@ const (
 
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
+
+	FixedCloudRolePrefix = "fixed:cloud:"
+	FixedCloudViewerRole = "fixed:cloud:viewer"
+	FixedCloudEditorRole = "fixed:cloud:editor"
+	FixedCloudAdminRole  = "fixed:cloud:admin"
 )
+
+var AllFixedCloudRoles = map[string]struct{}{
+	FixedCloudViewerRole: struct{}{},
+	FixedCloudEditorRole: struct{}{},
+	FixedCloudAdminRole:  struct{}{},
+}
 
 // Roles definition
 var (
