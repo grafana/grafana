@@ -55,6 +55,96 @@ func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(http.StatusOK, result.Channels)
 }
 
+func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response {
+	dashboardUid := web.Params(c.Req)[":uid"]
+
+	dashboard, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{UID: dashboardUid})
+	if err != nil {
+		hs.log.Error("fail to get dashboard", "err", err, "dashboard UID", dashboardUid)
+		return response.Error(400, "error parsing body", err)
+	}
+
+	var shareRequest ShareRequest
+	if err := web.Bind(c.Req, &shareRequest); err != nil {
+		return response.Error(400, "error parsing body", err)
+	}
+	// 		Blocks: []interface{
+	// 		Block{
+	// 			Type: "header",
+	// 			Text: &Text{
+	// 				Type: "plain_text",
+	// 				Text: dashboard.Title,
+	// 			},
+	// 		},
+	// 		{
+	// 			Type: "section",
+	// 			Text: &Text{
+	// 				Type: "plain_text",
+	// 				Text: shareRequest.Message,
+	// 			},
+	// 		},
+	// 		{
+	// 			Type: "image",
+	// 			Title: &Text{
+	// 				Type: "plain_text",
+	// 				Text: "Dashboard preview",
+	// 			},
+	// 			ImageURL: shareRequest.ImagePreviewUrl,
+	// 			AltText:  "dashboard preview",
+	// 		},
+	// 		{
+	// 			Type: "actions",
+	// 			Elements: []Element{{
+	// 				Type: "button",
+	// 				Text: &Text{
+	// 					Type: "plain_text",
+	// 					Text: "View Dashboard",
+	// 				},
+	// 				Style:    "primary",
+	// 				Value:    hs.Cfg.Domain+shareRequest.DashboardPath
+	// 				ActionID: "view",
+	// 			}},
+	// 		},
+	// 	},
+	// },
+
+	for _, channelId := range shareRequest.ChannelIds {
+		postMessageRequest := &PostMessageRequest{
+			Channel: channelId,
+			Text:    dashboard.Title,
+		}
+
+		jsonBody, err := json.Marshal(postMessageRequest)
+
+		if err != nil {
+			return response.Error(400, "error parsing body", err)
+		}
+
+		req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/chat.postMessage", bytes.NewReader(jsonBody))
+		req.Header.Add("Content-Type", "application/json; charset=utf-8")
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
+
+		if err != nil {
+			fmt.Errorf("client: could not create request: %w", err)
+		}
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Errorf("client: error making http request: %w", err)
+		}
+
+		resBody, err := io.ReadAll(res.Body)
+		if err != nil {
+			fmt.Errorf("client: could not read response body: %w", err)
+		}
+
+		hs.log.Info("successfully sent unfurl event payload", "body", string(resBody))
+
+	}
+
+	return response.JSON(http.StatusOK, nil)
+}
+
 func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
 	var eventPayload EventPayload
 	if err := web.Bind(c.Req, &eventPayload); err != nil {
@@ -364,4 +454,18 @@ type UnfurlEventPayload struct {
 	Channel string  `json:"channel,omitempty"`
 	TS      string  `json:"ts,omitempty"`
 	Unfurls Unfurls `json:"unfurls,omitempty"`
+}
+
+type ShareRequest struct {
+	ChannelIds      []string `json:"channelIds"`
+	Message         string   `json:"message,omitempty"`
+	ImagePreviewUrl string   `json:"imagePreviewUrl"`
+	PanelId         string   `json:"panelId,omitempty"`
+	DashboardPath   string   `json:"dashboardPath"`
+}
+
+type PostMessageRequest struct {
+	Channel string `json:"channel"`
+	Text    string `json:"text,omitempty"`
+	// Blocks  string `json:"blocks,omitempty"`
 }
