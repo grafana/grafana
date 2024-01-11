@@ -2,12 +2,15 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { e2e } from '../utils';
 
+const DATASOURCE_ID = 'Prometheus';
+const DATASOURCE_TYPED_NAME = 'PrometheusDatasourceInstance';
+
 describe('Prometheus config', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
 
     e2e.pages.AddDataSource.visit();
-    e2e.pages.AddDataSource.dataSourcePluginsV2('Prometheus')
+    e2e.pages.AddDataSource.dataSourcePluginsV2(DATASOURCE_ID)
       .scrollIntoView()
       .should('be.visible') // prevents flakiness
       .click();
@@ -31,6 +34,27 @@ describe('Prometheus config', () => {
 
   it('should have a default editor component', () => {
     e2e.components.DataSource.Prometheus.configPage.defaultEditor().scrollIntoView().should('exist');
+  });
+
+  it('should save the default editor when navigating to explore', () => {
+    e2e.components.DataSource.Prometheus.configPage.defaultEditor().scrollIntoView().should('exist').click();
+
+    selectOption('Code');
+
+    e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('http://prom-url:9090');
+
+    e2e.pages.DataSource.name().clear();
+    e2e.pages.DataSource.name().type(DATASOURCE_TYPED_NAME);
+    e2e.pages.DataSource.saveAndTest().click();
+
+    e2e.pages.Explore.visit();
+
+    e2e.components.DataSourcePicker.container().should('be.visible').click();
+    cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+
+    const monacoLoadingText = 'Loading...';
+    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
+    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
   });
 
   it('should have a disable metric lookup component', () => {
