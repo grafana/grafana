@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { Menu, ModalsContext } from '@grafana/ui';
 
@@ -8,6 +9,7 @@ import { ShareModal } from '../../ShareModal';
 import { ShareSlackModal } from './ShareSlackModal';
 
 export function ShareMenu({ dashboard }: { dashboard: DashboardModel }) {
+  const location = useLocation();
   const { showModal, hideModal } = useContext(ModalsContext);
 
   return (
@@ -29,6 +31,8 @@ export function ShareMenu({ dashboard }: { dashboard: DashboardModel }) {
         label="Share to slack"
         onClick={() => {
           showModal(ShareSlackModal, {
+            dashboardUid: dashboard.uid,
+            dashboardUrl: `${location.pathname}${location.search}${location.hash}`,
             onDismiss: hideModal,
           });
         }}

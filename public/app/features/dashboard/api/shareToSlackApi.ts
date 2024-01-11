@@ -13,6 +13,18 @@ export interface Channel {
   label: string;
 }
 
+export interface SlackShareContent {
+  dashboardUid: string;
+  channelId: string;
+  message?: string;
+  imagePreviewUrl: string;
+}
+
+interface DashboardPreview {
+  dashboardUid: string;
+  dashboardUrl: string;
+}
+
 const backendSrvBaseQuery =
   ({ baseUrl }: { baseUrl: string }): BaseQueryFn<BackendSrvRequest> =>
   async (requestOptions) => {
@@ -45,12 +57,13 @@ export const shareToSlackApi = createApi({
       },
       providesTags: (result, error, dashboardUid) => ['channels'],
     }),
-    createDashboardPreview: builder.query<string[] | undefined, string>({
-      query: (dashboardUid) => ({
-        url: `/dashboards/${dashboardUid}/preview`,
+    createDashboardPreview: builder.query<{ previewUrl: string }, DashboardPreview>({
+      query: ({ dashboardUrl }) => ({
+        url: `/dashboards/preview`,
         method: 'POST',
+        data: { dashboardUrl },
       }),
-      providesTags: (result, error, dashboardUid) => [{ type: 'preview', id: dashboardUid }],
+      providesTags: (result, error, { dashboardUid }) => [{ type: 'preview', id: dashboardUid }],
     }),
   }),
 });
