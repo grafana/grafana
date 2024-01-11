@@ -1,0 +1,6 @@
+namespace: grafana
+
+resources:
+  - ns.yaml
+  - apiservice.yaml
+  - service.yaml

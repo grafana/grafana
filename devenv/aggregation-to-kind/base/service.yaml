@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: grafana
+spec:
+  ports:
+  - port: 6443
+    protocol: TCP
+    targetPort: 6443
