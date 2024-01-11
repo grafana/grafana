@@ -113,7 +113,7 @@ describe('VariablesEditView', () => {
 
       variableView.onTypeChange('constant');
       expect(variableView.getVariables()).toHaveLength(2);
-      const variable = variableView.getVariables()[1] as CustomVariable;
+      const variable = variableView.getVariables()[1];
       expect(variable).not.toBe(previousVariable);
       expect(variable.state.type).toBe('constant');
 

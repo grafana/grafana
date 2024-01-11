@@ -93,7 +93,7 @@ export function getVariableEditor(type: EditableVariableType) {
 }
 
 interface CommonVariableProperties {
-  name?: string;
+  name: string;
   label?: string;
 }
 
