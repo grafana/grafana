@@ -63,6 +63,20 @@ export const Components = {
     Prometheus: {
       configPage: {
         connectionSettings: 'Data source connection URL',
+        manageAlerts: 'alerts-manager',
+        scrapeInterval: 'data-testid scrape interval',
+        queryTimeout: 'data-testid query timeout',
+        defaultEditor: 'data-testid default editor',
+        disableMetricLookup: 'disable-metric-lookup',
+        prometheusType: 'data-testid prometheus type',
+        prometheusVersion: 'data-testid prometheus version',
+        cacheLevel: 'data-testid cache level',
+        incrementalQuerying: 'incremental-querying',
+        queryOverlapWindow: 'data-testid query overlap window',
+        disableRecordingRules: 'disable-recording-rules',
+        customQueryParameters: 'data-testid custom query parameters',
+        httpMethod: 'data-testid http method',
+
         exemplarsAddButton: 'data-testid Add exemplar config button',
         internalLinkSwitch: 'data-testid Internal link switch',
       },
