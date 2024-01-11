@@ -307,6 +307,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		if isReadyToRun {
+			sch.log.Error("\n\nRule is ready to run", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset) // TODO: Remove me!
 			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
 				scheduledAt: tick,
 				rule:        item,
