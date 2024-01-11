@@ -915,6 +915,10 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 
 // TODO: Duplicated from the rendering service - maybe we can do this in another way to not duplicate this
 func (hs *HTTPServer) getImageURL(imageName string) string {
+	if hs.Cfg.RendererCallbackUrl != "" {
+		return fmt.Sprintf("%s%s/%s", hs.Cfg.RendererCallbackUrl, "public/img/attachments", imageName)
+	}
+
 	protocol := hs.Cfg.Protocol
 	switch protocol {
 	case setting.HTTPScheme:
