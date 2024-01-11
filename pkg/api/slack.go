@@ -229,31 +229,6 @@ func extractURLInfo(dashboardURL string) (string, string) {
 	return res[1], res[2]
 }
 
-//func (hs *HTTPServer) RenderAndPostToSlack(c *contextmodel.ReqContext) response.Response {
-//	// TODO: hardcoded for now, the input of this method should be the event payload
-//	//source := "conversations_history"
-//	//unfurlID := "12345"
-//	rawURL := "http://localhost:3000/render/d/RvNCUVm4z/dashboard-with-expressions?orgId=1&from=1704891104021&to=1704912704021&width=1000&height=500&tz=America%2FBuenos_Aires"
-//	renderPath, _ := extractURLInfo(rawURL)
-//	if renderPath == "" {
-//		hs.log.Error("fail to extract render path from link")
-//		return response.Error(http.StatusInternalServerError, "fail to extract render path from link", fmt.Errorf("fail to extract render path from link"))
-//	}
-//
-//	imagePath, err := hs.renderDashboard(c.Req.Context(), renderPath)
-//	if err != nil {
-//		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
-//	}
-//
-//	// post to slack api
-//	err = hs.sendUnfurlEvent(c.Req.Context(), EventPayload{}, imagePath, "Dashboard with expressions")
-//	if err != nil {
-//		return response.Error(http.StatusInternalServerError, "Fail to send unfurl event to Slack", err)
-//	}
-//
-//	return response.Empty(http.StatusOK)
-//}
-
 func (hs *HTTPServer) renderDashboard(ctx context.Context, renderPath string) (string, error) {
 	result, err := hs.RenderService.Render(ctx, rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
