@@ -5,6 +5,8 @@ keywords:
   - configuration
   - documentation
   - upgrade
+  - '10.3'
+  - '10.2.3'
 title: Upgrade to Grafana v10.3
 menuTitle: Upgrade to v10.3
 weight: 1400

@@ -5,6 +5,7 @@ keywords:
   - new
   - documentation
   - '10.3'
+  - '10.2.3'
   - release notes
 labels:
 products:
