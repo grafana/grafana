@@ -118,12 +118,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2 + 1,
+      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
       height: '100%',
     }),
     contentNoSearchBar: css({
-      paddingTop: TOP_BAR_LEVEL_HEIGHT + 1,
+      paddingTop: TOP_BAR_LEVEL_HEIGHT,
     }),
     contentChromeless: css({
       paddingTop: 0,
@@ -148,7 +148,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: config.featureToggles.dockedMegaMenu ? undefined : shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     panes: css({
       label: 'page-panes',
