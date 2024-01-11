@@ -275,12 +275,6 @@ describe('InfluxDataSource Backend Mode', () => {
       fetchMock.mockImplementation(fetchMockImpl);
     });
 
-    // These tests are passing but this is NOT the functionality we see in the frontend.
-    // SELECT "used_percent" FROM "disk" WHERE ("path"::tag =~ /^$path$/) AND $timeFilter
-    // Becomes
-    // SELECT \"used_percent\" FROM \"disk\" WHERE (\"path\"::tag =~ /^/etc/telegraf/telegraf\\\\.conf$/) AND $timeFilter
-    // Something is still wrong with our tests!
-
     it('should render variables with URL', () => {
       ds.metricFindQuery('SELECT "used_percent" FROM "disk" WHERE ("path"::tag =~ /^$var1$/) AND $timeFilter', {
         ...queryOptions,

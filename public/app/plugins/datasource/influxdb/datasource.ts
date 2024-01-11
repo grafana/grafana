@@ -172,7 +172,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
-    debugger;
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
@@ -280,7 +279,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: Partial<CustomFormatterVariable>) {
-    debugger;
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return influxRegularEscape(value);
