@@ -567,9 +567,10 @@ func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (i
 
 func (r *xormRepositoryImpl) fetchIDs(ctx context.Context, table, condition string) ([]int64, error) {
 	sql := fmt.Sprintf(`SELECT id FROM %s`, table)
-	if condition != "" {
-		sql += fmt.Sprintf(` WHERE %s`, condition)
+	if condition == "" {
+		return nil, fmt.Errorf("condition must be supplied; cannot fetch IDs from entire table")
 	}
+	sql += fmt.Sprintf(` WHERE %s`, condition)
 	ids := make([]int64, 0)
 	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
 		return session.SQL(sql).Find(&ids)
