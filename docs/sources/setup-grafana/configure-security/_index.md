@@ -49,7 +49,7 @@ Self-hosted reverse proxy options include but are not limited to:
 
 Users with the `Viewer role` can enter _any possible query_ in _any_ of the data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
 
-For example, in a Grafana instance with one data source, one dashboard, and one panel that has one query defined, you might assume that a Viewer can only see the result of the query defined in that panel. Actually, the Viewer as access to send any query to the data source. With a command-line tool like curl (there are many tools for this), the Viewer can make their own query to the data source and potentially access sensitive data.
+For example, in a Grafana instance with one data source, one dashboard, and one panel that has one query defined, you might assume that a Viewer can only see the result of the query defined in that panel. Actually, the Viewer has access to send any query to the data source. With a command-line tool like curl (there are many tools for this), the Viewer can make their own query to the data source and potentially access sensitive data.
 
 To address this vulnerability, you can restrict data source query access in the following ways:
 
