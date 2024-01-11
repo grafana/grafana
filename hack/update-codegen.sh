@@ -30,7 +30,7 @@ CLIENTSET_PKG_NAME=clientset \
 "${CODEGEN_PKG}/generate-groups.sh" "all" \
   github.com/grafana/grafana/pkg/generated \
   github.com/grafana/grafana/pkg/apis \
-  "folders:v0alpha1" \
+  "datasource:v0alpha1" \
   --output-base "${OUTDIR}" \
   --go-header-file "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
 
@@ -40,6 +40,6 @@ CLIENTSET_PKG_NAME=clientset \
   github.com/grafana/grafana/pkg/generated \
   github.com/grafana/grafana/pkg/apis \
   github.com/grafana/grafana/pkg/apis \
-  "folders:v0alpha1" \
+  "datasource:v0alpha1" \
   --output-base "${OUTDIR}" \
   --go-header-file "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
