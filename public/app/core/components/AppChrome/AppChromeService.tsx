@@ -33,10 +33,10 @@ export class AppChromeService {
 
   private megaMenuDocked = Boolean(
     config.featureToggles.dockedMegaMenu &&
-      window.innerWidth >= config.theme2.breakpoints.values.xxl &&
+      window.innerWidth >= config.theme2.breakpoints.values.xl &&
       store.getBool(
         DOCKED_LOCAL_STORAGE_KEY,
-        Boolean(config.featureToggles.dockedMegaMenu && window.innerWidth >= config.theme2.breakpoints.values.xxl)
+        Boolean(config.featureToggles.dockedMegaMenu && window.innerWidth >= config.theme2.breakpoints.values.xl)
       )
   );
 
