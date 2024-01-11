@@ -16,16 +16,24 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
 var _ grafanaapiserver.APIGroupBuilder = (*QueryAPIBuilder)(nil)
 
-type QueryAPIBuilder struct{}
+type QueryAPIBuilder struct {
+	log                    log.Logger
+	concurrentQueryLimit   int
+	UserFacingDefaultError string
+}
 
 func NewQueryAPIBuilder() *QueryAPIBuilder {
-	return &QueryAPIBuilder{}
+	return &QueryAPIBuilder{
+		concurrentQueryLimit: 4, // from config?
+		log:                  log.New("query_apiserver"),
+	}
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *QueryAPIBuilder {
@@ -65,8 +73,13 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	gv := v0alpha1.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
 
-	ds := newDataSourceStorage()
-	plugins := newPluginsStorage()
+	cache, err := initRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	ds := newDataSourceStorage(cache)
+	plugins := newPluginsStorage(cache)
 
 	storage := map[string]rest.Storage{}
 	storage[ds.resourceInfo.StoragePath()] = ds

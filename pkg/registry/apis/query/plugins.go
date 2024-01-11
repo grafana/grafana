@@ -23,17 +23,15 @@ var (
 type pluginsStorage struct {
 	resourceInfo   *apis.ResourceInfo
 	tableConverter rest.TableConvertor
-	cache          *v0alpha1.DataSourcePluginList
+	cache          *registry
 }
 
-func newPluginsStorage() *pluginsStorage {
+func newPluginsStorage(reg *registry) *pluginsStorage {
 	var resourceInfo = v0alpha1.DataSourcePluginResourceInfo
 	return &pluginsStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
-		cache: &v0alpha1.DataSourcePluginList{
-			Items: []v0alpha1.DataSourcePlugin{},
-		},
+		cache:          reg,
 	}
 }
 
@@ -60,5 +58,5 @@ func (s *pluginsStorage) ConvertToTable(ctx context.Context, object runtime.Obje
 }
 
 func (s *pluginsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.cache, nil
+	return s.cache.GetPlugins(ctx, options)
 }

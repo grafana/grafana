@@ -23,17 +23,15 @@ var (
 type dataSourceStorage struct {
 	resourceInfo   *apis.ResourceInfo
 	tableConverter rest.TableConvertor
-	cache          *v0alpha1.DataSourceList
+	cache          *registry
 }
 
-func newDataSourceStorage() *dataSourceStorage {
+func newDataSourceStorage(reg *registry) *dataSourceStorage {
 	var resourceInfo = v0alpha1.DataSourceResourceInfo
 	return &dataSourceStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
-		cache: &v0alpha1.DataSourceList{
-			Items: []v0alpha1.DataSource{},
-		},
+		cache:          reg,
 	}
 }
 
@@ -60,5 +58,16 @@ func (s *dataSourceStorage) ConvertToTable(ctx context.Context, object runtime.O
 }
 
 func (s *dataSourceStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.cache, nil
+	datasources, err := s.cache.GetDataSources(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	viewable := &v0alpha1.DataSourceList{ListMeta: datasources.ListMeta}
+	for _, item := range datasources.Items {
+		// TODO: access control on the datasources
+		if true {
+			viewable.Items = append(viewable.Items, item)
+		}
+	}
+	return viewable, err
 }
