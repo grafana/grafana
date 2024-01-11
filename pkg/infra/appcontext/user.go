@@ -15,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+const (
+	KubeadmProvisionedAdminGroup = "kubeadm:cluster-admins"
+)
+
 type ctxUserKey struct{}
 
 // WithUser adds the supplied SignedInUser to the context.
@@ -52,6 +56,8 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 
 		for _, group := range k8sUserInfo.GetGroups() {
 			switch group {
+			case KubeadmProvisionedAdminGroup:
+				fallthrough
 			case k8suser.APIServerUser:
 				fallthrough
 			case k8suser.SystemPrivilegedGroup:
