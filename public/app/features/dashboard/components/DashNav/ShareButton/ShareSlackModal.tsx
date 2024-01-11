@@ -15,7 +15,11 @@ export function ShareSlackModal({
   dashboardUrl: string;
   onDismiss(): void;
 }) {
-  const [value, setValue] = useState<Array<SelectableValue<string>>>();
+  const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
+  const [description, setDescription] = useState<string>();
+
+  const styles = useStyles2(getStyles);
+
   const { data: channels, isLoading: isChannelsLoading, isFetching: isChannelsFetching } = useGetChannelsQuery();
   const {
     data: preview,
@@ -23,8 +27,6 @@ export function ShareSlackModal({
     refetch,
     isFetching: isPreviewFetching,
   } = useCreateDashboardPreviewQuery({ dashboardUid, dashboardUrl }, { refetchOnMountOrArgChange: false });
-
-  const styles = useStyles2(getStyles);
 
   const disableShareButton = isChannelsLoading || isChannelsFetching || isPreviewLoading || isPreviewFetching;
 
@@ -37,13 +39,16 @@ export function ShareSlackModal({
             placeholder="Select channel"
             options={channels}
             value={value}
-            onChange={(v) => {
-              setValue(v);
-            }}
+            onChange={setValue}
           />
         </Field>
         <Field label="Description">
-          <TextArea placeholder="Type your message" cols={2} />
+          <TextArea
+            placeholder="Type your message"
+            cols={2}
+            value={description}
+            onChange={(e) => setDescription(e.currentTarget.value)}
+          />
         </Field>
         <Field label="Dashboard preview" horizontal className={styles.refreshContainer}>
           {preview ? (
@@ -55,11 +60,13 @@ export function ShareSlackModal({
           )}
         </Field>
         {isPreviewLoading || isPreviewFetching ? (
-          <img
-            className={styles.dashboardPreview}
-            alt="dashboard-preview-placeholder"
-            src="public/img/share/dashboard_preview_placeholder.png"
-          />
+          <div className={styles.loadingContainer}>
+            <img
+              className={styles.loadingPreview}
+              alt="dashboard-preview-placeholder"
+              src="public/img/share/loading_grot.gif"
+            />
+          </div>
         ) : (
           <>
             <img className={styles.dashboardPreview} alt="dashboard-preview" src={preview?.previewUrl} />
@@ -70,7 +77,7 @@ export function ShareSlackModal({
         <Button variant="secondary" fill="outline" onClick={onDismiss}>
           Cancel
         </Button>
-        <Button disabled={!value || disableShareButton}>Share</Button>
+        <Button disabled={!value.length || disableShareButton}>Share</Button>
       </Modal.ButtonRow>
     </Modal>
   );
@@ -82,6 +89,13 @@ const getStyles = () => ({
   }),
   refreshContainer: css({
     alignItems: 'center',
+  }),
+  loadingContainer: css({
+    display: 'flex',
+    justifyContent: 'center',
+  }),
+  loadingPreview: css({
+    width: '66%',
   }),
   dashboardPreview: css({
     width: '100%',
