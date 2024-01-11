@@ -251,6 +251,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
       timeZone: oldModel.timezone,
       weekStart: oldModel.weekStart,
+      UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
     $behaviors: [
