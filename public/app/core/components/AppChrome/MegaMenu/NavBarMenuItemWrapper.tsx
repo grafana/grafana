@@ -3,8 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-
-import { MegaMenuItem } from '../DockedMegaMenu/MegaMenuItem';
+import { MegaMenuItem } from 'app/percona/shared/components/MegaMenuItem';
 
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarMenuSection } from './NavBarMenuSection';

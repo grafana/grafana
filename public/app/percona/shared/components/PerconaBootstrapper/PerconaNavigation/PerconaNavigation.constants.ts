@@ -345,6 +345,7 @@ export const PMM_NAV_MYSQL: NavModelItem = {
       text: 'High availability',
       icon: 'percona-cluster',
       hideFromTabs: true,
+      showChildren: true,
 
       children: [
         {
@@ -436,7 +437,6 @@ export const PMM_NAV_MONGO: NavModelItem = {
   url: `${config.appSubUrl}/d/mongodb-instance-overview/mongodb-instances-overview`,
   sortWeight: WEIGHTS.dashboards,
   hideFromTabs: true,
-  showChildren: true,
 
   children: [
     {
@@ -458,6 +458,7 @@ export const PMM_NAV_MONGO: NavModelItem = {
       text: 'High availability',
       icon: 'percona-cluster',
       hideFromTabs: true,
+      showChildren: true,
 
       children: [
         {

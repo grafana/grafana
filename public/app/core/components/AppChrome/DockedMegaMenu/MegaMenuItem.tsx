@@ -55,8 +55,6 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
     }
   }, [isActive, menuIsDocked]);
 
-  link.id === 'mongo' && console.log('link', link, linkHasChildren(link));
-
   if (!link.url) {
     return null;
   }
@@ -201,10 +199,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     fontStyle: 'italic',
     padding: theme.spacing(1, 1.5, 1, 7),
-  }),
-  // @PERCONA
-  iconSpacing: css({
-    marginRight: theme.spacing(1),
   }),
 });
 
