@@ -14,6 +14,11 @@ function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {
   return typeof error === 'object' && error != null && 'error' in error;
 }
 
+export interface Channel {
+  id: string;
+  name: string;
+}
+
 const backendSrvBaseQuery =
   ({ baseUrl }: { baseUrl: string }): BaseQueryFn<BackendSrvRequest & ReqOptions> =>
   async (requestOptions) => {
@@ -37,19 +42,19 @@ export const shareToSlackApi = createApi({
   tagTypes: ['channels', 'preview'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
-    getChannels: builder.query<string[] | undefined, string>({
-      query: (dashboardUid) => ({
+    getChannels: builder.query<Channel[], void>({
+      query: () => ({
         url: `/share/slack/channels`,
       }),
-      async onQueryStarted(_, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled;
-        } catch (e) {
-          if (isFetchBaseQueryError(e) && isFetchError(e.error)) {
-            dispatch(notifyApp(createErrorNotification(e.error.data.message)));
-          }
-        }
-      },
+      // async onQueryStarted(_, { dispatch, queryFulfilled }) {
+      //   try {
+      //     await queryFulfilled;
+      //   } catch (e) {
+      //     if (isFetchBaseQueryError(e) && isFetchError(e.error)) {
+      //       dispatch(notifyApp(createErrorNotification(e.error.data.message)));
+      //     }
+      //   }
+      // },
       providesTags: (result, error, dashboardUid) => ['channels'],
     }),
     createDashboardPreview: builder.query<string[] | undefined, string>({
