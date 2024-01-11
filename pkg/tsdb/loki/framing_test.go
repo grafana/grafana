@@ -53,6 +53,7 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse an empty response", filepath: "empty", query: matrixQuery},
 
 		{name: "parse structured metadata", filepath: "streams_structured_metadata", query: streamsQuery},
+		{name: "parse structured metadata different labels each log line", filepath: "streams_structured_metadata_2", query: streamsQuery},
 	}
 
 	runTest := func(folder string, path string, query lokiQuery, responseOpts ResponseOpts) {
