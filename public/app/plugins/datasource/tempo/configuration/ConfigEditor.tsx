@@ -13,12 +13,10 @@ import {
   DataSourceDescription,
 } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
+import { TraceToLogsSection, TraceToMetricsSection, TraceToProfilesSection } from '@grafana/traces';
 import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
-import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsSection } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { TraceToProfilesSection } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
 
 import { LokiSearchSettings } from './LokiSearchSettings';

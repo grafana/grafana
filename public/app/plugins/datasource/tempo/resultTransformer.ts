@@ -24,7 +24,7 @@ import {
   DataLinkConfigOrigin,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
+import { TraceToProfilesData } from '@grafana/traces';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { SearchTableType } from './dataquery.gen';

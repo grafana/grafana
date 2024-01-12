@@ -16,10 +16,14 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import {
+  TraceToProfilesOptions,
+  TraceToMetricQuery,
+  TraceToMetricsOptions,
+  TraceToLogsOptionsV2,
+  TraceToLogsTag,
+} from '@grafana/traces';
 import { Icon } from '@grafana/ui';
-import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 

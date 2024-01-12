@@ -18,8 +18,8 @@ import React from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
+import { TraceToProfilesOptions } from '@grafana/traces';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
 import { autoColor } from '../Theme';
 import { SpanLinkFunc } from '../types';

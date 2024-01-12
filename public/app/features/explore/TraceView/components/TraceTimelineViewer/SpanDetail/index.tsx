@@ -20,8 +20,8 @@ import React from 'react';
 import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
+import { TraceToProfilesOptions } from '@grafana/traces';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';

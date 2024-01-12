@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { IntervalInput, invalidTimeShiftError } from '@grafana/traces';
 import { InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
-import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
-import { invalidTimeShiftError } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 
 import { TempoJsonData } from '../types';
 

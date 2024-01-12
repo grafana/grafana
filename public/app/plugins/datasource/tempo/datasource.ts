@@ -31,8 +31,8 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
+import { TraceToLogsOptions } from '@grafana/traces';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 

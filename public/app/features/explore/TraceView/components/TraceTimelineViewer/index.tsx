@@ -18,8 +18,8 @@ import React, { RefObject } from 'react';
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
+import { TraceToProfilesOptions } from '@grafana/traces';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
