@@ -280,7 +280,7 @@ Flapping alerts occur when a metric hovers around the alert threshold condition 
 ### Trace to Profiles\*
 
 <!--Joey Tawadrous-->
-<!--internal_enablement_video-->
+<!--internal_enablement_video, also under tags Data sources and Profiles-->
 
 _Experimental in all editions of Grafana_
 
