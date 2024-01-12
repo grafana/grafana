@@ -54,7 +54,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       200: MuteTimeInterval
+//       202: MuteTimeInterval
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming

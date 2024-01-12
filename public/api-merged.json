@@ -3536,7 +3536,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "202": {
             "description": "MuteTimeInterval",
             "schema": {
               "$ref": "#/definitions/MuteTimeInterval"
@@ -21402,7 +21402,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -21590,6 +21589,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -21650,7 +21650,6 @@
       }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -21794,6 +21793,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
