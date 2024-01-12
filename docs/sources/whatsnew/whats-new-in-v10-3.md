@@ -18,9 +18,9 @@ weight: -40
 
 # What’s new in Grafana v10.3
 
-Welcome to Grafana 10.3! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
+Welcome to Grafana 10.3! Read on to learn about changes to navigation, visualizations and transformations, alerting, profiling, and logs.
 
-This also includes features released in Grafana 10.2.3 as well as breaking changes from that release. Features that were included in the 10.2.3 release are marked with an asterisk.
+We've also included here features released in Grafana 10.2.3, as well as breaking changes from that release. Features that were included in the 10.2.3 release are marked with an asterisk.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.3/).
 
