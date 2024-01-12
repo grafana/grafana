@@ -90,6 +90,21 @@ func TestAnnotationCleanUp(t *testing.T) {
 			APIAnnotationCount:       3,
 			affectedAnnotations:      0,
 		},
+		{
+			name:                          "should not fail if batch size is larger than SQLITE_MAX_VARIABLE_NUMBER for SQLite >= 3.32.0",
+			createAnnotationsNum:          40003,
+			createOldAnnotationsNum:       0,
+			annotationCleanupJobBatchSize: 32767,
+			cfg: &setting.Cfg{
+				AlertingAnnotationCleanupSetting:   settingsFn(0, 1),
+				DashboardAnnotationCleanupSettings: settingsFn(0, 1),
+				APIAnnotationCleanupSettings:       settingsFn(0, 1),
+			},
+			alertAnnotationCount:     1,
+			dashboardAnnotationCount: 1,
+			APIAnnotationCount:       1,
+			affectedAnnotations:      40000,
+		},
 	}
 
 	for _, test := range tests {
@@ -249,11 +264,22 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 	}
 
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.InsertMulti(newAnnotations)
-		require.NoError(t, err, "should be able to save annotation", err)
+		batchsize := 500
+		for i := 0; i < len(newAnnotations); i += batchsize {
+			_, err := sess.InsertMulti(newAnnotations[i:min(i+batchsize, len(newAnnotations))])
+			require.NoError(t, err)
+		}
+		return nil
+	})
+	require.NoError(t, err)
 
-		_, err = sess.InsertMulti(newAnnotationTags)
-		return err
+	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
+		batchsize := 500
+		for i := 0; i < len(newAnnotationTags); i += batchsize {
+			_, err := sess.InsertMulti(newAnnotationTags[i:min(i+batchsize, len(newAnnotationTags))])
+			require.NoError(t, err)
+		}
+		return nil
 	})
 	require.NoError(t, err)
 }
