@@ -121,7 +121,7 @@
     "@types/lodash": "4.14.202",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
-    "@types/marked": "5.0.1",
+    "@types/marked": "5.0.2",
     "@types/mousetrap": "1.6.11",
     "@types/node": "20.8.10",
     "@types/node-forge": "^1",
