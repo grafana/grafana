@@ -141,7 +141,7 @@
     "@types/react-virtualized-auto-sizer": "1.0.1",
     "@types/react-window": "1.8.5",
     "@types/react-window-infinite-loader": "^1",
-    "@types/redux-mock-store": "1.0.3",
+    "@types/redux-mock-store": "1.0.6",
     "@types/semver": "7.5.0",
     "@types/slate": "0.47.11",
     "@types/slate-plain-serializer": "0.7.2",
