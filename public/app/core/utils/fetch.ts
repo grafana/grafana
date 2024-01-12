@@ -103,23 +103,23 @@ export async function parseResponseBody<T>(
   if (responseType) {
     switch (responseType) {
       case 'arraybuffer':
-        return response.arrayBuffer() as any;
+        return response.arrayBuffer() as Promise<T>;
 
       case 'blob':
-        return response.blob() as any;
+        return response.blob() as Promise<T>;
 
       case 'json':
         // An empty string is not a valid JSON.
         // Sometimes (unfortunately) our APIs declare their Content-Type as JSON, however they return an empty body.
         if (response.headers.get('Content-Length') === '0') {
           console.warn(`${response.url} returned an invalid JSON`);
-          return {} as unknown as T;
+          return {} as Promise<T>;
         }
 
         return await response.json();
 
       case 'text':
-        return response.text() as any;
+        return response.text() as Promise<T>;
     }
   }
 
@@ -127,7 +127,7 @@ export async function parseResponseBody<T>(
   try {
     return JSON.parse(textData); // majority of the requests this will be something that can be parsed
   } catch {}
-  return textData as any;
+  return textData as T;
 }
 
 function serializeParams(data: Record<string, any>): string {

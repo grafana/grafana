@@ -272,12 +272,12 @@ class PanelCompatibilityWrapper {
               uid: SHARED_DASHBOARD_QUERY,
               type: 'datasource',
             },
-            ...(this._vizPanel.state.$data.state.$data as ShareQueryDataProvider).state.query,
+            ...this._vizPanel.state.$data.state.$data.state.query,
           },
         ];
       }
       if (this._vizPanel.state.$data.state.$data instanceof SceneQueryRunner) {
-        return (this._vizPanel.state.$data.state.$data as SceneQueryRunner).state.queries;
+        return this._vizPanel.state.$data.state.$data.state.queries;
       }
     }
 
