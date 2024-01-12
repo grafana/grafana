@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -44,15 +43,12 @@ func (s *SlackService) GetUserConversations(ctx context.Context) (*dtos.SlackCha
 	return result, nil
 }
 
-func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardTitle string) error {
-	grafanaURL := s.getGrafanaURL()
-	dashboardLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.DashboardPath)
-
+func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardTitle string, dashboardLink string) error {
 	blocks := []Block{{
-		Type: "section",
+		Type: "header",
 		Text: &Text{
-			Type: "mrkdwn",
-			Text: fmt.Sprintf("<%s|*%s*>", dashboardLink, dashboardTitle),
+			Type: "plain_text",
+			Text: dashboardTitle,
 		},
 	}}
 
@@ -112,15 +108,13 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 	return nil
 }
 
-func (s *SlackService) PostUnfurl(ctx context.Context, linkEvent EventPayload, imagePath string, dashboardTitle string) error {
+func (s *SlackService) PostUnfurl(ctx context.Context, linkEvent EventPayload, imageURL string, dashboardTitle string) error {
 	unfurlEvent := &UnfurlEventPayload{
 		Channel: linkEvent.Event.Channel,
 		TS:      linkEvent.Event.MessageTS,
 		Unfurls: make(Unfurls),
 	}
 
-	imageFileName := filepath.Base(imagePath)
-	imageURL := s.getImageURL(imageFileName)
 	for _, link := range linkEvent.Event.Links {
 		unfurlEvent.Unfurls[link.URL] = Unfurl{
 			Blocks: []Block{

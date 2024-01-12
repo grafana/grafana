@@ -42,7 +42,10 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 		return response.Error(400, "error parsing body", err)
 	}
 
-	err = hs.slackService.PostMessage(c.Req.Context(), shareRequest, dashboard.Title)
+	grafanaURL := hs.getGrafanaURL()
+	dashboardLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.DashboardPath)
+
+	err = hs.slackService.PostMessage(c.Req.Context(), shareRequest, dashboard.Title, dashboardLink)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "error posting message to Slack", err)
 	}
@@ -93,43 +96,11 @@ func (hs *HTTPServer) handleLinkSharedEvent(event slack.EventPayload) {
 		return
 	}
 
-	err = hs.slackService.PostUnfurl(ctx, event, imagePath, dashboard.Title)
+	imageURL := hs.getImageURL(filepath.Base(imagePath))
+	err = hs.slackService.PostUnfurl(ctx, event, imageURL, dashboard.Title)
 	if err != nil {
 		hs.log.Error("fail to send unfurl event to Slack", "err", err)
 	}
-}
-
-// TODO: Duplicated from the rendering service - maybe we can do this in another way to not duplicate this
-func (hs *HTTPServer) getGrafanaURL() string {
-	if hs.Cfg.RendererCallbackUrl != "" {
-		return hs.Cfg.RendererCallbackUrl
-	}
-
-	protocol := hs.Cfg.Protocol
-	switch protocol {
-	case setting.HTTPScheme:
-		protocol = "http"
-	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		protocol = "https"
-	default:
-		// TODO: Handle other schemes?
-	}
-
-	subPath := ""
-	if hs.Cfg.ServeFromSubPath {
-		subPath = hs.Cfg.AppSubURL
-	}
-
-	domain := "localhost"
-	if hs.Cfg.HTTPAddr != "0.0.0.0" {
-		domain = hs.Cfg.HTTPAddr
-	}
-	return fmt.Sprintf("%s://%s:%s%s/", protocol, domain, hs.Cfg.HTTPPort, subPath)
-}
-
-func (hs *HTTPServer) getImageURL(imageName string) string {
-	grafanaURL := hs.getGrafanaURL()
-	return fmt.Sprintf("%s%s/%s", grafanaURL, "public/img/attachments", imageName)
 }
 
 // extractURLInfo returns the render path and the dashboard UID
@@ -189,6 +160,39 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, &PreviewResponse{
 		PreviewURL: imageURL,
 	})
+}
+
+// TODO: Duplicated from the rendering service - maybe we can do this in another way to not duplicate this
+func (hs *HTTPServer) getGrafanaURL() string {
+	if hs.Cfg.RendererCallbackUrl != "" {
+		return hs.Cfg.RendererCallbackUrl
+	}
+
+	protocol := hs.Cfg.Protocol
+	switch protocol {
+	case setting.HTTPScheme:
+		protocol = "http"
+	case setting.HTTP2Scheme, setting.HTTPSScheme:
+		protocol = "https"
+	default:
+		// TODO: Handle other schemes?
+	}
+
+	subPath := ""
+	if hs.Cfg.ServeFromSubPath {
+		subPath = hs.Cfg.AppSubURL
+	}
+
+	domain := "localhost"
+	if hs.Cfg.HTTPAddr != "0.0.0.0" {
+		domain = hs.Cfg.HTTPAddr
+	}
+	return fmt.Sprintf("%s://%s:%s%s/", protocol, domain, hs.Cfg.HTTPPort, subPath)
+}
+
+func (hs *HTTPServer) getImageURL(imageName string) string {
+	grafanaURL := hs.getGrafanaURL()
+	return fmt.Sprintf("%s%s/%s", grafanaURL, "public/img/attachments", imageName)
 }
 
 type PreviewRequest struct {
