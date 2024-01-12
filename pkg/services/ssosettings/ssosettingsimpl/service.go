@@ -252,7 +252,12 @@ func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[st
 }
 
 func (s *SSOSettingsService) Run(ctx context.Context) error {
-	ticker := time.NewTicker(1 * time.Minute)
+	interval := s.cfg.SSOSettingsReloadInterval
+	if interval == 0 {
+		return nil
+	}
+
+	ticker := time.NewTicker(interval)
 
 	// start a background process for reloading the SSO settings for all providers at a fixed interval
 	// it is useful for high availability setups running multiple Grafana instances
