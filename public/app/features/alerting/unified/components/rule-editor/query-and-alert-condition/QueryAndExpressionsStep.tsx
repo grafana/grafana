@@ -91,6 +91,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, [dispatchReduxAction]);
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
+  const queriesInForm = getValues('queries');
 
   const runQueriesPreview = useCallback(
     (condition?: string) => {
@@ -99,10 +100,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         // Grafana Managed rules and recording rules do
         return;
       }
-
-      runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
+      runQueries(queriesInForm, condition || (getValues('condition') ?? ''));
     },
-    [isCloudAlertRuleType, runQueries, getValues]
+    [isCloudAlertRuleType, runQueries, getValues, queriesInForm]
   );
 
   // whenever we update the queries we have to update the form too
