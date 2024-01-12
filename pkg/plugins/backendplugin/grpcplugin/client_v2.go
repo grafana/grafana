@@ -146,7 +146,7 @@ func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 		return nil, err
 	}
 
-	return backend.FromProto().CheckHealthResponse(protoResp), nil
+	return backend.FromProto().CheckHealthResponse(protoResp), backend.FromProto().Error(protoResp.Error)
 }
 
 func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

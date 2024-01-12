@@ -7,7 +7,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // NewStatusSourceMiddleware returns a new plugins.ClientMiddleware that sets the status source in the
@@ -18,12 +20,14 @@ func NewStatusSourceMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &StatusSourceMiddleware{
 			next: next,
+			log:  log.New("plugins.grpc.middlewares"),
 		}
 	})
 }
 
 type StatusSourceMiddleware struct {
 	next plugins.Client
+	log  log.Logger
 }
 
 func (m *StatusSourceMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -63,7 +67,14 @@ func (m *StatusSourceMiddleware) CallResource(ctx context.Context, req *backend.
 }
 
 func (m *StatusSourceMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return m.next.CheckHealth(ctx, req)
+	resp, err := m.next.CheckHealth(ctx, req)
+	// TODO: see how it behaves with wrapped errors
+	if e, ok := err.(errutil.Error); ok {
+		if pluginErr, ok := e.Underlying.(backend.Error); ok {
+			m.log.Error("CheckHealth error", "error", pluginErr.Error(), "source", pluginErr.Source())
+		}
+	}
+	return resp, err
 }
 
 func (m *StatusSourceMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
