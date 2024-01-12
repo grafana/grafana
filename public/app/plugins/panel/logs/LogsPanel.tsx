@@ -73,7 +73,7 @@ export const LogsPanel = ({
     );
 
     return new Map(raw.map(({ key, ds }) => [key, ds]));
-  });
+  }, [data.request?.targets]);
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
