@@ -227,7 +227,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
         <VersionsHistoryButtons
           hasMore={hasMore}
           canCompare={canCompare}
-          getVersions={model.fetchVersions}
+          getVersions={model.fetchVersions.bind(model)}
           getDiff={model.getDiff}
           isLastPage={!!isLastPage}
         />
