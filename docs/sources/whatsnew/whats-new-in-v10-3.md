@@ -207,6 +207,46 @@ We've also streamlined the user experience by integrating documentation directly
 
 {{< figure src="/media/docs/grafana/transformations/transformations_internal_documentation.png" caption="Transformation documentation is now internally available inside the Grafana app itself." alt="Transformation documentation internally available" >}}
 
+## Profiles
+
+### Trace to Profiles\*
+
+<!--Joey Tawadrous-->
+<!--internal_enablement_video-->
+
+_Experimental in all editions of Grafana_
+
+Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
+
+**Trace to profiles** lets you link your Grafana Pyroscope data source to tracing data. When configured, this connection lets you run queries from a trace span into the profile data.
+
+There are two ways to configure the trace to profiles feature:
+
+- Use a simplified configuration with default query, or
+- Configure a custom query where you can use a template language to interpolate variables from the trace or span.
+
+{{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" caption="Trace to profiles screenshot" alt="Trace to profiles screenshot" >}}
+
+To try out **Trace to profiles**, enable the 'traceToProfiles' feature toggle.
+
+If you would also like to try out the **Embedded Flame Graph** feature, please enable the 'tracesEmbeddedFlameGraph' feature toggle.
+
+Note: in order to determine that there is a profile for a given span and render the 'Profiles for this span' button or the embedded flame graph in the span details, the 'pyroscope.profile.id' key-value pair must exist in your span tags.
+
+[Documentation](https://grafana.com/docs/grafana/next/datasources/tempo/configure-tempo-data-source/#trace-to-profiles)
+
+### FlameGraph: Collapsing similar items in the graph\*
+
+<!--Andrej Ocenas-->
+
+_Experimental in all editions of Grafana_
+
+Sometimes profile stacks contain lots of levels with similar repeating items, for example long stacks of framework code that usually isn't of interest but takes up a lot of visual real estate. With this feature, instead of rendering all of the similar items we render only one and allow to expand those collapsed items on demand.
+
+To try it out, enable the ‘traceToProfiles’ feature toggle. To enable it in your Grafana Cloud stack, contact Grafana Support.
+
+{{< video-embed src="https://github.com/grafana/grafana/assets/1014802/0b3f29b7-c02b-44a4-9895-6e62c472c933" >}}
+
 ## Alerting
 
 ### Alerting insights\*
@@ -274,46 +314,6 @@ _Generally available in all editions of Grafana_
 To reduce the noise of flapping alerts, you can set a recovery threshold different to the alert threshold.
 
 Flapping alerts occur when a metric hovers around the alert threshold condition and may lead to frequent state changes, resulting in too many notifications being generated.
-
-## Profiles
-
-### Trace to Profiles\*
-
-<!--Joey Tawadrous-->
-<!--internal_enablement_video-->
-
-_Experimental in all editions of Grafana_
-
-Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
-
-**Trace to profiles** lets you link your Grafana Pyroscope data source to tracing data. When configured, this connection lets you run queries from a trace span into the profile data.
-
-There are two ways to configure the trace to profiles feature:
-
-- Use a simplified configuration with default query, or
-- Configure a custom query where you can use a template language to interpolate variables from the trace or span.
-
-{{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" caption="Trace to profiles screenshot" alt="Trace to profiles screenshot" >}}
-
-To try out **Trace to profiles**, enable the 'traceToProfiles' feature toggle.
-
-If you would also like to try out the **Embedded Flame Graph** feature, please enable the 'tracesEmbeddedFlameGraph' feature toggle.
-
-Note: in order to determine that there is a profile for a given span and render the 'Profiles for this span' button or the embedded flame graph in the span details, the 'pyroscope.profile.id' key-value pair must exist in your span tags.
-
-[Documentation](https://grafana.com/docs/grafana/next/datasources/tempo/configure-tempo-data-source/#trace-to-profiles)
-
-### FlameGraph: Collapsing similar items in the graph\*
-
-<!--Andrej Ocenas-->
-
-_Experimental in all editions of Grafana_
-
-Sometimes profile stacks contain lots of levels with similar repeating items, for example long stacks of framework code that usually isn't of interest but takes up a lot of visual real estate. With this feature, instead of rendering all of the similar items we render only one and allow to expand those collapsed items on demand.
-
-To try it out, enable the ‘traceToProfiles’ feature toggle. To enable it in your Grafana Cloud stack, contact Grafana Support.
-
-{{< video-embed src="https://github.com/grafana/grafana/assets/1014802/0b3f29b7-c02b-44a4-9895-6e62c472c933" >}}
 
 ## Logs
 
