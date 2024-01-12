@@ -737,20 +737,17 @@ func TestGetNamespaceTitleFromKey(t *testing.T) {
 		expected string
 	}{
 		{"just title", "title with space", "title with space"},
-		{"title and uid", "uid/title with space", "title with space"},
-		{"title with / and uid", "uid/title\\/with\\/slashes", "title/with/slashes"},
-		{"just title with /", "title\\/with\\/slashes", "title/with/slashes"},
-		{"when uid is empty", "/part1", "part1"},
-		{"when title is empty", "part1/", ""},
-		{"when empty string", "", ""},
+		{"title and uid", `["parentUID","title"]`, "title"},
+		{"wrong input-empty array", "[]", "[]"},
+		{"wrong input-incorrect json", "[", "["},
+		{"wrong input-long array", `["parentUID","title","title"]`, `["parentUID","title","title"]`},
+		{"empty string", "", ""},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := GetNamespaceTitleFromKey(tc.input)
-			if got != tc.expected {
-				t.Errorf("got %s; expected %s", got, tc.expected)
-			}
+			actual := GetNamespaceTitleFromKey(tc.input)
+			require.Equal(t, actual, tc.expected)
 		})
 	}
 }
@@ -763,22 +760,16 @@ func TestGetNamespaceKey(t *testing.T) {
 		expected  string
 	}{
 		{
-			name:      "NoSlashes",
-			parentUID: "parentUID",
-			title:     "Title",
-			expected:  "parentUID/Title",
-		},
-		{
-			name:      "WithSlashes",
+			name:      "Parent UID and title",
 			parentUID: "parentUID",
 			title:     "Title/Title",
-			expected:  "parentUID/Title\\/Title",
+			expected:  `["parentUID","Title/Title"]`,
 		},
 		{
 			name:      "EmptyTitle",
 			parentUID: "parentUID",
 			title:     "",
-			expected:  "parentUID",
+			expected:  `["parentUID",""]`,
 		},
 		{
 			name:      "EmptyParentUID",

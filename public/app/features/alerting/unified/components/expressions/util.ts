@@ -42,22 +42,31 @@ const formatLabels = (labels: Labels): string => {
 
 /**
  * After https://github.com/grafana/grafana/pull/74600,
- * Grafana rule names will be returned from the API as a combination of the folder name and parent UID separated by /.
- * For this reason, we need to format this namespace , removing the folder uid and the / separator.
+ * Grafana folder names will be returned from the API as a combination of the folder name and parent UID in a format of JSON array,
+ * where first element is parent UID and the second element is Title.
  */
-const GRAFANA_PARENT_FOLDER_SEPARATOR = '/';
 const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): string => {
   const nameSpaceName = namespace.name;
 
   if (isCloudRulesSource(namespace.rulesSource)) {
     return nameSpaceName;
   }
-  const nameSpaceWithoutSeparator = nameSpaceName.substring(nameSpaceName.indexOf(GRAFANA_PARENT_FOLDER_SEPARATOR) + 1);
-  // replace \/ with / and \\ with \
-  const nameSpaceWitoutSeparatorAndSlashesUnescaped = nameSpaceWithoutSeparator
-    .replace(/\\\//g, '/')
-    .replace(/\\\\/g, '\\');
-  return nameSpaceWitoutSeparatorAndSlashesUnescaped;
+
+  if (nameSpaceName.indexOf('[') !== 0) {
+    return nameSpaceName;
+  }
+
+  let arr: string[];
+  try {
+    arr = JSON.parse(nameSpaceName);
+  } catch {
+    // if failed to parse, return as is
+    return nameSpaceName;
+  }
+  if (arr.length !== 2) {
+    return nameSpaceName;
+  }
+  return arr[1];
 };
 
 const isEmptySeries = (series: DataFrame[]): boolean => {
@@ -66,12 +75,4 @@ const isEmptySeries = (series: DataFrame[]): boolean => {
   return isEmpty;
 };
 
-export {
-  GRAFANA_PARENT_FOLDER_SEPARATOR,
-  decodeGrafanaNamespace,
-  formatLabels,
-  getSeriesLabels,
-  getSeriesName,
-  getSeriesValue,
-  isEmptySeries,
-};
+export { decodeGrafanaNamespace, formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries };
