@@ -126,14 +126,19 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
 
 export const addAccessRolesLink = (configNode: NavModelItem) => {
   if (configNode.children) {
-    const usersIdx = configNode.children.findIndex((item) => item.id === 'global-users');
-    configNode.children = [
-      ...configNode.children.slice(0, usersIdx + 1),
-      PMM_ACCESS_ROLES_PAGE,
-      // Add to have a create action for adding a role
-      PMM_ACCESS_ROLE_CREATE_PAGE,
-      ...configNode.children.slice(usersIdx + 1),
-    ];
+    const accessNode = configNode.children.find((item) => item.id === 'cfg/access');
+
+    if (accessNode && accessNode.children) {
+      const usersIdx = accessNode.children.findIndex((item) => item.id === 'global-users');
+      PMM_ACCESS_ROLES_PAGE.parentItem = accessNode;
+      accessNode.children = [
+        ...accessNode.children.slice(0, usersIdx + 1),
+        PMM_ACCESS_ROLES_PAGE,
+        // Add to have a create action for adding a role
+        PMM_ACCESS_ROLE_CREATE_PAGE,
+        ...accessNode.children.slice(usersIdx + 1),
+      ];
+    }
   }
 };
 

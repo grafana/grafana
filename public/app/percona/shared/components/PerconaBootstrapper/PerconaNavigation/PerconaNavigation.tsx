@@ -101,6 +101,7 @@ const PerconaNavigation: FC = () => {
         // update nav index with the access roles tab
         if (cfg) {
           addAccessRolesLink(cfg);
+          dispatch(updateNavIndex(PMM_ACCESS_ROLES_PAGE));
           dispatch(updateNavIndex(cfg));
         }
       }
