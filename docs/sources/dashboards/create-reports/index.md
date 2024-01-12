@@ -110,11 +110,13 @@ By default, reports use the saved time range of the dashboard. You can change th
 - Saving a modified time range to the dashboard. Changing the dashboard time range without saving it doesn't change the time zone of the report.
 - Setting a time range via the **Time range** field in the report form. If specified, the custom time range overrides the time range from the report's dashboard.
 
-The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone use the time zone on the Grafana server.
+The page header of the report displays the time range for the dashboard's data queries.
 
 #### Report time zones
 
-To avoid confusing time zone behavior in your reports, we recommend against using the **Browser Time** time zone setting in the dashboard from which you're generating a report. Instead, set a specific time zone for the dashboard. That way reports always show the correct time zone regardless of what your default time zone is when you create a report.
+Reports use the time zone of the dashboard from which they’re generated. 
+
+If a dashboard has the **Browser Time** setting, the reports generated from that dashboard use the time zone of the Grafana server. As a result, this time zone might not match the time zone of users creating or receiving the report.
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls][].
 
