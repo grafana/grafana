@@ -19,7 +19,7 @@ export const ReturnToPreviousWrapper = () => {
   const [showReturnToPrevious, setShowReturnToPrevious] = React.useState(shouldShowReturnToPrevious(params));
 
   // Only show the button on large screens
-  const isLargeScreen = window.innerWidth >= theme.breakpoints.values.xl;
+  const isLargeScreen = window.innerWidth >= theme.breakpoints.values.md;
 
   React.useEffect(() => {
     setShowReturnToPrevious(shouldShowReturnToPrevious(params));
