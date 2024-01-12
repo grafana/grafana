@@ -177,11 +177,15 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { options, panelPluginId, fieldConfig, timeZone } = this.props;
     const data = this.state.transformedData;
 
-    if (!options.withFieldConfig || !panelPluginId || !fieldConfig) {
+    if (!options.withFieldConfig) {
       return applyRawFieldOverrides(data);
     }
 
-    const fieldConfigCleaned = this.cleanTableConfigFromFieldConfig(panelPluginId, fieldConfig);
+    let fieldConfigCleaned = fieldConfig ?? { defaults: {}, overrides: [] };
+    // Because we visualize this data in a table we have to remove any custom table display settings
+    if (panelPluginId === 'table' && fieldConfig) {
+      fieldConfigCleaned = this.cleanTableConfigFromFieldConfig(fieldConfig);
+    }
 
     // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
     // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
@@ -195,11 +199,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   // Because we visualize this data in a table we have to remove any custom table display settings
-  cleanTableConfigFromFieldConfig(panelPluginId: string, fieldConfig: FieldConfigSource): FieldConfigSource {
-    if (panelPluginId !== 'table') {
-      return fieldConfig;
-    }
-
+  cleanTableConfigFromFieldConfig(fieldConfig: FieldConfigSource): FieldConfigSource {
     fieldConfig = cloneDeep(fieldConfig);
     // clear all table specific options
     fieldConfig.defaults.custom = {};

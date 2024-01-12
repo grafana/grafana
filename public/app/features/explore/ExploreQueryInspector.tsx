@@ -27,7 +27,7 @@ interface DispatchProps {
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { exploreId, width, onClose, queryResponse, timeZone } = props;
+  const { width, onClose, queryResponse, timeZone } = props;
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
@@ -70,9 +70,6 @@ export function ExploreQueryInspector(props: Props) {
         app={CoreApp.Explore}
         formattedDataDescription="Matches the format in the panel"
         onOptionsChange={setDataOptions}
-        // need these props so formatting can work
-        panelPluginId={exploreId}
-        fieldConfig={{ defaults: {}, overrides: [] }}
       />
     ),
   };
