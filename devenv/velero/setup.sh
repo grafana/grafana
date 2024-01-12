@@ -21,8 +21,6 @@ aws_access_key_id = minio
 aws_secret_access_key = minio123
 EOF
 
-kubectl apply -f 00-minio-deployment.yaml
-
 velero install \
     --provider aws \
     --plugins velero/velero-plugin-for-aws:v1.2.1 \
@@ -31,7 +29,5 @@ velero install \
     --use-volume-snapshots=false \
     --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000
 
-
-MINIO_POD=$(kubectl get pods -n velero -l component=minio -o jsonpath='{.items[0].metadata.name}')
-kubectl port-forward $MINIO_POD -n velero $MINIO_LOCALHOST_PORT:9000 &
+# Tilt will set up the port-forward
 kubectl patch -n velero backupstoragelocation default --type merge -p "{\"spec\":{\"config\":{\"publicUrl\":\"http://localhost:$MINIO_LOCALHOST_PORT\"}}}"
