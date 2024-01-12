@@ -109,7 +109,8 @@ export interface QueryResultMeta {
   instant?: boolean;
 
   /**
-   * Array of field indices which values create a unique id for each row.
+   * Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID
+   * but that isn't guarantied.
    */
   uniqueId?: number[];
 }
