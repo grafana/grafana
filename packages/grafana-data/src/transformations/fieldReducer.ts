@@ -84,7 +84,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
   const data = field.values;
-  if (data.length < 1) {
+  if (data && data.length < 1) {
     const calcs: FieldCalcs = { ...field.state.calcs };
     for (const reducer of queue) {
       calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
@@ -297,6 +297,11 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   };
 
   const data = field.values;
+
+  // early return for undefined / empty series
+  if (!data) {
+    return calcs;
+  }
 
   const isNumberField = field.type === FieldType.number || field.type === FieldType.time;
 
