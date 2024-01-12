@@ -37,6 +37,7 @@ export type Props = {
   resource: string;
   resourceId: ResourceId;
   canSetPermissions: boolean;
+  getWarnings?: (items: ResourcePermission[]) => ResourcePermission[];
 };
 
 export const Permissions = ({
@@ -47,15 +48,20 @@ export const Permissions = ({
   resourceId,
   canSetPermissions,
   addPermissionTitle,
+  getWarnings,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
 
-  const fetchItems = useCallback(() => {
-    return getPermissions(resource, resourceId).then((r) => setItems(r));
-  }, [resource, resourceId]);
+  const fetchItems = useCallback(async () => {
+    let items = await getPermissions(resource, resourceId);
+    if (getWarnings) {
+      items = getWarnings(items);
+    }
+    setItems(items);
+  }, [resource, resourceId, getWarnings]);
 
   useEffect(() => {
     getDescription(resource).then((r) => {
