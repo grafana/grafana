@@ -20,6 +20,7 @@ import {
   AbsoluteTimeEvent,
   CopyTimeEvent,
   PasteTimeEvent,
+  PasteTimeContext,
 } from '../../types/events';
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
@@ -185,7 +186,7 @@ export class KeybindingSrv {
     this.bind(keyArg, withFocusedPanel(fn));
   }
 
-  setupTimeRangeBindings(updateUrl = true) {
+  setupTimeRangeBindings({ updateUrl = true, context }: { updateUrl?: boolean; context: PasteTimeContext }) {
     this.bind('t a', () => {
       appEvents.publish(new AbsoluteTimeEvent({ updateUrl }));
     });
@@ -211,7 +212,7 @@ export class KeybindingSrv {
     });
 
     this.bind('t v', () => {
-      appEvents.publish(new PasteTimeEvent({ updateUrl }));
+      appEvents.publish(new PasteTimeEvent({ context, updateUrl }));
     });
   }
 
@@ -235,7 +236,7 @@ export class KeybindingSrv {
       }
     });
 
-    this.setupTimeRangeBindings();
+    this.setupTimeRangeBindings({ context: PasteTimeContext.Dashboard });
 
     // edit panel
     this.bindWithPanelId('e', (panelId) => {

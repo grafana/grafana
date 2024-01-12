@@ -23,6 +23,7 @@ import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import {
   AbsoluteTimeEvent,
   CopyTimeEvent,
+  PasteTimeContext,
   PasteTimeEvent,
   ShiftTimeEvent,
   ShiftTimeEventDirection,
@@ -64,6 +65,9 @@ export class TimeSrv {
     });
 
     appEvents.subscribe(PasteTimeEvent, (e) => {
+      if (e.payload.context !== PasteTimeContext.Dashboard) {
+        return;
+      }
       this.pasteTimeRangeFromClipboard(e.payload.updateUrl);
     });
 

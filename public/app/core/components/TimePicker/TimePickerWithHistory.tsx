@@ -35,7 +35,7 @@ export const TimePickerWithHistory = (props: Props) => {
               onAppendToHistory(value, values, onSaveToStore);
               props.onChange(value);
             }}
-            onPasteError={(clipboardContent: string) =>
+            onError={(clipboardContent: string) =>
               appEvents.emit(AppEvents.alertError, [
                 'Invalid time range',
                 `"${clipboardContent}" is not a valid time range`,

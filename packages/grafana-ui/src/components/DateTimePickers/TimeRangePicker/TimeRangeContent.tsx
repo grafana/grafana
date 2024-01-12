@@ -34,7 +34,7 @@ interface Props {
   roundup?: boolean;
   isReversed?: boolean;
   // callback for when the user pastes invalid JSON
-  onPasteError?: (clipboardContent: string) => void;
+  onError?: (clipboardContent: string) => void;
 }
 
 interface InputState {
@@ -56,7 +56,7 @@ export const TimeRangeContent = (props: Props) => {
     onApply: onApplyFromProps,
     isReversed,
     fiscalYearStartMonth,
-    onPasteError,
+    onError,
   } = props;
   const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
   const style = useStyles2(getStyles);
@@ -121,8 +121,8 @@ export const TimeRangeContent = (props: Props) => {
     try {
       range = JSON.parse(raw);
     } catch (error) {
-      if (onPasteError) {
-        onPasteError(raw);
+      if (onError) {
+        onError(raw);
       }
       return;
     }

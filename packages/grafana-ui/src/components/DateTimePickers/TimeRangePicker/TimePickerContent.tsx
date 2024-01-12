@@ -22,7 +22,7 @@ interface Props {
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   onChangeFiscalYearStartMonth?: (month: number) => void;
-  onPasteError?: (clipboardContent: string) => void;
+  onError?: (clipboardContent: string) => void;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
@@ -123,7 +123,7 @@ export const TimePickerContent = (props: Props) => {
 };
 
 const NarrowScreenForm = (props: FormProps) => {
-  const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onPasteError } = props;
+  const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onError } = props;
   const styles = useStyles2(getNarrowScreenStyles);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const [collapsedFlag, setCollapsedFlag] = useState(!isAbsolute);
@@ -162,7 +162,7 @@ const NarrowScreenForm = (props: FormProps) => {
               onApply={onChange}
               timeZone={timeZone}
               isFullscreen={false}
-              onPasteError={onPasteError}
+              onError={onError}
             />
           </div>
           {showHistory && (
@@ -180,7 +180,7 @@ const NarrowScreenForm = (props: FormProps) => {
 };
 
 const FullScreenForm = (props: FormProps) => {
-  const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onPasteError } = props;
+  const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
@@ -201,7 +201,7 @@ const FullScreenForm = (props: FormProps) => {
           onApply={onChange}
           isFullscreen={true}
           isReversed={isReversed}
-          onPasteError={onPasteError}
+          onError={onError}
         />
       </div>
       {props.showHistory && (

@@ -4,7 +4,14 @@ import { Unsubscribable } from 'rxjs';
 import { getAppEvents } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useDispatch } from 'app/types';
-import { AbsoluteTimeEvent, CopyTimeEvent, PasteTimeEvent, ShiftTimeEvent, ZoomOutEvent } from 'app/types/events';
+import {
+  AbsoluteTimeEvent,
+  CopyTimeEvent,
+  PasteTimeContext,
+  PasteTimeEvent,
+  ShiftTimeEvent,
+  ZoomOutEvent,
+} from 'app/types/events';
 
 import {
   copyTimeRangeToClipboard,
@@ -19,7 +26,7 @@ export function useKeyboardShortcuts() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    keybindings.setupTimeRangeBindings(false);
+    keybindings.setupTimeRangeBindings({ updateUrl: false, context: PasteTimeContext.Explore });
 
     const tearDown: Unsubscribable[] = [];
 

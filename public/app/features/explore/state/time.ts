@@ -185,7 +185,7 @@ export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
     try {
       range = JSON.parse(raw);
     } catch (e) {
-      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${range}" is not a valid time range`]);
+      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${raw}" is not a valid time range`]);
       return;
     }
 
