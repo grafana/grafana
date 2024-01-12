@@ -396,6 +396,8 @@ The following example would add the derived field `traceID regex` based on a reg
 
 _Generally available in Grafana Open source and Enterprise_
 
+Released in Grafana 10.2.3
+
 We've identified a need for users who enable anonymous authentication to monitor the anonymous devices connected to their Grafana instance. This feature is part of our ongoing efforts to enhance control and transparency regarding anonymous usage.
 
 Anonymous access now allows users, including those in open-source and enterprise self-managed environments, to view and monitor their anonymous access. They can also set a device limit, configuring a specific number of anonymous devices to connect to their instance.
