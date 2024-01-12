@@ -62,23 +62,35 @@ export const Components = {
     },
     Prometheus: {
       configPage: {
-        connectionSettings: 'Data source connection URL',
-        manageAlerts: 'alerts-manager',
+        connectionSettings: 'Data source connection URL', // aria-label in grafana experimental
+        manageAlerts: 'prometheus-alerts-manager', // id for switch component
         scrapeInterval: 'data-testid scrape interval',
         queryTimeout: 'data-testid query timeout',
         defaultEditor: 'data-testid default editor',
-        disableMetricLookup: 'disable-metric-lookup',
+        disableMetricLookup: 'disable-metric-lookup', // id for switch component
         prometheusType: 'data-testid prometheus type',
         prometheusVersion: 'data-testid prometheus version',
         cacheLevel: 'data-testid cache level',
-        incrementalQuerying: 'incremental-querying',
+        incrementalQuerying: 'prometheus-incremental-querying', // id for switch component
         queryOverlapWindow: 'data-testid query overlap window',
-        disableRecordingRules: 'disable-recording-rules',
+        disableRecordingRules: 'disable-recording-rules', // id for switch component
         customQueryParameters: 'data-testid custom query parameters',
         httpMethod: 'data-testid http method',
-
         exemplarsAddButton: 'data-testid Add exemplar config button',
         internalLinkSwitch: 'data-testid Internal link switch',
+      },
+      queryEditor: {
+        // kickstart: '', see QueryBuilder queryPatterns below
+        explain: 'prometheus-explain-wrapper', // switch wrapper id
+        editorToggle: 'data-testid QueryEditorModeToggle', // need to change this in shared folder
+        options: 'data-testid prometheus-options', //// id wrapper for options group collapse component
+        legend: 'legend-wrapper', // wrapper for multiple compomnents
+        format: 'data-testid prometheus format',
+        step: 'prometheus-step', // id for autosize component
+        type: 'data-testid prometheus type', //wrapper for radio button group
+        exemplars: 'prometheus-exemplars', // id for editor switch component
+        builder: {},
+        code: {},
       },
       exemplarMarker: 'data-testid Exemplar marker',
     },
