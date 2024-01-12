@@ -75,7 +75,7 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return errInvalidCloudRole.Errorf("invalid role: %s", ident.GetOrgRole())
 	}
 
-	return s.ac.SyncUserRole(ctx, ident.GetOrgID(), accesscontrol.SyncUserRoleCommand{
+	return s.ac.SyncUserRoles(ctx, ident.GetOrgID(), accesscontrol.SyncUserRolesCommand{
 		UserID: userID,
 		Roles:  []string{fixedRoleName},
 	})

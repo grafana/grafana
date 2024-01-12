@@ -57,7 +57,7 @@ type Mock struct {
 	SearchUserPermissionsFunc          func(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error)
 	SaveExternalServiceRoleFunc        func(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
 	DeleteExternalServiceRoleFunc      func(ctx context.Context, externalServiceID string) error
-	SyncUserRoleFunc                   func(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRoleCommand) error
+	SyncUserRolesFunc                  func(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -237,9 +237,9 @@ func (m *Mock) DeleteExternalServiceRole(ctx context.Context, externalServiceID 
 	return nil
 }
 
-func (m *Mock) SyncUserRole(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRoleCommand) error {
-	if m.SyncUserRoleFunc != nil {
-		return m.SyncUserRoleFunc(ctx, orgID, cmd)
+func (m *Mock) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
+	if m.SyncUserRolesFunc != nil {
+		return m.SyncUserRolesFunc(ctx, orgID, cmd)
 	}
 	return nil
 }

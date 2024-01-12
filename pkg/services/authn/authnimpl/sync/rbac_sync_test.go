@@ -123,7 +123,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			var called bool
 			s := &RBACSync{
 				ac: &acmock.Mock{
-					SyncUserRoleFunc: func(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRoleCommand) error {
+					SyncUserRolesFunc: func(_ context.Context, _ int64, _ accesscontrol.SyncUserRolesCommand) error {
 						called = true
 						return nil
 					},
