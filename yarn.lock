@@ -8843,10 +8843,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mousetrap@npm:1.6.11":
-  version: 1.6.11
-  resolution: "@types/mousetrap@npm:1.6.11"
-  checksum: 4465d16b7c20ab52d2f6b7fe8087e8f16101472f2e8758f01c63591015c1b0a67c9e6c371d978f24d5f37c4b83457515571489284bf7c7c844eb6c8f2527685b
+"@types/mousetrap@npm:1.6.15":
+  version: 1.6.15
+  resolution: "@types/mousetrap@npm:1.6.15"
+  checksum: 58ec552218108f8e5f0d40ee81579aafbdb00c3af0ef4b6d3fb193a8a11a2d37aa84c6e20524120b7f218c2a87dac24f426ee3b23e1269d42f8145a1a37c9eca
   languageName: node
   linkType: hard
 
@@ -17127,7 +17127,7 @@ __metadata:
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
     "@types/marked": "npm:5.0.2"
-    "@types/mousetrap": "npm:1.6.11"
+    "@types/mousetrap": "npm:1.6.15"
     "@types/node": "npm:20.8.10"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"

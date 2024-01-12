@@ -122,7 +122,7 @@
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
     "@types/marked": "5.0.2",
-    "@types/mousetrap": "1.6.11",
+    "@types/mousetrap": "1.6.15",
     "@types/node": "20.8.10",
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0",
