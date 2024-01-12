@@ -72,52 +72,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 fullWidth
               ></RadioButtonGroup>
               <OptionsPaneCategory id="test" title="Panel options">
-                <Field label="Title">
-                  <Input value={title} onChange={(evt) => panel.setState({ title: evt.currentTarget.value })} />
-                </Field>
-                <Field label="Description">
-                  <TextArea
-                    id="description-text-area"
-                    value={description}
-                    onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
-                  />
-                </Field>
-                <Field label="Transparent background">
-                  <Switch
-                    value={displayMode === 'transparent'}
-                    onChange={(e) =>
-                      panel.setState({ displayMode: displayMode === 'transparent' ? 'default' : 'transparent' })
-                    }
-                  />
-                </Field>
-                <OptionsPaneCategory id="panel-links" title="Panel Links">
-                  <Field label="Panel links">
-                    <>TBD...</>
-                  </Field>
-                </OptionsPaneCategory>
-                <OptionsPaneCategory id="repeat-options" title="Repeat options" isOpenDefault={false}>
-                  <Field
-                    title="Repeat by variable"
-                    description="Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard."
-                  >
-                    <>TBD...</>
-                  </Field>
-                  <Field title="Repeat direction">
-                    <RadioButtonGroup
-                      options={directionOptions}
-                      value={'h'}
-                      // onChange={(value) => onPanelConfigChange('repeatDirection', value)}
-                    />
-                  </Field>
-                  <Field title="Max per row">
-                    <Select
-                      options={maxPerRowOptions}
-                      value={2}
-                      // onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}
-                      onChange={() => {}}
-                    />
-                  </Field>
-                </OptionsPaneCategory>
+                Placeholder
               </OptionsPaneCategory>
             </>
           )}
