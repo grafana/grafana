@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"sort"
 	"testing"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 )
 
 const (
