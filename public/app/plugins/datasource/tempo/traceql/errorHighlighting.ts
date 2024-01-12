@@ -11,8 +11,10 @@ import {
   Or,
   parser,
   Pipe,
+  Resource,
   ScalarExpression,
   ScalarFilter,
+  Span,
   SpansetFilter,
   SpansetPipelineExpression,
 } from '@grafana/lezer-traceql';
@@ -54,7 +56,10 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
     case Aggregate:
       return 'Invalid expression for aggregator operator.';
     case AttributeField:
-      return 'Invalid expression for spanset.';
+      if (errorNode.prevSibling?.type.id === Span || errorNode.prevSibling?.type.id === Resource) {
+        return 'Invalid expression for spanset.';
+      }
+      return ImproveQueryPerformanceMsg;
     case ScalarFilter:
       switch (errorNode.prevSibling?.type.id) {
         case ComparisonOp:
@@ -70,6 +75,8 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
       return 'Invalid query.';
   }
 };
+
+export const ImproveQueryPerformanceMsg = 'Add resource or span scope to attribute to improve query performance.';
 
 /**
  * Parse the given query and find the error nodes, if any, in the resulting tree.
@@ -131,9 +138,13 @@ export const setErrorMarkers = (
         end -= model.getLineLength(endLine) + 1;
       }
 
+      const message = computeErrorMessage(errorNode);
+      const severity =
+        message === ImproveQueryPerformanceMsg ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Error;
+
       return {
-        message: computeErrorMessage(errorNode),
-        severity: monaco.MarkerSeverity.Error,
+        message,
+        severity,
 
         startLineNumber: startLine,
         endLineNumber: endLine,
