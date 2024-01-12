@@ -3547,7 +3547,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/common-tags": "npm:^1.8.0"
     "@types/d3": "npm:7.4.3"
-    "@types/hoist-non-react-statics": "npm:3.3.1"
+    "@types/hoist-non-react-statics": "npm:3.3.5"
     "@types/is-hotkey": "npm:0.1.7"
     "@types/jest": "npm:29.5.4"
     "@types/jquery": "npm:3.5.16"
@@ -8608,23 +8608,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/hoist-non-react-statics@npm:3.3.1":
-  version: 3.3.1
-  resolution: "@types/hoist-non-react-statics@npm:3.3.1"
+"@types/hoist-non-react-statics@npm:3.3.5, @types/hoist-non-react-statics@npm:^3.3.0, @types/hoist-non-react-statics@npm:^3.3.1":
+  version: 3.3.5
+  resolution: "@types/hoist-non-react-statics@npm:3.3.5"
   dependencies:
     "@types/react": "npm:*"
     hoist-non-react-statics: "npm:^3.3.0"
-  checksum: 071e6d75a0ed9aa0e9ca2cc529a8c15bf7ac3e4a37aac279772ea6036fd0bf969b67fb627b65cfce65adeab31fec1e9e95b4dcdefeab075b580c0c7174206f63
-  languageName: node
-  linkType: hard
-
-"@types/hoist-non-react-statics@npm:^3.3.0, @types/hoist-non-react-statics@npm:^3.3.1":
-  version: 3.3.4
-  resolution: "@types/hoist-non-react-statics@npm:3.3.4"
-  dependencies:
-    "@types/react": "npm:*"
-    hoist-non-react-statics: "npm:^3.3.0"
-  checksum: dee430941a9ea16b7f665ecafa9b134066a49d13ae497fc051cf5d41b3aead394ab1a8179c3c98c9a3584f80aed16fab82dd7979c7dcddfbb5f74a132575d362
+  checksum: b645b062a20cce6ab1245ada8274051d8e2e0b2ee5c6bd58215281d0ec6dae2f26631af4e2e7c8abe238cdcee73fcaededc429eef569e70908f82d0cc0ea31d7
   languageName: node
   linkType: hard
 
@@ -17121,7 +17111,7 @@ __metadata:
     "@types/google.analytics": "npm:^0.0.45"
     "@types/gtag.js": "npm:^0.0.18"
     "@types/history": "npm:4.7.11"
-    "@types/hoist-non-react-statics": "npm:3.3.1"
+    "@types/hoist-non-react-statics": "npm:3.3.5"
     "@types/jest": "npm:29.5.4"
     "@types/jquery": "npm:3.5.16"
     "@types/js-yaml": "npm:^4.0.5"
