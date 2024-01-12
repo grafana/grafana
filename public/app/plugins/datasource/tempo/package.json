@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.23.2",
-    "@grafana/plugin-configs": "10.3.0-pre",
+    "@grafana/plugin-configs": "10.4.0-pre",
     "@grafana/tsconfig": "^1.3.0-rc1",
     "@swc/core": "1.3.38",
     "@testing-library/jest-dom": "6.1.4",
