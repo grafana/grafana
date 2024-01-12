@@ -51,7 +51,7 @@ Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/
 
 <!--Laura Benz-->
 
-_Available in public preview in Grafana Open source and Enterprise_
+_Available in public preview in Grafana Open Source and Enterprise_
 
 The improved navigation menu gives you a better overview by showing all levels of navigation items in a more compact design. We also implemented a better dock and improved scrolling behavior. Furthermore, we improved the structure of the nav menu and added several new items.
 
@@ -63,7 +63,7 @@ The improved navigation menu gives you a better overview by showing all levels o
 
 <!--internal_enablement_video-->
 
-_Available in public preview in Grafana Enterprise and Cloud_
+_Available in public preview in Grafana Enterprise and Grafana Cloud_
 
 We've improved the reporting experience with options to make all of your table data accessible in PDFs. Previously, if your dashboard included large table visualizations, you couldn't see all of the table data in your PDF report. Unlike in Grafana, you couldn't scroll in the PDF table visualization or click on the page numbers. With this new feature, you now have the option to see all the data directly in your PDF without losing your dashboard layout.
 
@@ -344,7 +344,7 @@ In addition to `Query` and `Edit` access, you can now grant users, teams, or bas
 <!--Isabella Siu-->
 <!--get review for note-->
 
-_Generally available in Grafana Enterprise, Cloud Advanced and Cloud Pro_
+_Generally available in Grafana Enterprise, Grafana Cloud Advanced and Cloud Pro_
 
 <!--is this avail info still valid-->
 
@@ -394,7 +394,7 @@ The following example would add the derived field `traceID regex` based on a reg
 <!--Eric Leijonmarck-->
 <!--internal_enablement_video-->
 
-_Generally available in Grafana Open source and Enterprise_
+_Generally available in Grafana Open Source and Enterprise_
 
 We've identified a need for users who enable anonymous authentication to monitor the anonymous devices connected to their Grafana instance. This feature is part of our ongoing efforts to enhance control and transparency regarding anonymous usage.
 
