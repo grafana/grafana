@@ -28,11 +28,18 @@ interface JaegerDependenciesResponseError {
   msg: string;
 }
 
+interface JaegerDependenciesResponse {
+  data?: {
+    errors?: JaegerDependenciesResponseError[];
+    data: JaegerServiceDependency[];
+  };
+}
+
 /**
  * Transforms a Jaeger dependencies API response to a Grafana {@link DataQueryResponse}.
  * @param response Raw response data from the API proxy.
  */
-export function mapJaegerDependenciesResponse(response: Record<string, any>): DataQueryResponse {
+export function mapJaegerDependenciesResponse(response: JaegerDependenciesResponse): DataQueryResponse {
   const errors = response?.data?.errors;
   if (errors) {
     return {

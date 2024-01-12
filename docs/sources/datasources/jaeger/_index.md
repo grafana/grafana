@@ -371,5 +371,6 @@ To configure this feature, see the [introduction to exemplars][exemplars] docume
 {{% /docs/reference %}}
 
 ## Visualizing the dependency graph
+
 If service dependency information is available in Jaeger, it can be visualized in Grafana.
 Use the Jaeger data source with the "Dependency Graph" query type on a Node Graph panel for this.
