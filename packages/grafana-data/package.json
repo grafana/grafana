@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "10.3.0-pre",
+  "version": "10.4.0-pre",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.2",
-    "@grafana/schema": "10.3.0-pre",
+    "@grafana/schema": "10.4.0-pre",
     "@types/d3-interpolate": "^3.0.0",
     "@types/string-hash": "1.1.1",
     "d3-interpolate": "3.0.1",
@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
-    "@rollup/plugin-commonjs": "25.0.2",
+    "@rollup/plugin-commonjs": "25.0.7",
     "@rollup/plugin-json": "6.0.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@testing-library/dom": "9.3.4",
@@ -72,10 +72,10 @@
     "@testing-library/user-event": "14.5.2",
     "@types/dompurify": "^2",
     "@types/history": "4.7.11",
-    "@types/jest": "29.5.4",
+    "@types/jest": "29.5.11",
     "@types/jquery": "3.5.16",
-    "@types/lodash": "4.14.195",
-    "@types/marked": "5.0.1",
+    "@types/lodash": "4.14.202",
+    "@types/marked": "5.0.2",
     "@types/node": "20.8.10",
     "@types/papaparse": "5.3.7",
     "@types/react": "18.2.15",
