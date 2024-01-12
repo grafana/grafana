@@ -340,9 +340,9 @@
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
+/packages/grafana-traces/ @grafana/observability-traces-and-profiling
 
-
-# root files, mostly frontend
+# root files, mostly frontend 
 .browserslistrc @grafana/frontend-ops
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
