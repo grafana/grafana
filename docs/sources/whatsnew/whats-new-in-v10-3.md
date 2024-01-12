@@ -137,7 +137,9 @@ To try out the new tooltips, enable the `newVizTooltips` [feature toggle](https:
 - XY Chart
 - and more coming soon!
 
-Note: As this is an ongoing project, the dashboard shared cursor and annotations features are not yet fully supported.
+{{% admonition type="note" %}}
+As this is an ongoing project, the dashboard shared cursor and annotations features are not yet fully supported.
+{{% /admonition %}}
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Tooltips-Enablement-Video.mp4" max-width="750px" caption="Improved tooltips enablement video" >}}
 
