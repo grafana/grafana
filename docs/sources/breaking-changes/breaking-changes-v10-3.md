@@ -35,7 +35,7 @@ For each change, the provided information:
 - Guides you in how to mitigate for the change or migrate
 - Provides more learning resources
 
-For release highlights and deprecations, refer to our [v10.3 What’s new]({{< relref "../whatsnew/whats-new-in-v10-3/" >}}). For the specific steps we recommend when you upgrade to v10.3, check out our [Upgrade guide]({{< relref "../upgrade-guide/upgrade-v10.3/index.md" >}}).
+For release highlights and deprecations, refer to our [v10.3 What’s new](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v10-3/). For the specific steps we recommend when you upgrade to v10.3, check out our [Upgrade guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.3/).
 
 <!--
 ## Feature

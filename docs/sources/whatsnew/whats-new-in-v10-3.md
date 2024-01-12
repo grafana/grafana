@@ -26,7 +26,7 @@ For even more detail about all the changes in this release, refer to the [change
 
 ## Breaking changes
 
-For Grafana v10.3, we've also provided a list of [breaking changes]({{< relref "../breaking-changes/breaking-changes-v10-3/" >}}) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.3]({{< relref "../breaking-changes/breaking-changes-v10-3/" >}}).
+For Grafana v10.3, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v10-3) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.3](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v10-3/).
 
 <!-- Template below
 
@@ -50,12 +50,11 @@ Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/
 ## Navigation updates\*
 
 <!--Laura Benz-->
+<!--internal_enablement_video-->
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
 The improved navigation menu gives you a better overview by showing all levels of navigation items in a more compact design. We also implemented a better dock and improved scrolling behavior. Furthermore, we improved the structure of the nav menu and added several new items.
-
-<!--internal_enablement_video-->
 
 ## Table data in PDF reports
 
@@ -96,7 +95,7 @@ By selecting the **Window functions** mode and using **Mean** as the calculation
 
 The **Window functions** mode also supports moving variance and moving standard deviation calculations if you need to analyze the volatility of your metric.
 
-[Documentation](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
 
 #### Trend lines\*
 
@@ -115,11 +114,11 @@ _Available in public preview in all editions of Grafana_
 
 Canvas visualizations now support panning and zooming. This allows you to both create and navigate more complex designs.
 
-To enable this feature, you must first enable the `canvasPanelPanZoom` [feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+To enable this feature, you must first enable the `canvasPanelPanZoom` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
 
-[Documentation](https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas/)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/)
 
 ### Improved tooltips in visualizations\*
 
@@ -129,7 +128,7 @@ _Available in public preview in all editions of Grafana_
 
 We've introduced enhanced tooltips as part of our standardization initiative, unifying the tooltip architecture for a consistent user experience across panels. Packed with features like color indicators, time uniformity, and improved support for long labels, these tooltips go beyond a cosmetic redesign, bringing fundamental changes to elevate your data visualization experience. Stay tuned for more updates!
 
-To try out the new tooltips, enable the `newVizTooltips` [feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/). Enhanced tooltips have been implemented for the following visualizations:
+To try out the new tooltips, enable the `newVizTooltips` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/). Enhanced tooltips have been implemented for the following visualizations:
 
 - Time series
 - Trend
@@ -150,7 +149,7 @@ Note: As this is an ongoing project, the dashboard shared cursor and annotations
 
 _Generally available in all editions of Grafana_
 
-You can now plot enum values in your time series and state timeline visualizations. This feature is useful when you want to visualize the state of a system, such as the status of a service or the health of a device. For example, you can use this feature to visualize the status of a service as `ON`, `STANDBY`, or `OFF`. To display enum values you can [use the convert field transform](/docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#convert-field-type).
+You can now plot enum values in your time series and state timeline visualizations. This feature is useful when you want to visualize the state of a system, such as the status of a service or the health of a device. For example, you can use this feature to visualize the status of a service as `ON`, `STANDBY`, or `OFF`. To display enum values you can [use the convert field transform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#convert-field-type).
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Enum-Enablement-Video.mp4" caption="Enum enablement video" >}}
 
@@ -164,7 +163,7 @@ You can now view percent change in stat visualizations. This makes it easier to 
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Stat-Percent-Change-Enablement-Video-(USE).mp4" max-width="750px" caption="Stat percent change enablement video" >}}
 
-[Documentation](https://grafana.com/docs/grafana/next/panels-visualizations/visualizations/stat/#show-percent-change)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/#show-percent-change)
 
 ### Data visualization quality of life improvements
 
@@ -182,7 +181,7 @@ You can now apply data transformations to annotation data. For example, you can 
 
 #### Disable auto scaling units
 
-By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana will display it as 140 W. You can now disable unit auto scaling. This is helpful in cases where you want to ensure that the same unit is shown in your visualization regardless of the magnitude of the data. See [the standard options documentation](/docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#scale-units) for more information.
+By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana will display it as 140 W. You can now disable unit auto scaling. This is helpful in cases where you want to ensure that the same unit is shown in your visualization regardless of the magnitude of the data. See [the standard options documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#scale-units) for more information.
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-3-disable-unit-auto-scaling.mp4" caption="Disable auto scaling units" >}}
 
@@ -233,7 +232,7 @@ If you would also like to try out the **Embedded Flame Graph** feature, please e
 
 Note: in order to determine that there is a profile for a given span and render the 'Profiles for this span' button or the embedded flame graph in the span details, the 'pyroscope.profile.id' key-value pair must exist in your span tags.
 
-[Documentation](https://grafana.com/docs/grafana/next/datasources/tempo/configure-tempo-data-source/#trace-to-profiles)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-profiles)
 
 ### FlameGraph: Collapsing similar items in the graph\*
 
@@ -412,4 +411,4 @@ When anonymous access has been enabled, any device which accesses Grafana in the
 
 - A new statistic has been added to the Usage & Stats page, displaying active anonymous devices from the last 30 days.
 
-[Documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/grafana/)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/)
