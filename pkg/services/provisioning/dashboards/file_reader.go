@@ -383,6 +383,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return f.ID, f.UID, nil
 	}
 
+	// nolint:staticcheck
 	return result.ID, result.UID, nil
 }
 
