@@ -25,10 +25,15 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     return getDashboardSceneFor(this);
   }
 
-  static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {
-    const dashboard = model.getDashboard();
+  public getJsonText(): string {
+    const dashboard = this.getDashboard();
     const jsonData = transformSceneToSaveModel(dashboard);
-    const jsonText = getPrettyJSON(jsonData);
+    return getPrettyJSON(jsonData);
+  }
+
+  static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {
+    const jsonText = model.getJsonText();
+    const dashboard = model.getDashboard();
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const canSave = dashboard.useState().meta.canSave;
 
