@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { InlineFieldRow, InlineField } from '@grafana/ui';
 
 import { LokiDatasource } from '../datasource';
 import { shouldRefreshLabels } from '../languageUtils';
@@ -71,8 +70,11 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
     return (
       <>
-        <InlineFieldRow data-testid={this.props['data-testid']}>
-          <InlineField grow className="min-width-15">
+        <div
+          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+          data-testid={this.props['data-testid']}
+        >
+          <div className="gf-form--grow flex-shrink-1 min-width-15">
             <MonacoQueryFieldWrapper
               datasource={datasource}
               history={history ?? []}
@@ -82,8 +84,8 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               placeholder={placeholder}
               timeRange={range}
             />
-          </InlineField>
-        </InlineFieldRow>
+          </div>
+        </div>
         {ExtraFieldElement}
       </>
     );
