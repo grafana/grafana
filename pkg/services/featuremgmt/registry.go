@@ -826,11 +826,11 @@ var (
 		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
-			Stage:           FeatureStagePrivatePreview,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
-			Enabled:         true,
+			Expression:      "true", // enabled by default
 			Created:         time.Date(2023, time.August, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1070,14 +1070,6 @@ var (
 			Created:      time.Date(2023, time.October, 17, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "costManagementUi",
-			Description:  "Toggles the display of the cost management ui plugin",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaDatabasesFrontend,
-			Created:      time.Date(2023, time.October, 17, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
 			Stage:           FeatureStageExperimental,
@@ -1234,8 +1226,9 @@ var (
 		{
 			Name:         "logRowsPopoverMenu",
 			Description:  "Enable filtering menu displayed when text of a log line is selected",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true",
 			Owner:        grafanaObservabilityLogsSquad,
 			Created:      time.Date(2023, time.November, 16, 12, 0, 0, 0, time.UTC),
 		},
@@ -1303,6 +1296,32 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "enablePluginsTracingByDefault",
+			Description:     "Enable plugin tracing for all external plugins",
+			FrontendOnly:    false,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 9, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "cloudRBACRoles",
+			Description:     "Enabled grafana cloud specific RBAC roles",
+			Stage:           FeatureStageExperimental,
+			Owner:           identityAccessTeam,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:           "alertingQueryOptimization",
+			Description:    "Optimizes eligible queries in order to reduce load on datasources",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaAlertingSquad,
+			AllowSelfServe: false,
+			Created:        time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
