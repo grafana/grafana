@@ -342,6 +342,9 @@ type Cfg struct {
 	ExtendedJWTExpectIssuer   string
 	ExtendedJWTExpectAudience string
 
+	// SSO Settings Auth
+	SSOSettingsReloadInterval time.Duration
+
 	// Dataproxy
 	SendUserHeader                 bool
 	DataProxyLogging               bool
@@ -551,7 +554,7 @@ type Cfg struct {
 // AddChangePasswordLink returns if login form is disabled or not since
 // the same intention can be used to hide both features.
 func (cfg *Cfg) AddChangePasswordLink() bool {
-	return !cfg.DisableLoginForm
+	return !(cfg.DisableLoginForm || cfg.DisableLogin)
 }
 
 type CommandLineArgs struct {
@@ -1622,6 +1625,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
+
+	// SSO Settings
+	ssoSettings := iniFile.Section("sso_settings")
+	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)
 
 	return nil
 }

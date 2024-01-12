@@ -1,79 +1,59 @@
-import React, { FormEvent } from 'react';
+import React from 'react';
 
-import { SelectableValue, VariableType } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneVariable, AdHocFiltersVariable, AdHocFilterSet } from '@grafana/scenes';
+import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
 import { HorizontalGroup, Button } from '@grafana/ui';
+import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
+import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
+import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
+import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { ConfirmDeleteModal } from 'app/features/variables/editor/ConfirmDeleteModal';
-// import { VariableHideSelect } from 'app/features/variables/editor/VariableHideSelect';
-import { VariableHideSelect } from 'app/features/variables/editor/VariableHideSelect';
-import { VariableLegend } from 'app/features/variables/editor/VariableLegend';
-import { VariableTextAreaField } from 'app/features/variables/editor/VariableTextAreaField';
-import { VariableTextField } from 'app/features/variables/editor/VariableTextField';
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
-import { getVariableEditor, getVariableScene, isEditableVariableType } from './utils';
+import { EditableVariableType, getVariableEditor, hasVariableOptions, isEditableVariableType } from './utils';
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
-  onSubmit: (variable: SceneVariable) => void;
+  onTypeChange: (type: EditableVariableType) => void;
+  onGoBack: () => void;
+  onDiscardChanges: () => void;
 }
 
-export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormProps) {
-  const [editingVariable, setEditingVariable] = React.useState(variable.clone());
-
-  const { name, type, label, description, hide } = editingVariable.useState();
+export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscardChanges }: VariableEditorFormProps) {
+  const { name: initialName, type, label: initialLabel, description: initialDescription, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
+  const [name, setName] = React.useState(initialName ?? '');
+  const [label, setLabel] = React.useState(initialLabel ?? '');
+  const [description, setDescription] = React.useState(initialDescription ?? '');
 
-  const onTypeChange = (option: SelectableValue<VariableType>) => {
-    const variableType = option.value && isEditableVariableType(option.value) ? option.value : undefined;
-
-    if (!variableType) {
-      return;
-    }
-
-    const scene = getVariableScene(variableType);
-
-    if (scene === AdHocFiltersVariable) {
-      const newVariable = new scene({ name, description, set: new AdHocFilterSet({}), type: 'adhoc' });
-      setEditingVariable(newVariable);
-    } else {
-      const newVariable = new scene({ name, description });
-      setEditingVariable(newVariable);
+  const onVariableTypeChange = (option: SelectableValue<EditableVariableType>) => {
+    if (option.value) {
+      onTypeChange(option.value);
     }
   };
 
-  function onNameChange(event: FormEvent<HTMLInputElement>) {
-    editingVariable.setState({ name: event.currentTarget.value });
-  }
+  const onNameChange = (e: React.FormEvent<HTMLInputElement>) => setName(e.currentTarget.value);
+  const onLabelChange = (e: React.FormEvent<HTMLInputElement>) => setLabel(e.currentTarget.value);
+  const onDescriptionChange = (e: React.FormEvent<HTMLTextAreaElement>) => setDescription(e.currentTarget.value);
 
-  function onLabelChange(event: FormEvent<HTMLInputElement>) {
-    editingVariable.setState({ label: event.currentTarget.value });
-  }
-
-  function onDescriptionChange(event: FormEvent<HTMLTextAreaElement>) {
-    editingVariable.setState({ description: event.currentTarget.value });
-  }
-
-  function onHideChange(hide: VariableHide) {
-    editingVariable.setState({ hide });
-  }
-
-  function onSubmitHandler(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onSubmit(editingVariable);
-  }
+  const onNameBlur = () => variable.setState({ name });
+  const onLabelBlur = () => variable.setState({ label });
+  const onDescriptionBlur = () => variable.setState({ description });
+  const onHideChange = (hide: VariableHide) => variable.setState({ hide });
 
   return (
     <>
-      <form aria-label="Variable editor Form" onSubmit={onSubmitHandler}>
-        <VariableTypeSelect onChange={onTypeChange} type={type} />
+      <form aria-label="Variable editor Form">
+        <VariableTypeSelect onChange={onVariableTypeChange} type={type} />
 
         <VariableLegend>General</VariableLegend>
         <VariableTextField
-          value={name ?? ''}
+          value={name}
+          onBlur={onNameBlur}
           onChange={onNameChange}
           name="Name"
           placeholder="Variable name"
@@ -82,20 +62,21 @@ export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormPro
           maxLength={VariableNameConstraints.MaxSize}
           required
         />
-
         <VariableTextField
           name="Label"
           description="Optional display name"
-          value={label ?? ''}
-          placeholder="Label name"
+          value={label}
           onChange={onLabelChange}
+          placeholder="Label name"
+          onBlur={onLabelBlur}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
         />
         <VariableTextAreaField
           name="Description"
-          value={description ?? ''}
-          placeholder="Descriptive text"
+          value={description}
           onChange={onDescriptionChange}
+          placeholder="Descriptive text"
+          onBlur={onDescriptionBlur}
           width={52}
         />
 
@@ -103,8 +84,7 @@ export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormPro
 
         {EditorToRender && <EditorToRender variable={variable} />}
 
-        {/* TODO: VariableValuesPreview should accept only options as property
-          {hasOptions(variable) ? <VariableValuesPreview variable={variable} /> : null}  */}
+        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.options} />}
 
         <div style={{ marginTop: '16px' }}>
           <HorizontalGroup spacing="md" height="inherit">
@@ -121,11 +101,18 @@ export function VariableEditorForm({ variable, onSubmit }: VariableEditorFormPro
               {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
             </Button> */}
             <Button
-              type="submit"
-              variant="primary"
+              variant="secondary"
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+              onClick={onGoBack}
             >
-              Apply
+              Back to list
+            </Button>
+            <Button
+              variant="destructive"
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+              onClick={onDiscardChanges}
+            >
+              Discard changes
             </Button>
           </HorizontalGroup>
         </div>

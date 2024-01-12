@@ -3,8 +3,8 @@ import React, { FormEvent } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 
-import { VariableLegend } from '../editor/VariableLegend';
-import { VariableTextAreaField } from '../editor/VariableTextAreaField';
+import { VariableLegend } from '../components/VariableLegend';
+import { VariableTextAreaField } from '../components/VariableTextAreaField';
 
 interface CustomVariableFormProps {
   query: string;

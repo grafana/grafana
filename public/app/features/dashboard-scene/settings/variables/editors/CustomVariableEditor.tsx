@@ -19,10 +19,10 @@ export function CustomVariableEditor({ variable }: CustomVariableEditorProps) {
     variable.setState({ query: event.currentTarget.value });
   };
   const onMultiChange = (event: React.FormEvent<HTMLInputElement>) => {
-    variable.setState({ isMulti: event.target.checked });
+    variable.setState({ isMulti: event.currentTarget.checked });
   };
   const onIncludeAllChange = (event: React.FormEvent<HTMLInputElement>) => {
-    variable.setState({ includeAll: event.target.checked });
+    variable.setState({ includeAll: event.currentTarget.checked });
   };
   const onAllValueChange = (event: React.FormEvent<HTMLInputElement>) => {
     variable.setState({ allValue: event.currentTarget.value });

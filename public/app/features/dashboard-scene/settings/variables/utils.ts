@@ -1,12 +1,14 @@
 import { SelectableValue } from '@grafana/data';
 import {
-  AdHocFiltersVariable,
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
   IntervalVariable,
   TextBoxVariable,
   QueryVariable,
+  AdHocFilterSet,
+  SceneVariable,
+  VariableValueOption,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
 
@@ -21,16 +23,6 @@ import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 interface EditableVariableConfig {
   name: string;
   description: string;
-  // FIXME: This should include all the scene objects
-  scene:
-    | typeof CustomVariable
-    | typeof QueryVariable
-    | typeof ConstantVariable
-    | typeof IntervalVariable
-    | typeof DataSourceVariable
-    | typeof AdHocFiltersVariable
-    | typeof TextBoxVariable;
-  // FIXME: This should include all the editor objects
   editor: React.ComponentType<any>;
 }
 
@@ -40,63 +32,93 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
   return type !== 'system';
 }
 
-const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> = {
+export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> = {
   custom: {
     name: 'Custom',
-    description: 'Custom variables',
-    scene: CustomVariable,
+    description: 'Define variable values manually',
     editor: CustomVariableEditor,
   },
   query: {
     name: 'Query',
-    description: 'Query variables',
-    scene: QueryVariable,
+    description: 'Variable values are fetched from a datasource query',
     editor: QueryVariableEditor,
   },
   constant: {
     name: 'Constant',
-    description: 'Constant variables',
-    scene: ConstantVariable,
+    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
     editor: ConstantVariableEditor,
   },
   interval: {
     name: 'Interval',
-    description: 'Interval variables',
-    scene: IntervalVariable,
+    description: 'Define a timespan interval (ex 1m, 1h, 1d)',
     editor: IntervalVariableEditor,
   },
   datasource: {
-    name: 'Datasource',
-    description: 'Datasource variables',
-    scene: DataSourceVariable,
+    name: 'Data source',
+    description: 'Enables you to dynamically switch the data source for multiple panels',
     editor: DataSourceVariableEditor,
   },
   adhoc: {
-    name: 'Adhoc',
-    description: 'Adhoc variables',
-    scene: AdHocFiltersVariable,
+    name: 'Ad hoc filters',
+    description: 'Add key/value filters on the fly',
     editor: AdHocFiltersVariableEditor,
   },
   textbox: {
     name: 'Textbox',
-    description: 'Textbox variables',
-    scene: TextBoxVariable,
+    description: 'Define a textbox variable, where users can enter any arbitrary string',
     editor: TextBoxVariableEditor,
   },
 };
 
-export function getVariableTypeSelectOptions(): SelectableValue<VariableType> {
-  return Object.entries(EDITABLE_VARIABLES).map(([id, variableType]) => ({
-    label: variableType.name,
-    value: id,
-    description: variableType.description,
+export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
+  'query',
+  'custom',
+  'textbox',
+  'constant',
+  'datasource',
+  'interval',
+  'adhoc',
+];
+
+export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
+  return EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
+    label: EDITABLE_VARIABLES[variableType].name,
+    value: variableType,
+    description: EDITABLE_VARIABLES[variableType].description,
   }));
 }
 
 export function getVariableEditor(type: EditableVariableType) {
-  return EDITABLE_VARIABLES[type]?.editor;
+  return EDITABLE_VARIABLES[type].editor;
 }
 
-export function getVariableScene(type: EditableVariableType) {
-  return EDITABLE_VARIABLES[type].scene;
+interface CommonVariableProperties {
+  name: string;
+  label?: string;
+}
+
+export function getVariableScene(type: EditableVariableType, initialState: CommonVariableProperties) {
+  switch (type) {
+    case 'custom':
+      return new CustomVariable(initialState);
+    case 'query':
+      return new QueryVariable(initialState);
+    case 'constant':
+      return new ConstantVariable(initialState);
+    case 'interval':
+      return new IntervalVariable(initialState);
+    case 'datasource':
+      return new DataSourceVariable(initialState);
+    case 'adhoc':
+      // TODO: Initialize properly AdHocFilterSet with initialState
+      return new AdHocFilterSet({ name: initialState.name });
+    case 'textbox':
+      return new TextBoxVariable(initialState);
+  }
+}
+
+export function hasVariableOptions(
+  variable: SceneVariable
+): variable is SceneVariable & { options: VariableValueOption[] } {
+  return 'options' in variable.state;
 }

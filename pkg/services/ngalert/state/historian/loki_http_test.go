@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
-	"github.com/weaveworks/common/http/client"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
