@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -65,7 +64,7 @@ func NewDashboardAccess(sql db.DB, namespacer request.NamespaceMapper, dashStore
 	}
 }
 
-const selector = `SELECT 
+const selector = `SELECT
 	dashboard.org_id, dashboard.id,
 	dashboard.uid,slug,
 	dashboard.folder_uid,
@@ -79,10 +78,10 @@ const selector = `SELECT
 	dashboard.version,
 	title,
 	dashboard.data
-  FROM dashboard 
+  FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id 
-  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.created_by = UpdatedUSER.id 
+  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
+  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.created_by = UpdatedUSER.id
   WHERE is_folder = false`
 
 // GetDashboards implements DashboardAccess.
@@ -303,7 +302,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		dash.Namespace = a.namespacer(orgId)
 		dash.UID = utils.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(v1.NewTime(created))
-		meta := kinds.MetaAccessor(dash)
+		meta, err := utils.MetaAccessor(dash)
+		if err != nil {
+			return nil, err
+		}
 		meta.SetUpdatedTimestamp(&updated)
 		meta.SetSlug(slug)
 		if createdByID > 0 {
@@ -328,14 +330,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				return nil, err
 			}
 
-			meta.SetOriginInfo(&kinds.ResourceOriginInfo{
+			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name:      origin_name.String,
 				Path:      originPath,
 				Key:       origin_key.String,
 				Timestamp: &ts,
 			})
 		} else if plugin_id != "" {
-			meta.SetOriginInfo(&kinds.ResourceOriginInfo{
+			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name: "plugin",
 				Path: plugin_id,
 			})
@@ -403,7 +405,10 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		dash.Spec.Remove("uid")
 	}
 
-	meta := kinds.MetaAccessor(dash)
+	meta, err := utils.MetaAccessor(dash)
+	if err != nil {
+		return nil, false, err
+	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
