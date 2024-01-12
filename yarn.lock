@@ -3488,7 +3488,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/traces@workspace:packages/grafana-traces":
+"@grafana/traces@workspace:*, @grafana/traces@workspace:packages/grafana-traces":
   version: 0.0.0-use.local
   resolution: "@grafana/traces@workspace:packages/grafana-traces"
   dependencies:
@@ -17094,6 +17094,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:1.28.6"
     "@grafana/schema": "workspace:*"
+    "@grafana/traces": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": "npm:^7.4.0"
