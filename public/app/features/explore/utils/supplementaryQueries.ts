@@ -1,5 +1,5 @@
 import { cloneDeep, groupBy } from 'lodash';
-import { distinct, Observable, merge, isObservable } from 'rxjs';
+import { distinct, Observable, merge } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
@@ -131,7 +131,7 @@ export const getSupplementaryQueryProvider = (
 
     if (hasSupplementaryQuerySupport(datasource, type)) {
       const provider = datasource.getDataProvider(type, dsRequest);
-      if (provider === undefined || isObservable(provider)) {
+      if (!provider) {
         return provider;
       }
       return type === SupplementaryQueryType.LogsVolume
