@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { LoadingState, createDataFrame, FieldType, LogsSortOrder } from '@grafana/data';
+import { LoadingState, createDataFrame, FieldType, LogsSortOrder, CoreApp } from '@grafana/data';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 
 import { LogsPanel } from './LogsPanel';
@@ -170,7 +170,7 @@ describe('LogsPanel', () => {
           series,
           options: { showCommonLabels: false },
           request: {
-            app: 'logs',
+            app: CoreApp.Dashboard,
             targets: [{ refId: 'A', datasource: { uid: 'no-show-context' } }],
           },
         },
@@ -188,7 +188,7 @@ describe('LogsPanel', () => {
           series,
           options: { showCommonLabels: false },
           request: {
-            app: 'logs',
+            app: CoreApp.Dashboard,
             targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
           },
         },
@@ -200,13 +200,31 @@ describe('LogsPanel', () => {
       });
     });
 
+    it('should not show the toggle if the datasource does support show context but the app is not Dashboard', async () => {
+      setup({
+        data: {
+          series,
+          options: { showCommonLabels: false },
+          request: {
+            app: CoreApp.CloudAlerting,
+            targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+          },
+        },
+      });
+
+      await waitFor(async () => {
+        await userEvent.hover(screen.getByText(/logline text/i));
+        expect(screen.queryByLabelText(/show context/i)).toBeNull();
+      });
+    });
+
     it('should render the mocked `LogRowContextModal` after click', async () => {
       setup({
         data: {
           series,
           options: { showCommonLabels: false },
           request: {
-            app: 'logs',
+            app: CoreApp.Dashboard,
             targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
           },
         },
@@ -224,7 +242,7 @@ describe('LogsPanel', () => {
           series,
           options: { showCommonLabels: false },
           request: {
-            app: 'logs',
+            app: CoreApp.Dashboard,
             targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
           },
         },
