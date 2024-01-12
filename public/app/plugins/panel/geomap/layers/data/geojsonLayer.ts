@@ -101,6 +101,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       });
     }
 
+    const styleStrings: string[] = Object.values(GeoJSONStyles);
     const vectorLayer = new VectorLayer({
       source,
       style: (feature: FeatureLike) => {
@@ -127,7 +128,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
           // Support styling polygons from Feature properties
           const featureProps = feature.getProperties();
-          const styleStrings: string[] = Object.values(GeoJSONStyles);
           if (Object.keys(featureProps).some((property) => styleStrings.includes(property))) {
             const values: StyleConfigValues = {
               color: featureProps[GeoJSONStyles.color] ?? check.state.base.color,
