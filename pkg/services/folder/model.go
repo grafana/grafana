@@ -93,7 +93,8 @@ type CreateFolderCommand struct {
 	Description string `json:"description"`
 	ParentUID   string `json:"parentUid"`
 
-	SignedInUser identity.Requester `json:"-"`
+	SignedInUser          identity.Requester `json:"-"`
+	IgnoreDuplicateRowErr bool               `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -146,7 +147,8 @@ type GetFolderQuery struct {
 	Title *string
 	OrgID int64
 
-	SignedInUser identity.Requester `json:"-"`
+	ForceFoldersWrite bool               `json:"-"`
+	SignedInUser      identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to

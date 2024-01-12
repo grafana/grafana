@@ -128,7 +128,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && !cmd.ForceFoldersWrite {
 		return dashFolder, nil
 	}
 
@@ -440,15 +440,27 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
-	if err != nil {
+	ignoreDuplicateInsert := errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) && cmd.IgnoreDuplicateRowErr
+	if err != nil && !ignoreDuplicateInsert {
 		return nil, toFolderError(err)
 	}
 
 	var nestedFolder *folder.Folder
 	var dash *dashboards.Dashboard
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
-		if dash, err = s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd); err != nil {
-			return toFolderError(err)
+		if !ignoreDuplicateInsert {
+			if dash, err = s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd); err != nil {
+				return toFolderError(err)
+			}
+
+		} else {
+			dashQuery := &dashboards.GetDashboardQuery{
+				Title: &dashFolder.Title,
+				OrgID: cmd.OrgID,
+			}
+			if dash, err = s.dashboardStore.GetDashboard(ctx, dashQuery); err != nil {
+				return toFolderError(err)
+			}
 		}
 
 		cmd = &folder.CreateFolderCommand{
