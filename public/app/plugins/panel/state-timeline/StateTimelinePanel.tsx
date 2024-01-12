@@ -245,6 +245,7 @@ export const StateTimelinePanel = ({
                   timeZone={timeZone}
                   newRange={newAnnotationRange}
                   setNewRange={setNewAnnotationRange}
+                  canvasRegionRendering={false}
                 />
               </>
             ) : (

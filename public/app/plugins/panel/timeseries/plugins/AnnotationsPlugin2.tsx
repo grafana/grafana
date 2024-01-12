@@ -142,7 +142,7 @@ export const AnnotationsPlugin2 = ({
           if (!vals.isRegion?.[i]) {
             renderLine(ctx, y0, y1, x0, color);
             // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
-          } else if (vals.isRegion?.[i] && canvasRegionRendering) {
+          } else if (canvasRegionRendering) {
             renderLine(ctx, y0, y1, x0, color);
 
             let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
