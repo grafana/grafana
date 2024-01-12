@@ -148,7 +148,7 @@
     "@types/react": "18.2.15",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-calendar": "3.9.0",
-    "@types/react-color": "3.0.6",
+    "@types/react-color": "3.0.11",
     "@types/react-dom": "18.2.7",
     "@types/react-highlight-words": "0.16.4",
     "@types/react-router-dom": "5.3.3",
