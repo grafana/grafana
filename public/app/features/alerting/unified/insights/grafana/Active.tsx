@@ -33,11 +33,11 @@ export function getActiveGrafanaAlertsScene(datasource: DataSourceRef, panelTitl
         mode: ThresholdsMode.Absolute,
         steps: [
           {
-            color: 'red',
+            color: 'green',
             value: 0,
           },
           {
-            color: 'red',
+            color: 'green',
             value: 80,
           },
         ],
