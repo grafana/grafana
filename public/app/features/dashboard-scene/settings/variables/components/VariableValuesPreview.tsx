@@ -33,7 +33,7 @@ export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) =
       <InlineFieldRow>
         {previewOptions.map((o, index) => (
           <InlineFieldRow key={`${o.value}-${index}`} className={styles.optionContainer}>
-            <InlineLabel data-test-id={selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption}>
+            <InlineLabel data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption}>
               <div className={styles.label}>{o.label}</div>
             </InlineLabel>
           </InlineFieldRow>
