@@ -8585,10 +8585,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/gtag.js@npm:^0.0.12":
-  version: 0.0.12
-  resolution: "@types/gtag.js@npm:0.0.12"
-  checksum: f78217dd0485aa6c34f1e74e21a8fed1f58e1dcaeed7841df12ab2df2438d6015910424307945a886f101176bc95078da859b101666bfbd9437e75b63883fd36
+"@types/gtag.js@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@types/gtag.js@npm:0.0.18"
+  checksum: 194c11f7c7cdfeca6511dc6124b7269987c2a52105d88ea9e945a74732dacedfa747312b407f286fbea903dd12255c7b54960d5d25bbb6276c7867c1eafc295a
   languageName: node
   linkType: hard
 
@@ -17119,7 +17119,7 @@ __metadata:
     "@types/file-saver": "npm:2.0.7"
     "@types/glob": "npm:^8.0.0"
     "@types/google.analytics": "npm:^0.0.45"
-    "@types/gtag.js": "npm:^0.0.12"
+    "@types/gtag.js": "npm:^0.0.18"
     "@types/history": "npm:4.7.11"
     "@types/hoist-non-react-statics": "npm:3.3.1"
     "@types/jest": "npm:29.5.4"
