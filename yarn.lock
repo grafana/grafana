@@ -8569,10 +8569,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/google.analytics@npm:^0.0.42":
-  version: 0.0.42
-  resolution: "@types/google.analytics@npm:0.0.42"
-  checksum: bda167875e189eeb2263d1d8a7f53994630b0c00af095145e7961d59b2f7d8f6968c463e6e61afccebba4a707a2eec184a370f3ebef1d93188b83fa3b01aa15a
+"@types/google.analytics@npm:^0.0.45":
+  version: 0.0.45
+  resolution: "@types/google.analytics@npm:0.0.45"
+  checksum: 3dbf5f8b58b1122d49b4987a1e5b7476f21955b1bf0c140f9a389a0403877eef978463acbcf7856a3ae6bd166ab17bb97958f9c48d032e2c12fe9d8f3d73240e
   languageName: node
   linkType: hard
 
@@ -17118,7 +17118,7 @@ __metadata:
     "@types/eslint": "npm:8.44.0"
     "@types/file-saver": "npm:2.0.7"
     "@types/glob": "npm:^8.0.0"
-    "@types/google.analytics": "npm:^0.0.42"
+    "@types/google.analytics": "npm:^0.0.45"
     "@types/gtag.js": "npm:^0.0.12"
     "@types/history": "npm:4.7.11"
     "@types/hoist-non-react-statics": "npm:3.3.1"
