@@ -3556,7 +3556,7 @@ __metadata:
     "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.15"
-    "@types/react-beautiful-dnd": "npm:13.1.4"
+    "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-calendar": "npm:3.9.0"
     "@types/react-color": "npm:3.0.6"
     "@types/react-dom": "npm:18.2.7"
@@ -8987,12 +8987,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-beautiful-dnd@npm:13.1.4":
-  version: 13.1.4
-  resolution: "@types/react-beautiful-dnd@npm:13.1.4"
+"@types/react-beautiful-dnd@npm:13.1.8":
+  version: 13.1.8
+  resolution: "@types/react-beautiful-dnd@npm:13.1.8"
   dependencies:
     "@types/react": "npm:*"
-  checksum: f52931d0d062e6788ecf8a61991063771eb4b18b128538c1835b615e674ac17634caf9bce5615cc6358151a0bbe5e0b32f5f489f415cc23e9321a7216c3c7502
+  checksum: cb8a182ed0ea6f680c7c343fcb4e54237437ca90dc88c2a70f4a203ec8ad0740e389e3ab7772c8cc1479f05e5a046bccbc33d54055b94e0fe5b22be030ab23d2
   languageName: node
   linkType: hard
 
@@ -17135,7 +17135,7 @@ __metadata:
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.15"
-    "@types/react-beautiful-dnd": "npm:13.1.4"
+    "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.7"
     "@types/react-grid-layout": "npm:1.3.2"
     "@types/react-highlight-words": "npm:0.16.4"
