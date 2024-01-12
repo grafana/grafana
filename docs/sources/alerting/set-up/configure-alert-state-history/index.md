@@ -9,7 +9,7 @@ keywords:
   - alert state history
 labels:
   products:
-    - cloud
+    - oss
 title: Configure Alert State History
 weight: 600
 ---
