@@ -4,7 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
 const (
@@ -13,13 +13,13 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var DataSourceResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+var DataSourceResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"datasources", "datasource", "DataSource",
 	func() runtime.Object { return &DataSource{} },
 	func() runtime.Object { return &DataSourceList{} },
 )
 
-var DataSourcePluginResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+var DataSourcePluginResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"plugins", "plugin", "DataSourcePlugin",
 	func() runtime.Object { return &DataSourcePlugin{} },
 	func() runtime.Object { return &DataSourcePluginList{} },
