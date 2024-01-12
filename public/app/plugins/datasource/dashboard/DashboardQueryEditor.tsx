@@ -32,7 +32,7 @@ interface Props {
   queries: DataQuery[];
   panelData: PanelData;
   onChange: (queries: DataQuery[]) => void;
-  onRunQueries: () => void;
+  onRunQueries?: () => void;
 }
 
 const topics = [
@@ -74,7 +74,9 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
   const onUpdateQuery = useCallback(
     (query: DashboardQuery) => {
       onChange([query]);
-      onRunQueries();
+      if (onRunQueries) {
+        onRunQueries();
+      }
     },
     [onChange, onRunQueries]
   );

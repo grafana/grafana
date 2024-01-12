@@ -17,6 +17,7 @@ import {
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
@@ -106,6 +107,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const newState = sceneUtils.cloneSceneObjectState(panelMngr.state.panel.state);
 
+    // Remove data provider if it's a share query. For editing purposes the data provider is cloned and attached to the
+    // ShareQueryDataProvider when panel is in edit mode.
+    // TODO: Handle transformations when we get on transformations edit.
+    if (newState.$data instanceof ShareQueryDataProvider) {
+      newState.$data.setState({ $data: undefined });
+    }
+
     sourcePanel.setState(newState);
 
     // preserve time range and variables state
@@ -129,7 +137,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
 
-  const vizPanelMgr = new VizPanelManager(panelClone, dashboard.getRef());
+  const vizPanelMgr = new VizPanelManager(panelClone);
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({

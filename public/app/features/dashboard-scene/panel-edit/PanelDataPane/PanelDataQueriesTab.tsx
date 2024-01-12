@@ -5,6 +5,7 @@ import { SceneObjectBase, SceneComponentProps, SceneQueryRunner, sceneGraph } fr
 import { DataQuery } from '@grafana/schema';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
+import { DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
@@ -15,7 +16,6 @@ import { VizPanelManager } from '../VizPanelManager';
 import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
 
 interface PanelDataQueriesTabState extends PanelDataPaneTabState {
-  // dataRef: SceneObjectRef<SceneQueryRunner | ShareQueryDataProvider>;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
 }
@@ -115,6 +115,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     this._panelManager.changeQueries(queries);
   };
 
+  onRunQueries = () => {
+    this._panelManager.queryRunner.runQueries();
+  };
+
   getQueries() {
     const dataObj = this._panelManager.state.panel.state.$data!;
 
@@ -132,11 +136,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { panel, datasource, dsSettings } = model.panelManager.useState();
   const { $data: dataObj } = panel.useState();
-
-  if (!dataObj) {
-    return;
-  }
-
   const { data } = dataObj!.useState();
 
   if (!datasource || !dsSettings || !data) {
@@ -156,7 +155,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
       />
 
       {dataObj instanceof ShareQueryDataProvider ? (
-        <h1>TODO: DashboardQueryEditor</h1>
+        <DashboardQueryEditor queries={model.getQueries()} panelData={data} onChange={model.onQueriesChange} />
       ) : (
         <QueryEditorRows
           data={data}
@@ -164,7 +163,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
           dsSettings={dsSettings}
           onAddQuery={() => {}}
           onQueriesChange={model.onQueriesChange}
-          onRunQueries={() => {}}
+          onRunQueries={model.onRunQueries}
         />
       )}
     </>

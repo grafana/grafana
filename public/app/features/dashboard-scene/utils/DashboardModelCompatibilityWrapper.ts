@@ -9,10 +9,16 @@ import {
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
+  SceneObject,
+  SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { DataSourceRef } from '@grafana/schema';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { findVizPanelByKey, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
@@ -89,6 +95,13 @@ export class DashboardModelCompatibilityWrapper {
       from: time.state.from,
       to: time.state.to,
     };
+  }
+
+  public get panels() {
+    const panels = findAllObjects(this._scene, (o) => {
+      return Boolean(o instanceof VizPanel);
+    });
+    return panels.map((p) => new PanelCompatibilityWrapper(p as VizPanel));
   }
 
   /**
@@ -206,7 +219,9 @@ class PanelCompatibilityWrapper {
   constructor(private _vizPanel: VizPanel) {}
 
   public get id() {
-    const id = getPanelIdForVizPanel(this._vizPanel);
+    const id = getPanelIdForVizPanel(
+      this._vizPanel.parent instanceof LibraryVizPanel ? this._vizPanel.parent : this._vizPanel
+    );
 
     if (isNaN(id)) {
       console.error('VizPanel key could not be translated to a legacy numeric panel id', this._vizPanel);
@@ -232,6 +247,63 @@ class PanelCompatibilityWrapper {
     return [];
   }
 
+  public get targets() {
+    if (this._vizPanel.state.$data instanceof SceneQueryRunner) {
+      return this._vizPanel.state.$data.state.queries;
+    }
+
+    if (this._vizPanel.state.$data instanceof ShareQueryDataProvider) {
+      return [
+        {
+          datasource: {
+            uid: SHARED_DASHBOARD_QUERY,
+            type: 'datasource',
+          },
+          ...this._vizPanel.state.$data.state.query,
+        },
+      ];
+    }
+
+    if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
+      if (this._vizPanel.state.$data.state.$data instanceof ShareQueryDataProvider) {
+        return [
+          {
+            datasource: {
+              uid: SHARED_DASHBOARD_QUERY,
+              type: 'datasource',
+            },
+            ...(this._vizPanel.state.$data.state.$data as ShareQueryDataProvider).state.query,
+          },
+        ];
+      }
+      if (this._vizPanel.state.$data.state.$data instanceof SceneQueryRunner) {
+        return (this._vizPanel.state.$data.state.$data as SceneQueryRunner).state.queries;
+      }
+    }
+
+    return [];
+  }
+
+  public get datasource(): DataSourceRef | null {
+    if (this._vizPanel.state.$data instanceof SceneQueryRunner) {
+      return this._vizPanel.state.$data.state.datasource ?? null;
+    }
+
+    if (this._vizPanel.state.$data instanceof ShareQueryDataProvider) {
+      return { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' };
+    }
+
+    if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
+      if (this._vizPanel.state.$data.state.$data instanceof ShareQueryDataProvider) {
+        return { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' };
+      }
+
+      return (this._vizPanel.state.$data.state.$data as SceneQueryRunner).state.datasource ?? null;
+    }
+
+    return null;
+  }
+
   public refresh() {
     console.error('Scenes PanelCompatibilityWrapper.refresh no implemented (yet)');
   }
@@ -243,4 +315,17 @@ class PanelCompatibilityWrapper {
   public getQueryRunner() {
     console.error('Scenes PanelCompatibilityWrapper.getQueryRunner no implemented (yet)');
   }
+}
+
+function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean) {
+  let result: SceneObject[] = [];
+  root.forEachChild((child) => {
+    if (check(child)) {
+      result.push(child);
+    } else {
+      result = result.concat(findAllObjects(child, check));
+    }
+  });
+
+  return result;
 }

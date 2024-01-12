@@ -1,6 +1,6 @@
 import { Observable, ReplaySubject, Unsubscribable } from 'rxjs';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import {
   SceneDataProvider,
   SceneDataProviderResult,
@@ -12,6 +12,7 @@ import {
 } from '@grafana/scenes';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 export interface ShareQueryDataProviderState extends SceneDataState {
@@ -26,24 +27,56 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
   private _passContainerWidth = false;
 
   constructor(state: ShareQueryDataProviderState) {
-    super(state);
-
-    this.addActivationHandler(() => {
-      // TODO handle changes to query model (changed panelId / withTransforms)
-      //this.subscribeToState(this._onStateChanged);
-
-      this._subscribeToSource();
-
-      return () => {
-        if (this._querySub) {
-          this._querySub.unsubscribe();
-        }
-        if (this._sourceDataDeactivationHandler) {
-          this._sourceDataDeactivationHandler();
-        }
-      };
+    super({
+      data: emptyPanelData,
+      ...state,
     });
+
+    this.addActivationHandler(this._onActivate);
   }
+
+  // Will detect the root of the scene and if it's a PanelEditor, it will clone the data from the source panel.
+  // We are doing it because the source panel's original scene (dashboard) does not exist in the edit mode.
+  private _setupEditMode(panelId: number, root: PanelEditor) {
+    const keyToFind = getVizPanelKeyForPanelId(panelId);
+    const source = findObjectInScene(
+      root.state.dashboardRef.resolve(),
+      (scene: SceneObject) => scene.state.key === keyToFind
+    );
+
+    if (source) {
+      // Indicate that when de-activated, i.e. navigating back to dashboard, the cloned$data state needs to be removed
+      // so that the panel on the dashboar can use data from the actual source panel.
+      this.setState({
+        $data: source.state.$data!.clone(),
+      });
+    }
+  }
+
+  private _onActivate = () => {
+    const root = this.getRoot();
+    if (root instanceof PanelEditor && this.state.query.panelId) {
+      this._setupEditMode(this.state.query.panelId, root);
+    }
+    // TODO handle changes to query model (changed panelId / withTransforms)
+    this.subscribeToState(this._onStateChanged);
+    /**
+     * If the panel uses a shared query, we clone the source runner and attach it as a data provider for the shared one.
+     * This way the source panel does not to be present in the edit scene hierarchy.
+     */
+
+    this._subscribeToSource();
+
+    return () => {
+      if (this._querySub) {
+        this._querySub.unsubscribe();
+      }
+      if (this._sourceDataDeactivationHandler) {
+        this._sourceDataDeactivationHandler();
+        this._sourceDataDeactivationHandler = undefined;
+      }
+    };
+  };
 
   public getResultsStream(): Observable<SceneDataProviderResult> {
     return this._results;
@@ -54,6 +87,11 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
 
     if (this._querySub) {
       this._querySub.unsubscribe();
+    }
+
+    if (this._sourceDataDeactivationHandler) {
+      this._sourceDataDeactivationHandler();
+      this._sourceDataDeactivationHandler = undefined;
     }
 
     if (this.state.$data) {
@@ -110,8 +148,19 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
     });
 
     // Copy the initial state
-    this.setState({ data: this._sourceProvider.state.data });
+    this.setState({ data: this._sourceProvider.state.data || emptyPanelData });
   }
+
+  private _onStateChanged = (n: ShareQueryDataProviderState, p: ShareQueryDataProviderState) => {
+    const root = this.getRoot();
+    // If the query changed, we need to find the new source panel and subscribe to it
+    if (n.query !== p.query && n.query.panelId) {
+      if (root instanceof PanelEditor) {
+        this._setupEditMode(n.query.panelId, root);
+      }
+      this._subscribeToSource();
+    }
+  };
 
   public setContainerWidth(width: number) {
     if (this._passContainerWidth && this._sourceProvider) {
@@ -143,3 +192,5 @@ export function findObjectInScene(scene: SceneObject, check: (scene: SceneObject
 
   return found;
 }
+
+const emptyPanelData: PanelData = { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() };
