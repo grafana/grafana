@@ -5,15 +5,33 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	openapi "k8s.io/kube-openapi/pkg/common"
+	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 // Unstructured allows objects that do not have Golang structs registered to be manipulated
 // generically.
 type Unstructured struct {
-	// Object is a JSON compatible map with string, float, int, bool, []interface{}, or
-	// map[string]interface{}
-	// children.
-	Object map[string]interface{}
+	// Object is a JSON compatible map with string, float, int, bool, []interface{},
+	// or map[string]interface{} children.
+	Object map[string]any
+}
+
+// Produce an API definition that represents map[string]any
+func (u Unstructured) OpenAPIDefinition() openapi.OpenAPIDefinition {
+	return openapi.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type:                 []string{"object"},
+				AdditionalProperties: &spec.SchemaOrBool{Allows: true},
+			},
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: map[string]interface{}{
+					"x-kubernetes-preserve-unknown-fields": true,
+				},
+			},
+		},
+	}
 }
 
 func (u *Unstructured) UnstructuredContent() map[string]interface{} {

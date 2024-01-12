@@ -2,21 +2,6 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/grafana/grafana/pkg/apis"
-)
-
-const (
-	GROUP      = "playlist.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
-)
-
-var PlaylistResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"playlists", "playlist", "Playlist",
-	func() runtime.Object { return &Playlist{} },
-	func() runtime.Object { return &PlaylistList{} },
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
