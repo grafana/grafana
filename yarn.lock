@@ -3093,7 +3093,7 @@ __metadata:
     "@types/lodash": "npm:4.14.202"
     "@types/marked": "npm:5.0.2"
     "@types/node": "npm:20.8.10"
-    "@types/papaparse": "npm:5.3.7"
+    "@types/papaparse": "npm:5.3.14"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
     "@types/string-hash": "npm:1.1.1"
@@ -8922,12 +8922,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/papaparse@npm:5.3.7":
-  version: 5.3.7
-  resolution: "@types/papaparse@npm:5.3.7"
+"@types/papaparse@npm:5.3.14":
+  version: 5.3.14
+  resolution: "@types/papaparse@npm:5.3.14"
   dependencies:
     "@types/node": "npm:*"
-  checksum: 4fef3e38e4d4ebf5b8f9f2ca96a822311284f788058c3d7983b6c841f28be3737ccd467dea280c7c363ee9ba57114980a62c1cf3c8e65a2521c72a8472b59005
+  checksum: 9bd5cc0e6a2c02def6c8903dc4604e499907cb465186ed3532390468082a06f023adbac0216428d0d8e8fe017206780a03d20007041e9fed47c8d391cd69a536
   languageName: node
   linkType: hard
 
@@ -17131,7 +17131,7 @@ __metadata:
     "@types/node": "npm:20.8.10"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
-    "@types/papaparse": "npm:5.3.7"
+    "@types/papaparse": "npm:5.3.14"
     "@types/pluralize": "npm:^0.0.30"
     "@types/prismjs": "npm:1.26.0"
     "@types/react": "npm:18.2.15"
