@@ -36,7 +36,7 @@ import {
   selectIsWaitingForData,
   setSupplementaryQueryEnabled,
 } from '../state/query';
-import { updateTimeRange } from '../state/time';
+import { updateTimeRange, loadMoreLogs } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -138,6 +138,11 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
+  };
+
+  loadMoreLogs = (absoluteRange: AbsoluteTimeRange) => {
+    const { exploreId, loadMoreLogs } = this.props;
+    loadMoreLogs({ exploreId, absoluteRange });
   };
 
   private getQuery(
@@ -244,6 +249,14 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     );
   };
 
+  addResultsToCache = () => {
+    this.props.addResultsToCache(this.props.exploreId);
+  };
+
+  clearCache = () => {
+    this.props.clearCache(this.props.exploreId);
+  };
+
   render() {
     const {
       loading,
@@ -267,8 +280,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       splitOpenFn,
       isLive,
       exploreId,
-      addResultsToCache,
-      clearCache,
       logsVolume,
       scrollElement,
     } = this.props;
@@ -316,6 +327,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             loadingState={loadingState}
             loadLogsVolumeData={() => loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume)}
             onChangeTime={this.onChangeTime}
+            loadMoreLogs={this.loadMoreLogs}
             onClickFilterLabel={this.logDetailsFilterAvailable() ? onClickFilterLabel : undefined}
             onClickFilterOutLabel={this.logDetailsFilterAvailable() ? onClickFilterOutLabel : undefined}
             onStartScanning={onStartScanning}
@@ -330,8 +342,8 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             getRowContextQuery={this.getLogRowContextQuery}
             getLogRowContextUi={this.getLogRowContextUi}
             getFieldLinks={this.getFieldLinks}
-            addResultsToCache={() => addResultsToCache(exploreId)}
-            clearCache={() => clearCache(exploreId)}
+            addResultsToCache={this.addResultsToCache}
+            clearCache={this.clearCache}
             eventBus={this.props.eventBus}
             panelState={this.props.panelState}
             logsFrames={this.props.logsFrames}
@@ -389,6 +401,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 
 const mapDispatchToProps = {
   updateTimeRange,
+  loadMoreLogs,
   addResultsToCache,
   clearCache,
   loadSupplementaryQueryData,

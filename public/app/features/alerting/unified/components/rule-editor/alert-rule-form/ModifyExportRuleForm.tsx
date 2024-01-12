@@ -46,6 +46,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
   const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? MINUTE);
 
+  const onInvalid = (): void => {
+    notifyApp.error('There are errors in the form. Please correct them and try again!');
+  };
+
   const checkAlertCondition = (msg = '') => {
     setConditionErrorMsg(msg);
   };
@@ -66,7 +70,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
     <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
       Cancel
     </LinkButton>,
-    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues))}>
+    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
       Export
     </Button>,
   ];

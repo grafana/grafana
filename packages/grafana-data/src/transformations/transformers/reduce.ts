@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { guessFieldTypeForField, guessFieldTypeFromValue } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { KeyValue } from '../../types/data';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
@@ -224,6 +224,7 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
           const value = results[reducer];
           const copy = {
             ...field,
+            type: guessFieldTypeFromValue(value),
             values: [value],
           };
           copy.state = undefined;
