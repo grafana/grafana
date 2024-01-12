@@ -275,12 +275,12 @@ To reduce the noise of flapping alerts, you can set a recovery threshold differe
 
 Flapping alerts occur when a metric hovers around the alert threshold condition and may lead to frequent state changes, resulting in too many notifications being generated.
 
-## Traces
+## Profiles
 
 ### Trace to Profiles\*
 
 <!--Joey Tawadrous-->
-<!--internal_enablement_video, also under tags Data sources and Profiles-->
+<!--internal_enablement_video-->
 
 _Experimental in all editions of Grafana_
 
@@ -302,8 +302,6 @@ If you would also like to try out the **Embedded Flame Graph** feature, please e
 Note: in order to determine that there is a profile for a given span and render the 'Profiles for this span' button or the embedded flame graph in the span details, the 'pyroscope.profile.id' key-value pair must exist in your span tags.
 
 [Documentation](https://grafana.com/docs/grafana/next/datasources/tempo/configure-tempo-data-source/#trace-to-profiles)
-
-## Profiles
 
 ### FlameGraph: Collapsing similar items in the graph\*
 
