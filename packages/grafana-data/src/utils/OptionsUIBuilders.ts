@@ -1,3 +1,5 @@
+import { set, cloneDeep } from 'lodash';
+
 import {
   numberOverrideProcessor,
   selectOverrideProcessor,
@@ -185,7 +187,24 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
   constructor(public cfg: NestedPanelOptions<TSub>) {
     this.path = cfg.path;
     this.category = cfg.category;
-    this.defaultValue = cfg.defaultValue;
+    this.defaultValue = this.getDefaultValue(cfg);
+  }
+
+  private getDefaultValue(cfg: NestedPanelOptions<TSub>): TSub {
+    let result = isObject(cfg.defaultValue) ? cloneDeep(cfg.defaultValue) : {};
+
+    const builder = new PanelOptionsEditorBuilder<TSub>();
+    cfg.build(builder, { data: [] });
+
+    for (const item of builder.getItems()) {
+      if (item.defaultValue != null) {
+        set(result, item.path, item.defaultValue);
+      }
+    }
+
+    // TSub is defined as type any and we need to cast it back
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return result as TSub;
   }
 
   getBuilder = () => {
