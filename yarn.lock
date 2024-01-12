@@ -3562,7 +3562,7 @@ __metadata:
     "@types/react-dom": "npm:18.2.7"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
-    "@types/react-table": "npm:7.7.14"
+    "@types/react-table": "npm:7.7.19"
     "@types/react-test-renderer": "npm:18.0.0"
     "@types/react-transition-group": "npm:4.4.6"
     "@types/react-window": "npm:1.8.5"
@@ -9084,12 +9084,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.14":
-  version: 7.7.14
-  resolution: "@types/react-table@npm:7.7.14"
+"@types/react-table@npm:7.7.19":
+  version: 7.7.19
+  resolution: "@types/react-table@npm:7.7.19"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 547e4e26a8512572d8372a88aaa1d5d0027e15ed34a18acfd1a76bda0520c856b096643c9e585b8459061dde3e50572333dd9e8d9671d83dc87615bd7532dfe8
+  checksum: 00ade23df17d1e6b4cd94dbf127268178f7daab9e5c823c9aa915458d99817814dfdbede9d37068c0d913e4706697dc8904e34987db16cb80ce2e41ad8a6cc10
   languageName: node
   linkType: hard
 
@@ -17141,7 +17141,7 @@ __metadata:
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-resizable": "npm:3.0.4"
     "@types/react-router-dom": "npm:5.3.3"
-    "@types/react-table": "npm:7.7.14"
+    "@types/react-table": "npm:7.7.19"
     "@types/react-test-renderer": "npm:18.0.0"
     "@types/react-transition-group": "npm:4.4.6"
     "@types/react-virtualized-auto-sizer": "npm:1.0.1"
