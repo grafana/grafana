@@ -39,10 +39,10 @@ interface Props {
   showColorScale?: boolean;
   isPinned: boolean;
   dismiss: () => void;
-  canAnnotate: boolean;
   panelData: PanelData;
   replaceVars: InterpolateFunction;
   scopedVars: ScopedVars[];
+  annotate?: () => void;
 }
 
 export const HeatmapHoverView = (props: Props) => {
@@ -65,11 +65,11 @@ const HeatmapHoverCell = ({
   dataRef,
   showHistogram,
   isPinned,
-  canAnnotate,
   showColorScale = false,
   scopedVars,
   replaceVars,
   mode,
+  annotate,
 }: Props) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -375,9 +375,6 @@ const HeatmapHoverCell = ({
     return content;
   };
 
-  // @TODO remove this when adding annotations support
-  canAnnotate = false;
-
   const styles = useStyles2(getStyles);
 
   return (
@@ -388,7 +385,7 @@ const HeatmapHoverCell = ({
         customContent={getCustomContent()}
         isPinned={isPinned}
       />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} />}
+      {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );
 };

@@ -14,7 +14,7 @@ import {
   ZoomPlugin,
 } from '@grafana/ui';
 import { addTooltipSupport, HoverEvent } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
@@ -25,6 +25,7 @@ import {
 
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
@@ -60,6 +61,8 @@ export const StateTimelinePanel = ({
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const { sync, canAddAnnotations } = usePanelContext();
 
   const onCloseToolTip = () => {
@@ -163,7 +166,8 @@ export const StateTimelinePanel = ({
     }
   }
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
+  const showNewVizTooltips =
+    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
 
   return (
     <TimelineChart
@@ -203,7 +207,20 @@ export const StateTimelinePanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xOne}
                     queryZoom={onChangeTimeRange}
-                    render={(u, dataIdxs, seriesIdx, isPinned) => {
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
+                      if (timeRange2 != null) {
+                        setNewAnnotationRange(timeRange2);
+                        dismiss();
+                        return;
+                      }
+
+                      const annotate = () => {
+                        let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                        setNewAnnotationRange({ from: xVal, to: xVal });
+                        dismiss();
+                      };
+
                       return (
                         <StateTimelineTooltip2
                           data={frames ?? []}
@@ -215,16 +232,27 @@ export const StateTimelinePanel = ({
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                           timeRange={timeRange}
+                          annotate={enableAnnotationCreation ? annotate : undefined}
                         />
                       );
                     }}
                   />
                 )}
+                {/* Renders annotations */}
+                <AnnotationsPlugin2
+                  annotations={data.annotations ?? []}
+                  config={builder}
+                  timeZone={timeZone}
+                  newRange={newAnnotationRange}
+                  setNewRange={setNewAnnotationRange}
+                  canvasRegionRendering={false}
+                />
               </>
             ) : (
               <>
                 <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />
                 <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+                {/* Renders annotation markers*/}
                 {data.annotations && (
                   <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
                 )}

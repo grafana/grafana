@@ -26,6 +26,8 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+
   const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
@@ -124,7 +126,7 @@ export const TrendPanel = ({
             <KeyboardPlugin config={uPlotConfig} />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <>
-                {config.featureToggles.newVizTooltips ? (
+                {showNewVizTooltips ? (
                   <TooltipPlugin2
                     config={uPlotConfig}
                     hoverMode={
