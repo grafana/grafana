@@ -11,6 +11,7 @@ function getStyles(theme: GrafanaTheme2) {
     dragIcon: css({
       cursor: 'drag',
       marginLeft: theme.spacing(1),
+      opacity: 0.4,
     }),
     labelCount: css({
       marginLeft: theme.spacing(0.5),
@@ -19,6 +20,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'none',
       border: 'none',
       fontSize: theme.typography.pxToRem(11),
+      opacity: 0.6,
     }),
     contentWrap: css({
       display: 'flex',
