@@ -2,21 +2,6 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/grafana/grafana/pkg/apis"
-)
-
-const (
-	GROUP      = "frontend.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
-)
-
-var ExtensionResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"extension", "extensions", "ExtensionResource",
-	func() runtime.Object { return &ExtensionResource{} },
-	func() runtime.Object { return &ExtensionResourceList{} },
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

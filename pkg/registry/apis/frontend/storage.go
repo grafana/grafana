@@ -11,7 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/frontend/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
@@ -24,7 +24,7 @@ var (
 )
 
 type extensionStorage struct {
-	info           apis.ResourceInfo
+	info           common.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
