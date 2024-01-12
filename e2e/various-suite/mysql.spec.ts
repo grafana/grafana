@@ -1,4 +1,5 @@
 import { e2e } from '../utils';
+import { waitForMonacoToLoad } from '../utils/support/monaco';
 
 import datasetResponse from './fixtures/datasets-response.json';
 import fieldsResponse from './fixtures/fields-response.json';
@@ -37,10 +38,7 @@ describe('MySQL datasource', () => {
   it.skip('code editor autocomplete should handle table name escaping/quoting', () => {
     e2e.components.RadioButton.container().filter(':contains("Code")').click();
 
-    // Wait for lazy loading Monaco
-    e2e.components.CodeEditor.container().children('[data-testid="Spinner"]').should('not.exist');
-    cy.window().its('monaco').should('exist');
-    e2e.components.CodeEditor.container().get('textarea').should('exist');
+    waitForMonacoToLoad();
 
     e2e.components.CodeEditor.container().get('textarea').type('S{downArrow}{enter}');
     cy.wait('@tables');
@@ -94,9 +92,7 @@ describe('MySQL datasource', () => {
       selectOption('timeFilter');
 
       // Wait for lazy loading Monaco
-      e2e.components.CodeEditor.container().children('[data-testid="Spinner"]').should('not.exist');
-      cy.window().its('monaco').should('exist');
-      e2e.components.CodeEditor.container().get('textarea').should('exist');
+      waitForMonacoToLoad();
 
       // Validate that the timeFilter macro was added
       e2e.components.CodeEditor.container()

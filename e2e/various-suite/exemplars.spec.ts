@@ -1,4 +1,5 @@
 import { e2e } from '../utils';
+import { waitForMonacoToLoad } from '../utils/support/monaco';
 
 const dataSourceName = 'PromExemplar';
 const addDataSource = () => {
@@ -58,9 +59,7 @@ describe('Exemplars', () => {
     e2e.components.RadioButton.container().filter(':contains("Code")').click();
 
     // Wait for lazy loading Monaco
-    e2e.components.QueryField.container().children('[data-testid="Spinner"]').should('not.exist');
-    cy.window().its('monaco').should('exist');
-    cy.get('.monaco-editor textarea:first').should('exist');
+    waitForMonacoToLoad();
 
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.fromField().clear().type('2021-07-10 17:10:00');
