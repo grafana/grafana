@@ -2569,6 +2569,20 @@
         },
         "type": "object"
       },
+      "AlertPair": {
+        "properties": {
+          "alertRule": {
+            "$ref": "#/components/schemas/AlertRuleUpgrade"
+          },
+          "error": {
+            "type": "string"
+          },
+          "legacyAlert": {
+            "$ref": "#/components/schemas/LegacyAlert"
+          }
+        },
+        "type": "object"
+      },
       "AlertQuery": {
         "properties": {
           "datasourceUid": {
@@ -2749,6 +2763,23 @@
           "interval": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AlertRuleUpgrade": {
+        "properties": {
+          "sendsTo": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -3667,6 +3698,20 @@
         "title": "Config is the top-level configuration for Alertmanager's config files.",
         "type": "object"
       },
+      "ContactPair": {
+        "properties": {
+          "contactPoint": {
+            "$ref": "#/components/schemas/ContactPointUpgrade"
+          },
+          "error": {
+            "type": "string"
+          },
+          "legacyChannel": {
+            "$ref": "#/components/schemas/LegacyChannel"
+          }
+        },
+        "type": "object"
+      },
       "ContactPointExport": {
         "properties": {
           "name": {
@@ -3684,6 +3729,20 @@
           }
         },
         "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
+        "type": "object"
+      },
+      "ContactPointUpgrade": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "routeMatchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "ContactPoints": {
@@ -4425,6 +4484,48 @@
             "type": "integer"
           },
           "term": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DashboardUpgrade": {
+        "properties": {
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardName": {
+            "type": "string"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "folderName": {
+            "type": "string"
+          },
+          "folderUid": {
+            "type": "string"
+          },
+          "migratedAlerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertPair"
+            },
+            "type": "array"
+          },
+          "newFolderName": {
+            "type": "string"
+          },
+          "newFolderUid": {
+            "type": "string"
+          },
+          "provisioned": {
+            "type": "boolean"
+          },
+          "warning": {
             "type": "string"
           }
         },
@@ -6438,6 +6539,21 @@
         },
         "type": "object"
       },
+      "LegacyChannel": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "LibraryElementArrayResponse": {
         "properties": {
           "result": {
@@ -7210,6 +7326,50 @@
           },
           "name": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMigrationState": {
+        "properties": {
+          "migratedChannels": {
+            "items": {
+              "$ref": "#/components/schemas/ContactPair"
+            },
+            "type": "array"
+          },
+          "migratedDashboards": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardUpgrade"
+            },
+            "type": "array"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMigrationSummary": {
+        "properties": {
+          "hasErrors": {
+            "type": "boolean"
+          },
+          "newAlerts": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "newChannels": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "newDashboards": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "removed": {
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -11762,6 +11922,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12010,6 +12171,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12153,7 +12315,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12219,7 +12380,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -24805,6 +24965,41 @@
           }
         },
         "summary": "Remove SSO Settings",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "get": {
+        "description": "You need to have a permission with action `settings:read` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "getProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          }
+        },
+        "summary": "Get an SSO Settings entry by Key",
         "tags": [
           "sso_settings"
         ]
