@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { MouseEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
@@ -40,6 +41,7 @@ const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Tutoria
   if (!isSet) {
     store.set(card.key, true);
   }
+  reportInteraction('grafana_getting_started_tutorial', { title: card.title });
 };
 
 const getStyles = (theme: GrafanaTheme2, complete: boolean) => {

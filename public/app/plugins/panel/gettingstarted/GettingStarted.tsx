@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -68,6 +68,8 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const { id } = this.props;
     const dashboard = getDashboardSrv().getCurrent();
     const panel = dashboard?.getPanelById(id);
+
+    reportInteraction('grafana_getting_started_remove_panel');
 
     dashboard?.removePanel(panel!);
 
