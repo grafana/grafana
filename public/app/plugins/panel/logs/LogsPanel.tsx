@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import {
   PanelProps,
@@ -15,9 +14,7 @@ import {
   DataQueryResponse,
   LogRowContextOptions,
   hasLogsContextSupport,
-  DataSourceApi,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
@@ -28,6 +25,7 @@ import { LogRows } from '../../../features/logs/components/LogRows';
 import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from '../../../features/logs/logsModel';
 
 import { Options } from './types';
+import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -55,25 +53,7 @@ export const LogsPanel = ({
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
 
-  // create a map of refid -> datasource
-  const { value: dataSourcesMap } = useAsync(async (): Promise<Map<string, DataSourceApi>> => {
-    if (!data.request?.targets) {
-      return new Map();
-    }
-
-    // resolve all datasources for every query feeding this panel
-    const raw = await Promise.all(
-      data.request.targets
-        .filter((target) => !!target.datasource?.uid)
-        .map((target) =>
-          getDataSourceSrv()
-            .get(target.datasource?.uid)
-            .then((ds) => ({ key: target.refId, ds }))
-        )
-    );
-
-    return new Map(raw.map(({ key, ds }) => [key, ds]));
-  }, [data.request?.targets]);
+  const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
