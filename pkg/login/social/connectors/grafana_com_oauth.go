@@ -69,10 +69,6 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOS
 	return nil
 }
 
-func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	return nil
-}
-
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }
@@ -104,6 +100,8 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
+	info := s.GetOAuthInfo()
+
 	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
 
 	if err != nil {
@@ -117,7 +115,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 
 	// on login we do not want to display the role from the external provider
 	var role roletype.RoleType
-	if !s.info.SkipOrgRoleSync {
+	if !info.SkipOrgRoleSync {
 		role = org.RoleType(data.Role)
 	}
 	userInfo := &social.BasicUserInfo{
@@ -135,8 +133,4 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	return userInfo, nil
-}
-
-func (s *SocialGrafanaCom) GetOAuthInfo() *social.OAuthInfo {
-	return s.info
 }

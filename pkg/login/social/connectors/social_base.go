@@ -3,12 +3,14 @@ package connectors
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
+	"sync"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
@@ -19,11 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 
 type SocialBase struct {
 	*oauth2.Config
 	info              *social.OAuthInfo
+	infoMutex         sync.RWMutex
 	log               log.Logger
 	autoAssignOrgRole string
 	features          featuremgmt.FeatureToggles
@@ -68,6 +72,27 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
 	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
 	bf.WriteString("```\n\n")
+	return nil
+}
+
+func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
+	s.infoMutex.RLock()
+	defer s.infoMutex.RUnlock()
+
+	return s.info
+}
+
+func (s *SocialBase) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.infoMutex.Lock()
+	defer s.infoMutex.Unlock()
+
+	s.info = info
+
 	return nil
 }
 

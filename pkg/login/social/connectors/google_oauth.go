@@ -71,11 +71,9 @@ func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSetti
 	return nil
 }
 
-func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	return nil
-}
-
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	info := s.GetOAuthInfo()
+
 	data, errToken := s.extractFromToken(ctx, client, token)
 	if errToken != nil {
 		return nil, errToken
@@ -116,13 +114,13 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups:         groups,
 	}
 
-	if !s.info.SkipOrgRoleSync {
+	if !info.SkipOrgRoleSync {
 		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups)
 		if errRole != nil {
 			return nil, errRole
 		}
 
-		if s.info.AllowAssignGrafanaAdmin {
+		if info.AllowAssignGrafanaAdmin {
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -134,10 +132,6 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
-func (s *SocialGoogle) GetOAuthInfo() *social.OAuthInfo {
-	return s.info
-}
-
 type googleAPIData struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`
@@ -146,9 +140,11 @@ type googleAPIData struct {
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
-	if strings.HasPrefix(s.info.ApiUrl, legacyAPIURL) {
+	info := s.GetOAuthInfo()
+
+	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
 		data := googleAPIData{}
-		response, err := s.httpGet(ctx, client, s.info.ApiUrl)
+		response, err := s.httpGet(ctx, client, info.ApiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving legacy user info: %s", err)
 		}
@@ -167,7 +163,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 	}
 
 	data := googleUserData{}
-	response, err := s.httpGet(ctx, client, s.info.ApiUrl)
+	response, err := s.httpGet(ctx, client, info.ApiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
@@ -180,7 +176,9 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	if s.info.UseRefreshToken {
+	info := s.GetOAuthInfo()
+
+	if info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)
