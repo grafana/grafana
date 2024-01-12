@@ -283,12 +283,22 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
 {{% admonition type="note" %}}
-Styles can be set within the "properties" object of the GeoJSON with support for the following geometrys.
+Styles can be set within the "properties" object of the GeoJSON with support for the following geometries:
 
 - Polygon, MultiPolygon
-  - **"fill"** the color of the interior of the polygon
-  - **"fill-opacity"** the opacity of the interior of the polygon
-  - **"stroke-width"** the width of the line component of the polygon
+
+  - **"fill"** - The color of the interior of the polygon(s)
+  - **"fill-opacity"** - The opacity of the interior of the polygon(s)
+  - **"stroke-width"** - The width of the line component of the polygon(s)
+
+- Point, MultiPoint
+
+  - **"marker-color"** - The color of the point(s)
+  - **"marker-size"** - The size of the point(s)
+
+- LineString, MultiLineString
+  - **"stroke"** - The color of the line(s)
+  - **"stroke-width"** - The width of the line(s)
 
 {{% /admonition %}}
 
