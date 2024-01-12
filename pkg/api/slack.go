@@ -43,9 +43,9 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 	}
 
 	grafanaURL := hs.getGrafanaURL()
-	dashboardLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.DashboardPath)
+	resourceLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.ResourcePath)
 
-	err = hs.slackService.PostMessage(c.Req.Context(), shareRequest, dashboard.Title, dashboardLink)
+	err = hs.slackService.PostMessage(c.Req.Context(), shareRequest, dashboard.Title, resourceLink)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "error posting message to Slack", err)
 	}

@@ -43,12 +43,12 @@ func (s *SlackService) GetUserConversations(ctx context.Context) (*dtos.SlackCha
 	return result, nil
 }
 
-func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardTitle string, dashboardLink string) error {
+func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, title string, resourceLink string) error {
 	blocks := []Block{{
 		Type: "header",
 		Text: &Text{
 			Type: "plain_text",
-			Text: dashboardTitle,
+			Text: title,
 		},
 	}}
 
@@ -62,15 +62,20 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 		})
 	}
 
+	imageText := "Dashboard preview"
+	if shareRequest.PanelId != "" {
+		imageText = "Panel preview"
+	}
+
 	blocks = append(blocks, []Block{
 		{
 			Type: "image",
 			Title: &Text{
 				Type: "plain_text",
-				Text: "Dashboard preview",
+				Text: imageText,
 			},
 			ImageURL: shareRequest.ImagePreviewUrl,
-			AltText:  "dashboard preview",
+			AltText:  imageText,
 		},
 		{
 			Type: "actions",
@@ -82,7 +87,7 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 				},
 				Style: "primary",
 				Value: "View in Grafana",
-				URL:   dashboardLink,
+				URL:   resourceLink,
 			}},
 		}}...)
 
@@ -100,8 +105,10 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 
 		resp, err := s.postRequest(ctx, "chat.postMessage", bytes.NewReader(jsonBody))
 		if err != nil {
+			s.log.Info("Posting to slack api", "eventPayload", err)
 			return err
 		}
+
 		s.log.Debug("successfully sent postMessage event payload", "channel", channelID, "response", string(resp))
 	}
 

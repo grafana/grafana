@@ -13,5 +13,5 @@ type ShareRequest struct {
 	Message         string   `json:"message,omitempty"`
 	ImagePreviewUrl string   `json:"imagePreviewUrl"`
 	PanelId         string   `json:"panelId,omitempty"`
-	DashboardPath   string   `json:"dashboardPath"`
+	ResourcePath    string   `json:"resourcePath"`
 }
