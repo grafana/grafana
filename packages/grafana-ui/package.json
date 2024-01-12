@@ -150,7 +150,7 @@
     "@types/react-calendar": "3.9.0",
     "@types/react-color": "3.0.11",
     "@types/react-dom": "18.2.7",
-    "@types/react-highlight-words": "0.16.4",
+    "@types/react-highlight-words": "0.16.7",
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.14",
     "@types/react-test-renderer": "18.0.0",

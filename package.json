@@ -133,7 +133,7 @@
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-dom": "18.2.7",
     "@types/react-grid-layout": "1.3.2",
-    "@types/react-highlight-words": "0.16.4",
+    "@types/react-highlight-words": "0.16.7",
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.14",
     "@types/react-test-renderer": "18.0.0",

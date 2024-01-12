@@ -3560,7 +3560,7 @@ __metadata:
     "@types/react-calendar": "npm:3.9.0"
     "@types/react-color": "npm:3.0.11"
     "@types/react-dom": "npm:18.2.7"
-    "@types/react-highlight-words": "npm:0.16.4"
+    "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.14"
     "@types/react-test-renderer": "npm:18.0.0"
@@ -9033,12 +9033,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-highlight-words@npm:0.16.4":
-  version: 0.16.4
-  resolution: "@types/react-highlight-words@npm:0.16.4"
+"@types/react-highlight-words@npm:0.16.7":
+  version: 0.16.7
+  resolution: "@types/react-highlight-words@npm:0.16.7"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 8b7c1b2b63b8f6d58e181613ba5392755b042bf87c74e65caad7bfc4585566944e9aacda6ee3b1cad222aea6667716c8be8643b39b72ae7b4aaadde063a62d25
+  checksum: 503e49f396cd9b9d08e5f3ca4817095427d51bfdb094e2458752908e1803d379750aa7b421397fe6e6fe8c842fbe91f5b30f87a56586ae7f2b2f0e6816b69113
   languageName: node
   linkType: hard
 
@@ -17138,7 +17138,7 @@ __metadata:
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.7"
     "@types/react-grid-layout": "npm:1.3.2"
-    "@types/react-highlight-words": "npm:0.16.4"
+    "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-resizable": "npm:3.0.4"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.14"
