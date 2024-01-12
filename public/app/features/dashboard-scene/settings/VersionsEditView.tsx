@@ -246,7 +246,7 @@ export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
 function getStyles(theme: GrafanaTheme2) {
   return {
     margin: css({
-      'margin-bottom': theme.spacing(4),
+      marginBottom: theme.spacing(4),
     }),
   };
 }

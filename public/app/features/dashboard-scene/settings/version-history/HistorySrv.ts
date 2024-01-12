@@ -38,11 +38,10 @@ export class HistorySrv {
     return getBackendSrv().get(`api/dashboards/uid/${uid}/versions/${version}`);
   }
 
-  restoreDashboard(dashboard: DashboardModel, version: number) {
-    const uid = dashboard && dashboard.uid ? dashboard.uid : void 0;
-    const url = `api/dashboards/uid/${uid}/restore`;
+  restoreDashboard(dashboardUID: string, version: number) {
+    const url = `api/dashboards/uid/${dashboardUID}/restore`;
 
-    return uid && isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
+    return isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
   }
 }
 

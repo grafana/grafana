@@ -61,14 +61,14 @@ describe('historySrv', () => {
       const version = 6;
       postMock.mockImplementation(() => Promise.resolve(restoreResponse(version)));
       historySrv = new HistorySrv();
-      return historySrv.restoreDashboard(dash, version).then((response) => {
+      return historySrv.restoreDashboard(dash.uid, version).then((response) => {
         expect(response).toEqual(restoreResponse(version));
       });
     });
 
     it('should return an empty object when not given an id', async () => {
       historySrv = new HistorySrv();
-      const rsp = await historySrv.restoreDashboard(emptyDash, 6);
+      const rsp = await historySrv.restoreDashboard(emptyDash.uid, 6);
       expect(rsp).toEqual({});
     });
   });
