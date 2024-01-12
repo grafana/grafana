@@ -46,7 +46,6 @@ export async function getCopiedTimeRange(): Promise<CopiedTimeRangeResult> {
   let range;
 
   try {
-    // Attempt to parse the raw content as JSON
     range = JSON.parse(raw);
 
     if (!range.from || !range.to) {
@@ -55,7 +54,6 @@ export async function getCopiedTimeRange(): Promise<CopiedTimeRangeResult> {
 
     return { range, isError: false };
   } catch (e) {
-    // If parsing fails, return the raw content and set isError to true
     return { range: raw, isError: true };
   }
 }
