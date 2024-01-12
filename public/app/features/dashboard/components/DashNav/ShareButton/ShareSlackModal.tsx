@@ -56,9 +56,9 @@ export function ShareSlackModal({
       channels: value.map((v) => ({ label: v.label!, value: v.value! })),
       message: description,
       imagePreviewUrl: preview!.previewUrl,
-      dashboardUid: dashboardUid,
-      resourcePath: resourcePath,
-      panelId: panelTitle,
+      dashboardUid,
+      resourcePath,
+      panelTitle,
     });
   };
 

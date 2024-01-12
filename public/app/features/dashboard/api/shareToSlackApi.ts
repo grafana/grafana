@@ -67,7 +67,7 @@ export const shareToSlackApi = createApi({
         message?: string;
         imagePreviewUrl: string;
         dashboardUid: string;
-        panelId?: string;
+        panelTitle?: string;
         resourcePath: string;
       }
     >({
@@ -82,7 +82,9 @@ export const shareToSlackApi = createApi({
           notifyApp(
             createSuccessNotification(
               'Shared to Slack',
-              `Your dashboard has been successfully shared to ${payload.channels.map((c) => c.label).join(' ,')}.`
+              `Your ${payload.panelTitle ? 'panel' : 'dashboard'} has been successfully shared to ${payload.channels
+                .map((c) => c.label)
+                .join(' ,')}.`
             )
           )
         );
