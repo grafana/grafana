@@ -57,7 +57,6 @@ func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Resp
 
 func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response {
 	dashboardUid := web.Params(c.Req)[":uid"]
-
 	dashboard, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{UID: dashboardUid})
 	if err != nil {
 		hs.log.Error("fail to get dashboard", "err", err, "dashboard UID", dashboardUid)
@@ -69,38 +68,28 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 		return response.Error(400, "error parsing body", err)
 	}
 
-	protocol := hs.Cfg.Protocol
-	switch protocol {
-	case setting.HTTPScheme:
-		protocol = "http"
-	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		protocol = "https"
-	default:
-		// TODO: Handle other schemes?
-	}
+	grafanaURL := hs.getGrafanaURL()
+	dashboardLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.DashboardPath)
 
-	domain := "localhost"
-	if hs.Cfg.HTTPAddr != "0.0.0.0" {
-		domain = hs.Cfg.HTTPAddr
-	}
-
-	dashboardLink := fmt.Sprintf("%s://%s:%s%s", protocol, domain, hs.Cfg.HTTPPort, shareRequest.DashboardPath)
-
-	blocks := []Block{
-		{
-			Type: "section",
-			Text: &Text{
-				Type: "mrkdwn",
-				Text: fmt.Sprintf("<%s|*%s*>", dashboardLink, dashboard.Title),
-			},
+	blocks := []Block{{
+		Type: "section",
+		Text: &Text{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("<%s|*%s*>", dashboardLink, dashboard.Title),
 		},
-		{
+	}}
+
+	if shareRequest.Message != "" {
+		blocks = append(blocks, Block{
 			Type: "section",
 			Text: &Text{
 				Type: "plain_text",
 				Text: shareRequest.Message,
 			},
-		},
+		})
+	}
+
+	blocks = append(blocks, []Block{
 		{
 			Type: "image",
 			Title: &Text{
@@ -122,8 +111,7 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 				Value: "View in Grafana",
 				URL:   dashboardLink,
 			}},
-		},
-	}
+		}}...)
 
 	for _, channelId := range shareRequest.ChannelIds {
 		postMessageRequest := &PostMessageRequest{
@@ -132,18 +120,17 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 		}
 
 		jsonBody, err := json.Marshal(postMessageRequest)
-
 		if err != nil {
 			return response.Error(400, "error parsing body", err)
 		}
+		hs.log.Info("Posting to slack api", "eventPayload", string(jsonBody))
 
 		req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/chat.postMessage", bytes.NewReader(jsonBody))
-		req.Header.Add("Content-Type", "application/json; charset=utf-8")
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
-
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "could not create request", err)
 		}
+		req.Header.Add("Content-Type", "application/json; charset=utf-8")
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
 
 		res, err := http.DefaultClient.Do(req)
 		if err != nil {
@@ -160,7 +147,7 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 			return response.Error(http.StatusInternalServerError, "could not read response body", err)
 		}
 
-		hs.log.Info("successfully sent unfurl event payload", "body", string(resBody))
+		hs.log.Info("successfully sent postMessage event payload", "body", string(resBody))
 	}
 
 	return response.JSON(http.StatusOK, nil)
@@ -275,11 +262,11 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 
 	bodyReader := bytes.NewReader(b)
 	req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/chat.unfurl", bodyReader)
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
 	if err != nil {
 		return fmt.Errorf("client: could not create request: %w", err)
 	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -301,9 +288,9 @@ func (hs *HTTPServer) sendUnfurlEvent(c context.Context, linkEvent EventPayload,
 }
 
 // TODO: Duplicated from the rendering service - maybe we can do this in another way to not duplicate this
-func (hs *HTTPServer) getImageURL(imageName string) string {
+func (hs *HTTPServer) getGrafanaURL() string {
 	if hs.Cfg.RendererCallbackUrl != "" {
-		return fmt.Sprintf("%s%s/%s", hs.Cfg.RendererCallbackUrl, "public/img/attachments", imageName)
+		return hs.Cfg.RendererCallbackUrl
 	}
 
 	protocol := hs.Cfg.Protocol
@@ -325,8 +312,12 @@ func (hs *HTTPServer) getImageURL(imageName string) string {
 	if hs.Cfg.HTTPAddr != "0.0.0.0" {
 		domain = hs.Cfg.HTTPAddr
 	}
+	return fmt.Sprintf("%s://%s:%s%s/", protocol, domain, hs.Cfg.HTTPPort, subPath)
+}
 
-	return fmt.Sprintf("%s://%s:%s%s/%s/%s", protocol, domain, hs.Cfg.HTTPPort, subPath, "public/img/attachments", imageName)
+func (hs *HTTPServer) getImageURL(imageName string) string {
+	grafanaURL := hs.getGrafanaURL()
+	return fmt.Sprintf("%s%s/%s", grafanaURL, "public/img/attachments", imageName)
 }
 
 // extractURLInfo returns the render path and the dashboard UID
