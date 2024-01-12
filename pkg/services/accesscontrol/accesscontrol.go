@@ -62,7 +62,10 @@ type SearchOptions struct {
 
 type SyncUserRolesCommand struct {
 	UserID int64
-	Roles  []string
+	// name of roles the user should have
+	RolesToAdd []string
+	// name of roles the user should not have
+	RolesToRemove []string
 }
 
 type TeamPermissionsService interface {

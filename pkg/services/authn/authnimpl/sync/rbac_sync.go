@@ -70,13 +70,25 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return err
 	}
 
-	fixedRoleName, ok := fixedCloudRoles[ident.GetOrgRole()]
-	if !ok {
+	rolesToAdd := make([]string, 0, 1)
+	rolesToRemove := make([]string, 0, 2)
+
+	for role, fixedRole := range fixedCloudRoles {
+		if role == ident.GetOrgRole() {
+			rolesToAdd = append(rolesToAdd, fixedRole)
+		} else {
+			rolesToRemove = append(rolesToRemove, fixedRole)
+		}
+
+	}
+
+	if len(rolesToAdd) != 1 {
 		return errInvalidCloudRole.Errorf("invalid role: %s", ident.GetOrgRole())
 	}
 
 	return s.ac.SyncUserRoles(ctx, ident.GetOrgID(), accesscontrol.SyncUserRolesCommand{
-		UserID: userID,
-		Roles:  []string{fixedRoleName},
+		UserID:        userID,
+		RolesToAdd:    rolesToAdd,
+		RolesToRemove: rolesToRemove,
 	})
 }
