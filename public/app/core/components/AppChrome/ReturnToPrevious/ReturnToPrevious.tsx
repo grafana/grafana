@@ -10,10 +10,9 @@ import { Trans, t } from 'app/core/internationalization';
 export interface ReturnToPreviousProps {
   href: UrlQueryValue;
   title: UrlQueryValue;
-  children: UrlQueryValue;
 }
 
-export const ReturnToPrevious = ({ href, title, children }: ReturnToPreviousProps) => {
+export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
   const [, setParams] = useQueryParams();
 
