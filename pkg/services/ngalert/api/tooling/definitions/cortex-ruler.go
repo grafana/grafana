@@ -60,7 +60,7 @@ import (
 
 // swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
-// Converts submitted rule group to provisioning format
+// Converts submitted rule group or dashboard with legacy alert definitions to provisioning format
 //
 //     Consumes:
 //     - application/json
@@ -164,13 +164,21 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
+// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
 type NamespaceConfig struct {
 	// The UID of the rule folder
 	// in:path
 	Namespace string
 	// in:body
 	Body PostableRuleGroupConfig
+}
+
+// swagger:parameters RoutePostRulesGroupForExport
+type PostForExportPayload struct {
+	// in:path
+	Namespace string
+	// in:body
+	Body PostForExportBody
 }
 
 // swagger:parameters RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetNamespaceGrafanaRulesConfig RouteDeleteNamespaceGrafanaRulesConfig
@@ -204,6 +212,33 @@ type RuleGroupConfigResponse struct {
 
 // swagger:model
 type NamespaceConfigResponse map[string][]GettableRuleGroupConfig
+
+// swagger:model
+type PostForExportBody struct {
+	PostableRuleGroupConfig `json:",inline" yaml:",inline"`
+	// Dashboard json containing legacy alert rules.
+	Dashboard json.RawMessage `json:"dashboard" yaml:"dashboard"`
+}
+
+func (c *PostForExportBody) UnmarshalJSON(b []byte) error {
+	type plain PostForExportBody
+	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	// Since PostableRuleGroupConfig implements json.Unmarshaler, we must handle _all_ other fields independently.
+	// Otherwise, the json decoder will detect this and only use the embedded type.
+	// Additionally, we'll use pointers to reference the intended target.
+	type overrides struct {
+		Dashboard *json.RawMessage `yaml:"dashboard,omitempty" json:"dashboard,omitempty"`
+	}
+
+	if err := json.Unmarshal(b, &overrides{Dashboard: &c.Dashboard}); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // swagger:model
 type PostableRuleGroupConfig struct {

@@ -6,37 +6,85 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// ExportFromPayload converts the rule groups from the argument `ruleGroupConfig` to export format. All rules are expected to be fully specified. The access to data sources mentioned in the rules is not enforced.
+// ExportFromPayload convert rules from other formats into the provisioning export format. Currently, this supports two input formats:
+// 1. PostableRuleGroupConfig: A collection of AlertRule Ruler definitions with group information.
+// 2. Dashboard: A Grafana dashboard with legacy alert rules defined in the dashboard JSON.
+// All rules are expected to be fully specified. The access to data sources mentioned in the rules is not enforced.
 // Can return 403 StatusForbidden if user is not authorized to read folder `namespaceUID`
-func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
+func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, body apimodels.PostForExportBody, namespaceUID string) response.Response {
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
-	rulesWithOptionals, err := ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg))
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "")
+	var groupsWithTitle []ngmodels.AlertRuleGroupWithFolderTitle
+	if len(body.Rules) > 0 {
+		rulesWithOptionals, err := ValidateRuleGroup(&body.PostableRuleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg))
+		if err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+
+		if len(rulesWithOptionals) == 0 {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+
+		rules := make([]ngmodels.AlertRule, 0, len(rulesWithOptionals))
+		for _, optional := range rulesWithOptionals {
+			rules = append(rules, optional.AlertRule)
+		}
+
+		groupsWithTitle = []ngmodels.AlertRuleGroupWithFolderTitle{ngmodels.NewAlertRuleGroupWithFolderTitle(rules[0].GetGroupKey(), rules, namespace.Title)}
+	} else if len(body.Dashboard) > 0 {
+		if body.Interval != 0 {
+			return ErrResp(http.StatusBadRequest, errors.New("interval must not be specified when exporting from a dashboard"), "")
+		}
+
+		data, err := simplejson.NewJson(body.Dashboard)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to parse dashboard json")
+		}
+		dash := dashboards.NewDashboardFromJson(data)
+		dash.OrgID = c.OrgID
+
+		// Use provided group name as the dashboard title. This will be used as part of the group name for the extracted rules.
+		if body.Name != "" {
+			dash.Title = body.Name
+		}
+
+		// Use the folder specified in the request path instead of the folder defined in the dashboard.
+		dash.FolderID = namespace.ID //nolint:staticcheck
+		dash.FolderUID = namespace.UID
+
+		groups, err := srv.dashboardUpgradeService.ExtractDashboardAlerts(c.Req.Context(), alerting.DashAlertInfo{
+			User:  c.SignedInUser,
+			Dash:  dash,
+			OrgID: c.OrgID,
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "failed to upgrade dashboard alerts", err)
+		}
+
+		for _, group := range groups {
+			groupsWithTitle = append(groupsWithTitle, ngmodels.NewAlertRuleGroupWithFolderTitle(group.Rules[0].GetGroupKey(), group.Rules, namespace.Title))
+		}
+
+		if len(groupsWithTitle) == 0 {
+			return ErrResp(http.StatusBadRequest, errors.New("no alert rules found in the dashboard"), "")
+		}
+	} else {
+		return ErrResp(http.StatusBadRequest, errors.New("either rules or dashboard must be specified"), "")
 	}
 
-	if len(rulesWithOptionals) == 0 {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
-
-	rules := make([]ngmodels.AlertRule, 0, len(rulesWithOptionals))
-	for _, optional := range rulesWithOptionals {
-		rules = append(rules, optional.AlertRule)
-	}
-
-	groupsWithTitle := ngmodels.NewAlertRuleGroupWithFolderTitle(rules[0].GetGroupKey(), rules, namespace.Title)
-
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]ngmodels.AlertRuleGroupWithFolderTitle{groupsWithTitle})
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groupsWithTitle)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}

@@ -80,7 +80,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(alert.Frequency),
 		Version:         1,
-		NamespaceUID:    "", // The folder for this alert is determined later.
+		NamespaceUID:    dashboard.FolderUID, // The folder will be redetermined based on permissions on persist.
 		DashboardUID:    &dashUID,
 		PanelID:         &alert.PanelID,
 		RuleGroup:       groupName(ruleAdjustInterval(alert.Frequency), dashboard.Title),

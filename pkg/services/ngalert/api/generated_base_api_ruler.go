@@ -120,7 +120,7 @@ func (f *RulerApiHandler) RoutePostRulesGroupForExport(ctx *contextmodel.ReqCont
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	// Parse Request Body
-	conf := apimodels.PostableRuleGroupConfig{}
+	conf := apimodels.PostForExportBody{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

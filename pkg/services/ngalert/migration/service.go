@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -38,6 +39,8 @@ type UpgradeService interface {
 	MigrateOrg(ctx context.Context, orgID int64, skipExisting bool) (definitions.OrgMigrationSummary, error)
 	GetOrgMigrationState(ctx context.Context, orgID int64) (*definitions.OrgMigrationState, error)
 	RevertOrg(ctx context.Context, orgID int64) error
+
+	ExtractDashboardAlerts(ctx context.Context, dashInfo alerting.DashAlertInfo) ([]*models.AlertRuleGroup, error)
 }
 
 type migrationService struct {
@@ -48,8 +51,9 @@ type migrationService struct {
 	store          db.DB
 	migrationStore migrationStore.Store
 
-	encryptionService secrets.Service
-	silences          *silenceHandler
+	encryptionService  secrets.Service
+	dashAlertExtractor alerting.DashAlertExtractor
+	silences           *silenceHandler
 }
 
 func ProvideService(
@@ -59,15 +63,17 @@ func ProvideService(
 	store db.DB,
 	migrationStore migrationStore.Store,
 	encryptionService secrets.Service,
+	dashAlertExtractor alerting.DashAlertExtractor,
 ) (UpgradeService, error) {
 	return &migrationService{
-		lock:              lock,
-		log:               log.New("ngalert.migration"),
-		cfg:               cfg,
-		features:          features,
-		store:             store,
-		migrationStore:    migrationStore,
-		encryptionService: encryptionService,
+		lock:               lock,
+		log:                log.New("ngalert.migration"),
+		cfg:                cfg,
+		features:           features,
+		store:              store,
+		migrationStore:     migrationStore,
+		encryptionService:  encryptionService,
+		dashAlertExtractor: dashAlertExtractor,
 		silences: &silenceHandler{
 			persistSilences: migrationStore.SetSilences,
 		},
@@ -562,6 +568,59 @@ func (ms *migrationService) RevertAllOrgs(ctx context.Context) error {
 		return nil, ms.migrationStore.RevertAllOrgs(ctx)
 	})
 	return err
+}
+
+// ExtractDashboardAlerts extracts all legacy dashboard alerts from a single dashboard definition and migrates them to
+// a slice of AlertRuleGroup. Unlike the actual migration, this will not perform title deduplication, add contact routing labels,
+// or determine a permission-specific folder. This method does not persist anything to the database.
+func (ms *migrationService) ExtractDashboardAlerts(ctx context.Context, dashInfo alerting.DashAlertInfo) ([]*models.AlertRuleGroup, error) {
+	om := ms.newOrgMigration(dashInfo.OrgID)
+
+	if dashInfo.Dash.ID == 0 {
+		dashInfo.Dash.ID = -1 // Required non-zero for extractAlerts to validate.
+	}
+	alerts, err := ms.dashAlertExtractor.GetAlerts(ctx, dashInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	var errs error
+	groups := make(map[string]*models.AlertRuleGroup)
+	pairs := om.migrateAlerts(ctx, om.log, alerts, dashInfo.Dash)
+	for _, pair := range pairs {
+		if pair.Error != nil {
+			errs = errors.Join(errs, pair.Error)
+		}
+		if pair.Rule == nil {
+			errs = errors.Join(errs, fmt.Errorf("unknown issue migrating alert '%s'", pair.LegacyRule.Name))
+		}
+
+		if _, ok := groups[pair.Rule.RuleGroup]; !ok {
+			groups[pair.Rule.RuleGroup] = &models.AlertRuleGroup{
+				Title:     pair.Rule.RuleGroup,
+				FolderUID: dashInfo.Dash.FolderUID,
+				Interval:  pair.Rule.IntervalSeconds,
+				Rules:     make([]models.AlertRule, 0),
+			}
+		}
+
+		// Remove information that isn't relevant for un-persisted alert rules.
+		pair.Rule.UID = ""
+		delete(pair.Rule.Annotations, models.MigratedAlertIdAnnotation)
+		delete(pair.Rule.Labels, models.MigratedUseLegacyChannelsLabel)
+		delete(pair.Rule.Labels, "rule_uid")
+
+		groups[pair.Rule.RuleGroup].Rules = append(groups[pair.Rule.RuleGroup].Rules, *pair.Rule)
+	}
+	if errs != nil {
+		return nil, errs
+	}
+
+	res := make([]*models.AlertRuleGroup, 0, len(groups))
+	for _, group := range groups {
+		res = append(res, group)
+	}
+	return res, nil
 }
 
 // fromDashboardUpgrades converts DashboardUpgrades to their api representation. This requires rehydrating information
