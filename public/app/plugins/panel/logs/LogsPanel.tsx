@@ -179,7 +179,6 @@ export const LogsPanel = ({
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
             logRows={logRows}
-            // always return true for now as this propery will
             showContextToggle={showContextToggle}
             deduplicatedRows={deduplicatedRows}
             dedupStrategy={dedupStrategy}
