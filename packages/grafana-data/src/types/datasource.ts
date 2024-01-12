@@ -620,6 +620,7 @@ export interface DataSourceJsonData {
   manageAlerts?: boolean;
   alertmanagerUid?: string;
   disableGrafanaCache?: boolean;
+  forwardGrafanaIdToken?: boolean;
 }
 
 /**

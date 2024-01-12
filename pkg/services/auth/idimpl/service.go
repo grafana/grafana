@@ -77,6 +77,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
 			},
+			AuthenticatedBy: id.GetAuthenticatedBy(),
 		})
 
 		if err != nil {
