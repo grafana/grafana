@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { VariableSizeList } from 'react-window';
 
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 
 import { GrafanaTableState } from './types';
 
@@ -44,7 +44,7 @@ export function useResetVariableListSizeCache(
   extendedState: GrafanaTableState,
   listRef: React.RefObject<VariableSizeList>,
   data: DataFrame,
-  uniqueField?: Field
+  hasUniqueId: boolean
 ) {
   // Make sure we trigger the reset when keys change in any way
   const expandedRowsRepr = JSON.stringify(Object.keys(extendedState.expanded));
@@ -55,7 +55,7 @@ export function useResetVariableListSizeCache(
 
     // If we have unique field, extendedState.expanded keys are not row indexes but IDs so instead of trying to search
     // for correct index we just reset the whole table.
-    if (!uniqueField) {
+    if (!hasUniqueId) {
       // If we don't have we reset from the last changed index.
       if (Number.isFinite(extendedState.lastExpandedOrCollapsedIndex)) {
         resetIndex = extendedState.lastExpandedOrCollapsedIndex!;
@@ -77,6 +77,6 @@ export function useResetVariableListSizeCache(
     listRef,
     data,
     expandedRowsRepr,
-    uniqueField,
+    hasUniqueId,
   ]);
 }

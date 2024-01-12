@@ -658,7 +658,6 @@ export function createTableFrameFromTraceQlQuery(
           displayNameFromDS: 'Trace ID',
           custom: {
             width: 200,
-            unique: true,
           },
           links: [
             {
@@ -706,6 +705,7 @@ export function createTableFrameFromTraceQlQuery(
     ],
     meta: {
       preferredVisualisationType: 'table',
+      uniqueId: [0],
     },
   });
 

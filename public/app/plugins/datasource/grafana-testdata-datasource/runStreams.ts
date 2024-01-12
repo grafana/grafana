@@ -290,13 +290,16 @@ function createMainTraceFrame(target: TestData, maxDataPoints = 1000) {
   });
   data.refId = target.refId;
   data.name = target.alias || 'Traces ' + target.refId;
-  data.addField({ name: 'TraceID', type: FieldType.string, config: { custom: { unique: true } } });
+  data.addField({ name: 'TraceID', type: FieldType.string });
   data.addField({ name: 'Start time', type: FieldType.time });
   data.addField({ name: 'Service', type: FieldType.string });
   data.addField({ name: 'Name', type: FieldType.string });
   data.addField({ name: 'Duration', type: FieldType.number, config: { unit: 'ms' } });
   data.addField({ name: 'nested', type: FieldType.nestedFrames });
-  data.meta = { preferredVisualisationType: 'table' };
+  data.meta = {
+    preferredVisualisationType: 'table',
+    uniqueId: [0],
+  };
   return data;
 }
 
