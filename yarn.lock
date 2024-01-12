@@ -9057,6 +9057,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/prismjs@npm:1.26.0":
+  version: 1.26.0
+  resolution: "@types/prismjs@npm:1.26.0"
+  checksum: 61b46e490acd46abba6c7c8c491247ba0c94f65f36f2eb1b8a80b0afc7961c7f9f2b386bd51daf114d61758e59957fe196a285f5e34bd88e46b4794b3e2a597d
+  languageName: node
+  linkType: hard
+
 "@types/prismjs@npm:1.26.3":
   version: 1.26.3
   resolution: "@types/prismjs@npm:1.26.3"
