@@ -67,13 +67,15 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	parentUID := ""
-	fieldRequirements, err := entity.ReadFieldRequirements(options.FieldSelector)
+	fieldRequirements, fieldSelector, err := entity.ReadFieldRequirements(options.FieldSelector)
 	if err != nil {
 		return nil, err
 	}
-	if fieldRequirements != nil {
-		parentUID = fieldRequirements.Folder
+	if fieldRequirements.Folder != nil {
+		parentUID = *fieldRequirements.Folder
 	}
+	// Update the field selector to remove the unneeded selectors
+	options.FieldSelector = fieldSelector
 
 	paging, err := readContinueToken(options)
 	if err != nil {

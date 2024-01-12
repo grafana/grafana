@@ -14,27 +14,37 @@ const folderAnnoKey = "grafana.app/folder"
 
 type FieldRequirements struct {
 	// Equals folder
-	Folder string
+	Folder *string
 }
 
-func ReadFieldRequirements(selector fields.Selector) (*FieldRequirements, error) {
+func ReadFieldRequirements(selector fields.Selector) (FieldRequirements, fields.Selector, error) {
+	requirements := FieldRequirements{}
+
 	if selector == nil {
-		return nil, nil
+		return requirements, selector, nil
 	}
-	requirements := &FieldRequirements{}
 
 	for _, r := range selector.Requirements() {
-		if (r.Operator == selection.Equals) || (r.Operator == selection.DoubleEquals) {
-			return nil, apierrors.NewBadRequest("only equality is supported in the selectors")
-		}
 		switch r.Field {
 		case folderAnnoKey:
-			requirements.Folder = r.Value
-		default:
-			return nil, getBadSelectorError(r.Field)
+			if (r.Operator != selection.Equals) && (r.Operator != selection.DoubleEquals) {
+				return requirements, selector, apierrors.NewBadRequest("only equality is supported in the selectors")
+			}
+			folder := r.Value
+			requirements.Folder = &folder
 		}
 	}
-	return requirements, nil
+
+	// use Transform function to remove grafana.app/folder field selector
+	selector, err := selector.Transform(func(field, value string) (string, string, error) {
+		switch field {
+		case folderAnnoKey:
+			return "", "", nil
+		}
+		return field, value, nil
+	})
+
+	return requirements, selector, err
 }
 
 func RegisterFieldSelectorSupport(scheme *runtime.Scheme) error {

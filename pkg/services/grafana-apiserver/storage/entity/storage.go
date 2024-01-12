@@ -242,15 +242,15 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	// translate grafana.app/folder field selector to the folder condition
-	fieldRequirements, err := ReadFieldRequirements(opts.Predicate.Field)
+	fieldRequirements, fieldSelector, err := ReadFieldRequirements(opts.Predicate.Field)
 	if err != nil {
 		return err
 	}
-	if fieldRequirements != nil {
-		req.Folder = fieldRequirements.Folder
+	if fieldRequirements.Folder != nil {
+		req.Folder = *fieldRequirements.Folder
 	}
-	// Clear the standard fields selector since we are using an explicit version
-	opts.Predicate.Field = nil
+	// Update the field selector to remove the unneeded selectors
+	opts.Predicate.Field = fieldSelector
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
