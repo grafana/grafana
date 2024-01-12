@@ -8913,12 +8913,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ol-ext@npm:@siedlerchr/types-ol-ext@3.2.0":
-  version: 3.2.0
-  resolution: "@siedlerchr/types-ol-ext@npm:3.2.0"
+"@types/ol-ext@npm:@siedlerchr/types-ol-ext@3.2.4":
+  version: 3.2.4
+  resolution: "@siedlerchr/types-ol-ext@npm:3.2.4"
   dependencies:
     jspdf: "npm:^2.5.1"
-  checksum: e3449b43fc1b2847b2349a4993ee40bd227e81728875763ee64a68cd70568295807623388c7133286d52302bfd57836e1bef325620e09cda8f6c72dd626d5059
+  checksum: 28d0f32bd98d54b039e7cdea232435cb658df677ddcc89ad0b73be2493a951524eae34be9eaf5d2877a2c06e4f5fba002c88e28b981150f3038d9b5b4589d568
   languageName: node
   linkType: hard
 
@@ -17130,7 +17130,7 @@ __metadata:
     "@types/mousetrap": "npm:1.6.15"
     "@types/node": "npm:20.8.10"
     "@types/node-forge": "npm:^1"
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
     "@types/papaparse": "npm:5.3.7"
     "@types/pluralize": "npm:^0.0.30"
     "@types/prismjs": "npm:1.26.0"
