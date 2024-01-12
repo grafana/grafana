@@ -2948,7 +2948,7 @@ __metadata:
     "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.8.10"
-    "@types/prismjs": "npm:1.26.0"
+    "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.15"
     "@types/testing-library__jest-dom": "npm:5.14.8"
     fast-deep-equal: "npm:^3.1.3"
@@ -3093,7 +3093,7 @@ __metadata:
     "@types/lodash": "npm:4.14.202"
     "@types/marked": "npm:5.0.2"
     "@types/node": "npm:20.8.10"
-    "@types/papaparse": "npm:5.3.7"
+    "@types/papaparse": "npm:5.3.14"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
     "@types/string-hash": "npm:1.1.1"
@@ -3585,19 +3585,19 @@ __metadata:
     "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.202"
-    "@types/mock-raf": "npm:1.0.3"
+    "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.8.10"
-    "@types/prismjs": "npm:1.26.0"
+    "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.15"
-    "@types/react-beautiful-dnd": "npm:13.1.4"
+    "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-calendar": "npm:3.9.0"
-    "@types/react-color": "npm:3.0.6"
+    "@types/react-color": "npm:3.0.11"
     "@types/react-dom": "npm:18.2.7"
-    "@types/react-highlight-words": "npm:0.16.4"
+    "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
-    "@types/react-table": "npm:7.7.14"
-    "@types/react-test-renderer": "npm:18.0.0"
-    "@types/react-transition-group": "npm:4.4.6"
+    "@types/react-table": "npm:7.7.19"
+    "@types/react-test-renderer": "npm:18.0.7"
+    "@types/react-transition-group": "npm:4.4.10"
     "@types/react-window": "npm:1.8.5"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.2"
@@ -8869,17 +8869,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mock-raf@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@types/mock-raf@npm:1.0.3"
-  checksum: 0c1e4cb40d03e32f27ca78b412b04b317d9f34df42ad4cb3c3fdfa1a9aa9b627a1f709ef1ca5ed47e6fef22d3a8a8d302df922782f4b3052641d70c918859a47
+"@types/mock-raf@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@types/mock-raf@npm:1.0.6"
+  checksum: 0389ac9a2f4be5d3c9dc05586c68d0c78f0d6a9dc167c57ee94da0bb1d9ef9a797871bcdf2f0ba43c951a423c05bdeb80807d5ca21a63c50c54ed21054a4aeb8
   languageName: node
   linkType: hard
 
-"@types/mousetrap@npm:1.6.11":
-  version: 1.6.11
-  resolution: "@types/mousetrap@npm:1.6.11"
-  checksum: 4465d16b7c20ab52d2f6b7fe8087e8f16101472f2e8758f01c63591015c1b0a67c9e6c371d978f24d5f37c4b83457515571489284bf7c7c844eb6c8f2527685b
+"@types/mousetrap@npm:1.6.15":
+  version: 1.6.15
+  resolution: "@types/mousetrap@npm:1.6.15"
+  checksum: 58ec552218108f8e5f0d40ee81579aafbdb00c3af0ef4b6d3fb193a8a11a2d37aa84c6e20524120b7f218c2a87dac24f426ee3b23e1269d42f8145a1a37c9eca
   languageName: node
   linkType: hard
 
@@ -8901,11 +8901,11 @@ __metadata:
   linkType: hard
 
 "@types/node-forge@npm:^1":
-  version: 1.3.2
-  resolution: "@types/node-forge@npm:1.3.2"
+  version: 1.3.11
+  resolution: "@types/node-forge@npm:1.3.11"
   dependencies:
     "@types/node": "npm:*"
-  checksum: e49aa578159e353e93c5b8c5a2f010e1ea53e7da509bf4ee82775ee43eb78aead8407d5f27a53ce57e49c7a5b86739e78d14714c37f1e37bca979025dbaea932
+  checksum: 670c9b377c48189186ec415e3c8ed371f141ecc1a79ab71b213b20816adeffecba44dae4f8406cc0d09e6349a4db14eb8c5893f643d8e00fa19fc035cf49dee0
   languageName: node
   linkType: hard
 
@@ -8946,21 +8946,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ol-ext@npm:@siedlerchr/types-ol-ext@3.2.0":
-  version: 3.2.0
-  resolution: "@siedlerchr/types-ol-ext@npm:3.2.0"
+"@types/ol-ext@npm:@siedlerchr/types-ol-ext@3.2.4":
+  version: 3.2.4
+  resolution: "@siedlerchr/types-ol-ext@npm:3.2.4"
   dependencies:
     jspdf: "npm:^2.5.1"
-  checksum: e3449b43fc1b2847b2349a4993ee40bd227e81728875763ee64a68cd70568295807623388c7133286d52302bfd57836e1bef325620e09cda8f6c72dd626d5059
+  checksum: 28d0f32bd98d54b039e7cdea232435cb658df677ddcc89ad0b73be2493a951524eae34be9eaf5d2877a2c06e4f5fba002c88e28b981150f3038d9b5b4589d568
   languageName: node
   linkType: hard
 
-"@types/papaparse@npm:5.3.7":
-  version: 5.3.7
-  resolution: "@types/papaparse@npm:5.3.7"
+"@types/papaparse@npm:5.3.14":
+  version: 5.3.14
+  resolution: "@types/papaparse@npm:5.3.14"
   dependencies:
     "@types/node": "npm:*"
-  checksum: 4fef3e38e4d4ebf5b8f9f2ca96a822311284f788058c3d7983b6c841f28be3737ccd467dea280c7c363ee9ba57114980a62c1cf3c8e65a2521c72a8472b59005
+  checksum: 9bd5cc0e6a2c02def6c8903dc4604e499907cb465186ed3532390468082a06f023adbac0216428d0d8e8fe017206780a03d20007041e9fed47c8d391cd69a536
   languageName: node
   linkType: hard
 
@@ -8971,10 +8971,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/pluralize@npm:^0.0.30":
-  version: 0.0.30
-  resolution: "@types/pluralize@npm:0.0.30"
-  checksum: 7a9a4a24aac1f74bd63e592a824ebec114486e0635a94496e92aa37fa388fac585be108d3ccfc7b2c490963679ec4900fbf394d22fa6cbf419f22cc499ab5a29
+"@types/pluralize@npm:^0.0.33":
+  version: 0.0.33
+  resolution: "@types/pluralize@npm:0.0.33"
+  checksum: 282d42dc0187e5e0912f9f36ee0f5615bfd273a08d40afe5bf5881cb28daf1977abe10564543032aa0f42352ebba739ff3d86bf5562ac4691c6d1761fcc7cf39
   languageName: node
   linkType: hard
 
@@ -8985,10 +8985,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prismjs@npm:1.26.0":
-  version: 1.26.0
-  resolution: "@types/prismjs@npm:1.26.0"
-  checksum: 61b46e490acd46abba6c7c8c491247ba0c94f65f36f2eb1b8a80b0afc7961c7f9f2b386bd51daf114d61758e59957fe196a285f5e34bd88e46b4794b3e2a597d
+"@types/prismjs@npm:1.26.3":
+  version: 1.26.3
+  resolution: "@types/prismjs@npm:1.26.3"
+  checksum: 4bd55230ffc0b2b16f4008be3a7f1d7c6b32dd3bed8006e64d24fb22c44fc7e300dac77b856f732803ccdc9a3472b2c0ee7776cad048843c47d608c41a89b6a6
   languageName: node
   linkType: hard
 
@@ -9020,12 +9020,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-beautiful-dnd@npm:13.1.4":
-  version: 13.1.4
-  resolution: "@types/react-beautiful-dnd@npm:13.1.4"
+"@types/react-beautiful-dnd@npm:13.1.8":
+  version: 13.1.8
+  resolution: "@types/react-beautiful-dnd@npm:13.1.8"
   dependencies:
     "@types/react": "npm:*"
-  checksum: f52931d0d062e6788ecf8a61991063771eb4b18b128538c1835b615e674ac17634caf9bce5615cc6358151a0bbe5e0b32f5f489f415cc23e9321a7216c3c7502
+  checksum: cb8a182ed0ea6f680c7c343fcb4e54237437ca90dc88c2a70f4a203ec8ad0740e389e3ab7772c8cc1479f05e5a046bccbc33d54055b94e0fe5b22be030ab23d2
   languageName: node
   linkType: hard
 
@@ -9038,13 +9038,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-color@npm:3.0.6":
-  version: 3.0.6
-  resolution: "@types/react-color@npm:3.0.6"
+"@types/react-color@npm:3.0.11":
+  version: 3.0.11
+  resolution: "@types/react-color@npm:3.0.11"
   dependencies:
     "@types/react": "npm:*"
     "@types/reactcss": "npm:*"
-  checksum: 8a60aedd9a8577a78bf8c4899de6c58515e548016921b115a506eb167050f388b6851f90ab2509f1f6ac17b64fb30869a43a227b51505db50940e797981c64c2
+  checksum: c683e7222da449fc68953710bd8e95c9748d12c223f89d78891878f813a4560bca18663ee431658e47aa41cfd7f36b2ab1e61f04007e9e8acd4878b75236b653
   languageName: node
   linkType: hard
 
@@ -9066,12 +9066,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-highlight-words@npm:0.16.4":
-  version: 0.16.4
-  resolution: "@types/react-highlight-words@npm:0.16.4"
+"@types/react-highlight-words@npm:0.16.7":
+  version: 0.16.7
+  resolution: "@types/react-highlight-words@npm:0.16.7"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 8b7c1b2b63b8f6d58e181613ba5392755b042bf87c74e65caad7bfc4585566944e9aacda6ee3b1cad222aea6667716c8be8643b39b72ae7b4aaadde063a62d25
+  checksum: 503e49f396cd9b9d08e5f3ca4817095427d51bfdb094e2458752908e1803d379750aa7b421397fe6e6fe8c842fbe91f5b30f87a56586ae7f2b2f0e6816b69113
   languageName: node
   linkType: hard
 
@@ -9117,30 +9117,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.14":
-  version: 7.7.14
-  resolution: "@types/react-table@npm:7.7.14"
+"@types/react-table@npm:7.7.19":
+  version: 7.7.19
+  resolution: "@types/react-table@npm:7.7.19"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 547e4e26a8512572d8372a88aaa1d5d0027e15ed34a18acfd1a76bda0520c856b096643c9e585b8459061dde3e50572333dd9e8d9671d83dc87615bd7532dfe8
+  checksum: 00ade23df17d1e6b4cd94dbf127268178f7daab9e5c823c9aa915458d99817814dfdbede9d37068c0d913e4706697dc8904e34987db16cb80ce2e41ad8a6cc10
   languageName: node
   linkType: hard
 
-"@types/react-test-renderer@npm:18.0.0":
-  version: 18.0.0
-  resolution: "@types/react-test-renderer@npm:18.0.0"
+"@types/react-test-renderer@npm:18.0.7":
+  version: 18.0.7
+  resolution: "@types/react-test-renderer@npm:18.0.7"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 6afc938a1d7618d88ab8793e251f0bd5981bf3f08c1b600f74df3f8800b92589ea534dc6dcb7c8d683893fcc740bf8d7843a42bf2dae59785cfe88f004bd7b0b
+  checksum: 701d7d815fe7b921712ebdb2c4434e99b92403d37c51b33a01ce1b62fed7d1efbf9f749971d9031a5b137c6d5e194249c378106768aa69725a01f150fef0ec7f
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:4.4.6, @types/react-transition-group@npm:^4.4.0":
-  version: 4.4.6
-  resolution: "@types/react-transition-group@npm:4.4.6"
+"@types/react-transition-group@npm:4.4.10, @types/react-transition-group@npm:^4.4.0":
+  version: 4.4.10
+  resolution: "@types/react-transition-group@npm:4.4.10"
   dependencies:
     "@types/react": "npm:*"
-  checksum: eb4a14df7ad283be56d44c4bd4351136bd50dfedf6958299fbbc571d6871fad17a373b5b9a6d44adac27154d1f2059225a26c4fee79053349a4d52eb89277787
+  checksum: b429f3bd54d9aea6c0395943ce2dda6b76fb458e902365bd91fd99bf72064fb5d59e2b74e78d10f2871908501d350da63e230d81bda2b616c967cab8dc51bd16
   languageName: node
   linkType: hard
 
@@ -9154,12 +9154,12 @@ __metadata:
   linkType: hard
 
 "@types/react-window-infinite-loader@npm:^1":
-  version: 1.0.6
-  resolution: "@types/react-window-infinite-loader@npm:1.0.6"
+  version: 1.0.9
+  resolution: "@types/react-window-infinite-loader@npm:1.0.9"
   dependencies:
     "@types/react": "npm:*"
     "@types/react-window": "npm:*"
-  checksum: d4648dfb44614e4f0137d7b77eb1868b0c5252f451a78edfc4520e508157ce7687d4b7d9efd6df8f01e72e0d92224338b8c8d934220f32a3081b528599a25829
+  checksum: 9f2c27f24bfa726ceaef6612a4adbda745f3455c877193f68dfa48591274c670a6df4fa6870785cff5f948e289ceb9a247fb7cbf67e3cd555ab16d11866fd63f
   languageName: node
   linkType: hard
 
@@ -17161,23 +17161,23 @@ __metadata:
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
     "@types/marked": "npm:5.0.2"
-    "@types/mousetrap": "npm:1.6.11"
+    "@types/mousetrap": "npm:1.6.15"
     "@types/node": "npm:20.8.10"
     "@types/node-forge": "npm:^1"
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"
-    "@types/papaparse": "npm:5.3.7"
-    "@types/pluralize": "npm:^0.0.30"
-    "@types/prismjs": "npm:1.26.0"
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
+    "@types/papaparse": "npm:5.3.14"
+    "@types/pluralize": "npm:^0.0.33"
+    "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.15"
-    "@types/react-beautiful-dnd": "npm:13.1.4"
+    "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.7"
     "@types/react-grid-layout": "npm:1.3.2"
-    "@types/react-highlight-words": "npm:0.16.4"
+    "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-resizable": "npm:3.0.4"
     "@types/react-router-dom": "npm:5.3.3"
-    "@types/react-table": "npm:7.7.14"
-    "@types/react-test-renderer": "npm:18.0.0"
-    "@types/react-transition-group": "npm:4.4.6"
+    "@types/react-table": "npm:7.7.19"
+    "@types/react-test-renderer": "npm:18.0.7"
+    "@types/react-transition-group": "npm:4.4.10"
     "@types/react-virtualized-auto-sizer": "npm:1.0.1"
     "@types/react-window": "npm:1.8.5"
     "@types/react-window-infinite-loader": "npm:^1"
@@ -17307,6 +17307,7 @@ __metadata:
     moveable: "npm:0.43.1"
     msw: "npm:1.3.2"
     mutationobserver-shim: "npm:0.3.7"
+    nanoid: "npm:^5.0.4"
     ngtemplate-loader: "npm:2.1.0"
     node-forge: "npm:^1.3.1"
     node-notifier: "npm:10.0.1"
@@ -21920,6 +21921,15 @@ __metadata:
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 67235c39d1bc05851383dadde5cf77ae1c90c2a1d189e845c7f20f646f0488d875ad5f5226bbba072a88cebbb085a3f784a6673117daf785bdf614a852550362
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^5.0.4":
+  version: 5.0.4
+  resolution: "nanoid@npm:5.0.4"
+  bin:
+    nanoid: bin/nanoid.js
+  checksum: cf09cca3774f3147100948f7478f75f4c9ee97a4af65c328dd9abbd83b12f8bb35cf9f89a21c330f3b759d667a4cd0140ed84aa5fdd522c61e0d341aeaa7fb6f
   languageName: node
   linkType: hard
 

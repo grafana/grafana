@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func TestIntegrationProvisioning(t *testing.T) {
@@ -491,9 +492,10 @@ func TestMuteTimings(t *testing.T) {
 		_, status, body := apiClient.CreateMuteTimingWithStatus(t, m)
 		t.Log(body)
 		requireStatusCode(t, http.StatusBadRequest, status, body)
-		var validationError map[string]any
+		var validationError errutil.PublicError
 		assert.NoError(t, json.Unmarshal([]byte(body), &validationError))
-		assert.Contains(t, validationError, "message")
+		assert.NotEmpty(t, validationError, validationError.Message)
+		assert.Equal(t, "alerting.notifications.time-intervals.nameExists", validationError.MessageID)
 		if t.Failed() {
 			t.Fatalf("response: %s", body)
 		}
@@ -585,7 +587,7 @@ func TestMuteTimings(t *testing.T) {
 		requireStatusCode(t, http.StatusNotFound, status, body)
 	})
 
-	t.Run("should get BadRequest if deletes used mute-timing", func(t *testing.T) {
+	t.Run("should get 409 Conflict if deletes used mute-timing", func(t *testing.T) {
 		route, status, response := apiClient.GetRouteWithStatus(t)
 		requireStatusCode(t, http.StatusOK, status, response)
 		route.Routes = append(route.Routes, &definitions.Route{
@@ -602,7 +604,14 @@ func TestMuteTimings(t *testing.T) {
 		requireStatusCode(t, http.StatusAccepted, status, response)
 
 		status, response = apiClient.DeleteMuteTimingWithStatus(t, anotherMuteTiming.Name)
-		requireStatusCode(t, http.StatusInternalServerError, status, response) // TODO should be bad request
+		requireStatusCode(t, http.StatusConflict, status, response)
+		var validationError errutil.PublicError
+		assert.NoError(t, json.Unmarshal([]byte(response), &validationError))
+		assert.NotEmpty(t, validationError, validationError.Message)
+		assert.Equal(t, "alerting.notifications.time-intervals.used", validationError.MessageID)
+		if t.Failed() {
+			t.Fatalf("response: %s", response)
+		}
 	})
 }
 
