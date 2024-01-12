@@ -655,8 +655,8 @@ function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
 }
 
 function getLogLevelFromLabels(labels: Labels): LogLevel {
-  const levelLabel = labels['level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
-  return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
+  const level = labels['level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
+  return level ? getLogLevelFromKey(level) : LogLevel.unknown;
 }
 
 /**
