@@ -43,6 +43,10 @@ type UpgradeService interface {
 	ExtractDashboardAlerts(ctx context.Context, dashInfo alerting.DashAlertInfo) ([]*models.AlertRuleGroup, error)
 }
 
+type DashAlertExtractor interface {
+	GetAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) ([]*legacymodels.Alert, error)
+}
+
 type migrationService struct {
 	lock           *serverlock.ServerLockService
 	cfg            *setting.Cfg
@@ -52,7 +56,7 @@ type migrationService struct {
 	migrationStore migrationStore.Store
 
 	encryptionService  secrets.Service
-	dashAlertExtractor alerting.DashAlertExtractor
+	DashAlertExtractor DashAlertExtractor // Public for testing purposes.
 	silences           *silenceHandler
 }
 
@@ -73,7 +77,7 @@ func ProvideService(
 		store:              store,
 		migrationStore:     migrationStore,
 		encryptionService:  encryptionService,
-		dashAlertExtractor: dashAlertExtractor,
+		DashAlertExtractor: dashAlertExtractor,
 		silences: &silenceHandler{
 			persistSilences: migrationStore.SetSilences,
 		},
@@ -579,7 +583,7 @@ func (ms *migrationService) ExtractDashboardAlerts(ctx context.Context, dashInfo
 	if dashInfo.Dash.ID == 0 {
 		dashInfo.Dash.ID = -1 // Required non-zero for extractAlerts to validate.
 	}
-	alerts, err := ms.dashAlertExtractor.GetAlerts(ctx, dashInfo)
+	alerts, err := ms.DashAlertExtractor.GetAlerts(ctx, dashInfo)
 	if err != nil {
 		return nil, err
 	}

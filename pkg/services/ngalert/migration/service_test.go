@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
@@ -390,6 +391,138 @@ func checkAlertRulesCount(t *testing.T, x *xorm.Engine, orgID int64, count int) 
 	require.NoError(t, err, "table alert_rule error")
 	require.Equal(t, int(cnt), count, "table alert_rule should have no rows")
 }
+
+func TestExtractDashboardAlerts(t *testing.T) {
+	dash := &dashboards.Dashboard{
+		UID:       "test-dash",
+		Title:     "Test Dash",
+		FolderUID: "test-folder",
+	}
+
+	genAlert := func(title string, mutators ...func(*models.AlertRule)) models.AlertRule {
+		m := func(a *models.AlertRule) {
+			a.ID = 0
+			a.PanelID = pointer(int64(1))
+			a.RuleGroup = dash.Title + " - 1m"
+			a.Labels = map[string]string{}
+		}
+		mutators = append([]func(*models.AlertRule){m}, mutators...)
+		a := genAlert(title, dash.FolderUID, dash.UID, mutators...)
+		return *a
+	}
+
+	tc := []struct {
+		name                string
+		config              *setting.Cfg
+		extractedDashAlerts []*legacymodels.Alert
+		expectedAlertGroups []*models.AlertRuleGroup
+		expectedErr         bool
+	}{
+		{
+			name:                "no extracted alerts",
+			extractedDashAlerts: []*legacymodels.Alert{},
+			expectedAlertGroups: []*models.AlertRuleGroup{},
+		},
+		{
+			name: "single alert",
+			extractedDashAlerts: []*legacymodels.Alert{
+				createLegacyAlert(1, "alert1", withLegacyPanelId(1)),
+			},
+			expectedAlertGroups: []*models.AlertRuleGroup{
+				{
+					Title:     dash.Title + " - 1m",
+					FolderUID: dash.FolderUID,
+					Interval:  60,
+					Rules: []models.AlertRule{
+						genAlert("alert1"),
+					},
+				},
+			},
+		},
+		{
+			name: "multiple alerts",
+			extractedDashAlerts: []*legacymodels.Alert{
+				createLegacyAlert(1, "alert1", withLegacyPanelId(1)),
+				createLegacyAlert(1, "alert2", withLegacyPanelId(2)),
+				createLegacyAlert(1, "alert3", withLegacyPanelId(3)),
+			},
+			expectedAlertGroups: []*models.AlertRuleGroup{
+				{
+					Title:     dash.Title + " - 1m",
+					FolderUID: dash.FolderUID,
+					Interval:  60,
+					Rules: []models.AlertRule{
+						genAlert("alert1", withPanelId(1)),
+						genAlert("alert2", withPanelId(2)),
+						genAlert("alert3", withPanelId(3)),
+					},
+				},
+			},
+		},
+		{
+			name: "with frequency",
+			extractedDashAlerts: []*legacymodels.Alert{
+				createLegacyAlert(1, "alert1", withLegacyFrequency(150)),
+			},
+			expectedAlertGroups: []*models.AlertRuleGroup{
+				{Title: dash.Title + " - 2m30s", FolderUID: dash.FolderUID, Interval: 150,
+					Rules: []models.AlertRule{
+						genAlert("alert1", func(a *models.AlertRule) {
+							a.IntervalSeconds = 150
+							a.RuleGroup = dash.Title + " - 2m30s"
+						}),
+					},
+				},
+			},
+		},
+		{
+			name: "with non-multiple frequency",
+			extractedDashAlerts: []*legacymodels.Alert{
+				createLegacyAlert(1, "alert1", withLegacyFrequency(157)),
+			},
+			expectedAlertGroups: []*models.AlertRuleGroup{
+				{Title: dash.Title + " - 2m30s", FolderUID: dash.FolderUID, Interval: 150,
+					Rules: []models.AlertRule{
+						genAlert("alert1", func(a *models.AlertRule) {
+							a.IntervalSeconds = 150
+							a.RuleGroup = dash.Title + " - 2m30s"
+						}),
+					},
+				},
+			},
+		},
+	}
+
+	sqlStore := db.InitTestDB(t)
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			service := NewTestMigrationService(t, sqlStore, setting.NewCfg())
+			service.DashAlertExtractor = &fakeDashAlertExtractor{expectedAlerts: tt.extractedDashAlerts}
+
+			groups, err := service.ExtractDashboardAlerts(ctx, alerting.DashAlertInfo{
+				User:  nil,
+				Dash:  dash,
+				OrgID: 1,
+			})
+			if tt.expectedErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			opts := []cmp.Option{
+				cmpopts.IgnoreUnexported(models.AlertQuery{}),
+				cmpopts.IgnoreFields(models.AlertRule{}, "Updated"),
+			}
+			if !cmp.Equal(groups, tt.expectedAlertGroups, opts...) {
+				t.Errorf("Unexpected Config: %v", cmp.Diff(groups, tt.expectedAlertGroups, opts...))
+			}
+		})
+	}
+}
+
+// Main migration endpoint tests.
 
 type testcase struct {
 	name         string

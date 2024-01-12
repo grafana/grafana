@@ -40,53 +40,6 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 		return a
 	}
 
-	genAlert := func(title string, namespaceUID string, dashboardUID string, mutators ...func(*ngModels.AlertRule)) *ngModels.AlertRule {
-		dashTitle := "Dashboard Title " + dashboardUID
-		a := &ngModels.AlertRule{
-			ID:        1,
-			OrgID:     1,
-			Title:     title,
-			Condition: "A",
-			Data: []ngModels.AlertQuery{
-				{
-					RefID:         "A",
-					DatasourceUID: "__expr__",
-					Model:         json.RawMessage(`{"conditions":[],"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"classic_conditions"}`),
-				},
-			},
-			NamespaceUID:    namespaceUID,
-			DashboardUID:    &dashboardUID,
-			RuleGroup:       fmt.Sprintf("%s - 1m", dashTitle),
-			IntervalSeconds: 60,
-			Version:         1,
-			PanelID:         pointer(int64(1)),
-			RuleGroupIndex:  1,
-			NoDataState:     ngModels.NoData,
-			ExecErrState:    ngModels.AlertingErrState,
-			For:             60 * time.Second,
-			Annotations: map[string]string{
-				"message":          "message",
-				"__dashboardUid__": dashboardUID,
-				"__panelId__":      "1",
-			},
-			Labels:   map[string]string{ngModels.MigratedUseLegacyChannelsLabel: "true"},
-			IsPaused: false,
-		}
-		if len(mutators) > 0 {
-			for _, mutator := range mutators {
-				mutator(a)
-			}
-		}
-		return a
-	}
-
-	withPanelId := func(id int64) func(*ngModels.AlertRule) {
-		return func(a *ngModels.AlertRule) {
-			a.PanelID = pointer(id)
-			a.Annotations["__panelId__"] = fmt.Sprintf("%d", id)
-		}
-	}
-
 	genFolder := func(t *testing.T, id int64, uid string, mutators ...func(f *dashboards.Dashboard)) *dashboards.Dashboard {
 		d := createFolder(t, id, 1, uid)
 		d.Title = "Original Folder " + uid
@@ -817,4 +770,51 @@ func createRoles(t testing.TB, ctx context.Context, store db.DB, rolePerms map[a
 
 		return nil
 	})
+}
+
+func genAlert(title string, namespaceUID string, dashboardUID string, mutators ...func(*ngModels.AlertRule)) *ngModels.AlertRule {
+	dashTitle := "Dashboard Title " + dashboardUID
+	a := &ngModels.AlertRule{
+		ID:        1,
+		OrgID:     1,
+		Title:     title,
+		Condition: "A",
+		Data: []ngModels.AlertQuery{
+			{
+				RefID:         "A",
+				DatasourceUID: "__expr__",
+				Model:         json.RawMessage(`{"conditions":[],"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"classic_conditions"}`),
+			},
+		},
+		NamespaceUID:    namespaceUID,
+		DashboardUID:    &dashboardUID,
+		RuleGroup:       fmt.Sprintf("%s - 1m", dashTitle),
+		IntervalSeconds: 60,
+		Version:         1,
+		PanelID:         pointer(int64(1)),
+		RuleGroupIndex:  1,
+		NoDataState:     ngModels.NoData,
+		ExecErrState:    ngModels.AlertingErrState,
+		For:             60 * time.Second,
+		Annotations: map[string]string{
+			"message":          "message",
+			"__dashboardUid__": dashboardUID,
+			"__panelId__":      "1",
+		},
+		Labels:   map[string]string{ngModels.MigratedUseLegacyChannelsLabel: "true"},
+		IsPaused: false,
+	}
+	if len(mutators) > 0 {
+		for _, mutator := range mutators {
+			mutator(a)
+		}
+	}
+	return a
+}
+
+func withPanelId(id int64) func(*ngModels.AlertRule) {
+	return func(a *ngModels.AlertRule) {
+		a.PanelID = pointer(id)
+		a.Annotations["__panelId__"] = fmt.Sprintf("%d", id)
+	}
 }

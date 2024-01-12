@@ -11,20 +11,32 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	folder2 "github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-//go:embed test-data/*.*
-var testData embed.FS
+//go:embed test-data/export-from-payload/*.*
+var testExportFromPayloadData embed.FS
+
+type FakeCondition struct{}
+
+func (f *FakeCondition) Eval(context *alerting.EvalContext, reqHandler legacydata.RequestHandler) (*alerting.ConditionResult, error) {
+	return &alerting.ConditionResult{}, nil
+}
 
 func TestExportFromPayload(t *testing.T) {
 	orgID := int64(1)
@@ -36,163 +48,176 @@ func TestExportFromPayload(t *testing.T) {
 	ruleStore := fakes.NewRuleStore(t)
 	ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 
+	alerting.RegisterCondition("query", func(model *simplejson.Json, index int) (alerting.Condition, error) {
+		return &FakeCondition{}, nil
+	})
+
 	srv := createService(ruleStore)
+	sqlStore := db.InitTestDB(t)
+	srv.dashboardUpgradeService = NewTestDashboardUpgradeService(t, sqlStore,
+		&setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second}},
+		&datasources.DataSource{ID: 12, OrgID: 1, Name: "graphite2", IsDefault: true, UID: "graphite2-uid", Created: timeNow(), Updated: timeNow()},
+	)
 
-	requestFile := "post-rulegroup-101.json"
-	rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
-	require.NoError(t, err)
-	var body apimodels.PostableRuleGroupConfig
-	require.NoError(t, json.Unmarshal(rawBody, &body))
+	for _, inputFilename := range []string{"post-rulegroup-101-input.json", "post-dashboard-101-input.json"} {
+		t.Run(inputFilename, func(t *testing.T) {
+			inputPath := path.Join("test-data", "export-from-payload", inputFilename)
+			rawBody, err := testExportFromPayloadData.ReadFile(inputPath)
+			require.NoError(t, err)
+			var body apimodels.PostForExportBody
+			require.NoError(t, json.Unmarshal(rawBody, &body))
 
-	createRequest := func() *contextmodel.ReqContext {
-		return createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
-	}
+			createRequest := func() *contextmodel.ReqContext {
+				return createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
+			}
 
-	t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
-		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/yaml")
+			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
+				rc := createRequest()
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
 
-		response.WriteTo(rc)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
-	})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
 
-	t.Run("query format contains yaml, GET returns text yaml", func(t *testing.T) {
-		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "yaml")
+			t.Run("query format contains yaml, GET returns text yaml", func(t *testing.T) {
+				rc := createRequest()
+				rc.Context.Req.Form.Set("format", "yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, "text/yaml", rc.Resp.Header().Get("Content-Type"))
-	})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Resp.Header().Get("Content-Type"))
+			})
 
-	t.Run("query format contains unknown value, GET returns text yaml", func(t *testing.T) {
-		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "foo")
+			t.Run("query format contains unknown value, GET returns text yaml", func(t *testing.T) {
+				rc := createRequest()
+				rc.Context.Req.Form.Set("format", "foo")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
-	})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
 
-	t.Run("accept header contains json, GET returns json", func(t *testing.T) {
-		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json")
+			t.Run("accept header contains json, GET returns json", func(t *testing.T) {
+				rc := createRequest()
+				rc.Context.Req.Header.Add("Accept", "application/json")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
-	})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
 
-	t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
-		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+			t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
+				rc := createRequest()
+				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
-	})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
 
-	t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
-		rc := createRequest()
-		rc.Context.Req.Form.Set("download", "true")
+			t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
+				rc := createRequest()
+				rc.Context.Req.Form.Set("download", "true")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
-	})
+				require.Equal(t, 200, response.Status())
+				require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
+			})
 
-	t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
-		rc := createRequest()
-		rc.Context.Req.Form.Set("download", "false")
+			t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
+				rc := createRequest()
+				rc.Context.Req.Form.Set("download", "false")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
-	})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
 
-	t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
-		rc := createRequest()
+			t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
+				rc := createRequest()
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
-	})
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
 
-	t.Run("json body content is as expected", func(t *testing.T) {
-		expectedResponse, err := testData.ReadFile(path.Join("test-data", strings.Replace(requestFile, ".json", "-export.json", 1)))
-		require.NoError(t, err)
+			t.Run("json body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testExportFromPayloadData.ReadFile(strings.Replace(inputPath, "-input.json", "-export.json", 1))
+				require.NoError(t, err)
 
-		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json")
+				rc := createRequest()
+				rc.Context.Req.Header.Add("Accept", "application/json")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
-		t.Log(string(response.Body()))
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
+				t.Log(string(response.Body()))
 
-		require.Equal(t, 200, response.Status())
-		require.JSONEq(t, string(expectedResponse), string(response.Body()))
-	})
+				require.Equal(t, 200, response.Status())
+				require.JSONEq(t, string(expectedResponse), string(response.Body()))
+			})
 
-	t.Run("yaml body content is as expected", func(t *testing.T) {
-		expectedResponse, err := testData.ReadFile(path.Join("test-data", strings.Replace(requestFile, ".json", "-export.yaml", 1)))
-		require.NoError(t, err)
+			t.Run("yaml body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testExportFromPayloadData.ReadFile(strings.Replace(inputPath, "-input.json", "-export.yaml", 1))
+				require.NoError(t, err)
 
-		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc := createRequest()
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, string(expectedResponse), string(response.Body()))
-	})
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
+				require.Equal(t, 200, response.Status())
+				require.YAMLEq(t, string(expectedResponse), string(response.Body()))
+			})
 
-	t.Run("hcl body content is as expected", func(t *testing.T) {
-		expectedResponse, err := testData.ReadFile(path.Join("test-data", strings.Replace(requestFile, ".json", "-export.hcl", 1)))
-		require.NoError(t, err)
+			t.Run("hcl body content is as expected", func(t *testing.T) {
+				expectedResponse, err := testExportFromPayloadData.ReadFile(strings.Replace(inputPath, "-input.json", "-export.hcl", 1))
+				require.NoError(t, err)
 
-		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "hcl")
-		rc.Context.Req.Form.Set("download", "false")
+				rc := createRequest()
+				rc.Context.Req.Form.Set("format", "hcl")
+				rc.Context.Req.Form.Set("download", "false")
 
-		response := srv.ExportFromPayload(rc, body, folder.UID)
-		response.WriteTo(rc)
+				response := srv.ExportFromPayload(rc, body, folder.UID)
+				response.WriteTo(rc)
 
-		require.Equal(t, 200, response.Status())
-		require.Equal(t, string(expectedResponse), string(response.Body()))
-		require.Equal(t, "text/hcl", rc.Resp.Header().Get("Content-Type"))
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, string(expectedResponse), string(response.Body()))
+				require.Equal(t, "text/hcl", rc.Resp.Header().Get("Content-Type"))
 
-		t.Run("and add specific headers if download=true", func(t *testing.T) {
-			rc := createRequest()
-			rc.Context.Req.Form.Set("format", "hcl")
-			rc.Context.Req.Form.Set("download", "true")
+				t.Run("and add specific headers if download=true", func(t *testing.T) {
+					rc := createRequest()
+					rc.Context.Req.Form.Set("format", "hcl")
+					rc.Context.Req.Form.Set("download", "true")
 
-			response := srv.ExportFromPayload(rc, body, folder.UID)
-			response.WriteTo(rc)
+					response := srv.ExportFromPayload(rc, body, folder.UID)
+					response.WriteTo(rc)
 
-			require.Equal(t, 200, response.Status())
-			require.Equal(t, string(expectedResponse), string(response.Body()))
-			require.Equal(t, "application/terraform+hcl", rc.Resp.Header().Get("Content-Type"))
-			require.Equal(t, `attachment;filename=export.tf`, rc.Resp.Header().Get("Content-Disposition"))
+					require.Equal(t, 200, response.Status())
+					require.Equal(t, string(expectedResponse), string(response.Body()))
+					require.Equal(t, "application/terraform+hcl", rc.Resp.Header().Get("Content-Type"))
+					require.Equal(t, `attachment;filename=export.tf`, rc.Resp.Header().Get("Content-Disposition"))
+				})
+			})
 		})
-	})
+	}
 }
 
 func TestExportRules(t *testing.T) {

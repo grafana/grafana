@@ -1330,30 +1330,14 @@ func createCondition(refId string, reducer string, evalType string, thresh float
 	}
 }
 
-// createAlert creates a legacy alert rule for inserting into the test database.
-func createAlert(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string) *models.Alert {
-	return createAlertWithCond(t, orgId, dashboardId, panelsId, name, notifierUids, []dashAlertCondition{})
-}
-
-// createAlert creates a legacy alert rule for inserting into the test database.
-func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string, cond []dashAlertCondition) *models.Alert {
-	t.Helper()
-
+// createLegacyAlert creates a legacy alert rule for inserting into the test database.
+func createLegacyAlert(orgId int, name string, mutators ...func(*models.Alert)) *models.Alert {
 	var settings = simplejson.New()
-	if len(notifierUids) != 0 {
-		notifiers := make([]any, 0)
-		for _, n := range notifierUids {
-			notifiers = append(notifiers, notificationKey{UID: n})
-		}
+	settings.Set("conditions", []dashAlertCondition{})
 
-		settings.Set("notifications", notifiers)
-	}
-	settings.Set("conditions", cond)
-
-	return &models.Alert{
+	a := &models.Alert{
 		OrgID:        int64(orgId),
-		DashboardID:  int64(dashboardId),
-		PanelID:      int64(panelsId),
+		PanelID:      1,
 		Name:         name,
 		Message:      "message",
 		Frequency:    int64(60),
@@ -1364,6 +1348,59 @@ func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int,
 		Created:      now,
 		Updated:      now,
 	}
+	if len(mutators) > 0 {
+		for _, mutator := range mutators {
+			mutator(a)
+		}
+	}
+	return a
+}
+
+func withLegacyPanelId(id int64) func(*models.Alert) {
+	return func(a *models.Alert) {
+		a.PanelID = id
+	}
+}
+
+func withLegacyDashboardId(id int64) func(*models.Alert) {
+	return func(a *models.Alert) {
+		a.DashboardID = id
+	}
+}
+
+func withLegacyNotifiers(notifierUids []string) func(*models.Alert) {
+	return func(a *models.Alert) {
+		notifiers := make([]any, 0)
+		for _, n := range notifierUids {
+			notifiers = append(notifiers, notificationKey{UID: n})
+		}
+
+		a.Settings.Set("notifications", notifiers)
+	}
+}
+
+func withLegacyCondition(cond []dashAlertCondition) func(*models.Alert) {
+	return func(a *models.Alert) {
+		a.Settings.Set("conditions", cond)
+	}
+}
+
+func withLegacyFrequency(freq int64) func(*models.Alert) {
+	return func(a *models.Alert) {
+		a.Frequency = freq
+	}
+}
+
+// createAlert creates a legacy alert rule for inserting into the test database.
+func createAlert(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string) *models.Alert {
+	t.Helper()
+	return createLegacyAlert(orgId, name, withLegacyDashboardId(int64(dashboardId)), withLegacyPanelId(int64(panelsId)), withLegacyNotifiers(notifierUids))
+}
+
+// createAlert creates a legacy alert rule for inserting into the test database.
+func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string, cond []dashAlertCondition) *models.Alert {
+	t.Helper()
+	return createLegacyAlert(orgId, name, withLegacyDashboardId(int64(dashboardId)), withLegacyPanelId(int64(panelsId)), withLegacyNotifiers(notifierUids), withLegacyCondition(cond))
 }
 
 // createDashboard creates a folder for inserting into the test database.

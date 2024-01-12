@@ -1,0 +1,141 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "Graphite 4 - 1m",
+      "folder": "foo bar",
+      "interval": "1m",
+      "rules": [
+        {
+          "title": "name1",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 300,
+                "to": 0
+              },
+              "datasourceUid": "graphite2-uid",
+              "model": {
+                "intervalMs": 200,
+                "maxDataPoints": 1500,
+                "refId": "A",
+                "target": "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [100],
+                      "type": ">"
+                    },
+                    "operator": {
+                      "type": ""
+                    },
+                    "query": {
+                      "params": ["A"]
+                    },
+                    "reducer": {
+                      "type": "avg"
+                    }
+                  }
+                ],
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "B",
+                "type": "classic_conditions"
+              }
+            }
+          ],
+          "dasboardUid": "graphite-4",
+          "panelId": 3,
+          "noDataState": "NoData",
+          "execErrState": "Alerting",
+          "for": "2m",
+          "annotations": {
+            "__dashboardUid__": "graphite-4",
+            "__panelId__": "3",
+            "message": "desc1"
+          },
+          "labels": {
+          },
+          "isPaused": false
+        },
+        {
+          "title": "name2",
+          "condition": "A",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [100],
+                      "type": ">"
+                    },
+                    "operator": {
+                      "type": ""
+                    },
+                    "query": {
+                      "params": ["B"]
+                    },
+                    "reducer": {
+                      "type": "avg"
+                    }
+                  }
+                ],
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A",
+                "type": "classic_conditions"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 300,
+                "to": 0
+              },
+              "datasourceUid": "graphite2-uid",
+              "model": {
+                "intervalMs": 200,
+                "maxDataPoints": 1500,
+                "refId": "B",
+                "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"
+              }
+            }
+          ],
+          "dasboardUid": "graphite-4",
+          "panelId": 4,
+          "noDataState": "NoData",
+          "execErrState": "Alerting",
+          "for": "0s",
+          "annotations": {
+            "__dashboardUid__": "graphite-4",
+            "__panelId__": "4",
+            "message": "desc2"
+          },
+          "labels": {
+          },
+          "isPaused": false
+        }
+      ]
+    }
+  ]
+}

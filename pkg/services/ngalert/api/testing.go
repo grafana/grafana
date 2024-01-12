@@ -8,14 +8,24 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeAlertInstanceManager struct {
@@ -159,4 +169,34 @@ func (f fakeRuleAccessControlService) AuthorizeRuleChanges(ctx context.Context, 
 
 func (f fakeRuleAccessControlService) AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
 	return nil
+}
+
+func NewTestDashboardUpgradeService(t *testing.T, store *sqlstore.SQLStore, cfg *setting.Cfg, expectedDatasource *datasources.DataSource) DashboardUpgradeService {
+	dsGuardian := guardian.ProvideGuardian()
+	dsService := &fakeDatasourceService{ExpectedDatasource: expectedDatasource}
+	db := dbtest.NewFakeDB()
+	alertingstore := alerting.ProvideAlertStore(db, localcache.ProvideService(), cfg, nil, featuremgmt.WithFeatures())
+
+	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(expectedDatasource)
+		return err
+	})
+	require.NoError(t, err)
+
+	ms := migration.NewTestMigrationService(t, store, cfg)
+	ms.DashAlertExtractor = alerting.ProvideDashAlertExtractorService(dsGuardian, dsService, alertingstore)
+	return ms
+}
+
+type fakeDatasourceService struct {
+	ExpectedDatasource *datasources.DataSource
+	datasources.DataSourceService
+}
+
+func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
+	return f.ExpectedDatasource, nil
+}
+
+func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	return f.ExpectedDatasource, nil
 }
