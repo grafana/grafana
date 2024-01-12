@@ -107,6 +107,11 @@ export interface QueryResultMeta {
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
   instant?: boolean;
+
+  /**
+   * Array of field indices which values create a unique id for each row.
+   */
+  uniqueId?: number[];
 }
 
 export interface QueryResultMetaStat extends FieldConfig {

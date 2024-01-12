@@ -88,6 +88,18 @@ export function hasTimeField(data: DataFrame): boolean {
 }
 
 /**
+ * Get row id based on the meta.keyBy attribute.
+ * @param dataFrame
+ * @param rowIndex
+ */
+export function getRowUniqueId(dataFrame: DataFrame, rowIndex: number) {
+  if (dataFrame.meta?.uniqueId === undefined) {
+    return undefined;
+  }
+  return dataFrame.meta.uniqueId.map((fieldIndex) => dataFrame.fields[fieldIndex].values[rowIndex]).join('-');
+}
+
+/**
  * Simple helper to add values to a data frame. Doesn't do any validation so make sure you are adding the right types
  * of values.
  * @param dataFrame
