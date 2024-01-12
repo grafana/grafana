@@ -44,7 +44,7 @@ export function getLogLevel(line: string): LogLevel {
   return level;
 }
 
-export function getLogLevelFromKey(key: string | number): LogLevel {
+export function getLogLevelFromKey(key: string): LogLevel {
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
   if (level) {
     return level;
