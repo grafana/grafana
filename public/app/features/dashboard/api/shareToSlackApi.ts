@@ -23,11 +23,6 @@ export interface SlackShareContent {
   imagePreviewUrl: string;
 }
 
-interface DashboardPreview {
-  resourceUid: string; //dashboard uid or panel id
-  resourceUrl: string; //dashboard url or panel url
-}
-
 const backendSrvBaseQuery =
   ({ baseUrl }: { baseUrl: string }): BaseQueryFn<BackendSrvRequest> =>
   async (requestOptions) => {
@@ -55,37 +50,42 @@ export const shareToSlackApi = createApi({
         url: `/share/slack/channels`,
       }),
       transformResponse: (response: ChannelRS[], meta, arg) => {
-        return response.map((c) => ({ value: c.id, label: c.name }));
+        return response.map((c) => ({ value: c.id, label: `#${c.name}` }));
       },
-      providesTags: (result, error, dashboardUid) => ['channels'],
     }),
-    createPreview: builder.query<{ previewUrl: string }, DashboardPreview>({
-      query: ({ resourceUrl }) => ({
+    createPreview: builder.query<{ previewUrl: string }, { resourcePath: string }>({
+      query: ({ resourcePath }) => ({
         url: `/dashboards/preview`,
         method: 'POST',
-        data: { resourceUrl },
+        data: { resourcePath },
       }),
-      providesTags: (result, error, { resourceUid }) => [{ type: 'preview', id: resourceUid }],
     }),
     share: builder.mutation<
       void,
       {
-        channelIds: string[];
+        channels: Channel[];
         message?: string;
         imagePreviewUrl: string;
         dashboardUid: string;
         panelId?: string;
-        dashboardPath: string;
+        resourcePath: string;
       }
     >({
       query: (payload) => ({
         url: `/share/${payload.dashboardUid}/slack`,
         method: 'POST',
-        data: payload,
+        data: { ...payload, channelIds: payload.channels.map((c) => c.value) },
       }),
-      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+      async onQueryStarted(payload, { dispatch, queryFulfilled }) {
         await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Shared to slack')));
+        dispatch(
+          notifyApp(
+            createSuccessNotification(
+              'Shared to Slack',
+              `Your dashboard has been successfully shared to ${payload.channels.map((c) => c.label).join(' ,')}.`
+            )
+          )
+        );
       },
     }),
   }),

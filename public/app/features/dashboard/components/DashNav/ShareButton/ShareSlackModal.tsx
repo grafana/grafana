@@ -1,26 +1,35 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, Modal, MultiSelect, Spinner, TextArea, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  IconButton,
+  Modal,
+  ModalsContext,
+  MultiSelect,
+  Spinner,
+  TextArea,
+  useStyles2,
+} from '@grafana/ui';
 
 import { useCreatePreviewQuery, useGetChannelsQuery, useShareMutation } from '../../../api/shareToSlackApi';
 
 export function ShareSlackModal({
-  resourceUid,
-  resourceUrl,
-  onDismiss,
-  resourceType,
+  resourcePath,
+  dashboardUid,
+  panelId,
 }: {
-  resourceUid: string;
-  resourceUrl: string;
-  onDismiss(): void;
-  resourceType: 'dashboard' | 'panel';
+  dashboardUid: string;
+  resourcePath: string;
+  panelId?: string;
 }) {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
   const [description, setDescription] = useState<string>();
 
+  const { hideModal } = useContext(ModalsContext);
   const styles = useStyles2(getStyles);
 
   const { data: channels, isLoading: isChannelsLoading, isFetching: isChannelsFetching } = useGetChannelsQuery();
@@ -30,31 +39,41 @@ export function ShareSlackModal({
     refetch,
     isFetching: isPreviewFetching,
     isError,
-  } = useCreatePreviewQuery({ resourceUid, resourceUrl }, { refetchOnMountOrArgChange: false });
+  } = useCreatePreviewQuery({ resourcePath }, { refetchOnMountOrArgChange: false });
   const [share, { isLoading: isShareLoading, isSuccess: isShareSuccess }] = useShareMutation();
 
   const disableShareButton = isChannelsLoading || isChannelsFetching || isPreviewLoading || isPreviewFetching;
+  const resourceType = panelId ? 'panel' : 'dashboard';
 
   useEffect(() => {
     if (isShareSuccess) {
-      onDismiss();
+      hideModal();
     }
-  }, [isShareSuccess, onDismiss]);
+  }, [isShareSuccess, hideModal]);
 
   const onShareClick = () => {
     share({
-      channelIds: value.map((v) => v.value!),
+      channels: value.map((v) => ({ label: v.label!, value: v.value! })),
       message: description,
       imagePreviewUrl: preview!.previewUrl,
-      dashboardUid: resourceUid,
-      dashboardPath: resourceUrl,
+      dashboardUid: dashboardUid,
+      resourcePath: resourcePath,
+      panelId: panelId,
     });
   };
 
   return (
-    <Modal className={styles.modal} isOpen title="Share to Slack" onDismiss={onDismiss}>
+    <Modal className={styles.modal} isOpen title="Share to Slack" onDismiss={hideModal}>
       <div>
-        <Field label="Select channel *">
+        <div className={styles.field}>
+          <Field label="Select channel *" horizontal className={css({ marginBottom: 0 })}>
+            <IconButton
+              name="info-circle"
+              variant="primary"
+              tooltip="To share in a specific channel, invite the Grafana app."
+              tooltipPlacement="left"
+            />
+          </Field>
           <MultiSelect
             isLoading={isChannelsLoading || isChannelsFetching}
             placeholder="Select channel"
@@ -62,7 +81,7 @@ export function ShareSlackModal({
             value={value}
             onChange={setValue}
           />
-        </Field>
+        </div>
         <Field label="Description">
           <TextArea
             placeholder="Type your message"
@@ -95,7 +114,7 @@ export function ShareSlackModal({
       </div>
       <Modal.ButtonRow>
         {isShareLoading && <Spinner size="lg" />}
-        <Button variant="secondary" fill="outline" onClick={onDismiss}>
+        <Button variant="secondary" fill="outline" onClick={hideModal}>
           Cancel
         </Button>
         <Button disabled={!value.length || disableShareButton || isShareLoading || isError} onClick={onShareClick}>
@@ -126,5 +145,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   description: css({
     ...theme.typography.body,
+  }),
+  field: css({
+    marginBottom: theme.spacing(2),
   }),
 });

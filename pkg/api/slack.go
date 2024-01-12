@@ -43,7 +43,7 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 	}
 
 	grafanaURL := hs.getGrafanaURL()
-	dashboardLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.DashboardPath)
+	dashboardLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.ResourcePath)
 
 	err = hs.slackService.PostMessage(c.Req.Context(), shareRequest, dashboard.Title, dashboardLink)
 	if err != nil {
@@ -147,9 +147,9 @@ func (hs *HTTPServer) GeneratePreview(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "error parsing body", err)
 	}
 
-	hs.log.Info("Generating preview", "resourceURL", previewRequest.ResourceURL)
+	hs.log.Info("Generating preview", "resourceURL", previewRequest.ResourcePath)
 
-	filePath, err := hs.renderDashboard(c.Req.Context(), previewRequest.ResourceURL)
+	filePath, err := hs.renderDashboard(c.Req.Context(), previewRequest.ResourcePath)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Rendering failed", err)
 	}
@@ -196,7 +196,7 @@ func (hs *HTTPServer) getImageURL(imageName string) string {
 }
 
 type PreviewRequest struct {
-	ResourceURL string `json:"resourceUrl"`
+	ResourcePath string `json:"resourcePath"`
 }
 
 type PreviewResponse struct {

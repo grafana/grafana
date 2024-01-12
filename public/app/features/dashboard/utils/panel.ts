@@ -16,7 +16,7 @@ import { dispatch } from 'app/store/store';
 
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 import { ShareSlackModal } from '../components/DashNav/ShareButton/ShareSlackModal';
-import { buildSoloUrl } from '../components/ShareModal/utils';
+import { buildRenderPath } from '../components/ShareModal/utils';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -76,10 +76,9 @@ export const shareToSlack = (dashboard: DashboardModel, panel: PanelModel) => {
     new ShowModalReactEvent({
       component: ShareSlackModal,
       props: {
-        resourceUid: dashboard.uid,
-        resourceUrl: buildSoloUrl(false, dashboard.uid, 'current', panel).replace(`${window.location.origin}/`, ''),
-        onDismiss: () => {},
-        resourceType: 'panel',
+        dashboardUid: dashboard.uid,
+        resourcePath: buildRenderPath(dashboard.uid, panel),
+        panelId: panel.id,
       },
     })
   );

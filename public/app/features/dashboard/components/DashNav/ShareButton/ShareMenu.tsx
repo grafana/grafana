@@ -31,10 +31,8 @@ export function ShareMenu({ dashboard }: { dashboard: DashboardModel }) {
         label="Share to Slack"
         onClick={() => {
           showModal(ShareSlackModal, {
-            resourceUid: dashboard.uid,
-            resourceUrl: `${location.pathname}${location.search}${location.hash}`.substring(1),
-            onDismiss: hideModal,
-            resourceType: 'dashboard',
+            dashboardUid: dashboard.uid,
+            resourcePath: `${location.pathname}${location.search}${location.hash}`.substring(1),
           });
         }}
       />

@@ -108,6 +108,11 @@ export function buildSoloUrl(
   return urlUtil.appendQueryToUrl(soloUrl, params.toString());
 }
 
+export function buildRenderPath(dashboardUid: string, panel: { timeFrom?: string; id: number }) {
+  const soloUrl = buildSoloUrl(true, dashboardUid, 'current', panel);
+  return soloUrl.replace(`${window.location.origin}/`, '');
+}
+
 export function buildImageUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
