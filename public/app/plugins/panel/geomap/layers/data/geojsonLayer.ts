@@ -14,7 +14,14 @@ import { ComparisonOperation } from '@grafana/schema';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { polyStyle } from '../../style/markers';
-import { defaultStyleConfig, GeoJSONStyles, StyleConfig, StyleConfigState, StyleConfigValues } from '../../style/types';
+import {
+  defaultStyleConfig,
+  GeoJSONPointStyles,
+  GeoJSONPolyStyles,
+  StyleConfig,
+  StyleConfigState,
+  StyleConfigValues,
+} from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
@@ -101,7 +108,8 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       });
     }
 
-    const styleStrings: string[] = Object.values(GeoJSONStyles);
+    const polyStyleStrings: string[] = Object.values(GeoJSONPolyStyles);
+    const pointStyleStrings: string[] = Object.values(GeoJSONPointStyles);
     const vectorLayer = new VectorLayer({
       source,
       style: (feature: FeatureLike) => {
@@ -128,13 +136,19 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
           // Support styling polygons from Feature properties
           const featureProps = feature.getProperties();
-          if (Object.keys(featureProps).some((property) => styleStrings.includes(property))) {
+          if (!isPoint && Object.keys(featureProps).some((property) => polyStyleStrings.includes(property))) {
             const values: StyleConfigValues = {
-              color: featureProps[GeoJSONStyles.color] ?? check.state.base.color,
-              opacity: featureProps[GeoJSONStyles.opacity] ?? check.state.base.opacity,
-              lineWidth: featureProps[GeoJSONStyles.lineWidth] ?? check.state.base.lineWidth,
+              color: featureProps[GeoJSONPolyStyles.color] ?? check.state.base.color,
+              opacity: featureProps[GeoJSONPolyStyles.opacity] ?? check.state.base.opacity,
+              lineWidth: featureProps[GeoJSONPolyStyles.lineWidth] ?? check.state.base.lineWidth,
             };
             return polyStyle(values);
+          } else if (Object.keys(featureProps).some((property) => pointStyleStrings.includes(property))) {
+            const values: StyleConfigValues = {
+              color: featureProps[GeoJSONPointStyles.color] ?? check.state.base.color,
+              size: featureProps[GeoJSONPointStyles.size] ?? check.state.base.size,
+            };
+            return check.state.maker(values);
           }
 
           // Lazy create the style object
