@@ -35,10 +35,21 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 					Settings: map[string]any{"enabled": true},
 					Source:   models.DB,
 				}
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"client_id":     "client_id",
+						"client_secret": "secret",
+					},
+				}
 			},
 			want: &models.SSOSettings{
 				Provider: "github",
-				Settings: map[string]any{"enabled": true},
+				Settings: map[string]any{
+					"enabled":       true,
+					"client_id":     "client_id",
+					"client_secret": "secret",
+				},
 			},
 			wantErr: false,
 		},
@@ -49,16 +60,23 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should fallback to strategy if store returns not found",
+			name: "should fallback to the system settings if store returns not found",
 			setup: func(env testEnv) {
 				env.store.ExpectedError = ssosettings.ErrNotFound
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": true}
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled":   true,
+						"client_id": "client_id",
+					},
+				}
 			},
 			want: &models.SSOSettings{
 				Provider: "github",
-				Settings: map[string]any{"enabled": true},
-				Source:   models.System,
+				Settings: map[string]any{
+					"enabled":   true,
+					"client_id": "client_id"},
+				Source: models.System,
 			},
 			wantErr: false,
 		},
@@ -146,7 +164,11 @@ func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
 			setup: func(env testEnv) {
 				env.store.ExpectedError = ssosettings.ErrNotFound
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": true}
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled": true,
+					},
+				}
 			},
 			want: &models.SSOSettings{
 				Provider: "github",
@@ -219,18 +241,52 @@ func TestSSOSettingsService_List(t *testing.T) {
 					},
 				}
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": false}
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled":       false,
+						"client_id":     "client_id",
+						"client_secret": "client_secret",
+					},
+					"okta": {
+						"enabled":       false,
+						"client_id":     "client_id",
+						"client_secret": "client_secret",
+					},
+					"gitlab": {
+						"enabled": false,
+					},
+					"generic_oauth": {
+						"enabled": false,
+					},
+					"google": {
+						"enabled": false,
+					},
+					"azuread": {
+						"enabled": false,
+					},
+					"grafana_com": {
+						"enabled": false,
+					},
+				}
 			},
 			want: []*models.SSOSettings{
 				{
 					Provider: "github",
-					Settings: map[string]any{"enabled": true},
-					Source:   models.DB,
+					Settings: map[string]any{
+						"enabled":       true,
+						"client_id":     "client_id",
+						"client_secret": "client_secret",
+					},
+					Source: models.DB,
 				},
 				{
 					Provider: "okta",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.DB,
+					Settings: map[string]any{
+						"enabled":       false,
+						"client_id":     "client_id",
+						"client_secret": "client_secret",
+					},
+					Source: models.DB,
 				},
 				{
 					Provider: "gitlab",
@@ -271,7 +327,29 @@ func TestSSOSettingsService_List(t *testing.T) {
 			setup: func(env testEnv) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": false}
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled": false,
+					},
+					"okta": {
+						"enabled": false,
+					},
+					"gitlab": {
+						"enabled": false,
+					},
+					"generic_oauth": {
+						"enabled": false,
+					},
+					"google": {
+						"enabled": false,
+					},
+					"azuread": {
+						"enabled": false,
+					},
+					"grafana_com": {
+						"enabled": false,
+					},
+				}
 			},
 			want: []*models.SSOSettings{
 				{
@@ -367,77 +445,6 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		require.NoError(t, err)
 
 		settings.Settings["client_secret"] = "encrypted-client-secret"
-		require.EqualValues(t, settings, env.store.ActualSSOSettings)
-	})
-
-	t.Run("successfully upsert SSO settings having system settings", func(t *testing.T) {
-		env := setupTestEnv(t)
-
-		provider := social.GitHubProviderName
-		settings := models.SSOSettings{
-			Provider: provider,
-			Settings: map[string]any{
-				"client_id":     "client-id",
-				"client_secret": "client-secret",
-				"enabled":       true,
-			},
-			IsDeleted: false,
-		}
-		systemSettings := map[string]any{
-			"api_url":           "http://api-url",
-			"use_refresh_token": true,
-		}
-
-		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings).Return(nil)
-		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
-		env.reloadables[provider] = reloadable
-		env.fallbackStrategy.ExpectedConfig = systemSettings
-		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
-
-		err := env.service.Upsert(context.Background(), settings)
-		require.NoError(t, err)
-
-		settings.Settings["client_secret"] = "encrypted-client-secret"
-		settings.Settings["api_url"] = systemSettings["api_url"]
-		settings.Settings["use_refresh_token"] = systemSettings["use_refresh_token"]
-		require.EqualValues(t, settings, env.store.ActualSSOSettings)
-	})
-
-	t.Run("successfully upsert SSO settings having system settings without overwriting user settings", func(t *testing.T) {
-		env := setupTestEnv(t)
-
-		provider := social.GitlabProviderName
-		settings := models.SSOSettings{
-			Provider: provider,
-			Settings: map[string]any{
-				"client_id":     "client-id",
-				"client_secret": "client-secret",
-				"enabled":       true,
-			},
-			IsDeleted: false,
-		}
-		systemSettings := map[string]any{
-			"client_id":         "client-id-from-system",
-			"client_secret":     "client-secret-from-system",
-			"enabled":           false,
-			"api_url":           "http://api-url",
-			"use_refresh_token": true,
-		}
-
-		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings).Return(nil)
-		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
-		env.reloadables[provider] = reloadable
-		env.fallbackStrategy.ExpectedConfig = systemSettings
-		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
-
-		err := env.service.Upsert(context.Background(), settings)
-		require.NoError(t, err)
-
-		settings.Settings["client_secret"] = "encrypted-client-secret"
-		settings.Settings["api_url"] = systemSettings["api_url"]
-		settings.Settings["use_refresh_token"] = systemSettings["use_refresh_token"]
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
 	})
 
@@ -697,7 +704,7 @@ func setupTestEnv(t *testing.T) testEnv {
 	fallbackStrategy.ExpectedIsMatch = true
 
 	svc := &SSOSettingsService{
-		log:          log.NewNopLogger(),
+		logger:       log.NewNopLogger(),
 		store:        store,
 		ac:           accessControl,
 		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},

@@ -10,7 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -26,7 +26,7 @@ var (
 )
 
 type connectionAccess struct {
-	resourceInfo   apis.ResourceInfo
+	resourceInfo   common.ResourceInfo
 	tableConverter rest.TableConvertor
 	builder        *DataSourceAPIBuilder
 }
