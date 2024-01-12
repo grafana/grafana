@@ -44,8 +44,8 @@ export const LogsPanel = ({
     sortOrder,
     dedupStrategy,
     enableLogDetails,
+    showLogContextToggle,
   },
-  title,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -107,14 +107,21 @@ export const LogsPanel = ({
 
   const showContextToggle = useCallback(
     (row: LogRowModel): boolean => {
-      if (!row.dataFrame.refId || !dataSourcesMap) {
+      if (
+        !row.dataFrame.refId ||
+        !dataSourcesMap ||
+        (!showLogContextToggle &&
+          data.request?.app !== CoreApp.Dashboard &&
+          data.request?.app !== CoreApp.PanelEditor &&
+          data.request?.app !== CoreApp.PanelViewer)
+      ) {
         return false;
       }
 
       const dataSource = dataSourcesMap.get(row.dataFrame.refId);
       return hasLogsContextSupport(dataSource);
     },
-    [dataSourcesMap]
+    [dataSourcesMap, showLogContextToggle, data.request?.app]
   );
 
   const getLogRowContext = useCallback(
