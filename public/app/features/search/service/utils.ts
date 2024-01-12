@@ -40,16 +40,9 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function getIconForItem(itemOrKind: string | DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
-  const kind = typeof itemOrKind === 'string' ? itemOrKind : itemOrKind.kind;
-  const item = typeof itemOrKind === 'string' ? undefined : itemOrKind;
-
+export function getIconForKind(kind: string, isOpen?: boolean): IconName {
   if (kind === 'dashboard') {
     return 'apps';
-  }
-
-  if (item && isSharedWithMe(item.uid)) {
-    return 'users-alt';
   }
 
   if (kind === 'folder') {
@@ -58,6 +51,33 @@ export function getIconForItem(itemOrKind: string | DashboardViewItemWithUIItems
 
   return 'question-circle';
 }
+
+export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
+  if (item && isSharedWithMe(item.uid)) {
+    return 'users-alt';
+  } else {
+    return getIconForKind(item.kind, isOpen);
+  }
+}
+
+// export function getIconForItem(itemOrKind: string | DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
+//   const kind = typeof itemOrKind === 'string' ? itemOrKind : itemOrKind.kind;
+//   const item = typeof itemOrKind === 'string' ? undefined : itemOrKind;
+
+//   if (kind === 'dashboard') {
+//     return 'apps';
+//   }
+
+//   if (item && isSharedWithMe(item.uid)) {
+//     return 'users-alt';
+//   }
+
+//   if (kind === 'folder') {
+//     return isOpen ? 'folder-open' : 'folder';
+//   }
+
+//   return 'question-circle';
+// }
 
 function parseKindString(kind: string): DashboardViewItemKind {
   switch (kind) {
