@@ -2,6 +2,7 @@ package slack
 
 import (
 	"context"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 )
@@ -10,6 +11,7 @@ type Service interface {
 	GetUserConversations(ctx context.Context) (*dtos.SlackChannels, error)
 	PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardTitle string, dashboardLink string) error
 	PostUnfurl(ctx context.Context, linkEvent EventPayload, imageURL string, dashboardTitle string) error
+	ValidateSignatureRequest(c *contextmodel.ReqContext, body string) bool
 }
 
 type PreviewRequest struct {
@@ -102,9 +104,6 @@ type Unfurl struct {
 type Unfurls map[string]Unfurl
 
 type UnfurlEventPayload struct {
-	//Source   string  `json:"source"`
-	//UnfurlID string  `json:"unfurl_id"`
-	//Token    string  `json:"token"`
 	Channel string  `json:"channel,omitempty"`
 	TS      string  `json:"ts,omitempty"`
 	Unfurls Unfurls `json:"unfurls,omitempty"`

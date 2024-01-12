@@ -548,7 +548,8 @@ type Cfg struct {
 	FeatureManagement FeatureMgmtSettings
 
 	// Slack
-	SlackToken string
+	SlackToken         string
+	SlackSigningSecret string
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1989,4 +1990,5 @@ func (cfg *Cfg) readPublicDashboardsSettings() {
 func (cfg *Cfg) readSlackSettings() {
 	slack := cfg.Raw.Section("slack")
 	cfg.SlackToken = slack.Key("token").MustString("")
+	cfg.SlackSigningSecret = slack.Key("signing_secret").MustString("")
 }

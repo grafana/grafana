@@ -3,8 +3,12 @@ package slack
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"io"
 	"net/http"
 
@@ -182,6 +186,19 @@ func (s *SlackService) PostUnfurl(ctx context.Context, linkEvent EventPayload, i
 	return nil
 }
 
+func (s *SlackService) ValidateSignatureRequest(c *contextmodel.ReqContext, body string) bool {
+	signature := c.Req.Header.Get("X-Slack-Signature")
+	timestamp := c.Req.Header.Get("X-Slack-Request-Timestamp")
+
+	mySignature := fmt.Sprintf("v0:%v:%v", timestamp, body)
+	requestSignatureHash := fmt.Sprintf("v0=%s", calculateHMAC([]byte(mySignature), []byte(s.cfg.SlackSigningSecret)))
+	if !hmac.Equal([]byte(signature), []byte(requestSignatureHash)) {
+		return false
+	}
+
+	return true
+}
+
 func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io.Reader) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("https://slack.com/api/%s", endpoint), body)
 	if err != nil {
@@ -207,4 +224,10 @@ func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io
 	}
 
 	return b, nil
+}
+
+func calculateHMAC(message, key []byte) string {
+	hash := hmac.New(sha256.New, key)
+	hash.Write(message)
+	return hex.EncodeToString(hash.Sum(nil))
 }

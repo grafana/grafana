@@ -1,8 +1,10 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -54,6 +56,14 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
+	rawBody, err := io.ReadAll(c.Req.Body)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "error reading body", err)
+	}
+
+	// Restore the original body for further processing
+	c.Req.Body = io.NopCloser(bytes.NewBuffer(rawBody))
+
 	var eventPayload slack.EventPayload
 	if err := web.Bind(c.Req, &eventPayload); err != nil {
 		return response.Error(http.StatusBadRequest, "error parsing body", err)
@@ -66,6 +76,9 @@ func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response
 		})
 	case "event_callback":
 		if eventPayload.Event.Type == "link_shared" && eventPayload.Event.Source == "conversations_history" {
+			if !hs.slackService.ValidateSignatureRequest(c, string(rawBody)) {
+				return response.Error(http.StatusBadRequest, "invalid signature", fmt.Errorf("invalid signature"))
+			}
 			defer hs.handleLinkSharedEvent(eventPayload)
 			return response.Empty(http.StatusOK)
 		}
@@ -121,7 +134,9 @@ func (hs *HTTPServer) renderDashboard(ctx context.Context, renderPath string) (s
 		},
 		AuthOpts: rendering.AuthOpts{
 			// TODO: get the org id from the URL
-			OrgID:   1,
+			OrgID: 1,
+			// TODO: get the user id from the signedInUser in sharing from Grafana and create a user when unfurling
+			UserID:  1,
 			OrgRole: roletype.RoleAdmin,
 		},
 		Width:  1600,
