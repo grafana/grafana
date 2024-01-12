@@ -457,12 +457,12 @@ func TestMuteTimings(t *testing.T) {
 		mt, status, body := apiClient.GetMuteTimingByNameWithStatus(t, emptyMuteTiming.Name)
 		requireStatusCode(t, http.StatusOK, status, body)
 		require.Equal(t, emptyMuteTiming.MuteTimeInterval, mt.MuteTimeInterval)
-		require.EqualValues(t, "", mt.Provenance) // TODO this is a bug
+		require.EqualValues(t, models.ProvenanceAPI, mt.Provenance)
 
 		mt, status, body = apiClient.GetMuteTimingByNameWithStatus(t, anotherMuteTiming.Name)
 		requireStatusCode(t, http.StatusOK, status, body)
 		require.Equal(t, anotherMuteTiming.MuteTimeInterval, mt.MuteTimeInterval)
-		require.EqualValues(t, "", mt.Provenance) // TODO this is a bug
+		require.EqualValues(t, models.ProvenanceAPI, mt.Provenance)
 	})
 
 	t.Run("should return NotFound if mute timing does not exist", func(t *testing.T) {
@@ -480,10 +480,10 @@ func TestMuteTimings(t *testing.T) {
 		})
 
 		require.Equal(t, emptyMuteTiming.MuteTimeInterval, mt[0].MuteTimeInterval)
-		require.EqualValues(t, "", mt[0].Provenance) // TODO this is a bug
+		require.EqualValues(t, models.ProvenanceAPI, mt[0].Provenance)
 
 		require.Equal(t, anotherMuteTiming.MuteTimeInterval, mt[1].MuteTimeInterval)
-		require.EqualValues(t, "", mt[1].Provenance) // TODO this is a bug
+		require.EqualValues(t, models.ProvenanceAPI, mt[1].Provenance)
 	})
 
 	t.Run("should get BadRequest if creates a new mute timing with the same name", func(t *testing.T) {
