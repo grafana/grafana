@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
@@ -82,21 +82,15 @@ function LogsNavigation({
         return newPages;
       });
     }
-    addResultsToCache();
   }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
-
-  useEffect(() => {
-    clearCache();
-    // We can't enforce the eslint rule here because we only want to run when component is mounted.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const changeTime = useCallback(
     ({ from, to }: AbsoluteTimeRange) => {
+      addResultsToCache();
       expectedRangeRef.current = { from, to };
       onChangeTime({ from, to });
     },
-    [onChangeTime]
+    [onChangeTime, addResultsToCache]
   );
 
   const sortPages = (a: LogsPage, b: LogsPage, logsSortOrder?: LogsSortOrder | null) => {
@@ -173,24 +167,28 @@ function LogsNavigation({
         pageType: 'page',
         pageNumber,
       });
-      !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to });
+      changeTime({ from: page.queryRange.from, to: page.queryRange.to });
       scrollToTopLogs();
     },
-    [changeTime, loading, scrollToTopLogs]
+    [changeTime, scrollToTopLogs]
   );
 
   return (
     <div className={styles.navContainer}>
-      {oldestLogsFirst ? olderLogsButton : newerLogsButton}
-      <LogsNavigationPages
-        pages={pages}
-        currentPageIndex={currentPageIndex}
-        oldestLogsFirst={oldestLogsFirst}
-        timeZone={timeZone}
-        loading={loading}
-        onClick={onPageClick}
-      />
-      {oldestLogsFirst ? newerLogsButton : olderLogsButton}
+      {!config.featureToggles.logsInfiniteScrolling && (
+        <>
+          {oldestLogsFirst ? olderLogsButton : newerLogsButton}
+          <LogsNavigationPages
+            pages={pages}
+            currentPageIndex={currentPageIndex}
+            oldestLogsFirst={oldestLogsFirst}
+            timeZone={timeZone}
+            loading={loading}
+            onClick={onPageClick}
+          />
+          {oldestLogsFirst ? newerLogsButton : olderLogsButton}
+        </>
+      )}
       <Button
         data-testid="scrollToTop"
         className={styles.scrollToTopButton}
@@ -213,7 +211,9 @@ const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
       max-height: ${navContainerHeight};
       display: flex;
       flex-direction: column;
-      justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
+      ${config.featureToggles.logsInfiniteScrolling
+        ? `justify-content: flex-end;`
+        : `justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};`}
       position: sticky;
       top: ${theme.spacing(2)};
       right: 0;

@@ -25,7 +25,7 @@ type APIGroupBuilder interface {
 	// Build the group+version behavior
 	GetAPIGroupInfo(
 		scheme *runtime.Scheme,
-		codecs serializer.CodecFactory, // pointer?
+		codecs serializer.CodecFactory,
 		optsGetter generic.RESTOptionsGetter,
 	) (*genericapiserver.APIGroupInfo, error)
 

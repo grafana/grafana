@@ -86,16 +86,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	userOrgCount := 1
-	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
-	if err != nil {
-		hs.log.Error("Failed to count user orgs", "error", err)
-	}
-
-	if len(userOrgs) > 0 {
-		userOrgCount = len(userOrgs)
-	}
-
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
@@ -109,7 +99,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgId:                      c.SignedInUser.GetOrgID(),
 			OrgName:                    c.OrgName,
 			OrgRole:                    c.SignedInUser.GetOrgRole(),
-			OrgCount:                   userOrgCount,
+			OrgCount:                   hs.getUserOrgCount(c, userID),
 			GravatarUrl:                dtos.GetGravatarUrl(c.SignedInUser.GetEmail()),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
@@ -121,7 +111,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c),
-			AuthenticatedBy:            c.SignedInUser.AuthenticatedBy,
+			AuthenticatedBy:            hs.getUserAuthenticatedBy(c, userID),
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
@@ -152,7 +142,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.CSPEnabled = true
 		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
-
 	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 	if err != nil {
 		return nil, err
@@ -209,6 +198,40 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 		Identifier:         identifier,
 		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
 	}
+}
+
+func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) int {
+	if userID == 0 {
+		return 1
+	}
+
+	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
+	if err != nil {
+		hs.log.FromContext(c.Req.Context()).Error("Failed to count user orgs", "userId", userID, "error", err)
+		return 1
+	}
+
+	return len(userOrgs)
+}
+
+// getUserAuthenticatedBy returns external authentication method used for user.
+// If user does not have an external authentication method an empty string is returned
+func (hs *HTTPServer) getUserAuthenticatedBy(c *contextmodel.ReqContext, userID int64) string {
+	if userID == 0 {
+		return ""
+	}
+
+	info, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
+	// we ignore errors where a user does not have external user auth
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		hs.log.FromContext(c.Req.Context()).Error("Failed to fetch auth info", "userId", c.SignedInUser.UserID, "error", err)
+	}
+
+	if err != nil {
+		return ""
+	}
+
+	return info.AuthModule
 }
 
 func hashUserIdentifier(identifier string, secret string) string {

@@ -37,12 +37,11 @@ var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo apis.ResourceInfo
 
-	plugin        pluginstore.Plugin
+	plugin        plugins.JSONData
 	client        plugins.Client
 	dsService     datasources.DataSourceService
 	dsCache       datasources.CacheService
 	accessControl accesscontrol.AccessControl
-	namespacer    request.NamespaceMapper
 }
 
 func RegisterAPIService(
@@ -67,13 +66,12 @@ func RegisterAPIService(
 		"grafana-testdata-datasource",
 	}
 
-	namespacer := request.GetNamespaceMapper(cfg)
 	for _, ds := range all {
 		if !slices.Contains(ids, ds.ID) {
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds, pluginClient, dsService, dsCache, accessControl, namespacer)
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData, pluginClient, dsService, dsCache, accessControl)
 		if err != nil {
 			return nil, err
 		}
@@ -83,12 +81,11 @@ func RegisterAPIService(
 }
 
 func NewDataSourceAPIBuilder(
-	plugin pluginstore.Plugin,
+	plugin plugins.JSONData,
 	client plugins.Client,
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,
-	accessControl accesscontrol.AccessControl,
-	namespacer request.NamespaceMapper) (*DataSourceAPIBuilder, error) {
+	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
 	group, err := getDatasourceGroupNameFromPluginID(plugin.ID)
 	if err != nil {
 		return nil, err
@@ -100,7 +97,6 @@ func NewDataSourceAPIBuilder(
 		dsService:              dsService,
 		dsCache:                dsCache,
 		accessControl:          accessControl,
-		namespacer:             namespacer,
 	}, nil
 }
 
