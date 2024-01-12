@@ -1235,12 +1235,3 @@ type DashboardVersionResponse struct {
 	// in: body
 	Body *dashver.DashboardVersionMeta `json:"body"`
 }
-
-// Authorization represents the "authorizations" field in the payload
-type Authorization struct {
-	EnterpriseID        interface{} `json:"enterprise_id"`
-	TeamID              string      `json:"team_id"`
-	UserID              string      `json:"user_id"`
-	IsBot               bool        `json:"is_bot"`
-	IsEnterpriseInstall bool        `json:"is_enterprise_install"`
-}
