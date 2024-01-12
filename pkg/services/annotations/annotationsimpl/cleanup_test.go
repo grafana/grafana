@@ -15,7 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestAnnotationCleanUp(t *testing.T) {
+func TestIntegrationAnnotationCleanUp(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+
 	fakeSQL := db.InitTestDB(t)
 
 	tests := []struct {
@@ -144,7 +148,11 @@ func TestAnnotationCleanUp(t *testing.T) {
 	}
 }
 
-func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
+func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+
 	fakeSQL := db.InitTestDB(t)
 
 	t.Cleanup(func() {
