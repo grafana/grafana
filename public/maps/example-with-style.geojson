@@ -87,7 +87,7 @@
       },
       "properties": {
         "name": "Line 1",
-        "stroke": "white",
+        "stroke": "red",
         "stroke-width": 2
       }
     },
@@ -117,7 +117,7 @@
       },
       "properties": {
         "name": "Line 3",
-        "stroke": "white",
+        "stroke": "blue",
         "stroke-width": 2
       }
     },
