@@ -87,13 +87,15 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 		},
 		Spec: spec,
 	}
-	meta, _ := utils.MetaAccessor(p)
-	meta.SetUpdatedTimestampMillis(v.UpdatedAt)
-	if v.Id > 0 {
-		meta.SetOriginInfo(&utils.ResourceOriginInfo{
-			Name: "SQL",
-			Key:  fmt.Sprintf("%d", v.Id),
-		})
+	meta, err := utils.MetaAccessor(p)
+	if err == nil {
+		meta.SetUpdatedTimestampMillis(v.UpdatedAt)
+		if v.Id > 0 {
+			meta.SetOriginInfo(&utils.ResourceOriginInfo{
+				Name: "SQL",
+				Key:  fmt.Sprintf("%d", v.Id),
+			})
+		}
 	}
 
 	p.UID = utils.CalculateClusterWideUID(p)

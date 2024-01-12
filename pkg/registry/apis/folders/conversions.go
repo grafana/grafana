@@ -26,19 +26,21 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		},
 	}
 
-	meta, _ := utils.MetaAccessor(f)
-	meta.SetUpdatedTimestamp(&v.Updated)
-	if v.ID > 0 { // nolint:staticcheck
-		meta.SetOriginInfo(&utils.ResourceOriginInfo{
-			Name: "SQL",
-			Key:  fmt.Sprintf("%d", v.ID), // nolint:staticcheck
-		})
-	}
-	if v.CreatedBy > 0 {
-		meta.SetCreatedBy(fmt.Sprintf("user:%d", v.CreatedBy))
-	}
-	if v.UpdatedBy > 0 {
-		meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
+	meta, err := utils.MetaAccessor(f)
+	if err == nil {
+		meta.SetUpdatedTimestamp(&v.Updated)
+		if v.ID > 0 { // nolint:staticcheck
+			meta.SetOriginInfo(&utils.ResourceOriginInfo{
+				Name: "SQL",
+				Key:  fmt.Sprintf("%d", v.ID), // nolint:staticcheck
+			})
+		}
+		if v.CreatedBy > 0 {
+			meta.SetCreatedBy(fmt.Sprintf("user:%d", v.CreatedBy))
+		}
+		if v.UpdatedBy > 0 {
+			meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
+		}
 	}
 
 	f.UID = utils.CalculateClusterWideUID(f)
