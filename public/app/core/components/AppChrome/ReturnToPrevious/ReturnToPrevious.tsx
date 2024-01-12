@@ -25,13 +25,6 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
     locationService.push(currentLocation);
   };
 
-  const shortenTitle = (title: UrlQueryValue) => {
-    const titleLength = 37;
-    return title && title.toString().length > titleLength ? title.toString().substring(0, titleLength) + '...' : title;
-  };
-
-  const shortTitle = shortenTitle(title);
-
   return (
     <ButtonGroup className={styles.wrapper}>
       <Button
@@ -43,7 +36,7 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
         title={title?.toString()}
         className={styles.returnToPrevious}
       >
-        <Trans i18nKey="return-to-previous.button.title">Back to {{ shortTitle }}</Trans>
+        <Trans i18nKey="return-to-previous.button.title">Back to {{ title }}</Trans>
       </Button>
       <Button
         icon="times"
@@ -58,8 +51,13 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
 };
 const getStyles = (theme: GrafanaTheme2) => ({
   returnToPrevious: css({
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    ['span']: {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      maxWidth: '270px',
+      display: 'inline-block',
+    },
   }),
   wrapper: css({
     backgroundColor: theme.colors.background.secondary,
