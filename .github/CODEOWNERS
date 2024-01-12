@@ -376,7 +376,6 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
-/public/app/core/components/TraceToLogs @grafana/observability-traces-and-profiling
 /public/app/core/components/GraphNG/ @grafana/dataviz-squad
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
