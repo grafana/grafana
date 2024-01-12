@@ -3558,13 +3558,13 @@ __metadata:
     "@types/react": "npm:18.2.15"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-calendar": "npm:3.9.0"
-    "@types/react-color": "npm:3.0.6"
+    "@types/react-color": "npm:3.0.11"
     "@types/react-dom": "npm:18.2.7"
-    "@types/react-highlight-words": "npm:0.16.4"
+    "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
-    "@types/react-table": "npm:7.7.14"
-    "@types/react-test-renderer": "npm:18.0.0"
-    "@types/react-transition-group": "npm:4.4.6"
+    "@types/react-table": "npm:7.7.19"
+    "@types/react-test-renderer": "npm:18.0.7"
+    "@types/react-transition-group": "npm:4.4.10"
     "@types/react-window": "npm:1.8.5"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.2"
@@ -9005,13 +9005,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-color@npm:3.0.6":
-  version: 3.0.6
-  resolution: "@types/react-color@npm:3.0.6"
+"@types/react-color@npm:3.0.11":
+  version: 3.0.11
+  resolution: "@types/react-color@npm:3.0.11"
   dependencies:
     "@types/react": "npm:*"
     "@types/reactcss": "npm:*"
-  checksum: 8a60aedd9a8577a78bf8c4899de6c58515e548016921b115a506eb167050f388b6851f90ab2509f1f6ac17b64fb30869a43a227b51505db50940e797981c64c2
+  checksum: c683e7222da449fc68953710bd8e95c9748d12c223f89d78891878f813a4560bca18663ee431658e47aa41cfd7f36b2ab1e61f04007e9e8acd4878b75236b653
   languageName: node
   linkType: hard
 
@@ -9033,12 +9033,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-highlight-words@npm:0.16.4":
-  version: 0.16.4
-  resolution: "@types/react-highlight-words@npm:0.16.4"
+"@types/react-highlight-words@npm:0.16.7":
+  version: 0.16.7
+  resolution: "@types/react-highlight-words@npm:0.16.7"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 8b7c1b2b63b8f6d58e181613ba5392755b042bf87c74e65caad7bfc4585566944e9aacda6ee3b1cad222aea6667716c8be8643b39b72ae7b4aaadde063a62d25
+  checksum: 503e49f396cd9b9d08e5f3ca4817095427d51bfdb094e2458752908e1803d379750aa7b421397fe6e6fe8c842fbe91f5b30f87a56586ae7f2b2f0e6816b69113
   languageName: node
   linkType: hard
 
@@ -9084,30 +9084,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.14":
-  version: 7.7.14
-  resolution: "@types/react-table@npm:7.7.14"
+"@types/react-table@npm:7.7.19":
+  version: 7.7.19
+  resolution: "@types/react-table@npm:7.7.19"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 547e4e26a8512572d8372a88aaa1d5d0027e15ed34a18acfd1a76bda0520c856b096643c9e585b8459061dde3e50572333dd9e8d9671d83dc87615bd7532dfe8
+  checksum: 00ade23df17d1e6b4cd94dbf127268178f7daab9e5c823c9aa915458d99817814dfdbede9d37068c0d913e4706697dc8904e34987db16cb80ce2e41ad8a6cc10
   languageName: node
   linkType: hard
 
-"@types/react-test-renderer@npm:18.0.0":
-  version: 18.0.0
-  resolution: "@types/react-test-renderer@npm:18.0.0"
+"@types/react-test-renderer@npm:18.0.7":
+  version: 18.0.7
+  resolution: "@types/react-test-renderer@npm:18.0.7"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 6afc938a1d7618d88ab8793e251f0bd5981bf3f08c1b600f74df3f8800b92589ea534dc6dcb7c8d683893fcc740bf8d7843a42bf2dae59785cfe88f004bd7b0b
+  checksum: 701d7d815fe7b921712ebdb2c4434e99b92403d37c51b33a01ce1b62fed7d1efbf9f749971d9031a5b137c6d5e194249c378106768aa69725a01f150fef0ec7f
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:4.4.6, @types/react-transition-group@npm:^4.4.0":
-  version: 4.4.6
-  resolution: "@types/react-transition-group@npm:4.4.6"
+"@types/react-transition-group@npm:4.4.10, @types/react-transition-group@npm:^4.4.0":
+  version: 4.4.10
+  resolution: "@types/react-transition-group@npm:4.4.10"
   dependencies:
     "@types/react": "npm:*"
-  checksum: eb4a14df7ad283be56d44c4bd4351136bd50dfedf6958299fbbc571d6871fad17a373b5b9a6d44adac27154d1f2059225a26c4fee79053349a4d52eb89277787
+  checksum: b429f3bd54d9aea6c0395943ce2dda6b76fb458e902365bd91fd99bf72064fb5d59e2b74e78d10f2871908501d350da63e230d81bda2b616c967cab8dc51bd16
   languageName: node
   linkType: hard
 
@@ -9121,12 +9121,12 @@ __metadata:
   linkType: hard
 
 "@types/react-window-infinite-loader@npm:^1":
-  version: 1.0.6
-  resolution: "@types/react-window-infinite-loader@npm:1.0.6"
+  version: 1.0.9
+  resolution: "@types/react-window-infinite-loader@npm:1.0.9"
   dependencies:
     "@types/react": "npm:*"
     "@types/react-window": "npm:*"
-  checksum: d4648dfb44614e4f0137d7b77eb1868b0c5252f451a78edfc4520e508157ce7687d4b7d9efd6df8f01e72e0d92224338b8c8d934220f32a3081b528599a25829
+  checksum: 9f2c27f24bfa726ceaef6612a4adbda745f3455c877193f68dfa48591274c670a6df4fa6870785cff5f948e289ceb9a247fb7cbf67e3cd555ab16d11866fd63f
   languageName: node
   linkType: hard
 
@@ -9170,12 +9170,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/redux-mock-store@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@types/redux-mock-store@npm:1.0.3"
+"@types/redux-mock-store@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@types/redux-mock-store@npm:1.0.6"
   dependencies:
     redux: "npm:^4.0.5"
-  checksum: b8c76be560fb06c0b5fc8b8874001f0b0219a7a5d0bbbf8f06ebfc437a1300df49f079b30199a9fa99c738817145895a4f0297b8f614edadd1d9e110e917cd0a
+  checksum: 5c799d2fc5b3f0f84bfcd6243c56b1ac98be6707057f570b5e51e9d305f446978cc2958c7e0b629ebf73293f15a79765517e6d0a1df0371fd27551f7128325c7
   languageName: node
   linkType: hard
 
@@ -9200,14 +9200,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:7.5.0":
-  version: 7.5.0
-  resolution: "@types/semver@npm:7.5.0"
-  checksum: 8fbfbf79e9c14c3c20160a42145a146cba44d9763d0fac78358b394dc36e41bc2590bc4f0129c6fcbbc9b30f12ea1ba821bfe84b29dc80897f315cc7dd251393
-  languageName: node
-  linkType: hard
-
-"@types/semver@npm:^7.3.12, @types/semver@npm:^7.3.4, @types/semver@npm:^7.5.0":
+"@types/semver@npm:7.5.6, @types/semver@npm:^7.3.12, @types/semver@npm:^7.3.4, @types/semver@npm:^7.5.0":
   version: 7.5.6
   resolution: "@types/semver@npm:7.5.6"
   checksum: e77282b17f74354e17e771c0035cccb54b94cc53d0433fa7e9ba9d23fd5d7edcd14b6c8b7327d58bbd89e83b1c5eda71dfe408e06b929007e2b89586e9b63459
@@ -17138,17 +17131,17 @@ __metadata:
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.7"
     "@types/react-grid-layout": "npm:1.3.2"
-    "@types/react-highlight-words": "npm:0.16.4"
+    "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-resizable": "npm:3.0.4"
     "@types/react-router-dom": "npm:5.3.3"
-    "@types/react-table": "npm:7.7.14"
-    "@types/react-test-renderer": "npm:18.0.0"
-    "@types/react-transition-group": "npm:4.4.6"
+    "@types/react-table": "npm:7.7.19"
+    "@types/react-test-renderer": "npm:18.0.7"
+    "@types/react-transition-group": "npm:4.4.10"
     "@types/react-virtualized-auto-sizer": "npm:1.0.1"
     "@types/react-window": "npm:1.8.5"
     "@types/react-window-infinite-loader": "npm:^1"
-    "@types/redux-mock-store": "npm:1.0.3"
-    "@types/semver": "npm:7.5.0"
+    "@types/redux-mock-store": "npm:1.0.6"
+    "@types/semver": "npm:7.5.6"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.2"
     "@types/slate-react": "npm:0.22.9"
