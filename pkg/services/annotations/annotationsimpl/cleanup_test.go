@@ -2,6 +2,7 @@ package annotationsimpl
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -17,28 +18,23 @@ import (
 func TestAnnotationCleanUp(t *testing.T) {
 	fakeSQL := db.InitTestDB(t)
 
-	t.Cleanup(func() {
-		err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
-			_, err := session.Exec("DELETE FROM annotation")
-			return err
-		})
-		assert.NoError(t, err)
-	})
-
-	createTestAnnotations(t, fakeSQL, 21, 6)
-	assertAnnotationCount(t, fakeSQL, "", 21)
-	assertAnnotationTagCount(t, fakeSQL, 42)
-
 	tests := []struct {
-		name                     string
-		cfg                      *setting.Cfg
-		alertAnnotationCount     int64
-		dashboardAnnotationCount int64
-		APIAnnotationCount       int64
-		affectedAnnotations      int64
+		name                    string
+		createAnnotationsNum    int
+		createOldAnnotationsNum int
+
+		cfg                           *setting.Cfg
+		alertAnnotationCount          int64
+		annotationCleanupJobBatchSize int
+		dashboardAnnotationCount      int64
+		APIAnnotationCount            int64
+		affectedAnnotations           int64
 	}{
 		{
-			name: "default settings should not delete any annotations",
+			name:                          "default settings should not delete any annotations",
+			createAnnotationsNum:          21,
+			createOldAnnotationsNum:       6,
+			annotationCleanupJobBatchSize: 1,
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(0, 0),
 				DashboardAnnotationCleanupSettings: settingsFn(0, 0),
@@ -50,7 +46,10 @@ func TestAnnotationCleanUp(t *testing.T) {
 			affectedAnnotations:      0,
 		},
 		{
-			name: "should remove annotations created before cut off point",
+			name:                          "should remove annotations created before cut off point",
+			createAnnotationsNum:          21,
+			createOldAnnotationsNum:       6,
+			annotationCleanupJobBatchSize: 1,
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(time.Hour*48, 0),
 				DashboardAnnotationCleanupSettings: settingsFn(time.Hour*48, 0),
@@ -62,7 +61,10 @@ func TestAnnotationCleanUp(t *testing.T) {
 			affectedAnnotations:      6,
 		},
 		{
-			name: "should only keep three annotations",
+			name:                          "should only keep three annotations",
+			createAnnotationsNum:          15,
+			createOldAnnotationsNum:       6,
+			annotationCleanupJobBatchSize: 1,
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
 				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
@@ -74,7 +76,10 @@ func TestAnnotationCleanUp(t *testing.T) {
 			affectedAnnotations:      6,
 		},
 		{
-			name: "running the max count delete again should not remove any annotations",
+			name:                          "running the max count delete again should not remove any annotations",
+			createAnnotationsNum:          9,
+			createOldAnnotationsNum:       6,
+			annotationCleanupJobBatchSize: 1,
 			cfg: &setting.Cfg{
 				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
 				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
@@ -89,8 +94,21 @@ func TestAnnotationCleanUp(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			createTestAnnotations(t, fakeSQL, test.createAnnotationsNum, test.createOldAnnotationsNum)
+			assertAnnotationCount(t, fakeSQL, "", int64(test.createAnnotationsNum))
+			assertAnnotationTagCount(t, fakeSQL, 2*int64(test.createAnnotationsNum))
+
+			t.Cleanup(func() {
+				err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
+					_, deleteAnnotationErr := session.Exec("DELETE FROM annotation")
+					_, deleteAnnotationTagErr := session.Exec("DELETE FROM annotation_tag")
+					return errors.Join(deleteAnnotationErr, deleteAnnotationTagErr)
+				})
+				assert.NoError(t, err)
+			})
+
 			cfg := setting.NewCfg()
-			cfg.AnnotationCleanupJobBatchSize = 1
+			cfg.AnnotationCleanupJobBatchSize = int64(test.annotationCleanupJobBatchSize)
 			cleaner := ProvideCleanupService(fakeSQL, cfg)
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
 			require.NoError(t, err)
