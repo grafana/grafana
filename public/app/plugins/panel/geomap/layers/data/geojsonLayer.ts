@@ -14,7 +14,7 @@ import { ComparisonOperation } from '@grafana/schema';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { polyStyle } from '../../style/markers';
-import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleConfigValues } from '../../style/types';
+import { defaultStyleConfig, GeoJSONStyles, StyleConfig, StyleConfigState, StyleConfigValues } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
@@ -127,11 +127,12 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
           // Support styling polygons from Feature properties
           const featureProps = feature.getProperties();
-          if (featureProps.fill || featureProps['fill-opacity'] || featureProps['stroke-width']) {
+          const styleStrings: string[] = Object.values(GeoJSONStyles);
+          if (Object.keys(featureProps).some((property) => styleStrings.includes(property))) {
             const values: StyleConfigValues = {
-              color: featureProps.fill,
-              opacity: featureProps['fill-opacity'],
-              lineWidth: featureProps['stroke-width'],
+              color: featureProps[GeoJSONStyles.color] ?? check.state.base.color,
+              opacity: featureProps[GeoJSONStyles.opacity] ?? check.state.base.opacity,
+              lineWidth: featureProps[GeoJSONStyles.lineWidth] ?? check.state.base.lineWidth,
             };
             return polyStyle(values);
           }

@@ -127,6 +127,12 @@ export interface StyleConfigValues {
   textConfig?: TextStyleConfig;
 }
 
+export enum GeoJSONStyles {
+  color = 'fill',
+  opacity = 'fill-opacity',
+  lineWidth = 'stroke-width',
+}
+
 /** When the style depends on a field */
 export interface StyleConfigFields {
   color?: string;
