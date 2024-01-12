@@ -202,7 +202,7 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
       }
     }
 
-    // TSub is defined as any and we need to cast it back
+    // TSub is defined as type any and we need to cast it back
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return result as TSub;
   }
