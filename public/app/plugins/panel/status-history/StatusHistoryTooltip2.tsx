@@ -31,6 +31,7 @@ interface StatusHistoryTooltipProps {
   isPinned: boolean;
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
+  annotate?: () => void;
 }
 
 function fmt(field: Field, val: number): string {
@@ -42,13 +43,13 @@ function fmt(field: Field, val: number): string {
 }
 
 export const StatusHistoryTooltip2 = ({
-  data,
   dataIdxs,
   alignedData,
   seriesIdx,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   isPinned,
+  annotate,
 }: StatusHistoryTooltipProps) => {
   const styles = useStyles2(getStyles);
 
@@ -144,7 +145,7 @@ export const StatusHistoryTooltip2 = ({
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
+      {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );
 };

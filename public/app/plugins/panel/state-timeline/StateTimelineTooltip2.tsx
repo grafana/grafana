@@ -33,6 +33,7 @@ interface StateTimelineTooltip2Props {
   timeRange: TimeRange;
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
+  annotate?: () => void;
 }
 
 export const StateTimelineTooltip2 = ({
@@ -45,6 +46,7 @@ export const StateTimelineTooltip2 = ({
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   isPinned,
+  annotate,
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -181,7 +183,7 @@ export const StateTimelineTooltip2 = ({
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
+      {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );
 };

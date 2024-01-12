@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis"
@@ -57,32 +58,38 @@ func (s *connectionAccess) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ns := request.NamespaceValue(ctx)
 	ds, err := s.builder.getDataSource(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return s.asConnection(ds), nil
+	return s.asConnection(ds, ns), nil
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ns := request.NamespaceValue(ctx)
+	if ns == "" {
+		// require a namespace so we do not need to support reverse mappings (yet)
+		return nil, fmt.Errorf("missing namespace in request URL")
+	}
 	result := &v0alpha1.DataSourceConnectionList{
 		Items: []v0alpha1.DataSourceConnection{},
 	}
 	vals, err := s.builder.getDataSources(ctx)
 	if err == nil {
 		for _, ds := range vals {
-			result.Items = append(result.Items, *s.asConnection(ds))
+			result.Items = append(result.Items, *s.asConnection(ds, ns))
 		}
 	}
 	return result, err
 }
 
-func (s *connectionAccess) asConnection(ds *datasources.DataSource) *v0alpha1.DataSourceConnection {
+func (s *connectionAccess) asConnection(ds *datasources.DataSource, ns string) *v0alpha1.DataSourceConnection {
 	v := &v0alpha1.DataSourceConnection{
 		TypeMeta: s.resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              ds.UID,
-			Namespace:         s.builder.namespacer(ds.OrgID),
+			Namespace:         ns,
 			CreationTimestamp: metav1.NewTime(ds.Created),
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
 		},

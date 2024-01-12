@@ -122,7 +122,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
       <VizTooltipContent contentLabelValue={getContentLabel()} isPinned={isPinned} />
-      {isPinned && <VizTooltipFooter dataLinks={getLinks()} canAnnotate={false} />}
+      {isPinned && <VizTooltipFooter dataLinks={getLinks()} />}
     </div>
   );
 };
