@@ -434,12 +434,11 @@ func (ss *sqlStore) pauseAllAlerts(t *testing.T, pauseState bool) error {
 	return err
 }
 
-func insertTestDashboard(t *testing.T, store db.DB, title string, orgId int64,
+func insertTestDashboard(t *testing.T, store db.DB, title string, orgID int64,
 	folderId int64, folderUID string, isFolder bool, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:     orgId,
-		FolderID:  folderId, // nolint:staticcheck
+		OrgID:     orgID,
 		FolderUID: folderUID,
 		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]any{

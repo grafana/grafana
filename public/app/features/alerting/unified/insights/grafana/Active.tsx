@@ -7,7 +7,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 
-export function getFiringGrafanaAlertsScene(datasource: DataSourceRef, panelTitle: string) {
+export function getActiveGrafanaAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
     ? `sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules{state="active", id="${INSTANCE_ID}"})`
     : `sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules{state="active"})`;
@@ -27,17 +27,17 @@ export function getFiringGrafanaAlertsScene(datasource: DataSourceRef, panelTitl
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
-      .setDescription('The number of currently firing alert rules')
+      .setDescription('The number of currently active alert rules')
       .setData(query)
       .setThresholds({
         mode: ThresholdsMode.Absolute,
         steps: [
           {
-            color: 'red',
+            color: 'green',
             value: 0,
           },
           {
-            color: 'red',
+            color: 'green',
             value: 80,
           },
         ],
