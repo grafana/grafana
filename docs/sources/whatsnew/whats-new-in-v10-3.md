@@ -30,22 +30,20 @@ For Grafana v10.3, we've also provided a list of [breaking changes](https://graf
 
 <!-- Template below
 
-> Add on-prem only features here. Features documented in the Cloud What's new will be copied from those release notes.
-
 ## Feature
 <!-- Name of contributor -->
-<!-- _[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise]_
+<!--_[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, all editions of Grafana, some combination of self-managed and Cloud]_
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 {{% admonition type="note" %}}
 Use full URLs for links. When linking to versioned docs, replace the version with the version interpolation placeholder (for example, <GRAFANA_VERSION>, <TEMPO_VERSION>, <MIMIR_VERSION>) so the system can determine the correct set of docs to point to. For example, "https://grafana.com/docs/grafana/latest/administration/" becomes "https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/".
 {{% /admonition %}}
--->
-<!-- Add an image, GIF or video  as below
 
-{{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="DESCRIPTIVE CAPTION" >}}
+<!--Add an image, GIF or video  as below-->
 
-Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets
--->
+<!--{{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="DESCRIPTIVE CAPTION" >}}
+
+<!--Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets-->
+<!---->
 
 ## Navigation updates\*
 
