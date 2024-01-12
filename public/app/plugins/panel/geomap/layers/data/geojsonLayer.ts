@@ -167,7 +167,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             if (!check.point) {
               check.point = check.state.maker(check.state.base);
             }
-            // TODO support styling points from Feature properties
             return check.point;
           }
 
