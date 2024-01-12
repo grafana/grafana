@@ -188,7 +188,7 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 #### [Optional] Convert an existing dashboard into a JSON file
 
 1. Navigate to the page of the dashboard you want to use as the home dashboard.
-1. Click the **Share dashboard** icon next to the dashboard title.
+1. Click the **Share** button at the top right of the screen.
 1. In the Export tab, click **Save to file**. Grafana converts the dashboard to a JSON file and saves it locally.
 
 #### Use a JSON file as the home dashboard

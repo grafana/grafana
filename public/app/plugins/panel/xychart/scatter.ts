@@ -535,7 +535,9 @@ const prepConfig = (
 
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
-    if (!config.featureToggles.newVizTooltips) {
+    const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+
+    if (!showNewVizTooltips) {
       u.over.style.overflow = 'hidden';
     }
     ref_parent = u.root.parentElement;
