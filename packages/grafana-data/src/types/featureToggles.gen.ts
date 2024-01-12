@@ -144,7 +144,6 @@ export interface FeatureToggles {
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
-  costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -171,4 +170,8 @@ export interface FeatureToggles {
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
+  alertingPreviewUpgrade?: boolean;
+  enablePluginsTracingByDefault?: boolean;
+  cloudRBACRoles?: boolean;
+  alertingQueryOptimization?: boolean;
 }

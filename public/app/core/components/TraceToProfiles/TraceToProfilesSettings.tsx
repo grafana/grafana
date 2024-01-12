@@ -8,10 +8,9 @@ import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
-import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProfileTypesCascader } from 'app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/ProfileTypesCascader';
 import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
@@ -173,7 +172,7 @@ export const TraceToProfilesSection = ({ options, onOptionsChange }: DataSourceP
       description={
         <ConfigDescriptionLink
           description="Navigate from a trace span to the selected data source's profiles."
-          suffix={`${options.type}/#trace-to-profiles`}
+          suffix={`${options.type}/configure-tempo-data-source/#trace-to-profiles`}
           feature="trace to profiles"
         />
       }

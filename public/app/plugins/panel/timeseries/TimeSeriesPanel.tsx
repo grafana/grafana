@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TooltipPlugin, TooltipPlugin2, usePanelContext, ZoomPlugin } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
@@ -12,6 +12,7 @@ import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
+import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
@@ -49,6 +50,12 @@ export const TimeSeriesPanel = ({
     return undefined;
   }, [frames, id]);
 
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const showNewVizTooltips =
+    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
+
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
@@ -63,8 +70,13 @@ export const TimeSeriesPanel = ({
     );
   }
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
+  // which annotation are we editing?
+  // are we adding a new annotation? is annotating?
+  // console.log(data.annotations);
+
+  // annotations plugin includes the editor and the renderer
+  // its annotation state is managed here for now
+  // tooltipplugin2 receives render with annotate range, callback should setstate here that gets passed to annotationsplugin as newAnnotaton or editAnnotation
 
   return (
     <TimeSeries
@@ -90,7 +102,7 @@ export const TimeSeriesPanel = ({
 
         return (
           <>
-            <KeyboardPlugin config={uplotConfig} />
+            {!showNewVizTooltips && <KeyboardPlugin config={uplotConfig} />}
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <>
                 {showNewVizTooltips ? (
@@ -101,8 +113,22 @@ export const TimeSeriesPanel = ({
                     }
                     queryZoom={onChangeTimeRange}
                     clientZoom={true}
-                    render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2) => {
+                      if (timeRange2 != null) {
+                        setNewAnnotationRange(timeRange2);
+                        dismiss();
+                        return;
+                      }
+
+                      const annotate = () => {
+                        let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                        setNewAnnotationRange({ from: xVal, to: xVal });
+                        dismiss();
+                      };
+
                       return (
+                        // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                         <TimeSeriesTooltip
                           frames={frames}
                           seriesFrame={alignedDataFrame}
@@ -111,6 +137,7 @@ export const TimeSeriesPanel = ({
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
+                          annotate={enableAnnotationCreation ? annotate : undefined}
                         />
                       );
                     }}
@@ -132,9 +159,20 @@ export const TimeSeriesPanel = ({
               </>
             )}
             {/* Renders annotation markers*/}
-            {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+            {showNewVizTooltips ? (
+              <AnnotationsPlugin2
+                annotations={data.annotations ?? []}
+                config={uplotConfig}
+                timeZone={timeZone}
+                newRange={newAnnotationRange}
+                setNewRange={setNewAnnotationRange}
+              />
+            ) : (
+              data.annotations && (
+                <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+              )
             )}
+
             {/*Enables annotations creation*/}
             {!showNewVizTooltips ? (
               enableAnnotationCreation ? (

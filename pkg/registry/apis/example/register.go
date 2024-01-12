@@ -45,7 +45,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration gra
 		return nil // skip registration unless opting into experimental apis
 	}
 	builder := NewTestingAPIBuilder()
-	apiregistration.RegisterAPI(NewTestingAPIBuilder())
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
