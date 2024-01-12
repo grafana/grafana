@@ -167,7 +167,9 @@ export const StateTimelinePanel = ({
   }
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+    config.featureToggles.newVizTooltips &&
+    !config.featureToggles.scenes &&
+    (sync == null || sync() === DashboardCursorSync.Off);
 
   return (
     <TimelineChart

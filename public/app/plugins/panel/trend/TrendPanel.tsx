@@ -26,7 +26,7 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
-  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && !config.featureToggles.scenes;
 
   const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬

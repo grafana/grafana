@@ -44,7 +44,7 @@ export const XYChartPanel = (props: Props) => {
   const [facets, setFacets] = useState<FacetedData | undefined>();
   const [hover, setHover] = useState<ScatterHoverEvent | undefined>();
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
-  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+  const showNewVizTooltips = config.featureToggles.newVizTooltips && !config.featureToggles.scenes;
 
   const isToolTipOpen = useRef<boolean>(false);
   const oldOptions = usePrevious(props.options);

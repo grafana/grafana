@@ -52,7 +52,9 @@ export const TimeSeriesPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+    config.featureToggles.newVizTooltips &&
+    !config.featureToggles.scenes &&
+    (sync == null || sync() === DashboardCursorSync.Off);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
