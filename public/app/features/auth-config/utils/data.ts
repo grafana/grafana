@@ -80,11 +80,9 @@ const includeRequiredKeysOnly = (
     return obj;
   }
   let result: Partial<SSOProviderDTO> = {};
-  for (const key of Object.keys(obj)) {
-    if (requiredKeys.includes(key as keyof SSOProvider['settings'])) {
-      //@ts-expect-error
-      result[key] = obj[key];
-    }
+  for (const key of requiredKeys) {
+    //@ts-expect-error
+    result[key] = obj[key];
   }
   return result;
 };
@@ -92,7 +90,7 @@ const includeRequiredKeysOnly = (
 // Convert the DTO to the data format used by the API
 export function dtoToData(dto: SSOProviderDTO, provider: string) {
   const arrayFields = getArrayFields(fieldMap);
-  const dtoWithRequiredFields = includeRequiredKeysOnly(dto, fields[provider]);
+  const dtoWithRequiredFields = includeRequiredKeysOnly(dto, [...fields[provider], 'enabled']);
   const settings = { ...dtoWithRequiredFields };
 
   for (const field of arrayFields) {
