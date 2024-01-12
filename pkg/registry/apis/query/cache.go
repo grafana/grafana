@@ -14,10 +14,9 @@ import (
 )
 
 type registry struct {
-	plugins        *v0alpha1.DataSourcePluginList
-	lookup         map[string]*v0alpha1.DataSourcePlugin // pluginID >> API
-	pluginsMu      sync.RWMutex
-	pluginsChecked int64
+	plugins *v0alpha1.DataSourcePluginList
+	//lookup    map[string]*v0alpha1.DataSourcePlugin // pluginID >> API
+	pluginsMu sync.RWMutex
 
 	// Namespace lookup
 	namespaces   map[string]*dsCache

@@ -31,8 +31,8 @@ func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
 	var err error
 	tr := legacydata.NewDataTimeRange(raw.From, raw.To)
 	backendTr := backend.TimeRange{
-		From: tr.MustGetFrom(),
-		To:   tr.MustGetTo(),
+		From: tr.GetFromAsTimeUTC(),
+		To:   tr.GetToAsTimeUTC(),
 	}
 
 	for idx, q := range raw.Queries {
@@ -53,12 +53,22 @@ func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
 			RefID:         q.RefID,
 			QueryType:     q.QueryType,
 			MaxDataPoints: q.MaxDataPoints,
-			Interval:      time.Duration(q.IntervalMS),
 			TimeRange:     backendTr,
 		}
 		dq.JSON, err = json.Marshal(q)
 		if err != nil {
 			return parsed, err
+		}
+		if dq.RefID == "" {
+			dq.RefID = "A"
+		}
+		if dq.MaxDataPoints == 0 {
+			dq.MaxDataPoints = 100
+		}
+		if q.IntervalMS > 0 {
+			dq.Interval = time.Duration(q.IntervalMS) * time.Millisecond
+		} else {
+			dq.Interval = time.Duration(time.Second)
 		}
 
 		// Just the lookup key
@@ -76,6 +86,7 @@ func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
 				Queries: []backend.DataQuery{dq},
 			}
 			mixed[key] = req
+			parsed.Requests = append(parsed.Requests, req)
 		} else {
 			req.Queries = append(req.Queries, dq)
 		}

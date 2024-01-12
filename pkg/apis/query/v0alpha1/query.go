@@ -68,11 +68,16 @@ type BaseDataQuery struct {
 	// It can be used to distinguish different types of queries.
 	QueryType string `json:"queryType,omitempty"`
 
-	// MaxDataPoints is the maximum number of datapoints that should be returned from a time series query.
+	// MaxDataPoints is the maximum number of data points that should be returned from a time series query.
 	MaxDataPoints int64 `json:"maxDataPoints,omitempty"`
 
 	// Interval is the suggested duration between time points in a time series query.
 	IntervalMS float64 `json:"intervalMs,omitempty"`
+
+	// true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide bool `json:"hide,omitempty"`
 }
 
 // This will parse

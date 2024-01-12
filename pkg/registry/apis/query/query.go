@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -47,9 +46,12 @@ func (b *QueryAPIBuilder) handleQuery(w http.ResponseWriter, r *http.Request) {
 // See:
 // https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L88
 func (b *QueryAPIBuilder) processRequest(ctx context.Context, req parsedQueryRequest) (qdr *backend.QueryDataResponse, err error) {
-	if len(req.Requests) == 1 {
+	switch len(req.Requests) {
+	case 0:
+		break // nothing to do
+	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-	} else {
+	default:
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
 	}
 
@@ -62,22 +64,7 @@ func (b *QueryAPIBuilder) processRequest(ctx context.Context, req parsedQueryReq
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
 func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return &backend.QueryDataResponse{
-		Responses: backend.Responses{
-			"A": backend.DataResponse{
-				Frames: data.Frames{
-					&data.Frame{
-						Meta: &data.FrameMeta{
-							Custom: map[string]any{
-								"TODO": req,
-							},
-						},
-					},
-				},
-				Error: fmt.Errorf("not implemented yet"),
-			},
-		},
-	}, nil
+	return b.helper.ExecuteQueryData(ctx, &req)
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
