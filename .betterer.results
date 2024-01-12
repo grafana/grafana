@@ -609,9 +609,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "packages/grafana-ui/src/components/DataSourceSettings/DataSourceHttpSettings.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "packages/grafana-ui/src/components/DataSourceSettings/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1589,8 +1586,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/components/alert-groups/MatcherFilter.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/components/contact-points/ContactPoints.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -2377,11 +2373,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/features/connections/tabs/ConnectData/ConnectData.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
     "public/app/features/connections/tabs/ConnectData/NoAccessModal/NoAccessModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -2394,9 +2385,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "8"]
     ],
     "public/app/features/connections/tabs/ConnectData/NoResults/NoResults.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/connections/tabs/ConnectData/Search/Search.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/correlations/CorrelationsPage.tsx:5381": [
@@ -2427,12 +2415,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "public/app/features/dashboard-scene/panel-edit/VizPanelManager.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/features/dashboard-scene/scene/DashboardScene.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2472,6 +2462,18 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"]
+    ],
+    "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/dashboard-scene/settings/variables/utils.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/dashboard-scene/utils/DashboardModelCompatibilityWrapper.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/features/dashboard-scene/utils/test-utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3712,10 +3714,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"]
     ],
-    "public/app/features/expressions/components/Threshold.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
     "public/app/features/expressions/guards.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -4037,9 +4035,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/plugins/admin/components/PluginDetailsBody.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/plugins/admin/components/PluginDetailsHeaderDependencies.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4377,12 +4373,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Do not use any type assertions.", "12"],
-      [0, 0, 0, "Do not use any type assertions.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Do not use any type assertions.", "15"]
+      [0, 0, 0, "Do not use any type assertions.", "10"],
+      [0, 0, 0, "Do not use any type assertions.", "11"],
+      [0, 0, 0, "Do not use any type assertions.", "12"]
     ],
     "public/app/features/trails/SelectMetricTrailView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4568,16 +4561,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "8"],
       [0, 0, 0, "Styles should be written using objects.", "9"],
       [0, 0, 0, "Styles should be written using objects.", "10"]
-    ],
-    "public/app/features/variables/editor/VariableSelectField.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/features/variables/editor/VariableTextAreaField.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/variables/editor/VariableValuesPreview.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/variables/editor/getVariableQueryEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5949,24 +5932,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/plugins/datasource/tempo/traceql/autocomplete.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/zipkin/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/plugins/datasource/zipkin/QueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/zipkin/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/zipkin/utils/testResponse.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6005,8 +5980,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/alertlist/AlertListMigrationHandler.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/alertlist/UnifiedAlertList.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6038,18 +6012,11 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/annolist/AnnoListPanel.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/annolist/AnnoListPanel.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
-    ],
-    "public/app/plugins/panel/annolist/module.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/panel/barchart/BarChartPanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -6096,9 +6063,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/canvas/globalStyles.ts:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/plugins/panel/dashlist/migrations.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/panel/dashlist/styles.ts:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -6119,8 +6083,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/debug/EventBusLogger.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/gauge/GaugeMigrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6170,8 +6133,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/geomap/utils/layers.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/geomap/utils/tooltip.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6248,9 +6210,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "16"]
     ],
     "public/app/plugins/panel/histogram/Histogram.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/live/LiveChannelEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6332,13 +6292,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/plugins/panel/nodeGraph/usePanning.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/panel/nodeGraph/utils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/panel/piechart/PieChart.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -6351,8 +6304,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/panel/stat/StatMigrations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/state-timeline/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6405,14 +6357,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "public/app/plugins/panel/table-old/renderer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6487,17 +6432,18 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/timeseries/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Do not use any type assertions.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Do not use any type assertions.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/AnnotationsPlugin2.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/timeseries/plugins/ThresholdDragHandle.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6541,6 +6487,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "7"],
       [0, 0, 0, "Styles should be written using objects.", "8"]
     ],
+    "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationEditor2.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationMarker2.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationTooltip2.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "public/app/plugins/panel/timeseries/plugins/styles.ts:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
@@ -6565,24 +6520,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/xychart/TooltipView.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/panel/xychart/XYChartPanel2.tsx:5381": [
+    "public/app/plugins/panel/xychart/XYChartPanel.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/plugins/panel/xychart/dims.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/panel/xychart/scatter.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -6700,8 +6642,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
     ]
   }`
 };
@@ -6963,9 +6904,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/core/components/AccessControl/PermissionList.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/core/components/AccessControl/Permissions.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/core/components/PageHeader/PageHeader.tsx:5381": [
