@@ -2945,7 +2945,7 @@ __metadata:
     "@kusto/monaco-kusto": "npm:^7.4.0"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.4"
+    "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.195"
     "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.0"
@@ -2984,7 +2984,7 @@ __metadata:
     "@grafana/ui": "npm:10.4.0-pre"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.4"
+    "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.195"
     "@types/node": "npm:20.8.10"
     "@types/react": "npm:18.2.15"
@@ -3088,7 +3088,7 @@ __metadata:
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/dompurify": "npm:^2"
     "@types/history": "npm:4.7.11"
-    "@types/jest": "npm:29.5.4"
+    "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.195"
     "@types/marked": "npm:5.0.1"
@@ -3422,7 +3422,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/angular": "npm:1.8.9"
     "@types/history": "npm:4.7.11"
-    "@types/jest": "npm:29.5.4"
+    "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.195"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
@@ -3549,7 +3549,7 @@ __metadata:
     "@types/d3": "npm:7.4.3"
     "@types/hoist-non-react-statics": "npm:3.3.5"
     "@types/is-hotkey": "npm:0.1.10"
-    "@types/jest": "npm:29.5.4"
+    "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.195"
     "@types/mock-raf": "npm:1.0.3"
@@ -8666,13 +8666,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:*, @types/jest@npm:29.5.4, @types/jest@npm:^29.5.4":
-  version: 29.5.4
-  resolution: "@types/jest@npm:29.5.4"
+"@types/jest@npm:*, @types/jest@npm:29.5.11, @types/jest@npm:^29.5.4":
+  version: 29.5.11
+  resolution: "@types/jest@npm:29.5.11"
   dependencies:
     expect: "npm:^29.0.0"
     pretty-format: "npm:^29.0.0"
-  checksum: c56081b958c06f4f3a30f7beabf4e94e70db96a4b41b8a73549fea7f9bf0a8c124ab3998ea4e6d040d1b8c95cfbe0b8d4a607da4bdea03c9e116f92c147df193
+  checksum: 798f4c89407d9457bea1256de74c26f2b279f6c789c0e3311cd604cc75cdab333b9a29b00c51b0090d31abdf11cc788b4103282851a653bef6daf72edf97eef2
   languageName: node
   linkType: hard
 
@@ -17112,7 +17112,7 @@ __metadata:
     "@types/gtag.js": "npm:^0.0.18"
     "@types/history": "npm:4.7.11"
     "@types/hoist-non-react-statics": "npm:3.3.5"
-    "@types/jest": "npm:29.5.4"
+    "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
     "@types/js-yaml": "npm:^4.0.5"
     "@types/jsurl": "npm:^1.2.28"
