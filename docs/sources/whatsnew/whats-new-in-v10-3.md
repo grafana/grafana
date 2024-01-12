@@ -76,10 +76,9 @@ To try out this feature, enable the `pdfTables` [feature toggle](https://grafana
 ### Moving average and trend lines using transformations
 
 <!--Oscar Kilhed-->
-<!--what is the status of this feature?-->
 <!--internal_enablement_video for either moving average or trend lines or both-->
 
-_Available in private preview in all editions of Grafana_
+_Available in public preview in all editions of Grafana_
 
 #### Moving average\*
 
@@ -339,11 +338,8 @@ In addition to `Query` and `Edit` access, you can now grant users, teams, or bas
 ### Redshift and Athena: Async query caching
 
 <!--Isabella Siu-->
-<!--get review for note-->
 
 _Generally available in Grafana Enterprise, Grafana Cloud Advanced and Cloud Pro_
-
-<!--is this avail info still valid-->
 
 Introducing query caching for async queries in the Athena and Redshift data source plugins. We previously introduced async queries for the Athena and Redshift plugins, and this feature adds support for caching those queries. To use this, you must have query caching enabled for the Athena or Redshift data source you wish to cache. This feature was previously available behind a feature toggle and is now generally available and enabled by default.
 
