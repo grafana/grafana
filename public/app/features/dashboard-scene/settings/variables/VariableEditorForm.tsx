@@ -84,7 +84,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
 
         {EditorToRender && <EditorToRender variable={variable} />}
 
-        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.options} />}
+        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.state.options} />}
 
         <div style={{ marginTop: '16px' }}>
           <HorizontalGroup spacing="md" height="inherit">
