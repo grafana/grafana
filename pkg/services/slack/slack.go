@@ -43,7 +43,14 @@ func (s *SlackService) GetUserConversations(ctx context.Context) (*dtos.SlackCha
 	return result, nil
 }
 
-func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, title string, resourceLink string) error {
+func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, DashboardTitle string, resourceLink string) error {
+	title := DashboardTitle
+	imageText := "Dashboard preview"
+	if shareRequest.PanelTitle != "" {
+		title = shareRequest.PanelTitle
+		imageText = "Panel preview"
+	}
+
 	blocks := []Block{{
 		Type: "header",
 		Text: &Text{
@@ -60,11 +67,6 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 				Text: shareRequest.Message,
 			},
 		})
-	}
-
-	imageText := "Dashboard preview"
-	if shareRequest.PanelId != "" {
-		imageText = "Panel preview"
 	}
 
 	blocks = append(blocks, []Block{

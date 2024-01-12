@@ -12,6 +12,6 @@ type ShareRequest struct {
 	ChannelIds      []string `json:"channelIds"`
 	Message         string   `json:"message,omitempty"`
 	ImagePreviewUrl string   `json:"imagePreviewUrl"`
-	PanelId         string   `json:"panelId,omitempty"`
+	PanelTitle      string   `json:"panelTitle,omitempty"`
 	ResourcePath    string   `json:"resourcePath"`
 }
