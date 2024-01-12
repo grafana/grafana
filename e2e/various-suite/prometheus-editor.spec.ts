@@ -1,8 +1,6 @@
-// import { selectors } from '@grafana/e2e-selectors';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { e2e } from '../utils';
-
-import { selectOption } from './prometheus-config.spec';
 
 const DATASOURCE_ID = 'Prometheus';
 // const DATASOURCE_TYPED_NAME = 'PrometheusDatasourceInstance';
@@ -46,6 +44,33 @@ function navigateToEditor(editorType: editorType, name: string): void {
 }
 
 describe('Prometheus query editor', () => {
+  it('should have a kickstart component', () => {
+    navigateToEditor('Code', 'prometheus');
+    e2e.components.QueryBuilder.queryPatterns().scrollIntoView().should('exist').click();
+  });
+
+  it('should have an explain component', () => {
+    navigateToEditor('Code', 'prometheus');
+    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.explain}`).scrollIntoView().should('exist');
+  });
+
+  it('should have an editor toggle component', () => {
+    navigateToEditor('Code', 'prometheus');
+    e2e.components.DataSource.Prometheus.queryEditor.editorToggle().scrollIntoView().should('exist');
+  });
+
+  it('should have an options component with legend, format, step, type and exemplars', () => {
+    navigateToEditor('Code', 'prometheus');
+    // open options
+    e2e.components.DataSource.Prometheus.queryEditor.options().scrollIntoView().should('exist').click();
+    // check options
+    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.legend}`).scrollIntoView().should('exist');
+    e2e.components.DataSource.Prometheus.queryEditor.format().scrollIntoView().should('exist');
+    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.step}`).scrollIntoView().should('exist');
+    e2e.components.DataSource.Prometheus.queryEditor.type().scrollIntoView().should('exist');
+    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.exemplars}`).scrollIntoView().should('exist');
+  });
+
   describe('Code editor', () => {
     it('navigates to the code editor with editor type as code', () => {
       navigateToEditor('Code', 'prometheusCode');
@@ -58,3 +83,7 @@ describe('Prometheus query editor', () => {
     });
   });
 });
+
+export function selectOption(option: string) {
+  cy.get("[aria-label='Select option']").contains(option).should('be.visible').click();
+}
