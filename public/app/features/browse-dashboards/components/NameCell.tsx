@@ -13,7 +13,7 @@ import { Indent } from '../../../core/components/Indent/Indent';
 import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeCellProps } from '../types';
 
-import { isSharedWithMe, makeRowID } from './utils';
+import { makeRowID } from './utils';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
@@ -53,9 +53,6 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
     );
   }
 
-  // We don't link to the Shared with me pseudo-folder
-  const itemURL = item.url && !isSharedWithMe(item.uid) ? item.url : undefined;
-
   return (
     <>
       <Indent
@@ -92,12 +89,12 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
         {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
-          {itemURL ? (
+          {item.url ? (
             <Link
               onClick={() => {
                 reportInteraction('manage_dashboards_result_clicked');
               }}
-              href={itemURL}
+              href={item.url}
               className={styles.link}
             >
               {item.title}
