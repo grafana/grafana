@@ -268,7 +268,6 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 
 		newAnnotations = append(newAnnotations, a)
 		newAnnotationTags = append(newAnnotationTags, &annotationTag{AnnotationID: a.ID, TagID: 1}, &annotationTag{AnnotationID: a.ID, TagID: 2})
-
 	}
 
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
