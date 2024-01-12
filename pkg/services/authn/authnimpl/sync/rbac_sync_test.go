@@ -106,7 +106,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			expectedCalled: false,
 		},
 		{
-			desc:   "should not call sync when authenticated when not authenticated with grafana com",
+			desc:   "should not call sync when not authenticated with grafana com",
 			module: login.LDAPAuthModule,
 			identity: &authn.Identity{
 				ID:       authn.NamespacedID(authn.NamespaceUser, 1),
