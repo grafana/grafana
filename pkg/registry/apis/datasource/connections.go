@@ -12,7 +12,6 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
@@ -63,7 +62,7 @@ func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1
 	if err != nil {
 		return nil, err
 	}
-	return s.asConnection(ds, ns), nil
+	return s.asConnection(ds, ns)
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -78,13 +77,14 @@ func (s *connectionAccess) List(ctx context.Context, options *internalversion.Li
 	vals, err := s.builder.getDataSources(ctx)
 	if err == nil {
 		for _, ds := range vals {
-			result.Items = append(result.Items, *s.asConnection(ds, ns))
+			v, _ := s.asConnection(ds, ns)
+			result.Items = append(result.Items, *v)
 		}
 	}
 	return result, err
 }
 
-func (s *connectionAccess) asConnection(ds *datasources.DataSource, ns string) *v0alpha1.DataSourceConnection {
+func (s *connectionAccess) asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceConnection, error) {
 	v := &v0alpha1.DataSourceConnection{
 		TypeMeta: s.resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
@@ -96,7 +96,9 @@ func (s *connectionAccess) asConnection(ds *datasources.DataSource, ns string) *
 		Title: ds.Name,
 	}
 	v.UID = utils.CalculateClusterWideUID(v) // indicates if the value changed on the server
-	meta := kinds.MetaAccessor(v)
-	meta.SetUpdatedTimestamp(&ds.Updated)
-	return v
+	meta, err := utils.MetaAccessor(v)
+	if err != nil {
+		meta.SetUpdatedTimestamp(&ds.Updated)
+	}
+	return v, err
 }
