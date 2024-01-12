@@ -57,6 +57,23 @@ The improved navigation menu gives you a better overview by showing all levels o
 
 <!--internal_enablement_video-->
 
+## Table data in PDF reports
+
+<!--Agnès Toulet-->
+
+<!--internal_enablement_video-->
+
+_Available in public preview in Grafana Enterprise and Cloud_
+
+We've improved the reporting experience with options to make all of your table data accessible in PDFs. Previously, if your dashboard included large table visualizations, you couldn't see all of the table data in your PDF report. Unlike in Grafana, you couldn't scroll in the PDF table visualization or click on the page numbers. With this new feature, you now have the option to see all the data directly in your PDF without losing your dashboard layout.
+
+We've added two format options to the report creation form:
+
+- **Include table data as PDF appendix** - Adds an appendix to your dashboard PDF.
+- **Attach a separate PDF of table data** - Generates a separate PDF file for your table panel data.
+
+To try out this feature, enable the `pdfTables` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) or contact Grafana Support to have it enabled in on your Grafana Cloud stack.
+
 ## Dashboards and visualizations
 
 ### Moving average and trend lines using transformations
@@ -189,23 +206,6 @@ In the past, transformations were applied through a dropdown menu, indicated sol
 We've also streamlined the user experience by integrating documentation directly into the core Grafana application. Gone are the days of navigating to a separate browser page for Transformation documentation. Now, users can conveniently access documentation within the app interface, providing a more seamless and efficient way to understand and utilize various features. This enhancement aims to save time and enhance user convenience, ensuring that valuable information is readily available at their fingertips.
 
 {{< figure src="/media/docs/grafana/transformations/transformations_internal_documentation.png" caption="Transformation documentation is now internally available inside the Grafana app itself." alt="Transformation documentation internally available" >}}
-
-### Table data in PDF reports
-
-<!--Agnès Toulet-->
-
-<!--internal_enablement_video-->
-
-_Available in public preview in Grafana Enterprise and Cloud_
-
-We've improved the reporting experience with options to make all of your table data accessible in PDFs. Previously, if your dashboard included large table visualizations, you couldn't see all of the table data in your PDF report. Unlike in Grafana, you couldn't scroll in the PDF table visualization or click on the page numbers. With this new feature, you now have the option to see all the data directly in your PDF without losing your dashboard layout.
-
-We've added two format options to the report creation form:
-
-- **Include table data as PDF appendix** - Adds an appendix to your dashboard PDF.
-- **Attach a separate PDF of table data** - Generates a separate PDF file for your table panel data.
-
-To try out this feature, enable the `pdfTables` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) or contact Grafana Support to have it enabled in on your Grafana Cloud stack.
 
 ## Alerting
 
