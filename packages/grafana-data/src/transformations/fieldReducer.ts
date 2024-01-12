@@ -271,30 +271,33 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   },
 ]);
 
-export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  const calcs: FieldCalcs = {
-    sum: 0,
-    max: -Number.MAX_VALUE,
-    min: Number.MAX_VALUE,
-    logmin: Number.MAX_VALUE,
-    mean: null,
-    last: null,
-    first: null,
-    lastNotNull: null,
-    firstNotNull: null,
-    count: 0,
-    nonNullCount: 0,
-    allIsNull: true,
-    allIsZero: true,
-    range: null,
-    diff: null,
-    delta: 0,
-    step: Number.MAX_VALUE,
-    diffperc: 0,
+// Used for test cases
+export const defaultCalcs: FieldCalcs = {
+  sum: 0,
+  max: -Number.MAX_VALUE,
+  min: Number.MAX_VALUE,
+  logmin: Number.MAX_VALUE,
+  mean: null,
+  last: null,
+  first: null,
+  lastNotNull: null,
+  firstNotNull: null,
+  count: 0,
+  nonNullCount: 0,
+  allIsNull: true,
+  allIsZero: true,
+  range: null,
+  diff: null,
+  delta: 0,
+  step: Number.MAX_VALUE,
+  diffperc: 0,
 
-    // Just used for calculations -- not exposed as a stat
-    previousDeltaUp: true,
-  };
+  // Just used for calculations -- not exposed as a stat
+  previousDeltaUp: true,
+};
+
+export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const calcs: FieldCalcs = defaultCalcs;
 
   const data = field.values;
 
