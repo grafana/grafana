@@ -63,6 +63,7 @@ import (
 //
 //     Responses:
 //       204: description: The mute timing was deleted successfully.
+//       409: GenericPublicError
 
 // swagger:route
 

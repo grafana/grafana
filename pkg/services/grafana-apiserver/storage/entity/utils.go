@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -50,7 +50,10 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 	metaAccessor.SetResourceVersion(fmt.Sprintf("%d", rsp.ResourceVersion))
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
 
-	grafanaAccessor := kinds.MetaAccessor(metaAccessor)
+	grafanaAccessor, err := utils.MetaAccessor(metaAccessor)
+	if err != nil {
+		return err
+	}
 
 	if rsp.Folder != "" {
 		grafanaAccessor.SetFolder(rsp.Folder)
@@ -66,11 +69,10 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 		grafanaAccessor.SetUpdatedTimestamp(&updatedAt)
 	}
 	grafanaAccessor.SetSlug(rsp.Slug)
-	grafanaAccessor.SetTitle(rsp.Title)
 
 	if rsp.Origin != nil {
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
-		grafanaAccessor.SetOriginInfo(&kinds.ResourceOriginInfo{
+		grafanaAccessor.SetOriginInfo(&utils.ResourceOriginInfo{
 			Name: rsp.Origin.Source,
 			Key:  rsp.Origin.Key,
 			// Path: rsp.Origin.Path,
@@ -103,7 +105,10 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
-	grafanaAccessor := kinds.MetaAccessor(metaAccessor)
+	grafanaAccessor, err := utils.MetaAccessor(metaAccessor)
+	if err != nil {
+		return nil, err
+	}
 	rv, _ := strconv.ParseInt(metaAccessor.GetResourceVersion(), 10, 64)
 
 	rsp := &entityStore.Entity{
@@ -121,7 +126,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		CreatedBy:       grafanaAccessor.GetCreatedBy(),
 		UpdatedBy:       grafanaAccessor.GetUpdatedBy(),
 		Slug:            grafanaAccessor.GetSlug(),
-		Title:           grafanaAccessor.GetTitle(),
+		Title:           grafanaAccessor.FindTitle(metaAccessor.GetName()),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),
