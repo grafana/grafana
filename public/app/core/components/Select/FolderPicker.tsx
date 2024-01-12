@@ -29,7 +29,7 @@ interface FolderPickerProps extends NestedFolderPickerProps {
 // FolderPicker depending on feature flags
 export function FolderPicker(props: FolderPickerProps) {
   const nestedEnabled =
-    config.featureToggles.nestedFolderPickerOverride ??
+    config.featureToggles.newFolderPicker ||
     (config.featureToggles.nestedFolders && config.featureToggles.nestedFolderPicker);
   const { initialTitle, dashboardId, enableCreateNew, ...newFolderPickerProps } = props;
 
