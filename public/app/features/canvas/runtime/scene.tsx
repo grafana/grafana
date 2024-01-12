@@ -397,9 +397,20 @@ export class Scene {
       hitRate: 0,
     });
 
+    const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
+    const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
+
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
+
+      // Setup snappable
+      snappable: allowChanges,
+      snapThreshold: 0,
+      snapDirections: snapDirections,
+      elementSnapDirections: elementSnapDirections,
+      elementGuidelines: targetElements,
+
       ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
         dimensionViewable: allowChanges,
@@ -426,9 +437,18 @@ export class Scene {
       .on('dragStart', (event) => {
         this.ignoreDataUpdate = true;
         this.setNonTargetPointerEvents(event.target, true);
+
+        if (this.moveable && this.moveable.elementGuidelines) {
+          const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+          if (targetIndex > -1) {
+            this.moveable.elementGuidelines.splice(targetIndex, 1);
+          }
+        }
       })
       .on('dragGroupStart', (event) => {
         this.ignoreDataUpdate = true;
+
+        // TODO: handling for dragging multiple elements / removing them from elementGuildelines
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -463,6 +483,8 @@ export class Scene {
             if (targetedElement) {
               targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
             }
+
+            // TODO: handling for dragging multiple elements / adding them back to elementGuildelines
           }
         });
 
@@ -478,6 +500,10 @@ export class Scene {
         this.moved.next(Date.now());
         this.ignoreDataUpdate = false;
         this.setNonTargetPointerEvents(event.target, false);
+
+        if (this.moveable && this.moveable.elementGuidelines) {
+          this.moveable.elementGuidelines.push(event.target);
+        }
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
