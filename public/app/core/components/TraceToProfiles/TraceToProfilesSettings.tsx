@@ -172,7 +172,7 @@ export const TraceToProfilesSection = ({ options, onOptionsChange }: DataSourceP
       description={
         <ConfigDescriptionLink
           description="Navigate from a trace span to the selected data source's profiles."
-          suffix={`${options.type}/#trace-to-profiles`}
+          suffix={`${options.type}/configure-tempo-data-source/#trace-to-profiles`}
           feature="trace to profiles"
         />
       }
