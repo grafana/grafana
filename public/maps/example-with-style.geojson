@@ -1,0 +1,47 @@
+{
+  "type": "FeatureCollection",
+  "name": "timezones_wVVG8",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Bermuda Triangle", "fill": "red", "fill-opacity": 0.5, "stroke-width": 8 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-80.226529, 25.789106],
+            [-66.1057427, 18.4663188],
+            [-64.78138, 32.294887]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-80.226529, 25.789106] },
+      "properties": {
+        "name": "Miami",
+        "marker-color": "rgb(255,255,0)",
+        "marker-size": 20
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-66.1057427, 18.4663188] },
+      "properties": {
+        "name": "San Juan",
+        "marker-color": "#F99E26",
+        "marker-size": 10
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-64.78138, 32.294887] },
+      "properties": {
+        "name": "Hamilton",
+        "marker-color": "green",
+        "marker-size": 5
+      }
+    }
+  ]
+}
