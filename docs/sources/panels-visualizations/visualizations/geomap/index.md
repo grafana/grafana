@@ -282,6 +282,16 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 - **Add style rule** creates additional style rules.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
+{{% admonition type="note" %}}
+Styles can be set within the "properties" object of the GeoJSON with support for the following geometrys.
+
+- Polygon, MultiPolygon
+  - **"fill"** the color of the interior of the polygon
+  - **"fill-opacity"** the opacity of the interior of the polygon
+  - **"stroke-width"** the width of the line component of the polygon
+
+{{% /admonition %}}
+
 ## Night / Day layer
 
 The Night / Day layer displays night and day regions based on the current time range.
