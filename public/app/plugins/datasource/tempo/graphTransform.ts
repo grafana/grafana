@@ -81,6 +81,10 @@ function convertTraceToGraph(data: DataFrame): { nodes: Node[]; edges: Edge[] } 
 
     const ranges: Array<[number, number]> = spanMap[row.spanID].children.map((c) => {
       const span = spanMap[c].span;
+      if (!span) {
+        console.error('Undefined span');
+      }
+      // @ts-ignore
       return [span.startTime, span.startTime + span.duration];
     });
     const childrenDuration = getNonOverlappingDuration(ranges);
