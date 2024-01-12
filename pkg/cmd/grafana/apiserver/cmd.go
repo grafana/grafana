@@ -4,18 +4,17 @@ import (
 	"os"
 	"path"
 
+	"github.com/spf13/cobra"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/component-base/cli"
 	"k8s.io/klog/v2"
+	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 
 	"github.com/grafana/grafana/pkg/aggregator"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-
-	"github.com/spf13/cobra"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/server/options"
-	"k8s.io/component-base/cli"
-	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 )
 
 const (
@@ -34,7 +33,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 		Example: "grafana apiserver example.grafana.app",
 		RunE: func(c *cobra.Command, args []string) error {
 			// Load each group from the args
-			if err := o.LoadAPIGroupBuilders(args[1:]); err != nil {
+			if err := o.loadAPIGroupBuilders(args[1:]); err != nil {
 				return err
 			}
 
