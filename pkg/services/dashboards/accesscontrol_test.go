@@ -26,8 +26,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 	t.Run("resolver should convert to uid scope", func(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
-		// nolint:staticcheck
-		db := &folder.Folder{Title: title, ID: rand.Int63(), UID: util.GenerateShortUID()}
+		db := &folder.Folder{Title: title, UID: util.GenerateShortUID()}
 		folderStore := foldertest.NewFakeFolderStore(t)
 		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
@@ -44,8 +43,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
 
-		// nolint:staticcheck
-		db := &folder.Folder{Title: title, ID: rand.Int63(), UID: util.GenerateShortUID()}
+		db := &folder.Folder{Title: title, UID: util.GenerateShortUID()}
 
 		folderStore := foldertest.NewFakeFolderStore(t)
 		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
@@ -114,7 +112,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)
 		_, resolver := NewFolderIDScopeResolver(folderStore, foldertest.NewFakeService())
 
-		orgId := rand.Int63()
+		orgID := rand.Int63()
 		uid := util.GenerateShortUID()
 		// nolint:staticcheck
 		db := &folder.Folder{ID: rand.Int63(), UID: uid}
@@ -122,13 +120,13 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 		// nolint:staticcheck
 		scope := "folders:id:" + strconv.FormatInt(db.ID, 10)
-		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgID, scope)
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 1)
 		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.UID), resolvedScopes[0])
 
 		// nolint:staticcheck
-		folderStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgId, db.ID)
+		folderStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgID, db.ID)
 	})
 	t.Run("resolver should should include inherited scopes if any", func(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)

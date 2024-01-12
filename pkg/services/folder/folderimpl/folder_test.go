@@ -106,36 +106,20 @@ func TestIntegrationFolderService(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 
-			folderId := rand.Int63()
 			folderUID := util.GenerateShortUID()
 
 			f := folder.NewFolder("Folder", "")
-			// nolint:staticcheck
-			f.ID = folderId
 			f.UID = folderUID
 
-			folderStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(f, nil)
 			folderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(f, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &folderId, // nolint:staticcheck
+					UID:          &folderUID,
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
-			})
-
-			var zeroInt int64 = 0
-			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
-				foldr, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &zeroInt, // nolint:staticcheck
-					OrgID:        orgID,
-					SignedInUser: usr,
-				})
-				require.NoError(t, err)
-				// nolint:staticcheck
-				require.Equal(t, foldr, &folder.Folder{ID: 0, Title: "General"})
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
@@ -176,7 +160,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				newFolder := folder.NewFolder("Folder", "")
 				newFolder.UID = folderUID
 
-				folderStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
 				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
@@ -267,8 +250,6 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
 				f := folder.NewFolder(util.GenerateShortUID(), "")
-				// nolint:staticcheck
-				f.ID = rand.Int63()
 				f.UID = util.GenerateShortUID()
 				folderStore.On("GetFolders", mock.Anything, orgID, []string{f.UID}).Return(map[string]*folder.Folder{f.UID: f}, nil)
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
@@ -287,8 +268,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
-				// nolint:staticcheck
-				require.Equal(t, f.ID, actualCmd.ID)
 				require.Equal(t, orgID, actualCmd.OrgID)
 				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
 			})
@@ -301,20 +280,6 @@ func TestIntegrationFolderService(t *testing.T) {
 		t.Run("Given user has permission to view", func(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
-
-			t.Run("When get folder by id should return folder", func(t *testing.T) {
-				expected := folder.NewFolder(util.GenerateShortUID(), "")
-				// nolint:staticcheck
-				expected.ID = rand.Int63()
-
-				// nolint:staticcheck
-				folderStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
-
-				// nolint:staticcheck
-				actual, err := service.getFolderByID(context.Background(), expected.ID, orgID)
-				require.Equal(t, expected, actual)
-				require.NoError(t, err)
-			})
 
 			t.Run("When get folder by uid should return folder", func(t *testing.T) {
 				expected := folder.NewFolder(util.GenerateShortUID(), "")
@@ -1384,8 +1349,6 @@ func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth
 		f, err := service.Create(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
-		// nolint:staticcheck
-		require.NotEmpty(t, f.ID)
 		require.NotEmpty(t, f.UID)
 
 		parents, err := store.GetParents(context.Background(), folder.GetParentsQuery{

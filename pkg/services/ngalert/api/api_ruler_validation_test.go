@@ -85,7 +85,6 @@ func validGroup(cfg *setting.UnifiedAlertingSettings, rules ...apimodels.Postabl
 
 func randFolder() *folder.Folder {
 	return &folder.Folder{
-		ID:    rand.Int63(), // nolint:staticcheck
 		UID:   util.GenerateShortUID(),
 		Title: "TEST-FOLDER-" + util.GenerateShortUID(),
 		// URL:       "",

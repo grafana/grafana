@@ -125,15 +125,15 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		str := fmt.Sprintf("dashboard under folder %s", leaf.Title)
 		now := time.Now()
 		dashes = append(dashes, dashboards.Dashboard{
-			OrgID:    usr.OrgID,
-			IsFolder: false,
-			UID:      str,
-			Slug:     str,
-			Title:    str,
-			Data:     simplejson.New(),
-			Created:  now,
-			Updated:  now,
-			FolderID: leaf.ID, // nolint:staticcheck
+			OrgID:     usr.OrgID,
+			IsFolder:  false,
+			UID:       str,
+			Slug:      str,
+			Title:     str,
+			Data:      simplejson.New(),
+			Created:   now,
+			Updated:   now,
+			FolderUID: leaf.UID,
 		})
 	}
 
@@ -177,8 +177,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 			})
 			for _, dash := range dashes {
 				// add permission to read dashboards under the general
-				// nolint:staticcheck
-				if dash.FolderID == 0 {
+				if dash.FolderUID == "" {
 					permissions = append(permissions, accesscontrol.Permission{
 						RoleID:  int64(i),
 						Action:  dashboards.ActionDashboardsRead,

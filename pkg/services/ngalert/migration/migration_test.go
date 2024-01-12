@@ -1110,10 +1110,9 @@ func TestDashAlertQueryMigration(t *testing.T) {
 					}),
 			},
 			expectedFolder: &dashboards.Dashboard{
-				OrgID:    2,
-				Title:    "General Alerting",
-				FolderID: 0, // nolint:staticcheck
-				Slug:     "general-alerting",
+				OrgID: 2,
+				Title: "General Alerting",
+				Slug:  "general-alerting",
 			},
 			expected: map[int64][]*ngModels.AlertRule{
 				int64(2): {
@@ -1227,8 +1226,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						folder := getDashboard(t, x, orgId, r.NamespaceUID)
 						require.Equal(t, tt.expectedFolder.Title, folder.Title)
 						require.Equal(t, tt.expectedFolder.OrgID, folder.OrgID)
-						// nolint:staticcheck
-						require.Equal(t, tt.expectedFolder.FolderID, folder.FolderID)
+						require.Equal(t, tt.expectedFolder.FolderUID, folder.FolderUID)
 					}
 				}
 

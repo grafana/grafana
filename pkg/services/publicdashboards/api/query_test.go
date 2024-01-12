@@ -276,7 +276,6 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// Create Dashboard
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		OrgID:     1,
-		FolderID:  1, // nolint:staticcheck
 		FolderUID: "1",
 		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
