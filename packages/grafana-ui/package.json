@@ -146,7 +146,7 @@
     "@types/node": "20.8.10",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.15",
-    "@types/react-beautiful-dnd": "13.1.4",
+    "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-calendar": "3.9.0",
     "@types/react-color": "3.0.6",
     "@types/react-dom": "18.2.7",
