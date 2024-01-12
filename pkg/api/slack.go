@@ -142,21 +142,25 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
 
 		if err != nil {
-			fmt.Errorf("client: could not create request: %w", err)
+			return response.Error(http.StatusInternalServerError, "could not create request", err)
 		}
 
 		res, err := http.DefaultClient.Do(req)
 		if err != nil {
-			fmt.Errorf("client: error making http request: %w", err)
+			return response.Error(http.StatusInternalServerError, "error making http request", err)
 		}
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				hs.log.Error("failed to close response body", "err", err)
+			}
+		}()
 
 		resBody, err := io.ReadAll(res.Body)
 		if err != nil {
-			fmt.Errorf("client: could not read response body: %w", err)
+			return response.Error(http.StatusInternalServerError, "could not read response body", err)
 		}
 
 		hs.log.Info("successfully sent unfurl event payload", "body", string(resBody))
-
 	}
 
 	return response.JSON(http.StatusOK, nil)
