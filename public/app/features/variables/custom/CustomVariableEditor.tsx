@@ -5,9 +5,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableLegend } from '../editor/VariableLegend';
-import { VariableTextAreaField } from '../editor/VariableTextAreaField';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { CustomVariableModel, VariableWithMultiSupport } from '../types';

@@ -45,8 +45,8 @@ export function VariableSelectField({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    selectContainer: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
+    selectContainer: css({
+      marginRight: theme.spacing(0.5),
+    }),
   };
 }

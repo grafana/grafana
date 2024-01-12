@@ -3,17 +3,16 @@ import React, { MouseEvent, useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { VariableValueOption } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, useStyles2 } from '@grafana/ui';
 
-import { VariableOption, VariableWithOptions } from '../types';
-
 export interface VariableValuesPreviewProps {
-  variable: VariableWithOptions;
+  options: VariableValueOption[];
 }
 
-export const VariableValuesPreview = ({ variable: { options } }: VariableValuesPreviewProps) => {
+export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) => {
   const [previewLimit, setPreviewLimit] = useState(20);
-  const [previewOptions, setPreviewOptions] = useState<VariableOption[]>([]);
+  const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);
   const showMoreOptions = useCallback(
     (event: MouseEvent) => {
       event.preventDefault();
@@ -34,8 +33,8 @@ export const VariableValuesPreview = ({ variable: { options } }: VariableValuesP
       <InlineFieldRow>
         {previewOptions.map((o, index) => (
           <InlineFieldRow key={`${o.value}-${index}`} className={styles.optionContainer}>
-            <InlineLabel aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption}>
-              <div className={styles.label}>{o.text}</div>
+            <InlineLabel data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption}>
+              <div className={styles.label}>{o.label}</div>
             </InlineLabel>
           </InlineFieldRow>
         ))}

@@ -9,7 +9,7 @@ interface VariableTextAreaFieldProps {
   name: string;
   value: string;
   placeholder: string;
-  onChange: (event: FormEvent<HTMLTextAreaElement>) => void;
+  onChange?: (event: FormEvent<HTMLTextAreaElement>) => void;
   width: number;
   ariaLabel?: string;
   required?: boolean;
@@ -54,17 +54,17 @@ export function VariableTextAreaField({
 
 export function getStyles(theme: GrafanaTheme2) {
   return {
-    textarea: css`
-      white-space: pre-wrap;
-      min-height: ${theme.spacing(4)};
-      height: auto;
-      overflow: auto;
-      padding: ${theme.spacing(0.75, 1)};
-      width: inherit;
+    textarea: css({
+      whiteSpace: 'pre-wrap',
+      minHeight: theme.spacing(4),
+      height: 'auto',
+      overflow: 'auto',
+      padding: `${theme.spacing(0.75)} ${theme.spacing(1)}`,
+      width: 'inherit',
 
-      ${theme.breakpoints.down('sm')} {
-        width: 100%;
-      }
-    `,
+      [theme.breakpoints.down('sm')]: {
+        width: '100%',
+      },
+    }),
   };
 }

@@ -9,9 +9,9 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { StoreState } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableLegend } from '../editor/VariableLegend';
-import { VariableTextAreaField } from '../editor/VariableTextAreaField';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getQueryVariableEditorState } from '../editor/selectors';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
