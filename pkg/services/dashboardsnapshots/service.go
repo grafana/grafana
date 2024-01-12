@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -82,11 +83,11 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashsnap.SnapshotSh
 		cmd.DeleteKey = resp.DeleteKey
 		cmd.ExternalURL = resp.Url
 		cmd.ExternalDeleteURL = resp.DeleteUrl
-		cmd.Dashboard = simplejson.New()
+		cmd.Dashboard = &common.Unstructured{}
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
 	} else {
-		cmd.Dashboard.SetPath([]string{"snapshot", "originalUrl"}, originalDashboardURL)
+		cmd.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
 
 		if cmd.Key == "" {
 			var err error
@@ -196,7 +197,7 @@ func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externa
 }
 
 func createOriginalDashboardURL(cmd *CreateDashboardSnapshotCommand) (string, error) {
-	dashUID := cmd.Dashboard.Get("uid").MustString("")
+	dashUID := cmd.Dashboard.GetNestedString("uid")
 	if ok := util.IsValidShortUID(dashUID); !ok {
 		return "", fmt.Errorf("invalid dashboard UID")
 	}

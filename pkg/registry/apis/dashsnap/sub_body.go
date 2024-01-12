@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -53,7 +54,7 @@ func (r *subBodyREST) Connect(ctx context.Context, name string, opts runtime.Obj
 		responder.Object(200, &dashsnap.FullDashboardSnapshot{
 			ObjectMeta: r.ObjectMeta,
 			Info:       r.Spec,
-			Dashboard:  dashsnap.Unstructured{Object: data},
+			Dashboard:  common.Unstructured{Object: data},
 		})
 	}), nil
 }

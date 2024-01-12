@@ -27,7 +27,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SharingOptionsList":             schema_pkg_apis_dashsnap_v0alpha1_SharingOptionsList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo":                   schema_pkg_apis_dashsnap_v0alpha1_SnapshotInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotSharingOptions":         schema_pkg_apis_dashsnap_v0alpha1_SnapshotSharingOptions(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.Unstructured":                   schema_pkg_apis_dashsnap_v0alpha1_Unstructured(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                        schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                                    schema_pkg_apis_meta_v1_APIGroupList(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                                     schema_pkg_apis_meta_v1_APIResource(ref),
@@ -115,7 +114,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardCreateCommand(ref common.Referen
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The complete dashboard model. required:true",
-							Ref:         ref("github.com/grafana/grafana/pkg/components/simplejson.Json"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 					"expires": {
@@ -139,7 +138,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardCreateCommand(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/components/simplejson.Json"},
+			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"},
 	}
 }
 
@@ -380,7 +379,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_FullDashboardSnapshot(ref common.Referenc
 						SchemaProps: spec.SchemaProps{
 							Description: "The raw dashboard (unstructured for now)",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.Unstructured"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
@@ -388,7 +387,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_FullDashboardSnapshot(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo", "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -570,35 +569,6 @@ func schema_pkg_apis_dashsnap_v0alpha1_SnapshotSharingOptions(ref common.Referen
 					},
 				},
 				Required: []string{"snapshotEnabled"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashsnap_v0alpha1_Unstructured(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Unstructured allows objects that do not have Golang structs registered to be manipulated generically.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"Object": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Object is a JSON compatible map with string, float, int, bool, []interface{}, or map[string]interface{} children.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"Object"},
 			},
 		},
 	}

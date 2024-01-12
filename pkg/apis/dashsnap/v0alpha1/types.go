@@ -2,22 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-)
-
-const (
-	GROUP      = "dashsnap.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
-)
-
-var DashboardSnapshotResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"dashsnaps", "dashsnap", "DashboardSnapshot",
-	func() runtime.Object { return &DashboardSnapshot{} },
-	func() runtime.Object { return &DashboardSnapshotList{} },
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -73,7 +59,7 @@ type FullDashboardSnapshot struct {
 	Info SnapshotInfo `json:"info"`
 
 	// The raw dashboard (unstructured for now)
-	Dashboard Unstructured `json:"dashboard"`
+	Dashboard common.Unstructured `json:"dashboard"`
 }
 
 // Each tenant, may have different sharing options
@@ -97,7 +83,7 @@ type DashboardCreateCommand struct {
 
 	// The complete dashboard model.
 	// required:true
-	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Dashboard *common.Unstructured `json:"dashboard" binding:"Required"`
 
 	// When the snapshot should expire in seconds in seconds. Default is never to expire.
 	// required:false
