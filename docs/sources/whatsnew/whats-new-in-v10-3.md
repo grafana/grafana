@@ -20,7 +20,7 @@ weight: -40
 
 Welcome to Grafana 10.3! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
 
-This also includes features released in Grafana 10.2.3 as well as breaking changes from that release.
+This also includes features released in Grafana 10.2.3 as well as breaking changes from that release. Features that were included in the 10.2.3 release are marked with an asterisk.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.3/).
 
@@ -47,7 +47,7 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets
 -->
 
-## Navigation updates
+## Navigation updates\*
 
 <!--Laura Benz-->
 
@@ -67,7 +67,7 @@ The improved navigation menu gives you a better overview by showing all levels o
 
 _Available in private preview in all editions of Grafana_
 
-#### Moving average
+#### Moving average\*
 
 Sometimes your data is too noisy to quickly grasp what's going on. A common way to address this issue is to calculate the moving mean, or moving average, to filter out some of that noise. Luckily, many data sources already support calculating the moving mean, but when the support is lacking or you're not well versed in the query language, until now, you were stuck with the noise.
 
@@ -81,7 +81,7 @@ The **Window functions** mode also supports moving variance and moving standard 
 
 [Documentation](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
 
-#### Trend lines
+#### Trend lines\*
 
 We're also adding some basic statistical analysis features as a way to help you visualize trends in your data. The **Regression analysis** transformation will fit a mathematical function to your data and display it as predicted data points in a separate data frame.
 
@@ -104,7 +104,7 @@ To enable this feature, you must first enable the `canvasPanelPanZoom` [feature 
 
 [Documentation](https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas/)
 
-### Improved tooltips in visualizations
+### Improved tooltips in visualizations\*
 
 <!--Nathan Marrs-->
 
@@ -127,7 +127,7 @@ Note: As this is an ongoing project, the dashboard shared cursor and annotations
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Tooltips-Enablement-Video.mp4" max-width="750px" caption="Improved tooltips enablement video" >}}
 
-### Plot enum values in your time series and state timeline visualizations
+### Plot enum values in your time series and state timeline visualizations\*
 
 <!--Nathan Marrs-->
 
@@ -178,7 +178,7 @@ _Generally available in all editions of Grafana_
 
 We've revamped the Transformations user interface to make it cleaner, more user-friendly, and overall better for visualizing, selecting, and comprehending transformation options for your data.
 
-#### Improved UI
+#### Improved UI\*
 
 In the past, transformations were applied through a dropdown menu, indicated solely by text names like Merge, Sort, JoinByLabels, etc. Now, we've introduced a much more user-friendly interface. A convenient drawer allows seamless access to all transformation options, each accompanied by visual/graphical representations and a brief description. These enhancements are designed to enhance the user's comprehension of their data transformation choices.
 
@@ -209,7 +209,7 @@ To try out this feature, enable the `pdfTables` [feature toggle](https://grafana
 
 ## Alerting
 
-### Alerting insights
+### Alerting insights\*
 
 <!-- George Robinson -->
 
@@ -233,7 +233,7 @@ _Generally available in all editions of Grafana_
 
 The Contact points list view has been redesigned and split into two tabs: Contact Points and Notification Templates, making it easier to view all contact point information at a glance. You can now search for name and type of contact points and integrations, view how many notification policies each contact point is being used for, and navigate directly to the linked notification policies.
 
-### Quality of life enhancements for alerting contact points (possible dupe)
+### Quality of life enhancements for alerting contact points (possible dupe)\*
 
 <!--Ryan Kehoe-->
 
@@ -241,7 +241,7 @@ _Generally available in all editions of Grafana_
 
 The contact point UI has received a major overhaul in Grafana 10.3. Contact point lists can now be searched and sorted. Contact Points now display the notification policies that utilize them as well as other useful metadata about the integration.
 
-### Create alerts from panels
+### Create alerts from panels\*
 
 <!-- Brenda Muir -->
 
@@ -257,7 +257,7 @@ _Generally available in all editions of Grafana_
 
 Creating an alert from a panel just got easier. Users can now create an alert from any dashboard panel type via the **_More..._** section of a panel's action menu.
 
-### Support for adding responders to Opsgenie alerting contact point
+### Support for adding responders to Opsgenie alerting contact point\*
 
 <!--Ryan Kehoe-->
 
@@ -277,7 +277,7 @@ Flapping alerts occur when a metric hovers around the alert threshold condition 
 
 ## Traces
 
-### Trace to Profiles
+### Trace to Profiles\*
 
 <!--Joey Tawadrous-->
 <!--internal_enablement_video-->
@@ -305,7 +305,7 @@ Note: in order to determine that there is a profile for a given span and render 
 
 ## Profiles
 
-### FlameGraph: Collapsing similar items in the graph
+### FlameGraph: Collapsing similar items in the graph\*
 
 <!--Andrej Ocenas-->
 
@@ -331,11 +331,11 @@ Tables can be configured and shared with team members via explore URLs or by add
 
 ## Data sources
 
-<!--This item has a release date of October 24th but isn't in the 10.2 release notes; is it for 10.3?
 ### Data source Admin permission
+
+<!--This item has a release date of October 24th but isn't in the 10.2 release notes; is it for 10.3?
 <!--Ieva Vasiljeva
 _Generally available in Grafana Enterprise and Cloud_
-
 
 In addition to `Query` and `Edit` access, you can now grant users, teams, or basic roles `Admin` access to data sources. Users with `Admin` access to a data source can grant and revoke permissions to the data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access to data sources that they create. -->
 
@@ -356,7 +356,7 @@ The `useCachingService` feature toggle must also be enabled to use this feature.
 
 {{% /admonition %}}
 
-### Loki data source improvements: Filter syntax, filter by label types, derived fields by labels
+### Loki data source improvements: "or" filter syntax, filter by label types, derived fields by labels
 
 <!--Sven Grossmann-->
 <!--enablement videos to come?-->
@@ -365,7 +365,7 @@ _Generally available in all editions of Grafana_
 
 Introducing several improvements to the Loki data source.
 
-#### Line filter "or" syntax
+#### Line filter "or" syntax\*
 
 Loki's line filter syntax is great to find specific substrings of your log lines. If users want to find multiple different substrings it was cumbersome to use the regex `=~` operator. With this change it is possible to chain multiple strings with the existing filter operators.
 
@@ -375,11 +375,11 @@ Example:
 {app="foo"} |= "foo" or "bar" != "baz" or "qux"
 ```
 
-#### Filter based on label type
+#### Filter based on label type\*
 
 Grafana users can use the action buttons in the log details to filter for specific labels. Those would be always added as a LabelFilter expression regardless of the type of the label. Now, filtered labels will be added either to the stream selector if the label is an indexed label, or as a LabelFilter expression if the label is a parsed label or part of structured metadata.
 
-#### Derived fields based on labels
+#### Derived fields based on labels\*
 
 Derived fields or data links are a concept to add correlations based on your log lines. Previously it was only possible to add derived fields based on a regular expression of your log line and doing it based on labels was not possible. With this change derived fields can be added either based on a regex of a log line or based on a label, parsed label or structured metadata.
 
@@ -389,14 +389,12 @@ The following example would add the derived field `traceID regex` based on a reg
 
 ## Authentication and authorization
 
-### Grafana Anonymous Access
+### Grafana Anonymous Access\*
 
 <!--Eric Leijonmarck-->
 <!--internal_enablement_video-->
 
 _Generally available in Grafana Open source and Enterprise_
-
-Released in Grafana 10.2.3
 
 We've identified a need for users who enable anonymous authentication to monitor the anonymous devices connected to their Grafana instance. This feature is part of our ongoing efforts to enhance control and transparency regarding anonymous usage.
 
