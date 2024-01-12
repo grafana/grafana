@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 
 import {
   arrayToDataFrame,
+  createDataFrame,
   DataFrame,
   DataQuery,
   DataQueryRequest,
@@ -16,10 +17,10 @@ import {
   LogsMetaKind,
   LogsVolumeCustomMetaData,
   LogsVolumeType,
-  MutableDataFrame,
   sortDataFrame,
   toDataFrame,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
 
@@ -244,7 +245,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without a time field should return empty logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'message',
@@ -259,7 +260,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without a string field should return empty logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -274,7 +275,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -358,9 +359,48 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
+  it('with infinite scrolling enabled it should return expected logs model', () => {
+    config.featureToggles.logsInfiniteScrolling = true;
+
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['t=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server'],
+            labels: {},
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['foo'],
+          },
+        ],
+        meta: {
+          limit: 1000,
+        },
+        refId: 'A',
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: LIMIT_LABEL,
+      value: `1000 (1 displayed)`,
+      kind: LogsMetaKind.String,
+    });
+
+    config.featureToggles.logsInfiniteScrolling = false;
+  });
+
   it('given one series with limit as custom meta property should return correct limit', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -402,7 +442,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series with labels-field should return expected logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'labels',
@@ -516,15 +556,15 @@ describe('dataFrameToLogsModel', () => {
       type: FieldType.string,
       values: ['line1'],
     };
-    const frame1 = new MutableDataFrame({
+    const frame1 = createDataFrame({
       fields: [labels, time, line],
     });
 
-    const frame2 = new MutableDataFrame({
+    const frame2 = createDataFrame({
       fields: [time, labels, line],
     });
 
-    const frame3 = new MutableDataFrame({
+    const frame3 = createDataFrame({
       fields: [time, line, labels],
     });
 
@@ -543,7 +583,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series with error should return expected logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -619,7 +659,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series without labels should return expected logs model', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -910,7 +950,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('should return expected line limit meta info when returned number of series equal the log limit', () => {
     const series: DataFrame[] = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
