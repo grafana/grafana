@@ -123,7 +123,9 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         >
           Kick start your query
         </Button>
-        <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
+        <div id={selectors.components.DataSource.Prometheus.queryEditor.explain}>
+          <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
+        </div>
         <FlexItem grow={1} />
         {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
           <Button
