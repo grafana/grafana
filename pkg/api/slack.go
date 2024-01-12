@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -38,94 +39,17 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 		return response.Error(400, "error parsing body", err)
 	}
 
-	var shareRequest ShareRequest
+	var shareRequest dtos.ShareRequest
 	if err := web.Bind(c.Req, &shareRequest); err != nil {
 		return response.Error(400, "error parsing body", err)
 	}
 
-	grafanaURL := hs.getGrafanaURL()
-	dashboardLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.DashboardPath)
-
-	blocks := []Block{{
-		Type: "section",
-		Text: &Text{
-			Type: "mrkdwn",
-			Text: fmt.Sprintf("<%s|*%s*>", dashboardLink, dashboard.Title),
-		},
-	}}
-
-	if shareRequest.Message != "" {
-		blocks = append(blocks, Block{
-			Type: "section",
-			Text: &Text{
-				Type: "plain_text",
-				Text: shareRequest.Message,
-			},
-		})
+	err = hs.slackService.PostMessage(c.Req.Context(), shareRequest, dashboard.Title)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "error posting message to Slack", err)
 	}
 
-	blocks = append(blocks, []Block{
-		{
-			Type: "image",
-			Title: &Text{
-				Type: "plain_text",
-				Text: "Dashboard preview",
-			},
-			ImageURL: shareRequest.ImagePreviewUrl,
-			AltText:  "dashboard preview",
-		},
-		{
-			Type: "actions",
-			Elements: []Element{{
-				Type: "button",
-				Text: &Text{
-					Type: "plain_text",
-					Text: "View in Grafana",
-				},
-				Style: "primary",
-				Value: "View in Grafana",
-				URL:   dashboardLink,
-			}},
-		}}...)
-
-	for _, channelId := range shareRequest.ChannelIds {
-		postMessageRequest := &PostMessageRequest{
-			Channel: channelId,
-			Blocks:  blocks,
-		}
-
-		jsonBody, err := json.Marshal(postMessageRequest)
-		if err != nil {
-			return response.Error(400, "error parsing body", err)
-		}
-		hs.log.Info("Posting to slack api", "eventPayload", string(jsonBody))
-
-		req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/chat.postMessage", bytes.NewReader(jsonBody))
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "could not create request", err)
-		}
-		req.Header.Add("Content-Type", "application/json; charset=utf-8")
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
-
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "error making http request", err)
-		}
-		defer func() {
-			if err := res.Body.Close(); err != nil {
-				hs.log.Error("failed to close response body", "err", err)
-			}
-		}()
-
-		resBody, err := io.ReadAll(res.Body)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "could not read response body", err)
-		}
-
-		hs.log.Info("successfully sent postMessage event payload", "body", string(resBody))
-	}
-
-	return response.JSON(http.StatusOK, nil)
+	return response.Empty(http.StatusOK)
 }
 
 func (hs *HTTPServer) AcknowledgeSlackEvent(c *contextmodel.ReqContext) response.Response {
@@ -441,17 +365,4 @@ type UnfurlEventPayload struct {
 	Channel string  `json:"channel,omitempty"`
 	TS      string  `json:"ts,omitempty"`
 	Unfurls Unfurls `json:"unfurls,omitempty"`
-}
-
-type ShareRequest struct {
-	ChannelIds      []string `json:"channelIds"`
-	Message         string   `json:"message,omitempty"`
-	ImagePreviewUrl string   `json:"imagePreviewUrl"`
-	PanelId         string   `json:"panelId,omitempty"`
-	DashboardPath   string   `json:"dashboardPath"`
-}
-
-type PostMessageRequest struct {
-	Channel string  `json:"channel"`
-	Blocks  []Block `json:"blocks,omitempty"`
 }

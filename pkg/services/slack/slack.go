@@ -1,14 +1,16 @@
 package slack
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"io"
-	"net/http"
 )
 
 type SlackService struct {
@@ -39,6 +41,74 @@ func (s *SlackService) GetUserConversations(ctx context.Context) (*dtos.SlackCha
 	}
 
 	return result, nil
+}
+
+func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardTitle string) error {
+	grafanaURL := s.getGrafanaURL()
+	dashboardLink := fmt.Sprintf("%s%s", grafanaURL, shareRequest.DashboardPath)
+
+	blocks := []Block{{
+		Type: "section",
+		Text: &Text{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("<%s|*%s*>", dashboardLink, dashboardTitle),
+		},
+	}}
+
+	if shareRequest.Message != "" {
+		blocks = append(blocks, Block{
+			Type: "section",
+			Text: &Text{
+				Type: "plain_text",
+				Text: shareRequest.Message,
+			},
+		})
+	}
+
+	blocks = append(blocks, []Block{
+		{
+			Type: "image",
+			Title: &Text{
+				Type: "plain_text",
+				Text: "Dashboard preview",
+			},
+			ImageURL: shareRequest.ImagePreviewUrl,
+			AltText:  "dashboard preview",
+		},
+		{
+			Type: "actions",
+			Elements: []Element{{
+				Type: "button",
+				Text: &Text{
+					Type: "plain_text",
+					Text: "View in Grafana",
+				},
+				Style: "primary",
+				Value: "View in Grafana",
+				URL:   dashboardLink,
+			}},
+		}}...)
+
+	for _, channelID := range shareRequest.ChannelIds {
+		postMessageRequest := &PostMessageRequest{
+			Channel: channelID,
+			Blocks:  blocks,
+		}
+
+		jsonBody, err := json.Marshal(postMessageRequest)
+		if err != nil {
+			return err
+		}
+		s.log.Info("Posting to slack api", "eventPayload", string(jsonBody))
+
+		resp, err := s.postRequest(ctx, "chat.postMessage", bytes.NewReader(jsonBody))
+		if err != nil {
+			return err
+		}
+		s.log.Info("successfully sent postMessage event payload", "channel", channelID, "body", string(resp))
+	}
+
+	return nil
 }
 
 func (s *SlackService) postRequest(ctx context.Context, endpoint string, body io.Reader) ([]byte, error) {
