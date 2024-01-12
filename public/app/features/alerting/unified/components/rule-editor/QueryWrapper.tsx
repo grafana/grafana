@@ -243,8 +243,8 @@ export function MinIntervalOption({
       labelWidth={24}
       tooltip={
         <>
-          Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if your
-          data is written every minute.
+          Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
+          your data is written every minute.
         </>
       }
     >
