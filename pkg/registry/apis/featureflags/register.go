@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -56,7 +57,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.FeatureList{},
 		&v0alpha1.FeatureToggles{},
 		&v0alpha1.FeatureTogglesList{},
-		&v0alpha1.ToggleStatus{},
+		&v0alpha1.ResolvedToggleState{},
 	)
 }
 
@@ -86,13 +87,12 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	featureStore := NewFeaturesStorage(scheme, b.features)
-	toggleStore := NewTogglesStorage(scheme, b.features)
+	featureStore := NewFeaturesStorage(b.features.GetFlags())
+	toggleStore := NewTogglesStorage(b.features)
 
 	storage := map[string]rest.Storage{}
 	storage[featureStore.resource.StoragePath()] = featureStore
 	storage[toggleStore.resource.StoragePath()] = toggleStore
-	storage[toggleStore.resource.StoragePath("status")] = &togglesStatusREST{}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return &apiGroupInfo, nil
@@ -102,10 +102,84 @@ func (b *FeatureFlagAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinit
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return nil // no custom API routes
-}
-
 func (b *FeatureFlagAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // default authorizer is fine
+}
+
+// Register additional routes with the server
+
+func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+	return &grafanaapiserver.APIRoutes{
+		Root: []grafanaapiserver.APIRouteHandler{
+			{
+				Path: "resolved/status",
+				Spec: &spec3.PathProps{
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Summary:     "Current state",
+							Description: "Shows the current flag status and interesting properties",
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {},
+												},
+												Description: "OK",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: b.handleResolvedStatus,
+			},
+			{
+				Path: "resolved/enabled",
+				Spec: &spec3.PathProps{
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Summary:     "enabled values",
+							Description: "only the enabled flags",
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {},
+												},
+												Description: "OK",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: b.handleResolvedEnabled,
+			},
+			{
+				Path: "resolved/update",
+				Spec: &spec3.PathProps{
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Summary:     "modify",
+							Description: "change values at runtime",
+							Parameters: []*spec3.Parameter{
+								{ParameterProps: spec3.ParameterProps{
+									Name: "b",
+								}},
+							},
+						},
+					},
+				},
+				Handler: b.handleResolvedUpdate,
+			},
+		},
+	}
 }

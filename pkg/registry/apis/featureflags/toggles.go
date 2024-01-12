@@ -7,14 +7,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 )
 
 var (
@@ -26,67 +24,26 @@ var (
 )
 
 type togglesStorage struct {
-	resource *common.ResourceInfo
-	store    *genericregistry.Store
-	features *featuremgmt.FeatureManager
+	resource       *common.ResourceInfo
+	tableConverter rest.TableConvertor
 
 	// The startup toggles
 	startup *v0alpha1.FeatureToggles
 }
 
-func NewTogglesStorage(scheme *runtime.Scheme, features *featuremgmt.FeatureManager) *togglesStorage {
+func NewTogglesStorage(features *featuremgmt.FeatureManager) *togglesStorage {
 	resourceInfo := v0alpha1.TogglesResourceInfo
-	strategy := grafanaregistry.NewStrategy(scheme)
-	store := &genericregistry.Store{
-		NewFunc:                   resourceInfo.NewFunc,
-		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
-		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		CreateStrategy:            strategy,
-		UpdateStrategy:            strategy,
-		DeleteStrategy:            strategy,
-	}
-	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
-
-	startup := &v0alpha1.FeatureToggles{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "startup",
-			Namespace:         "system",
-			CreationTimestamp: metav1.Now(),
-		},
-		Spec:   features.GetEnabled(context.Background()),
-		Status: v0alpha1.ToggleStatus{},
-	}
-
-	lookup := map[string]featuremgmt.FeatureFlag{}
-	for _, f := range features.GetFlags() {
-		lookup[f.Name] = f
-	}
-
-	// Find runtime state
-	for k, v := range startup.Spec {
-		state := v0alpha1.ToggleState{
-			Feature: k,
-			Enabled: v,
-			Source:  "startup",
-		}
-		f, ok := lookup[k]
-		if ok {
-			if v && f.Expression == "true" {
-				state.Source = "default"
-			}
-		} else {
-			state.Warning = "unknown feature flag"
-		}
-		startup.Status.Toggles = append(startup.Status.Toggles, state)
-	}
-
 	return &togglesStorage{
 		resource: &resourceInfo,
-		store:    store,
-		features: features,
-		startup:  startup,
+		startup: &v0alpha1.FeatureToggles{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "startup",
+				Namespace:         "system",
+				CreationTimestamp: metav1.Now(),
+			},
+			Spec: features.GetStartupFlags(),
+		},
+		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
 	}
 }
 
@@ -109,7 +66,7 @@ func (s *togglesStorage) NewList() runtime.Object {
 }
 
 func (s *togglesStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *togglesStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {

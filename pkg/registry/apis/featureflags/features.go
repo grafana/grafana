@@ -3,17 +3,16 @@ package featureflags
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
@@ -26,47 +25,38 @@ var (
 )
 
 type featuresStorage struct {
-	resource *common.ResourceInfo
-	store    *genericregistry.Store
-	features *featuremgmt.FeatureManager
+	resource       *common.ResourceInfo
+	tableConverter rest.TableConvertor
+	features       []featuremgmt.FeatureFlag
+	startup        int64
 }
 
-func NewFeaturesStorage(scheme *runtime.Scheme, features *featuremgmt.FeatureManager) *featuresStorage {
+// NOTE! this does not depend on config or any system state!
+// In the future, the existence of features (and their properties) can be defined dynamically
+func NewFeaturesStorage(features []featuremgmt.FeatureFlag) *featuresStorage {
 	resourceInfo := v0alpha1.FeatureResourceInfo
-	strategy := grafanaregistry.NewStrategy(scheme)
-	store := &genericregistry.Store{
-		NewFunc:                   resourceInfo.NewFunc,
-		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
-		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		CreateStrategy:            strategy,
-		UpdateStrategy:            strategy,
-		DeleteStrategy:            strategy,
-	}
-	store.TableConvertor = utils.NewTableConverter(
-		store.DefaultQualifiedResource,
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Stage", Type: "string", Format: "string", Description: "Where is the flag in the dev cycle"},
-			{Name: "Owner", Type: "string", Format: "string", Description: "Which team owns the feature"},
-		},
-		func(obj any) ([]interface{}, error) {
-			r, ok := obj.(*v0alpha1.Feature)
-			if ok {
-				return []interface{}{
-					r.Name,
-					r.Spec.Stage,
-					r.Spec.Owner,
-				}, nil
-			}
-			return nil, fmt.Errorf("expected resource or info")
-		})
-
 	return &featuresStorage{
+		startup:  time.Now().UnixMilli(),
 		resource: &resourceInfo,
-		store:    store,
 		features: features,
+		tableConverter: utils.NewTableConverter(
+			resourceInfo.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Stage", Type: "string", Format: "string", Description: "Where is the flag in the dev cycle"},
+				{Name: "Owner", Type: "string", Format: "string", Description: "Which team owns the feature"},
+			},
+			func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*v0alpha1.Feature)
+				if ok {
+					return []interface{}{
+						r.Name,
+						r.Spec.Stage,
+						r.Spec.Owner,
+					}, nil
+				}
+				return nil, fmt.Errorf("expected resource or info")
+			}),
 	}
 }
 
@@ -89,19 +79,23 @@ func (s *featuresStorage) NewList() runtime.Object {
 }
 
 func (s *featuresStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *featuresStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	flags := &v0alpha1.FeatureList{}
-	for _, flag := range s.features.GetFlags() {
+	flags := &v0alpha1.FeatureList{
+		ListMeta: metav1.ListMeta{
+			ResourceVersion: fmt.Sprintf("%d", s.startup),
+		},
+	}
+	for _, flag := range s.features {
 		flags.Items = append(flags.Items, toK8sForm(flag))
 	}
 	return flags, nil
 }
 
 func (s *featuresStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	for _, flag := range s.features.GetFlags() {
+	for _, flag := range s.features {
 		if name == flag.Name {
 			obj := toK8sForm(flag)
 			return &obj, nil

@@ -63,9 +63,6 @@ type FeatureToggles struct {
 
 	// The configured toggles.  Note this may include unknown fields
 	Spec map[string]bool `json:"spec"`
-
-	// The status is not configured explicitly, but
-	Status ToggleStatus `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -78,22 +75,21 @@ type FeatureTogglesList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ToggleStatus struct {
+type ResolvedToggleState struct {
 	metav1.TypeMeta `json:",inline"`
 
-	Toggles []ToggleState `json:"toggles,omitempty"`
+	// The toggles with state worth advertising
+	Toggles map[string]ToggleState `json:"toggles"`
 
 	// Flags that can be edited in the UI
-	Editable []string `json:"editable,omitempty"`
+	// When empty, nothing is editable
+	Editable []string `json:"editable"`
 
-	// Flags that should be hidden in the UI
+	// Flags that should never be shown in the UI
 	Hidden []string `json:"hidden,omitempty"`
 }
 
 type ToggleState struct {
-	// Feature name
-	Feature string `json:"feature"`
-
 	// Is the flag enabled
 	Enabled bool `json:"enabled"`
 
