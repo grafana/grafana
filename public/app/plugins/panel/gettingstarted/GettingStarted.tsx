@@ -1,5 +1,5 @@
 // Libraries
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
@@ -97,7 +97,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
             </Button>
             {currentStep === steps.length - 1 && (
               <Button
-                className={cx(styles.backForwardButtons, styles.previous)}
+                className={styles.backForwardButtons}
                 onClick={this.onPreviousClick}
                 aria-label="To basic tutorials"
                 icon="angle-left"
@@ -109,7 +109,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
             </div>
             {currentStep < steps.length - 1 && (
               <Button
-                className={cx(styles.backForwardButtons, styles.forward)}
+                className={styles.backForwardButtons}
                 onClick={this.onForwardClick}
                 aria-label="To advanced tutorials"
                 icon="angle-right"
@@ -130,7 +130,6 @@ const getStyles = stylesFactory(() => {
       display: flex;
       flex-direction: column;
       height: 100%;
-      // background: url(public/img/getting_started_bg_${theme.colors.mode}.svg) no-repeat;
       background-size: cover;
       padding: ${theme.spacing(4)} ${theme.spacing(2)} 0;
     `,
@@ -178,15 +177,6 @@ const getStyles = stylesFactory(() => {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-    `,
-    previous: css`
-      left: 10px;
-
-      ${theme.breakpoints.down('md')} {
-        left: 0;
-      }
-    `,
-    forward: css`
       right: 10px;
 
       ${theme.breakpoints.down('md')} {
