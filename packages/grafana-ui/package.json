@@ -154,7 +154,7 @@
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.19",
     "@types/react-test-renderer": "18.0.7",
-    "@types/react-transition-group": "4.4.6",
+    "@types/react-transition-group": "4.4.10",
     "@types/react-window": "1.8.5",
     "@types/slate": "0.47.11",
     "@types/slate-plain-serializer": "0.7.2",

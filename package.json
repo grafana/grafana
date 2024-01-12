@@ -137,7 +137,7 @@
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.19",
     "@types/react-test-renderer": "18.0.7",
-    "@types/react-transition-group": "4.4.6",
+    "@types/react-transition-group": "4.4.10",
     "@types/react-virtualized-auto-sizer": "1.0.1",
     "@types/react-window": "1.8.5",
     "@types/react-window-infinite-loader": "^1",
