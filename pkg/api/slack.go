@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"time"
 
-	dtos "github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -23,36 +22,12 @@ import (
 )
 
 func (hs *HTTPServer) GetSlackChannels(c *contextmodel.ReqContext) response.Response {
-	req, err := http.NewRequest(http.MethodPost, "https://slack.com/api/conversations.list", nil)
-	req.Header.Add("Content-Type", "application/json; charset=utf-8")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", hs.Cfg.SlackToken))
-
+	channels, err := hs.slackService.GetUserConversations(c.Req.Context())
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not create request", err)
+		return response.Error(http.StatusInternalServerError, "could not retrieve Slack channels", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error making http request", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			hs.log.Error("failed to close response body", "err", err)
-		}
-	}()
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not read response body", err)
-	}
-
-	var result dtos.SlackChannels
-	err = json.Unmarshal(b, &result)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not unmarshall response", err)
-	}
-
-	return response.JSON(http.StatusOK, result.Channels)
+	return response.JSON(http.StatusOK, channels.Channels)
 }
 
 func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response {

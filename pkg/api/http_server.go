@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/slack"
 	"math/big"
 	"net"
 	"net/http"
@@ -218,6 +219,7 @@ type HTTPServer struct {
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	namespacer           request.NamespaceMapper
 	anonService          anonymous.Service
+	slackService         slack.Service
 }
 
 type ServerOptions struct {
@@ -260,6 +262,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
+	slackService slack.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -363,6 +366,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		clientConfigProvider:         clientConfigProvider,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
+		slackService:                 slackService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

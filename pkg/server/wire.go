@@ -128,6 +128,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
+	"github.com/grafana/grafana/pkg/services/slack"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoSettingsImpl "github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
@@ -381,6 +382,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.SSOSettingsService)),
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
+	slack.ProvideService,
+	wire.Bind(new(slack.Service), new(*slack.SlackService)),
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 )
