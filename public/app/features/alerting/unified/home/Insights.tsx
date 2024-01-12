@@ -22,7 +22,7 @@ import { SectionFooter } from '../insights/SectionFooter';
 import { SectionSubheader } from '../insights/SectionSubheader';
 import { getGrafanaInstancesByStateScene } from '../insights/grafana/AlertsByStateScene';
 import { getGrafanaEvalSuccessVsFailuresScene } from '../insights/grafana/EvalSuccessVsFailuresScene';
-import { getFiringGrafanaAlertsScene } from '../insights/grafana/Firing';
+import { getActiveGrafanaAlertsScene } from '../insights/grafana/Firing';
 import { getInstanceStatByStatusScene } from '../insights/grafana/InstanceStatusScene';
 import { getGrafanaMissedIterationsScene } from '../insights/grafana/MissedIterationsScene';
 import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstancesTable';
@@ -192,7 +192,7 @@ function getGrafanaManagedScenes() {
             new SceneFlexLayout({
               children: [
                 getMostFiredInstancesScene(ashDs, 'Top 10 firing instances'),
-                getFiringGrafanaAlertsScene(cloudUsageDs, 'Firing rules'),
+                getActiveGrafanaAlertsScene(cloudUsageDs, 'Active rules'),
                 getPausedGrafanaAlertsScene(cloudUsageDs, 'Paused rules'),
               ],
             }),
