@@ -82,8 +82,8 @@ export const Components = {
       queryEditor: {
         // kickstart: '', see QueryBuilder queryPatterns below
         explain: 'prometheus-explain-wrapper', // switch wrapper id
-        editorToggle: 'data-testid QueryEditorModeToggle', // need to change this in shared folder
-        options: 'data-testid prometheus-options', //// id wrapper for options group collapse component
+        editorToggle: 'data-testid QueryEditorModeToggle', // need to change this in *shared* folder
+        options: 'data-testid prometheus-options', // id wrapper for options group collapse component in *shared* folder
         legend: 'legend-wrapper', // wrapper for multiple compomnents
         format: 'data-testid prometheus format',
         step: 'prometheus-step', // id for autosize component
