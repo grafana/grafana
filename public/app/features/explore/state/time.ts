@@ -12,7 +12,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
-import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
@@ -185,13 +185,10 @@ export function copyTimeRangeToClipboard(): ThunkResult<void> {
 
 export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const raw = await navigator.clipboard.readText();
-    let range;
+    const { range, isError } = await getCopiedTimeRange();
 
-    try {
-      range = JSON.parse(raw);
-    } catch (e) {
-      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${raw}" is not a valid time range`]);
+    if (isError === true) {
+      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${range}" is not a valid time range`]);
       return;
     }
 

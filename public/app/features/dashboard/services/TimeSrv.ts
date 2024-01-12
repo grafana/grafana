@@ -17,7 +17,7 @@ import { sceneGraph } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
-import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import {
@@ -384,13 +384,10 @@ export class TimeSrv {
   }
 
   async pasteTimeRangeFromClipboard(updateUrl = true) {
-    const raw = await navigator.clipboard.readText();
-    let range;
+    const { range, isError } = await getCopiedTimeRange();
 
-    try {
-      range = JSON.parse(raw);
-    } catch (err) {
-      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${raw}" is not a valid time range`]);
+    if (isError === true) {
+      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${range}" is not a valid time range`]);
       return;
     }
 
