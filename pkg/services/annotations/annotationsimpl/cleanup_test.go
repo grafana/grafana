@@ -193,8 +193,11 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 
 	cutoffDate := time.Now()
 
+	newAnnotations := make([]*annotations.Item, 0, expectedCount)
+	newAnnotationTags := make([]*annotationTag, 0, 2*expectedCount)
 	for i := 0; i < expectedCount; i++ {
 		a := &annotations.Item{
+			ID:          int64(i + 1),
 			DashboardID: 1,
 			OrgID:       1,
 			UserID:      1,
@@ -222,20 +225,19 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 			a.Created = cutoffDate.AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond)
 		}
 
-		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
-			_, err := sess.Insert(a)
-			require.NoError(t, err, "should be able to save annotation", err)
+		newAnnotations = append(newAnnotations, a)
+		newAnnotationTags = append(newAnnotationTags, &annotationTag{AnnotationID: a.ID, TagID: 1}, &annotationTag{AnnotationID: a.ID, TagID: 2})
 
-			// mimick the SQL annotation Save logic by writing records to the annotation_tag table
-			// we need to ensure they get deleted when we clean up annotations
-			for tagID := range []int{1, 2} {
-				_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.ID, tagID)
-				require.NoError(t, err, "should be able to save annotation tag ID", err)
-			}
-			return err
-		})
-		require.NoError(t, err)
 	}
+
+	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.InsertMulti(newAnnotations)
+		require.NoError(t, err, "should be able to save annotation", err)
+
+		_, err = sess.InsertMulti(newAnnotationTags)
+		return err
+	})
+	require.NoError(t, err)
 }
 
 func settingsFn(maxAge time.Duration, maxCount int64) setting.AnnotationCleanupSettings {
