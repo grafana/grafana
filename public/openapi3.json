@@ -5532,6 +5532,14 @@
         "title": "Frames is a slice of Frame pointers.",
         "type": "array"
       },
+      "GenericPublicError": {
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/PublicError"
+          }
+        },
+        "type": "object"
+      },
       "GetAnnotationTagsResponse": {
         "properties": {
           "result": {
@@ -11899,6 +11907,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -12055,7 +12064,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -16456,6 +16464,16 @@
         "responses": {
           "204": {
             "description": " The mute timing was deleted successfully."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Delete a mute timing.",
