@@ -3093,7 +3093,7 @@ __metadata:
     "@types/lodash": "npm:4.14.202"
     "@types/marked": "npm:5.0.2"
     "@types/node": "npm:20.8.10"
-    "@types/papaparse": "npm:5.3.7"
+    "@types/papaparse": "npm:5.3.14"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
     "@types/string-hash": "npm:1.1.1"
@@ -3552,7 +3552,7 @@ __metadata:
     "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.202"
-    "@types/mock-raf": "npm:1.0.3"
+    "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.0"
     "@types/react": "npm:18.2.15"
@@ -8836,17 +8836,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mock-raf@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@types/mock-raf@npm:1.0.3"
-  checksum: 0c1e4cb40d03e32f27ca78b412b04b317d9f34df42ad4cb3c3fdfa1a9aa9b627a1f709ef1ca5ed47e6fef22d3a8a8d302df922782f4b3052641d70c918859a47
+"@types/mock-raf@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@types/mock-raf@npm:1.0.6"
+  checksum: 0389ac9a2f4be5d3c9dc05586c68d0c78f0d6a9dc167c57ee94da0bb1d9ef9a797871bcdf2f0ba43c951a423c05bdeb80807d5ca21a63c50c54ed21054a4aeb8
   languageName: node
   linkType: hard
 
-"@types/mousetrap@npm:1.6.11":
-  version: 1.6.11
-  resolution: "@types/mousetrap@npm:1.6.11"
-  checksum: 4465d16b7c20ab52d2f6b7fe8087e8f16101472f2e8758f01c63591015c1b0a67c9e6c371d978f24d5f37c4b83457515571489284bf7c7c844eb6c8f2527685b
+"@types/mousetrap@npm:1.6.15":
+  version: 1.6.15
+  resolution: "@types/mousetrap@npm:1.6.15"
+  checksum: 58ec552218108f8e5f0d40ee81579aafbdb00c3af0ef4b6d3fb193a8a11a2d37aa84c6e20524120b7f218c2a87dac24f426ee3b23e1269d42f8145a1a37c9eca
   languageName: node
   linkType: hard
 
@@ -8868,11 +8868,11 @@ __metadata:
   linkType: hard
 
 "@types/node-forge@npm:^1":
-  version: 1.3.2
-  resolution: "@types/node-forge@npm:1.3.2"
+  version: 1.3.11
+  resolution: "@types/node-forge@npm:1.3.11"
   dependencies:
     "@types/node": "npm:*"
-  checksum: e49aa578159e353e93c5b8c5a2f010e1ea53e7da509bf4ee82775ee43eb78aead8407d5f27a53ce57e49c7a5b86739e78d14714c37f1e37bca979025dbaea932
+  checksum: 670c9b377c48189186ec415e3c8ed371f141ecc1a79ab71b213b20816adeffecba44dae4f8406cc0d09e6349a4db14eb8c5893f643d8e00fa19fc035cf49dee0
   languageName: node
   linkType: hard
 
@@ -8913,21 +8913,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ol-ext@npm:@siedlerchr/types-ol-ext@3.2.0":
-  version: 3.2.0
-  resolution: "@siedlerchr/types-ol-ext@npm:3.2.0"
+"@types/ol-ext@npm:@siedlerchr/types-ol-ext@3.2.4":
+  version: 3.2.4
+  resolution: "@siedlerchr/types-ol-ext@npm:3.2.4"
   dependencies:
     jspdf: "npm:^2.5.1"
-  checksum: e3449b43fc1b2847b2349a4993ee40bd227e81728875763ee64a68cd70568295807623388c7133286d52302bfd57836e1bef325620e09cda8f6c72dd626d5059
+  checksum: 28d0f32bd98d54b039e7cdea232435cb658df677ddcc89ad0b73be2493a951524eae34be9eaf5d2877a2c06e4f5fba002c88e28b981150f3038d9b5b4589d568
   languageName: node
   linkType: hard
 
-"@types/papaparse@npm:5.3.7":
-  version: 5.3.7
-  resolution: "@types/papaparse@npm:5.3.7"
+"@types/papaparse@npm:5.3.14":
+  version: 5.3.14
+  resolution: "@types/papaparse@npm:5.3.14"
   dependencies:
     "@types/node": "npm:*"
-  checksum: 4fef3e38e4d4ebf5b8f9f2ca96a822311284f788058c3d7983b6c841f28be3737ccd467dea280c7c363ee9ba57114980a62c1cf3c8e65a2521c72a8472b59005
+  checksum: 9bd5cc0e6a2c02def6c8903dc4604e499907cb465186ed3532390468082a06f023adbac0216428d0d8e8fe017206780a03d20007041e9fed47c8d391cd69a536
   languageName: node
   linkType: hard
 
@@ -17127,11 +17127,11 @@ __metadata:
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
     "@types/marked": "npm:5.0.2"
-    "@types/mousetrap": "npm:1.6.11"
+    "@types/mousetrap": "npm:1.6.15"
     "@types/node": "npm:20.8.10"
     "@types/node-forge": "npm:^1"
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"
-    "@types/papaparse": "npm:5.3.7"
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
+    "@types/papaparse": "npm:5.3.14"
     "@types/pluralize": "npm:^0.0.30"
     "@types/prismjs": "npm:1.26.0"
     "@types/react": "npm:18.2.15"
@@ -17273,6 +17273,7 @@ __metadata:
     moveable: "npm:0.43.1"
     msw: "npm:1.3.2"
     mutationobserver-shim: "npm:0.3.7"
+    nanoid: "npm:^5.0.4"
     ngtemplate-loader: "npm:2.1.0"
     node-forge: "npm:^1.3.1"
     node-notifier: "npm:10.0.1"
@@ -21886,6 +21887,15 @@ __metadata:
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 67235c39d1bc05851383dadde5cf77ae1c90c2a1d189e845c7f20f646f0488d875ad5f5226bbba072a88cebbb085a3f784a6673117daf785bdf614a852550362
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^5.0.4":
+  version: 5.0.4
+  resolution: "nanoid@npm:5.0.4"
+  bin:
+    nanoid: bin/nanoid.js
+  checksum: cf09cca3774f3147100948f7478f75f4c9ee97a4af65c328dd9abbd83b12f8bb35cf9f89a21c330f3b759d667a4cd0140ed84aa5fdd522c61e0d341aeaa7fb6f
   languageName: node
   linkType: hard
 
