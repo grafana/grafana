@@ -467,7 +467,7 @@ A map from a collaborative free geographic world database.
 
 ### More Information
 
-- [**About Open Street Map**](https://www.openstreetmap.org/about)\
+- [**About Open Street Map**](https://www.openstreetmap.org/about)
 
 ## ArcGIS layer
 
@@ -546,7 +546,7 @@ Displays measure tools in the upper right corner. Measurements appear only when 
 - **Double-click** to end measurement
 
 {{% admonition type="note" %}}
-<br /- When you change measurement type or units, the previous measurement is removed from the map. <br /- If the control is closed and then re-opened, the most recent measurement is displayed. <br /- A measurement can be modified by clicking and dragging on it.
+When you change measurement type or units, the previous measurement is removed from the map. If the control is closed and then re-opened, the most recent measurement is displayed. A measurement can be modified by clicking and dragging on it.
 {{% /admonition %}}
 
 #### Length
