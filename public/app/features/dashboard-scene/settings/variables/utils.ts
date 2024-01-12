@@ -8,7 +8,7 @@ import {
   QueryVariable,
   AdHocFilterSet,
   SceneVariable,
-  VariableValueOption,
+  MultiValueVariable,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
 
@@ -117,8 +117,6 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
   }
 }
 
-export function hasVariableOptions(
-  variable: SceneVariable
-): variable is SceneVariable & { options: VariableValueOption[] } {
+export function hasVariableOptions(variable: SceneVariable): variable is MultiValueVariable {
   return 'options' in variable.state;
 }
