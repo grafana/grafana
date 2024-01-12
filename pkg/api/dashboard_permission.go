@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -52,7 +53,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -133,7 +134,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -141,7 +142,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
-			OrgID:       c.OrgID,
+			OrgID:       c.SignedInUser.GetOrgID(),
 			DashboardID: dashID,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
@@ -166,10 +167,10 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 	return response.Success("Dashboard permissions updated")
 }
 
-var dashboardPermissionMap = map[string]dashboards.PermissionType{
-	"View":  dashboards.PERMISSION_VIEW,
-	"Edit":  dashboards.PERMISSION_EDIT,
-	"Admin": dashboards.PERMISSION_ADMIN,
+var dashboardPermissionMap = map[string]dashboardaccess.PermissionType{
+	"View":  dashboardaccess.PERMISSION_VIEW,
+	"Edit":  dashboardaccess.PERMISSION_EDIT,
+	"Admin": dashboardaccess.PERMISSION_ADMIN,
 }
 
 func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Requester, dashboard *dashboards.Dashboard) ([]*dashboards.DashboardACLInfoDTO, error) {
@@ -195,7 +196,7 @@ func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Request
 		acl = append(acl, &dashboards.DashboardACLInfoDTO{
 			OrgID:          dashboard.OrgID,
 			DashboardID:    dashboard.ID,
-			FolderID:       dashboard.FolderID,
+			FolderID:       dashboard.FolderID, // nolint:staticcheck
 			Created:        p.Created,
 			Updated:        p.Updated,
 			UserID:         p.UserId,
@@ -313,11 +314,11 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardACLCommand) error {
 	for _, item := range apiCmd.Items {
 		if item.UserID > 0 && item.TeamID > 0 {
-			return dashboards.ErrPermissionsWithUserAndTeamNotAllowed
+			return dashboardaccess.ErrPermissionsWithUserAndTeamNotAllowed
 		}
 
 		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
-			return dashboards.ErrPermissionsWithRoleNotAllowed
+			return dashboardaccess.ErrPermissionsWithRoleNotAllowed
 		}
 	}
 	return nil

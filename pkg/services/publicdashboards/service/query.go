@@ -244,8 +244,8 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	return datasourceUids
 }
 
-func getFlattenedPanels(dashboard *simplejson.Json) []interface{} {
-	var flatPanels []interface{}
+func getFlattenedPanels(dashboard *simplejson.Json) []any {
+	var flatPanels []any
 	for _, panelObj := range dashboard.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
 		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
@@ -269,7 +269,7 @@ func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 	return result
 }
 
-func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejson.Json) {
+func extractQueriesFromPanels(panels []any, result map[int64][]*simplejson.Json) {
 	for _, panelObj := range panels {
 		panel := simplejson.NewFromAny(panelObj)
 
@@ -299,7 +299,7 @@ func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejs
 			// if query target has no datasource, set it to have the datasource on the panel
 			if _, ok := query.CheckGet("datasource"); !ok {
 				uid := getDataSourceUidFromJson(panel)
-				datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
+				datasource := map[string]any{"type": "public-ds", "uid": uid}
 				query.Set("datasource", datasource)
 			}
 			panelQueries = append(panelQueries, query)
@@ -338,6 +338,27 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 			if frames[i].Meta != nil {
 				frames[i].Meta.ExecutedQueryString = ""
 			}
+		}
+	}
+}
+
+// sanitizeData removes the query expressions from the dashboard data
+func sanitizeData(data *simplejson.Json) {
+	for _, panelObj := range data.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+			// recursive call to get queries from panels inside a row
+			sanitizeData(panel)
+			continue
+		}
+
+		for _, targetObj := range panel.Get("targets").MustArray() {
+			target := simplejson.NewFromAny(targetObj)
+			target.Del("expr")
+			target.Del("query")
+			target.Del("rawSql")
 		}
 	}
 }

@@ -11,7 +11,7 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode } from '@grafana/schema';
 
 import {
   BarGauge,
@@ -56,6 +56,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     value: field.display(25),
     theme,
     orientation: VizOrientation.Horizontal,
+    namePlacement: BarGaugeNamePlacement.Auto,
   };
 
   Object.assign(props, propOverrides);
@@ -221,6 +222,28 @@ describe('BarGauge', () => {
         height: 41,
         value: getValue(100, 'AA'),
         orientation: VizOrientation.Horizontal,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.wrapper.flexDirection).toBe('column');
+    });
+
+    it('should place left even if height > 40 if name placement is set to left', () => {
+      const props = getProps({
+        height: 41,
+        value: getValue(100, 'AA'),
+        orientation: VizOrientation.Horizontal,
+        namePlacement: BarGaugeNamePlacement.Left,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.wrapper.flexDirection).toBe('row');
+    });
+
+    it('should place above even if height < 40 if name placement is set to top', () => {
+      const props = getProps({
+        height: 39,
+        value: getValue(100, 'AA'),
+        orientation: VizOrientation.Horizontal,
+        namePlacement: BarGaugeNamePlacement.Top,
       });
       const styles = getTitleStyles(props);
       expect(styles.wrapper.flexDirection).toBe('column');

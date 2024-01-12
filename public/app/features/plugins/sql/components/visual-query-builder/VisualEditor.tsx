@@ -51,7 +51,7 @@ export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, 
         )}
         {queryRowFilter.preview && query.rawSql && (
           <EditorRow>
-            <Preview rawSql={query.rawSql} />
+            <Preview rawSql={query.rawSql} datasourceType={query.datasource?.type} />
           </EditorRow>
         )}
       </EditorRows>

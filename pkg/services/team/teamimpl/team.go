@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -14,7 +14,7 @@ type Service struct {
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg) team.Service {
-	return &Service{store: &xormStore{db: db, cfg: cfg}}
+	return &Service{store: &xormStore{db: db, cfg: cfg, deletes: []string{}}}
 }
 
 func (s *Service) CreateTeam(name, email string, orgID int64) (team.Team, error) {
@@ -41,7 +41,11 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 	return s.store.GetByUser(ctx, query)
 }
 
-func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
+func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+	return s.store.GetIDsByUser(ctx, query)
+}
+
+func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
 	return s.store.AddMember(userID, orgID, teamID, isExternal, permission)
 }
 
@@ -67,4 +71,8 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	return s.store.GetMembers(ctx, query)
+}
+
+func (s *Service) RegisterDelete(query string) {
+	s.store.RegisterDelete(query)
 }

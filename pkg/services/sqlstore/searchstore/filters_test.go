@@ -12,31 +12,31 @@ func TestFolderUIDFilter(t *testing.T) {
 		description    string
 		uids           []string
 		expectedSql    string
-		expectedParams []interface{}
+		expectedParams []any
 	}{
 		{
 			description:    "searching general folder",
 			uids:           []string{"general"},
 			expectedSql:    "dashboard.folder_id = ? ",
-			expectedParams: []interface{}{0},
+			expectedParams: []any{0},
 		},
 		{
 			description:    "searching a specific folder",
 			uids:           []string{"abc-123"},
 			expectedSql:    "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid = ?)",
-			expectedParams: []interface{}{int64(1), "abc-123"},
+			expectedParams: []any{int64(1), "abc-123"},
 		},
 		{
 			description:    "searching a specific folders",
 			uids:           []string{"abc-123", "def-456"},
 			expectedSql:    "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN (?,?))",
-			expectedParams: []interface{}{int64(1), "abc-123", "def-456"},
+			expectedParams: []any{int64(1), "abc-123", "def-456"},
 		},
 		{
 			description:    "searching a specific folders or general",
 			uids:           []string{"general", "abc-123", "def-456"},
 			expectedSql:    "(dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN (?,?)) OR dashboard.folder_id = ?)",
-			expectedParams: []interface{}{int64(1), "abc-123", "def-456", 0},
+			expectedParams: []any{int64(1), "abc-123", "def-456", 0},
 		},
 	}
 

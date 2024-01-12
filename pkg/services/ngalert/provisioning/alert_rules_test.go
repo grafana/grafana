@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,21 +23,6 @@ import (
 func TestAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t)
 	var orgID int64 = 1
-
-	t.Run("alert rule creation should return the created id", func(t *testing.T) {
-		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", orgID), models.ProvenanceNone, 0)
-		require.NoError(t, err)
-		require.NotEqual(t, 0, rule.ID, "expected to get the created id and not the zero value")
-	})
-
-	t.Run("alert rule creation should set the right provenance", func(t *testing.T) {
-		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#2", orgID), models.ProvenanceAPI, 0)
-		require.NoError(t, err)
-
-		_, provenance, err := ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceAPI, provenance)
-	})
 
 	t.Run("group creation should set the right provenance", func(t *testing.T) {
 		group := createDummyGroup("group-test-1", orgID)
@@ -528,6 +516,45 @@ func TestAlertRuleService(t *testing.T) {
 		err := ruleService.ReplaceRuleGroup(context.Background(), 1, group, 0, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
+	})
+}
+
+func TestCreateAlertRule(t *testing.T) {
+	ruleService := createAlertRuleService(t)
+	var orgID int64 = 1
+
+	t.Run("should return the created id", func(t *testing.T) {
+		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", orgID), models.ProvenanceNone, 0)
+		require.NoError(t, err)
+		require.NotEqual(t, 0, rule.ID, "expected to get the created id and not the zero value")
+	})
+
+	t.Run("should set the right provenance", func(t *testing.T) {
+		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#2", orgID), models.ProvenanceAPI, 0)
+		require.NoError(t, err)
+
+		_, provenance, err := ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, models.ProvenanceAPI, provenance)
+	})
+
+	t.Run("when UID is specified", func(t *testing.T) {
+		t.Run("return error if it is not valid UID", func(t *testing.T) {
+			rule := dummyRule("test#3", orgID)
+			rule.UID = strings.Repeat("1", util.MaxUIDLength+1)
+			rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		})
+		t.Run("should create a new rule with this UID", func(t *testing.T) {
+			rule := dummyRule("test#3", orgID)
+			uid := util.GenerateShortUID()
+			rule.UID = uid
+			created, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+			require.NoError(t, err)
+			require.Equal(t, uid, created.UID)
+			_, _, err = ruleService.GetAlertRule(context.Background(), orgID, uid)
+			require.NoError(t, err)
+		})
 	})
 }
 

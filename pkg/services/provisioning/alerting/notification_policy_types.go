@@ -13,7 +13,7 @@ type NotificiationPolicyV1 struct {
 	Policy values.JSONValue `json:"-" yaml:"-"`
 }
 
-func (v1 *NotificiationPolicyV1) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (v1 *NotificiationPolicyV1) UnmarshalYAML(unmarshal func(any) error) error {
 	err := v1.Policy.UnmarshalYAML(unmarshal)
 	if err != nil {
 		return err

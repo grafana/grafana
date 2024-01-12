@@ -21,20 +21,20 @@ func TestGetUniqueDatasourceTypes(t *testing.T) {
 			desc:   "can get unique datasource names",
 			result: []string{"mysql", "prometheus"},
 			queries: []*simplejson.Json{
-				simplejson.NewFromAny(map[string]interface{}{
-					"datasource": map[string]interface{}{
+				simplejson.NewFromAny(map[string]any{
+					"datasource": map[string]any{
 						"type": "prometheus",
 						"uid":  "uid1",
 					},
 				}),
-				simplejson.NewFromAny(map[string]interface{}{
-					"datasource": map[string]interface{}{
+				simplejson.NewFromAny(map[string]any{
+					"datasource": map[string]any{
 						"type": "prometheus",
 						"uid":  "uid2",
 					},
 				}),
-				simplejson.NewFromAny(map[string]interface{}{
-					"datasource": map[string]interface{}{
+				simplejson.NewFromAny(map[string]any{
+					"datasource": map[string]any{
 						"type": "mysql",
 						"uid":  "uid3",
 					},
@@ -45,13 +45,13 @@ func TestGetUniqueDatasourceTypes(t *testing.T) {
 			desc:   "returns empty slice when datasources have no type property",
 			result: []string{},
 			queries: []*simplejson.Json{
-				simplejson.NewFromAny(map[string]interface{}{
-					"datasource": map[string]interface{}{
+				simplejson.NewFromAny(map[string]any{
+					"datasource": map[string]any{
 						"uid": "uid1",
 					},
 				}),
-				simplejson.NewFromAny(map[string]interface{}{
-					"datasource": map[string]interface{}{
+				simplejson.NewFromAny(map[string]any{
+					"datasource": map[string]any{
 						"uid": "uid3",
 					},
 				}),

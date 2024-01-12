@@ -5,12 +5,9 @@ import React from 'react';
 
 import { WeekStartPicker } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 const meta: Meta<typeof WeekStartPicker> = {
   title: 'Pickers and Editors/TimePickers/WeekStartPicker',
   component: WeekStartPicker,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['onBlur', 'onChange', 'inputId'],

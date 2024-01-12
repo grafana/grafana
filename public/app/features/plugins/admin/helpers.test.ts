@@ -10,10 +10,10 @@ import {
   mergeLocalsAndRemotes,
   sortPlugins,
   Sorters,
-  isLocalPluginVisible,
-  isRemotePluginVisible,
+  isLocalPluginVisibleByConfig,
+  isRemotePluginVisibleByConfig,
 } from './helpers';
-import { RemotePlugin, LocalPlugin } from './types';
+import { RemotePlugin, LocalPlugin, RemotePluginStatus } from './types';
 
 describe('Plugins/Helpers', () => {
   let remotePlugin: RemotePlugin;
@@ -37,7 +37,7 @@ describe('Plugins/Helpers', () => {
     ];
 
     test('adds all available plugins only once', () => {
-      const merged = mergeLocalsAndRemotes(localPlugins, remotePlugins);
+      const merged = mergeLocalsAndRemotes({ local: localPlugins, remote: remotePlugins });
       const mergedIds = merged.map(({ id }) => id);
 
       expect(merged.length).toBe(4);
@@ -48,7 +48,7 @@ describe('Plugins/Helpers', () => {
     });
 
     test('merges all plugins with their counterpart (if available)', () => {
-      const merged = mergeLocalsAndRemotes(localPlugins, remotePlugins);
+      const merged = mergeLocalsAndRemotes({ local: localPlugins, remote: remotePlugins });
       const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
 
       // Both local & remote counterparts
@@ -64,6 +64,29 @@ describe('Plugins/Helpers', () => {
 
       // Only remote
       expect(findMerged('plugin-4')).toEqual(mergeLocalAndRemote(undefined, getRemotePluginMock({ slug: 'plugin-4' })));
+    });
+
+    test('skips deprecated plugins unless they have a local - installed - counterpart', () => {
+      const merged = mergeLocalsAndRemotes({
+        local: localPlugins,
+        remote: [...remotePlugins, getRemotePluginMock({ slug: 'plugin-5', status: RemotePluginStatus.Deprecated })],
+      });
+      const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
+
+      expect(merged).toHaveLength(4);
+      expect(findMerged('plugin-5')).toBeUndefined();
+    });
+
+    test('keeps deprecated plugins in case they have a local counterpart', () => {
+      const merged = mergeLocalsAndRemotes({
+        local: [...localPlugins, getLocalPluginMock({ id: 'plugin-5' })],
+        remote: [...remotePlugins, getRemotePluginMock({ slug: 'plugin-5', status: RemotePluginStatus.Deprecated })],
+      });
+      const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
+
+      expect(merged).toHaveLength(5);
+      expect(findMerged('plugin-5')).not.toBeUndefined();
+      expect(findMerged('plugin-5')?.isDeprecated).toBe(true);
     });
   });
 
@@ -100,6 +123,7 @@ describe('Plugins/Helpers', () => {
         isDisabled: false,
         isEnterprise: false,
         isInstalled: false,
+        isDeprecated: false,
         isPublished: true,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
@@ -108,24 +132,40 @@ describe('Plugins/Helpers', () => {
         signature: 'valid',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
+        isFullyInstalled: false,
       });
     });
 
     test('adds the correct signature enum', () => {
       const pluginWithoutSignature = { ...remotePlugin, signatureType: '', versionSignatureType: '' } as RemotePlugin;
-      // With only "signatureType" -> valid
-      const pluginWithSignature1 = { ...remotePlugin, signatureType: PluginSignatureType.commercial } as RemotePlugin;
-      // With only "versionSignatureType" -> valid
-      const pluginWithSignature2 = { ...remotePlugin, versionSignatureType: PluginSignatureType.core } as RemotePlugin;
+      // With only "signatureType" -> invalid
+      const pluginWithSignature1 = {
+        ...remotePlugin,
+        signatureType: PluginSignatureType.commercial,
+        versionSignatureType: '',
+      } as RemotePlugin;
+      // With only "versionSignatureType" -> invalid
+      const pluginWithSignature2 = {
+        ...remotePlugin,
+        signatureType: '',
+        versionSignatureType: PluginSignatureType.core,
+      } as RemotePlugin;
+      // With signatureType and versionSignatureType -> valid
+      const pluginWithSignature3 = {
+        ...remotePlugin,
+        signatureType: PluginSignatureType.commercial,
+        versionSignatureType: PluginSignatureType.commercial,
+      } as RemotePlugin;
 
       expect(mapRemoteToCatalog(pluginWithoutSignature).signature).toBe(PluginSignatureStatus.missing);
-      expect(mapRemoteToCatalog(pluginWithSignature1).signature).toBe(PluginSignatureStatus.valid);
-      expect(mapRemoteToCatalog(pluginWithSignature2).signature).toBe(PluginSignatureStatus.valid);
+      expect(mapRemoteToCatalog(pluginWithSignature1).signature).toBe(PluginSignatureStatus.missing);
+      expect(mapRemoteToCatalog(pluginWithSignature2).signature).toBe(PluginSignatureStatus.missing);
+      expect(mapRemoteToCatalog(pluginWithSignature3).signature).toBe(PluginSignatureStatus.valid);
     });
 
     test('adds an "isEnterprise" field', () => {
-      const enterprisePlugin = { ...remotePlugin, status: 'enterprise' } as RemotePlugin;
-      const notEnterprisePlugin = { ...remotePlugin, status: 'unknown' } as RemotePlugin;
+      const enterprisePlugin = { ...remotePlugin, status: RemotePluginStatus.Enterprise } as RemotePlugin;
+      const notEnterprisePlugin = { ...remotePlugin, status: RemotePluginStatus.Active } as RemotePlugin;
 
       expect(mapRemoteToCatalog(enterprisePlugin).isEnterprise).toBe(true);
       expect(mapRemoteToCatalog(notEnterprisePlugin).isEnterprise).toBe(false);
@@ -160,6 +200,7 @@ describe('Plugins/Helpers', () => {
         isEnterprise: false,
         isInstalled: true,
         isPublished: false,
+        isDeprecated: false,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0,
@@ -170,6 +211,7 @@ describe('Plugins/Helpers', () => {
         type: 'app',
         updatedAt: '2021-08-25',
         installedVersion: '4.2.2',
+        isFullyInstalled: true,
       });
     });
 
@@ -208,6 +250,7 @@ describe('Plugins/Helpers', () => {
         isEnterprise: false,
         isInstalled: true,
         isPublished: true,
+        isDeprecated: false,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0.2111,
@@ -218,6 +261,7 @@ describe('Plugins/Helpers', () => {
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
         installedVersion: '4.2.2',
+        isFullyInstalled: true,
       });
     });
 
@@ -304,15 +348,17 @@ describe('Plugins/Helpers', () => {
 
     test('`.isEnterprise` - prefers the remote', () => {
       // Local & Remote
-      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: 'enterprise' })).toMatchObject({
-        isEnterprise: true,
-      });
-      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: 'unknown' })).toMatchObject({
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: RemotePluginStatus.Enterprise })).toMatchObject(
+        {
+          isEnterprise: true,
+        }
+      );
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: RemotePluginStatus.Active })).toMatchObject({
         isEnterprise: false,
       });
 
       // Remote only
-      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: 'enterprise' })).toMatchObject({
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: RemotePluginStatus.Enterprise })).toMatchObject({
         isEnterprise: true,
       });
 
@@ -321,6 +367,34 @@ describe('Plugins/Helpers', () => {
 
       // No local or remote
       expect(mapToCatalogPlugin()).toMatchObject({ isEnterprise: false });
+    });
+
+    test('`.isDeprecated` - comes from the remote', () => {
+      // Local & Remote
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: RemotePluginStatus.Deprecated })).toMatchObject(
+        {
+          isDeprecated: true,
+        }
+      );
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: RemotePluginStatus.Enterprise })).toMatchObject(
+        {
+          isDeprecated: false,
+        }
+      );
+
+      // Remote only
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: RemotePluginStatus.Deprecated })).toMatchObject({
+        isDeprecated: true,
+      });
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: RemotePluginStatus.Enterprise })).toMatchObject({
+        isDeprecated: false,
+      });
+
+      // Local only
+      expect(mapToCatalogPlugin(localPlugin)).toMatchObject({ isDeprecated: false });
+
+      // No local or remote
+      expect(mapToCatalogPlugin()).toMatchObject({ isDeprecated: false });
     });
 
     test('`.isInstalled` - prefers the local', () => {
@@ -656,7 +730,7 @@ describe('Plugins/Helpers', () => {
         id: 'barchart',
       });
 
-      expect(isLocalPluginVisible(plugin)).toBe(true);
+      expect(isLocalPluginVisibleByConfig(plugin)).toBe(true);
     });
 
     test('should return FALSE if the plugin is listed as hidden in the main Grafana configuration', () => {
@@ -665,7 +739,7 @@ describe('Plugins/Helpers', () => {
         id: 'akumuli-datasource',
       });
 
-      expect(isLocalPluginVisible(plugin)).toBe(false);
+      expect(isLocalPluginVisibleByConfig(plugin)).toBe(false);
     });
   });
 
@@ -676,7 +750,7 @@ describe('Plugins/Helpers', () => {
         slug: 'barchart',
       });
 
-      expect(isRemotePluginVisible(plugin)).toBe(true);
+      expect(isRemotePluginVisibleByConfig(plugin)).toBe(true);
     });
 
     test('should return FALSE if the plugin is listed as hidden in the main Grafana configuration', () => {
@@ -685,7 +759,7 @@ describe('Plugins/Helpers', () => {
         slug: 'akumuli-datasource',
       });
 
-      expect(isRemotePluginVisible(plugin)).toBe(false);
+      expect(isRemotePluginVisibleByConfig(plugin)).toBe(false);
     });
   });
 });

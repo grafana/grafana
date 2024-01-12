@@ -114,10 +114,17 @@ Add further value columns by clicking the plus button and another column dropdow
 
 ### Filter data (WHERE)
 
-To add a filter, flip the switch at the top of the editor.
-Using the first dropdown, select if all the filters need to match (AND) or if only one of the filters needs to match (OR).
+To add a filter, toggle the **Filter** switch at the top of the editor.
+This reveals a **Filter by column value** section with two dropdown selectors.
 
-To add more columns to filter on use the plus button.
+Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
+Use the second dropdown to choose a filter.
+
+To filter on more columns, click the plus (`+`) button to the right of the condition dropdown.
+
+To remove a filter, click the `x` button next to that filter's dropdown.
+
+After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column.
 
 ### Group By
 
@@ -232,7 +239,7 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format][data-frames-wide-format]. Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/introduction/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
@@ -491,9 +498,6 @@ conditions.
 
 [configure-standard-options-display-name]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
 [configure-standard-options-display-name]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
-
-[data-frames-wide-format]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
-[data-frames-wide-format]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"

@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, features *featuremgmt.FeatureManager) (*pCfg.Cfg, error) {
+func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, features featuremgmt.FeatureToggles) (*pCfg.Cfg, error) {
 	plugins := settingProvider.Section("plugins")
 	allowedUnsigned := grafanaCfg.PluginsAllowUnsigned
 	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
@@ -41,10 +41,14 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
 		grafanaCfg.AppURL,
+		grafanaCfg.AppSubURL,
 		tracingCfg,
-		featuremgmt.ProvideToggles(features),
+		features,
 		grafanaCfg.AngularSupportEnabled,
 		grafanaCfg.GrafanaComURL,
+		grafanaCfg.DisablePlugins,
+		grafanaCfg.HideAngularDeprecation,
+		grafanaCfg.ForwardHostEnvVars,
 	), nil
 }
 

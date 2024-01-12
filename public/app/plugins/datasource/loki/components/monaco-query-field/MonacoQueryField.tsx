@@ -6,13 +6,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { parser } from '@grafana/lezer-logql';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/completionUtils';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
@@ -40,6 +41,7 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
     verticalScrollbarSize: 8, // used as "padding-right"
     horizontal: 'hidden',
     horizontalScrollbarSize: 0,
+    alwaysConsumeMouseWheel: false,
   },
   scrollBeyondLastLine: false,
   suggest: getSuggestOptions(),
@@ -61,13 +63,20 @@ const LANG_ID = 'logql';
 // we must only run the lang-setup code once
 let LANGUAGE_SETUP_STARTED = false;
 
+export const defaultWordPattern = /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g;
+
 function ensureLogQL(monaco: Monaco) {
   if (LANGUAGE_SETUP_STARTED === false) {
     LANGUAGE_SETUP_STARTED = true;
     monaco.languages.register({ id: LANG_ID });
 
     monaco.languages.setMonarchTokensProvider(LANG_ID, monarchlanguage);
-    monaco.languages.setLanguageConfiguration(LANG_ID, languageConfiguration);
+    monaco.languages.setLanguageConfiguration(LANG_ID, {
+      ...languageConfiguration,
+      wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()+\[{\]}\\|;:',.<>\/?\s]+)/g,
+      // Default:  /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g
+      // Removed `"`, `=`, and `-`, from the exclusion list, so now the completion provider can decide to overwrite any matching words, or just insert text at the cursor
+    });
   }
 }
 
@@ -98,7 +107,8 @@ const MonacoQueryField = ({
   initialValue,
   datasource,
   placeholder,
-  onQueryType,
+  onChange,
+  timeRange,
 }: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
@@ -151,16 +161,12 @@ const MonacoQueryField = ({
   };
 
   const onTypeDebounced = debounce(async (query: string) => {
-    if (!onQueryType) {
-      return;
-    }
-
-    onQueryType(query);
+    onChange(query);
   }, 1000);
 
   return (
     <div
-      aria-label={selectors.components.QueryField.container}
+      data-testid={selectors.components.QueryField.container}
       className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
@@ -191,7 +197,8 @@ const MonacoQueryField = ({
               validateQuery(
                 query,
                 datasource.interpolateString(query, placeHolderScopedVars),
-                model.getLinesContent()
+                model.getLinesContent(),
+                parser
               ) || [];
 
             const markers = errors.map(({ error, ...boundary }) => ({
@@ -205,7 +212,7 @@ const MonacoQueryField = ({
             onTypeDebounced(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
-          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef, timeRange);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

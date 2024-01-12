@@ -28,16 +28,15 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
     const theme = useTheme2();
     const { isFocusVisible, focusProps } = useFocusRing();
     const styles = getStyles(theme, variant, color, isFocusVisible, isSelected);
-    const hasLabel = !label;
+    const hasLabel = !!label;
     const colorLabel = ariaLabel || label;
-
     return (
       <div ref={ref} className={styles.wrapper} data-testid={selectors.components.ColorSwatch.name} {...otherProps}>
         {hasLabel && <span className={styles.label}>{label}</span>}
         <button
           className={styles.swatch}
           {...focusProps}
-          aria-label={hasLabel ? `${colorLabel} color` : 'Pick a color'}
+          aria-label={colorLabel ? `${colorLabel} color` : 'Pick a color'}
           type="button"
         />
       </div>

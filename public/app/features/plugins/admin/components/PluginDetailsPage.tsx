@@ -19,6 +19,8 @@ import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
 import { PluginTabIds } from '../types';
 
+import { PluginDetailsDeprecatedWarning } from './PluginDetailsDeprecatedWarning';
+
 export type Props = {
   // The ID of the plugin
   pluginId: string;
@@ -87,6 +89,7 @@ export function PluginDetailsPage({
           )}
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
+          <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
           <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
         </TabContent>
       </Page.Contents>
@@ -108,6 +111,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     tabContent: css`
       overflow: auto;
       height: 100%;
+      padding-left: 5px;
     `,
   };
 };

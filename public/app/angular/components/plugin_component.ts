@@ -8,20 +8,6 @@ import config from 'app/core/config';
 import { importPanelPlugin } from '../../features/plugins/importPanelPlugin';
 import { importDataSourcePlugin, importAppPlugin } from '../../features/plugins/plugin_loader';
 
-export function relativeTemplateUrlToCDN(templateUrl: string, baseUrl: string) {
-  if (!templateUrl) {
-    return undefined;
-  }
-
-  // the templateUrl may have already been updated with the hostname
-  if (templateUrl.startsWith(config.pluginsCDNBaseURL)) {
-    return templateUrl;
-  }
-
-  // use the 'plugin-cdn' key to load via cdn
-  return `${baseUrl.replace('plugin-cdn/', `${config.pluginsCDNBaseURL}/`)}/${templateUrl}`;
-}
-
 coreModule.directive('pluginComponent', ['$compile', '$http', '$templateCache', '$location', pluginDirectiveLoader]);
 
 function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $location: ILocationService) {
@@ -50,12 +36,8 @@ function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $
   }
 
   function getPluginComponentDirective(options: any) {
-    if (options.baseUrl.includes('plugin-cdn')) {
-      options.Component.templateUrl = relativeTemplateUrlToCDN(options.Component.templateUrl, options.baseUrl);
-    } else {
-      // handle relative template urls for plugin templates
-      options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
-    }
+    // handle relative template urls for plugin templates
+    options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
 
     return () => {
       return {
@@ -105,11 +87,7 @@ function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $
       }
 
       if (panelInfo) {
-        if (panelInfo.baseUrl.includes('plugin-cdn')) {
-          PanelCtrl.templateUrl = relativeTemplateUrlToCDN(PanelCtrl.templateUrl, panelInfo.baseUrl);
-        } else {
-          PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
-        }
+        PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
       }
 
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then((template: any) => {

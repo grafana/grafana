@@ -2,17 +2,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, useStyles2 } from '@grafana/ui';
+import { Card, Grid, useStyles2 } from '@grafana/ui';
 import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  sourcesList: css`
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 12px;
-    list-style: none;
-    margin-bottom: 80px;
-  `,
   heading: css({
     fontSize: theme.typography.h5.fontSize,
     fontWeight: 'inherit',
@@ -55,6 +48,7 @@ export type CardGridItem = {
   logo?: string;
   angularDetected?: boolean;
 };
+
 export interface CardGridProps {
   items: CardGridItem[];
   onClickItem?: (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => void;
@@ -64,7 +58,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <ul className={styles.sourcesList}>
+    <Grid gap={1.5} minColumnWidth={44}>
       {items.map((item) => (
         <Card
           key={item.id}
@@ -89,6 +83,6 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
           ) : null}
         </Card>
       ))}
-    </ul>
+    </Grid>
   );
 };

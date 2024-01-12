@@ -6,8 +6,6 @@ module.exports = {
 
   output: './public/locales/$LOCALE/$NAMESPACE.json',
 
-  pluralSeparator: '__',
-
   sort: true,
 
   createOldCatalogs: false,

@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -38,7 +38,7 @@ type CacheServiceImpl struct {
 func (dc *CacheServiceImpl) GetDatasource(
 	ctx context.Context,
 	datasourceID int64,
-	user *user.SignedInUser,
+	user identity.Requester,
 	skipCache bool,
 ) (*datasources.DataSource, error) {
 	cacheKey := idKey(datasourceID)
@@ -46,7 +46,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
 			ds := cached.(*datasources.DataSource)
-			if ds.OrgID == user.OrgID {
+			if ds.OrgID == user.GetOrgID() {
 				if err := dc.canQuery(user, ds); err != nil {
 					return nil, err
 				}
@@ -55,9 +55,9 @@ func (dc *CacheServiceImpl) GetDatasource(
 		}
 	}
 
-	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgID)
+	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.GetOrgID())
 
-	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.OrgID}
+	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.GetOrgID()}
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
@@ -79,21 +79,21 @@ func (dc *CacheServiceImpl) GetDatasource(
 func (dc *CacheServiceImpl) GetDatasourceByUID(
 	ctx context.Context,
 	datasourceUID string,
-	user *user.SignedInUser,
+	user identity.Requester,
 	skipCache bool,
 ) (*datasources.DataSource, error) {
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
 	}
-	if user.OrgID == 0 {
+	if user.GetOrgID() == 0 {
 		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
 	}
-	uidCacheKey := uidKey(user.OrgID, datasourceUID)
+	uidCacheKey := uidKey(user.GetOrgID(), datasourceUID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(uidCacheKey); found {
 			ds := cached.(*datasources.DataSource)
-			if ds.OrgID == user.OrgID {
+			if ds.OrgID == user.GetOrgID() {
 				if err := dc.canQuery(user, ds); err != nil {
 					return nil, err
 				}
@@ -102,8 +102,8 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 		}
 	}
 
-	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgID)
-	query := &datasources.GetDataSourceQuery{UID: datasourceUID, OrgID: user.OrgID}
+	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.GetOrgID())
+	query := &datasources.GetDataSourceQuery{UID: datasourceUID, OrgID: user.GetOrgID()}
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
@@ -128,8 +128,8 @@ func uidKey(orgID int64, uid string) string {
 	return fmt.Sprintf("ds-orgid-uid-%d-%s", orgID, uid)
 }
 
-func (dc *CacheServiceImpl) canQuery(user *user.SignedInUser, ds *datasources.DataSource) error {
-	guardian := dc.dsGuardian.New(user.OrgID, user, *ds)
+func (dc *CacheServiceImpl) canQuery(user identity.Requester, ds *datasources.DataSource) error {
+	guardian := dc.dsGuardian.New(user.GetOrgID(), user, *ds)
 	if canQuery, err := guardian.CanQuery(ds.ID); err != nil || !canQuery {
 		if err != nil {
 			return err

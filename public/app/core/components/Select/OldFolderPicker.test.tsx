@@ -76,7 +76,7 @@ describe('OldFolderPicker', () => {
     });
   });
 
-  it('should show the General folder by default for editors', async () => {
+  it('should show the Dashboards root by default for editors', async () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
@@ -84,7 +84,7 @@ describe('OldFolderPicker', () => {
         { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
@@ -94,10 +94,10 @@ describe('OldFolderPicker', () => {
 
     const pickerOptions = await screen.findAllByLabelText('Select option');
 
-    expect(pickerOptions[0]).toHaveTextContent('General');
+    expect(pickerOptions[0]).toHaveTextContent('Dashboards');
   });
 
-  it('should not show the General folder by default if showRoot is false', async () => {
+  it('should not show the Dashboards root by default if showRoot is false', async () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
@@ -105,7 +105,7 @@ describe('OldFolderPicker', () => {
         { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} showRoot={false} />);
@@ -115,10 +115,10 @@ describe('OldFolderPicker', () => {
 
     const pickerOptions = await screen.findAllByLabelText('Select option');
 
-    expect(pickerOptions[0]).not.toHaveTextContent('General');
+    expect(pickerOptions[0]).not.toHaveTextContent('Dashboards');
   });
 
-  it('should not show the General folder by default for not editors', async () => {
+  it('should not show the Dashboards root by default for not editors', async () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
@@ -126,7 +126,7 @@ describe('OldFolderPicker', () => {
         { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
@@ -136,7 +136,7 @@ describe('OldFolderPicker', () => {
 
     const pickerOptions = await screen.findAllByLabelText('Select option');
 
-    expect(pickerOptions[0]).not.toHaveTextContent('General');
+    expect(pickerOptions[0]).not.toHaveTextContent('Dashboards');
   });
 
   it('should return the correct search results when typing in the select', async () => {
@@ -148,7 +148,7 @@ describe('OldFolderPicker', () => {
         ].filter((dash) => dash.title.indexOf(query) > -1)
       );
     });
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
 

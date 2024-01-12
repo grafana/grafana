@@ -72,6 +72,7 @@ export interface GetFieldDisplayValuesOptions {
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
+  percentChange?: boolean; // Calculate percent change
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
 }
@@ -186,6 +187,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           } else {
             displayValue.title = getFieldDisplayName(field, dataFrame, data);
           }
+          displayValue.percentChange = options.percentChange
+            ? reduceField({ field: field, reducers: [ReducerID.diffperc] }).diffperc
+            : undefined;
 
           let sparkline: FieldSparkline | undefined = undefined;
           if (options.sparkline) {
@@ -373,9 +377,12 @@ function getDisplayText(display: DisplayValue, fallback: string): string {
 }
 
 export function fixCellTemplateExpressions(str: string) {
-  return str.replace(/\${__cell_(\d+)}|\[\[__cell_(\d+)\]\]|\$__cell_(\d+)/g, (match, fmt1, fmt2, fmt3) => {
-    return `\${__data.fields[${fmt1 ?? fmt2 ?? fmt3}]}`;
-  });
+  return str.replace(
+    /\${__cell_(\d+)(.*?)}|\[\[__cell_(\d+)(.*?)\]\]|\$__cell_(\d+)(\S*)/g,
+    (match, cellNum1, fmt1, cellNum2, fmt2, cellNum3, fmt3) => {
+      return `\${__data.fields[${cellNum1 ?? cellNum2 ?? cellNum3}]${fmt1 ?? fmt2 ?? fmt3}}`;
+    }
+  );
 }
 
 /**

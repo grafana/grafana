@@ -15,11 +15,11 @@ export const Divider = ({ hideLine = false }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  divider: css`
-    margin: ${theme.spacing(4, 0)};
-  `,
-  dividerHideLine: css`
-    border: none;
-    margin: ${theme.spacing(3, 0)};
-  `,
+  divider: css({
+    margin: theme.spacing(4, 0),
+  }),
+  dividerHideLine: css({
+    border: 'none',
+    margin: theme.spacing(3, 0),
+  }),
 });

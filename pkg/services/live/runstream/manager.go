@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 var (
@@ -26,7 +26,7 @@ type ChannelLocalPublisher interface {
 }
 
 type PluginContextGetter interface {
-	GetPluginContext(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error)
+	GetPluginContext(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error)
 }
 
 type NumLocalSubscribersGetter interface {
@@ -185,7 +185,7 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 				dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
 				pCtx, err := s.pluginContextGetter.GetPluginContext(ctx, sr.user, sr.PluginContext.PluginID, dsUID, false)
 				if err != nil {
-					if errors.Is(err, plugincontext.ErrPluginNotFound) {
+					if errors.Is(err, plugins.ErrPluginNotRegistered) {
 						logger.Debug("Datasource not found, stop stream", "channel", sr.Channel, "path", sr.Path)
 						return
 					}
@@ -286,7 +286,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			}
 			newPluginCtx, err := s.pluginContextGetter.GetPluginContext(ctx, sr.user, pluginCtx.PluginID, datasourceUID, false)
 			if err != nil {
-				if errors.Is(err, plugincontext.ErrPluginNotFound) {
+				if errors.Is(err, plugins.ErrPluginNotRegistered) {
 					logger.Info("No plugin context found, stopping stream", "path", sr.Path)
 					return
 				}
@@ -374,7 +374,7 @@ func (s *Manager) Run(ctx context.Context) error {
 type streamRequest struct {
 	Channel       string
 	Path          string
-	user          *user.SignedInUser
+	user          identity.Requester
 	PluginContext backend.PluginContext
 	StreamRunner  StreamRunner
 	Data          []byte
@@ -401,7 +401,7 @@ var errDatasourceNotFound = errors.New("datasource not found")
 
 // SubmitStream submits stream handler in Manager to manage.
 // The stream will be opened and kept till channel has active subscribers.
-func (s *Manager) SubmitStream(ctx context.Context, user *user.SignedInUser, channel string, path string, data []byte, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
+func (s *Manager) SubmitStream(ctx context.Context, user identity.Requester, channel string, path string, data []byte, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
 	if isResubmit {
 		// Resolve new plugin context as it could be modified since last call.
 		var datasourceUID string
@@ -410,7 +410,7 @@ func (s *Manager) SubmitStream(ctx context.Context, user *user.SignedInUser, cha
 		}
 		newPluginCtx, err := s.pluginContextGetter.GetPluginContext(ctx, user, pCtx.PluginID, datasourceUID, false)
 		if err != nil {
-			if errors.Is(err, plugincontext.ErrPluginNotFound) {
+			if errors.Is(err, plugins.ErrPluginNotRegistered) {
 				return nil, errDatasourceNotFound
 			}
 			return nil, err

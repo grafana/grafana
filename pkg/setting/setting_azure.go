@@ -2,6 +2,7 @@ package setting
 
 import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (cfg *Cfg) readAzureSettings() {
@@ -16,6 +17,24 @@ func (cfg *Cfg) readAzureSettings() {
 	// Managed Identity authentication
 	azureSettings.ManagedIdentityEnabled = azureSection.Key("managed_identity_enabled").MustBool(false)
 	azureSettings.ManagedIdentityClientId = azureSection.Key("managed_identity_client_id").String()
+
+	// Workload Identity authentication
+	if azureSection.Key("workload_identity_enabled").MustBool(false) {
+		azureSettings.WorkloadIdentityEnabled = true
+		workloadIdentitySettings := &azsettings.WorkloadIdentitySettings{}
+
+		if val := azureSection.Key("workload_identity_tenant_id").String(); val != "" {
+			workloadIdentitySettings.TenantId = val
+		}
+		if val := azureSection.Key("workload_identity_client_id").String(); val != "" {
+			workloadIdentitySettings.ClientId = val
+		}
+		if val := azureSection.Key("workload_identity_token_file").String(); val != "" {
+			workloadIdentitySettings.TokenFile = val
+		}
+
+		azureSettings.WorkloadIdentitySettings = workloadIdentitySettings
+	}
 
 	// User Identity authentication
 	if azureSection.Key("user_identity_enabled").MustBool(false) {
@@ -44,6 +63,8 @@ func (cfg *Cfg) readAzureSettings() {
 
 		azureSettings.UserIdentityTokenEndpoint = tokenEndpointSettings
 	}
+
+	azureSettings.ForwardSettingsPlugins = util.SplitString(azureSection.Key("forward_settings_to_plugins").String())
 
 	cfg.Azure = azureSettings
 }

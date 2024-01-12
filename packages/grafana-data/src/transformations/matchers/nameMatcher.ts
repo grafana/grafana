@@ -8,6 +8,7 @@ import { FieldMatcherID, FrameMatcherID } from './ids';
 export interface RegexpOrNamesMatcherOptions {
   pattern?: string;
   names?: string[];
+  variable?: string;
 }
 
 /**

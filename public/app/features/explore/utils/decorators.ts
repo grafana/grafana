@@ -10,6 +10,9 @@ import {
   PanelData,
   standardTransformers,
   preProcessPanelData,
+  DataLinkConfigOrigin,
+  getRawDisplayProcessor,
+  DataSourceApi,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -93,14 +96,45 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
 };
 
 export const decorateWithCorrelations = ({
+  showCorrelationEditorLinks,
   queries,
   correlations,
+  defaultTargetDatasource,
 }: {
+  showCorrelationEditorLinks: boolean;
   queries: DataQuery[] | undefined;
   correlations: CorrelationData[] | undefined;
+  defaultTargetDatasource?: DataSourceApi;
 }) => {
   return (data: PanelData): PanelData => {
-    if (queries?.length && correlations?.length) {
+    if (showCorrelationEditorLinks && defaultTargetDatasource) {
+      for (const frame of data.series) {
+        for (const field of frame.fields) {
+          field.config.links = []; // hide all previous links, we only want to show fake correlations in this view
+
+          field.display = field.display || getRawDisplayProcessor();
+
+          const availableVars: Record<string, string> = {};
+          frame.fields.map((field) => {
+            availableVars[`${field.name}`] = "${__data.fields.['" + `${field.name}` + `']}`;
+          });
+
+          field.config.links.push({
+            url: '',
+            origin: DataLinkConfigOrigin.ExploreCorrelationsEditor,
+            title: `Correlate with ${field.name}`,
+            internal: {
+              datasourceUid: defaultTargetDatasource.uid,
+              datasourceName: defaultTargetDatasource.name,
+              query: { datasource: { uid: defaultTargetDatasource.uid } },
+              meta: {
+                correlationData: { resultField: field.name, vars: availableVars, origVars: availableVars },
+              },
+            },
+          });
+        }
+      }
+    } else if (queries?.length && correlations?.length) {
       const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
       attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
     }
@@ -255,11 +289,20 @@ export function decorateData(
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
-  correlations: CorrelationData[] | undefined
+  correlations: CorrelationData[] | undefined,
+  showCorrelationEditorLinks: boolean,
+  defaultCorrelationTargetDatasource?: DataSourceApi
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-    map(decorateWithCorrelations({ queries, correlations })),
+    map(
+      decorateWithCorrelations({
+        defaultTargetDatasource: defaultCorrelationTargetDatasource,
+        showCorrelationEditorLinks,
+        queries,
+        correlations,
+      })
+    ),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),

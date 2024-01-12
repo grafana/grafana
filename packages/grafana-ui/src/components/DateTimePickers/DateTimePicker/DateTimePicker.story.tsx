@@ -4,8 +4,6 @@ import React, { useState } from 'react';
 
 import { dateTime, DateTime } from '@grafana/data';
 
-import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
-
 import { DateTimePicker } from './DateTimePicker';
 import mdx from './DateTimePicker.mdx';
 
@@ -18,7 +16,6 @@ minimumDate.setDate(minimumDate.getDate() - 7);
 
 const meta: Meta<typeof DateTimePicker> = {
   title: 'Pickers and Editors/TimePickers/DateTimePicker',
-  decorators: [withCenteredStory],
   component: DateTimePicker,
   argTypes: {
     date: {

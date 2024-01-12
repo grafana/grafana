@@ -3,6 +3,7 @@ import { ContextSrvStub } from 'test/specs/helpers';
 
 import { dateTime, isDateTime } from '@grafana/data';
 import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+import { EmbeddedScene, SceneCanvasText, SceneTimeRange } from '@grafana/scenes';
 
 import { TimeModel } from '../state/TimeModel';
 
@@ -99,7 +100,7 @@ describe('timeSrv', () => {
         };
 
         locationService.push('/d/id?from=now-24h&to=now');
-        config.isPublicDashboardView = true;
+        config.publicDashboardAccessToken = 'abc123';
         timeSrv = new TimeSrv(new ContextSrvStub());
       });
 
@@ -209,26 +210,26 @@ describe('timeSrv', () => {
         expect(time.to.valueOf()).toEqual(1410337650000);
       });
 
-      it('corrects inverted from/to dates in ms', () => {
+      it('does not correct inverted from/to dates in ms', () => {
         locationService.push('/d/id?from=1621436828909&to=1621436818909');
 
         timeSrv = new TimeSrv(new ContextSrvStub());
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
-        expect(time.from.valueOf()).toEqual(1621436818909);
-        expect(time.to.valueOf()).toEqual(1621436828909);
+        expect(time.from.valueOf()).toEqual(1621436828909);
+        expect(time.to.valueOf()).toEqual(1621436818909);
       });
 
-      it('corrects inverted from/to dates as relative times', () => {
+      it('does not correct inverted from/to dates as relative times', () => {
         locationService.push('/d/id?from=now&to=now-1h');
 
         timeSrv = new TimeSrv(new ContextSrvStub());
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
-        expect(time.raw.from).toBe('now-1h');
-        expect(time.raw.to).toBe('now');
+        expect(time.raw.from).toBe('now');
+        expect(time.raw.to).toBe('now-1h');
       });
     });
   });
@@ -340,6 +341,26 @@ describe('timeSrv', () => {
           expect(timeSrv.isRefreshOutsideThreshold(57000, 0.05)).toBe(true);
         });
       });
+    });
+  });
+
+  describe('Scenes compatibility', () => {
+    it('should use scene provided range if active', () => {
+      timeSrv.setTime({ from: 'now-6h', to: 'now' });
+
+      window.__grafanaSceneContext = new EmbeddedScene({
+        $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
+        body: new SceneCanvasText({ text: 'hello' }),
+      });
+
+      let time = timeSrv.timeRange();
+      expect(time.raw.from).toBe('now-6h');
+      expect(time.raw.to).toBe('now');
+
+      window.__grafanaSceneContext.activate();
+      time = timeSrv.timeRange();
+      expect(time.raw.from).toBe('now-1h');
+      expect(time.raw.to).toBe('now');
     });
   });
 });

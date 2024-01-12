@@ -18,7 +18,7 @@ Alerting rules can only query backend data sources with alerting enabled:
 
 - builtin or developed and maintained by grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
   `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`
-- any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../../developers/plugins/metadata/" >}}))
+- any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json](/developers/plugin-tools/reference-plugin-json)
 
 ## Metrics from the alerting engine
 

@@ -92,7 +92,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			require.Equal(t, nt.OrgID, int64(2))
 			require.Equal(t, nt.UID, "notifier1")
 			require.True(t, nt.IsDefault)
-			require.Equal(t, nt.Settings, map[string]interface{}{
+			require.Equal(t, nt.Settings, map[string]any{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
 			})
 			require.Equal(t, nt.SecureSettings, map[string]string{

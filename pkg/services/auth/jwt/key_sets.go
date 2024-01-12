@@ -97,7 +97,7 @@ func (s *AuthService) initKeySet() error {
 			return ErrFailedToParsePemFile
 		}
 
-		var key interface{}
+		var key any
 		switch block.Type {
 		case "PUBLIC KEY":
 			if key, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
@@ -194,7 +194,11 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	if ks.cacheExpiration > 0 {
 		if val, err := ks.cache.Get(ctx, ks.cacheKey); err == nil {
 			err := json.Unmarshal(val, &jwks)
-			return jwks, err
+			if err != nil {
+				ks.log.Warn("Failed to unmarshal key set from cache", "err", err)
+			} else {
+				return jwks, err
+			}
 		}
 	}
 

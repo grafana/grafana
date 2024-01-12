@@ -12,7 +12,7 @@ import (
 	"xorm.io/core"
 )
 
-func setColumnInt(bean interface{}, col *core.Column, t int64) {
+func setColumnInt(bean any, col *core.Column, t int64) {
 	v, err := col.ValueOf(bean)
 	if err != nil {
 		return
@@ -27,7 +27,7 @@ func setColumnInt(bean interface{}, col *core.Column, t int64) {
 	}
 }
 
-func setColumnTime(bean interface{}, col *core.Column, t time.Time) {
+func setColumnTime(bean any, col *core.Column, t time.Time) {
 	v, err := col.ValueOf(bean)
 	if err != nil {
 		return
@@ -121,5 +121,12 @@ func (session *Session) Distinct(columns ...string) *Session {
 // Nullable Set null when column is zero-value and nullable for update
 func (session *Session) Nullable(columns ...string) *Session {
 	session.statement.Nullable(columns...)
+	return session
+}
+
+// NoAutoTime means do not automatically give created field and updated field
+// the current time on the current session temporarily
+func (session *Session) NoAutoTime() *Session {
+	session.statement.UseAutoTime = false
 	return session
 }

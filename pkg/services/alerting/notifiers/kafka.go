@@ -79,7 +79,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	kn.log.Info("Notifying Kafka", "alert_state", state)
 
 	recordJSON := simplejson.New()
-	records := make([]interface{}, 1)
+	records := make([]any, 1)
 
 	bodyJSON := simplejson.New()
 	// get alert state in the kafka output issue #11401
@@ -97,7 +97,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("client_url", ruleURL)
 
 	if kn.NeedsImage() && evalContext.ImagePublicURL != "" {
-		contexts := make([]interface{}, 1)
+		contexts := make([]any, 1)
 		imageJSON := simplejson.New()
 		imageJSON.Set("type", "image")
 		imageJSON.Set("src", evalContext.ImagePublicURL)

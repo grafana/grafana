@@ -141,48 +141,84 @@ const getStyles = (currentConstraints: Constraint) => (theme: GrafanaTheme2) => 
   const selectionBoxColor = theme.isDark ? '#ffffff' : '#000000';
 
   return {
-    constraintHover: css`
-      &:hover {
-        fill: ${HOVER_COLOR};
-        fill-opacity: ${HOVER_OPACITY};
-      }
-    `,
-    topConstraint: css`
-      ${currentConstraints.vertical === VerticalConstraint.Top ||
+    constraintHover: css({
+      '&:hover': {
+        fill: HOVER_COLOR,
+        fillOpacity: HOVER_OPACITY,
+      },
+    }),
+    topConstraint: css({
+      ...(currentConstraints.vertical === VerticalConstraint.Top ||
       currentConstraints.vertical === VerticalConstraint.TopBottom
-        ? `width: 92pt; x: 1085; fill: ${SELECTED_COLOR};`
-        : `fill: ${selectionBoxColor};`}
-    `,
-    bottomConstraint: css`
-      ${currentConstraints.vertical === VerticalConstraint.Bottom ||
+        ? {
+            width: '92pt',
+            x: '1085',
+            fill: SELECTED_COLOR,
+          }
+        : {
+            fill: selectionBoxColor,
+          }),
+    }),
+    bottomConstraint: css({
+      ...(currentConstraints.vertical === VerticalConstraint.Bottom ||
       currentConstraints.vertical === VerticalConstraint.TopBottom
-        ? `width: 92pt; x: 1085; fill: ${SELECTED_COLOR};`
-        : `fill: ${selectionBoxColor};`}
-    `,
-    leftConstraint: css`
-      ${currentConstraints.horizontal === HorizontalConstraint.Left ||
+        ? {
+            width: '92pt',
+            x: '1085',
+            fill: SELECTED_COLOR,
+          }
+        : {
+            fill: selectionBoxColor,
+          }),
+    }),
+    leftConstraint: css({
+      ...(currentConstraints.horizontal === HorizontalConstraint.Left ||
       currentConstraints.horizontal === HorizontalConstraint.LeftRight
-        ? `height: 92pt; y: 1014; fill: ${SELECTED_COLOR};`
-        : `fill: ${selectionBoxColor};`}
-    `,
-    rightConstraint: css`
-      ${currentConstraints.horizontal === HorizontalConstraint.Right ||
+        ? {
+            height: '92pt',
+            y: '1014',
+            fill: SELECTED_COLOR,
+          }
+        : {
+            fill: selectionBoxColor,
+          }),
+    }),
+    rightConstraint: css({
+      ...(currentConstraints.horizontal === HorizontalConstraint.Right ||
       currentConstraints.horizontal === HorizontalConstraint.LeftRight
-        ? `height: 92pt; y: 1014; fill: ${SELECTED_COLOR};`
-        : `fill: ${selectionBoxColor};`}
-    `,
-    horizontalCenterConstraint: css`
-      ${currentConstraints.horizontal === HorizontalConstraint.Center
-        ? `height: 92pt; y: 1014; fill: ${SELECTED_COLOR};`
-        : `fill: ${selectionBoxColor};`}
-    `,
-    verticalCenterConstraint: css`
-      ${currentConstraints.vertical === VerticalConstraint.Center
-        ? `width: 92pt; x: 1085; fill: ${SELECTED_COLOR};`
-        : `fill: ${selectionBoxColor};`}
-    `,
-    box: css`
-      fill: ${selectionBoxColor};
-    `,
+        ? {
+            height: '92pt',
+            y: '1014',
+            fill: SELECTED_COLOR,
+          }
+        : {
+            fill: selectionBoxColor,
+          }),
+    }),
+    horizontalCenterConstraint: css({
+      ...(currentConstraints.horizontal === HorizontalConstraint.Center
+        ? {
+            height: '92pt',
+            y: '1014',
+            fill: SELECTED_COLOR,
+          }
+        : {
+            fill: selectionBoxColor,
+          }),
+    }),
+    verticalCenterConstraint: css({
+      ...(currentConstraints.vertical === VerticalConstraint.Center
+        ? {
+            width: '92pt',
+            x: '1085',
+            fill: SELECTED_COLOR,
+          }
+        : {
+            fill: selectionBoxColor,
+          }),
+    }),
+    box: css({
+      fill: selectionBoxColor,
+    }),
   };
 };

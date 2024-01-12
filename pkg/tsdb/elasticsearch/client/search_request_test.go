@@ -110,7 +110,7 @@ func TestSearchRequest(t *testing.T) {
 		t.Run("should set correct props", func(t *testing.T) {
 			require.Nil(t, b.customProps["fields"])
 
-			scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
+			scriptFields, ok := b.customProps["script_fields"].(map[string]any)
 			require.True(t, ok)
 			require.Equal(t, 0, len(scriptFields))
 

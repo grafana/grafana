@@ -4,14 +4,14 @@ import { connect, ConnectedProps } from 'react-redux';
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Field } from '@grafana/ui';
+import { Field, Text, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { StoreState } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableLegend } from '../editor/VariableLegend';
-import { VariableTextAreaField } from '../editor/VariableTextAreaField';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getQueryVariableEditorState } from '../editor/selectors';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
@@ -151,15 +151,18 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <Field label="Query">
-          <VariableQueryEditor
-            key={datasource.uid}
-            datasource={datasource}
-            query={query}
-            templateSrv={getTemplateSrv()}
-            onChange={this.onLegacyQueryChange}
-          />
-        </Field>
+        <Box marginBottom={2}>
+          <Text element={'h4'}>Query</Text>
+          <Box marginTop={1}>
+            <VariableQueryEditor
+              key={datasource.uid}
+              datasource={datasource}
+              query={query}
+              templateSrv={getTemplateSrv()}
+              onChange={this.onLegacyQueryChange}
+            />
+          </Box>
+        </Box>
       );
     }
 
@@ -167,19 +170,22 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <Field label="Query">
-          <VariableQueryEditor
-            key={datasource.uid}
-            datasource={datasource}
-            query={query}
-            onChange={this.onQueryChange}
-            onRunQuery={() => {}}
-            data={{ series: [], state: LoadingState.Done, timeRange: range }}
-            range={range}
-            onBlur={() => {}}
-            history={[]}
-          />
-        </Field>
+        <Box marginBottom={2}>
+          <Text element={'h4'}>Query</Text>
+          <Box marginTop={1}>
+            <VariableQueryEditor
+              key={datasource.uid}
+              datasource={datasource}
+              query={query}
+              onChange={this.onQueryChange}
+              onRunQuery={() => {}}
+              data={{ series: [], state: LoadingState.Done, timeRange: range }}
+              range={range}
+              onBlur={() => {}}
+              history={[]}
+            />
+          </Box>
+        </Box>
       );
     }
 

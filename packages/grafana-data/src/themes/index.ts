@@ -15,3 +15,4 @@ export type { ThemeVisualizationColors, ThemeVizColor, ThemeVizHue } from './cre
 /** Exporting the module like this to be able to generate docs properly. */
 import * as colorManipulator from './colorManipulator';
 export { colorManipulator };
+export { ThemeContext } from './context';

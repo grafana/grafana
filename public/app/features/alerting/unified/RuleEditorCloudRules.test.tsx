@@ -3,16 +3,22 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
-import { disableRBAC, mockDataSource } from './mocks';
+import { grantUserPermissions, mockDataSource } from './mocks';
+import {
+  defaultAlertmanagerChoiceResponse,
+  emptyExternalAlertmanagersResponse,
+  mockAlertmanagerChoiceResponse,
+  mockAlertmanagersResponse,
+} from './mocks/alertmanagerApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
@@ -48,6 +54,8 @@ setupDataSources(dataSources.default);
 const server = setupMswServer();
 
 mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
+mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
+mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
 mockApi(server).eval({ results: {} });
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
@@ -74,9 +82,18 @@ describe('RuleEditor cloud', () => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.DataSourcesWrite,
+      AccessControlAction.DataSourcesCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
   });
-
-  disableRBAC();
 
   it('can create a new cloud alert', async () => {
     mocks.api.setRulerRuleGroup.mockResolvedValue();
@@ -110,10 +127,11 @@ describe('RuleEditor cloud', () => {
     expect(removeExpressionsButtons).toHaveLength(2);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
-    await waitFor(() => expect(screen.getByText('Switch to data source-managed alert rule')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Data source-managed')).toBeInTheDocument());
 
-    const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
+    const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
+    expect(switchToCloudButton).not.toBeDisabled();
 
     await user.click(switchToCloudButton);
 
@@ -122,8 +140,8 @@ describe('RuleEditor cloud', () => {
 
     expect(screen.getByTestId('datasource-picker')).toBeInTheDocument();
 
-    const dataSourceSelect = ui.inputs.dataSource.get();
-    await user.click(byRole('combobox').get(dataSourceSelect));
+    const dataSourceSelect = await ui.inputs.dataSource.find();
+    await user.click(dataSourceSelect);
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
 
@@ -143,7 +161,7 @@ describe('RuleEditor cloud', () => {
     await user.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
 
     // save and check what was sent to backend
-    await user.click(ui.buttons.save.get());
+    await user.click(ui.buttons.saveAndExit.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: 'Prom', apiVersion: 'config' },

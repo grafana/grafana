@@ -1,6 +1,8 @@
 import { map } from 'rxjs/operators';
 
-import { dateTimeParse } from '../../datetime';
+import { TimeZone } from '@grafana/schema';
+
+import { DateTimeOptionsWhenParsing, dateTimeParse } from '../../datetime';
 import { SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
 import { fieldMatchers } from '../matchers';
@@ -25,8 +27,17 @@ export interface ConvertFieldTypeOptions {
    * Date format to parse a string datetime
    */
   dateFormat?: string;
-
-  /** When converting to an enumeration, this is the target config */
+  /**
+   * When converting an array to a string, the values can be joined with a custom separator
+   */
+  joinWith?: string;
+  /**
+   * When converting a date to a string an option timezone.
+   */
+  timezone?: TimeZone;
+  /**
+   * When converting to an enumeration, this is the target config
+   */
   enumConfig?: EnumFieldConfig;
 }
 
@@ -36,7 +47,7 @@ export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<Convert
   description: 'Convert a field to a specified field type.',
   defaultOptions: {
     fields: {},
-    conversions: [{ targetField: undefined, destinationType: undefined, dateFormat: undefined }],
+    conversions: [{ targetField: undefined, destinationType: undefined, dateFormat: undefined, timezone: undefined }],
   },
 
   operator: (options, ctx) => (source) =>
@@ -96,7 +107,7 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
-      return fieldToStringField(field, opts.dateFormat);
+      return fieldToStringField(field, opts.dateFormat, { timeZone: opts.timezone }, opts.joinWith);
     case FieldType.boolean:
       return fieldToBooleanField(field);
     case FieldType.enum:
@@ -179,16 +190,29 @@ function fieldToBooleanField(field: Field): Field {
   };
 }
 
-function fieldToStringField(field: Field, dateFormat?: string): Field {
+/**
+ * @internal
+ */
+export function fieldToStringField(
+  field: Field,
+  dateFormat?: string,
+  parseOptions?: DateTimeOptionsWhenParsing,
+  joinWith?: string
+): Field {
   let values = field.values;
 
   switch (field.type) {
     case FieldType.time:
-      values = values.map((v) => dateTimeParse(v).format(dateFormat));
+      values = values.map((v) => dateTimeParse(v, parseOptions).format(dateFormat));
       break;
 
     case FieldType.other:
-      values = values.map((v) => JSON.stringify(v));
+      values = values.map((v) => {
+        if (joinWith?.length && Array.isArray(v)) {
+          return v.join(joinWith);
+        }
+        return JSON.stringify(v); // will quote strings and avoid "object"
+      });
       break;
 
     default:
@@ -242,25 +266,24 @@ export function ensureTimeField(field: Field, dateFormat?: string): Field {
   return fieldToTimeField(field, dateFormat);
 }
 
-function fieldToEnumField(field: Field, cfg?: EnumFieldConfig): Field {
-  const enumConfig = { ...cfg };
+function fieldToEnumField(field: Field, config?: EnumFieldConfig): Field {
+  const enumConfig = { ...config };
   const enumValues = field.values.slice();
+
+  // Create lookup map based on existing enum config text values, if none exist return field as is
   const lookup = new Map<unknown, number>();
-  if (enumConfig.text) {
+  if (enumConfig.text && enumConfig.text.length > 0) {
     for (let i = 0; i < enumConfig.text.length; i++) {
       lookup.set(enumConfig.text[i], i);
     }
   } else {
-    enumConfig.text = [];
+    return field;
   }
 
+  // Convert field values to enum indexes
   for (let i = 0; i < enumValues.length; i++) {
-    const v = enumValues[i];
-    if (!lookup.has(v)) {
-      enumConfig.text[lookup.size] = v;
-      lookup.set(v, lookup.size);
-    }
-    enumValues[i] = lookup.get(v);
+    const value = enumValues[i];
+    enumValues[i] = lookup.get(value);
   }
 
   return {

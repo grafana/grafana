@@ -52,7 +52,7 @@ type DataTableColumn struct {
 type DataTimePoint [2]null.Float
 type DataTimeSeriesPoints []DataTimePoint
 type DataTimeSeriesSlice []DataTimeSeries
-type DataRowValues []interface{}
+type DataRowValues []any
 
 // Deprecated: DataQueryResult should use backend.QueryDataResponse
 type DataQueryResult struct {
@@ -69,7 +69,7 @@ type DataQueryResult struct {
 //
 // Deserialization support is required by tests.
 func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
-	m := map[string]interface{}{}
+	m := map[string]any{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
 	}
 	var meta *simplejson.Json
 	if m["meta"] != nil {
-		mm, ok := m["meta"].(map[string]interface{})
+		mm, ok := m["meta"].(map[string]any)
 		if !ok {
 			return fmt.Errorf("can't decode field meta - not a JSON object")
 		}
@@ -93,22 +93,22 @@ func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
 	*/
 	var tables []DataTable
 	if m["tables"] != nil {
-		ts, ok := m["tables"].([]interface{})
+		ts, ok := m["tables"].([]any)
 		if !ok {
 			return fmt.Errorf("can't decode field tables - not an array of Tables")
 		}
 		for _, ti := range ts {
-			tm, ok := ti.(map[string]interface{})
+			tm, ok := ti.(map[string]any)
 			if !ok {
 				return fmt.Errorf("can't decode field tables - not an array of Tables")
 			}
 			var columns []DataTableColumn
-			cs, ok := tm["columns"].([]interface{})
+			cs, ok := tm["columns"].([]any)
 			if !ok {
 				return fmt.Errorf("can't decode field tables - not an array of Tables")
 			}
 			for _, ci := range cs {
-				cm, ok := ci.(map[string]interface{})
+				cm, ok := ci.(map[string]any)
 				if !ok {
 					return fmt.Errorf("can't decode field tables - not an array of Tables")
 				}
@@ -120,13 +120,13 @@ func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
 				columns = append(columns, DataTableColumn{Text: val})
 			}
 
-			rs, ok := tm["rows"].([]interface{})
+			rs, ok := tm["rows"].([]any)
 			if !ok {
 				return fmt.Errorf("can't decode field tables - not an array of Tables")
 			}
 			var rows []DataRowValues
 			for _, ri := range rs {
-				vals, ok := ri.([]interface{})
+				vals, ok := ri.([]any)
 				if !ok {
 					return fmt.Errorf("can't decode field tables - not an array of Tables")
 				}
@@ -142,7 +142,7 @@ func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
 
 	var dfs *dataFrames
 	if m["dataframes"] != nil {
-		raw, ok := m["dataframes"].([]interface{})
+		raw, ok := m["dataframes"].([]any)
 		if !ok {
 			return fmt.Errorf("can't decode field dataframes - not an array of byte arrays")
 		}

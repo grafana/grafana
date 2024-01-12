@@ -188,10 +188,10 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-func buildRedactedAMs(l log.Logger, alertmanagers []externalAMcfg, ordId int64) []string {
+func buildRedactedAMs(l log.Logger, alertmanagers []ExternalAMcfg, ordId int64) []string {
 	var redactedAMs []string
 	for _, am := range alertmanagers {
-		parsedAM, err := url.Parse(am.amURL)
+		parsedAM, err := url.Parse(am.URL)
 		if err != nil {
 			l.Error("Failed to parse alertmanager string", "org", ordId, "error", err)
 			continue
@@ -208,9 +208,9 @@ func asSHA256(strings []string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcfg, error) {
+func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcfg, error) {
 	var (
-		alertmanagers []externalAMcfg
+		alertmanagers []ExternalAMcfg
 	)
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
@@ -246,9 +246,9 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcf
 				"error", err)
 			continue
 		}
-		alertmanagers = append(alertmanagers, externalAMcfg{
-			amURL:   amURL,
-			headers: headers,
+		alertmanagers = append(alertmanagers, ExternalAMcfg{
+			URL:     amURL,
+			Headers: headers,
 		})
 	}
 	return alertmanagers, nil
@@ -288,7 +288,7 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 		password, parsed.Host, parsed.Path, parsed.RawQuery), nil
 }
 
-func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
 	logger := d.logger.New(key.LogContext()...)
 	if len(alerts.PostableAlerts) == 0 {
 		logger.Info("No alerts to notify about")
@@ -304,7 +304,7 @@ func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.Postable
 		n, err := d.multiOrgNotifier.AlertmanagerFor(key.OrgID)
 		if err == nil {
 			localNotifierExist = true
-			if err := n.PutAlerts(alerts); err != nil {
+			if err := n.PutAlerts(ctx, alerts); err != nil {
 				logger.Error("Failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "error", err)
 			}
 		} else {

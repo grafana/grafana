@@ -3,8 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Button, LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
+import { Alert, Button, Field, Form, HorizontalGroup, Input } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -42,6 +41,10 @@ interface State {
   isLoading: boolean;
 }
 
+interface FormModel {
+  username: string;
+}
+
 const pageNav: NavModelItem = {
   text: 'LDAP',
   subTitle: `Verify your LDAP and user mapping configuration.`,
@@ -76,9 +79,7 @@ export class LdapPage extends PureComponent<Props, State> {
     return await loadUserMapping(username);
   }
 
-  search = (event: any) => {
-    event.preventDefault();
-    const username = event.target.elements['username'].value;
+  search = (username: string) => {
     if (username) {
       this.fetchUserMapping(username);
     }
@@ -98,11 +99,9 @@ export class LdapPage extends PureComponent<Props, State> {
         <Page.Contents isLoading={isLoading}>
           <>
             {ldapError && ldapError.title && (
-              <div className="gf-form-group">
-                <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
-                  {ldapError.body}
-                </Alert>
-              </div>
+              <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
+                {ldapError.body}
+              </Alert>
             )}
 
             <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
@@ -111,31 +110,32 @@ export class LdapPage extends PureComponent<Props, State> {
 
             {canReadLDAPUser && (
               <>
-                <h3 className="page-heading">Test user mapping</h3>
-                <div className="gf-form-group">
-                  <form onSubmit={this.search} className="gf-form-inline">
-                    <FormField
-                      label="Username"
-                      labelWidth={8}
-                      inputWidth={30}
-                      type="text"
-                      id="username"
-                      name="username"
-                      defaultValue={queryParams.username}
-                    />
-                    <Button type="submit">Run</Button>
-                  </form>
-                </div>
+                <h3>Test user mapping</h3>
+                <Form onSubmit={(data: FormModel) => this.search(data.username)}>
+                  {({ register }) => (
+                    <HorizontalGroup>
+                      <Field label="Username">
+                        <Input
+                          {...register('username', { required: true })}
+                          id="username"
+                          type="text"
+                          defaultValue={queryParams.username}
+                        />
+                      </Field>
+                      <Button variant="primary" type="submit">
+                        Run
+                      </Button>
+                    </HorizontalGroup>
+                  )}
+                </Form>
                 {userError && userError.title && (
-                  <div className="gf-form-group">
-                    <Alert
-                      title={userError.title}
-                      severity={AppNotificationSeverity.Error}
-                      onRemove={this.onClearUserError}
-                    >
-                      {userError.body}
-                    </Alert>
-                  </div>
+                  <Alert
+                    title={userError.title}
+                    severity={AppNotificationSeverity.Error}
+                    onRemove={this.onClearUserError}
+                  >
+                    {userError.body}
+                  </Alert>
                 )}
                 {ldapUser && <LdapUserInfo ldapUser={ldapUser} showAttributeMapping={true} />}
               </>

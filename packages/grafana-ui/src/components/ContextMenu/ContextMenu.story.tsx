@@ -2,7 +2,6 @@ import { action } from '@storybook/addon-actions';
 import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { IconButton } from '../IconButton/IconButton';
 
 import { ContextMenu, ContextMenuProps } from './ContextMenu';
@@ -13,7 +12,6 @@ import { WithContextMenu, WithContextMenuProps } from './WithContextMenu';
 const meta: Meta<typeof ContextMenu> = {
   title: 'General/ContextMenu',
   component: ContextMenu,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

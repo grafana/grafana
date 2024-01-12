@@ -17,16 +17,16 @@ const (
 // to avoid having to depend on other packages in the module so that
 // there's no risk of circular dependencies.
 type LogInterface interface {
-	Debug(msg string, ctx ...interface{})
-	Info(msg string, ctx ...interface{})
-	Warn(msg string, ctx ...interface{})
-	Error(msg string, ctx ...interface{})
+	Debug(msg string, ctx ...any)
+	Info(msg string, ctx ...any)
+	Warn(msg string, ctx ...any)
+	Error(msg string, ctx ...any)
 }
 
-func (l LogLevel) LogFunc(logger LogInterface) func(msg string, ctx ...interface{}) {
+func (l LogLevel) LogFunc(logger LogInterface) func(msg string, ctx ...any) {
 	switch l {
 	case LevelNever:
-		return func(_ string, _ ...interface{}) {}
+		return func(_ string, _ ...any) {}
 	case LevelDebug:
 		return logger.Debug
 	case LevelInfo:

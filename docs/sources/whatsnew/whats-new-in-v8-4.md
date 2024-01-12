@@ -3,7 +3,7 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v8-4/
-description: Feature and improvement highlights for Grafana v8.4
+description: Learn about new and updated features in Grafana v8.4
 keywords:
   - grafana
   - new
@@ -84,7 +84,7 @@ Traditionally alerts in the Alert Panel were grouped by the alert rule that crea
 
 #### WeCom contact point
 
-Starting with Grafana 8.4, you can [configure a WeCom](/docs/grafana/next/alerting/unified-alerting/contact-points/#wecom) contact point, to send alert notifications to WeCom.
+Starting with Grafana 8.4, you can configure a [WeCom contact point](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/) , to send alert notifications to WeCom.
 
 ### New panel options
 

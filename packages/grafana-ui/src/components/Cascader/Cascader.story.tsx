@@ -3,8 +3,6 @@ import React from 'react';
 
 import { Cascader } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { CascaderOption } from './Cascader';
 import mdx from './Cascader.mdx';
 
@@ -37,7 +35,6 @@ const options = [
 const meta: Meta<typeof Cascader> = {
   title: 'Forms/Cascader',
   component: Cascader,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

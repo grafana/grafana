@@ -22,12 +22,44 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
     throw new Error('invalid logs-dataframe, string-field missing');
   }
 
-  lineField.values.forEach((line) => {
+  const labelFields = dataFrame.fields.find((f) => f.type === FieldType.other && f.name === 'labels');
+
+  for (let i = 0; i < lineField.values.length; i++) {
     for (const field of newFields) {
-      const logMatch = line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
-      field.values.push(logMatch && logMatch[1]);
+      // `matcherRegex` can be either a RegExp that is used to extract the value from the log line, or it can be a label key to derive the field from the labels
+      if (derivedFieldsGrouped[field.name][0].matcherType === 'label' && labelFields) {
+        const label = labelFields.values[i];
+        if (label) {
+          // Find the key that matches both, the `matcherRegex` and the label key
+          const intersectingKey = Object.keys(label).find(
+            (key) => derivedFieldsGrouped[field.name][0].matcherRegex === key
+          );
+
+          if (intersectingKey) {
+            field.values.push(label[intersectingKey]);
+            continue;
+          }
+        }
+        field.values.push(null);
+      } else if (
+        derivedFieldsGrouped[field.name][0].matcherType === 'regex' ||
+        derivedFieldsGrouped[field.name][0].matcherType === undefined
+      ) {
+        // `matcherRegex` will actually be used as a RegExp here
+        const line = lineField.values[i];
+        const logMatch = line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
+
+        if (logMatch && logMatch[1]) {
+          field.values.push(logMatch[1]);
+          continue;
+        }
+
+        field.values.push(null);
+      } else {
+        field.values.push(null);
+      }
     }
-  });
+  }
 
   return newFields;
 }
@@ -42,6 +74,16 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
       const dsSettings = dataSourceSrv.getInstanceSettings(derivedFieldConfig.datasourceUid);
+      const queryType = (type: string | undefined): string | undefined => {
+        switch (type) {
+          case 'tempo':
+            return 'traceql';
+          case 'grafana-x-ray-datasource':
+            return 'getTrace';
+          default:
+            return undefined;
+        }
+      };
 
       acc.push({
         // Will be filled out later
@@ -49,7 +91,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         url: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         internal: {
-          query: { query: derivedFieldConfig.url, queryType: dsSettings?.type === 'tempo' ? 'traceql' : undefined },
+          query: { query: derivedFieldConfig.url, queryType: queryType(dsSettings?.type) },
           datasourceUid: derivedFieldConfig.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },

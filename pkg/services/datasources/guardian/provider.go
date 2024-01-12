@@ -1,12 +1,12 @@
 package guardian
 
 import (
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type DatasourceGuardianProvider interface {
-	New(orgID int64, user *user.SignedInUser, dataSources ...datasources.DataSource) DatasourceGuardian
+	New(orgID int64, user identity.Requester, dataSources ...datasources.DataSource) DatasourceGuardian
 }
 
 type DatasourceGuardian interface {
@@ -20,6 +20,6 @@ func ProvideGuardian() *OSSProvider {
 
 type OSSProvider struct{}
 
-func (p *OSSProvider) New(orgID int64, user *user.SignedInUser, dataSources ...datasources.DataSource) DatasourceGuardian {
+func (p *OSSProvider) New(orgID int64, user identity.Requester, dataSources ...datasources.DataSource) DatasourceGuardian {
 	return &AllowGuardian{}
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Form, Field, HorizontalGroup } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -37,7 +38,11 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
   const fieldNameLabel = t('browse-dashboards.new-folder-form.name-label', 'Folder name');
 
   return (
-    <Form defaultValues={initialFormModel} onSubmit={(form: FormModel) => onConfirm(form.folderName)}>
+    <Form
+      defaultValues={initialFormModel}
+      onSubmit={(form: FormModel) => onConfirm(form.folderName)}
+      data-testid={selectors.pages.BrowseDashboards.NewFolderForm.form}
+    >
       {({ register, errors }) => (
         <>
           <Field
@@ -46,6 +51,7 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
             error={errors.folderName && errors.folderName.message}
           >
             <Input
+              data-testid={selectors.pages.BrowseDashboards.NewFolderForm.nameInput}
               id="folder-name-input"
               {...register('folderName', {
                 required: translatedFolderNameRequiredPhrase,

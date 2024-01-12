@@ -4,8 +4,6 @@ import React, { PureComponent } from 'react';
 
 import { StatsPicker } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 interface State {
   stats: string[];
 }
@@ -56,7 +54,6 @@ class WrapperWithState extends PureComponent<any, State> {
 const meta: Meta<typeof StatsPicker> = {
   title: 'Pickers and Editors/StatsPicker',
   component: StatsPicker,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['onChange', 'stats', 'defaultStat', 'className'],

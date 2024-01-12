@@ -78,6 +78,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
     return (categoryIndex[categoryName] = new OptionsPaneCategoryDescriptor({
       title: categoryName,
       id: categoryName,
+      sandboxId: plugin.meta.id,
     }));
   };
 
@@ -96,12 +97,14 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
    * Field options
    */
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    if (
-      fieldOption.isCustom &&
-      fieldOption.showIf &&
-      !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)
-    ) {
-      continue;
+    if (fieldOption.isCustom) {
+      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)) {
+        continue;
+      }
+    } else {
+      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series)) {
+        continue;
+      }
     }
 
     if (fieldOption.hideFromDefaults) {

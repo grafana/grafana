@@ -2,7 +2,9 @@ import React from 'react';
 import { components, IndicatorsContainerProps } from 'react-select';
 
 import { Icon } from '../../../Icon/Icon';
+import { Select } from '../../../Select/Select';
 
+/** @deprecated Please use the {@link Select} component*/
 export const IndicatorsContainer = (props: IndicatorsContainerProps) => {
   const isOpen = props.selectProps.menuIsOpen;
   return (

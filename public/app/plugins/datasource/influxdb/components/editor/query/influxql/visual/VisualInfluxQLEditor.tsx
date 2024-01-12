@@ -6,10 +6,10 @@ import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
 import InfluxDatasource from '../../../../../datasource';
 import {
-  getAllMeasurementsForTags,
+  getAllMeasurements,
   getAllPolicies,
-  getFieldKeysForMeasurement,
-  getTagKeysForMeasurementAndTags,
+  getFieldKeys,
+  getTagKeys,
   getTagValues,
 } from '../../../../../influxql_metadata_query';
 import {
@@ -53,13 +53,9 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const { measurement, policy } = query;
 
   const allTagKeys = useMemo(async () => {
-    const tagKeys = (await getTagKeysForMeasurementAndTags(datasource, [], measurement, policy)).map(
-      (tag) => `${tag}::tag`
-    );
+    const tagKeys = (await getTagKeys(datasource, measurement, policy)).map((tag) => `${tag}::tag`);
 
-    const fieldKeys = (await getFieldKeysForMeasurement(datasource, measurement || '', policy)).map(
-      (field) => `${field}::field`
-    );
+    const fieldKeys = (await getFieldKeys(datasource, measurement || '', policy)).map((field) => `${field}::field`);
 
     return new Set([...tagKeys, ...fieldKeys]);
   }, [measurement, policy, datasource]);
@@ -69,9 +65,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
       [
         'field_0',
         () => {
-          return measurement !== undefined
-            ? getFieldKeysForMeasurement(datasource, measurement, policy)
-            : Promise.resolve([]);
+          return measurement !== undefined ? getFieldKeys(datasource, measurement, policy) : Promise.resolve([]);
         },
       ],
     ]);
@@ -80,20 +74,18 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
 
   // the following function is not complicated enough to memoize, but it's result
   // is used in both memoized and un-memoized parts, so we have no choice
-  const getTagKeys = useMemo(
+  const getMemoizedTagKeys = useMemo(
     () => async () => {
-      const selectedTagKeys = new Set(query.tags?.map((tag) => tag.key));
-
-      return [...(await allTagKeys)].filter((tagKey) => !selectedTagKeys.has(tagKey));
+      return [...(await allTagKeys)];
     },
-    [query.tags, allTagKeys]
+    [allTagKeys]
   );
 
   const groupByList = useMemo(() => {
-    const dynamicGroupByPartOptions = new Map([['tag_0', getTagKeys]]);
+    const dynamicGroupByPartOptions = new Map([['tag_0', getMemoizedTagKeys]]);
 
     return makePartList(query.groupBy ?? [], dynamicGroupByPartOptions);
-  }, [getTagKeys, query.groupBy]);
+  }, [getMemoizedTagKeys, query.groupBy]);
 
   const onAppliedChange = (newQuery: InfluxQuery) => {
     props.onChange(newQuery);
@@ -125,11 +117,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
           getMeasurementOptions={(filter) =>
             withTemplateVariableOptions(
               allTagKeys.then((keys) =>
-                getAllMeasurementsForTags(
-                  datasource,
-                  filterTags(query.tags ?? [], keys),
-                  filter === '' ? undefined : filter
-                )
+                getAllMeasurements(datasource, filterTags(query.tags ?? [], keys), filter === '' ? undefined : filter)
               ),
               wrapRegex,
               filter
@@ -143,7 +131,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
         <TagsSection
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
-          getTagKeyOptions={getTagKeys}
+          getTagKeyOptions={getMemoizedTagKeys}
           getTagValueOptions={(key) =>
             withTemplateVariableOptions(
               allTagKeys.then((keys) => getTagValues(datasource, filterTags(query.tags ?? [], keys), key)),
@@ -173,7 +161,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
       <SegmentSection label="GROUP BY" fill={true}>
         <PartListSection
           parts={groupByList}
-          getNewPartOptions={() => getNewGroupByPartOptions(query, getTagKeys)}
+          getNewPartOptions={() => getNewGroupByPartOptions(query, getMemoizedTagKeys)}
           onChange={(partIndex, newParams) => {
             const newQuery = changeGroupByPart(query, partIndex, newParams);
             onAppliedChange(newQuery);

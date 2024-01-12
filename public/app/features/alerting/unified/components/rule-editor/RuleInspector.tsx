@@ -20,7 +20,7 @@ interface Props {
   onClose: () => void;
 }
 
-const tabs = [{ label: 'Yaml', value: 'yaml' }];
+const cloudRulesTabs = [{ label: 'Yaml', value: 'yaml' }];
 
 export const RuleInspector = ({ onClose }: Props) => {
   const [activeTab, setActiveTab] = useState('yaml');
@@ -42,7 +42,7 @@ export const RuleInspector = ({ onClose }: Props) => {
       title="Inspect Alert rule"
       subtitle={
         <div className={styles.subtitle}>
-          <RuleInspectorSubtitle setActiveTab={setActiveTab} activeTab={activeTab} />
+          <RuleInspectorTabs tabs={cloudRulesTabs} setActiveTab={setActiveTab} activeTab={activeTab} />
         </div>
       }
       onClose={onClose}
@@ -52,12 +52,13 @@ export const RuleInspector = ({ onClose }: Props) => {
   );
 };
 
-interface SubtitleProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+interface RuleInspectorTabsProps<T = string> {
+  tabs: Array<{ label: string; value: T }>;
+  activeTab: T;
+  setActiveTab: (tab: T) => void;
 }
 
-export const RuleInspectorSubtitle = ({ activeTab, setActiveTab }: SubtitleProps) => {
+export function RuleInspectorTabs<T extends string>({ tabs, activeTab, setActiveTab }: RuleInspectorTabsProps<T>) {
   return (
     <TabsBar>
       {tabs.map((tab, index) => {
@@ -73,7 +74,7 @@ export const RuleInspectorSubtitle = ({ activeTab, setActiveTab }: SubtitleProps
       })}
     </TabsBar>
   );
-};
+}
 
 interface YamlTabProps {
   onSubmit: (newModel: RuleFormValues) => void;

@@ -43,7 +43,7 @@ class UnThemedTestRuleResult extends PureComponent<Props, State> {
     const { dashboard, panel } = this.props;
 
     // dashboard save model
-    const model = dashboard.getSaveModelClone();
+    const model = dashboard.getSaveModelCloneOld();
 
     // now replace panel to get current edits
     model.panels = model.panels.map((dashPanel) => {

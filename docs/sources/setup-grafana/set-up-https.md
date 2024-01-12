@@ -70,7 +70,7 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
    Country Name (2 letter code) [AU]:US
    State or Province Name (full name) [Some-State]:Virginia
    Locality Name (eg, city) []:Richmond
-   Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+   Organization Name (eg, company) [Internet Pty Ltd]:
    Organizational Unit Name (eg, section) []:
    Common Name (e.g. server FQDN or YOUR name) []:subdomain.mysite.com
    Email Address []:me@mysite.com

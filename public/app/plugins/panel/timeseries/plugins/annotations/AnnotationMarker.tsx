@@ -35,7 +35,7 @@ const POPPER_CONFIG = {
 };
 
 export function AnnotationMarker({ annotation, timeZone, width }: Props) {
-  const { canAddAnnotations, canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
+  const { canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
   const commonStyles = useStyles2(getCommonAnnotationStyles);
   const styles = useStyles2(getStyles);
 
@@ -45,7 +45,7 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
   const [tooltipRef, setTooltipRef] = useState<HTMLDivElement | null>(null);
   const [editorRef, setEditorRef] = useState<HTMLDivElement | null>(null);
 
-  const popoverRenderTimeout = useRef<NodeJS.Timer>();
+  const popoverRenderTimeout = useRef<NodeJS.Timeout>();
 
   const popper = usePopper(markerRef, tooltipRef, POPPER_CONFIG);
   const editorPopper = usePopper(markerRef, editorRef, POPPER_CONFIG);
@@ -97,11 +97,12 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
         timeFormatter={timeFormatter}
         onEdit={onAnnotationEdit}
         onDelete={onAnnotationDelete}
-        canEdit={canEditAnnotations!(annotation.dashboardUID)}
-        canDelete={canDeleteAnnotations!(annotation.dashboardUID)}
+        canEdit={canEditAnnotations ? canEditAnnotations(annotation.dashboardUID) : false}
+        canDelete={canDeleteAnnotations ? canDeleteAnnotations(annotation.dashboardUID) : false}
       />
     );
   }, [canEditAnnotations, canDeleteAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
+
   const isRegionAnnotation = Boolean(annotation.isRegion) && width > MIN_REGION_ANNOTATION_WIDTH;
 
   let left = `${width / 2}px`;

@@ -48,7 +48,7 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 | **Database**                  | Name of your MySQL database.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | **User**                      | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | **Password**                  | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Session Timezone**          | Specifies the time zone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, then the time zone is not updated. For more information, refer to the [MySQL documentation](https://dev.mysql.com/doc/en/time-zone-support.html).                                                                                                                                                                                                      |
+| **Session Timezone**          | Specifies the timezone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set this to `+00:00` so Grafana can handle times properly. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, the timezone will not be updated. For more information, refer to [MySQL Server Time Zone Support](https://dev.mysql.com/doc/en/time-zone-support.html).                                                                                                                                      |
 | **Max open**                  | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | **Max idle**                  | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | **Auto (max idle)**           | Toggle to set the maximum number of idle connections to the number of maximum open connections (available in Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -120,7 +120,7 @@ datasources:
       password: ${GRAFANA_MYSQL_PASSWORD}
 ```
 
-##### Using TLS Verificaiton
+##### Using TLS verification
 
 ```yaml
 apiVersion: 1
@@ -201,10 +201,17 @@ Add further value columns by clicking the plus button and another column dropdow
 
 ### Filter data (WHERE)
 
-To add a filter, flip the switch at the top of the editor.
-Using the first dropdown, select if all the filters need to match (AND) or if only one of the filters needs to match (OR).
+To add a filter, toggle the **Filter** switch at the top of the editor.
+This reveals a **Filter by column value** section with two dropdown selectors.
 
-To add more columns to filter on use the plus button.
+Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
+Use the second dropdown to choose a filter.
+
+To filter on more columns, click the plus (`+`) button to the right of the condition dropdown.
+
+To remove a filter, click the `x` button next to that filter's dropdown.
+
+After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column.
 
 ### Group By
 
@@ -297,7 +304,7 @@ The examples in this section query the following table:
 
 If the `Format as` query option is set to `Time Series` then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format][data-frames-wide-format]. Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/introduction/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
@@ -488,7 +495,7 @@ ORDER BY atimestamp ASC
 
 #### Disabling Quoting for Multi-value Variables
 
-Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. Do disable quoting, use the csv formatting option for variables:
+Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. To disable quoting, use the csv formatting option for variables:
 
 `${servers:csv}`
 
@@ -566,9 +573,6 @@ Time series queries should work in alerting conditions. Table formatted queries 
 
 [configure-standard-options-display-name]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
 [configure-standard-options-display-name]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
-
-[data-frames-wide-format]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
-[data-frames-wide-format]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"

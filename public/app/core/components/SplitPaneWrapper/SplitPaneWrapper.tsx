@@ -13,6 +13,7 @@ interface Props {
   maxSize?: number;
   primary?: 'first' | 'second';
   onDragFinished?: (size?: number) => void;
+  parentStyle?: React.CSSProperties;
   paneStyle?: React.CSSProperties;
   secondaryPaneStyle?: React.CSSProperties;
 }
@@ -58,6 +59,7 @@ export class SplitPaneWrapper extends PureComponent<React.PropsWithChildren<Prop
       maxSize,
       minSize,
       primary,
+      parentStyle,
       paneStyle,
       secondaryPaneStyle,
       splitVisible = true,
@@ -87,6 +89,7 @@ export class SplitPaneWrapper extends PureComponent<React.PropsWithChildren<Prop
 
     return (
       <SplitPane
+        className={styles.splitPane}
         split={splitOrientation}
         minSize={minSize}
         maxSize={maxSize}
@@ -95,6 +98,7 @@ export class SplitPaneWrapper extends PureComponent<React.PropsWithChildren<Prop
         resizerClassName={splitOrientation === 'horizontal' ? styles.resizerH : styles.resizerV}
         onDragStarted={() => this.onDragStarted()}
         onDragFinished={(size) => this.onDragFinished(size)}
+        style={parentStyle}
         paneStyle={paneStyle}
         pane2Style={secondaryPaneStyle}
       >
@@ -141,6 +145,9 @@ const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
   `;
 
   return {
+    splitPane: css({
+      overflow: 'visible !important',
+    }),
     resizerV: cx(
       resizer,
       css`

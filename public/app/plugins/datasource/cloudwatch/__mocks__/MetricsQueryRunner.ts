@@ -1,8 +1,7 @@
 import { of, throwError } from 'rxjs';
 
 import { CustomVariableModel, DataQueryError, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendDataSourceResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 
 import { CloudWatchMetricsQueryRunner } from '../query-runner/CloudWatchMetricsQueryRunner';
 import { CloudWatchJsonData, CloudWatchQuery } from '../types';
@@ -15,33 +14,20 @@ export function setupMockedMetricsQueryRunner({
     results: {},
   },
   variables,
-  mockGetVariableName = true,
-  throws = false,
+  errorResponse,
   instanceSettings = CloudWatchSettings,
 }: {
-  data?: BackendDataSourceResponse | DataQueryError;
+  data?: BackendDataSourceResponse;
   variables?: CustomVariableModel[];
-  mockGetVariableName?: boolean;
-  throws?: boolean;
+  errorResponse?: DataQueryError;
   instanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
-  let templateService = new TemplateSrv();
-  if (variables) {
-    templateService = setupMockedTemplateService(variables);
-    if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name.replace('$', '');
-    }
-  }
+  const templateService = setupMockedTemplateService(variables);
 
+  const queryMock = errorResponse
+    ? jest.fn().mockImplementation(() => throwError(errorResponse))
+    : jest.fn().mockReturnValue(of(toDataQueryResponse({ data })));
   const runner = new CloudWatchMetricsQueryRunner(instanceSettings, templateService);
-  const fetchMock = throws
-    ? jest.fn().mockImplementation(() => throwError(data))
-    : jest.fn().mockReturnValue(of({ data }));
-
-  setBackendSrv({
-    ...getBackendSrv(),
-    fetch: fetchMock,
-  });
 
   const request: DataQueryRequest<CloudWatchQuery> = {
     range: TimeRangeMock,
@@ -56,5 +42,5 @@ export function setupMockedMetricsQueryRunner({
     startTime: 0,
   };
 
-  return { runner, fetchMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
+  return { runner, queryMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
 }

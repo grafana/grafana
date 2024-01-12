@@ -4,6 +4,7 @@ import {
   DataTransformerConfig,
   DataSourceInstanceSettings,
   DataSourceRef,
+  DataQuery,
 } from '@grafana/data';
 import { DataSourceSrv } from '@grafana/runtime';
 
@@ -81,9 +82,9 @@ describe('getAlertingValidationMessage', () => {
         },
         reload: jest.fn(),
       };
-      const targets: any[] = [
-        { refId: 'A', query: 'some query', datasource: 'alertingDatasource' },
-        { refId: 'B', query: 'some query', datasource: 'datasource' },
+      const targets: DataQuery[] = [
+        { refId: 'A', datasource: { type: 'alertingDatasource' } },
+        { refId: 'B', datasource: { type: 'datasource' } },
       ];
       const transformations: DataTransformerConfig[] = [];
 

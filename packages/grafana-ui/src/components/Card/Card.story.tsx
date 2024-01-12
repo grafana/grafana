@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
 import { VerticalGroup } from '../Layout/Layout';
@@ -15,7 +14,6 @@ const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 const meta: Meta<typeof Card> = {
   title: 'General/Card',
   component: Card,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

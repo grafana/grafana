@@ -153,7 +153,6 @@ export function restore(version: number, restoredFrom?: number) {
           },
         ],
         schemaVersion: 14,
-        style: 'dark',
         tags: ['development'],
         templating: {
           list: [],

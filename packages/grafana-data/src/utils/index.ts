@@ -10,6 +10,7 @@ export * from './object';
 export * from './namedColorsPalette';
 export * from './series';
 export * from './binaryOperators';
+export * from './unaryOperators';
 export * from './nodeGraph';
 export * from './selectUtils';
 export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './OptionsUIBuilders';
@@ -25,3 +26,4 @@ export { withLoadingIndicator, type WithLoadingIndicatorOptions } from './withLo
 export { convertOldAngularValueMappings, LegacyMappingType } from './valueMappings';
 export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './variables';
 export { renderLegendFormat } from './legend';
+export { matchPluginId } from './matchPluginId';

@@ -30,7 +30,7 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 		frame.RefID = query.getRefID()
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"alignmentPeriod":  params.Get("aggregation.alignmentPeriod"),
 				"perSeriesAligner": params.Get("aggregation.perSeriesAligner"),
 				"labels":           seriesLabels,
@@ -68,9 +68,9 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
 			filter = fmt.Sprintf(`resource.type="%s" %s`, resourceType, filter)
 		}
 	}
-	dataSets := []map[string]interface{}{
+	dataSets := []map[string]any{
 		{
-			"timeSeriesFilter": map[string]interface{}{
+			"timeSeriesFilter": map[string]any{
 				"aggregations":           []string{},
 				"crossSeriesReducer":     timeSeriesFilter.params.Get("aggregation.crossSeriesReducer"),
 				"filter":                 filter,

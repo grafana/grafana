@@ -1,53 +1,70 @@
-import React, { useState } from 'react';
-import { Disable, Enable } from 'react-enable';
-import { useParams } from 'react-router-dom';
+import React, { useMemo } from 'react';
 
-import { Button, HorizontalGroup, withErrorBoundary } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Alert, withErrorBoundary } from '@grafana/ui';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaRuleInspector } from './components/rule-editor/GrafanaRuleInspector';
-import { AlertingFeature } from './features';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { useCombinedRule } from './hooks/useCombinedRule';
+import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
 
 const DetailViewV1 = SafeDynamicImport(() => import('./components/rule-viewer/RuleViewer.v1'));
-const DetailViewV2 = SafeDynamicImport(() => import('./components/rule-viewer/v2/RuleViewer.v2'));
+const DetailViewV2 = React.lazy(() => import('./components/rule-viewer/v2/RuleViewer.v2'));
 
 type RuleViewerProps = GrafanaRouteComponentProps<{
   id: string;
   sourceName: string;
 }>;
 
+const newAlertDetailView = Boolean(config.featureToggles.alertingDetailsViewV2) === true;
+
 const RuleViewer = (props: RuleViewerProps): JSX.Element => {
-  const routeParams = useParams<{ type: string; id: string }>();
-  const uidFromParams = routeParams.id;
+  return newAlertDetailView ? <RuleViewerV2Wrapper {...props} /> : <RuleViewerV1Wrapper {...props} />;
+};
 
-  const sourceName = props.match.params.sourceName;
+export const defaultPageNav: NavModelItem = {
+  id: 'alert-rule-view',
+  text: '',
+};
 
-  const [showYaml, setShowYaml] = useState(false);
-  const actionButtons =
-    sourceName === GRAFANA_RULES_SOURCE_NAME ? (
-      <HorizontalGroup height="auto" justify="flex-end">
-        <Button variant="secondary" type="button" onClick={() => setShowYaml(true)} size="sm">
-          View YAML
-        </Button>
-      </HorizontalGroup>
-    ) : null;
+const RuleViewerV1Wrapper = (props: RuleViewerProps) => <DetailViewV1 {...props} />;
 
-  return (
-    <AlertingPageWrapper>
-      <AppChromeUpdate actions={actionButtons} />
-      {showYaml && <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowYaml(false)} />}
-      <Enable feature={AlertingFeature.DetailsViewV2}>
-        <DetailViewV2 {...props} />
-      </Enable>
-      <Disable feature={AlertingFeature.DetailsViewV2}>
-        <DetailViewV1 {...props} />
-      </Disable>
-    </AlertingPageWrapper>
-  );
+const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
+  const id = getRuleIdFromPathname(props.match.params);
+  const identifier = useMemo(() => {
+    if (!id) {
+      throw new Error('Rule ID is required');
+    }
+
+    return parseRuleId(id, true);
+  }, [id]);
+
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
+
+  // TODO improve error handling here
+  if (error) {
+    if (typeof error === 'string') {
+      return error;
+    }
+
+    return <Alert title={'Uh-oh'}>Something went wrong loading the rule</Alert>;
+  }
+
+  if (loading) {
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true}>
+        <></>
+      </AlertingPageWrapper>
+    );
+  }
+
+  if (rule) {
+    return <DetailViewV2 rule={rule} identifier={identifier} />;
+  }
+
+  return null;
 };
 
 export default withErrorBoundary(RuleViewer, { style: 'page' });

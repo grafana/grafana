@@ -46,7 +46,7 @@ func (m *MockService) CreateRenderingSession(arg0 context.Context, arg1 AuthOpts
 }
 
 // CreateRenderingSession indicates an expected call of CreateRenderingSession.
-func (mr *MockServiceMockRecorder) CreateRenderingSession(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) CreateRenderingSession(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRenderingSession", reflect.TypeOf((*MockService)(nil).CreateRenderingSession), arg0, arg1, arg2)
 }
@@ -61,7 +61,7 @@ func (m *MockService) GetRenderUser(arg0 context.Context, arg1 string) (*RenderU
 }
 
 // GetRenderUser indicates an expected call of GetRenderUser.
-func (mr *MockServiceMockRecorder) GetRenderUser(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetRenderUser(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRenderUser", reflect.TypeOf((*MockService)(nil).GetRenderUser), arg0, arg1)
 }
@@ -76,7 +76,7 @@ func (m *MockService) HasCapability(arg0 context.Context, arg1 CapabilityName) (
 }
 
 // HasCapability indicates an expected call of HasCapability.
-func (mr *MockServiceMockRecorder) HasCapability(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) HasCapability(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasCapability", reflect.TypeOf((*MockService)(nil).HasCapability), arg0, arg1)
 }
@@ -90,7 +90,7 @@ func (m *MockService) IsAvailable(arg0 context.Context) bool {
 }
 
 // IsAvailable indicates an expected call of IsAvailable.
-func (mr *MockServiceMockRecorder) IsAvailable(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) IsAvailable(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAvailable", reflect.TypeOf((*MockService)(nil).IsAvailable), arg0)
 }
@@ -105,7 +105,7 @@ func (m *MockService) Render(arg0 context.Context, arg1 Opts, arg2 Session) (*Re
 }
 
 // Render indicates an expected call of Render.
-func (mr *MockServiceMockRecorder) Render(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Render(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Render", reflect.TypeOf((*MockService)(nil).Render), arg0, arg1, arg2)
 }
@@ -120,7 +120,7 @@ func (m *MockService) RenderCSV(arg0 context.Context, arg1 CSVOpts, arg2 Session
 }
 
 // RenderCSV indicates an expected call of RenderCSV.
-func (mr *MockServiceMockRecorder) RenderCSV(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) RenderCSV(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenderCSV", reflect.TypeOf((*MockService)(nil).RenderCSV), arg0, arg1, arg2)
 }
@@ -135,7 +135,7 @@ func (m *MockService) RenderErrorImage(arg0 models.Theme, arg1 error) (*RenderRe
 }
 
 // RenderErrorImage indicates an expected call of RenderErrorImage.
-func (mr *MockServiceMockRecorder) RenderErrorImage(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) RenderErrorImage(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenderErrorImage", reflect.TypeOf((*MockService)(nil).RenderErrorImage), arg0, arg1)
 }
@@ -150,7 +150,7 @@ func (m *MockService) SanitizeSVG(arg0 context.Context, arg1 *SanitizeSVGRequest
 }
 
 // SanitizeSVG indicates an expected call of SanitizeSVG.
-func (mr *MockServiceMockRecorder) SanitizeSVG(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) SanitizeSVG(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SanitizeSVG", reflect.TypeOf((*MockService)(nil).SanitizeSVG), arg0, arg1)
 }

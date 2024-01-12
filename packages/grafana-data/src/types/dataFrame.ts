@@ -68,6 +68,7 @@ export interface FieldConfig<TOptions = any> {
 
   // Numeric Options
   unit?: string;
+  unitScale?: boolean;
   decimals?: DecimalCount; // Significant digits (for display)
   min?: number | null;
   max?: number | null;
@@ -101,6 +102,9 @@ export interface FieldConfig<TOptions = any> {
 
   // Panel Specific Values
   custom?: TOptions;
+
+  // Calculate min max per field
+  fieldMinMax?: boolean;
 }
 
 export interface FieldTypeConfig {
@@ -242,6 +246,11 @@ export interface DataFrame extends QueryResultBase {
 
   // The number of rows
   length: number;
+}
+
+// Data frame that include aggregate value, for use by timeSeriesTableTransformer / chart cell type
+export interface DataFrameWithValue extends DataFrame {
+  value: number | null;
 }
 
 /**

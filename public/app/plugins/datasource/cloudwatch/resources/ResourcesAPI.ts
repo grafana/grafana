@@ -1,8 +1,7 @@
 import { memoize } from 'lodash';
 
 import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getBackendSrv, config, TemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchRequest } from '../query-runner/CloudWatchRequest';
 import { CloudWatchJsonData, LogGroupField, MultiFilters } from '../types';
@@ -19,6 +18,7 @@ import {
   GetDimensionValuesRequest,
   MetricResponse,
   SelectableResourceValue,
+  RegionResponse,
 } from './types';
 
 export class ResourcesAPI extends CloudWatchRequest {
@@ -51,11 +51,23 @@ export class ResourcesAPI extends CloudWatchRequest {
       .catch(() => false);
   }
 
-  getRegions() {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('regions').then((regions) => [
-      { label: 'default', value: 'default', text: 'default' },
-      ...regions.filter((r) => r.value),
-    ]);
+  getRegions(): Promise<SelectableResourceValue[]> {
+    if (!config.featureToggles.cloudwatchNewRegionsHandler) {
+      return this.memoizedGetRequest<SelectableResourceValue[]>('regions').then((regions) => [
+        { label: 'default', value: 'default', text: 'default' },
+        ...regions.filter((r) => r.value),
+      ]);
+    }
+    return this.memoizedGetRequest<Array<ResourceResponse<RegionResponse>>>('regions').then((regions) => {
+      return [
+        { label: 'default', value: 'default', text: 'default' },
+        ...regions.map((r) => ({
+          label: r.value.name,
+          value: r.value.name,
+          text: r.value.name,
+        })),
+      ].filter((r) => r.value);
+    });
   }
 
   getNamespaces() {
@@ -162,6 +174,13 @@ export class ResourcesAPI extends CloudWatchRequest {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       resourceType: this.templateSrv.replace(resourceType),
       tags: JSON.stringify(this.convertMultiFilterFormat(tags, 'tag name')),
+    });
+  }
+
+  legacyDescribeLogGroups(region: string, logGroupNamePrefix?: string) {
+    return this.memoizedGetRequest<SelectableResourceValue[]>('legacy-log-groups', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+      logGroupNamePrefix: logGroupNamePrefix || '',
     });
   }
 }

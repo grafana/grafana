@@ -11,6 +11,7 @@ import {
   PluginInstalledBadge,
   PluginUpdateAvailableBadge,
   PluginAngularBadge,
+  PluginDeprecatedBadge,
 } from './Badges';
 
 type PluginBadgeType = {
@@ -35,6 +36,7 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
     <HorizontalGroup height="auto" wrap>
       <PluginSignatureBadge status={plugin.signature} />
       {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
+      {plugin.isDeprecated && <PluginDeprecatedBadge />}
       {plugin.isInstalled && <PluginInstalledBadge />}
       {hasUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
       {plugin.angularDetected && <PluginAngularBadge />}

@@ -1,24 +1,14 @@
 import { css } from '@emotion/css';
-import React, {
-  createElement,
-  CSSProperties,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import ReactDomServer from 'react-dom/server';
+import React, { createElement, CSSProperties } from 'react';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { Tooltip } from '../Tooltip/Tooltip';
 
+import { TruncatedText } from './TruncatedText';
 import { customWeight, customColor, customVariant } from './utils';
 
-export interface TextProps {
+export interface TextProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   /** Defines what HTML element is defined underneath. "span" by default */
   element?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
@@ -37,75 +27,37 @@ export interface TextProps {
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, element, variant, color, weight, truncate, italic, textAlignment),
-        [color, textAlignment, truncate, italic, weight, variant, element]
-      )
-    );
-    const [isOverflowing, setIsOverflowing] = useState(false);
-    const internalRef = useRef<HTMLElement>(null);
+  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children, ...restProps }, ref) => {
+    const styles = useStyles2(getTextStyles, element, variant, color, weight, truncate, italic, textAlignment);
 
-    // wire up the forwarded ref to the internal ref
-    useImperativeHandle<HTMLElement | null, HTMLElement | null>(ref, () => internalRef.current);
-
-    const childElement = createElement(
-      element,
-      {
-        className: styles,
-        // when overflowing, the internalRef is passed to the tooltip which forwards it on to the child element
-        ref: isOverflowing ? undefined : internalRef,
-      },
-      children
-    );
-
-    const resizeObserver = useMemo(
-      () =>
-        new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            if (entry.target.clientWidth && entry.target.scrollWidth) {
-              if (entry.target.scrollWidth > entry.target.clientWidth) {
-                setIsOverflowing(true);
-              }
-              if (entry.target.scrollWidth <= entry.target.clientWidth) {
-                setIsOverflowing(false);
-              }
-            }
-          }
-        }),
-      []
-    );
-
-    useEffect(() => {
-      const { current } = internalRef;
-      if (current && truncate) {
-        resizeObserver.observe(current);
-      }
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }, [isOverflowing, resizeObserver, truncate]);
-
-    const getTooltipText = (children: NonNullable<React.ReactNode>) => {
-      if (typeof children === 'string') {
-        return children;
-      }
-      const html = ReactDomServer.renderToStaticMarkup(<>{children}</>);
-      const getRidOfTags = html.replace(/(<([^>]+)>)/gi, '');
-      return getRidOfTags;
-    };
-    // A 'span' is an inline element therefore it can't be truncated
-    // and it should be wrapped in a parent element that is the one that will show the tooltip
-    if (truncate && isOverflowing && element !== 'span') {
-      return (
-        <Tooltip ref={internalRef} content={getTooltipText(children)}>
-          {childElement}
-        </Tooltip>
+    const childElement = (ref: React.ForwardedRef<HTMLElement> | undefined) => {
+      return createElement(
+        element,
+        {
+          ...restProps,
+          style: undefined, // Remove the style prop to avoid overriding the styles
+          className: styles,
+          // When overflowing, the internalRef is passed to the tooltip, which forwards it to the child element
+          ref,
+        },
+        children
       );
-    } else {
-      return childElement;
+    };
+
+    // A 'span' is an inline element, so it can't be truncated
+    // and it should be wrapped in a parent element that will show the tooltip
+    if (!truncate || element === 'span') {
+      return childElement(undefined);
     }
+
+    return (
+      <TruncatedText
+        childElement={childElement}
+        // eslint-disable-next-line react/no-children-prop
+        children={children}
+        ref={ref}
+      />
+    );
   }
 );
 

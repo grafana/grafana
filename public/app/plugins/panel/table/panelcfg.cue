@@ -45,6 +45,9 @@ composableKinds: PanelCfg: {
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
 				} @cuetsy(kind="interface")
+				FieldConfig: {
+					ui.TableFieldOptions
+				} @cuetsy(kind="interface")
 			}
 		}]
 		lenses: []

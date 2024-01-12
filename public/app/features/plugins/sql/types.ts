@@ -1,4 +1,4 @@
-import { JsonTree } from 'react-awesome-query-builder';
+import { JsonTree } from '@react-awesome-query-builder/ui';
 
 import {
   DataFrame,
@@ -168,3 +168,5 @@ export interface MetaDefinition {
   completion?: string;
   kind: CompletionItemKind;
 }
+
+export type SQLDialect = 'postgres' | 'influx' | 'other';

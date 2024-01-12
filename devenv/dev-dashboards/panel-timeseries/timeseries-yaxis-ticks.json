@@ -1344,7 +1344,6 @@
   ],
   "refresh": "",
   "schemaVersion": 38,
-  "style": "dark",
   "tags": [
     "gdev",
     "panel-tests",

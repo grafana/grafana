@@ -28,6 +28,7 @@ theme.dark.generated.json
 
 # Generated Swagger API specs
 public/api-merged.json
+public/api-enterprise-spec.json
 public/openapi3.json
 
 # Generated Kinds report

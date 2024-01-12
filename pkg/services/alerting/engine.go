@@ -9,6 +9,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -206,13 +207,8 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		defer func() {
 			if err := recover(); err != nil {
 				e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
+				span.SetStatus(codes.Error, "failed to execute alert rule. panic was recovered.")
 				span.RecordError(fmt.Errorf("%v", err))
-				span.AddEvents(
-					[]string{"error", "message"},
-					[]tracing.EventValue{
-						{Str: fmt.Sprintf("%v", err)},
-						{Str: "failed to execute alert rule. panic was recovered."},
-					})
 				span.End()
 				close(attemptChan)
 			}
@@ -220,20 +216,17 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 
 		e.evalHandler.Eval(evalContext)
 
-		span.SetAttributes("alertId", evalContext.Rule.ID, attribute.Key("alertId").Int64(evalContext.Rule.ID))
-		span.SetAttributes("dashboardId", evalContext.Rule.DashboardID, attribute.Key("dashboardId").Int64(evalContext.Rule.DashboardID))
-		span.SetAttributes("firing", evalContext.Firing, attribute.Key("firing").Bool(evalContext.Firing))
-		span.SetAttributes("nodatapoints", evalContext.NoDataFound, attribute.Key("nodatapoints").Bool(evalContext.NoDataFound))
-		span.SetAttributes("attemptID", attemptID, attribute.Key("attemptID").Int(attemptID))
+		span.SetAttributes(
+			attribute.Int64("alertId", evalContext.Rule.ID),
+			attribute.Int64("dashboardId", evalContext.Rule.DashboardID),
+			attribute.Bool("firing", evalContext.Firing),
+			attribute.Bool("nodatapoints", evalContext.NoDataFound),
+			attribute.Int("attemptID", attemptID),
+		)
 
 		if evalContext.Error != nil {
+			span.SetStatus(codes.Error, "alerting execution attempt failed")
 			span.RecordError(evalContext.Error)
-			span.AddEvents(
-				[]string{"error", "message"},
-				[]tracing.EventValue{
-					{Str: fmt.Sprintf("%v", evalContext.Error)},
-					{Str: "alerting execution attempt failed"},
-				})
 
 			if attemptID < setting.AlertingMaxAttempts {
 				span.End()

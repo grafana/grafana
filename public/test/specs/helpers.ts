@@ -6,7 +6,7 @@ import config from 'app/core/config';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
-import { angularMocks, sinon } from '../lib/common';
+import { angularMocks } from '../lib/common';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -39,7 +39,7 @@ export function ControllerTestContext(this: any) {
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
       $provide.value('$sanitize', self.$sanitize);
-      each(mocks, (value: any, key: any) => {
+      each(mocks, (value, key) => {
         $provide.value(key, value);
       });
     });
@@ -56,8 +56,8 @@ export function ControllerTestContext(this: any) {
         return self.isUtc ? 'utc' : 'browser';
       };
 
-      $rootScope.appEvent = sinon.spy();
-      $rootScope.onAppEvent = sinon.spy();
+      $rootScope.appEvent = jest.fn();
+      $rootScope.onAppEvent = jest.fn();
       $rootScope.colors = [];
 
       for (let i = 0; i < 50; i++) {
@@ -85,8 +85,8 @@ export function ControllerTestContext(this: any) {
       self.scope.dashboard = { meta: {} };
       self.scope.dashboardMeta = {};
       self.scope.dashboardViewState = DashboardViewStateStub();
-      self.scope.appEvent = sinon.spy();
-      self.scope.onAppEvent = sinon.spy();
+      self.scope.appEvent = jest.fn();
+      self.scope.onAppEvent = jest.fn();
 
       $rootScope.colors = [];
       for (let i = 0; i < 50; i++) {
@@ -101,7 +101,7 @@ export function ControllerTestContext(this: any) {
     });
   };
 
-  this.setIsUtc = (isUtc: any = false) => {
+  this.setIsUtc = (isUtc = false) => {
     self.isUtc = isUtc;
   };
 }
@@ -129,7 +129,7 @@ export class TimeSrvStub {
     };
   }
 
-  setTime(time: any) {
+  setTime(time: RawTimeRange) {
     this.time = time;
   }
 }
@@ -161,7 +161,7 @@ export function TemplateSrvStub(this: any) {
     return template(text, this.templateSettings)(this.data);
   };
   this.init = () => {};
-  this.getAdhocFilters = (): any => {
+  this.getAdhocFilters = () => {
     return [];
   };
   this.fillVariableValuesForUrl = () => {};

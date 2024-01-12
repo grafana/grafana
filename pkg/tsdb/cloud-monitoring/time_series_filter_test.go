@@ -426,7 +426,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
 		frames := res.Frames
-		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
+		custom, ok := frames[0].Meta.Custom.(map[string]any)
 		require.True(t, ok)
 		labels, ok := custom["labels"].(sdkdata.Labels)
 		require.True(t, ok)
@@ -460,7 +460,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
 				ExecutedQueryString: "test_query",
-				Custom: map[string]interface{}{
+				Custom: map[string]any{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
 					"labels": sdkdata.Labels{
@@ -483,7 +483,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
 				ExecutedQueryString: "test_query",
-				Custom: map[string]interface{}{
+				Custom: map[string]any{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
 					"labels": sdkdata.Labels{
@@ -506,7 +506,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
 				ExecutedQueryString: "test_query",
-				Custom: map[string]interface{}{
+				Custom: map[string]any{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
 					"labels": sdkdata.Labels{

@@ -22,7 +22,8 @@ type QueryHistoryPreference struct {
 	HomeTab *string `json:"homeTab,omitempty"`
 }
 
-// Spec defines model for Spec.
+// Spec defines user, team or org Grafana preferences
+// swagger:model Preferences
 type Spec struct {
 	CookiePreferences *CookiePreferences `json:"cookiePreferences,omitempty"`
 

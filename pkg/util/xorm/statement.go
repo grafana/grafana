@@ -24,7 +24,7 @@ type Statement struct {
 	idParam         *core.PK
 	OrderStr        string
 	JoinStr         string
-	joinArgs        []interface{}
+	joinArgs        []any
 	GroupByStr      string
 	HavingStr       string
 	ColumnStr       string
@@ -34,7 +34,7 @@ type Statement struct {
 	AltTableName    string
 	tableName       string
 	RawSQL          string
-	RawParams       []interface{}
+	RawParams       []any
 	UseAutoJoin     bool
 	StoreEngine     string
 	Charset         string
@@ -66,7 +66,7 @@ func (statement *Statement) Init() {
 	statement.LimitN = nil
 	statement.OrderStr = ""
 	statement.JoinStr = ""
-	statement.joinArgs = make([]interface{}, 0)
+	statement.joinArgs = make([]any, 0)
 	statement.GroupByStr = ""
 	statement.HavingStr = ""
 	statement.ColumnStr = ""
@@ -77,7 +77,7 @@ func (statement *Statement) Init() {
 	statement.tableName = ""
 	statement.idParam = nil
 	statement.RawSQL = ""
-	statement.RawParams = make([]interface{}, 0)
+	statement.RawParams = make([]any, 0)
 	statement.UseCache = true
 	statement.UseAutoTime = true
 	statement.noAutoCondition = false
@@ -120,7 +120,7 @@ func (statement *Statement) Alias(alias string) *Statement {
 }
 
 // SQL adds raw sql statement
-func (statement *Statement) SQL(query interface{}, args ...interface{}) *Statement {
+func (statement *Statement) SQL(query any, args ...any) *Statement {
 	switch query.(type) {
 	case (*builder.Builder):
 		var err error
@@ -139,19 +139,19 @@ func (statement *Statement) SQL(query interface{}, args ...interface{}) *Stateme
 }
 
 // Where add Where statement
-func (statement *Statement) Where(query interface{}, args ...interface{}) *Statement {
+func (statement *Statement) Where(query any, args ...any) *Statement {
 	return statement.And(query, args...)
 }
 
 // And add Where & and statement
-func (statement *Statement) And(query interface{}, args ...interface{}) *Statement {
+func (statement *Statement) And(query any, args ...any) *Statement {
 	switch query.(type) {
 	case string:
 		cond := builder.Expr(query.(string), args...)
 		statement.cond = statement.cond.And(cond)
-	case map[string]interface{}:
-		queryMap := query.(map[string]interface{})
-		newMap := make(map[string]interface{})
+	case map[string]any:
+		queryMap := query.(map[string]any)
+		newMap := make(map[string]any)
 		for k, v := range queryMap {
 			newMap[statement.Engine.Quote(k)] = v
 		}
@@ -172,13 +172,13 @@ func (statement *Statement) And(query interface{}, args ...interface{}) *Stateme
 }
 
 // Or add Where & Or statement
-func (statement *Statement) Or(query interface{}, args ...interface{}) *Statement {
+func (statement *Statement) Or(query any, args ...any) *Statement {
 	switch query.(type) {
 	case string:
 		cond := builder.Expr(query.(string), args...)
 		statement.cond = statement.cond.Or(cond)
-	case map[string]interface{}:
-		cond := builder.Eq(query.(map[string]interface{}))
+	case map[string]any:
+		cond := builder.Eq(query.(map[string]any))
 		statement.cond = statement.cond.Or(cond)
 	case builder.Cond:
 		cond := query.(builder.Cond)
@@ -195,14 +195,14 @@ func (statement *Statement) Or(query interface{}, args ...interface{}) *Statemen
 }
 
 // In generate "Where column IN (?) " statement
-func (statement *Statement) In(column string, args ...interface{}) *Statement {
+func (statement *Statement) In(column string, args ...any) *Statement {
 	in := builder.In(statement.Engine.Quote(column), args...)
 	statement.cond = statement.cond.And(in)
 	return statement
 }
 
 // NotIn generate "Where column NOT IN (?) " statement
-func (statement *Statement) NotIn(column string, args ...interface{}) *Statement {
+func (statement *Statement) NotIn(column string, args ...any) *Statement {
 	notIn := builder.NotIn(statement.Engine.Quote(column), args...)
 	statement.cond = statement.cond.And(notIn)
 	return statement
@@ -218,7 +218,7 @@ func (statement *Statement) setRefValue(v reflect.Value) error {
 	return nil
 }
 
-func (statement *Statement) setRefBean(bean interface{}) error {
+func (statement *Statement) setRefBean(bean any) error {
 	var err error
 	statement.RefTable, err = statement.Engine.autoMapType(rValue(bean))
 	if err != nil {
@@ -229,9 +229,9 @@ func (statement *Statement) setRefBean(bean interface{}) error {
 }
 
 // Auto generating update columnes and values according a struct
-func (statement *Statement) buildUpdates(bean interface{},
+func (statement *Statement) buildUpdates(bean any,
 	includeVersion, includeUpdated, includeNil,
-	includeAutoIncr, update bool) ([]string, []interface{}) {
+	includeAutoIncr, update bool) ([]string, []any) {
 	engine := statement.Engine
 	table := statement.RefTable
 	allUseBool := statement.allUseBool
@@ -243,7 +243,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 	unscoped := statement.unscoped
 
 	var colNames = make([]string, 0)
-	var args = make([]interface{}, 0)
+	var args = make([]any, 0)
 	for _, col := range table.Columns() {
 		if !includeVersion && col.IsVersion {
 			continue
@@ -312,7 +312,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 			}
 		}
 
-		var val interface{}
+		var val any
 
 		if fieldValue.CanAddr() {
 			if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
@@ -518,7 +518,7 @@ func (statement *Statement) TableName() string {
 }
 
 // ID generate "where id = ? " statement or for composite key "where key1 = ? and key2 = ?"
-func (statement *Statement) ID(id interface{}) *Statement {
+func (statement *Statement) ID(id any) *Statement {
 	idValue := reflect.ValueOf(id)
 	idType := reflect.TypeOf(idValue.Interface())
 
@@ -546,7 +546,7 @@ func (statement *Statement) ID(id interface{}) *Statement {
 }
 
 // Incr Generate  "Update ... Set column = column + arg" statement
-func (statement *Statement) Incr(column string, arg ...interface{}) *Statement {
+func (statement *Statement) Incr(column string, arg ...any) *Statement {
 	if len(arg) > 0 {
 		statement.incrColumns.addParam(column, arg[0])
 	} else {
@@ -556,7 +556,7 @@ func (statement *Statement) Incr(column string, arg ...interface{}) *Statement {
 }
 
 // Decr Generate  "Update ... Set column = column - arg" statement
-func (statement *Statement) Decr(column string, arg ...interface{}) *Statement {
+func (statement *Statement) Decr(column string, arg ...any) *Statement {
 	if len(arg) > 0 {
 		statement.decrColumns.addParam(column, arg[0])
 	} else {
@@ -566,7 +566,7 @@ func (statement *Statement) Decr(column string, arg ...interface{}) *Statement {
 }
 
 // SetExpr Generate  "Update ... Set column = {expression}" statement
-func (statement *Statement) SetExpr(column string, expression interface{}) *Statement {
+func (statement *Statement) SetExpr(column string, expression any) *Statement {
 	statement.exprColumns.addParam(column, expression)
 	return statement
 }
@@ -713,7 +713,7 @@ func (statement *Statement) Asc(colNames ...string) *Statement {
 }
 
 // Table tempororily set table name, the parameter could be a string or a pointer of struct
-func (statement *Statement) Table(tableNameOrBean interface{}) *Statement {
+func (statement *Statement) Table(tableNameOrBean any) *Statement {
 	v := rValue(tableNameOrBean)
 	t := v.Type()
 	if t.Kind() == reflect.Struct {
@@ -730,7 +730,7 @@ func (statement *Statement) Table(tableNameOrBean interface{}) *Statement {
 }
 
 // Join The joinOP should be one of INNER, LEFT OUTER, CROSS etc - this will be prepended to JOIN
-func (statement *Statement) Join(joinOP string, tablename interface{}, condition string, args ...interface{}) *Statement {
+func (statement *Statement) Join(joinOP string, tablename any, condition string, args ...any) *Statement {
 	var buf strings.Builder
 	if len(statement.JoinStr) > 0 {
 		fmt.Fprintf(&buf, "%v %v JOIN ", statement.JoinStr, joinOP)
@@ -886,7 +886,7 @@ func (statement *Statement) genDelIndexSQL() []string {
 	return sqls
 }
 
-func (statement *Statement) genAddColumnStr(col *core.Column) (string, []interface{}) {
+func (statement *Statement) genAddColumnStr(col *core.Column) (string, []any) {
 	quote := statement.Engine.Quote
 	sql := fmt.Sprintf("ALTER TABLE %v ADD %v", quote(statement.TableName()),
 		col.String(statement.Engine.dialect))
@@ -894,15 +894,15 @@ func (statement *Statement) genAddColumnStr(col *core.Column) (string, []interfa
 		sql += " COMMENT '" + col.Comment + "'"
 	}
 	sql += ";"
-	return sql, []interface{}{}
+	return sql, []any{}
 }
 
-func (statement *Statement) buildConds(table *core.Table, bean interface{}, includeVersion bool, includeUpdated bool, includeNil bool, includeAutoIncr bool, addedTableName bool) (builder.Cond, error) {
+func (statement *Statement) buildConds(table *core.Table, bean any, includeVersion bool, includeUpdated bool, includeNil bool, includeAutoIncr bool, addedTableName bool) (builder.Cond, error) {
 	return statement.Engine.buildConds(table, bean, includeVersion, includeUpdated, includeNil, includeAutoIncr, statement.allUseBool, statement.useAllCols,
 		statement.unscoped, statement.mustColumnMap, statement.TableName(), statement.TableAlias, addedTableName)
 }
 
-func (statement *Statement) mergeConds(bean interface{}) error {
+func (statement *Statement) mergeConds(bean any) error {
 	if !statement.noAutoCondition {
 		var addedTableName = (len(statement.JoinStr) > 0)
 		autoCond, err := statement.buildConds(statement.RefTable, bean, true, true, false, true, addedTableName)
@@ -918,7 +918,7 @@ func (statement *Statement) mergeConds(bean interface{}) error {
 	return nil
 }
 
-func (statement *Statement) genConds(bean interface{}) (string, []interface{}, error) {
+func (statement *Statement) genConds(bean any) (string, []any, error) {
 	if err := statement.mergeConds(bean); err != nil {
 		return "", nil, err
 	}
@@ -926,7 +926,7 @@ func (statement *Statement) genConds(bean interface{}) (string, []interface{}, e
 	return builder.ToSQL(statement.cond)
 }
 
-func (statement *Statement) genGetSQL(bean interface{}) (string, []interface{}, error) {
+func (statement *Statement) genGetSQL(bean any) (string, []any, error) {
 	v := rValue(bean)
 	isStruct := v.Kind() == reflect.Struct
 	if isStruct {
@@ -981,9 +981,9 @@ func (statement *Statement) genGetSQL(bean interface{}) (string, []interface{}, 
 	return sqlStr, append(statement.joinArgs, condArgs...), nil
 }
 
-func (statement *Statement) genCountSQL(beans ...interface{}) (string, []interface{}, error) {
+func (statement *Statement) genCountSQL(beans ...any) (string, []any, error) {
 	var condSQL string
-	var condArgs []interface{}
+	var condArgs []any
 	var err error
 	if len(beans) > 0 {
 		statement.setRefBean(beans[0])
@@ -1011,7 +1011,7 @@ func (statement *Statement) genCountSQL(beans ...interface{}) (string, []interfa
 	return sqlStr, append(statement.joinArgs, condArgs...), nil
 }
 
-func (statement *Statement) genSumSQL(bean interface{}, columns ...string) (string, []interface{}, error) {
+func (statement *Statement) genSumSQL(bean any, columns ...string) (string, []any, error) {
 	statement.setRefBean(bean)
 
 	var sumStrs = make([]string, 0, len(columns))

@@ -6,7 +6,7 @@ import { Alert, Field } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { StoreState } from 'app/types';
 
-import { VariableLegend } from '../editor/VariableLegend';
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getAdhocVariableEditorState } from '../editor/selectors';
 import { VariableEditorProps } from '../editor/types';
@@ -64,7 +64,13 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
       <>
         <VariableLegend>Ad-hoc options</VariableLegend>
         <Field label="Data source" htmlFor="data-source-picker">
-          <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} width={30} noDefault />
+          <DataSourcePicker
+            current={variable.datasource}
+            onChange={this.onDatasourceChanged}
+            width={30}
+            variables={true}
+            noDefault
+          />
         </Field>
 
         {infoText ? <Alert title={infoText} severity="info" /> : null}

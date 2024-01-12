@@ -5,14 +5,14 @@ aliases:
   - ../unified-alerting/fundamentals/alertmanager/
   - alerting/manage-notifications/alertmanager/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alertmanager/
-description: Intro to the different Alertmanagers
+description: Learn about Alertmanagers and the Alertmanager options for Grafana Alerting
 labels:
   products:
     - cloud
     - enterprise
     - oss
 title: Alertmanager
-weight: 103
+weight: 140
 ---
 
 # Alertmanager

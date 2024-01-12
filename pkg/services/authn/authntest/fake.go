@@ -3,6 +3,8 @@ package authntest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
@@ -66,6 +68,10 @@ func (f *FakeService) RedirectURL(ctx context.Context, client string, r *authn.R
 	return f.ExpectedRedirect, f.ExpectedErr
 }
 
+func (*FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
+	panic("unimplemented")
+}
+
 func (f *FakeService) RegisterClient(c authn.Client) {}
 
 func (f *FakeService) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
@@ -80,7 +86,7 @@ type FakeClient struct {
 	ExpectedTest     bool
 	ExpectedPriority uint
 	ExpectedIdentity *authn.Identity
-	ExpectedStats    map[string]interface{}
+	ExpectedStats    map[string]any
 }
 
 func (f *FakeClient) Name() string {
@@ -99,7 +105,7 @@ func (f *FakeClient) Priority() uint {
 	return f.ExpectedPriority
 }
 
-func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
+func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]any, error) {
 	return f.ExpectedStats, f.ExpectedErr
 }
 

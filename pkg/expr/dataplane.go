@@ -61,7 +61,7 @@ func shouldUseDataplane(frames data.Frames, logger log.Logger, disable bool) (dt
 func handleDataplaneFrames(ctx context.Context, tracer tracing.Tracer, t data.FrameType, frames data.Frames) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.HandleDataPlaneData")
 	defer span.End()
-	span.SetAttributes("dataplane.type", t, attribute.Key("dataplane.type").String(string(t)))
+	span.SetAttributes(attribute.String("dataplane.type", string(t)))
 
 	switch t.Kind() {
 	case data.KindUnknown:

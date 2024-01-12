@@ -1,9 +1,9 @@
 import TimeSeries, { updateLegendValues } from 'app/core/time_series2';
 
 describe('TimeSeries', () => {
-  let points: any[][];
+  let points: ReturnType<TimeSeries['getFlotPairs']>;
   let series: TimeSeries;
-  let testData: { alias?: string; datapoints: any };
+  let testData: { alias?: string; datapoints: Array<[number | null, number | null]> };
 
   beforeEach(() => {
     testData = {

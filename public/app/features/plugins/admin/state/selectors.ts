@@ -23,9 +23,6 @@ export type PluginFilters = {
   type?: PluginType;
 
   // (Optional, only applied if set)
-  isCore?: boolean;
-
-  // (Optional, only applied if set)
   isInstalled?: boolean;
 
   // (Optional, only applied if set)
@@ -51,10 +48,6 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
-      if (filters.isCore !== undefined && plugin.isCore !== filters.isCore) {
-        return false;
-      }
-
       if (filters.isEnterprise !== undefined && plugin.isEnterprise !== filters.isEnterprise) {
         return false;
       }
@@ -63,19 +56,20 @@ export const selectPlugins = (filters: PluginFilters) =>
     });
   });
 
-export const selectPluginErrors = createSelector(selectAll, (plugins) => {
-  const pluginErrors: PluginError[] = [];
-  for (const plugin of plugins) {
-    if (plugin.error) {
-      pluginErrors.push({
-        pluginId: plugin.id,
-        errorCode: plugin.error,
-      });
+export const selectPluginErrors = (filterByPluginType?: PluginType) =>
+  createSelector(selectAll, (plugins) => {
+    const pluginErrors: PluginError[] = [];
+    for (const plugin of plugins) {
+      if (plugin.error && (!filterByPluginType || plugin.type === filterByPluginType)) {
+        pluginErrors.push({
+          pluginId: plugin.id,
+          errorCode: plugin.error,
+          pluginType: plugin.type,
+        });
+      }
     }
-  }
-
-  return pluginErrors;
-});
+    return pluginErrors;
+  });
 
 // The following selectors are used to get information about the outstanding or completed plugins-related network requests.
 export const selectRequest = (actionType: string) =>

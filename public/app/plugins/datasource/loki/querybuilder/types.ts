@@ -38,7 +38,6 @@ export enum LokiOperationId {
   Regexp = 'regexp',
   Pattern = 'pattern',
   Unpack = 'unpack',
-  Distinct = 'distinct',
   LineFormat = 'line_format',
   LabelFormat = 'label_format',
   Decolorize = 'decolorize',

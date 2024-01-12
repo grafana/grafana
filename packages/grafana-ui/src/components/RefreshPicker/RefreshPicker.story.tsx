@@ -5,14 +5,11 @@ import React from 'react';
 
 import { RefreshPicker } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import mdx from './RefreshPicker.mdx';
 
 const meta: Meta<typeof RefreshPicker> = {
   title: 'Pickers and Editors/RefreshPicker',
   component: RefreshPicker,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

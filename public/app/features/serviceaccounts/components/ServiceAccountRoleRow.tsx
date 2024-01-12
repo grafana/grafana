@@ -31,7 +31,7 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
             onBasicRoleChange={onRoleChange}
             roleOptions={roleOptions}
             basicRoleDisabled={!canUpdateRole}
-            disabled={serviceAccount.isDisabled}
+            disabled={serviceAccount.isExternal || serviceAccount.isDisabled}
           />
         </td>
       ) : (
@@ -42,7 +42,7 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
               inputId={inputId}
               aria-label="Role"
               value={serviceAccount.role}
-              disabled={serviceAccount.isDisabled}
+              disabled={serviceAccount.isExternal || serviceAccount.isDisabled}
               onChange={onRoleChange}
             />
           </td>

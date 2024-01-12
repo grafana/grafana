@@ -200,23 +200,23 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  rule: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  row: css`
-    display: flex;
-    margin-bottom: 4px;
-  `,
-  inline: css`
-    margin-bottom: 0;
-    margin-left: 4px;
-  `,
-  button: css`
-    margin-left: 4px;
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-  `,
+  rule: css({
+    marginBottom: theme.spacing(1),
+  }),
+  row: css({
+    display: 'flex',
+    marginBottom: '4px',
+  }),
+  inline: css({
+    marginBottom: 0,
+    marginLeft: '4px',
+  }),
+  button: css({
+    marginLeft: '4px',
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  }),
 });

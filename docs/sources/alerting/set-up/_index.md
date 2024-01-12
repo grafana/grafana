@@ -2,13 +2,13 @@
 aliases:
   - unified-alerting/set-up/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/
-description: How to configure alerting features and integrations
+description: Set up or upgrade your implementation of Grafana Alerting
 labels:
   products:
     - oss
 menuTitle: Set up
 title: Set up Alerting
-weight: 107
+weight: 110
 ---
 
 # Set up Alerting
@@ -18,8 +18,6 @@ Set up or upgrade your implementation of Grafana Alerting.
 **Note:**
 
 These are set-up instructions for Grafana Alerting Open Source.
-
-To set up Grafana Alerting for Cloud, see [Set up Alerting for Cloud][set-up-cloud].
 
 ## Before you begin
 
@@ -76,9 +74,6 @@ The following topics provide you with advanced configuration options for Grafana
 
 [file-provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning"
 [file-provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/file-provisioning"
-
-[set-up-cloud]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/set-up-cloud"
-[set-up-cloud]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/set-up-cloud"
 
 [terraform-provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
 [terraform-provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning"

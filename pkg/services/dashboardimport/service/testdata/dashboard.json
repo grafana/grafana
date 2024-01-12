@@ -199,7 +199,6 @@
   "refresh": "1m",
   "revision": "1.0",
   "schemaVersion": 30,
-  "style": "dark",
   "tags": ["prometheus"],
   "templating": {
     "list": []

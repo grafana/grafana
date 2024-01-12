@@ -41,7 +41,6 @@ export function makeNewDashboardRequestBody(dashboardName: string, folderUid?: s
       refresh: '',
       revision: 1,
       schemaVersion: 38,
-      style: 'dark',
       tags: [],
       templating: { list: [] },
       time: { from: 'now-6h', to: 'now' },

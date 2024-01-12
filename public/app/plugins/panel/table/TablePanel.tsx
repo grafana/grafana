@@ -1,8 +1,15 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import {
+  DashboardCursorSync,
+  DataFrame,
+  FieldMatcherID,
+  getFrameDisplayName,
+  PanelProps,
+  SelectableValue,
+} from '@grafana/data';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
@@ -37,6 +44,8 @@ export function TablePanel(props: Props) {
     tableHeight = height - inputHeight - padding;
   }
 
+  const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
+
   const tableElement = (
     <Table
       height={tableHeight}
@@ -53,6 +62,7 @@ export function TablePanel(props: Props) {
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
       timeRange={timeRange}
+      enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
     />
   );
 

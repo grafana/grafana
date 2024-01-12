@@ -6,7 +6,6 @@ define([], function () {
       return {
         title: '',
         tags: [],
-        style: 'dark',
         timezone: 'browser',
         editable: true,
         failover: false,

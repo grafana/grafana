@@ -37,8 +37,8 @@ var netClient = &http.Client{
 }
 
 func (u *WebdavUploader) PublicURL(filename string) string {
-	if strings.Contains(u.public_url, "${file}") {
-		return strings.ReplaceAll(u.public_url, "${file}", filename)
+	if strings.Contains(u.public_url, "{{file}}") {
+		return strings.ReplaceAll(u.public_url, "{{file}}", filename)
 	}
 
 	publicURL, _ := url.Parse(u.public_url)

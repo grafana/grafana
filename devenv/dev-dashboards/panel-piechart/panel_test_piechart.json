@@ -55,7 +55,7 @@
       "options": {
         "displayLabels": [
           "name"
-        ],        
+        ],
         "legend": {
           "values": [],
           "displayMode": "list",
@@ -125,7 +125,7 @@
         "displayLabels": [
           "name",
           "percent"
-        ],        
+        ],
         "legend": {
           "values": [
             "percent"
@@ -194,7 +194,7 @@
       "options": {
         "displayLabels": [
           "name"
-        ],        
+        ],
         "legend": {
           "values": [],
           "displayMode": "hidden",
@@ -261,7 +261,7 @@
       "options": {
         "displayLabels": [
           "percent"
-        ],      
+        ],
         "legend": {
           "values": [
             "percent"
@@ -330,7 +330,7 @@
       "options": {
         "displayLabels": [
           "value"
-        ],        
+        ],
         "legend": {
           "values": [
             "value"
@@ -399,7 +399,7 @@
       "options": {
         "displayLabels": [
           "name"
-        ],        
+        ],
         "legend": {
           "values": [],
           "displayMode": "list",
@@ -464,7 +464,7 @@
       },
       "id": 10,
       "options": {
-        "displayLabels": [],        
+        "displayLabels": [],
         "legend": {
           "values": ["percent", "value"],
           "displayMode": "table",
@@ -498,7 +498,6 @@
     }
   ],
   "schemaVersion": 27,
-  "style": "dark",
   "tags": [
     "gdev",
     "panel-tests"

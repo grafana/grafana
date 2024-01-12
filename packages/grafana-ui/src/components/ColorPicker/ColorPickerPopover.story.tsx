@@ -1,7 +1,7 @@
 import { Meta } from '@storybook/react';
+import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+import { useTheme2 } from '../../themes';
 
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
@@ -13,25 +13,35 @@ const meta: Meta<typeof ColorPickerPopover> = {
   // https://github.com/storybookjs/storybook/issues/20782
   // @ts-ignore
   subcomponents: { SeriesColorPickerPopover },
-  decorators: [withCenteredStory],
 };
 
-export const basic = () => {
-  return renderComponentWithTheme(ColorPickerPopover, {
-    color: '#BC67E6',
-    onChange: (color: string) => {
-      console.log(color);
-    },
-  });
+export const Basic = () => {
+  return (
+    <div style={{ position: 'absolute' }}>
+      <ColorPickerPopover
+        color="#BC67E6"
+        onChange={(color: string) => {
+          console.log(color);
+        }}
+      />
+    </div>
+  );
 };
 
-export const seriesColorPickerPopover = () => {
-  return renderComponentWithTheme(SeriesColorPickerPopover, {
-    color: '#BC67E6',
-    onChange: (color: string) => {
-      console.log(color);
-    },
-  });
+export const SeriesColorPickerPopoverExample = () => {
+  const theme = useTheme2();
+
+  return (
+    <div style={{ position: 'absolute' }}>
+      <SeriesColorPickerPopover
+        theme={theme}
+        color="#BC67E6"
+        onChange={(color: string) => {
+          console.log(color);
+        }}
+      />
+    </div>
+  );
 };
 
 export default meta;

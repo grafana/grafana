@@ -54,7 +54,7 @@ export function cloudReceiverToFormValues(
     // map property names to cloud notifier types by removing the `_config` suffix
     .map(([type, configs]): [CloudNotifierType, CloudChannelConfig[]] => [
       type.replace('_configs', '') as CloudNotifierType,
-      configs as CloudChannelConfig[],
+      configs,
     ])
     // convert channel configs to form values
     .map(([type, configs]) =>
@@ -115,7 +115,7 @@ export function formValuesToCloudReceiver(
     if (!(`${type}_configs` in recv)) {
       recv[`${type}_configs`] = [channel];
     } else {
-      (recv[`${type}_configs`] as unknown[]).push(channel);
+      recv[`${type}_configs`]?.push(channel);
     }
   });
   return recv;

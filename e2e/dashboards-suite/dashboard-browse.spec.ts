@@ -1,25 +1,52 @@
-import { e2e } from '@grafana/e2e';
-
 import testDashboard from '../dashboards/TestDashboard.json';
+import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Dashboard browse',
-  itName: 'Basic folder view test',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Dashboard browse', () => {
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
+
+  it('Manage Dashboards tests', () => {
     e2e.flows.importDashboard(testDashboard, 1000, true);
 
     e2e.pages.Dashboards.visit();
 
-    // folder view is collapsed - verify its content does not exist
-    e2e.components.Search.folderContent('General').should('not.exist');
-    e2e.components.Search.dashboardItem('E2E Test - Dashboard Search').should('not.exist');
+    // Folders and dashboards should be visible
+    e2e.pages.BrowseDashboards.table.row('gdev dashboards').should('be.visible');
+    e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').should('be.visible');
 
-    e2e.components.Search.folderHeader('General').click({ force: true });
+    // gdev dashboards folder is collapsed - its content should not be visible
+    e2e.pages.BrowseDashboards.table.row('Alerting with TestData').should('not.exist');
 
-    e2e.components.Search.folderContent('General').should('be.visible');
-    e2e.components.Search.dashboardItem('E2E Test - Import Dashboard').should('be.visible');
-  },
+    // should click a folder and see it's children
+    e2e.pages.BrowseDashboards.table.row('gdev dashboards').find('[aria-label^="Expand folder"]').click();
+    e2e.pages.BrowseDashboards.table.row('Alerting with TestData').should('be.visible');
+
+    // Open the new folder drawer
+    cy.contains('button', 'New').click();
+    cy.contains('button', 'New folder').click();
+
+    // And create a new folder
+    e2e.pages.BrowseDashboards.NewFolderForm.nameInput().type('My new folder');
+    e2e.pages.BrowseDashboards.NewFolderForm.form().contains('button', 'Create').click();
+    e2e.components.Alert.alertV2('success').find('button[aria-label="Close alert"]').click();
+    cy.contains('h1', 'My new folder').should('be.visible');
+
+    // Delete the folder and expect to go back to the root
+    cy.contains('button', 'Folder actions').click();
+    cy.contains('button', 'Delete').click();
+    e2e.flows.confirmDelete();
+    cy.contains('h1', 'Dashboards').should('be.visible');
+
+    // Can collapse the gdev folder and delete the dashboard we imported
+    e2e.pages.BrowseDashboards.table.row('gdev dashboards').find('[aria-label^="Collapse folder"]').click();
+    e2e.pages.BrowseDashboards.table
+      .row('E2E Test - Import Dashboard')
+      .find('[type="checkbox"]')
+      .click({ force: true });
+
+    cy.contains('button', 'Delete').click();
+    e2e.flows.confirmDelete();
+    e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').should('not.exist');
+  });
 });

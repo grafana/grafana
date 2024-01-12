@@ -1,7 +1,6 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { checkFields } from '@grafana/flamegraph';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { checkFields } from './components/FlameGraph/dataTransform';
 
 export class FlameGraphSuggestionsSupplier {
   getListWithDefaults(builder: VisualizationSuggestionsBuilder) {

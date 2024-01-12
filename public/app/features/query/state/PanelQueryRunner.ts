@@ -1,9 +1,8 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, merge } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
-  ApplyFieldOverrideOptions,
   applyFieldOverrides,
   compareArrayValues,
   compareDataFrameStructures,
@@ -20,23 +19,24 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
-  preProcessPanelData,
   rangeUtil,
   ScopedVars,
-  StreamingDataFrame,
   TimeRange,
   TimeZone,
   toDataFrame,
   transformDataFrame,
+  preProcessPanelData,
+  ApplyFieldOverrideOptions,
+  StreamingDataFrame,
+  DataTopic,
 } from '@grafana/data';
-import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { updatePanelDataWithASHFromLoki } from 'app/features/alerting/unified/components/rules/state-history/common';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
-import { PublicDashboardDataSource } from '../../dashboard/services/PublicDashboardDataSource';
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
@@ -51,7 +51,6 @@ export interface QueryRunnerOptions<
   queries: TQuery[];
   panelId?: number;
   dashboardUID?: string;
-  publicDashboardAccessToken?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -81,6 +80,7 @@ export class PanelQueryRunner {
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
   private lastRequest?: DataQueryRequest;
+  private templateSrv = getTemplateSrv();
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -105,6 +105,7 @@ export class PanelQueryRunner {
         state: LoadingState.Done,
         series: this.dataConfigSource.snapshotData.map((v) => toDataFrame(v)),
         timeRange: getDefaultTimeRange(), // Don't need real time range for snapshots
+        structureRev,
       };
       return of(snapshotPanelData);
     }
@@ -218,17 +219,27 @@ export class PanelQueryRunner {
     }
 
     const ctx: DataTransformContext = {
-      interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
+      interpolate: (v: string) => this.templateSrv.replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(
-      map((series) => ({ ...data, series })),
+    let seriesTransformations = transformations.filter((t) => t.topic == null || t.topic === DataTopic.Series);
+    let annotationsTransformations = transformations.filter((t) => t.topic === DataTopic.Annotations);
+
+    let seriesStream = transformDataFrame(seriesTransformations, data.series, ctx);
+    let annotationsStream = transformDataFrame(annotationsTransformations, data.annotations ?? [], ctx);
+
+    return merge(seriesStream, annotationsStream).pipe(
+      map((frames) => {
+        let isAnnotations = frames.some((f) => f.meta?.dataTopic === DataTopic.Annotations);
+        let transformed = isAnnotations ? { annotations: frames } : { series: frames };
+        return { ...data, ...transformed };
+      }),
       catchError((err) => {
         console.warn('Error running transformation:', err);
         return of({
           ...data,
           state: LoadingState.Error,
-          error: toDataQueryError(err),
+          errors: [toDataQueryError(err)],
         });
       })
     );
@@ -241,7 +252,6 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardUID,
-      publicDashboardAccessToken,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -263,7 +273,6 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardUID,
-      publicDashboardAccessToken,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -278,7 +287,8 @@ export class PanelQueryRunner {
     };
 
     try {
-      const ds = await getDataSource(datasource, request.scopedVars, publicDashboardAccessToken);
+      const ds = await getDataSource(datasource, request.scopedVars);
+
       const isMixedDS = ds.meta?.mixed;
 
       // Attach the data source to each query
@@ -292,7 +302,7 @@ export class PanelQueryRunner {
         return query;
       });
 
-      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
+      const lowerIntervalLimit = minInterval ? this.templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
       const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
@@ -304,6 +314,7 @@ export class PanelQueryRunner {
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
+      request.filters = this.templateSrv.getAdhocFilters(ds.name, true);
 
       this.lastRequest = request;
 
@@ -335,13 +346,32 @@ export class PanelQueryRunner {
     }
 
     this.subscription = panelData.subscribe({
-      next: async (data) => {
-        this.lastResult = skipPreProcess
-          ? data
-          : await updatePanelDataWithASHFromLoki(preProcessPanelData(data, this.lastResult));
+      next: (data) => {
+        const last = this.lastResult;
+        const next = skipPreProcess ? data : preProcessPanelData(data, last);
+
+        if (last != null && next.state !== LoadingState.Streaming) {
+          let sameSeries = compareArrayValues(last.series ?? [], next.series ?? [], (a, b) => a === b);
+          let sameAnnotations = compareArrayValues(last.annotations ?? [], next.annotations ?? [], (a, b) => a === b);
+          let sameState = last.state === next.state;
+
+          if (sameSeries) {
+            next.series = last.series;
+          }
+
+          if (sameAnnotations) {
+            next.annotations = last.annotations;
+          }
+
+          if (sameSeries && sameAnnotations && sameState) {
+            return;
+          }
+        }
+
+        this.lastResult = next;
 
         // Store preprocessed query results for applying overrides later on in the pipeline
-        this.subject.next(this.lastResult);
+        this.subject.next(next);
       },
     });
   }
@@ -416,17 +446,11 @@ export class PanelQueryRunner {
 
 async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
-  scopedVars: ScopedVars,
-  publicDashboardAccessToken?: string
+  scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (!publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+  if (datasource && typeof datasource === 'object' && 'query' in datasource) {
     return datasource;
   }
 
-  const ds = await getDatasourceSrv().get(datasource, scopedVars);
-  if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource(ds);
-  }
-
-  return ds;
+  return await getDatasourceSrv().get(datasource, scopedVars);
 }

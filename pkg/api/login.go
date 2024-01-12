@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -21,7 +22,6 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -89,7 +89,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagClientTokenRotation) {
 		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
 			c.Redirect(hs.Cfg.AppSubURL + "/")
 			return
@@ -127,7 +127,9 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
-		if hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken {
+		if hs.Cfg.AuthProxyEnabled &&
+			hs.Cfg.AuthProxyEnableLoginToken &&
+			c.SignedInUser.AuthenticatedBy == loginservice.AuthProxyAuthModule {
 			user := &user.User{ID: c.SignedInUser.UserID, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
@@ -239,37 +241,31 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 }
 
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
-	// If SAML is enabled and this is a SAML user use saml logout
+	// FIXME: restructure saml client to implement authn.LogoutClient
 	if hs.samlSingleLogoutEnabled() {
-		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: c.UserID}
-		if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-			if authInfo.AuthModule == loginservice.SAMLAuthModule {
-				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
-				return
-			}
+		id, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+		if err != nil {
+			hs.log.Error("failed to retrieve user ID", "error", err)
+		}
+
+		authInfo, _ := hs.authInfoService.GetAuthInfo(c.Req.Context(), &loginservice.GetAuthInfoQuery{UserId: id})
+		if authInfo != nil && authInfo.AuthModule == loginservice.SAMLAuthModule {
+			c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
+			return
 		}
 	}
 
-	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
-	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
-		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
-			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
-		}
-	}
-
-	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
-	if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
-		hs.log.Error("failed to revoke auth token", "error", err)
-	}
-
+	redirect, err := hs.authnService.Logout(c.Req.Context(), c.SignedInUser, c.UserToken)
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
-	if setting.SignoutRedirectUrl != "" {
-		c.Redirect(setting.SignoutRedirectUrl)
-	} else {
-		hs.log.Info("Successful Logout", "User", c.Email)
+	if err != nil {
+		hs.log.Error("Failed perform proper logout", "error", err)
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
+
+	_, id := c.SignedInUser.GetNamespacedID()
+	hs.log.Info("Successful Logout", "userID", id)
+	c.Redirect(redirect.URL)
 }
 
 func (hs *HTTPServer) tryGetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string) (string, bool) {
@@ -298,12 +294,12 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookie
 	return nil
 }
 
-func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...interface{}) {
+func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...any) {
 	c.Logger.Warn(err.Error(), v...)
 	c.Redirect(hs.redirectURLWithErrorCookie(c, err))
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
+func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err error, v ...any) *response.RedirectResponse {
 	c.Logger.Error(err.Error(), v...)
 	location := hs.redirectURLWithErrorCookie(c, err)
 	return response.Redirect(location)
@@ -311,8 +307,17 @@ func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err 
 
 func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
 	setCookie := true
-	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
+		var userID int64
+		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
+			var errID error
+			userID, errID = identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+			if errID != nil {
+				hs.log.Error("failed to retrieve user ID", "error", errID)
+			}
+		}
+
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
 		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 		if err != nil {
 			c.Redirect(hs.Cfg.AppSubURL + "/login")

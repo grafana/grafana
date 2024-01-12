@@ -4,8 +4,7 @@ import React, { useEffect, useMemo } from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
@@ -235,41 +234,41 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
         <form onSubmit={(e) => e.preventDefault()} key={JSON.stringify(defaultValues)}>
           <>
             {!props.hideFolder && (
-              <Field
-                label={
-                  <Label
-                    htmlFor="namespaceName"
-                    description={
-                      !isGrafanaManagedGroup &&
-                      'Change the current namespace name. Moving groups between namespaces is not supported'
-                    }
-                  >
-                    {nameSpaceLabel}
-                  </Label>
-                }
-                invalid={!!errors.namespaceName}
-                error={errors.namespaceName?.message}
-              >
-                <Stack gap={1} direction="row">
+              <Stack gap={1} alignItems={'center'}>
+                <Field
+                  className={styles.formInput}
+                  label={
+                    <Label
+                      htmlFor="namespaceName"
+                      description={
+                        !isGrafanaManagedGroup &&
+                        'Change the current namespace name. Moving groups between namespaces is not supported'
+                      }
+                    >
+                      {nameSpaceLabel}
+                    </Label>
+                  }
+                  invalid={!!errors.namespaceName}
+                  error={errors.namespaceName?.message}
+                >
                   <Input
                     id="namespaceName"
                     readOnly={intervalEditOnly || isGrafanaManagedGroup}
                     {...register('namespaceName', {
                       required: 'Namespace name is required.',
                     })}
-                    className={styles.formInput}
                   />
-                  {isGrafanaManagedGroup && props.folderUrl && (
-                    <LinkButton
-                      href={props.folderUrl}
-                      title="Go to folder"
-                      variant="secondary"
-                      icon="folder-open"
-                      target="_blank"
-                    />
-                  )}
-                </Stack>
-              </Field>
+                </Field>
+                {isGrafanaManagedGroup && props.folderUrl && (
+                  <LinkButton
+                    href={props.folderUrl}
+                    title="Go to folder"
+                    variant="secondary"
+                    icon="folder-open"
+                    target="_blank"
+                  />
+                )}
+              </Stack>
             )}
             <Field
               label={<Label htmlFor="groupName">Evaluation group name</Label>}

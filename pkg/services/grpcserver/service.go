@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/grafana/dskit/instrument"
+	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/weaveworks/common/instrument"
-	"github.com/weaveworks/common/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -28,21 +28,24 @@ var (
 
 type Provider interface {
 	registry.BackgroundService
+	registry.CanBeDisabled
 	GetServer() *grpc.Server
 	GetAddress() string
 }
 
-type GPRCServerService struct {
+type gPRCServerService struct {
 	cfg     *setting.Cfg
 	logger  log.Logger
 	server  *grpc.Server
 	address string
+	enabled bool
 }
 
-func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
-	s := &GPRCServerService{
-		cfg:    cfg,
-		logger: log.New("grpc-server"),
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
+	s := &gPRCServerService{
+		cfg:     cfg,
+		logger:  log.New("grpc-server"),
+		enabled: features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
 	}
 
 	// Register the metric here instead of an init() function so that we do
@@ -90,7 +93,7 @@ func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 	return s, nil
 }
 
-func (s *GPRCServerService) Run(ctx context.Context) error {
+func (s *gPRCServerService) Run(ctx context.Context) error {
 	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil)
 
 	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
@@ -121,17 +124,14 @@ func (s *GPRCServerService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *GPRCServerService) IsDisabled() bool {
-	if s.cfg == nil {
-		return true
-	}
-	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrpcServer)
+func (s *gPRCServerService) IsDisabled() bool {
+	return !s.enabled
 }
 
-func (s *GPRCServerService) GetServer() *grpc.Server {
+func (s *gPRCServerService) GetServer() *grpc.Server {
 	return s.server
 }
 
-func (s *GPRCServerService) GetAddress() string {
+func (s *gPRCServerService) GetAddress() string {
 	return s.address
 }

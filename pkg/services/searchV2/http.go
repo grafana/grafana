@@ -5,9 +5,10 @@ import (
 	"errors"
 	"io"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -32,7 +33,7 @@ func (s *searchHTTPService) RegisterHTTPRoutes(storageRoute routing.RouteRegiste
 }
 
 func (s *searchHTTPService) doQuery(c *contextmodel.ReqContext) response.Response {
-	searchReadinessCheckResp := s.search.IsReady(c.Req.Context(), c.OrgID)
+	searchReadinessCheckResp := s.search.IsReady(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if !searchReadinessCheckResp.IsReady {
 		dashboardSearchNotServedRequestsCounter.With(prometheus.Labels{
 			"reason": searchReadinessCheckResp.Reason,
@@ -57,7 +58,7 @@ func (s *searchHTTPService) doQuery(c *contextmodel.ReqContext) response.Respons
 		return response.Error(400, "error parsing body", err)
 	}
 
-	resp := s.search.doDashboardQuery(c.Req.Context(), c.SignedInUser, c.OrgID, *query)
+	resp := s.search.doDashboardQuery(c.Req.Context(), c.SignedInUser, c.SignedInUser.GetOrgID(), *query)
 
 	if resp.Error != nil {
 		return response.Error(500, "error handling search request", resp.Error)

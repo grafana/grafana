@@ -15,8 +15,8 @@ import (
 
 // interpolateString accepts template data and return a string with substitutions
 func interpolateString(text string, data templateData) (string, error) {
-	extraFuncs := map[string]interface{}{
-		"orEmpty": func(v interface{}) interface{} {
+	extraFuncs := map[string]any{
+		"orEmpty": func(v any) any {
 			if v == nil {
 				return ""
 			}

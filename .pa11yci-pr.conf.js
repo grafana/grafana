@@ -33,7 +33,8 @@ var dashboardSettings = [
     url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions',
     wait: 500,
     rootElement: '.main-view',
-    threshold: 9,
+    // TODO: improve the accessibility of the permission tab https://github.com/grafana/grafana/issues/77203
+    threshold: 11,
   },
   {
     url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json',
@@ -50,6 +51,7 @@ var config = {
     useIncognitoBrowserContext: false,
     standard: 'WCAG2AA',
     chromeLaunchConfig: {
+      executablePath: '/usr/bin/google-chrome',
       args: ['--no-sandbox'],
     },
     // see https://github.com/grafana/grafana/pull/41693#issuecomment-979921463 for context
@@ -71,8 +73,8 @@ var config = {
         "wait for element input[name='user'] to be added",
         "set field input[name='user'] to admin",
         "set field input[name='password'] to admin",
-        "click element button[aria-label='Login button']",
-        "wait for element [aria-label='Skip change password button'] to be visible",
+        "click element button[data-testid='data-testid Login button']",
+        "wait for element button[data-testid='data-testid Skip change password button'] to be visible",
       ],
       threshold: 15,
       rootElement: '.main-view',
@@ -80,7 +82,7 @@ var config = {
     {
       url: '${HOST}/?orgId=1',
       wait: 500,
-      threshold: 0,
+      threshold: 3,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
@@ -93,7 +95,7 @@ var config = {
       url: '${HOST}/?orgId=1&search=open',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 3,
     },
     {
       url: '${HOST}/alerting/list',

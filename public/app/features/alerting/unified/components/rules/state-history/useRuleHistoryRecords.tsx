@@ -1,3 +1,4 @@
+import { groupBy } from 'lodash';
 import { useMemo } from 'react';
 
 import {
@@ -11,17 +12,34 @@ import {
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { MappingType, ThresholdsMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
-import { normalizeAlertState } from 'app/features/alerting/state/alertDef';
 
 import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 
-import { extractCommonLabels, getLogRecordsByInstances, Line, LogRecord, omitLabels } from './common';
+import { extractCommonLabels, Line, LogRecord, omitLabels } from './common';
 
 export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
   const theme = useTheme2();
 
   return useMemo(() => {
-    const { logRecordsByInstance, logRecords } = getLogRecordsByInstances(stateHistory);
+    // merge timestamp with "line"
+    const tsValues = stateHistory?.data?.values[0] ?? [];
+    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
+    const lines = stateHistory?.data?.values[1] ?? [];
+
+    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+      const line = lines[index];
+      // values property can be undefined for some instance states (e.g. NoData)
+      if (isLine(line)) {
+        acc.push({ timestamp, line });
+      }
+
+      return acc;
+    }, []);
+
+    // group all records by alert instance (unique set of labels)
+    const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {
+      return JSON.stringify(record.line.labels);
+    });
 
     // CommonLabels should not be affected by the filter
     // find common labels so we can extract those from the instances
@@ -133,134 +151,5 @@ export function logRecordsToDataFrame(
     field.display = getDisplayProcessor({ field, theme });
   });
 
-  return frame;
-}
-
-interface MetricValuePair {
-  metric: string;
-  value: string;
-}
-
-function logRecordToData(record: LogRecord) {
-  let labelsInLogs: MetricValuePair[] = [];
-  let valuesInLogs: MetricValuePair = { metric: '', value: '' };
-  if (record.line.labels) {
-    const { labels } = record.line;
-    const labelsArray = Object.entries(labels);
-    labelsInLogs = labelsArray.map(([key, value]) => ({ metric: key, value }));
-  }
-
-  let values = record.line.values;
-  if (values) {
-    const valuesArray = Object.entries(values);
-    const valuesData = valuesArray.map(([key, value]) => ({ metric: key, value: value.toString() }));
-    //convert valuesInloGS to a one Data entry
-    valuesInLogs = valuesData.reduce<MetricValuePair>(
-      (acc, cur) => {
-        acc.value = acc.value.length > 0 ? acc.value + ', ' : acc.value;
-        acc.value = cur.metric.length > 0 ? acc.value + cur.metric + '= ' + cur.value : acc.value;
-        return acc;
-      },
-      { metric: ' Values', value: '' }
-    );
-    if (valuesInLogs.value.length > 0) {
-      valuesInLogs.value = '{' + valuesInLogs.value + '}';
-      return [...labelsInLogs, valuesInLogs];
-    } else {
-      return labelsInLogs;
-    }
-  }
-  return [...labelsInLogs, valuesInLogs];
-}
-
-// Convert log records to data frame for panel
-export function logRecordsToDataFrameForPanel(
-  instanceLabels: string,
-  records: LogRecord[],
-  theme: GrafanaTheme2
-): DataFrame {
-  const timeField: DataFrameField = {
-    name: 'time',
-    type: FieldType.time,
-    values: records.map((record) => record.timestamp),
-    config: { displayName: 'Time', custom: { fillOpacity: 100 } },
-  };
-
-  const timeIndex = timeField.values.map((_, index) => index);
-  timeIndex.sort(fieldIndexComparer(timeField));
-
-  const frame: DataFrame = {
-    fields: [
-      {
-        ...timeField,
-        values: timeField.values.map((_, i) => timeField.values[timeIndex[i]]),
-      },
-      {
-        name: 'alertId',
-        type: FieldType.string,
-        values: records.map((_) => 1),
-        config: {
-          displayName: 'AlertId',
-          custom: { fillOpacity: 100 },
-        },
-      },
-      {
-        name: 'newState',
-        type: FieldType.string,
-        values: records.map((record) => record.line.current),
-        config: {
-          displayName: 'newState',
-          custom: { fillOpacity: 100 },
-        },
-      },
-      {
-        name: 'prevState',
-        type: FieldType.string,
-        values: records.map((record) => record.line.previous),
-        config: {
-          displayName: 'prevState',
-          custom: { fillOpacity: 100 },
-        },
-      },
-      {
-        name: 'color',
-        type: FieldType.string,
-        values: records.map((record) => {
-          const normalizedState = normalizeAlertState(record.line.current);
-          switch (normalizedState) {
-            case 'firing':
-            case 'alerting':
-            case 'error':
-              return theme.colors.error.main;
-            case 'pending':
-              return theme.colors.warning.main;
-            case 'normal':
-              return theme.colors.success.main;
-            case 'nodata':
-              return theme.colors.info.main;
-            case 'paused':
-              return theme.colors.text.disabled;
-            default:
-              return theme.colors.info.main;
-          }
-        }),
-        config: {},
-      },
-      {
-        name: 'data',
-        type: FieldType.other,
-        values: records.map((record) => {
-          return logRecordToData(record);
-        }),
-        config: {},
-      },
-    ],
-    length: timeField.values.length,
-    name: instanceLabels,
-  };
-
-  frame.fields.forEach((field) => {
-    field.display = getDisplayProcessor({ field, theme });
-  });
   return frame;
 }

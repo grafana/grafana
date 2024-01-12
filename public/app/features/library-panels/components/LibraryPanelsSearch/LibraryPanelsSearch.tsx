@@ -41,7 +41,7 @@ export const LibraryPanelsSearch = ({
   showSort = false,
   showSecondaryActions = false,
 }: LibraryPanelsSearchProps): JSX.Element => {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, variant), [variant]));
+  const styles = useStyles2(getStyles, variant);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -149,7 +149,7 @@ const SearchControls = React.memo(
     onFolderFilterChange,
     onPanelFilterChange,
   }: SearchControlsProps) => {
-    const styles = useStyles2(useCallback((theme) => getRowStyles(theme, variant), [variant]));
+    const styles = useStyles2(getRowStyles, variant);
     const panelFilterChanged = useCallback(
       (plugins: PanelPluginMeta[]) => onPanelFilterChange(plugins.map((p) => p.id)),
       [onPanelFilterChange]

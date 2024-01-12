@@ -8,9 +8,9 @@ import {
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
+  LegendDisplayMode,
   LineInterpolation,
   StackingMode,
-  VizLegendOptions,
 } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SuggestionName } from 'app/types/suggestions';
@@ -29,7 +29,12 @@ export class TimeSeriesSuggestionsSupplier {
       name: SuggestionName.LineChart,
       pluginId: 'timeseries',
       options: {
-        legend: {} as VizLegendOptions,
+        legend: {
+          calcs: [],
+          displayMode: LegendDisplayMode.Hidden,
+          placement: 'right',
+          showLegend: false,
+        },
       },
       fieldConfig: {
         defaults: {
@@ -39,8 +44,6 @@ export class TimeSeriesSuggestionsSupplier {
       },
       cardOptions: {
         previewModifier: (s) => {
-          s.options!.legend.showLegend = false;
-
           if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
             s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
           }

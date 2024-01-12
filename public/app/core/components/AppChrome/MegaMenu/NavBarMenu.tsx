@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, Icon, IconButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -62,7 +63,13 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
         onExited={onClose}
       >
         <FocusScope contain autoFocus>
-          <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
+          <div
+            data-testid={selectors.components.NavMenu.Menu}
+            ref={ref}
+            {...overlayProps}
+            {...dialogProps}
+            className={styles.container}
+          >
             <div className={styles.mobileHeader}>
               <Icon name="bars" size="xl" />
               <IconButton

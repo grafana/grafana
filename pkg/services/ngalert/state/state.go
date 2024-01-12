@@ -34,6 +34,9 @@ type State struct {
 	// StateReason is a textual description to explain why the state has its current state.
 	StateReason string
 
+	// ResultFingerprint is a hash of labels of the result before it is processed by
+	ResultFingerprint data.Fingerprint
+
 	// Results contains the result of the current and previous evaluations.
 	Results []Evaluation
 
@@ -268,7 +271,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		resultAlerting(state, rule, result, logger)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
-		state.StateReason = "error"
+		state.StateReason = models.StateReasonError
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
@@ -326,7 +329,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	case models.Alerting:
 		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
 		resultAlerting(state, rule, result, logger)
-		state.StateReason = models.NoData.String()
+		state.StateReason = models.StateReasonNoData
 	case models.NoData:
 		if state.State == eval.NoData {
 			prevEndsAt := state.EndsAt
@@ -355,7 +358,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	case models.OK:
 		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
 		resultNormal(state, rule, result, logger)
-		state.StateReason = models.NoData.String()
+		state.StateReason = models.StateReasonNoData
 	default:
 		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
@@ -410,7 +413,10 @@ func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {
 	if intv > ResendDelay {
 		ends = intv
 	}
-	return evaluatedAt.Add(3 * ends)
+	// Allow for at least two evaluation cycles to pass before expiring, every time.
+	// Synchronized with Prometheus:
+	// https://github.com/prometheus/prometheus/blob/6a9b3263ffdba5ea8c23e6f9ef69fb7a15b566f8/rules/alerting.go#L493
+	return evaluatedAt.Add(4 * ends)
 }
 
 func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
@@ -474,6 +480,27 @@ func FormatStateAndReason(state eval.State, reason string) string {
 		s += fmt.Sprintf(" (%v)", reason)
 	}
 	return s
+}
+
+// ParseFormattedState parses a state string in the format "state (reason)"
+// and returns the state and reason separately.
+func ParseFormattedState(stateStr string) (eval.State, string, error) {
+	split := strings.Split(stateStr, " ")
+	if len(split) == 0 {
+		return -1, "", errors.New("invalid state format")
+	}
+
+	state, err := eval.ParseStateString(split[0])
+	if err != nil {
+		return -1, "", err
+	}
+
+	var reason string
+	if len(split) > 1 {
+		reason = strings.Trim(split[1], "()")
+	}
+
+	return state, reason, nil
 }
 
 // GetRuleExtraLabels returns a map of built-in labels that should be added to an alert before it is sent to the Alertmanager or its state is cached.

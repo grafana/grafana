@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -11,10 +12,9 @@ import (
 )
 
 type datasourceInfo struct {
-	TimeField                  interface{} `json:"timeField"`
-	MaxConcurrentShardRequests int64       `json:"maxConcurrentShardRequests"`
-	Interval                   string      `json:"interval"`
-	TimeInterval               string      `json:"timeInterval"`
+	TimeField                  any    `json:"timeField"`
+	MaxConcurrentShardRequests int64  `json:"maxConcurrentShardRequests"`
+	Interval                   string `json:"interval"`
 }
 
 func TestNewInstanceSettings(t *testing.T) {
@@ -30,7 +30,7 @@ func TestNewInstanceSettings(t *testing.T) {
 			JSONData: json.RawMessage(settingsJSON),
 		}
 
-		_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
+		_, err = newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
 		require.NoError(t, err)
 	})
 
@@ -39,7 +39,6 @@ func TestNewInstanceSettings(t *testing.T) {
 			dsInfo := datasourceInfo{
 				MaxConcurrentShardRequests: 5,
 				Interval:                   "Daily",
-				TimeInterval:               "TimeInterval",
 			}
 
 			settingsJSON, err := json.Marshal(dsInfo)
@@ -49,7 +48,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
 			require.EqualError(t, err, "timeField cannot be cast to string")
 		})
 
@@ -58,7 +57,6 @@ func TestNewInstanceSettings(t *testing.T) {
 				MaxConcurrentShardRequests: 5,
 				Interval:                   "Daily",
 				TimeField:                  "",
-				TimeInterval:               "TimeInterval",
 			}
 
 			settingsJSON, err := json.Marshal(dsInfo)
@@ -68,7 +66,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
 			require.EqualError(t, err, "elasticsearch time field name is required")
 		})
 	})

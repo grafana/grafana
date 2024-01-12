@@ -25,7 +25,7 @@ const matchersToArrayFieldMatchers = (
         operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
       },
     ],
-    [] as MatcherFieldValue[]
+    []
   );
 
 const selectableValueToString = (selectableValue: SelectableValue<string>): string => selectableValue.value!;
@@ -149,9 +149,9 @@ export const formAmRouteToAmRoute = (
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
   const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : INHERIT_FROM_PARENT;
-  const object_matchers = formAmRoute.object_matchers
+  const object_matchers: ObjectMatcher[] | undefined = formAmRoute.object_matchers
     ?.filter((route) => route.name && route.value && route.operator)
-    .map(({ name, operator, value }) => [name, operator, value] as ObjectMatcher);
+    .map(({ name, operator, value }) => [name, operator, value]);
 
   const routes = formAmRoute.routes?.map((subRoute) =>
     formAmRouteToAmRoute(alertManagerSourceName, subRoute, routeTree)
@@ -221,8 +221,8 @@ export const mapMultiSelectValueToStrings = (
   return selectableValuesToStrings(selectableValues);
 };
 
-export function promDurationValidator(duration: string) {
-  if (duration.length === 0) {
+export function promDurationValidator(duration?: string) {
+  if (!duration || duration.length === 0) {
     return true;
   }
 
@@ -237,7 +237,7 @@ export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
   });
 };
 
-export const repeatIntervalValidator = (repeatInterval: string, groupInterval: string) => {
+export const repeatIntervalValidator = (repeatInterval: string, groupInterval = '') => {
   if (repeatInterval.length === 0) {
     return true;
   }

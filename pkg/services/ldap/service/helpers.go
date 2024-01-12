@@ -70,7 +70,7 @@ func readConfig(configFile string) (*ldap.Config, error) {
 	return result, nil
 }
 
-func assertNotEmptyCfg(val interface{}, propName string) error {
+func assertNotEmptyCfg(val any, propName string) error {
 	switch v := val.(type) {
 	case string:
 		if v == "" {

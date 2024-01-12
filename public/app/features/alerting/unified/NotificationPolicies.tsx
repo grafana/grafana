@@ -4,8 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Alert, LoadingPlaceholder, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -31,7 +30,6 @@ import { updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
-import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { normalizeMatchers } from './utils/matchers';
 import { computeInheritedTree } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
@@ -57,7 +55,7 @@ const AmRoutes = () => {
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { selectedAlertmanager } = useAlertmanager();
+  const { selectedAlertmanager, hasConfigurationAPI } = useAlertmanager();
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
@@ -186,10 +184,6 @@ const AmRoutes = () => {
     return null;
   }
 
-  const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager);
-  const readOnlyPolicies = vanillaPrometheusAlertManager;
-  const readOnlyMuteTimings = vanillaPrometheusAlertManager;
-
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
   const isFetching = !result && resultLoading;
@@ -246,7 +240,7 @@ const AmRoutes = () => {
                       currentRoute={rootRoute}
                       alertGroups={alertGroups ?? []}
                       contactPointsState={contactPointsState.receivers}
-                      readOnly={readOnlyPolicies}
+                      readOnly={!hasConfigurationAPI}
                       provisioned={isProvisioned}
                       alertManagerSourceName={selectedAlertmanager}
                       onAddPolicy={openAddModal}
@@ -265,7 +259,7 @@ const AmRoutes = () => {
               </>
             )}
             {muteTimingsTabActive && (
-              <MuteTimingsTable alertManagerSourceName={selectedAlertmanager} hideActions={readOnlyMuteTimings} />
+              <MuteTimingsTable alertManagerSourceName={selectedAlertmanager} hideActions={!hasConfigurationAPI} />
             )}
           </>
         )}
@@ -335,7 +329,7 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
 }
 
 const NotificationPoliciesPage = () => (
-  <AlertmanagerPageWrapper pageId="am-routes" accessType="notification">
+  <AlertmanagerPageWrapper navId="am-routes" accessType="notification">
     <AmRoutes />
   </AlertmanagerPageWrapper>
 );

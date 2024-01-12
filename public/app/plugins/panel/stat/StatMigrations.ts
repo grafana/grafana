@@ -6,12 +6,12 @@ import { Options } from './panelcfg.gen';
 
 // This is called when the panel changes from another panel
 export const statPanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
+  panel: PanelModel<Partial<Options>>,
   prevPluginId: string,
   prevOptions: any
 ) => {
   // This handles most config changes
-  const options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions) as Options;
+  const options: Options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions);
 
   // Changing from angular singlestat
   if (prevOptions.angular && (prevPluginId === 'singlestat' || prevPluginId === 'grafana-singlestat-panel')) {

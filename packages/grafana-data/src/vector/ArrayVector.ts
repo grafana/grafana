@@ -1,3 +1,6 @@
+const notice = 'ArrayVector is deprecated and will be removed in Grafana 11. Please use plain arrays for field.values.';
+let notified = false;
+
 /**
  * @public
  *
@@ -30,6 +33,11 @@ export class ArrayVector<T = any> extends Array<T> {
   constructor(buffer?: any[]) {
     super();
     this.buffer = buffer ?? [];
+
+    if (!notified) {
+      console.warn(notice);
+      notified = true;
+    }
   }
 
   toJSON(): T[] {

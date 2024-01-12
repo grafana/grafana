@@ -42,7 +42,7 @@ jobs:
           private_key: ${{ secrets.EI_APP_PRIVATE_KEY }}
 
       - name: Checkout ephemeral instances repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: grafana/ephemeral-grafana-instances-github-action
           token: ${{ steps.generate_token.outputs.token }}

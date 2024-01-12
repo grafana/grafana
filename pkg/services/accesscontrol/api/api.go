@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -14,7 +15,7 @@ import (
 )
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
-	features *featuremgmt.FeatureManager) *AccessControlAPI {
+	features featuremgmt.FeatureToggles) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
@@ -27,7 +28,7 @@ type AccessControlAPI struct {
 	Service       ac.Service
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
-	features      *featuremgmt.FeatureManager
+	features      featuremgmt.FeatureToggles
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
@@ -36,12 +37,12 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Group("/api/access-control", func(rr routing.RouteRegister) {
 		rr.Get("/user/actions", middleware.ReqSignedIn, routing.Wrap(api.getUserActions))
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
-		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+		if api.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userID"))
 			rr.Get("/users/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
 			rr.Get("/user/:userID/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))
 		}
-	})
+	}, requestmeta.SetOwner(requestmeta.TeamAuth))
 }
 
 // GET /api/access-control/user/actions

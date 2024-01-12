@@ -118,13 +118,13 @@ var converterMap = map[string]data.FieldConverter{
 }
 
 type KeyValue struct {
-	Value interface{} `json:"value"`
-	Key   string      `json:"key"`
+	Value any    `json:"value"`
+	Key   string `json:"key"`
 }
 
 var tagsConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableJSON,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		if v == nil {
 			return nil, nil
 		}
@@ -171,7 +171,7 @@ var tagsConverter = data.FieldConverter{
 
 var stringConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableString,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var as *string
 		if v == nil {
 			return as, nil
@@ -187,7 +187,7 @@ var stringConverter = data.FieldConverter{
 
 var objectToStringConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableString,
-	Converter: func(kustoValue interface{}) (interface{}, error) {
+	Converter: func(kustoValue any) (any, error) {
 		var output *string
 		if kustoValue == nil {
 			return output, nil
@@ -207,7 +207,7 @@ var objectToStringConverter = data.FieldConverter{
 
 var timeConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableTime,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var at *time.Time
 		if v == nil {
 			return at, nil
@@ -227,7 +227,7 @@ var timeConverter = data.FieldConverter{
 
 var realConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableFloat64,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var af *float64
 		if v == nil {
 			return af, nil
@@ -260,7 +260,7 @@ var realConverter = data.FieldConverter{
 
 var boolConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableBool,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var ab *bool
 		if v == nil {
 			return ab, nil
@@ -275,7 +275,7 @@ var boolConverter = data.FieldConverter{
 
 var intConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableInt32,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var ai *int32
 		if v == nil {
 			return ai, nil
@@ -296,7 +296,7 @@ var intConverter = data.FieldConverter{
 
 var longConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableInt64,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var ai *int64
 		if v == nil {
 			return ai, nil
@@ -322,7 +322,7 @@ var longConverter = data.FieldConverter{
 // to functions like sdk's data.LongToWide.
 var decimalConverter = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableFloat64,
-	Converter: func(v interface{}) (interface{}, error) {
+	Converter: func(v any) (any, error) {
 		var af *float64
 		if v == nil {
 			return af, nil

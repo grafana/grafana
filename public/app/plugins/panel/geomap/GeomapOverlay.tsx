@@ -28,29 +28,29 @@ export const GeomapOverlay = ({ topRight1, topRight2, bottomLeft, blStyle }: Ove
 };
 
 const getStyles = (topRight1Exists: boolean) => (theme: GrafanaTheme2) => ({
-  overlay: css`
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 500;
-    pointer-events: none;
-  `,
-  TR1: css`
-    right: 0.5em;
-    pointer-events: auto;
-    position: absolute;
-    top: 0.5em;
-  `,
-  TR2: css`
-    position: absolute;
-    top: ${topRight1Exists ? '80' : '8'}px;
-    right: 8px;
-    pointer-events: auto;
-  `,
-  BL: css`
-    position: absolute;
-    bottom: 8px;
-    left: 8px;
-    pointer-events: auto;
-  `,
+  overlay: css({
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    zIndex: 500,
+    pointerEvents: 'none',
+  }),
+  TR1: css({
+    right: '0.5em',
+    pointerEvents: 'auto',
+    position: 'absolute',
+    top: '0.5em',
+  }),
+  TR2: css({
+    position: 'absolute',
+    top: topRight1Exists ? '80px' : '8px',
+    right: '8px',
+    pointerEvents: 'auto',
+  }),
+  BL: css({
+    position: 'absolute',
+    bottom: '8px',
+    left: '8px',
+    pointerEvents: 'auto',
+  }),
 });

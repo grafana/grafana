@@ -10,4 +10,6 @@ export const INTEGRATION_ICONS: Record<string, IconName> = {
   slack: 'slack',
   teams: 'microsoft',
   telegram: 'telegram-alt',
+  webhook: 'link',
+  sns: 'amazon',
 };

@@ -15,6 +15,10 @@ var (
 	batchSize = 1000
 )
 
+const (
+	maxLen = 40
+)
+
 func MigrateScopeSplit(db db.DB, log log.Logger) error {
 	t := time.Now()
 	ctx := context.Background()
@@ -25,12 +29,12 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 	if errFind := db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return sess.SQL("SELECT * FROM permission WHERE NOT scope = '' AND identifier = ''").Find(&permissions)
 	}); errFind != nil {
-		log.Error("could not search for permissions to update", "migration", "scopeSplit", "error", errFind)
+		log.Error("Could not search for permissions to update", "migration", "scopeSplit", "error", errFind)
 		return errFind
 	}
 
 	if len(permissions) == 0 {
-		log.Debug("no permission require a scope split", "migration", "scopeSplit")
+		log.Debug("No permission require a scope split", "migration", "scopeSplit")
 		return nil
 	}
 
@@ -39,15 +43,21 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 
 		// IDs to remove
 		delQuery := "DELETE FROM permission WHERE id IN ("
-		delArgs := make([]interface{}, 0, n)
+		delArgs := make([]any, 0, n)
 
 		// Query to insert the updated permissions
 		insertQuery := "INSERT INTO permission (id, role_id, action, scope, kind, attribute, identifier, created, updated) VALUES "
-		insertArgs := make([]interface{}, 0, 9*n)
+		insertArgs := make([]any, 0, 9*n)
 
 		// Prepare batch of updated permissions
 		for i := start; i < end; i++ {
 			kind, attribute, identifier := permissions[i].SplitScope()
+
+			// Trim to max length to avoid bootloop.
+			// too long scopes will be truncated and the permission will become invalid.
+			kind = trimToMaxLen(kind, maxLen)
+			attribute = trimToMaxLen(attribute, maxLen)
+			identifier = trimToMaxLen(identifier, maxLen)
 
 			delQuery += "?,"
 			delArgs = append(delArgs, permissions[i].ID)
@@ -68,16 +78,16 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 		// Batch update the permissions
 		if errBatchUpdate := db.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 			if _, errDel := tx.Exec(ctx, delQuery, delArgs...); errDel != nil {
-				log.Error("error deleting permissions", "migration", "scopeSplit", "error", errDel)
+				log.Error("Error deleting permissions", "migration", "scopeSplit", "error", errDel)
 				return errDel
 			}
 			if _, errInsert := tx.Exec(ctx, insertQuery, insertArgs...); errInsert != nil {
-				log.Error("error saving permissions", "migration", "scopeSplit", "error", errInsert)
+				log.Error("Error saving permissions", "migration", "scopeSplit", "error", errInsert)
 				return errInsert
 			}
 			return nil
 		}); errBatchUpdate != nil {
-			log.Error("error updating permission batch", "migration", "scopeSplit", "start", start, "end", end)
+			log.Error("Error updating permission batch", "migration", "scopeSplit", "start", start, "end", end)
 			return errBatchUpdate
 		}
 
@@ -85,11 +95,11 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 		return nil
 	})
 	if errBatchUpdate != nil {
-		log.Error("could not migrate permissions", "migration", "scopeSplit", "total", len(permissions), "succeeded", cnt, "left", len(permissions)-cnt, "error", errBatchUpdate)
+		log.Error("Could not migrate permissions", "migration", "scopeSplit", "total", len(permissions), "succeeded", cnt, "left", len(permissions)-cnt, "error", errBatchUpdate)
 		return errBatchUpdate
 	}
 
-	log.Debug("migrated permissions", "migration", "scopeSplit", "total", len(permissions), "succeeded", cnt, "in", time.Since(t))
+	log.Debug("Migrated permissions", "migration", "scopeSplit", "total", len(permissions), "succeeded", cnt, "in", time.Since(t))
 	return nil
 }
 
@@ -108,4 +118,11 @@ func batch(count, batchSize int, eachFn func(start, end int) error) error {
 	}
 
 	return nil
+}
+
+func trimToMaxLen(s string, maxLen int) string {
+	if len(s) > maxLen {
+		return s[:maxLen]
+	}
+	return s
 }

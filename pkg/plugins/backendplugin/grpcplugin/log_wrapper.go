@@ -14,15 +14,15 @@ type logWrapper struct {
 	Logger plog.Logger
 
 	name        string
-	impliedArgs []interface{}
+	impliedArgs []any
 }
 
-func formatArgs(args ...interface{}) []interface{} {
+func formatArgs(args ...any) []any {
 	if len(args) == 0 || len(args)%2 != 0 {
 		return args
 	}
 
-	res := []interface{}{}
+	res := []any{}
 
 	for n := 0; n < len(args); n += 2 {
 		key := args[n]
@@ -39,7 +39,7 @@ func formatArgs(args ...interface{}) []interface{} {
 }
 
 // Emit a message and key/value pairs at a provided log level
-func (lw logWrapper) Log(level hclog.Level, msg string, args ...interface{}) {
+func (lw logWrapper) Log(level hclog.Level, msg string, args ...any) {
 	switch level {
 	case hclog.Trace:
 		lw.Trace(msg, args...)
@@ -57,27 +57,27 @@ func (lw logWrapper) Log(level hclog.Level, msg string, args ...interface{}) {
 }
 
 // Emit a message and key/value pairs at the TRACE level
-func (lw logWrapper) Trace(msg string, args ...interface{}) {
+func (lw logWrapper) Trace(msg string, args ...any) {
 	lw.Logger.Debug(msg, formatArgs(args...)...)
 }
 
 // Emit a message and key/value pairs at the DEBUG level
-func (lw logWrapper) Debug(msg string, args ...interface{}) {
+func (lw logWrapper) Debug(msg string, args ...any) {
 	lw.Logger.Debug(msg, formatArgs(args...)...)
 }
 
 // Emit a message and key/value pairs at the INFO level
-func (lw logWrapper) Info(msg string, args ...interface{}) {
+func (lw logWrapper) Info(msg string, args ...any) {
 	lw.Logger.Info(msg, formatArgs(args...)...)
 }
 
 // Emit a message and key/value pairs at the WARN level
-func (lw logWrapper) Warn(msg string, args ...interface{}) {
+func (lw logWrapper) Warn(msg string, args ...any) {
 	lw.Logger.Warn(msg, formatArgs(args...)...)
 }
 
 // Emit a message and key/value pairs at the ERROR level
-func (lw logWrapper) Error(msg string, args ...interface{}) {
+func (lw logWrapper) Error(msg string, args ...any) {
 	lw.Logger.Error(msg, formatArgs(args...)...)
 }
 
@@ -97,12 +97,12 @@ func (lw logWrapper) IsWarn() bool { return true }
 func (lw logWrapper) IsError() bool { return true }
 
 // ImpliedArgs returns With key/value pairs
-func (lw logWrapper) ImpliedArgs() []interface{} {
+func (lw logWrapper) ImpliedArgs() []any {
 	return lw.impliedArgs
 }
 
 // Creates a sublogger that will always have the given key/value pairs
-func (lw logWrapper) With(args ...interface{}) hclog.Logger {
+func (lw logWrapper) With(args ...any) hclog.Logger {
 	return logWrapper{
 		Logger:      lw.Logger.New(args...),
 		name:        lw.name,

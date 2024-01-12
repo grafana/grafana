@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,7 +32,7 @@ const (
 type Service struct {
 	cfg                *setting.Cfg
 	sqlstore           db.DB
-	plugins            plugins.Store
+	plugins            pluginstore.Store
 	usageStats         usagestats.Service
 	validator          validator.Service
 	statsService       stats.Service
@@ -54,7 +55,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	store db.DB,
 	social social.Service,
-	plugins plugins.Store,
+	plugins pluginstore.Store,
 	features *featuremgmt.FeatureManager,
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
@@ -118,8 +119,8 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	statsResult, err := s.statsService.GetSystemStats(ctx, &stats.GetSystemStatsQuery{})
 	if err != nil {
@@ -163,6 +164,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.dashboard_versions.count"] = statsResult.DashboardVersions
 	m["stats.annotations.count"] = statsResult.Annotations
 	m["stats.alert_rules.count"] = statsResult.AlertRules
+	m["stats.rule_groups.count"] = statsResult.RuleGroups
 	m["stats.library_panels.count"] = statsResult.LibraryPanels
 	m["stats.library_variables.count"] = statsResult.LibraryVariables
 	m["stats.dashboards_viewers_can_edit.count"] = statsResult.DashboardsViewersCanEdit
@@ -210,8 +212,8 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	return m, nil
 }
 
-func (s *Service) collectAdditionalMetrics(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) collectAdditionalMetrics(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 	for _, usageStatProvider := range s.usageStatProviders {
 		stats := usageStatProvider.GetUsageStats(ctx)
 		for k, v := range stats {
@@ -221,8 +223,8 @@ func (s *Service) collectAdditionalMetrics(ctx context.Context) (map[string]inte
 	return m, nil
 }
 
-func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 	// get stats about alert notifier usage
 	anResult, err := s.statsService.GetAlertNotifiersUsageStats(ctx, &stats.GetAlertNotifierUsageStatsQuery{})
 	if err != nil {
@@ -236,8 +238,8 @@ func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]int
 	return m, nil
 }
 
-func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
 	if err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
@@ -260,8 +262,8 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 	return m, nil
 }
 
-func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	// fetch datasource access stats
 	dsAccessResult, err := s.statsService.GetDataSourceAccessStats(ctx, &stats.GetDataSourceAccessStatsQuery{})
@@ -327,6 +329,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalDashboardVersions.Set(float64(statsResult.DashboardVersions))
 	metrics.StatsTotalAnnotations.Set(float64(statsResult.Annotations))
 	metrics.StatsTotalAlertRules.Set(float64(statsResult.AlertRules))
+	metrics.StatsTotalRuleGroups.Set(float64(statsResult.RuleGroups))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsResult.LibraryPanels))
 	metrics.StatsTotalLibraryVariables.Set(float64(statsResult.LibraryVariables))
 

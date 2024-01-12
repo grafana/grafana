@@ -100,12 +100,12 @@ func TestVictoropsNotifier(t *testing.T) {
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
 			require.Nil(t, err)
 
-			diff := cmp.Diff(map[string]interface{}{
+			diff := cmp.Diff(map[string]any{
 				"alert_url":           "",
 				"entity_display_name": "[Alerting] someRule",
 				"entity_id":           "someRule",
 				"message_type":        "WARNING",
-				"metrics":             map[string]interface{}{},
+				"metrics":             map[string]any{},
 				"monitoring_tool":     "Grafana v",
 				"state_message":       "someMessage",
 				"state_start_time":    int64(-1),
@@ -148,12 +148,12 @@ func TestVictoropsNotifier(t *testing.T) {
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
 			require.Nil(t, err)
 
-			diff := cmp.Diff(map[string]interface{}{
+			diff := cmp.Diff(map[string]any{
 				"alert_url":           "",
 				"entity_display_name": "[OK] someRule",
 				"entity_id":           "someRule",
 				"message_type":        "RECOVERY",
-				"metrics":             map[string]interface{}{},
+				"metrics":             map[string]any{},
 				"monitoring_tool":     "Grafana v",
 				"state_message":       "someMessage",
 				"state_start_time":    int64(-1),

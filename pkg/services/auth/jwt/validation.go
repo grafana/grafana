@@ -32,7 +32,7 @@ func (s *AuthService) initClaimExpectations() error {
 			delete(s.expect, key)
 		case "aud":
 			switch value := value.(type) {
-			case []interface{}:
+			case []any:
 				for _, val := range value {
 					if v, ok := val.(string); ok {
 						s.expectRegistered.Audience = append(s.expectRegistered.Audience, v)
@@ -70,7 +70,7 @@ func (s *AuthService) validateClaims(claims JWTClaims) error {
 			}
 		case "aud":
 			switch value := value.(type) {
-			case []interface{}:
+			case []any:
 				for _, val := range value {
 					if v, ok := val.(string); ok {
 						registeredClaims.Audience = append(registeredClaims.Audience, v)

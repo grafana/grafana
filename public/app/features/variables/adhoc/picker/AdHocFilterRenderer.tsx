@@ -10,6 +10,7 @@ import { OperatorSegment } from './OperatorSegment';
 interface Props {
   datasource: DataSourceRef;
   filter: AdHocVariableFilter;
+  allFilters: AdHocVariableFilter[];
   onKeyChange: (item: SelectableValue<string | null>) => void;
   onOperatorChange: (item: SelectableValue<string>) => void;
   onValueChange: (item: SelectableValue<string>) => void;
@@ -25,7 +26,7 @@ export const AdHocFilterRenderer = ({
   onOperatorChange,
   onValueChange,
   placeHolder,
-  getTagKeysOptions,
+  allFilters,
   disabled,
 }: Props) => {
   return (
@@ -35,7 +36,7 @@ export const AdHocFilterRenderer = ({
         datasource={datasource}
         filterKey={key}
         onChange={onKeyChange}
-        getTagKeysOptions={getTagKeysOptions}
+        allFilters={allFilters}
       />
       <div className="gf-form">
         <OperatorSegment disabled={disabled} value={operator} onChange={onOperatorChange} />
@@ -45,6 +46,7 @@ export const AdHocFilterRenderer = ({
         datasource={datasource}
         filterKey={key}
         filterValue={value}
+        allFilters={allFilters}
         onChange={onValueChange}
         placeHolder={placeHolder}
       />

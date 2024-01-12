@@ -37,7 +37,7 @@ func (a *ActiveLast30DaysFilter) InCondition() *user.InCondition {
 	return nil
 }
 
-func (a *ActiveLast30DaysFilter) whereParams() interface{} {
+func (a *ActiveLast30DaysFilter) whereParams() any {
 	activeUserTimeLimit := time.Hour * 24 * 30
 	return time.Now().Add(-activeUserTimeLimit)
 }

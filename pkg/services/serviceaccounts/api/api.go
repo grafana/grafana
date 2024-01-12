@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -9,10 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,37 +22,23 @@ import (
 
 type ServiceAccountsAPI struct {
 	cfg                  *setting.Cfg
-	service              service
+	service              serviceaccounts.Service
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
 	RouterRegister       routing.RouteRegister
 	log                  log.Logger
 	permissionService    accesscontrol.ServiceAccountPermissionsService
-}
-
-// Service implements the API exposed methods for service accounts.
-type service interface {
-	CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error)
-	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error)
-	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
-		saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error)
-	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
-	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
-	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error)
-	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
-	// Service account tokens
-	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error)
-	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
+	isExternalSAEnabled  bool
 }
 
 func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
-	service service,
+	service serviceaccounts.Service,
 	accesscontrol accesscontrol.AccessControl,
 	accesscontrolService accesscontrol.Service,
 	routerRegister routing.RouteRegister,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
+	features *featuremgmt.FeatureManager,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
 		cfg:                  cfg,
@@ -62,6 +48,7 @@ func NewServiceAccountsAPI(
 		RouterRegister:       routerRegister,
 		log:                  log.New("serviceaccounts.api"),
 		permissionService:    permissionService,
+		isExternalSAEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth),
 	}
 }
 
@@ -78,7 +65,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
 		serviceAccountsRoute.Post("/migrate", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/migrate/:keyId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
-	})
+	}, requestmeta.SetOwner(requestmeta.TeamAuth))
 }
 
 // swagger:route POST /serviceaccounts service_accounts createServiceAccount
@@ -282,9 +269,13 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	// its okay that it fails, it is only filtering that might be weird, but to safe quard against any weird incoming query param
 	onlyWithExpiredTokens := c.QueryBool("expiredTokens")
 	onlyDisabled := c.QueryBool("disabled")
+	onlyExternal := c.QueryBool("external")
 	filter := serviceaccounts.FilterIncludeAll
 	if onlyWithExpiredTokens {
 		filter = serviceaccounts.FilterOnlyExpiredTokens
+	}
+	if api.isExternalSAEnabled && onlyExternal {
+		filter = serviceaccounts.FilterOnlyExternal
 	}
 	if onlyDisabled {
 		filter = serviceaccounts.FilterOnlyDisabled

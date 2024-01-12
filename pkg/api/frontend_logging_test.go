@@ -27,13 +27,13 @@ type SourceMapReadRecord struct {
 	path string
 }
 
-type logScenarioFunc func(c *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord)
+type logScenarioFunc func(c *scenarioContext, logs map[string]any, sourceMapReads []SourceMapReadRecord)
 
 func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event frontendlogging.FrontendGrafanaJavascriptAgentEvent, fn logScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		var logcontent = make(map[string]interface{})
+		var logcontent = make(map[string]any)
 		logcontent["logger"] = "frontend"
-		newfrontendLogger := log.Logger(log.LoggerFunc(func(keyvals ...interface{}) error {
+		newfrontendLogger := log.Logger(log.LoggerFunc(func(keyvals ...any) error {
 			for i := 0; i < len(keyvals); i += 2 {
 				logcontent[keyvals[i].(string)] = keyvals[i+1]
 			}
@@ -138,7 +138,7 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 		}
 
 		logGrafanaJavascriptAgentEventScenario(t, "Should log received error event", errorEvent,
-			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+			func(sc *scenarioContext, logs map[string]any, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
 				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "page_url", errorEvent.Meta.Page.URL)
@@ -161,7 +161,7 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 		}
 
 		logGrafanaJavascriptAgentEventScenario(t, "Should log received log event", logEvent,
-			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+			func(sc *scenarioContext, logs map[string]any, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
 				assert.Len(t, logs, 11)
 				assertContextContains(t, logs, "logger", "frontend")
@@ -186,7 +186,7 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 		}
 
 		logGrafanaJavascriptAgentEventScenario(t, "Should log received log context", logEventWithContext,
-			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+			func(sc *scenarioContext, logs map[string]any, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
 				assertContextContains(t, logs, "context_one", "two")
 				assertContextContains(t, logs, "context_bar", "baz")
@@ -249,7 +249,7 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 		}
 
 		logGrafanaJavascriptAgentEventScenario(t, "Should load sourcemap and transform stacktrace line when possible", errorEventForSourceMapping,
-			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+			func(sc *scenarioContext, logs map[string]any, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
 				assertContextContains(t, logs, "stacktrace", `UserError: Please replace user and try again
   at ? (core|webpack:///./some_source.ts:2:2)
@@ -285,14 +285,14 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 		}
 
 		logGrafanaJavascriptAgentEventScenario(t, "Should log web vitals as context", logWebVitals,
-			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+			func(sc *scenarioContext, logs map[string]any, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
 				assertContextContains(t, logs, "CLS", float64(1))
 			})
 	})
 }
 
-func assertContextContains(t *testing.T, logRecord map[string]interface{}, label string, value interface{}) {
+func assertContextContains(t *testing.T, logRecord map[string]any, label string, value any) {
 	assert.Contains(t, logRecord, label)
 	assert.Equal(t, value, logRecord[label])
 }

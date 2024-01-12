@@ -16,7 +16,7 @@ func TestBatching(t *testing.T) {
 	t.Run("InBatches", func(t *testing.T) {
 		t.Run("calls fn 0 times if items is empty", func(t *testing.T) {
 			var calls int
-			fn := func(batch interface{}) error { calls += 1; return nil }
+			fn := func(batch any) error { calls += 1; return nil }
 			opts := BulkOpSettings{BatchSize: DefaultBatchSize}
 
 			err := InBatches([]int{}, opts, fn)
@@ -27,7 +27,7 @@ func TestBatching(t *testing.T) {
 
 		t.Run("succeeds if batch size is nonpositive", func(t *testing.T) {
 			var calls int
-			fn := func(batch interface{}) error { calls += 1; return nil }
+			fn := func(batch any) error { calls += 1; return nil }
 			opts := BulkOpSettings{BatchSize: DefaultBatchSize}
 
 			err := InBatches([]int{1, 2, 3}, opts, fn)
@@ -38,7 +38,7 @@ func TestBatching(t *testing.T) {
 
 		t.Run("rejects if items is not a slice", func(t *testing.T) {
 			var calls int
-			fn := func(batch interface{}) error { calls += 1; return nil }
+			fn := func(batch any) error { calls += 1; return nil }
 			opts := BulkOpSettings{BatchSize: DefaultBatchSize}
 
 			err := InBatches("lol", opts, fn)
@@ -48,7 +48,7 @@ func TestBatching(t *testing.T) {
 
 		t.Run("calls expected number of times when batch size does not evenly divide length", func(t *testing.T) {
 			var calls int
-			fn := func(batch interface{}) error { calls += 1; return nil }
+			fn := func(batch any) error { calls += 1; return nil }
 			opts := BulkOpSettings{BatchSize: 5}
 			vals := make([]int, 93)
 
@@ -86,7 +86,7 @@ func TestIntegrationBulkOps(t *testing.T) {
 	})
 }
 
-func assertTableCount(t *testing.T, db *SQLStore, table interface{}, expCount int64) {
+func assertTableCount(t *testing.T, db *SQLStore, table any, expCount int64) {
 	t.Helper()
 	err := db.WithDbSession(context.Background(), func(sess *DBSession) error {
 		total, err := sess.Table(bulkTestItem{}).Count()

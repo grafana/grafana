@@ -33,20 +33,13 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
 
     tabs.push({
       id: PanelEditorTabId.Transform,
-      text: 'Transform',
+      text: 'Transform data',
       icon: 'process',
       active: false,
     });
   }
 
-  const { alertingEnabled, unifiedAlertingEnabled } = getConfig();
-  const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
-  const isAlertingAvailable = alertingEnabled || (unifiedAlertingEnabled && hasRuleReadPermissions);
-
-  const isGraph = plugin.meta.id === 'graph';
-  const isTimeseries = plugin.meta.id === 'timeseries';
-
-  if ((isAlertingAvailable && isGraph) || isTimeseries) {
+  if (shouldShowAlertingTab(plugin)) {
     tabs.push({
       id: PanelEditorTabId.Alert,
       text: 'Alert',
@@ -60,3 +53,14 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
 
   return tabs;
 });
+
+export function shouldShowAlertingTab(plugin: PanelPlugin) {
+  const { alertingEnabled, unifiedAlertingEnabled } = getConfig();
+  const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
+  const isAlertingAvailable = alertingEnabled || (unifiedAlertingEnabled && hasRuleReadPermissions);
+
+  const isGraph = plugin.meta.id === 'graph';
+  const isTimeseries = plugin.meta.id === 'timeseries';
+
+  return (isAlertingAvailable && isGraph) || isTimeseries;
+}

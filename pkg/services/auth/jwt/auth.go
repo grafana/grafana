@@ -53,7 +53,7 @@ type AuthService struct {
 
 	keySet           keySet
 	log              log.Logger
-	expect           map[string]interface{}
+	expect           map[string]any
 	expectRegistered jwt.Expected
 }
 

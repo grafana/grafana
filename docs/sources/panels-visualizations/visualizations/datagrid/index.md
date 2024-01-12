@@ -3,7 +3,7 @@ aliases:
   - ../../features/panels/datagrid_panel/
   - ../../reference/datagrid/
   - ../../visualizations/datagrid/
-description: Learn about datagrid panel visualization features.
+description: Configure options for Grafana's datagrid visualization
 keywords:
   - grafana
   - dashboard
@@ -18,18 +18,18 @@ labels:
     - oss
 menuTitle: Datagrid
 title: Datagrid
-weight: 350
+weight: 100
 ---
 
 # Datagrid
 
 {{% admonition type="note" %}}
 
-The Grafana Datagrid panel is experimental. This feature is supported by the engineering team on a best-effort basis, and breaking changes may occur without notice prior to general availability.
+The Grafana datagrid is experimental. This feature is supported by the engineering team on a best-effort basis, and breaking changes may occur without notice prior to general availability.
 
 {{% /admonition %}}
 
-The Datagrid panel offers you the ability to create, edit, and fine-tune data within Grafana. As such, this panel can act as a data source for other panels
+Datagrids offer you the ability to create, edit, and fine-tune data within Grafana. As such, this panel can act as a data source for other panels
 inside a dashboard.
 
 ![Datagrid panel](/media/docs/datagrid/screenshot-grafana-datagrid-panel.png)
@@ -41,11 +41,11 @@ Editing the dataset changes the data source to use the inbuilt `-- Grafana --` d
 
 You can then use the panel as a data source for other panels, by using the inbuilt `-- Dashboard --` data source to pull the datagrid data. This allows for an interactive dashboard experience, where you can modify the data and see the changes reflected in other panels.
 
-Learn more about the inbuilt `-- Grafana --` and `-- Dashboard --` data sources in the [special data sources]({{< relref "../../../datasources/#special-data-sources"  >}}) documentation.
+Learn more about the inbuilt `-- Grafana --` and `-- Dashboard --` data sources in the [special data sources][] documentation.
 
 ## Context menu
 
-To provide a more streamlined experience, the Datagrid panel has a context menu that can be accessed by right-clicking on a cell, column header, or row selector. Depending on the state of your datagrid, the context menu offers different options including:
+To provide a more streamlined experience, the datagrid has a context menu that can be accessed by right-clicking on a cell, column header, or row selector. Depending on the state of your datagrid, the context menu offers different options including:
 
 - Delete or clear rows and columns.
 - Remove all existing data (rendering your datagrid blank).
@@ -63,11 +63,11 @@ You can also access a header menu by clicking the dropdown icon next to the head
 
 ## Selecting series
 
-If there are multiple series, you can set the Datagrid panel to display the preferred dataset using the **Select series** dropdown in the panel options.
+If there are multiple series, you can set the datagrid to display the preferred dataset using the **Select series** dropdown in the panel options.
 
-## Using Datagrid
+## Using datagrids
 
-Datagrid offers various ways of interacting with your data. You can add, edit, move, clear, and remove rows and columns; use the inbuilt search functionality to find specific data; and convert field types or freeze horizontal scroll on a specific column.
+Datagrids offer various ways of interacting with your data. You can add, edit, move, clear, and remove rows and columns; use the inbuilt search functionality to find specific data; and convert field types or freeze horizontal scroll on a specific column.
 
 ### Add data
 
@@ -121,3 +121,8 @@ To delete or clear multiple rows, take the following steps:
 The same rules apply to columns by clicking the column headers.
 
 To delete all rows, use the "select all" checkbox at the top left corner of the datagrid. This selects all rows and allows you to delete them using the context menu.
+
+{{% docs/reference %}}
+[special data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources#special-data-sources"
+[special data sources]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources#special-data-sources"
+{{% /docs/reference %}}

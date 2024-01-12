@@ -21,10 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestUserAuthToken(t *testing.T) {
+func TestIntegrationUserAuthToken(t *testing.T) {
 	ctx := createTestContext(t)
-	user := &user.User{ID: int64(10)}
-	// userID := user.Id
+	usr := &user.User{ID: int64(10)}
 
 	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
 	getTime = func() time.Time { return now }
@@ -32,7 +31,7 @@ func TestUserAuthToken(t *testing.T) {
 
 	t.Run("When creating token", func(t *testing.T) {
 		createToken := func() *auth.UserToken {
-			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
@@ -56,7 +55,7 @@ func TestUserAuthToken(t *testing.T) {
 			userToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
-			require.Equal(t, user.ID, userToken.UserId)
+			require.Equal(t, usr.ID, userToken.UserId)
 			require.True(t, userToken.AuthTokenSeen)
 
 			storedAuthToken, err := ctx.getAuthTokenByID(userToken.Id)
@@ -105,27 +104,27 @@ func TestUserAuthToken(t *testing.T) {
 		userToken = createToken()
 
 		t.Run("When creating an additional token", func(t *testing.T) {
-			userToken2, err := ctx.tokenService.CreateToken(context.Background(), user,
+			userToken2, err := ctx.tokenService.CreateToken(context.Background(), usr,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.Nil(t, err)
 			require.NotNil(t, userToken2)
 
 			t.Run("Can get first user token", func(t *testing.T) {
-				token, err := ctx.tokenService.GetUserToken(context.Background(), user.ID, userToken.Id)
+				token, err := ctx.tokenService.GetUserToken(context.Background(), usr.ID, userToken.Id)
 				require.Nil(t, err)
 				require.NotNil(t, token)
 				require.Equal(t, userToken.Id, token.Id)
 			})
 
 			t.Run("Can get second user token", func(t *testing.T) {
-				token, err := ctx.tokenService.GetUserToken(context.Background(), user.ID, userToken2.Id)
+				token, err := ctx.tokenService.GetUserToken(context.Background(), usr.ID, userToken2.Id)
 				require.Nil(t, err)
 				require.NotNil(t, token)
 				require.Equal(t, userToken2.Id, token.Id)
 			})
 
 			t.Run("Can get user tokens", func(t *testing.T) {
-				tokens, err := ctx.tokenService.GetUserTokens(context.Background(), user.ID)
+				tokens, err := ctx.tokenService.GetUserTokens(context.Background(), usr.ID)
 				require.Nil(t, err)
 				require.Equal(t, 2, len(tokens))
 				require.Equal(t, userToken.Id, tokens[0].Id)
@@ -133,7 +132,7 @@ func TestUserAuthToken(t *testing.T) {
 			})
 
 			t.Run("Can revoke all user tokens", func(t *testing.T) {
-				err := ctx.tokenService.RevokeAllUserTokens(context.Background(), user.ID)
+				err := ctx.tokenService.RevokeAllUserTokens(context.Background(), usr.ID)
 				require.Nil(t, err)
 
 				model, err := ctx.getAuthTokenByID(userToken.Id)
@@ -150,9 +149,9 @@ func TestUserAuthToken(t *testing.T) {
 			t.Run("Can revoke all users tokens", func(t *testing.T) {
 				userIds := []int64{}
 				for i := 0; i < 3; i++ {
-					userId := user.ID + int64(i+1)
+					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
-					_, err := ctx.tokenService.CreateToken(context.Background(), user,
+					_, err := ctx.tokenService.CreateToken(context.Background(), usr,
 						net.ParseIP("192.168.10.11"), "some user agent")
 					require.Nil(t, err)
 				}
@@ -171,7 +170,7 @@ func TestUserAuthToken(t *testing.T) {
 
 	t.Run("expires correctly", func(t *testing.T) {
 		ctx := createTestContext(t)
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
 			net.ParseIP("192.168.10.11"), "some user agent")
 		require.Nil(t, err)
 
@@ -240,9 +239,8 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("when rotated_at is 5 days ago and created_at is 30 days ago should return token expired error", func(t *testing.T) {
-			updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+			_, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
 			require.Nil(t, err)
-			require.True(t, updated)
 
 			getTime = func() time.Time {
 				return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour)
@@ -257,7 +255,7 @@ func TestUserAuthToken(t *testing.T) {
 	t.Run("can properly rotate tokens", func(t *testing.T) {
 		getTime = func() time.Time { return now }
 		ctx := createTestContext(t)
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
 			net.ParseIP("192.168.10.11"), "some user agent")
 		require.Nil(t, err)
 
@@ -341,7 +339,7 @@ func TestUserAuthToken(t *testing.T) {
 
 	t.Run("keeps prev token valid for 1 minute after it is confirmed", func(t *testing.T) {
 		getTime = func() time.Time { return now }
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
 			net.ParseIP("192.168.10.11"), "some user agent")
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
@@ -372,7 +370,7 @@ func TestUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("will not mark token unseen when prev and current are the same", func(t *testing.T) {
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
 			net.ParseIP("192.168.10.11"), "some user agent")
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
@@ -394,7 +392,7 @@ func TestUserAuthToken(t *testing.T) {
 	t.Run("TryRotateToken", func(t *testing.T) {
 		t.Run("Should rotate current token and previous token when auth token seen", func(t *testing.T) {
 			getTime = func() time.Time { return now }
-			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
@@ -446,7 +444,7 @@ func TestUserAuthToken(t *testing.T) {
 
 		t.Run("Should rotate current token, but keep previous token when auth token not seen", func(t *testing.T) {
 			getTime = func() time.Time { return now }
-			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
@@ -474,7 +472,7 @@ func TestUserAuthToken(t *testing.T) {
 
 	t.Run("RotateToken", func(t *testing.T) {
 		var prev string
-		token, err := ctx.tokenService.CreateToken(context.Background(), user, nil, "")
+		token, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
 		require.NoError(t, err)
 		t.Run("should rotate token when called with current auth token", func(t *testing.T) {
 			prev = token.UnhashedToken
@@ -497,7 +495,7 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("should return error when token is revoked", func(t *testing.T) {
-			revokedToken, err := ctx.tokenService.CreateToken(context.Background(), user, nil, "")
+			revokedToken, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
 			require.NoError(t, err)
 			// mark token as revoked
 			err = ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -511,7 +509,7 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("should return error when token has expired", func(t *testing.T) {
-			expiredToken, err := ctx.tokenService.CreateToken(context.Background(), user, nil, "")
+			expiredToken, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
 			require.NoError(t, err)
 			// mark token as expired
 			err = ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -522,6 +520,38 @@ func TestUserAuthToken(t *testing.T) {
 
 			_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: expiredToken.UnhashedToken})
 			assert.ErrorIs(t, err, auth.ErrInvalidSessionToken)
+		})
+
+		t.Run("should only delete revoked tokens that are outside on specified window", func(t *testing.T) {
+			usr := &user.User{ID: 100}
+			token1, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
+			require.NoError(t, err)
+
+			token2, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
+			require.NoError(t, err)
+
+			getTime = func() time.Time {
+				return time.Now()
+			}
+			// revoked token1 with time now
+			err = ctx.tokenService.RevokeToken(context.Background(), token1, true)
+			require.NoError(t, err)
+
+			getTime = func() time.Time {
+				return time.Now().Add(-25 * time.Hour)
+			}
+			// revoked token1 with time at 25 hours ago
+			err = ctx.tokenService.RevokeToken(context.Background(), token2, true)
+			require.NoError(t, err)
+
+			err = ctx.tokenService.DeleteUserRevokedTokens(context.Background(), usr.ID, 24*time.Hour)
+			require.NoError(t, err)
+
+			revokedTokens, err := ctx.tokenService.GetUserRevokedTokens(context.Background(), usr.ID)
+			require.NoError(t, err)
+			assert.Len(t, revokedTokens, 1)
+
+			getTime = time.Now
 		})
 	})
 
@@ -673,4 +703,38 @@ func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
 		return nil
 	})
 	return hasRowsAffected, err
+}
+
+func TestIntegrationTokenCount(t *testing.T) {
+	ctx := createTestContext(t)
+	user := &user.User{ID: int64(10)}
+
+	createToken := func() *auth.UserToken {
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			net.ParseIP("192.168.10.11"), "some user agent")
+		require.Nil(t, err)
+		require.NotNil(t, userToken)
+		require.False(t, userToken.AuthTokenSeen)
+		return userToken
+	}
+
+	createToken()
+
+	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+	getTime = func() time.Time { return now }
+	defer func() { getTime = time.Now }()
+
+	count, err := ctx.tokenService.ActiveTokenCount(context.Background(), nil)
+	require.Nil(t, err)
+	require.Equal(t, int64(1), count)
+
+	var userID int64 = 10
+	count, err = ctx.tokenService.ActiveTokenCount(context.Background(), &userID)
+	require.Nil(t, err)
+	require.Equal(t, int64(1), count)
+
+	userID = 11
+	count, err = ctx.tokenService.ActiveTokenCount(context.Background(), &userID)
+	require.Nil(t, err)
+	require.Equal(t, int64(0), count)
 }

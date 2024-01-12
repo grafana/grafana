@@ -5,14 +5,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type fakePluginContextProvider struct {
 	recordings []struct {
 		method string
-		params []interface{}
+		params []any
 	}
 	result      map[string]*backend.AppInstanceSettings
 	errorResult error
@@ -20,20 +20,20 @@ type fakePluginContextProvider struct {
 
 var _ pluginContextProvider = &fakePluginContextProvider{}
 
-func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user *user.SignedInUser, orgID int64) (backend.PluginContext, error) {
+func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error) {
 	f.recordings = append(f.recordings, struct {
 		method string
-		params []interface{}
-	}{method: "Get", params: []interface{}{pluginID, user, orgID}})
+		params []any
+	}{method: "Get", params: []any{pluginID, user, orgID}})
 	if f.errorResult != nil {
 		return backend.PluginContext{}, f.errorResult
 	}
 	var u *backend.User
 	if user != nil {
 		u = &backend.User{
-			Login: user.Login,
-			Name:  user.Name,
-			Email: user.Email,
+			Login: user.GetLogin(),
+			Name:  user.GetDisplayName(),
+			Email: user.GetEmail(),
 		}
 	}
 	return backend.PluginContext{
@@ -45,11 +45,11 @@ func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user
 	}, nil
 }
 
-func (f *fakePluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user *user.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, error) {
+func (f *fakePluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
 	f.recordings = append(f.recordings, struct {
 		method string
-		params []interface{}
-	}{method: "GetWithDataSource", params: []interface{}{pluginID, user, ds}})
+		params []any
+	}{method: "GetWithDataSource", params: []any{pluginID, user, ds}})
 
 	if f.errorResult != nil {
 		return backend.PluginContext{}, f.errorResult
@@ -57,7 +57,7 @@ func (f *fakePluginContextProvider) GetWithDataSource(ctx context.Context, plugi
 
 	orgId := int64(1)
 	if user != nil {
-		orgId = user.OrgID
+		orgId = user.GetOrgID()
 	}
 	r, err := f.Get(ctx, pluginID, user, orgId)
 	if ds != nil {

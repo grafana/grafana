@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { NavModel, NavModelItem } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useDataSource, useDataSourceSettings } from 'app/features/datasources/state/hooks';
+import { useDataSource, useDataSourceMeta, useDataSourceSettings } from 'app/features/datasources/state/hooks';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from 'app/features/datasources/state/navModel';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { useSelector } from 'app/types';
@@ -12,6 +12,7 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
   const { uid } = useParams<{ uid: string }>();
   const location = useLocation();
   const datasource = useDataSource(uid);
+  const dataSourceMeta = useDataSourceMeta(datasource.type);
   const datasourcePlugin = useGetSingle(datasource.type);
   const params = new URLSearchParams(location.search);
   const pageId = pageIdParam || params.get('page');
@@ -63,7 +64,7 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
     dataSourcePluginName: datasourcePlugin?.name || plugin?.meta.name || '',
     active: true,
     text: datasource.name,
-    subTitle: `Type: ${datasourcePlugin?.name}`,
+    subTitle: `Type: ${dataSourceMeta.name}`,
     children: (pageNav.main.children || []).map((navModelItem) => ({
       ...navModelItem,
       url: navModelItem.url?.replace('datasources/edit/', '/connections/datasources/edit/'),

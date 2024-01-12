@@ -21,7 +21,6 @@ import { VariableQuery, VariableQueryType } from './types';
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
   constructor(private readonly resources: ResourcesAPI) {
     super();
-    this.query = this.query.bind(this);
   }
 
   editor = VariableQueryEditor;

@@ -50,7 +50,7 @@ def docs_pipelines(ver_mode, trigger):
 def lint_docs():
     return {
         "name": "lint-docs",
-        "image": images["build_image"],
+        "image": images["node"],
         "depends_on": [
             "yarn-install",
         ],

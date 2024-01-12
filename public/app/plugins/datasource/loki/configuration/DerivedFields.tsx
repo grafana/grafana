@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { Button, useTheme2 } from '@grafana/ui';
-import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { DerivedFieldConfig } from '../types';
 
@@ -50,7 +49,7 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
       description={
         <ConfigDescriptionLink
           description="Derived fields can be used to extract new fields from a log message and create a link from its value."
-          suffix="loki/#configure-derived-fields"
+          suffix="loki/configure-loki-data-source/#derived-fields"
           feature="derived fields"
         />
       }
@@ -91,7 +90,14 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
             icon="plus"
             onClick={(event) => {
               event.preventDefault();
-              const newDerivedFields = [...fields, { name: '', matcherRegex: '', urlDisplayLabel: '', url: '' }];
+              const emptyConfig: DerivedFieldConfig = {
+                name: '',
+                matcherRegex: '',
+                urlDisplayLabel: '',
+                url: '',
+                matcherType: 'regex',
+              };
+              const newDerivedFields = [...fields, emptyConfig];
               onChange(newDerivedFields);
             }}
           >

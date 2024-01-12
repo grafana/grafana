@@ -244,7 +244,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 
   return {
     // ...options.data[0], // keep name, meta?
-    length: joined[0].length,
+    length: joined[0] ? joined[0].length : 0,
     fields: originalFields.map((f, index) => ({
       ...f,
       values: joined[index],

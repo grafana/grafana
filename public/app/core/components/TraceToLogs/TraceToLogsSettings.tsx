@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo } from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
-import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';
@@ -156,7 +155,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace', 'deployment.environment'"
+          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace'"
           label="Tags"
           labelWidth={26}
         >
@@ -253,13 +252,16 @@ export const getTimeShiftTooltip = (type: 'start' | 'end', defaultVal: string) =
 export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';
 
 export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  let suffix = options.type;
+  suffix += options.type === 'tempo' ? '/configure-tempo-data-source/#trace-to-logs' : '/#trace-to-logs';
+
   return (
     <ConfigSection
       title="Trace to logs"
       description={
         <ConfigDescriptionLink
           description="Navigate from a trace span to the selected data source's logs."
-          suffix={`${options.type}/#trace-to-logs`}
+          suffix={suffix}
           feature="trace to logs"
         />
       }

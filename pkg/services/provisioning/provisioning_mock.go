@@ -3,15 +3,15 @@ package provisioning
 import "context"
 
 type Calls struct {
-	RunInitProvisioners                 []interface{}
-	ProvisionDatasources                []interface{}
-	ProvisionPlugins                    []interface{}
-	ProvisionNotifications              []interface{}
-	ProvisionDashboards                 []interface{}
-	ProvisionAlerting                   []interface{}
-	GetDashboardProvisionerResolvedPath []interface{}
-	GetAllowUIUpdatesFromConfig         []interface{}
-	Run                                 []interface{}
+	RunInitProvisioners                 []any
+	ProvisionDatasources                []any
+	ProvisionPlugins                    []any
+	ProvisionNotifications              []any
+	ProvisionDashboards                 []any
+	ProvisionAlerting                   []any
+	GetDashboardProvisionerResolvedPath []any
+	GetAllowUIUpdatesFromConfig         []any
+	Run                                 []any
 }
 
 type ProvisioningServiceMock struct {

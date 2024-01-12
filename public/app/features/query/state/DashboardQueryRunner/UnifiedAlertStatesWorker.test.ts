@@ -1,8 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
 import { AlertState, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { disableRBAC, enableRBAC, grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -25,9 +26,7 @@ function getDefaultOptions(): DashboardQueryRunnerOptions {
       id: 12345,
       uid: 'a uid',
     },
-    {
-      publicDashboardAccessToken: '',
-    }
+    {}
   );
   const range = getDefaultTimeRange();
 
@@ -46,8 +45,9 @@ function getTestContext() {
 describe('UnifiedAlertStatesWorker', () => {
   const worker = new UnifiedAlertStatesWorker();
 
-  beforeAll(() => {
-    disableRBAC();
+  beforeEach(() => {
+    config.publicDashboardAccessToken = '';
+    grantUserPermissions(Object.values(AccessControlAction));
   });
 
   describe('when canWork is called with correct props', () => {
@@ -61,7 +61,7 @@ describe('UnifiedAlertStatesWorker', () => {
   describe('when canWork is called on a public dashboard view', () => {
     it('then it should return false', () => {
       const options = getDefaultOptions();
-      options.dashboard.meta.publicDashboardAccessToken = 'abc123';
+      config.publicDashboardAccessToken = 'abc123';
 
       expect(worker.canWork(options)).toBe(false);
     });
@@ -228,7 +228,6 @@ describe('UnifiedAlertStatesWorker', () => {
 
 describe('UnifiedAlertStateWorker with RBAC', () => {
   beforeAll(() => {
-    enableRBAC();
     grantUserPermissions([]);
   });
 

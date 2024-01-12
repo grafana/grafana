@@ -14,6 +14,7 @@ labels:
     - enterprise
     - oss
 title: JSON model
+description: View your Grafana dashboard JSON object
 weight: 700
 ---
 
@@ -41,7 +42,6 @@ In the following JSON, id is shown as null which is the default value assigned t
   "uid": "cLV5GDCkz",
   "title": "New dashboard",
   "tags": [],
-  "style": "dark",
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,
@@ -82,7 +82,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **time**          | time range for dashboard, i.e. last 6 hours, last 7 days, etc                                                     |
 | **timepicker**    | timepicker metadata, see [timepicker section](#timepicker) for details                                            |
 | **templating**    | templating metadata, see [templating section](#templating) for details                                            |
-| **annotations**   | annotations metadata, see [annotations]({{< relref "../annotate-visualizations" >}}) for how to add them          |
+| **annotations**   | annotations metadata, see [annotations][] for how to add them                                                     |
 | **refresh**       | auto-refresh interval                                                                                             |
 | **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to said schema        |
 | **version**       | version of the dashboard (integer), incremented each time the dashboard is updated                                |
@@ -128,6 +128,19 @@ The grid has a negative gravity that moves panels up if there is empty space abo
     "enable": true,
     "notice": false,
     "now": true,
+    "hidden": false,
+    "nowDelay": "",
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
     "refresh_intervals": [
       "5s",
       "10s",
@@ -147,15 +160,18 @@ The grid has a negative gravity that moves panels up if there is empty space abo
 
 Usage of the fields is explained below:
 
-| Name                  | Usage                                  |
-| --------------------- | -------------------------------------- |
-| **collapse**          | whether timepicker is collapsed or not |
-| **enable**            | whether timepicker is enabled or not   |
-| **notice**            |                                        |
-| **now**               |                                        |
-| **refresh_intervals** |                                        |
-| **status**            |                                        |
-| **type**              |                                        |
+| Name                  | Usage                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **collapse**          | whether timepicker is collapsed or not                                                                                                |
+| **enable**            | whether timepicker is enabled or not                                                                                                  |
+| **notice**            |                                                                                                                                       |
+| **now**               |                                                                                                                                       |
+| **hidden**            | whether timepicker is hidden or not                                                                                                   |
+| **nowDelay**          | override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. |
+| **time_options**      | options available in the time picker dropdown                                                                                         |
+| **refresh_intervals** | interval options available in the refresh picker dropdown                                                                             |
+| **status**            |                                                                                                                                       |
+| **type**              |                                                                                                                                       |
 
 ### templating
 
@@ -243,6 +259,11 @@ Usage of the above mentioned fields in the templating section is explained below
 | **name**        | name of variable                                                                                        |
 | **options**     | array of variable text/value pairs available for selection on dashboard                                 |
 | **query**       | data source query used to fetch values for a variable                                                   |
-| **refresh**     |                                                                                                         |
-| **regex**       |                                                                                                         |
+| **refresh**     | configures when to refresh a variable                                                                   |
+| **regex**       | extracts part of a series name or metric node segment                                                   |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
+
+{{% docs/reference %}}
+[annotations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+{{% /docs/reference %}}

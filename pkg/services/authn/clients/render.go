@@ -45,7 +45,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	var identity *authn.Identity
 	if renderUsr.UserID <= 0 {
 		identity = &authn.Identity{
-			ID:           authn.NamespacedID(authn.NamespaceUser, 0),
+			ID:           authn.NamespacedID(authn.NamespaceRenderService, 0),
 			OrgID:        renderUsr.OrgID,
 			OrgRoles:     map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
 			ClientParams: authn.ClientParams{SyncPermissions: true},

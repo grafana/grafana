@@ -4,6 +4,7 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { ValidationEvents, ValidationRule } from '../../../../types';
 import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
 
+/** @deprecated Please use the `Input` component, which does not require this enum. */
 export enum LegacyInputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
@@ -24,6 +25,7 @@ interface State {
   error: string | null;
 }
 
+/** @deprecated Please use the `Input` component. {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-input--simple See Storybook for example.} */
 export class Input extends PureComponent<Props, State> {
   static defaultProps = {
     className: '',

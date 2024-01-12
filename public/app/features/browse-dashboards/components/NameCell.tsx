@@ -1,27 +1,28 @@
 import { css } from '@emotion/css';
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { CellProps } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
+import { t } from 'app/core/internationalization';
 import { getIconForKind } from 'app/features/search/service/utils';
 
+import { Indent } from '../../../core/components/Indent/Indent';
 import { useChildrenByParentUIDState } from '../state';
-import { DashboardsTreeItem } from '../types';
+import { DashboardsTreeCellProps } from '../types';
 
-import { Indent } from './Indent';
+import { makeRowID } from './utils';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
 
-type NameCellProps = CellProps<DashboardsTreeItem, unknown> & {
+type NameCellProps = DashboardsTreeCellProps & {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
 };
 
-export function NameCell({ row: { original: data }, onFolderClick }: NameCellProps) {
+export function NameCell({ row: { original: data }, onFolderClick, treeID }: NameCellProps) {
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
   const childrenByParentUID = useChildrenByParentUIDState();
@@ -31,7 +32,13 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
   if (item.kind === 'ui') {
     return (
       <>
-        <Indent level={level} />
+        <Indent
+          level={level}
+          spacing={{
+            xs: 1,
+            md: 3,
+          }}
+        />
         <span className={styles.folderButtonSpacer} />
         {item.uiKind === 'empty-folder' ? (
           <em className={styles.emptyText}>
@@ -48,7 +55,13 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
 
   return (
     <>
-      <Indent level={level} />
+      <Indent
+        level={level}
+        spacing={{
+          xs: 1,
+          md: 3,
+        }}
+      />
 
       {item.kind === 'folder' ? (
         <IconButton
@@ -58,14 +71,24 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
             onFolderClick(item.uid, !isOpen);
           }}
           name={isOpen ? 'angle-down' : 'angle-right'}
-          aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
+          aria-label={
+            isOpen
+              ? t('browse-dashboards.dashboards-tree.collapse-folder-button', 'Collapse folder {{title}}', {
+                  title: item.title,
+                })
+              : t('browse-dashboards.dashboards-tree.expand-folder-button', 'Expand folder {{title}}', {
+                  title: item.title,
+                })
+          }
         />
       ) : (
         <span className={styles.folderButtonSpacer} />
       )}
+
       <div className={styles.iconNameContainer}>
         {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
-        <Text variant="body" truncate>
+
+        <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (
             <Link
               onClick={() => {

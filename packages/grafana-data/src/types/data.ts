@@ -94,6 +94,12 @@ export interface QueryResultMeta {
    */
   pathSeparator?: string;
 
+  /** A time shift metadata indicating a result of comparison */
+  timeCompare?: {
+    diffMs: number;
+    isTimeShiftQuery: boolean;
+  };
+
   /**
    * Legacy data source specific, should be moved to custom
    * */
@@ -207,3 +213,27 @@ export interface DataConfigSource {
 
 type Truthy<T> = T extends false | '' | 0 | null | undefined ? never : T;
 export const isTruthy = <T>(value: T): value is Truthy<T> => Boolean(value);
+
+/**
+ * Serves no runtime purpose - only used to make typescript check a value has been correctly
+ * narrowed to an object
+ */
+function identityObject(value: object): object {
+  return value;
+}
+
+/**
+ * Utility type predicate to check if a value is typeof object, but excludes "null".
+ *
+ * We normally discourage the use of type predicates in favor of just inline typescript narrowing,
+ * but this is a special case to handle null annoyingly being typeof object
+ */
+export function isObject(value: unknown): value is object {
+  if (typeof value === 'object' && value !== null) {
+    identityObject(value);
+
+    return true;
+  }
+
+  return false;
+}

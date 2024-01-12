@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { arrayUtils } from '@grafana/data';
+import { DashboardLink } from '@grafana/schema';
 import { DeleteButton, HorizontalGroup, Icon, IconButton, TagList, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
-import { DashboardModel, DashboardLink } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state/DashboardModel';
 import { ListNewButton } from '../DashboardSettings/ListNewButton';
 
 type LinkSettingsListProps = {

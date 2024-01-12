@@ -31,6 +31,7 @@ functions, e.g.
 - `errutil.Forbidden(messageID, opts...)`
 - `errutil.TooManyRequests(messageID, opts...)`
 - `errutil.NotImplemented(messageID, opts...)`
+- `errutil.ClientClosedRequest(messageID, opts...)`
 
 Above functions uses `errutil.NewBase(status, messageID, opts...)` under the covers, and that function should in general only be used outside the `errutil` package for `errutil.StatusUnknown`, e.g. when there are no accurate status code available/provided.
 
@@ -104,6 +105,18 @@ construct and use Grafana style errors. This documentation is
 unfortunately not readily available on pkg.go.dev because Grafana is not
 fully Go modules compatible, but can be viewed using
 [godoc](https://go.dev/cmd/godoc/) from the Grafana directory.
+
+### Error source
+
+You can optionally specify an error source that describes from where an
+error originates. By default it's _server_ and means the error originates
+from within the application, e.g. Grafana. The `errutil.WithDownstream()`
+option may be appended to the NewBase function call to denote an error
+originates from a _downstream_ server/service. The error source information
+is used in the API layer to distinguish between Grafana errors and
+non-Grafana errors to include this information when instrumenting the
+application and by that allowing Grafana operators to define SLO's
+based on actual Grafana errors.
 
 ### Handling errors in the API
 

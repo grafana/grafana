@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import {
   DataQuery,
   DataSourceInstanceSettings,
@@ -23,6 +25,8 @@ import {
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
+  GrafanaNotificationSettings,
+  GrafanaRuleDefinition,
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
@@ -31,11 +35,11 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
-import { getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
+import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
@@ -65,6 +69,11 @@ export const getDefaultFormValues = (): RuleFormValues => {
     execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
+    manualRouting: false, // let's decide this later
+    contactPoints: {},
+    overrideGrouping: false,
+    overrideTimings: false,
+    muteTimeIntervals: [],
 
     // cortex / loki
     namespace: '',
@@ -75,11 +84,17 @@ export const getDefaultFormValues = (): RuleFormValues => {
 };
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
-  const { name, expression, forTime, forTimeUnit, type } = values;
+  const { name, expression, forTime, forTimeUnit, keepFiringForTime, keepFiringForTimeUnit, type } = values;
   if (type === RuleFormType.cloudAlerting) {
+    let keepFiringFor: string | undefined;
+    if (keepFiringForTime && keepFiringForTimeUnit) {
+      keepFiringFor = `${keepFiringForTime}${keepFiringForTimeUnit}`;
+    }
+
     return {
       alert: name,
       for: `${forTime}${forTimeUnit}`,
+      keep_firing_for: keepFiringFor,
       annotations: arrayToRecord(values.annotations || []),
       labels: arrayToRecord(values.labels || []),
       expr: expression,
@@ -125,9 +140,34 @@ export function normalizeDefaultAnnotations(annotations: Array<{ key: string; va
   return orderedAnnotations;
 }
 
+export function getNotificationSettingsForDTO(
+  manualRouting: boolean,
+  contactPoints?: AlertManagerManualRouting
+): GrafanaNotificationSettings | undefined {
+  if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
+    return {
+      receiver: contactPoints?.grafana?.selectedContactPoint,
+      mute_timings: contactPoints?.grafana?.muteTimeIntervals,
+      group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
+      group_wait: contactPoints?.grafana?.overrideTimings ? contactPoints?.grafana?.groupWaitValue : undefined,
+      group_interval: contactPoints?.grafana?.overrideTimings ? contactPoints?.grafana?.groupIntervalValue : undefined,
+      repeat_interval: contactPoints?.grafana?.overrideTimings
+        ? contactPoints?.grafana?.repeatIntervalValue
+        : undefined,
+    };
+  }
+  return undefined;
+}
+
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused } = values;
+  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused, contactPoints, manualRouting } =
+    values;
   if (condition) {
+    const notificationSettings: GrafanaNotificationSettings | undefined = getNotificationSettingsForDTO(
+      manualRouting,
+      contactPoints
+    );
+
     return {
       grafana_alert: {
         title: name,
@@ -136,6 +176,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         data: queries.map(fixBothInstantAndRangeQuery),
         is_paused: Boolean(isPaused),
+        notification_settings: notificationSettings,
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -145,6 +186,27 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   throw new Error('Cannot create rule without specifying alert condition');
 }
 
+export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
+  const contactPoint: ContactPoint | undefined = ga.notification_settings
+    ? {
+        selectedContactPoint: ga.notification_settings.receiver,
+        muteTimeIntervals: ga.notification_settings.mute_timings ?? [],
+        overrideGrouping: Boolean(ga.notification_settings?.group_by),
+        overrideTimings: Boolean(ga.notification_settings.group_wait),
+        groupBy: ga.notification_settings.group_by || [],
+        groupWaitValue: ga.notification_settings.group_wait || '',
+        groupIntervalValue: ga.notification_settings.group_interval || '',
+        repeatIntervalValue: ga.notification_settings.repeat_interval || '',
+      }
+    : undefined;
+  const routingSettings: AlertManagerManualRouting | undefined = contactPoint
+    ? {
+        [GRAFANA_RULES_SOURCE_NAME]: contactPoint,
+      }
+    : undefined;
+  return routingSettings;
+}
+
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
 
@@ -152,6 +214,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   if (isGrafanaRulesSource(ruleSourceName)) {
     if (isGrafanaRulerRule(rule)) {
       const ga = rule.grafana_alert;
+
+      const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
 
       return {
         ...defaultFormValues,
@@ -168,6 +232,27 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
+
+        contactPoints: routingSettings,
+        manualRouting: Boolean(routingSettings),
+        // next line is for testing
+        // manualRouting: true,
+        // contactPoints: {
+        //   grafana: {
+        //       selectedContactPoint: "contact_point_5",
+        //       muteTimeIntervals: [
+        //           "mute timing 1"
+        //       ],
+        //       overrideGrouping: true,
+        //       overrideTimings: true,
+        //       "groupBy": [
+        //           "..."
+        //       ],
+        //       groupWaitValue: "35s",
+        //       groupIntervalValue: "6m",
+        //       repeatIntervalValue: "5h"
+        //   }
+        // }
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
@@ -220,18 +305,34 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
 export function alertingRulerRuleToRuleForm(
   rule: RulerAlertingRuleDTO
-): Pick<RuleFormValues, 'name' | 'forTime' | 'forTimeUnit' | 'expression' | 'annotations' | 'labels'> {
+): Pick<
+  RuleFormValues,
+  | 'name'
+  | 'forTime'
+  | 'forTimeUnit'
+  | 'keepFiringForTime'
+  | 'keepFiringForTimeUnit'
+  | 'expression'
+  | 'annotations'
+  | 'labels'
+> {
   const defaultFormValues = getDefaultFormValues();
 
   const [forTime, forTimeUnit] = rule.for
     ? parseInterval(rule.for)
     : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
 
+  const [keepFiringForTime, keepFiringForTimeUnit] = rule.keep_firing_for
+    ? parseInterval(rule.keep_firing_for)
+    : [defaultFormValues.keepFiringForTime, defaultFormValues.keepFiringForTimeUnit];
+
   return {
     name: rule.alert,
     expression: rule.expr,
     forTime,
     forTimeUnit,
+    keepFiringForTime,
+    keepFiringForTimeUnit,
     annotations: listifyLabelsOrAnnotations(rule.annotations, false),
     labels: listifyLabelsOrAnnotations(rule.labels, true),
   };
@@ -521,4 +622,19 @@ function isPromQuery(model: AlertDataQuery): model is PromQuery {
 
 export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQuery {
   return 'expr' in model;
+}
+
+// the backend will always execute "hidden" queries, so we have no choice but to remove the property in the front-end
+// to avoid confusion. The query editor shows them as "disabled" and that's a different semantic meaning.
+// furthermore the "AlertingQueryRunner" calls `filterQuery` on each data source and those will skip running queries that are "hidden"."
+// It seems like we have no choice but to act like "hidden" queries don't exist in alerting.
+export const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
+  return {
+    ...ruleDefinition,
+    queries: ruleDefinition.queries?.map((query) => omit(query, 'model.hide')),
+  };
+};
+
+export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
+  return ignoreHiddenQueries(rulerRuleToFormValues(rule));
 }

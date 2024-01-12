@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, ActionMeta, Input, InputActionMeta, AsyncVirtualizedSelect } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -80,7 +80,7 @@ export function OldFolderPicker(props: Props) {
     folderWarning,
   } = props;
 
-  const rootName = rootNameProp ?? config.featureToggles.nestedFolders ? 'Dashboards' : 'General';
+  const rootName = rootNameProp ?? 'Dashboards';
 
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -104,8 +104,8 @@ export function OldFolderPicker(props: Props) {
       });
 
       const hasAccess =
-        contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
-        contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
+        contextSrv.hasPermission(AccessControlAction.DashboardsWrite) ||
+        contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
       if (hasAccess && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
         options.unshift({ label: rootName, value: '' });

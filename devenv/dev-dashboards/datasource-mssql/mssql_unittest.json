@@ -2731,7 +2731,6 @@
   ],
   "refresh": false,
   "schemaVersion": 16,
-  "style": "dark",
   "tags": ["gdev", "mssql", "datasource-test"],
   "templating": {
     "list": [

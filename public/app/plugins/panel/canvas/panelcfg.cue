@@ -56,6 +56,8 @@ composableKinds: PanelCfg: {
 					width?: float64
 				} @cuetsy(kind="interface")
 
+				HttpRequestMethod: "GET" | "POST" | "PUT" @cuetsy(kind="enum", memberNames="GET|POST|PUT")
+
 				ConnectionCoordinates: {
 					x: float64
 					y: float64
@@ -86,6 +88,8 @@ composableKinds: PanelCfg: {
 					inlineEditing: bool | *true
 					// Show all available element types
 					showAdvancedTypes: bool | *true
+					// Enable pan and zoom
+					panZoom: bool | *true
 					// The root element of canvas (frame), where all canvas elements are nested
 					// TODO: Figure out how to define a default value for this
 					root: {

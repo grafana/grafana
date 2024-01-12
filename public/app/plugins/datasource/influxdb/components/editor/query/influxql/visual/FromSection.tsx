@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { AccessoryButton } from '@grafana/experimental';
+
 import { DEFAULT_POLICY } from '../../../../../types';
 import { toSelectableValue } from '../utils/toSelectableValue';
 
@@ -65,6 +67,17 @@ export const FromSection = ({
           onChange(policy, v.value);
         }}
       />
+      {measurement && (
+        <AccessoryButton
+          style={{ marginRight: '4px' }}
+          aria-label="remove"
+          icon="times"
+          variant="secondary"
+          onClick={() => {
+            onChange(policy, undefined);
+          }}
+        />
+      )}
     </>
   );
 };

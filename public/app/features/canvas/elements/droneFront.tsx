@@ -118,7 +118,7 @@ export const droneFrontItem: CanvasElementItem = {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  droneFront: css`
-    transition: transform 0.4s;
-  `,
+  droneFront: css({
+    transition: 'transform 0.4s',
+  }),
 });

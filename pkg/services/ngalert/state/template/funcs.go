@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
+	"strings"
 	"text/template"
 )
 
@@ -13,14 +15,25 @@ type query struct {
 	Expr       string `json:"expr"`
 }
 
+const (
+	FilterLabelFuncName      = "filterLabels"
+	FilterLabelReFuncName    = "filterLabelsRe"
+	GraphLinkFuncName        = "graphLink"
+	RemoveLabelsFuncName     = "removeLabels"
+	RemoveLabelsReFuncName   = "removeLabelsRe"
+	TableLinkFuncName        = "tableLink"
+	MergeLabelValuesFuncName = "mergeLabelValues"
+)
+
 var (
 	defaultFuncs = template.FuncMap{
-		"filterLabels":    filterLabelsFunc,
-		"filterLabelsRe":  filterLabelsReFunc,
-		"graphLink":       graphLinkFunc,
-		"removeLabels":    removeLabelsFunc,
-		"removeLabelslRe": removeLabelsReFunc,
-		"tableLink":       tableLinkFunc,
+		FilterLabelFuncName:      filterLabelsFunc,
+		FilterLabelReFuncName:    filterLabelsReFunc,
+		GraphLinkFuncName:        graphLinkFunc,
+		RemoveLabelsFuncName:     removeLabelsFunc,
+		RemoveLabelsReFuncName:   removeLabelsReFunc,
+		TableLinkFuncName:        tableLinkFunc,
+		MergeLabelValuesFuncName: mergeLabelValuesFunc,
 	}
 )
 
@@ -88,4 +101,33 @@ func tableLinkFunc(data string) string {
 	datasource := url.QueryEscape(q.Datasource)
 	expr := url.QueryEscape(q.Expr)
 	return fmt.Sprintf(`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, datasource, expr)
+}
+
+// mergeLabelValuesFunc returns a map of label keys to deduplicated and comma separated values.
+func mergeLabelValuesFunc(values map[string]Value) Labels {
+	type uniqueLabelVals map[string]struct{}
+
+	labels := make(map[string]uniqueLabelVals)
+	for _, value := range values {
+		for k, v := range value.Labels {
+			var ul uniqueLabelVals
+			var ok bool
+			if ul, ok = labels[k]; !ok {
+				ul = uniqueLabelVals{}
+				labels[k] = ul
+			}
+			ul[v] = struct{}{}
+		}
+	}
+
+	res := make(Labels)
+	for label, vals := range labels {
+		keys := make([]string, 0, len(vals))
+		for val := range vals {
+			keys = append(keys, val)
+		}
+		slices.Sort(keys)
+		res[label] = strings.Join(keys, ", ")
+	}
+	return res
 }

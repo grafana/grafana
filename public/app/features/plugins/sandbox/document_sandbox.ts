@@ -1,4 +1,5 @@
 import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
+import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 
 import { DataSourceApi } from '@grafana/data';
@@ -159,4 +160,51 @@ export function getSandboxMockBody(): Element {
     document.body.appendChild(sandboxBody);
   }
   return sandboxBody;
+}
+
+let nativeAPIsPatched = false;
+
+export function patchWebAPIs() {
+  if (!nativeAPIsPatched) {
+    nativeAPIsPatched = true;
+    patchHistoryReplaceState();
+  }
+}
+
+/*
+ * window.history.replaceState is a native API that won't work with proxies
+ * so we need to patch it to unwrap any possible proxies you pass to it.
+ *
+ * Why can't we directly distord window.history.replaceState calls inside plugins?
+ *
+ * We can. Except that plugins don't call window.history.replaceState directly they
+ * instead use the history object from react-router.
+ *
+ * react-router is a runtime dependency and it is executed in the blue realm
+ * and calls window.history.replaceState directly where the sandbox is not involved at all
+ *
+ * It is most likely this "original" function is not really the native function because
+ * `useLocation` from `react-use` patches this function before the sandbox kicks in.
+ *
+ * Regarding the performance impact of this cloneDeep. The structures passed to history.replaceState
+ * are minimalistic and its impact will be neglegible.
+ */
+function patchHistoryReplaceState() {
+  const original = window.history.replaceState;
+  Object.defineProperty(window.history, 'replaceState', {
+    value: function (...args: Parameters<typeof window.history.replaceState>) {
+      let newArgs = args;
+      try {
+        newArgs = cloneDeep(args);
+      } catch (e) {
+        logWarning('Error cloning args in window.history.replaceState', {
+          error: String(e),
+        });
+      }
+      return Reflect.apply(original, this, newArgs);
+    },
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  });
 }

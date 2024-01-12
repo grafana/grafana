@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -178,11 +179,12 @@ type GetOrgUsersQuery struct {
 }
 
 type SearchOrgUsersQuery struct {
-	UserID int64 `xorm:"user_id"`
-	OrgID  int64 `xorm:"org_id"`
-	Query  string
-	Page   int
-	Limit  int
+	UserID   int64 `xorm:"user_id"`
+	OrgID    int64 `xorm:"org_id"`
+	Query    string
+	Page     int
+	Limit    int
+	SortOpts []model.SortOption
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
 

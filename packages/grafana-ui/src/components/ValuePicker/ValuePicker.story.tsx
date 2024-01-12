@@ -4,7 +4,6 @@ import React from 'react';
 import { ValuePicker } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { generateOptions } from '../Select/mockOptions';
 
 import mdx from './ValuePicker.mdx';
@@ -12,7 +11,6 @@ import mdx from './ValuePicker.mdx';
 const meta: Meta<typeof ValuePicker> = {
   title: 'Pickers and Editors/ValuePicker',
   component: ValuePicker,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

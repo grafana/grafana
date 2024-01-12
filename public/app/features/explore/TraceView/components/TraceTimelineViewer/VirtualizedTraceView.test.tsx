@@ -25,7 +25,7 @@ import VirtualizedTraceView, { VirtualizedTraceViewProps } from './VirtualizedTr
 jest.mock('./SpanTreeOffset');
 
 const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 2 }))!;
-const topOfExploreViewRef = jest.fn();
+
 let props = {
   childrenHiddenIDs: new Set(),
   childrenToggle: jest.fn(),
@@ -37,12 +37,11 @@ let props = {
   detailTagsToggle: jest.fn(),
   detailToggle: jest.fn(),
   findMatchesIDs: null,
-  registerAccessors: jest.fn(),
   setSpanNameColumnWidth: jest.fn(),
   spanNameColumnWidth: 0.5,
   trace,
   uiFind: 'uiFind',
-  topOfExploreViewRef,
+  topOfViewRef: jest.fn(),
 } as unknown as VirtualizedTraceViewProps;
 
 describe('<VirtualizedTraceViewImpl>', () => {

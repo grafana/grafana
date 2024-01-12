@@ -35,6 +35,7 @@ export function buildPluginSectionNav(
   currentUrl: string
 ): NavModel | undefined {
   // shallow clone as we set active flag
+  const MAX_RECURSION_DEPTH = 10;
   let copiedPluginNavSection = { ...pluginNavSection };
   let activePage: NavModelItem | undefined;
 
@@ -58,12 +59,15 @@ export function buildPluginSectionNav(
     return activePage;
   }
 
-  // Find and set active page
-  copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map((child) => {
+  function findAndSetActivePage(child: NavModelItem, depth = 0): NavModelItem {
+    if (depth > MAX_RECURSION_DEPTH) {
+      return child;
+    }
+
     if (child.children) {
       // Doing this here to make sure that first we check if any of the children is active
       // (In case yes, then the check for the parent will not mark it as active)
-      const children = child.children.map((pluginPage) => setPageToActive(pluginPage, currentUrl));
+      const children = child.children.map((pluginPage) => findAndSetActivePage(pluginPage, depth + 1));
 
       return {
         ...setPageToActive(child, currentUrl),
@@ -72,7 +76,10 @@ export function buildPluginSectionNav(
     }
 
     return setPageToActive(child, currentUrl);
-  });
+  }
+
+  // Find and set active page
+  copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map(findAndSetActivePage);
 
   return { main: copiedPluginNavSection, node: activePage ?? copiedPluginNavSection };
 }

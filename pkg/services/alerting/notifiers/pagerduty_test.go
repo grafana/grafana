@@ -151,20 +151,20 @@ func TestPagerdutyNotifier(t *testing.T) {
 		payload, err := simplejson.NewJson(payloadJSON)
 		require.Nil(t, err)
 
-		diff := cmp.Diff(map[string]interface{}{
+		diff := cmp.Diff(map[string]any{
 			"client":       "Grafana",
 			"client_url":   "",
 			"dedup_key":    "alertId-0",
 			"event_action": "trigger",
-			"links": []interface{}{
-				map[string]interface{}{
+			"links": []any{
+				map[string]any{
 					"href": "",
 				},
 			},
-			"payload": map[string]interface{}{
+			"payload": map[string]any{
 				"component": "Grafana",
 				"source":    "<<PRESENCE>>",
-				"custom_details": map[string]interface{}{
+				"custom_details": map[string]any{
 					"state": "alerting",
 				},
 				"severity":  "critical",
@@ -207,20 +207,20 @@ func TestPagerdutyNotifier(t *testing.T) {
 		payload, err := simplejson.NewJson(payloadJSON)
 		require.Nil(t, err)
 
-		diff := cmp.Diff(map[string]interface{}{
+		diff := cmp.Diff(map[string]any{
 			"client":       "Grafana",
 			"client_url":   "",
 			"dedup_key":    "alertId-0",
 			"event_action": "trigger",
-			"links": []interface{}{
-				map[string]interface{}{
+			"links": []any{
+				map[string]any{
 					"href": "",
 				},
 			},
-			"payload": map[string]interface{}{
+			"payload": map[string]any{
 				"component": "Grafana",
 				"source":    "<<PRESENCE>>",
-				"custom_details": map[string]interface{}{
+				"custom_details": map[string]any{
 					"state": "alerting",
 				},
 				"severity":  "critical",
@@ -274,22 +274,22 @@ func TestPagerdutyNotifier(t *testing.T) {
 		payload, err := simplejson.NewJson(payloadJSON)
 		require.NoError(t, err)
 
-		diff := cmp.Diff(map[string]interface{}{
+		diff := cmp.Diff(map[string]any{
 			"client":       "Grafana",
 			"client_url":   "",
 			"dedup_key":    "alertId-0",
 			"event_action": "trigger",
-			"links": []interface{}{
-				map[string]interface{}{
+			"links": []any{
+				map[string]any{
 					"href": "",
 				},
 			},
-			"payload": map[string]interface{}{
+			"payload": map[string]any{
 				"component": "Grafana",
 				"source":    "<<PRESENCE>>",
-				"custom_details": map[string]interface{}{
+				"custom_details": map[string]any{
 					"message": "someMessage",
-					"queries": map[string]interface{}{
+					"queries": map[string]any{
 						"someMetric": nil,
 					},
 					"state": "alerting",
@@ -345,20 +345,20 @@ func TestPagerdutyNotifier(t *testing.T) {
 		payload, err := simplejson.NewJson(payloadJSON)
 		require.NoError(t, err)
 
-		diff := cmp.Diff(map[string]interface{}{
+		diff := cmp.Diff(map[string]any{
 			"client":       "Grafana",
 			"client_url":   "",
 			"dedup_key":    "key-" + strings.Repeat("x", 250),
 			"event_action": "trigger",
-			"links": []interface{}{
-				map[string]interface{}{
+			"links": []any{
+				map[string]any{
 					"href": "",
 				},
 			},
-			"payload": map[string]interface{}{
+			"payload": map[string]any{
 				"source":    "<<PRESENCE>>",
 				"component": "aComponent",
-				"custom_details": map[string]interface{}{
+				"custom_details": map[string]any{
 					"group":     "aGroup",
 					"class":     "aClass",
 					"component": "aComponent",
@@ -373,8 +373,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 				"class":     "aClass",
 				"group":     "aGroup",
 			},
-			"images": []interface{}{
-				map[string]interface{}{
+			"images": []any{
+				map[string]any{
 					"src": "http://somewhere.com/omg_dont_panic.png",
 				},
 			},
@@ -424,20 +424,20 @@ func TestPagerdutyNotifier(t *testing.T) {
 		payload, err := simplejson.NewJson(payloadJSON)
 		require.NoError(t, err)
 
-		diff := cmp.Diff(map[string]interface{}{
+		diff := cmp.Diff(map[string]any{
 			"client":       "Grafana",
 			"client_url":   "",
 			"dedup_key":    "alertId-0",
 			"event_action": "trigger",
-			"links": []interface{}{
-				map[string]interface{}{
+			"links": []any{
+				map[string]any{
 					"href": "",
 				},
 			},
-			"payload": map[string]interface{}{
+			"payload": map[string]any{
 				"source":    "<<PRESENCE>>",
 				"component": "aComponent",
-				"custom_details": map[string]interface{}{
+				"custom_details": map[string]any{
 					"group":     "aGroup",
 					"class":     "aClass",
 					"component": "aComponent",
@@ -451,8 +451,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 				"class":     "aClass",
 				"group":     "aGroup",
 			},
-			"images": []interface{}{
-				map[string]interface{}{
+			"images": []any{
+				map[string]any{
 					"src": "http://somewhere.com/omg_dont_panic.png",
 				},
 			},
@@ -503,20 +503,20 @@ func TestPagerdutyNotifier(t *testing.T) {
 		payload, err := simplejson.NewJson(payloadJSON)
 		require.NoError(t, err)
 
-		diff := cmp.Diff(map[string]interface{}{
+		diff := cmp.Diff(map[string]any{
 			"client":       "Grafana",
 			"client_url":   "",
 			"dedup_key":    "alertId-0",
 			"event_action": "trigger",
-			"links": []interface{}{
-				map[string]interface{}{
+			"links": []any{
+				map[string]any{
 					"href": "",
 				},
 			},
-			"payload": map[string]interface{}{
+			"payload": map[string]any{
 				"source":    "<<PRESENCE>>",
 				"component": "aComponent",
-				"custom_details": map[string]interface{}{
+				"custom_details": map[string]any{
 					"group":     "aGroup",
 					"class":     "aClass",
 					"component": "aComponent",
@@ -530,8 +530,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 				"class":     "aClass",
 				"group":     "aGroup",
 			},
-			"images": []interface{}{
-				map[string]interface{}{
+			"images": []any{
+				map[string]any{
 					"src": "http://somewhere.com/omg_dont_panic.png",
 				},
 			},

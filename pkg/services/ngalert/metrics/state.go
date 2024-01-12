@@ -6,18 +6,18 @@ import (
 )
 
 type State struct {
-	AlertState          *prometheus.GaugeVec
 	StateUpdateDuration prometheus.Histogram
+	r                   prometheus.Registerer
+}
+
+// Registerer exposes the Prometheus register directly. The state package needs this as, it uses a collector to fetch the current alerts by state in the system.
+func (s State) Registerer() prometheus.Registerer {
+	return s.r
 }
 
 func NewStateMetrics(r prometheus.Registerer) *State {
 	return &State{
-		AlertState: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "alerts",
-			Help:      "How many alerts by state.",
-		}, []string{"state"}),
+		r: r,
 		StateUpdateDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,

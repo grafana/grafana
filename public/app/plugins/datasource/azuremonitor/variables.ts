@@ -7,7 +7,7 @@ import {
   MetricFindValue,
   toDataFrame,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
@@ -17,13 +17,12 @@ import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 import messageFromError from './utils/messageFromError';
 
 export class VariableSupport extends CustomVariableSupport<DataSource, AzureMonitorQuery> {
-  templateSrv = getTemplateSrv();
-
-  constructor(private readonly datasource: DataSource) {
+  constructor(
+    private readonly datasource: DataSource,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super();
     this.datasource = datasource;
-    this.query = this.query.bind(this);
-    this.templateSrv = getTemplateSrv();
   }
 
   editor = VariableEditor;
@@ -170,6 +169,6 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
   }
 
   replaceVariable(metric: string) {
-    return getTemplateSrv().replace((metric || '').trim());
+    return this.templateSrv.replace((metric || '').trim());
   }
 }

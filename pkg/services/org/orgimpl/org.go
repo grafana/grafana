@@ -241,3 +241,7 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(userTag, cfg.Quota.User.Org)
 	return limits, nil
 }
+
+func (s *Service) RegisterDelete(query string) {
+	s.store.RegisterDelete(query)
+}

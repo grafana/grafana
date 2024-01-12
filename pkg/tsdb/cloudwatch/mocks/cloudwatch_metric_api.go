@@ -14,7 +14,7 @@ type FakeMetricsAPI struct {
 	MetricsPerPage int
 }
 
-func (c *FakeMetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+func (c *FakeMetricsAPI) ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
 	if c.MetricsPerPage == 0 {
 		c.MetricsPerPage = 1000
 	}
@@ -52,10 +52,20 @@ func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metri
 type MetricsAPI struct {
 	cloudwatchiface.CloudWatchAPI
 	mock.Mock
+
+	Metrics []*cloudwatch.Metric
 }
 
 func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
 	args := m.Called(ctx, input, opts)
 
 	return args.Get(0).(*cloudwatch.GetMetricDataOutput), args.Error(1)
+}
+
+func (m *MetricsAPI) ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
+	fn(&cloudwatch.ListMetricsOutput{
+		Metrics: m.Metrics,
+	}, true)
+
+	return m.Called().Error(0)
 }

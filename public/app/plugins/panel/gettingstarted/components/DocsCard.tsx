@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -13,8 +13,8 @@ interface Props {
 }
 
 export const DocsCard = ({ card }: Props) => {
-  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, card.done), [card.done]));
-  const iconStyles = useStyles2(useCallback((theme: GrafanaTheme2) => iconStyle(theme, card.done), [card.done]));
+  const styles = useStyles2(getStyles, card.done);
+  const iconStyles = useStyles2(iconStyle, card.done);
 
   return (
     <div className={styles.card}>

@@ -2,14 +2,12 @@ import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { TypeaheadInput } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { QueryField, QueryFieldProps } from './QueryField';
 
 const meta: Meta<typeof QueryField> = {
   title: 'Data Source/QueryField',
   component: QueryField,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: [

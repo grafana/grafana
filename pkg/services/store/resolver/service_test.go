@@ -7,10 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -37,15 +36,15 @@ func TestResolver(t *testing.T) {
 		},
 	}
 
-	p1 := plugins.PluginDTO{}
-	p2 := plugins.PluginDTO{}
-	p3 := plugins.PluginDTO{}
+	p1 := pluginstore.Plugin{}
+	p2 := pluginstore.Plugin{}
+	p3 := pluginstore.Plugin{}
 
 	p1.ID = "influx"
 	p2.ID = "heatmap"
 	p3.ID = "xyz"
-	pluginStore := &fakes.FakePluginStore{
-		PluginList: []plugins.PluginDTO{p1, p2, p3},
+	pluginStore := &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{p1, p2, p3},
 	}
 	provider := ProvideEntityReferenceResolver(ds, pluginStore)
 

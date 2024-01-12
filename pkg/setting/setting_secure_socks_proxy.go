@@ -3,18 +3,18 @@ package setting
 import (
 	"errors"
 
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"gopkg.in/ini.v1"
 )
 
 type SecureSocksDSProxySettings struct {
-	Enabled      bool
-	ShowUI       bool
-	ClientCert   string
-	ClientKey    string
-	RootCA       string
-	ProxyAddress string
-	ServerName   string
+	Enabled       bool
+	ShowUI        bool
+	AllowInsecure bool
+	ClientCert    string
+	ClientKey     string
+	RootCA        string
+	ProxyAddress  string
+	ServerName    string
 }
 
 func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettings, error) {
@@ -27,37 +27,27 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	s.ProxyAddress = secureSocksProxySection.Key("proxy_address").MustString("")
 	s.ServerName = secureSocksProxySection.Key("server_name").MustString("")
 	s.ShowUI = secureSocksProxySection.Key("show_ui").MustBool(true)
+	s.AllowInsecure = secureSocksProxySection.Key("allow_insecure").MustBool(false)
 
 	if !s.Enabled {
 		return s, nil
 	}
 
-	// all fields must be specified to use the proxy
-	if s.RootCA == "" {
-		return s, errors.New("rootCA required")
-	} else if s.ClientCert == "" || s.ClientKey == "" {
-		return s, errors.New("client key pair required")
-	} else if s.ServerName == "" {
-		return s, errors.New("server name required")
-	} else if s.ProxyAddress == "" {
+	if s.ProxyAddress == "" {
 		return s, errors.New("proxy address required")
 	}
 
-	setDefaultProxyCli(s)
+	// If the proxy is going to use TLS.
+	if !s.AllowInsecure {
+		// all fields must be specified to use the proxy
+		if s.RootCA == "" {
+			return s, errors.New("rootCA required")
+		} else if s.ClientCert == "" || s.ClientKey == "" {
+			return s, errors.New("client key pair required")
+		} else if s.ServerName == "" {
+			return s, errors.New("server name required")
+		}
+	}
 
 	return s, nil
-}
-
-// setDefaultProxyCli overrides the default proxy cli for the sdk
-//
-// Note: Not optimal changing global state, but hard to not do in this case.
-func setDefaultProxyCli(cfg SecureSocksDSProxySettings) {
-	sdkproxy.Cli = sdkproxy.NewWithCfg(&sdkproxy.ClientCfg{
-		Enabled:      cfg.Enabled,
-		ClientCert:   cfg.ClientCert,
-		ClientKey:    cfg.ClientKey,
-		ServerName:   cfg.ServerName,
-		RootCA:       cfg.RootCA,
-		ProxyAddress: cfg.ProxyAddress,
-	})
 }

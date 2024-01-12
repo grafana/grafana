@@ -52,7 +52,7 @@ export const ConfigEditor = (props: Props) => {
     <>
       <DataSourceDescription
         dataSourceName="Loki"
-        docsLink="https://grafana.com/docs/grafana/latest/datasources/loki"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/loki/configure-loki-data-source/"
         hasRequiredFields={false}
       />
       <Divider />

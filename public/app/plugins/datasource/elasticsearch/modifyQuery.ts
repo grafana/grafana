@@ -1,6 +1,8 @@
 import { isEqual } from 'lodash';
 import lucene, { AST, BinaryAST, LeftOnlyAST, NodeTerm } from 'lucene';
 
+import { AdHocVariableFilter } from '@grafana/data';
+
 type ModifierType = '' | '-';
 
 /**
@@ -61,11 +63,63 @@ export function addFilterToQuery(query: string, key: string, value: string, modi
     return query;
   }
 
-  key = lucene.term.escape(key);
-  value = lucene.phrase.escape(value);
+  key = escapeFilter(key);
+  value = escapeFilterValue(value);
   const filter = `${modifier}${key}:"${value}"`;
 
-  return query === '' ? filter : `${query} AND ${filter}`;
+  return concatenate(query, filter);
+}
+
+/**
+ * Merge a query with a filter.
+ */
+function concatenate(query: string, filter: string, condition = 'AND'): string {
+  if (!filter) {
+    return query;
+  }
+  return query.trim() === '' ? filter : `${query} ${condition} ${filter}`;
+}
+
+/**
+ * Adds a label:"value" expression to the query.
+ */
+export function addAddHocFilter(query: string, filter: AdHocVariableFilter): string {
+  if (!filter.key || !filter.value) {
+    return query;
+  }
+
+  filter = {
+    ...filter,
+    // Type is defined as string, but it can be a number.
+    value: filter.value.toString(),
+  };
+
+  const equalityFilters = ['=', '!='];
+  if (equalityFilters.includes(filter.operator)) {
+    return addFilterToQuery(query, filter.key, filter.value, filter.operator === '=' ? '' : '-');
+  }
+  /**
+   * Keys and values in ad hoc filters may contain characters such as
+   * colons, which needs to be escaped.
+   */
+  const key = escapeFilter(filter.key);
+  const value = escapeFilterValue(filter.value);
+  let addHocFilter = '';
+  switch (filter.operator) {
+    case '=~':
+      addHocFilter = `${key}:/${value}/`;
+      break;
+    case '!~':
+      addHocFilter = `-${key}:/${value}/`;
+      break;
+    case '>':
+      addHocFilter = `${key}:>${value}`;
+      break;
+    case '<':
+      addHocFilter = `${key}:<${value}`;
+      break;
+  }
+  return concatenate(query, addHocFilter);
 }
 
 /**
@@ -133,6 +187,7 @@ export function escapeFilter(value: string) {
  * Use this function to escape filter values.
  */
 export function escapeFilterValue(value: string) {
+  value = value.replace(/\\/g, '\\\\');
   return lucene.phrase.escape(value);
 }
 
@@ -144,19 +199,22 @@ function normalizeQuery(query: string) {
 }
 
 function isLeftOnlyAST(ast: unknown): ast is LeftOnlyAST {
-  if (!ast) {
+  if (!ast || typeof ast !== 'object') {
     return false;
   }
+
   if ('left' in ast && !('right' in ast)) {
     return true;
   }
+
   return false;
 }
 
 function isBinaryAST(ast: unknown): ast is BinaryAST {
-  if (!ast) {
+  if (!ast || typeof ast !== 'object') {
     return false;
   }
+
   if ('left' in ast && 'right' in ast) {
     return true;
   }
@@ -168,12 +226,10 @@ function isAST(ast: unknown): ast is AST {
 }
 
 function isNodeTerm(ast: unknown): ast is NodeTerm {
-  if (!ast) {
-    return false;
-  }
-  if ('term' in ast) {
+  if (ast && typeof ast === 'object' && 'term' in ast) {
     return true;
   }
+
   return false;
 }
 
@@ -183,4 +239,9 @@ function parseQuery(query: string) {
   } catch (e) {
     return null;
   }
+}
+
+export function addStringFilterToQuery(query: string, filter: string, contains = true) {
+  const expression = `"${escapeFilterValue(filter)}"`;
+  return query.trim() ? `${query} ${contains ? 'AND' : 'NOT'} ${expression}` : `${contains ? '' : 'NOT '}${expression}`;
 }

@@ -5,14 +5,7 @@ import { Provider } from 'react-redux';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
 
-import {
-  disableRBAC,
-  enableRBAC,
-  mockFolder,
-  mockRulerAlertingRule,
-  mockRulerGrafanaRule,
-  mockUnifiedAlertingStore,
-} from '../mocks';
+import { mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule, mockUnifiedAlertingStore } from '../mocks';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
@@ -27,7 +20,6 @@ const mocks = {
 
 describe('useIsRuleEditable', () => {
   describe('RBAC enabled', () => {
-    beforeEach(enableRBAC);
     describe('Grafana rules', () => {
       // When RBAC is enabled we require appropriate alerting permissions in the folder scope
       it('Should allow editing when the user has the alert rule update permission in the folder', async () => {
@@ -123,35 +115,6 @@ describe('useIsRuleEditable', () => {
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('cortex', mockRulerAlertingRule()), { wrapper });
-
-        await waitFor(() => expect(result.current.loading).toBe(false));
-        expect(result.current.isEditable).toBe(false);
-        expect(result.current.isRemovable).toBe(false);
-      });
-    });
-  });
-
-  describe('RBAC disabled', () => {
-    beforeEach(disableRBAC);
-    describe('Grafana rules', () => {
-      it('Should allow editing and deleting when the user has folder canSave permission', async () => {
-        mockUseFolder({ canSave: true });
-
-        const wrapper = getProviderWrapper();
-
-        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
-
-        await waitFor(() => expect(result.current.loading).toBe(false));
-        expect(result.current.isEditable).toBe(true);
-        expect(result.current.isRemovable).toBe(true);
-      });
-
-      it('Should forbid editing and deleting when the user has no folder canSave permission', async () => {
-        mockUseFolder({ canSave: false });
-
-        const wrapper = getProviderWrapper();
-
-        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(false);

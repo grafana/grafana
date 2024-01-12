@@ -5,90 +5,154 @@
 # Updates should conform to the guidelines in https://keepachangelog.com/en/1.1.0/.
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
+#
 
-# ## 4.1.1 (2023-07-20)
-
-# ### Fixed
-
-# - Replaced use of `realpath` with POSIX compatible alternative to determine default value for REPOS_PATH.
-
-# ## 4.1.0 (2023-06-16)
-
+# ## 5.1.2 (2023-11-08)
+#
 # ### Added
+#
+# - Hide manual_mount warning messages from non-debug output.
+#   Set the DEBUG environment variable to see all hidden messages.
+#
+# ## 5.1.1 (2023-10-30)
+#
+# ### Added
+#
+# - Support for Datadog and Oracle data source plugins repositories.
+#
+# ## 5.1.0 (2023-10-20)
+#
+# ### Added
+#
+# - Support for the plugins monorepo.
+#
+# ## 5.0.0 (2023-10-18)
+#
+# ### Added
+#
+# - Improved support for website repository.
+#
+#   Mount more content and provide some feedback to users that the build can take time.
+#
+# - Ability to enter the `grafana/docs-base` container with a shell using the `ENTER` environment variable.
+#
+# ### Fixed
+#
+# - Correct key combination for interrupting the process.
+#
+#   Keyboards use capital letters so this more accurately reflects the exact key combination users are expected to press.
+#
+# ### Removed
+#
+# - Imperfect implementation of container name.
+#
+#   Facilitates running `make vale` and `make docs` at once.
+#   Container names are convenient for recognition in `docker ps` but the current implementation has more downsides than upsides.
+#
+# - Forced platform specification now that multiple architecture images exist.
+#
+#  Significantly speeds up build times on larger repositories.
+#
+# ## 4.2.2 (2023-10-05)
 
+# - Added support for Jira data source and MongoDB data source plugins repositories.
+#
+# ## 4.2.1 (2023-09-13)
+
+# ## Fixed
+#
+# - Improved consistency of the webserver request loop by polling the Hugo port rather than the proxy port.
+#
+# ## 4.2.0 (2023-09-01)
+#
+# ### Added
+#
+# - Retry the initial webserver request up to ten times to allow for the process to start.
+#   If it is still failing after ten seconds, an error message is logged.
+#
+# ## 4.1.1 (2023-07-20)
+#
+# ### Fixed
+#
+# - Replaced use of `realpath` with POSIX compatible alternative to determine default value for REPOS_PATH.
+#
+# ## 4.1.0 (2023-06-16)
+#
+# ### Added
+#
 # - Mounts of `layouts` and `config` directories for the `website` project.
 #   Ensures that local changes to mounts or shortcodes are reflected in the development server.
-
+#
 # ### Fixed
-
+#
 # - Version inference for versioned docs pages.
 #   Pages in versioned projects now have the `versioned: true` front matter set to ensure that "version" in $.Page.Scratch is set on builds.
-
+#
 # ## 4.0.0 (2023-06-06)
-
+#
 # ### Removed
-
+#
 # - `doc-validator/%` target.
 #   The behavior of the target was not as described.
 #   Instead, to limit `doc-validator` to only specific files, refer to https://grafana.com/docs/writers-toolkit/writing-guide/tooling-and-workflows/validate-technical-documentation/#run-on-specific-files.
-
+#
 # ## 3.0.0 (2023-05-18)
-
+#
 # ### Fixed
-
+#
 # - Compatibility with the updated Make targets in the `website` repository.
 #   `docs` now runs this script itself, `server-docs` builds the site with the `docs` Hugo environment.
-
+#
 # ## 2.0.0 (2023-05-18)
-
+#
 # ### Added
-
+#
 # - Support for the grafana-cloud/frontend-observability/faro-web-sdk project.
 # - Use of `doc-validator` v2.0.x which includes breaking changes to command line options.
-
+#
 # ### Fixed
-
+#
 # - Source grafana-cloud project from website repository.
-
+#
 # ### Added
-
+#
 # - Support for running the Vale linter with `make vale`.
-
+#
 # ## 1.2.1 (2023-05-05)
-
+#
 # ### Fixed
-
+#
 # - Use `latest` tag of `grafana/vale` image by default instead of hardcoded older version.
 # - Fix mounting multiple projects broken by the changes in 1.0.1
-
+#
 # ## 1.2.0 (2023-05-05)
-
+#
 # ### Added
-
+#
 # - Support for running the Vale linter with `make vale`.
-
+#
 # ### Fixed
-
+#
 # ## 1.1.0 (2023-05-05)
-
+#
 # ### Added
-
+#
 # - Rewrite error output so it can be followed by text editors.
-
+#
 # ### Fixed
-
+#
 # - Fix `docs-debug` container process port.
-
+#
 # ## 1.0.1 (2023-05-04)
-
+#
 # ### Fixed
-
+#
 # - Ensure complete section hierarchy so that all projects have a visible menu.
-
+#
 # ## 1.0.0 (2023-05-04)
-
+#
 # ### Added
-
+#
 # - Build multiple projects simultaneously if all projects are checked out locally.
 # - Run [`doc-validator`](https://github.com/grafana/technical-documentation/tree/main/tools/cmd/doc-validator) over projects.
 # - Redirect project root to mounted version.
@@ -118,7 +182,6 @@
 
 set -ef
 
-readonly DOCS_CONTAINER="${DOCS_CONTAINER:-make-docs}"
 readonly DOCS_HOST_PORT="${DOCS_HOST_PORT:-3002}"
 readonly DOCS_IMAGE="${DOCS_IMAGE:-grafana/docs-base:latest}"
 
@@ -189,7 +252,6 @@ EOF
 fi
 
 SOURCES_as_code='as-code-docs'
-SOURCES_beyla='ebpf-autoinstrument'
 SOURCES_enterprise_metrics='backend-enterprise'
 SOURCES_enterprise_metrics_='backend-enterprise'
 SOURCES_grafana_cloud='website'
@@ -201,6 +263,10 @@ SOURCES_grafana_cloud_frontend_observability_faro_web_sdk='faro-web-sdk'
 SOURCES_helm_charts_mimir_distributed='mimir'
 SOURCES_helm_charts_tempo_distributed='tempo'
 SOURCES_opentelemetry='opentelemetry-docs'
+SOURCES_plugins_grafana_datadog_datasource='datadog-datasource'
+SOURCES_plugins_grafana_jira_datasource='jira-datasource'
+SOURCES_plugins_grafana_mongodb_datasource='mongodb-datasource'
+SOURCES_plugins_grafana_oracle_datasource='oracle-datasource'
 SOURCES_plugins_grafana_splunk_datasource='splunk-datasource'
 
 VERSIONS_as_code='UNVERSIONED'
@@ -211,6 +277,11 @@ VERSIONS_grafana_cloud_k6='UNVERSIONED'
 VERSIONS_grafana_cloud_data_configuration_integrations='UNVERSIONED'
 VERSIONS_grafana_cloud_frontend_observability_faro_web_sdk='UNVERSIONED'
 VERSIONS_opentelemetry='UNVERSIONED'
+VERSIONS_plugins_grafana_datadog_datasource='latest'
+VERSIONS_plugins_grafana_jira_datasource='latest'
+VERSIONS_plugins_grafana_mongodb_datasource='latest'
+VERSIONS_plugins_grafana_oracle_datasource='latest'
+VERSIONS_plugins_grafana_splunk_datasource='latest'
 VERSIONS_technical_documentation='UNVERSIONED'
 VERSIONS_website='UNVERSIONED'
 VERSIONS_writers_toolkit='UNVERSIONED'
@@ -219,8 +290,13 @@ PATHS_grafana_cloud='content/docs/grafana-cloud'
 PATHS_helm_charts_mimir_distributed='docs/sources/helm-charts/mimir-distributed'
 PATHS_helm_charts_tempo_distributed='docs/sources/helm-charts/tempo-distributed'
 PATHS_mimir='docs/sources/mimir'
+PATHS_plugins_grafana_datadog_datasource='docs/sources'
+PATHS_plugins_grafana_jira_datasource='docs/sources'
+PATHS_plugins_grafana_mongodb_datasource='docs/sources'
+PATHS_plugins_grafana_oracle_datasource='docs/sources'
+PATHS_plugins_grafana_splunk_datasource='docs/sources'
 PATHS_tempo='docs/sources/tempo'
-PATHS_website='content/docs'
+PATHS_website='content'
 
 # identifier STR
 # Replace characters that are not valid in an identifier with underscores.
@@ -235,6 +311,77 @@ aget() {
   eval echo '$'"$(identifier "$1")_$(identifier "$2")"
 }
 
+# src returns the project source repository name for a project.
+src() {
+  _project="$1"
+
+  case "${_project}" in
+    plugins/*)
+      if [ -z "$(aget SOURCES "${_project}")" ]; then
+        echo plugins-private
+      else
+        aget SOURCES "${_project}"
+      fi
+      ;;
+    *)
+      if [ -z "$(aget SOURCES "${_project}")" ]; then
+        echo "${_project}"
+      else
+        aget SOURCES "${_project}"
+      fi
+      ;;
+  esac
+
+  unset _project
+}
+
+# path returns the relative path within the repository that contain the docs for a project.
+path() {
+  _project="$1"
+
+  case "${_project}" in
+    plugins/*)
+      if [ -z "$(aget PATHS "${_project}")" ]; then
+        echo "${_project}/docs/sources"
+      else
+        aget PATHS "${_project}"
+      fi
+      ;;
+    *)
+      if [ -z "$(aget PATHS "${_project}")" ]; then
+        echo "docs/sources"
+      else
+        aget PATHS "${_project}"
+      fi
+  esac
+
+  unset _project
+}
+
+# version returns the version for a project. Unversioned projects return the special value 'UNVERSIONED'.
+version() {
+  _project="$1"
+
+  case "${_project}" in
+    plugins/*)
+      if [ -z "$(aget VERSIONS "${_project}")" ]; then
+        echo "UNVERSIONED"
+      else
+        aget VERSIONS "${_project}"
+      fi
+      ;;
+    *)
+    if [ -z "$(aget VERSIONS "${_project}")" ]; then
+      echo latest
+    else
+      aget VERSIONS "${_project}"
+    fi
+  esac
+
+  unset _project
+}
+
+
 # new_proj populates a new project structure.
 new_proj() {
   _project="$1"
@@ -245,31 +392,19 @@ new_proj() {
   # If version is not set, use the script mapping of project to default versions if it exists.
   # Fallback to 'latest'.
   if [ -z "${_version}" ]; then
-    if [ -z "$(aget VERSIONS "${_project}")" ]; then
-      _version=latest
-    else
-      _version="$(aget VERSIONS "${_project}")"
-    fi
+    _version="$(version "${_project}")"
   fi
 
   # If repo is not set, use the script mapping of project to repo name if it exists.
   # Fallback to using the project name.
   if [ -z "${_repo}" ]; then
-    if [ -z "$(aget SOURCES "${_project}")" ]; then
-      _repo="${_project}"
-    else
-      _repo="$(aget SOURCES "${_project}")"
-    fi
+    _repo="$(src "${_project}")"
   fi
 
   # If path is not set, use the script mapping of project to docs sources path if it exists.
   # Fallback to using 'docs/sources'.
   if [ -z "${_path}" ]; then
-    if [ -z "$(aget PATHS "${_project}")" ]; then
-      _path="docs/sources"
-    else
-      _path="$(aget PATHS "${_project}")"
-    fi
+    _path="$(path "${_project}")"
   fi
 
   echo "${_project}:${_version}:${_repo}:${_path}"
@@ -318,7 +453,7 @@ $1
 POSIX_HERESTRING
 
   if [ "${_project}" = 'website' ]; then
-    echo '/hugo/content/docs'
+    echo '/hugo/content'
 
     unset _project _version
     return
@@ -440,30 +575,41 @@ await_build() {
   url="$1"
   req="$(if command -v curl >/dev/null 2>&1; then echo 'curl -s -o /dev/null'; else echo 'wget -q'; fi)"
 
-  sleep 2
+  i=1
+  max=10
+  while [ "${i}" -ne "${max}" ]
+  do
+    sleep 1
+    debg "Retrying request to webserver assuming the process is still starting up."
+    i=$((i + 1))
 
-  if ${req} "${url}"; then
-    echo
-    echo "View documentation locally:"
-    for x in ${url_src_dst_vers}; do
-      IFS='^' read -r url _ _ <<POSIX_HERESTRING
+    if ${req} "${url}"; then
+      echo
+      echo "View documentation locally:"
+      for x in ${url_src_dst_vers}; do
+        IFS='^' read -r url _ _ <<POSIX_HERESTRING
 $x
 POSIX_HERESTRING
 
-      if [ -n "${url}" ]; then
-        if [ "${_url}" != "arbitrary" ]; then
-          echo "  ${url}"
+        if [ -n "${url}" ]; then
+          if [ "${_url}" != "arbitrary" ]; then
+            echo "  ${url}"
+          fi
         fi
-      fi
-    done
-    echo
-    echo 'Press Ctrl+C to stop the server'
-  else
-    echo
-    errr 'The build was interrupted or a build error occurred, check the previous logs for possible causes.'
-  fi
+      done
+      echo
+      echo 'Press Ctrl+C to stop the server'
 
-  unset url req
+      unset i max req url
+      return
+    fi
+  done
+
+  echo
+  errr 'The build was interrupted or a build error occurred, check the previous logs for possible causes.'
+  note 'You might need to use Ctrl+C to end the process.'
+
+  unset i max req url
 }
 
 debg() {
@@ -490,10 +636,12 @@ for arg in "$@"; do
 ${arg}
 POSIX_HERESTRING
   if [ "${_project}" = website ]; then
+    note "Please be patient, building the website can take some time."
+
     _repo="$(repo_path website)"
     volumes="--volume=${_repo}/config:/hugo/config"
-    volumes="${volumes} --volume=${_repo}/layouts/partials:/hugo/layouts/partials"
-    volumes="${volumes} --volume=${_repo}/layouts/shortcodes:/hugo/layouts/shortcodes"
+    volumes="${volumes} --volume=${_repo}/layouts:/hugo/layouts"
+    volumes="${volumes} --volume=${_repo}/scripts:/hugo/scripts"
   fi
   unset _project _repo
 done
@@ -511,7 +659,7 @@ POSIX_HERESTRING
     fi
   fi
 
-  debg "DEBG: Mounting '${_src}' at container path '${_dst}'"
+  debg "Mounting '${_src}' at container path '${_dst}'"
 
   if [ -z "${volumes}" ]; then
     volumes="--volume=${_src}:${_dst}"
@@ -540,7 +688,6 @@ case "${image}" in
     "${PODMAN}" run \
                 --init \
                 --interactive \
-                --name "${DOCS_CONTAINER}" \
                 --platform linux/amd64 \
                 --rm \
                 --tty \
@@ -557,7 +704,6 @@ case "${image}" in
     "${PODMAN}" run \
                 --init \
                 --interactive \
-                --name "${DOCS_CONTAINER}" \
                 --platform linux/amd64 \
                 --rm \
                 --tty \
@@ -572,6 +718,12 @@ case "${image}" in
     tempfile="$(mktemp -t make-docs.XXX)"
     cat <<EOF >"${tempfile}"
 #!/usr/bin/env bash
+
+tc() {
+  set \${*,,}
+  echo \${*^}
+}
+
 for redirect in ${redirects}; do
   IFS='^' read -r path ver <<<"\${redirect}"
   echo -e "---\\nredirectURL: \"\${path/\/hugo\/content/}\"\\ntype: redirect\\nversioned: true\\n---\\n" > "\${path/\${ver}/_index.md}"
@@ -580,8 +732,12 @@ done
 for x in "${url_src_dst_vers}"; do
   IFS='^' read -r _ _ dst _ <<<"\${x}"
 
+  title="\${dst%/*}"
+  title="\$(tc \${title##*/})"
   while [[ -n "\${dst}" ]]; do
-    touch "\${dst}/_index.md"
+    if [[ ! -f "\${dst}/_index.md" ]]; then
+        echo -e "---title: \${title}\\n---\\n\\n# \${title}\\n\\n{{< section >}}" > "\${dst}/_index.md"
+    fi
     dst="\${dst%/*}"
   done
 done
@@ -601,33 +757,38 @@ ${PODMAN} run \
   --env=HUGO_REFLINKSERRORLEVEL=${HUGO_REFLINKSERRORLEVEL} \
   --init \
   --interactive \
-  --name=${DOCS_CONTAINER} \
-  --platform=linux/amd64 \
   --publish=${DOCS_HOST_PORT}:3002 \
   --publish=3003:3003 \
   --rm \
   --tty \
   ${volumes} \
-  ${DOCS_IMAGE} \
-  /entrypoint
+  ${DOCS_IMAGE}
 EOF
-    await_build http://localhost:3002 &
 
-    if [ -n "${DEBUG}" ]; then
-      ${cmd}
+    if [ -n "${ENTER}" ]; then
+      ${cmd} /bin/bash
+    elif [ -n "${DEBUG}" ]; then
+      await_build http://localhost:3003 &
+
+      debg "${cmd} /entrypoint"
+      ${cmd} /entrypoint
     else
-      ${cmd} 2>&1| sed \
-                     -e '/Web Server is available at http:\/\/localhost:3003\/ (bind address 0.0.0.0)/ d' \
-                     -e '/^hugo server/ d' \
-                     -e '/fatal: not a git repository (or any parent up to mount point \/)/ d' \
-                     -e '/Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)./ d' \
-                     -e "/Makefile:[0-9]*: warning: overriding recipe for target 'docs'/ d" \
-                     -e "/docs.mk:[0-9]*: warning: ignoring old recipe for target 'docs'/ d" \
-                     -e '/\/usr\/bin\/make -j 2 proxy hserver-docs HUGO_PORT=3003/ d' \
-                     -e '/website-proxy/ d' \
-                     -e '/rm -rf dist*/ d' \
-                     -e '/Press Ctrl+C to stop/ d' \
-                     -e '/make/ d' || echo
+      await_build http://localhost:3003 &
+
+      ${cmd} /entrypoint  2>&1\
+        | sed -u \
+              -e '/Web Server is available at http:\/\/localhost:3003\/ (bind address 0.0.0.0)/ d' \
+              -e '/^hugo server/ d' \
+              -e '/fatal: not a git repository (or any parent up to mount point \/)/ d' \
+              -e '/Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)./ d' \
+              -e "/Makefile:[0-9]*: warning: overriding recipe for target 'docs'/ d" \
+              -e "/docs.mk:[0-9]*: warning: ignoring old recipe for target 'docs'/ d" \
+              -e '/\/usr\/bin\/make -j 2 proxy hserver-docs HUGO_PORT=3003/ d' \
+              -e '/website-proxy/ d' \
+              -e '/rm -rf dist*/ d' \
+              -e '/Press Ctrl+C to stop/ d' \
+              -e '/make/ d' \
+              -e '/WARNING: The manual_mount source directory/ d'
     fi
     ;;
 esac

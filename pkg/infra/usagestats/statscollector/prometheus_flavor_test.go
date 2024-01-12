@@ -42,6 +42,7 @@ func TestDetectPrometheusVariant(t *testing.T) {
 		withDatasources(mockDatasourceService{datasources: []*datasources.DataSource{
 			{
 				ID:      1,
+				UID:     "vanilla",
 				OrgID:   1,
 				Version: 1,
 				Name:    "Vanilla",
@@ -51,6 +52,7 @@ func TestDetectPrometheusVariant(t *testing.T) {
 			},
 			{
 				ID:      2,
+				UID:     "mimir",
 				OrgID:   1,
 				Version: 1,
 				Name:    "Mimir",
@@ -60,6 +62,7 @@ func TestDetectPrometheusVariant(t *testing.T) {
 			},
 			{
 				ID:      3,
+				UID:     "another-mimir",
 				OrgID:   1,
 				Version: 1,
 				Name:    "Another Mimir",
@@ -69,6 +72,7 @@ func TestDetectPrometheusVariant(t *testing.T) {
 			},
 			{
 				ID:      4,
+				UID:     "cortex",
 				OrgID:   1,
 				Version: 1,
 				Name:    "Cortex",

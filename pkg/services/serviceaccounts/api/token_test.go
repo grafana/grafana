@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -43,7 +44,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeServiceAccountService{}
+				a.service = &satests.FakeServiceAccountService{}
 			})
 			req := server.NewGetRequest(fmt.Sprintf("/api/serviceaccounts/%d/tokens", tt.id))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
@@ -109,7 +110,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
 				a.cfg.ApiKeyMaxSecondsToLive = tt.tokenTTL
-				a.service = &fakeServiceAccountService{
+				a.service = &satests.FakeServiceAccountService{
 					ExpectedErr:    tt.expectedErr,
 					ExpectedAPIKey: tt.expectedAPIKey,
 				}
@@ -163,7 +164,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeServiceAccountService{ExpectedErr: tt.expectedErr}
+				a.service = &satests.FakeServiceAccountService{ExpectedErr: tt.expectedErr}
 			})
 
 			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d/tokens/%d", tt.saID, tt.apikeyID), nil)

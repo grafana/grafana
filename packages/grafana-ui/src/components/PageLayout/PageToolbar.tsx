@@ -4,12 +4,13 @@ import React, { ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Link, ToolbarButtonRow } from '..';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
+import { Link } from '../Link/Link';
+import { ToolbarButtonRow } from '../ToolbarButton/ToolbarButtonRow';
 
 export interface Props {
   pageIcon?: IconName;
@@ -91,7 +92,7 @@ export const PageToolbar = React.memo(
                 tooltip="Go back (Esc)"
                 tooltipPlacement="bottom"
                 size="xxl"
-                aria-label={selectors.components.BackButton.backArrow}
+                data-testid={selectors.components.BackButton.backArrow}
                 onClick={onGoBack}
               />
             </div>
@@ -221,7 +222,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       fontSize: typography.size.lg,
       margin: 0,
-      maxWidth: '300px',
       borderRadius: theme.shape.radius.default,
     }),
     titleLink: css({

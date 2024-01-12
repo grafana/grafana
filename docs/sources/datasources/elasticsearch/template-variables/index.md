@@ -72,6 +72,21 @@ The example also uses a variable in the _Terms_ group by field input box, which 
 
 To view an example dashboard on Grafana Play, see the [Elasticsearch Templated Dashboard](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1).
 
+## Create a query
+
+Write the query using a custom JSON string, with the field mapped as a [keyword](https://www.elastic.co/guide/en/elasticsearch/reference/current/keyword.html#keyword) in the Elasticsearch index mapping.
+
+If the query is [multi-field](https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html) with both a `text` and `keyword` type, use `"field":"fieldname.keyword"` (sometimes `fieldname.raw`) to specify the keyword field in your query.
+
+| Query                                                               | Description                                                                                                                                                                   |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{"find": "fields", "type": "keyword"}`                             | Returns a list of field names with the index type `keyword`.                                                                                                                  |
+| `{"find": "terms", "field": "hostname.keyword", "size": 1000}`      | Returns a list of values for a keyword using term aggregation. Query will use current dashboard time range as time range query.                                               |
+| `{"find": "terms", "field": "hostname", "query": '<Lucene query>'}` | Returns a list of values for a keyword field using term aggregation and a specified Lucene query filter. Query will use current dashboard time range as time range for query. |
+
+Queries of `terms` have a 500-result limit by default.
+To set a custom limit, set the `size` property in your query.
+
 {{% docs/reference %}}
 [add-template-variables-multi-value-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#multi-value-variables"
 [add-template-variables-multi-value-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#multi-value-variables"

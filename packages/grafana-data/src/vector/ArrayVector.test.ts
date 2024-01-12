@@ -3,6 +3,10 @@ import { Field, FieldType } from '../types';
 import { ArrayVector } from './ArrayVector';
 
 describe('ArrayVector', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation();
+  });
+
   it('should init 150k with 65k Array.push() chonking', () => {
     const arr = Array.from({ length: 150e3 }, (v, i) => i);
     const av = new ArrayVector(arr);

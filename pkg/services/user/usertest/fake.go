@@ -14,7 +14,7 @@ type FakeUserService struct {
 	ExpectedSearchUsers      user.SearchUserQueryResult
 	ExpectedUserProfileDTO   *user.UserProfileDTO
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
-	ExpectedUsageStats       map[string]interface{}
+	ExpectedUsageStats       map[string]any
 
 	GetSignedInUserFn   func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	CreateFn            func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
@@ -28,7 +28,7 @@ func NewUserServiceFake() *FakeUserService {
 	return &FakeUserService{}
 }
 
-func (f FakeUserService) GetUsageStats(ctx context.Context) map[string]interface{} {
+func (f FakeUserService) GetUsageStats(ctx context.Context) map[string]any {
 	return f.ExpectedUsageStats
 }
 

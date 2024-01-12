@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
-import React, { Context, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor, EventHook, Plugin } from 'slate-react';
@@ -9,15 +9,6 @@ import { Editor, EventHook, Plugin } from 'slate-react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import {
-  makeValue,
-  SCHEMA,
-  CompletionItemGroup,
-  TypeaheadOutput,
-  TypeaheadInput,
-  SuggestionsState,
-  Themeable2,
-} from '../..';
 import {
   ClearPlugin,
   NewlinePlugin,
@@ -29,6 +20,9 @@ import {
 } from '../../slate-plugins';
 import { withTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
+import { CompletionItemGroup, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../../types/completion';
+import { Themeable2 } from '../../types/theme';
+import { makeValue, SCHEMA } from '../../utils/slate';
 
 export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
@@ -73,8 +67,8 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   mounted = false;
   editor: Editor | null = null;
 
-  constructor(props: QueryFieldProps, context: Context<any>) {
-    super(props, context);
+  constructor(props: QueryFieldProps) {
+    super(props);
 
     this.runOnChangeDebounced = debounce(this.runOnChange, 500);
 
@@ -216,7 +210,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
 
     return (
       <div className={cx(wrapperClassName, styles.wrapper)}>
-        <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
+        <div className="slate-query-field" data-testid={selectors.components.QueryField.container}>
           <Editor
             ref={(editor) => (this.editor = editor!)}
             schema={SCHEMA}

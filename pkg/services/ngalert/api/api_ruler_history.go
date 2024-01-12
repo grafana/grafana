@@ -41,7 +41,7 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 
 	query := models.HistoryQuery{
 		RuleUID:      ruleUID,
-		OrgID:        c.OrgID,
+		OrgID:        c.SignedInUser.GetOrgID(),
 		DashboardUID: dashUID,
 		PanelID:      panelID,
 		SignedInUser: c.SignedInUser,

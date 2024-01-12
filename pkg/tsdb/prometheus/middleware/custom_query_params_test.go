@@ -6,10 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestCustomQueryParametersMiddleware(t *testing.T) {
@@ -20,7 +19,7 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("Without custom query parameters set should not apply middleware", func(t *testing.T) {
-		mw := CustomQueryParameters(log.New("test"))
+		mw := CustomQueryParameters(backend.NewLoggerWith("logger", "test"))
 		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
 		middlewareName, ok := mw.(httpclient.MiddlewareName)
@@ -40,9 +39,9 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("Without custom query parameters set as string should not apply middleware", func(t *testing.T) {
-		mw := CustomQueryParameters(log.New("test"))
+		mw := CustomQueryParameters(backend.NewLoggerWith("logger", "test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
+			CustomOptions: map[string]any{
 				customQueryParametersKey: 64,
 			},
 		}, finalRoundTripper)
@@ -64,9 +63,9 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set as empty string should not apply middleware", func(t *testing.T) {
-		mw := CustomQueryParameters(log.New("test"))
+		mw := CustomQueryParameters(backend.NewLoggerWith("logger", "test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
+			CustomOptions: map[string]any{
 				customQueryParametersKey: "",
 			},
 		}, finalRoundTripper)
@@ -88,9 +87,9 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set as invalid query string should not apply middleware", func(t *testing.T) {
-		mw := CustomQueryParameters(log.New("test"))
+		mw := CustomQueryParameters(backend.NewLoggerWith("logger", "test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
+			CustomOptions: map[string]any{
 				customQueryParametersKey: "custom=%%abc&test=abc",
 			},
 		}, finalRoundTripper)
@@ -112,10 +111,10 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set should apply middleware for request URL containing query parameters ", func(t *testing.T) {
-		mw := CustomQueryParameters(log.New("test"))
+		mw := CustomQueryParameters(backend.NewLoggerWith("logger", "test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
-				grafanaDataKey: map[string]interface{}{
+			CustomOptions: map[string]any{
+				grafanaDataKey: map[string]any{
 					customQueryParametersKey: "custom=par/am&second=f oo",
 				},
 			},
@@ -144,10 +143,10 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 	})
 
 	t.Run("With custom query parameters set should apply middleware for request URL not containing query parameters", func(t *testing.T) {
-		mw := CustomQueryParameters(log.New("test"))
+		mw := CustomQueryParameters(backend.NewLoggerWith("logger", "test"))
 		rt := mw.CreateMiddleware(httpclient.Options{
-			CustomOptions: map[string]interface{}{
-				grafanaDataKey: map[string]interface{}{
+			CustomOptions: map[string]any{
+				grafanaDataKey: map[string]any{
 					customQueryParametersKey: "custom=par/am&second=f oo",
 				},
 			},

@@ -96,7 +96,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
       let src = unknownImage;
       let idx = Infinity;
       if (images.length > 0) {
-        idx = feature.get('rowIndex') as number;
+        idx = feature.get('rowIndex');
         src = images[idx] ?? unknownImage;
       }
       const photoStyle = new Style({

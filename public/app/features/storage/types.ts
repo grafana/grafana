@@ -8,7 +8,7 @@ export enum StorageView {
   AddRoot = 'add',
 }
 
-export interface UploadReponse {
+export interface UploadResponse {
   status: number;
   statusText: string;
 

@@ -2221,7 +2221,6 @@
   ],
   "refresh": false,
   "schemaVersion": 27,
-  "style": "dark",
   "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []

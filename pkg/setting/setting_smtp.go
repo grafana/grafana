@@ -1,6 +1,11 @@
 package setting
 
-import "github.com/grafana/grafana/pkg/util"
+import (
+	"fmt"
+	"regexp"
+
+	"github.com/grafana/grafana/pkg/util"
+)
 
 type SmtpSettings struct {
 	Enabled        bool
@@ -14,13 +19,17 @@ type SmtpSettings struct {
 	EhloIdentity   string
 	StartTLSPolicy string
 	SkipVerify     bool
+	StaticHeaders  map[string]string
 
 	SendWelcomeEmailOnSignUp bool
 	TemplatesPatterns        []string
 	ContentTypes             []string
 }
 
-func (cfg *Cfg) readSmtpSettings() {
+// validates mail headers
+var mailHeaderRegex = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(-[A-Z][A-Za-z0-9]*)*$`)
+
+func (cfg *Cfg) readSmtpSettings() error {
 	sec := cfg.Raw.Section("smtp")
 	cfg.Smtp.Enabled = sec.Key("enabled").MustBool(false)
 	cfg.Smtp.Host = sec.Key("host").String()
@@ -38,4 +47,31 @@ func (cfg *Cfg) readSmtpSettings() {
 	cfg.Smtp.SendWelcomeEmailOnSignUp = emails.Key("welcome_email_on_sign_up").MustBool(false)
 	cfg.Smtp.TemplatesPatterns = util.SplitString(emails.Key("templates_pattern").MustString("emails/*.html, emails/*.txt"))
 	cfg.Smtp.ContentTypes = util.SplitString(emails.Key("content_types").MustString("text/html"))
+
+	// populate static headers
+	if err := cfg.readGrafanaSmtpStaticHeaders(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validHeader(header string) bool {
+	return mailHeaderRegex.MatchString(header)
+}
+
+func (cfg *Cfg) readGrafanaSmtpStaticHeaders() error {
+	staticHeadersSection := cfg.Raw.Section("smtp.static_headers")
+	keys := staticHeadersSection.Keys()
+	cfg.Smtp.StaticHeaders = make(map[string]string, len(keys))
+
+	for _, key := range keys {
+		if !validHeader(key.Name()) {
+			return fmt.Errorf("header %q in [smtp.static_headers] configuration: must follow canonical MIME form", key.Name())
+		}
+
+		cfg.Smtp.StaticHeaders[key.Name()] = key.Value()
+	}
+
+	return nil
 }

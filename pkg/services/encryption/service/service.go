@@ -82,11 +82,11 @@ func (s *Service) checkEncryptionAlgorithm(algorithm string) error {
 }
 
 func (s *Service) registerUsageMetrics() {
-	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
+	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
 		algorithm := s.cfg.SectionWithEnvOverrides(securitySection).Key(encryptionAlgorithmKey).
 			MustString(defaultEncryptionAlgorithm)
 
-		return map[string]interface{}{
+		return map[string]any{
 			fmt.Sprintf("stats.encryption.%s.count", algorithm): 1,
 		}, nil
 	})

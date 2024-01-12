@@ -15,13 +15,10 @@ var macros = sqlutil.Macros{
 	"timeGroupAlias": macroTimeGroupAlias,
 
 	// The behaviors of timeFrom and timeTo as defined in the SDK are different
-	// from all other Grafana SQL plugins. Instead we'll take their
-	// implementations, rename them and define timeFrom and timeTo ourselves.
-	"timeRangeFrom": sqlutil.DefaultMacros["timeFrom"],
-	"timeRangeTo":   sqlutil.DefaultMacros["timeTo"],
-	"timeRange":     sqlutil.DefaultMacros["timeFilter"],
-	"timeTo":        macroTo,
-	"timeFrom":      macroFrom,
+	// from all other Grafana SQL plugins. Instead we'll take the implementations,
+	// rename them and define timeFrom and timeTo ourselves.
+	"timeTo":   macroTo,
+	"timeFrom": macroFrom,
 }
 
 func macroTimeGroup(query *sqlutil.Query, args []string) (string, error) {
@@ -84,10 +81,12 @@ func macroInterval(query *sqlutil.Query, _ []string) (string, error) {
 	return fmt.Sprintf("interval '%d second'", int64(query.Interval.Seconds())), nil
 }
 
+// https://docs.influxdata.com/influxdb/cloud-serverless/query-data/sql/cast-types/?t=CAST%28%29#cast-to-a-timestamp-type
 func macroFrom(query *sqlutil.Query, _ []string) (string, error) {
 	return fmt.Sprintf("cast('%s' as timestamp)", query.TimeRange.From.Format(time.RFC3339)), nil
 }
 
+// https://docs.influxdata.com/influxdb/cloud-serverless/query-data/sql/cast-types/?t=CAST%28%29#cast-to-a-timestamp-type
 func macroTo(query *sqlutil.Query, _ []string) (string, error) {
 	return fmt.Sprintf("cast('%s' as timestamp)", query.TimeRange.To.Format(time.RFC3339)), nil
 }

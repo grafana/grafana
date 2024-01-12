@@ -2662,8 +2662,7 @@
         }
     ],
     "schemaVersion": 32,
-    "style": "dark",
-    "tags": [
+      "tags": [
         "gdev",
         "panel-tests"
     ],

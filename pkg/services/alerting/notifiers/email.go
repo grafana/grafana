@@ -84,7 +84,7 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 	cmd := &notifications.SendEmailCommandSync{
 		SendEmailCommand: notifications.SendEmailCommand{
 			Subject: evalContext.GetNotificationTitle(),
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"Title":         evalContext.GetNotificationTitle(),
 				"State":         evalContext.Rule.State,
 				"Name":          evalContext.Rule.Name,

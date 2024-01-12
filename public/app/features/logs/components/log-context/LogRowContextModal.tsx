@@ -14,10 +14,11 @@ import {
   LogsSortOrder,
   dateTime,
   TimeRange,
+  LoadingState,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, LoadingState, TimeZone } from '@grafana/schema';
-import { Icon, Button, Modal, useTheme2 } from '@grafana/ui';
+import { DataQuery, TimeZone } from '@grafana/schema';
+import { Button, Modal, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -128,7 +129,11 @@ interface LogRowContextModalProps {
   onClose: () => void;
   getRowContext: (row: LogRowModel, options: LogRowContextOptions) => Promise<DataQueryResponse>;
 
-  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   logsSortOrder: LogsSortOrder;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -358,7 +363,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       // this way this array of rows will never be empty
       const allRows = [...above.rows, row, ...below.rows];
 
-      const newRows = await loadMore(place, allRows);
+      const newRows = (await loadMore(place, allRows)).map((r) =>
+        // apply the original row's searchWords to all the rows for highlighting
+        !r.searchWords || !r.searchWords?.length ? { ...r, searchWords: row.searchWords } : r
+      );
       const [older, newer] = partition(newRows, (newRow) => newRow.timeEpochNs > row.timeEpochNs);
       const newAbove = logsSortOrder === LogsSortOrder.Ascending ? newer : older;
       const newBelow = logsSortOrder === LogsSortOrder.Ascending ? older : newer;
@@ -552,6 +560,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onUnpinLine={() => setSticky(false)}
                   onPinLine={() => setSticky(true)}
                   pinnedRowId={sticky ? row.uid : undefined}
+                  overflowingContent={true}
                 />
               </td>
             </tr>
@@ -590,21 +599,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       </div>
 
       <Modal.ButtonRow>
-        <a
-          href="https://forms.gle/Tsk4pN7vD95aBRbb7"
-          className={styles.link}
-          title="We recently reworked the Log Context UI, please let us know how we can further improve it."
-          target="_blank"
-          rel="noreferrer noopener"
-          onClick={() => {
-            reportInteraction('grafana_explore_logs_log_context_give_feedback_clicked', {
-              datasourceType: row.datasourceType,
-              logRowUid: row.uid,
-            });
-          }}
-        >
-          <Icon name="comment-alt-message" /> Give feedback
-        </a>
         {contextQuery?.datasource?.uid && (
           <Button
             variant="secondary"

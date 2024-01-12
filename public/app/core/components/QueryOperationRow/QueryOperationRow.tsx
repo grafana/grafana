@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import { useUpdateEffect } from 'react-use';
 
@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ReactUtils, useStyles2 } from '@grafana/ui';
 
-import { QueryOperationRowHeader } from './QueryOperationRowHeader';
+import { QueryOperationRowHeader, ExpanderMessages } from './QueryOperationRowHeader';
 
 export interface QueryOperationRowProps {
   index: number;
@@ -22,6 +22,7 @@ export interface QueryOperationRowProps {
   draggable?: boolean;
   collapsable?: boolean;
   disabled?: boolean;
+  expanderMessages?: ExpanderMessages;
 }
 
 export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
@@ -45,12 +46,21 @@ export function QueryOperationRow({
   collapsable,
   index,
   id,
+  expanderMessages,
 }: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const styles = useStyles2(getQueryOperationRowStyles);
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
+
+  // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
+  // `undefined` can be deliberately passed value here, but we only want booleans to trigger the effect.
+  useEffect(() => {
+    if (typeof isOpen === 'boolean') {
+      setIsContentVisible(isOpen);
+    }
+  }, [isOpen]);
 
   const reportDragMousePosition = useCallback((e: React.MouseEvent) => {
     // When drag detected react-beautiful-dnd will preventDefault the event
@@ -115,6 +125,7 @@ export function QueryOperationRow({
                     onRowToggle={onRowToggle}
                     reportDragMousePosition={reportDragMousePosition}
                     title={title}
+                    expanderMessages={expanderMessages}
                   />
                 </div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -139,6 +150,7 @@ export function QueryOperationRow({
         onRowToggle={onRowToggle}
         reportDragMousePosition={reportDragMousePosition}
         title={title}
+        expanderMessages={expanderMessages}
       />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>

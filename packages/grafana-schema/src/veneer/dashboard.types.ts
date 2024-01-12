@@ -1,4 +1,4 @@
-import { DataSourceRef as CommonDataSourceRef, DataSourceRef } from '../common/common.gen';
+import { DataSourceRef as CommonDataSourceRef, DataSourceRef, DataTopic } from '../common/common.gen';
 import * as raw from '../raw/dashboard/x/dashboard_types.gen';
 
 import { DataQuery } from './common.types';
@@ -7,11 +7,11 @@ export type { CommonDataSourceRef as DataSourceRef };
 
 export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
   extends Omit<raw.Panel, 'fieldConfig'> {
-  fieldConfig: FieldConfigSource<TCustomFieldConfig>;
+  fieldConfig?: FieldConfigSource<TCustomFieldConfig>;
 }
 
 export interface RowPanel extends Omit<raw.RowPanel, 'panels'> {
-  panels: Array<Panel | raw.GraphPanel | raw.HeatmapPanel>;
+  panels: Panel[];
 }
 
 export enum VariableHide {
@@ -20,14 +20,12 @@ export enum VariableHide {
   hideVariable,
 }
 
-export interface VariableModel extends Omit<raw.VariableModel, 'hide' | 'description' | 'datasource'> {
-  hide: VariableHide;
-  description?: string | null;
-  datasource: DataSourceRef | null;
+export interface VariableModel extends Omit<raw.VariableModel, 'datasource'> {
+  datasource?: DataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations' | 'panels'> {
-  panels?: Array<Panel | RowPanel | raw.GraphPanel | raw.HeatmapPanel>;
+  panels?: Array<Panel | RowPanel>;
   annotations?: AnnotationContainer;
   templating?: {
     list?: VariableModel[];
@@ -38,6 +36,9 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery>
   extends Omit<raw.AnnotationQuery, 'target' | 'datasource'> {
   datasource?: DataSourceRef | null;
   target?: TQuery;
+  // TODO: When migrating to snapshot queries, remove this property.
+  // With snapshot queries annotations become a part of the panel snapshot data.
+  snapshotData?: unknown;
 }
 
 export interface AnnotationContainer extends Omit<raw.AnnotationContainer, 'list'> {
@@ -58,15 +59,16 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
 
 export interface DataTransformerConfig<TOptions = any> extends raw.DataTransformerConfig {
   options: TOptions;
+  topic?: DataTopic;
 }
+
+export interface TimePickerConfig extends raw.TimePickerConfig {}
 
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
-  description: null,
-  hide: VariableHide.dontHide,
-  datasource: null,
 } as VariableModel;
+export const defaultTimePickerConfig = raw.defaultTimePickerConfig as TimePickerConfig;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;

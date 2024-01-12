@@ -57,8 +57,8 @@ FROM (select count(1) as tokens from user_auth_token group by user_id) uat;`
 	return s.concurrentUserStatsCache.stats, nil
 }
 
-func (s *Service) collectConcurrentUsers(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) collectConcurrentUsers(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	// Get concurrent users stats as histogram
 	concurrentUsersStats, err := s.concurrentUsers(ctx)

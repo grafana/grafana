@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -138,10 +139,11 @@ export class VersionsSettings extends PureComponent<Props, State> {
     const canCompare = versions.filter((version) => version.checked).length === 2;
     const showButtons = versions.length > 1;
     const hasMore = versions.length >= this.limit;
+    const pageNav = config.featureToggles.dockedMegaMenu ? this.props.sectionNav.node.parentItem : undefined;
 
     if (viewMode === 'compare') {
       return (
-        <Page navModel={this.props.sectionNav}>
+        <Page navModel={this.props.sectionNav} pageNav={pageNav}>
           <VersionHistoryHeader
             onClick={this.reset}
             baseVersion={baseInfo?.version}
@@ -163,7 +165,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }
 
     return (
-      <Page navModel={this.props.sectionNav}>
+      <Page navModel={this.props.sectionNav} pageNav={pageNav}>
         {isLoading ? (
           <VersionsHistorySpinner msg="Fetching history list&hellip;" />
         ) : (

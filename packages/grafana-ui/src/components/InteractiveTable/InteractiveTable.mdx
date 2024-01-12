@@ -13,7 +13,7 @@ The InteractiveTable is used to display and select data efficiently.
 It allows for the display and modification of detailed information.
 With additional functionality it allows for batch editing, as needed by your feature's users.
 
-It is a wrapper around [React Table](https://react-table-v7.tanstack.com/), for more informations about it, refer to the [official documentation](https://react-table.tanstack.com/docs/overview).
+It is a wrapper around [React Table](https://react-table-v7.tanstack.com/), for more information, refer to the [official documentation](https://react-table.tanstack.com/docs/overview).
 
 ### When to use
 
@@ -77,7 +77,7 @@ const data = useMemo<Array<TableData>>(
 ### With row expansion
 
 Individual rows can be expanded to display additional details or reconfigure properties previously defined when the row was created.
-The expanded row area should be used to declutter the primary presentation of data, carefully consider what the user needs to know at first glance and what can be hidden behind the Row Expander button.
+The expanded row area should be used to unclutter the primary presentation of data, carefully consider what the user needs to know at first glance and what can be hidden behind the Row Expander button.
 
 In general, data-types that are consistent across all dataset are in the primary table, variances are pushed to the expanded section for each individual row.
 
@@ -269,5 +269,52 @@ export const MyComponent = () => {
   return (
     <InteractiveTable columns={columns} data={pageableData} getRowId={(r) => r.id} headerToolTips={headerToolTips} />
   );
+};
+```
+
+### With controlled sorting
+
+The default sorting can be changed to controlled sorting by passing in the `fetchData` function, which is called whenever the sorting changes and should return the sorted data. This is useful when the sorting is done server side. It is important to memoize the `fetchData` function to prevent unnecessary rerenders and the possibility of an infinite render loop.
+
+```tsx
+interface WithPaginationData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  car: string;
+  age: number;
+}
+
+export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
+  const columns: Array<Column<WithPaginationData>> = [
+    { id: 'firstName', header: 'First name', sortType: 'string' },
+    { id: 'lastName', header: 'Last name', sortType: 'string' },
+    { id: 'car', header: 'Car', sortType: 'string' },
+    { id: 'age', header: 'Age' },
+  ];
+  const [data, setData] = useState(pageableData);
+
+  // In production the function will most likely make an API call to fetch the sorted data
+  const fetchData = useCallback(({ sortBy }: FetchDataArgs<WithPaginationData>) => {
+    if (!sortBy?.length) {
+      return setData(pageableData);
+    }
+
+    setTimeout(() => {
+      const newData = [...pageableData];
+      newData.sort((a, b) => {
+        const sort = sortBy[0];
+        const aData = a[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        const bData = b[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        if (sort.desc) {
+          return bData.localeCompare(aData);
+        }
+        return aData.localeCompare(bData);
+      });
+      setData(newData);
+    }, 300);
+  }, []);
+
+  return <InteractiveTable columns={columns} data={data} getRowId={(r) => r.id} pageSize={15} fetchData={fetchData} />;
 };
 ```

@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/reference/
-description: Reference for templating notifications
+description: Learn about templating notifications options
 keywords:
   - grafana
   - alerting
@@ -32,7 +32,7 @@ weight: 400
 | GeneratorURL | `string` | A link to Grafana, or the Alertmanager if using an external Alertmanager             | `{{ .GeneratorURL }}` |
 | SilenceURL   | `string` | A link to silence the alert                                                          | `{{ .SilenceURL }}`   |
 | DashboardURL | `string` | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation          | `{{ .DashboardURL }}` |
-| PanelURL     | `string` | A link to the panel if the alert has a Panel ID annotation                           | `{{ .PanelID }}`      |
+| PanelURL     | `string` | A link to the panel if the alert has a Panel ID annotation                           | `{{ .PanelURL }}`     |
 | Fingerprint  | `string` | A unique string that identifies the alert                                            | `{{ .Fingerprint }}`  |
 | ValueString  | `string` | A string that contains the labels and value of each reduced expression in the alert. | `{{ .ValueString }}`  |
 

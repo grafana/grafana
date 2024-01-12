@@ -3,7 +3,7 @@ import React, { ComponentProps } from 'react';
 
 import { dateTime } from '@grafana/data';
 
-import { createLokiDatasource } from '../mocks';
+import { createLokiDatasource } from '../__mocks__/datasource';
 
 import { LokiQueryField } from './LokiQueryField';
 
@@ -49,6 +49,7 @@ describe('LokiQueryField', () => {
 
     rerender(<LokiQueryField {...props} range={newRange} />);
     expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledTimes(1);
+    expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledWith({ timeRange: newRange });
   });
 
   it('does not refreshes metrics when time range change by less than 1 minute', async () => {

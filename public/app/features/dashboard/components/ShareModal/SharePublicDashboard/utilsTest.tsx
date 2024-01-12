@@ -50,7 +50,6 @@ export const renderSharePublicDashboard = async (
   const store = configureStore({
     dashboard: {
       getModel: () => props?.dashboard || mockDashboard,
-      permissions: [],
       initError: null,
       initPhase: DashboardInitPhase.Completed,
     },

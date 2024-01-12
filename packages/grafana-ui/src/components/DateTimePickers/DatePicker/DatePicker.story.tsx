@@ -1,7 +1,6 @@
 import { Meta } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Button } from '../../Button/Button';
 
 import { DatePicker, DatePickerProps } from './DatePicker';
@@ -10,7 +9,6 @@ import mdx from './DatePicker.mdx';
 const meta: Meta<typeof DatePicker> = {
   title: 'Pickers and Editors/TimePickers/Pickers And Editors/DatePicker',
   component: DatePicker,
-  decorators: [withCenteredStory],
   argTypes: {
     minDate: { control: 'date' },
   },

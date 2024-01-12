@@ -84,7 +84,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 
 		var qd []*cloudwatch.Dimension
 		for k, v := range dimensions {
-			if vv, ok := v.([]interface{}); ok {
+			if vv, ok := v.([]any); ok {
 				for _, vvv := range vv {
 					if vvvv, ok := vvv.(string); ok {
 						qd = append(qd, &cloudwatch.Dimension{
@@ -153,7 +153,7 @@ func transformAnnotationToTable(annotations []*annotationEvent, query backend.Da
 	}
 
 	frame.Meta = &data.FrameMeta{
-		Custom: map[string]interface{}{
+		Custom: map[string]any{
 			"rowCount": len(annotations),
 		},
 	}
@@ -162,7 +162,7 @@ func transformAnnotationToTable(annotations []*annotationEvent, query backend.Da
 }
 
 func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, metricName string,
-	dimensions map[string]interface{}, statistic string, period int64) []*string {
+	dimensions map[string]any, statistic string, period int64) []*string {
 	alarmNames := make([]*string, 0)
 
 	for _, alarm := range alarms.MetricAlarms {

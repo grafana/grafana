@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 
-import { DataSourceRef, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 import { Icon, SegmentAsync } from '@grafana/ui';
 
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
@@ -9,14 +9,14 @@ interface Props {
   datasource: DataSourceRef;
   filterKey: string | null;
   onChange: (item: SelectableValue<string | null>) => void;
-  getTagKeysOptions?: any;
+  allFilters: AdHocVariableFilter[];
   disabled?: boolean;
 }
 
 const MIN_WIDTH = 90;
-export const AdHocFilterKey = ({ datasource, onChange, disabled, filterKey, getTagKeysOptions }: Props) => {
-  const loadKeys = () => fetchFilterKeys(datasource, getTagKeysOptions);
-  const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource, getTagKeysOptions);
+export const AdHocFilterKey = ({ datasource, onChange, disabled, filterKey, allFilters }: Props) => {
+  const loadKeys = () => fetchFilterKeys(datasource, filterKey, allFilters);
+  const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource, filterKey, allFilters);
 
   if (filterKey === null) {
     return (
@@ -59,7 +59,8 @@ const plusSegment: ReactElement = (
 
 const fetchFilterKeys = async (
   datasource: DataSourceRef,
-  getTagKeysOptions?: any
+  currentKey: string | null,
+  allFilters: AdHocVariableFilter[]
 ): Promise<Array<SelectableValue<string>>> => {
   const ds = await getDatasourceSrv().get(datasource);
 
@@ -67,14 +68,16 @@ const fetchFilterKeys = async (
     return [];
   }
 
-  const metrics = await ds.getTagKeys(getTagKeysOptions);
+  const otherFilters = allFilters.filter((f) => f.key !== currentKey);
+  const metrics = await ds.getTagKeys({ filters: otherFilters });
   return metrics.map((m) => ({ label: m.text, value: m.text }));
 };
 
 const fetchFilterKeysWithRemove = async (
   datasource: DataSourceRef,
-  getTagKeysOptions?: any
+  currentKey: string | null,
+  allFilters: AdHocVariableFilter[]
 ): Promise<Array<SelectableValue<string>>> => {
-  const keys = await fetchFilterKeys(datasource, getTagKeysOptions);
+  const keys = await fetchFilterKeys(datasource, currentKey, allFilters);
   return [REMOVE_VALUE, ...keys];
 };

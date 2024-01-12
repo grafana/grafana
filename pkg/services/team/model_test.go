@@ -34,7 +34,7 @@ func TestTeamConversion(t *testing.T) {
 		  "name": "abc",
 		  "creationTimestamp": "2000-01-01T08:00:00Z",
 		  "annotations": {
-			"grafana.com/updatedTimestamp": "2010-01-01T08:00:00Z"
+			"grafana.app/updatedTimestamp": "2010-01-01T08:00:00Z"
 		  }
 		},
 		"spec": {

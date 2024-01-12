@@ -7,9 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	pluginDashboardsManager "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	pluginDashboardsManager "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 )
 
 func ProvideService(pluginDashboardStore pluginDashboardsManager.FileStore, dashboardPluginService dashboards.PluginService) *Service {

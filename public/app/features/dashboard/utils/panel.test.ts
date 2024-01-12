@@ -83,9 +83,9 @@ describe('applyPanelTimeOverrides', () => {
     expect(height).toBe(82);
   });
 
-  it('Calculate panel height with panel plugin zeroChromePadding', () => {
+  it('Calculate panel height with panel plugin zeroChromePadding', async () => {
     const panelModel = new PanelModel({});
-    panelModel.pluginLoaded(
+    await panelModel.pluginLoaded(
       getPanelPlugin({ id: 'table' }, null as unknown as ComponentClass<PanelProps>, null).setNoPadding()
     );
 

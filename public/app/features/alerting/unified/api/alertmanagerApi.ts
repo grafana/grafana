@@ -13,6 +13,7 @@ import {
   ExternalAlertmanagersResponse,
   Matcher,
 } from '../../../../plugins/datasource/alertmanager/types';
+import { NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToOperator } from '../utils/alertmanager';
 import {
@@ -81,6 +82,10 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       query: ({ amSourceName }) => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts/groups`,
       }),
+    }),
+
+    grafanaNotifiers: build.query<NotifierDTO[], void>({
+      query: () => ({ url: '/api/alert-notifiers' }),
     }),
 
     getAlertmanagerChoiceStatus: build.query<AlertmanagersChoiceResponse, void>({

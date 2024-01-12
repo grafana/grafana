@@ -19,6 +19,7 @@ export interface OptionsPaneCategoryProps {
   className?: string;
   isNested?: boolean;
   children: ReactNode;
+  sandboxId?: string;
 }
 
 const CATEGORY_PARAM_NAME = 'showCategory';
@@ -34,6 +35,7 @@ export const OptionsPaneCategory = React.memo(
     className,
     itemsCount,
     isNested = false,
+    sandboxId,
   }: OptionsPaneCategoryProps) => {
     const initialIsExpanded = isOpenDefault !== false;
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
@@ -112,6 +114,7 @@ export const OptionsPaneCategory = React.memo(
       <div
         className={boxStyles}
         data-testid="options-category"
+        data-plugin-sandbox={sandboxId}
         aria-label={selectors.components.OptionsGroup.group(id)}
         ref={ref}
       >

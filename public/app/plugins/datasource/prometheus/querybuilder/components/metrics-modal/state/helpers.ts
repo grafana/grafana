@@ -4,7 +4,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
-import { regexifyLabelValuesQueryString } from '../../../shared/parsingUtils';
+import { regexifyLabelValuesQueryString } from '../../../parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
@@ -206,6 +206,8 @@ export function tracking(event: string, state?: MetricsModalState | null, metric
         fuzzySearchQuery: state?.fuzzySearchQuery,
         fullMetaSearch: state?.fullMetaSearch,
         selectedTypes: state?.selectedTypes,
+        useRegexSearch: state?.useBackend,
+        includeResultsWithoutMetadata: state?.includeNullMetadata,
       });
     case 'grafana_prom_metric_encycopedia_disable_text_wrap_interaction':
       reportInteraction(event, {

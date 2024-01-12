@@ -1,4 +1,4 @@
-import { css, CSSObject, cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
@@ -83,7 +83,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-type ButtonLinkProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & AnchorHTMLAttributes<HTMLAnchorElement>;
+export type ButtonLinkProps = CommonProps &
+  ButtonHTMLAttributes<HTMLButtonElement> &
+  AnchorHTMLAttributes<HTMLAnchorElement>;
 
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   (
@@ -126,7 +128,13 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
-      <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={tooltip ? undefined : ref}>
+      <a
+        className={linkButtonStyles}
+        {...otherProps}
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
+        ref={tooltip ? undefined : ref}
+      >
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
@@ -216,7 +224,7 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
+function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
@@ -285,7 +293,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
 }
 
 function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
-  const disabledStyles: CSSObject = {
+  const disabledStyles = {
     cursor: 'not-allowed',
     boxShadow: 'none',
     color: theme.colors.text.disabled,

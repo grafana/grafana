@@ -14,11 +14,11 @@ interface GrafanaAlertmanagerDeliveryWarningProps {
 
 export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: GrafanaAlertmanagerDeliveryWarningProps) {
   const styles = useStyles2(getStyles);
-
-  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
-  const { currentData: amChoiceStatus } = useGetAlertmanagerChoiceStatusQuery();
-
   const viewingInternalAM = currentAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+
+  const { currentData: amChoiceStatus } = alertmanagerApi.endpoints.getAlertmanagerChoiceStatus.useQuery(undefined, {
+    skip: !viewingInternalAM,
+  });
 
   const interactsWithExternalAMs =
     amChoiceStatus?.alertmanagersChoice &&

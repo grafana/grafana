@@ -65,7 +65,7 @@ describe('optionsPickerReducer', () => {
         clearOthers: args.clearOthers,
         option: { text: args.option, value: args.option, selected: true },
       };
-      const expectedAsRecord: any = args.expectSelected.reduce((all: any, current: any) => {
+      const expectedAsRecord = args.expectSelected.reduce((all: any, current: any) => {
         all[current] = current;
         return all;
       }, {});
@@ -461,7 +461,7 @@ describe('optionsPickerReducer', () => {
         });
     });
 
-    it('should toggle all values to false when $_all is selected', () => {
+    it('should toggle each individual value to true when $_all is selected and mark ALL as selected, not supporting empty values', () => {
       const { initialState } = getVariableTestContext({
         options: [
           { text: 'All', value: '$__all', selected: true },
@@ -479,14 +479,17 @@ describe('optionsPickerReducer', () => {
           ...initialState,
           options: [
             { text: 'All', value: '$__all', selected: false },
-            { text: 'A', value: 'A', selected: false },
-            { text: 'B', value: 'B', selected: false },
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: true },
           ],
-          selectedValues: [],
+          selectedValues: [
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: true },
+          ],
         });
     });
 
-    it('should toggle all values to false when a option is selected', () => {
+    it('should toggle to ALL value when one regular option is selected, as empty values are not accepted', () => {
       const { initialState } = getVariableTestContext({
         options: [
           { text: 'All', value: '$__all', selected: false },
@@ -503,11 +506,11 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           options: [
-            { text: 'All', value: '$__all', selected: false },
+            { text: 'All', value: '$__all', selected: true },
             { text: 'A', value: 'A', selected: false },
             { text: 'B', value: 'B', selected: false },
           ],
-          selectedValues: [],
+          selectedValues: [{ text: 'All', value: '$__all', selected: true }],
         });
     });
   });
@@ -766,6 +769,39 @@ describe('optionsPickerReducer', () => {
           options: [{ text: 'option:11256', value: 'option:11256', selected: false }],
           selectedValues: [],
           queryValue: 'option:11256',
+          highlightIndex: 0,
+        });
+    });
+  });
+
+  describe('when similar data for updateOptionsAndFilter', () => {
+    it('should properly rank by match quality', () => {
+      const searchQuery = 'C';
+
+      const options: VariableOption[] = 'A AA AB AC BC C CD'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expect: VariableOption[] = 'C CD AC BC'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expect,
+          selectedValues: [],
+          queryValue: 'C',
           highlightIndex: 0,
         });
     });

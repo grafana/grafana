@@ -36,6 +36,7 @@ export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): 
       theme: config.theme2,
       timeZone: dashboard.getTimezone(),
     }),
+    structureRev: 1,
     annotations,
   };
 }

@@ -7,7 +7,7 @@ import { Unsubscribable, Observable } from 'rxjs';
 export interface BusEvent {
   readonly type: string;
   readonly payload?: any;
-  readonly origin?: EventBus;
+  origin?: EventBus;
 }
 
 /**

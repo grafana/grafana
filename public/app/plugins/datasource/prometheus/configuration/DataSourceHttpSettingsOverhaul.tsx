@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
-import { Auth, ConnectionSettings, convertLegacyAuthProps } from '@grafana/experimental';
+import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/experimental';
 import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/types';
 
@@ -54,16 +54,6 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
   if (sigV4AuthToggleEnabled) {
     customMethods.push(sigV4Option);
   }
-
-  const onSettingsChange = useCallback(
-    (change: Partial<DataSourceSettings<PromOptions, {}>>) => {
-      onOptionsChange({
-        ...options,
-        ...change,
-      });
-    },
-    [options, onOptionsChange]
-  );
 
   const azureAuthEnabled: boolean =
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(options)) || false;
@@ -137,22 +127,12 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
       />
       <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
       <Auth
-        // Reshaped legacy props
         {...newAuthProps}
-        // Your custom auth methods
         customMethods={customMethods}
-        // Still need to call `onAuthMethodSelect` function from
-        // `newAuthProps` to store the legacy data correctly.
-        // Also make sure to store the data about your component
-        // being selected/unselected.
         onAuthMethodSelect={(method) => {
-          // handle selecting of custom methods
           // sigV4Id
           if (sigV4AuthToggleEnabled) {
             setSigV4Selected(method === sigV4Id);
-            onSettingsChange({
-              jsonData: { ...options.jsonData, sigV4Auth: method === sigV4Id },
-            });
           }
 
           // Azure
@@ -161,7 +141,16 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
             azureAuthSettings.setAzureAuthEnabled(options, method === azureAuthId);
           }
 
-          newAuthProps.onAuthMethodSelect(method);
+          onOptionsChange({
+            ...options,
+            basicAuth: method === AuthMethod.BasicAuth,
+            withCredentials: method === AuthMethod.CrossSiteCredentials,
+            jsonData: {
+              ...options.jsonData,
+              sigV4Auth: method === sigV4Id,
+              oauthPassThru: method === AuthMethod.OAuthForward,
+            },
+          });
         }}
         // If your method is selected pass its id to `selectedMethod`,
         // otherwise pass the id from converted legacy data

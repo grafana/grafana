@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
-  const styles = useStyles2((theme) => getStyles(theme, size));
+  const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
 
   const labelsToShow = chain(labels)

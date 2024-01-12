@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import * as React from 'react';
 
-import { ArrayVector, DataFrame, dateTime, EventBus, Field, FieldType, LoadingState } from '@grafana/data';
+import { DataFrame, dateTime, EventBus, Field, FieldType, LoadingState } from '@grafana/data';
 
 import { DataGridPanel, DataGridProps } from './DataGridPanel';
 import * as utils from './utils';
@@ -286,6 +286,7 @@ describe('DataGrid', () => {
       });
     });
     it('should add a new column', async () => {
+      jest.spyOn(console, 'warn').mockImplementation();
       const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
@@ -311,7 +312,7 @@ describe('DataGrid', () => {
             expect.objectContaining({
               name: 'newColumn',
               type: 'string',
-              values: new ArrayVector(['', '', '', '']),
+              values: ['', '', '', ''],
             }),
           ]),
         }),

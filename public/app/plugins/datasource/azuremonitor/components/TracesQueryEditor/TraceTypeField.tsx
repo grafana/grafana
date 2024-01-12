@@ -30,12 +30,23 @@ const TraceTypeField = ({ query, variableOptionGroup, onQueryChange }: AzureQuer
 
   const options = useMemo(() => [...tables, variableOptionGroup], [tables, variableOptionGroup]);
 
+  // Select all trace event ypes by default
+  const getDefaultOptions = () => {
+    const allEventTypes = tables.map((t) => t.value);
+    const defaultQuery = setTraceTypes(query, allEventTypes);
+    onQueryChange(defaultQuery);
+    return allEventTypes;
+  };
+
   return (
     <Field label="Event Type">
       <MultiSelect
         placeholder="Choose event types"
         inputId="azure-monitor-traces-type-field"
-        value={findOptions([...tables, ...variableOptionGroup.options], query.azureTraces?.traceTypes ?? [])}
+        value={findOptions(
+          [...tables, ...variableOptionGroup.options],
+          query.azureTraces?.traceTypes ?? getDefaultOptions()
+        )}
         onChange={handleChange}
         options={options}
         allowCustomValue

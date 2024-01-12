@@ -2,6 +2,8 @@ package playlistimpl
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/playlist"
@@ -13,22 +15,31 @@ type sqlStore struct {
 	db db.DB
 }
 
+var _ store = &sqlStore{}
+
 func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	p := playlist.Playlist{}
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		uid, err := generateAndValidateNewPlaylistUid(sess, cmd.OrgId)
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	} else {
+		err := util.ValidateUID(cmd.UID)
 		if err != nil {
-			return err
+			return nil, err
 		}
+	}
 
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		ts := time.Now().UnixMilli()
 		p = playlist.Playlist{
-			Name:     cmd.Name,
-			Interval: cmd.Interval,
-			OrgId:    cmd.OrgId,
-			UID:      uid,
+			Name:      cmd.Name,
+			Interval:  cmd.Interval,
+			OrgId:     cmd.OrgId,
+			UID:       cmd.UID,
+			CreatedAt: ts,
+			UpdatedAt: ts,
 		}
 
-		_, err = sess.Insert(&p)
+		_, err := sess.Insert(&p)
 		if err != nil {
 			return err
 		}
@@ -67,6 +78,8 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 			return err
 		}
 		p.Id = existingPlaylist.Id
+		p.CreatedAt = existingPlaylist.CreatedAt
+		p.UpdatedAt = time.Now().UnixMilli()
 
 		dto = playlist.PlaylistDTO{
 			Uid:      p.UID,
@@ -74,7 +87,7 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 			Interval: p.Interval,
 		}
 
-		_, err = sess.Where("id=?", p.Id).Cols("name", "interval").Update(&p)
+		_, err = sess.Where("id=?", p.Id).Cols("name", "interval", "updated_at").Update(&p)
 		if err != nil {
 			return err
 		}
@@ -168,6 +181,51 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 	return playlists, err
 }
 
+func (s *sqlStore) ListAll(ctx context.Context, orgId int64) ([]playlist.PlaylistDTO, error) {
+	db := s.db.GetSqlxSession() // OK because dates are numbers!
+
+	playlists := []playlist.PlaylistDTO{}
+	err := db.Select(ctx, &playlists, "SELECT * FROM playlist WHERE org_id=? ORDER BY created_at asc", orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a map that links playlist id to the playlist array index
+	lookup := map[int64]int{}
+	for i, v := range playlists {
+		lookup[v.Id] = i
+	}
+
+	var playlistId int64
+	var itemType string
+	var itemValue string
+
+	rows, err := db.Query(ctx, `SELECT playlist.id,playlist_item.type,playlist_item.value
+		FROM playlist_item 
+		JOIN playlist ON playlist_item.playlist_id = playlist.id
+		WHERE playlist.org_id = ?
+		ORDER BY playlist_id asc, `+s.db.Quote("order")+` asc`, orgId)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		err = rows.Scan(&playlistId, &itemType, &itemValue)
+		if err != nil {
+			return nil, err
+		}
+		idx, ok := lookup[playlistId]
+		if !ok {
+			return nil, fmt.Errorf("could not find playlist by id")
+		}
+		items := append(playlists[idx].Items, playlist.PlaylistItemDTO{
+			Type:  itemType,
+			Value: itemValue,
+		})
+		playlists[idx].Items = items
+	}
+	return playlists, err
+}
+
 func (s *sqlStore) GetItems(ctx context.Context, query *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
 	var playlistItems = make([]playlist.PlaylistItem, 0)
 	if query.PlaylistUID == "" || query.OrgId == 0 {
@@ -187,26 +245,3 @@ func (s *sqlStore) GetItems(ctx context.Context, query *playlist.GetPlaylistItem
 	})
 	return playlistItems, err
 }
-
-// generateAndValidateNewPlaylistUid generates a playlistUID and verifies that
-// the uid isn't already in use. This is deliberately overly cautious, since users
-// can also specify playlist uids during provisioning.
-func generateAndValidateNewPlaylistUid(sess *db.Session, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := generateNewUid()
-
-		playlist := playlist.Playlist{OrgId: orgId, UID: uid}
-		exists, err := sess.Get(&playlist)
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", playlist.ErrPlaylistFailedGenerateUniqueUid
-}
-
-var generateNewUid func() string = util.GenerateShortUID

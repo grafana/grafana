@@ -102,7 +102,7 @@ func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value,
 		return structConvert.FromDB(data)
 	}
 
-	var v interface{}
+	var v any
 	key := col.Name
 	fieldType := fieldValue.Type()
 
@@ -471,7 +471,7 @@ func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value,
 }
 
 // convert a field value of a struct to interface for put into db
-func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Value) (interface{}, error) {
+func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Value) (any, error) {
 	if fieldValue.CanAddr() {
 		if fieldConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
 			data, err := fieldConvert.ToDB()

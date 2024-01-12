@@ -13,6 +13,8 @@ import {
   UserSession,
   UserListAdminState,
   UserFilter,
+  UserListAnonymousDevicesState,
+  UserAnonymousDeviceDTO,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
@@ -131,7 +133,7 @@ const initialUserListAdminState: UserListAdminState = {
   totalPages: 1,
   showPaging: false,
   filters: [{ name: 'activeLast30Days', value: false }],
-  isLoading: false,
+  isLoading: true,
 };
 
 interface UsersFetched {
@@ -173,6 +175,11 @@ export const userListAdminSlice = createSlice({
       ...state,
       page: action.payload,
     }),
+    sortChanged: (state, action: PayloadAction<UserListAdminState['sort']>) => ({
+      ...state,
+      page: 0,
+      sort: action.payload,
+    }),
     filterChanged: (state, action: PayloadAction<UserFilter>) => {
       const { name, value } = action.payload;
 
@@ -192,12 +199,41 @@ export const userListAdminSlice = createSlice({
   },
 });
 
-export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged } =
+export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged, sortChanged } =
   userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
+
+// UserListAnonymousPage
+
+const initialUserListAnonymousDevicesState: UserListAnonymousDevicesState = {
+  devices: [],
+};
+
+interface UsersAnonymousDevicesFetched {
+  devices: UserAnonymousDeviceDTO[];
+}
+
+export const userListAnonymousDevicesSlice = createSlice({
+  name: 'userListAnonymousDevices',
+  initialState: initialUserListAnonymousDevicesState,
+  reducers: {
+    usersAnonymousDevicesFetched: (state, action: PayloadAction<UsersAnonymousDevicesFetched>) => {
+      const { devices } = action.payload;
+      return {
+        ...state,
+        devices,
+        isLoading: false,
+      };
+    },
+  },
+});
+
+export const { usersAnonymousDevicesFetched } = userListAnonymousDevicesSlice.actions;
+export const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
 
 export default {
   ldap: ldapReducer,
   userAdmin: userAdminReducer,
   userListAdmin: userListAdminReducer,
+  userListAnonymousDevices: userListAnonymousDevicesReducer,
 };

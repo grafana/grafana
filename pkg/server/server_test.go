@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/registry"
@@ -48,7 +49,7 @@ func (s *testService) IsDisabled() bool {
 
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), &MockModuleService{})
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), prometheus.NewRegistry())
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
@@ -89,31 +90,4 @@ func TestServer_Shutdown(t *testing.T) {
 
 	err = <-ch
 	require.NoError(t, err)
-}
-
-type MockModuleService struct {
-	initFunc     func(context.Context) error
-	runFunc      func(context.Context) error
-	shutdownFunc func(context.Context) error
-}
-
-func (m *MockModuleService) Init(ctx context.Context) error {
-	if m.initFunc != nil {
-		return m.initFunc(ctx)
-	}
-	return nil
-}
-
-func (m *MockModuleService) Run(ctx context.Context) error {
-	if m.runFunc != nil {
-		return m.runFunc(ctx)
-	}
-	return nil
-}
-
-func (m *MockModuleService) Shutdown(ctx context.Context) error {
-	if m.shutdownFunc != nil {
-		return m.shutdownFunc(ctx)
-	}
-	return nil
 }
