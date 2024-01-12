@@ -33,7 +33,6 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
     <Dropdown
       overlay={() => <ShareMenu dashboard={dashboard} />}
       placement="bottom-start"
-      offset={[0, 6]}
       onVisibleChange={setIsMenuOpen}
     >
       <Button

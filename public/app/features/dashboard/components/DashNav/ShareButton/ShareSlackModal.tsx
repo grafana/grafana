@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, Modal, MultiSelect, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 
 import { useCreateDashboardPreviewQuery, useGetChannelsQuery, useShareMutation } from '../../../api/shareToSlackApi';
@@ -26,6 +26,7 @@ export function ShareSlackModal({
     isLoading: isPreviewLoading,
     refetch,
     isFetching: isPreviewFetching,
+    isError,
   } = useCreateDashboardPreviewQuery({ dashboardUid, dashboardUrl }, { refetchOnMountOrArgChange: false });
   const [share, { isLoading: isShareLoading, isSuccess: isShareSuccess }] = useShareMutation();
 
@@ -83,11 +84,10 @@ export function ShareSlackModal({
               alt="dashboard-preview-placeholder"
               src="public/img/share/loading_grot.gif"
             />
+            <p className={styles.description}>We are generating your dashboard preview</p>
           </div>
         ) : (
-          <>
-            <img className={styles.dashboardPreview} alt="dashboard-preview" src={preview?.previewUrl} />
-          </>
+          <img className={styles.dashboardPreview} alt="dashboard-preview" src={preview?.previewUrl} />
         )}
       </div>
       <Modal.ButtonRow>
@@ -95,7 +95,7 @@ export function ShareSlackModal({
         <Button variant="secondary" fill="outline" onClick={onDismiss}>
           Cancel
         </Button>
-        <Button disabled={!value.length || disableShareButton || isShareLoading} onClick={onShareClick}>
+        <Button disabled={!value.length || disableShareButton || isShareLoading || isError} onClick={onShareClick}>
           Share
         </Button>
       </Modal.ButtonRow>
@@ -103,7 +103,7 @@ export function ShareSlackModal({
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   modal: css({
     width: '500px',
   }),
@@ -112,12 +112,16 @@ const getStyles = () => ({
   }),
   loadingContainer: css({
     display: 'flex',
-    justifyContent: 'center',
+    flexDirection: 'column',
+    alignItems: 'center',
   }),
   loadingPreview: css({
     width: '66%',
   }),
   dashboardPreview: css({
     width: '100%',
+  }),
+  description: css({
+    ...theme.typography.body,
   }),
 });
