@@ -2946,7 +2946,7 @@ __metadata:
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.11"
-    "@types/lodash": "npm:4.14.195"
+    "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.0"
     "@types/react": "npm:18.2.15"
@@ -2985,7 +2985,7 @@ __metadata:
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.11"
-    "@types/lodash": "npm:4.14.195"
+    "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.8.10"
     "@types/react": "npm:18.2.15"
     "@types/testing-library__jest-dom": "npm:5.14.8"
@@ -3037,7 +3037,7 @@ __metadata:
     "@grafana/ui": "npm:10.4.0-pre"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/lodash": "npm:4.14.195"
+    "@types/lodash": "npm:4.14.202"
     "@types/react": "npm:18.2.15"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.0"
@@ -3090,7 +3090,7 @@ __metadata:
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
-    "@types/lodash": "npm:4.14.195"
+    "@types/lodash": "npm:4.14.202"
     "@types/marked": "npm:5.0.1"
     "@types/node": "npm:20.8.10"
     "@types/papaparse": "npm:5.3.7"
@@ -3324,7 +3324,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3": "npm:^7"
     "@types/jest": "npm:^29.5.4"
-    "@types/lodash": "npm:4.14.195"
+    "@types/lodash": "npm:4.14.202"
     "@types/react": "npm:18.2.15"
     "@types/react-virtualized-auto-sizer": "npm:1.0.1"
     "@types/tinycolor2": "npm:1.4.3"
@@ -3423,7 +3423,7 @@ __metadata:
     "@types/angular": "npm:1.8.9"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.11"
-    "@types/lodash": "npm:4.14.195"
+    "@types/lodash": "npm:4.14.202"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
     "@types/systemjs": "npm:6.13.1"
@@ -3551,7 +3551,7 @@ __metadata:
     "@types/is-hotkey": "npm:0.1.10"
     "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
-    "@types/lodash": "npm:4.14.195"
+    "@types/lodash": "npm:4.14.202"
     "@types/mock-raf": "npm:1.0.3"
     "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.0"
@@ -8757,7 +8757,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:*, @types/lodash@npm:4.14.195, @types/lodash@npm:^4.14.167, @types/lodash@npm:^4.14.172":
+"@types/lodash@npm:*, @types/lodash@npm:4.14.202, @types/lodash@npm:^4.14.167, @types/lodash@npm:^4.14.172":
+  version: 4.14.202
+  resolution: "@types/lodash@npm:4.14.202"
+  checksum: 1bb9760a5b1dda120132c4b987330d67979c95dbc22612678682cd61b00302e190f4207228f3728580059cdab5582362262e3819aea59960c1017bd2b9fb26f6
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:4.14.195":
   version: 4.14.195
   resolution: "@types/lodash@npm:4.14.195"
   checksum: d7c0902684508a3d0fdb60fe939a855f9f244fd4bf828eb75388a39d00b44e955dac16faea6c90c0ae4592a57784e45ceb6d51354af8dfd401de38046c685775
@@ -17116,7 +17123,7 @@ __metadata:
     "@types/jquery": "npm:3.5.16"
     "@types/js-yaml": "npm:^4.0.5"
     "@types/jsurl": "npm:^1.2.28"
-    "@types/lodash": "npm:4.14.195"
+    "@types/lodash": "npm:4.14.202"
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
     "@types/marked": "npm:5.0.1"
