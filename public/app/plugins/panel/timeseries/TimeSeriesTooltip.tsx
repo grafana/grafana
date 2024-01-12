@@ -38,6 +38,8 @@ interface TimeSeriesTooltipProps {
   sortOrder?: SortOrder;
 
   isPinned: boolean;
+
+  annotate?: () => void;
 }
 
 export const TimeSeriesTooltip = ({
@@ -48,6 +50,7 @@ export const TimeSeriesTooltip = ({
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   isPinned,
+  annotate,
 }: TimeSeriesTooltipProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -147,7 +150,7 @@ export const TimeSeriesTooltip = ({
       <div className={styles.wrapper}>
         <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
         <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
-        {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
+        {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
       </div>
     </div>
   );
