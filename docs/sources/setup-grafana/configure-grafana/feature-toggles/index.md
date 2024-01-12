@@ -172,6 +172,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `tableSharedCrosshair`                      | Enables shared crosshair in table panel                                                                                                                                                                                                                                           |
 | `enablePluginsTracingByDefault`             | Enable plugin tracing for all external plugins                                                                                                                                                                                                                                    |
+| `nestedFolderPickerOverride`                | Override toggle for nested folder picker (takes precedence over the other toggles)                                                                                                                                                                                                |
 
 ## Development feature toggles
 

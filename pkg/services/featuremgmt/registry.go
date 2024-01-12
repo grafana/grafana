@@ -1323,5 +1323,13 @@ var (
 			AllowSelfServe: false,
 			Created:        time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:         "nestedFolderPickerOverride",
+			Description:  "Override toggle for nested folder picker (takes precedence over the other toggles)",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Created:      time.Date(2024, time.January, 12, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )

@@ -630,4 +630,8 @@ const (
 	// FlagAlertingQueryOptimization
 	// Optimizes eligible queries in order to reduce load on datasources
 	FlagAlertingQueryOptimization = "alertingQueryOptimization"
+
+	// FlagNestedFolderPickerOverride
+	// Override toggle for nested folder picker (takes precedence over the other toggles)
+	FlagNestedFolderPickerOverride = "nestedFolderPickerOverride"
 )
