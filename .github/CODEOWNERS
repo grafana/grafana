@@ -333,7 +333,7 @@
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
-/packages/grafana-data/src/transformations/ @grafana/grafana-bi-squad
+/packages/grafana-data/src/transformations/ @grafana/dataviz-squad
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /packages/grafana-schema/src/**/*canvas* @grafana/dataviz-squad
@@ -392,7 +392,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/connections/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/correlations/ @grafana/explore-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad
-/public/app/features/dashboard/components/TransformationsEditor/ @grafana/grafana-bi-squad
+/public/app/features/dashboard/components/TransformationsEditor/ @grafana/dataviz-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/dimensions/ @grafana/dataviz-squad
@@ -423,8 +423,8 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/teams/ @grafana/identity-access-team
 /public/app/features/templating/ @grafana/dashboards-squad
 /public/app/features/trails/ @torkelo
-/public/app/features/transformers/ @grafana/grafana-bi-squad
-/public/app/features/transformers/timeSeriesTable/ @grafana/grafana-bi-squad @grafana/app-o11y-visualizations
+/public/app/features/transformers/ @grafana/dataviz-squad
+/public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/identity-access-team
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
@@ -448,8 +448,8 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/plugins/panel/state-timeline/ @grafana/dataviz-squad
 /public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/grafana-bi-squad
-/public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx @grafana/grafana-bi-squad @grafana/app-o11y-visualizations
-/public/app/plugins/panel/table-old/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
+/public/app/plugins/panel/table-old/ @grafana/dataviz-squad
 /public/app/plugins/panel/timeseries/ @grafana/dataviz-squad
 /public/app/plugins/panel/trend/ @grafana/dataviz-squad
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
@@ -528,7 +528,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 
-/scripts/docs/generate-transformations.ts @grafana/grafana-bi-squad
+/scripts/docs/generate-transformations.ts @grafana/dataviz-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
