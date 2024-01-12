@@ -3552,7 +3552,7 @@ __metadata:
     "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.202"
-    "@types/mock-raf": "npm:1.0.3"
+    "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.0"
     "@types/react": "npm:18.2.15"
@@ -8836,10 +8836,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mock-raf@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@types/mock-raf@npm:1.0.3"
-  checksum: 0c1e4cb40d03e32f27ca78b412b04b317d9f34df42ad4cb3c3fdfa1a9aa9b627a1f709ef1ca5ed47e6fef22d3a8a8d302df922782f4b3052641d70c918859a47
+"@types/mock-raf@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@types/mock-raf@npm:1.0.6"
+  checksum: 0389ac9a2f4be5d3c9dc05586c68d0c78f0d6a9dc167c57ee94da0bb1d9ef9a797871bcdf2f0ba43c951a423c05bdeb80807d5ca21a63c50c54ed21054a4aeb8
   languageName: node
   linkType: hard
 
