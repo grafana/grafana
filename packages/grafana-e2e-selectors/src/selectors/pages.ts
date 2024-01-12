@@ -141,7 +141,7 @@ export const Pages = {
             selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
             selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
-            previewOfValuesOption: 'Variable editor Preview of Values option',
+            previewOfValuesOption: 'data-testid Variable editor Preview of Values option',
             submitButton: 'Variable editor Submit button',
             applyButton: 'data-testid Variable editor Apply button',
           },
