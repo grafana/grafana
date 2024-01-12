@@ -1,6 +1,6 @@
 {
   "author": "Grafana Labs",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "name": "@grafana/traces",
   "private": true,
   "description": "Library to manage traces in Grafana.",
