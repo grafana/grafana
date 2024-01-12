@@ -3,6 +3,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
+import { reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Spinner } from '@grafana/ui';
 
@@ -78,6 +79,10 @@ export const InfiniteScroll = ({
           : getPrevRange(getVisibleRange(rows), range);
       loadMoreLogs?.(newRange);
       setUpperLoading(true);
+      reportInteraction('grafana_logs_infinite_scrolling', {
+        direction: 'top',
+        sort_order: sortOrder,
+      });
     }
 
     function scrollBottom() {
@@ -92,6 +97,10 @@ export const InfiniteScroll = ({
           : getNextRange(getVisibleRange(rows), range, timeZone);
       loadMoreLogs?.(newRange);
       setLowerLoading(true);
+      reportInteraction('grafana_logs_infinite_scrolling', {
+        direction: 'bottom',
+        sort_order: sortOrder,
+      });
     }
 
     scrollElement.addEventListener('scroll', handleScroll);
@@ -125,7 +134,7 @@ const styles = {
   }),
 };
 
-const outOfRangeMessage = <div className={styles.limitReached}>Limit reached for the current time range.</div>;
+const outOfRangeMessage = <div className={styles.limitReached}>End of the selected time range.</div>;
 const loadingMessage = (
   <div className={styles.limitReached}>
     <Spinner />

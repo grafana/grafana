@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';

@@ -48,6 +48,7 @@ import {
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
+import { getLogLevelFromKey } from 'app/features/logs/utils';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
@@ -109,6 +110,7 @@ interface Props extends Themeable2 {
   range: TimeRange;
   onClickFilterValue?: (value: string, refId?: string) => void;
   onClickFilterOutValue?: (value: string, refId?: string) => void;
+  loadMoreLogs?(range: AbsoluteTimeRange): void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
 }
 
@@ -203,6 +205,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       );
     }
   }
+
 
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
@@ -347,7 +350,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
-    const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
+    const hiddenLogLevels = hiddenRawLevels.map((level) => getLogLevelFromKey(level));
     this.setState({ hiddenLogLevels });
   };
 
@@ -473,6 +476,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollIntoView = (element: HTMLElement) => {
     if (config.featureToggles.logsInfiniteScrolling) {
+    if (config.featureToggles.logsInfiniteScrolling) {
       if (this.state.logsContainer) {
         this.topLogsRef.current?.scrollIntoView();
         this.state.logsContainer.scroll({
@@ -523,6 +527,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollToTopLogs = () => {
     if (config.featureToggles.logsInfiniteScrolling) {
+    if (config.featureToggles.logsInfiniteScrolling) {
       if (this.state.logsContainer) {
         this.state.logsContainer.scroll({
           behavior: 'auto',
@@ -530,6 +535,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
         });
       }
     }
+    this.topLogsRef.current?.scrollIntoView();
     this.topLogsRef.current?.scrollIntoView();
   };
 
@@ -560,6 +566,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       getRowContext,
       getLogRowContextUi,
       getRowContextQuery,
+      loadMoreLogs,
       loadMoreLogs,
     } = this.props;
 
@@ -831,6 +838,52 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     onClickFilterOutValue={this.props.onClickFilterOutValue}
                   />
                 </InfiniteScroll>
+              <div
+                className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
+                data-testid="logRows"
+                ref={this.onLogsContainerRef}
+              >
+                <InfiniteScroll
+                  loading={loading}
+                  loadMoreLogs={loadMoreLogs}
+                  range={this.props.range}
+                  timeZone={timeZone}
+                  rows={logRows}
+                  scrollElement={this.state.logsContainer}
+                  sortOrder={logsSortOrder}
+                >
+                  <LogRows
+                    logRows={logRows}
+                    deduplicatedRows={dedupedRows}
+                    dedupStrategy={dedupStrategy}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                    showContextToggle={showContextToggle}
+                    getRowContextQuery={getRowContextQuery}
+                    showLabels={showLabels}
+                    showTime={showTime}
+                    enableLogDetails={true}
+                    forceEscape={forceEscape}
+                    wrapLogMessage={wrapLogMessage}
+                    prettifyLogMessage={prettifyLogMessage}
+                    timeZone={timeZone}
+                    getFieldLinks={getFieldLinks}
+                    logsSortOrder={logsSortOrder}
+                    displayedFields={displayedFields}
+                    onClickShowField={this.showField}
+                    onClickHideField={this.hideField}
+                    app={CoreApp.Explore}
+                    onLogRowHover={this.onLogRowHover}
+                    onOpenContext={this.onOpenContext}
+                    onPermalinkClick={this.onPermalinkClick}
+                    permalinkedRowId={this.props.panelState?.logs?.id}
+                    scrollIntoView={this.scrollIntoView}
+                    isFilterLabelActive={this.props.isFilterLabelActive}
+                    containerRendered={!!this.state.logsContainer}
+                    onClickFilterValue={this.props.onClickFilterValue}
+                    onClickFilterOutValue={this.props.onClickFilterOutValue}
+                  />
+                </InfiniteScroll>
               </div>
             )}
             {!loading && !hasData && !scanning && (
@@ -911,8 +964,65 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       flexDirection: 'row',
       justifyContent: 'space-between',
     }),
+    noData: css({
+      '& > *': {
+        marginLeft: '0.5em',
+      },
+    }),
+    logOptions: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      flexWrap: 'wrap',
+      backgroundColor: theme.colors.background.primary,
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+      borderRadius: theme.shape.radius.default,
+      margin: `${theme.spacing(0, 0, 1)}`,
+      border: `1px solid ${theme.colors.border.medium}`,
+    }),
+    headerButton: css({
+      margin: `${theme.spacing(0.5, 0, 0, 1)}`,
+    }),
+    horizontalInlineLabel: css({
+      '& > label': {
+        marginRight: '0',
+      },
+    }),
+    horizontalInlineSwitch: css({
+      padding: `0 ${theme.spacing(1)} 0 0`,
+    }),
+    radioButtons: css({
+      margin: '0',
+    }),
+    logsSection: css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    }),
     logsTable: css({
       maxHeight: `${tableHeight}px`,
+    }),
+    scrollableLogRows: css({
+      overflowY: 'scroll',
+      width: '100%',
+      maxHeight: '75vh',
+    }),
+    logRows: css({
+      overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,
+      overflowY: 'visible',
+      width: '100%',
+    }),
+    visualisationType: css({
+      display: 'flex',
+      flex: '1',
+      justifyContent: 'space-between',
+    }),
+    visualisationTypeRadio: css({
+      margin: `0 0 0 ${theme.spacing(1)}`,
+    }),
+    stickyNavigation: css({
+      overflow: 'visible',
+      ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
     }),
     scrollableLogRows: css({
       overflowY: 'scroll',

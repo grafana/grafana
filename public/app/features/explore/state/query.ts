@@ -11,6 +11,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   dateTimeForTimeZone,
+  dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
@@ -32,12 +33,14 @@ import {
   generateNewKeyAndAddRefIdIfMissing,
   getQueryKeys,
   getTimeRange,
+  getTimeRange,
   hasNonEmptyQuery,
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
@@ -56,6 +59,7 @@ import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { visualisationTypeKey } from '../Logs/utils/logs';
 import { decorateData, mergeDataSeries } from '../utils/decorators';
+import { decorateData, mergeDataSeries } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -67,6 +71,13 @@ import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
+import {
+  createCacheKey,
+  filterLogRowsByIndex,
+  getCorrelationsData,
+  getDatasourceUIDs,
+  getResultsFromCache,
+} from './utils';
 import {
   createCacheKey,
   filterLogRowsByIndex,
@@ -513,7 +524,13 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       getState(),
       exploreId
     );
+    const { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(
+      getState(),
+      exploreId
+    );
     const correlations$ = getCorrelations(exploreId);
+
+    dispatch(updateTime({ exploreId }));
 
     dispatch(updateTime({ exploreId }));
 
@@ -522,6 +539,8 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       dispatch(clearCache(exploreId));
     }
 
+    const exploreState = getState();
+    const exploreItemState = exploreState.explore.panes[exploreId]!;
     const exploreState = getState();
     const exploreItemState = exploreState.explore.panes[exploreId]!;
     const {
@@ -537,6 +556,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       cache,
       supplementaryQueries,
     } = exploreItemState;
+
 
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
@@ -706,11 +726,10 @@ interface RunLoadMoreLogsQueriesOptions {
   absoluteRange: AbsoluteTimeRange;
 }
 /**
- * Supplementary action to run queries that request more results, and dispatches sub-actions based
- * on which result viewers are active
+ * Dedicated action to run log queries requesting more results.
  */
 export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQueriesOptions>(
-  'explore/runQueries',
+  'explore/runLoadMoreQueries',
   async ({ exploreId, absoluteRange }, { dispatch, getState }) => {
     dispatch(cancelQueries(exploreId));
 
@@ -733,18 +752,8 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       return;
     }
 
-    // Some datasource's query builders allow per-query interval limits,
-    // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance?.interval;
-
     const queryOptions: QueryOptions = {
-      minInterval,
-      // maxDataPoints is used in:
-      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
-      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
-      // Influx - used to correctly display logs in graph
-      // TODO:unification
-      // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+      minInterval: datasourceInstance?.interval,
       maxDataPoints: containerWidth,
     };
 
@@ -779,11 +788,6 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
 
     newQuerySource.subscribe({
       next(data) {
-        if (data.logsResult !== null && data.state === LoadingState.Done) {
-          reportInteraction('grafana_explore_logs_scrolled', {
-            datasourceType: datasourceInstance.type,
-          });
-        }
         dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
       },
       error(error) {
