@@ -18,7 +18,7 @@ import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
-import { getIconForKind } from '../../service/utils';
+import { getIconForItem } from '../../service/utils';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
@@ -177,7 +177,8 @@ export const generateColumns = (
                   }
                   return info ? (
                     <a key={p} href={info.url} className={styles.locationItem}>
-                      <Icon name={getIconForKind(info.kind)} />
+                      <Icon name={getIconForItem(info.kind)} />
+
                       <Text variant="body" truncate>
                         {info.name}
                       </Text>

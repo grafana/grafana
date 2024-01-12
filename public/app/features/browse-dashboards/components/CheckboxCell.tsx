@@ -29,7 +29,7 @@ export default function CheckboxCell({
     }
   }
 
-  if (isSharedWithMe(item)) {
+  if (isSharedWithMe(item.uid)) {
     return <CheckboxSpacer />;
   }
 

@@ -183,7 +183,7 @@ export function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    if (isSharedWithMe(thisItem.item)) {
+    if (isSharedWithMe(thisItem.item.uid)) {
       items.push({
         item: {
           kind: 'ui',

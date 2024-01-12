@@ -7,7 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { t } from 'app/core/internationalization';
-import { getIconForKind } from 'app/features/search/service/utils';
+import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
 import { useChildrenByParentUIDState } from '../state';
@@ -27,7 +27,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
   const { item, level, isOpen } = data;
   const childrenByParentUID = useChildrenByParentUIDState();
   const isLoading = isOpen && !childrenByParentUID[item.uid];
-  const iconName = getIconForKind(data.item.kind, isOpen, data.item);
+  const iconName = getIconForItem(data.item, isOpen);
 
   if (item.kind === 'ui') {
     return (
@@ -54,7 +54,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
   }
 
   // We don't link to the Shared with me pseudo-folder
-  const itemURL = item.url && !isSharedWithMe(item) ? item.url : undefined;
+  const itemURL = item.url && !isSharedWithMe(item.uid) ? item.url : undefined;
 
   return (
     <>

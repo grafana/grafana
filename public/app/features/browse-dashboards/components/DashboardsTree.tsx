@@ -259,10 +259,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
     }),
 
-    borderedRow: css({
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
-
     headerRow: css({
       backgroundColor: theme.colors.background.secondary,
       height: HEADER_HEIGHT,

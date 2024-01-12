@@ -40,14 +40,15 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function getIconForKind(_kind: string, isOpen?: boolean, item?: DashboardViewItemWithUIItems): IconName {
-  const kind = item?.kind ?? _kind;
+export function getIconForItem(itemOrKind: string | DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
+  const kind = typeof itemOrKind === 'string' ? itemOrKind : itemOrKind.kind;
+  const item = typeof itemOrKind === 'string' ? undefined : itemOrKind;
 
   if (kind === 'dashboard') {
     return 'apps';
   }
 
-  if (item && isSharedWithMe(item)) {
+  if (item && isSharedWithMe(item.uid)) {
     return 'users-alt';
   }
 
