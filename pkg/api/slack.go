@@ -68,50 +68,67 @@ func (hs *HTTPServer) ShareToSlack(c *contextmodel.ReqContext) response.Response
 	if err := web.Bind(c.Req, &shareRequest); err != nil {
 		return response.Error(400, "error parsing body", err)
 	}
-	// 		Blocks: []interface{
-	// 		Block{
-	// 			Type: "header",
-	// 			Text: &Text{
-	// 				Type: "plain_text",
-	// 				Text: dashboard.Title,
-	// 			},
-	// 		},
-	// 		{
-	// 			Type: "section",
-	// 			Text: &Text{
-	// 				Type: "plain_text",
-	// 				Text: shareRequest.Message,
-	// 			},
-	// 		},
-	// 		{
-	// 			Type: "image",
-	// 			Title: &Text{
-	// 				Type: "plain_text",
-	// 				Text: "Dashboard preview",
-	// 			},
-	// 			ImageURL: shareRequest.ImagePreviewUrl,
-	// 			AltText:  "dashboard preview",
-	// 		},
-	// 		{
-	// 			Type: "actions",
-	// 			Elements: []Element{{
-	// 				Type: "button",
-	// 				Text: &Text{
-	// 					Type: "plain_text",
-	// 					Text: "View Dashboard",
-	// 				},
-	// 				Style:    "primary",
-	// 				Value:    hs.Cfg.Domain+shareRequest.DashboardPath
-	// 				ActionID: "view",
-	// 			}},
-	// 		},
-	// 	},
-	// },
+
+	protocol := hs.Cfg.Protocol
+	switch protocol {
+	case setting.HTTPScheme:
+		protocol = "http"
+	case setting.HTTP2Scheme, setting.HTTPSScheme:
+		protocol = "https"
+	default:
+		// TODO: Handle other schemes?
+	}
+
+	domain := "localhost"
+	if hs.Cfg.HTTPAddr != "0.0.0.0" {
+		domain = hs.Cfg.HTTPAddr
+	}
+
+	dashboardLink := fmt.Sprintf("%s://%s:%s%s", protocol, domain, hs.Cfg.HTTPPort, shareRequest.DashboardPath)
+
+	blocks := []Block{
+		{
+			Type: "section",
+			Text: &Text{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("<%s|*%s*>", dashboardLink, dashboard.Title),
+			},
+		},
+		{
+			Type: "section",
+			Text: &Text{
+				Type: "plain_text",
+				Text: shareRequest.Message,
+			},
+		},
+		{
+			Type: "image",
+			Title: &Text{
+				Type: "plain_text",
+				Text: "Dashboard preview",
+			},
+			ImageURL: shareRequest.ImagePreviewUrl,
+			AltText:  "dashboard preview",
+		},
+		{
+			Type: "actions",
+			Elements: []Element{{
+				Type: "button",
+				Text: &Text{
+					Type: "plain_text",
+					Text: "View in Grafana",
+				},
+				Style: "primary",
+				Value: "View in Grafana",
+				URL:   dashboardLink,
+			}},
+		},
+	}
 
 	for _, channelId := range shareRequest.ChannelIds {
 		postMessageRequest := &PostMessageRequest{
 			Channel: channelId,
-			Text:    dashboard.Title,
+			Blocks:  blocks,
 		}
 
 		jsonBody, err := json.Marshal(postMessageRequest)
@@ -465,7 +482,6 @@ type ShareRequest struct {
 }
 
 type PostMessageRequest struct {
-	Channel string `json:"channel"`
-	Text    string `json:"text,omitempty"`
-	// Blocks  string `json:"blocks,omitempty"`
+	Channel string  `json:"channel"`
+	Blocks  []Block `json:"blocks,omitempty"`
 }
