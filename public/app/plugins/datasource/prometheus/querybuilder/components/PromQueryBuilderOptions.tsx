@@ -1,6 +1,7 @@
 import React, { SyntheticEvent } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorRow, EditorSwitch } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
@@ -80,6 +81,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
           }
         >
           <AutoSizeInput
+            id={selectors.components.DataSource.Prometheus.queryEditor.step}
             type="text"
             aria-label="Set lower limit for the step parameter"
             placeholder={'auto'}
@@ -89,14 +91,24 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
           />
         </EditorField>
         <EditorField label="Format">
-          <Select value={formatOption} allowCustomValue onChange={onChangeFormat} options={FORMAT_OPTIONS} />
+          <Select
+            data-testid={selectors.components.DataSource.Prometheus.queryEditor.format}
+            value={formatOption}
+            allowCustomValue
+            onChange={onChangeFormat}
+            options={FORMAT_OPTIONS}
+          />
         </EditorField>
-        <EditorField label="Type">
+        <EditorField label="Type" data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}>
           <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
         </EditorField>
         {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">
-            <EditorSwitch value={query.exemplar || false} onChange={onExemplarChange} />
+            <EditorSwitch
+              value={query.exemplar || false}
+              onChange={onExemplarChange}
+              id={selectors.components.DataSource.Prometheus.queryEditor.exemplars}
+            />
           </EditorField>
         )}
         {query.intervalFactor && query.intervalFactor > 1 && (
