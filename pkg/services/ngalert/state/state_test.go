@@ -666,3 +666,26 @@ func TestTakeImage(t *testing.T) {
 		assert.Equal(t, ngmodels.Image{Path: "foo.png"}, *image)
 	})
 }
+
+func TestParseFormattedState(t *testing.T) {
+	t.Run("should parse formatted state", func(t *testing.T) {
+		stateStr := "Normal (MissingSeries)"
+		s, reason, err := ParseFormattedState(stateStr)
+		require.NoError(t, err)
+
+		require.Equal(t, eval.Normal, s)
+		require.Equal(t, ngmodels.StateReasonMissingSeries, reason)
+	})
+
+	t.Run("should error on empty string", func(t *testing.T) {
+		stateStr := ""
+		_, _, err := ParseFormattedState(stateStr)
+		require.Error(t, err)
+	})
+
+	t.Run("should error on invalid string content", func(t *testing.T) {
+		stateStr := "NotAState"
+		_, _, err := ParseFormattedState(stateStr)
+		require.Error(t, err)
+	})
+}
