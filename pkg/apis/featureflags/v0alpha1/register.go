@@ -4,7 +4,7 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
 const (
@@ -13,13 +13,13 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var FeatureResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+var FeatureResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"features", "feature", "Feature",
 	func() runtime.Object { return &Feature{} },
 	func() runtime.Object { return &FeatureList{} },
 )
 
-var TogglesResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+var TogglesResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"toggles", "toggles", "FeatureToggles",
 	func() runtime.Object { return &FeatureToggles{} },
 	func() runtime.Object { return &FeatureTogglesList{} },

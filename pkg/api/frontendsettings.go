@@ -2,12 +2,16 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -23,6 +27,61 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// Returns a file that is easy to check for changes
+// Any changes to the file means we should refresh the frontend
+func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
+	hash := sha256.New()
+	keys := map[string]any{}
+
+	// BuildVersion
+	hash.Reset()
+	_, _ = hash.Write([]byte(setting.BuildVersion))
+	_, _ = hash.Write([]byte(setting.BuildCommit))
+	_, _ = hash.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
+	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
+
+	// Plugin configs
+	plugins := []string{}
+	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
+		plugins = append(plugins, fmt.Sprintf("%s@%s", p.Name, p.Info.Version))
+	}
+	keys["plugins"] = sortedHash(plugins, hash)
+
+	// Feature flags
+	enabled := []string{}
+	for flag, set := range hs.Features.GetEnabled(c.Req.Context()) {
+		if set {
+			enabled = append(enabled, flag)
+		}
+	}
+	keys["flags"] = sortedHash(enabled, hash)
+
+	// Assets
+	hash.Reset()
+	dto, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
+	if err == nil && dto != nil {
+		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
+		_, _ = hash.Write([]byte(dto.Dark))
+		_, _ = hash.Write([]byte(dto.Light))
+		for _, f := range dto.JSFiles {
+			_, _ = hash.Write([]byte(f.FilePath))
+			_, _ = hash.Write([]byte(f.Integrity))
+		}
+	}
+	keys["assets"] = fmt.Sprintf("%x", hash.Sum(nil))
+
+	c.JSON(http.StatusOK, keys)
+}
+
+func sortedHash(vals []string, hash hash.Hash) string {
+	hash.Reset()
+	sort.Strings(vals)
+	for _, v := range vals {
+		_, _ = hash.Write([]byte(v))
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 	settings, err := hs.getFrontendSettings(c)
@@ -270,6 +329,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		GithubSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
 		GitLabSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
 		OktaSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
+		DisableLogin:                hs.Cfg.DisableLogin,
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {

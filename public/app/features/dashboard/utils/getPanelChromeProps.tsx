@@ -79,7 +79,7 @@ export function getPanelChromeProps(props: CommonProps) {
 
   const onCancelQuery = () => {
     props.panel.getQueryRunner().cancelQuery();
-    DashboardInteractions.panelCancelQueryClicked();
+    DashboardInteractions.panelCancelQueryClicked({ data_state: props.data.state });
   };
 
   const padding: PanelPadding = props.plugin.noPadding ? 'none' : 'md';

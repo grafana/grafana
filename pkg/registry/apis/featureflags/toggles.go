@@ -10,7 +10,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -26,7 +26,7 @@ var (
 )
 
 type togglesStorage struct {
-	resource *apis.ResourceInfo
+	resource *common.ResourceInfo
 	store    *genericregistry.Store
 	features *featuremgmt.FeatureManager
 

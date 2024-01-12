@@ -3,6 +3,8 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featureflags"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -13,9 +15,10 @@ var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
 	// Each must be added here *and* in the ServiceSink above
-	//	playlistV0.RegisterAPIService,
 	playlist.RegisterAPIService,
+	dashboard.RegisterAPIService,
 	example.RegisterAPIService,
 	featureflags.RegisterAPIService,
+	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 )
