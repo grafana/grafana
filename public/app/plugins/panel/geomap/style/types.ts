@@ -138,6 +138,11 @@ export enum GeoJSONPointStyles {
   size = 'marker-size',
 }
 
+export enum GeoJSONLineStyles {
+  color = 'stroke',
+  lineWidth = 'stroke-width',
+}
+
 /** When the style depends on a field */
 export interface StyleConfigFields {
   color?: string;
