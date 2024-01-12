@@ -151,7 +151,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "permission": "Query",
+  "permission": "Query"
 }
 ```
 
@@ -174,7 +174,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "permission": "",
+  "permission": ""
 }
 ```
 
@@ -223,7 +223,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "permission": "Edit",
+  "permission": "Edit"
 }
 ```
 
@@ -246,7 +246,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "permission": "",
+  "permission": ""
 }
 ```
 
@@ -297,7 +297,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "permission": "Edit",
+  "permission": "Edit"
 }
 ```
 
@@ -320,7 +320,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "permission": "",
+  "permission": ""
 }
 ```
 
