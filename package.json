@@ -127,7 +127,7 @@
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
     "@types/papaparse": "5.3.14",
-    "@types/pluralize": "^0.0.30",
+    "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.0",
     "@types/react": "18.2.15",
     "@types/react-beautiful-dnd": "13.1.4",
