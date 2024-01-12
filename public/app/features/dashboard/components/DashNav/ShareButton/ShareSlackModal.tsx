@@ -20,11 +20,11 @@ import { useCreatePreviewQuery, useGetChannelsQuery, useShareMutation } from '..
 export function ShareSlackModal({
   resourcePath,
   dashboardUid,
-  panelId,
+  panelTitle,
 }: {
   dashboardUid: string;
   resourcePath: string;
-  panelId?: string;
+  panelTitle?: string;
 }) {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
   const [description, setDescription] = useState<string>();
@@ -43,7 +43,7 @@ export function ShareSlackModal({
   const [share, { isLoading: isShareLoading, isSuccess: isShareSuccess }] = useShareMutation();
 
   const disableShareButton = isChannelsLoading || isChannelsFetching || isPreviewLoading || isPreviewFetching;
-  const resourceType = panelId ? 'panel' : 'dashboard';
+  const resourceType = panelTitle ? 'panel' : 'dashboard';
 
   useEffect(() => {
     if (isShareSuccess) {
@@ -58,7 +58,7 @@ export function ShareSlackModal({
       imagePreviewUrl: preview!.previewUrl,
       dashboardUid: dashboardUid,
       resourcePath: resourcePath,
-      panelId: panelId,
+      panelId: panelTitle,
     });
   };
 

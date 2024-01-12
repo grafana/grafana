@@ -78,7 +78,7 @@ export const shareToSlack = (dashboard: DashboardModel, panel: PanelModel) => {
       props: {
         dashboardUid: dashboard.uid,
         resourcePath: buildRenderPath(dashboard.uid, panel),
-        panelId: panel.id,
+        panelTitle: panel.title,
       },
     })
   );
