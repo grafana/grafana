@@ -79,7 +79,7 @@ export const shareToSlackApi = createApi({
       }
     >({
       query: (payload) => ({
-        url: `/api/share/${payload.dashboardUid}/slack`,
+        url: `/share/${payload.dashboardUid}/slack`,
         method: 'POST',
         data: payload,
       }),

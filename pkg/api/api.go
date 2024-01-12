@@ -634,6 +634,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/unfurl-url", routing.Wrap(hs.AcknowledgeSlackEvent))
 
 	r.Get("/api/share/slack/channels", reqSignedIn, hs.GetSlackChannels)
+	r.Post("/api/share/:uid/slack", reqSignedIn, hs.ShareToSlack)
 }
 
 func evalAuthenticationSettings() ac.Evaluator {

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import { capitalize } from 'lodash';
 import React, { useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, Modal, MultiSelect, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 
 import { useCreatePreviewQuery, useGetChannelsQuery, useShareMutation } from '../../../api/shareToSlackApi';
@@ -10,10 +11,12 @@ export function ShareSlackModal({
   resourceUid,
   resourceUrl,
   onDismiss,
+  resourceType,
 }: {
   resourceUid: string;
   resourceUrl: string;
   onDismiss(): void;
+  resourceType: 'dashboard' | 'panel';
 }) {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
   const [description, setDescription] = useState<string>();
@@ -26,6 +29,7 @@ export function ShareSlackModal({
     isLoading: isPreviewLoading,
     refetch,
     isFetching: isPreviewFetching,
+    isError,
   } = useCreatePreviewQuery({ resourceUid, resourceUrl }, { refetchOnMountOrArgChange: false });
   const [share, { isLoading: isShareLoading, isSuccess: isShareSuccess }] = useShareMutation();
 
@@ -67,7 +71,7 @@ export function ShareSlackModal({
             onChange={(e) => setDescription(e.currentTarget.value)}
           />
         </Field>
-        <Field label="Dashboard preview" horizontal className={styles.refreshContainer}>
+        <Field label={`${capitalize(resourceType)} preview`} horizontal className={styles.refreshContainer}>
           {preview ? (
             <Button size="sm" icon="sync" variant="primary" fill="text" onClick={refetch}>
               Refresh
@@ -80,14 +84,13 @@ export function ShareSlackModal({
           <div className={styles.loadingContainer}>
             <img
               className={styles.loadingPreview}
-              alt="dashboard-preview-placeholder"
-              src="public/img/share/loading_grot.gif"
+              alt="preview-placeholder"
+              src={`public/img/share/loading_${resourceType}_preview.gif`}
             />
+            <p className={styles.description}>We are generating your {resourceType} preview</p>
           </div>
         ) : (
-          <>
-            <img className={styles.dashboardPreview} alt="dashboard-preview" src={preview?.previewUrl} />
-          </>
+          <img className={styles.dashboardPreview} alt="dashboard-preview" src={preview?.previewUrl} />
         )}
       </div>
       <Modal.ButtonRow>
@@ -95,7 +98,7 @@ export function ShareSlackModal({
         <Button variant="secondary" fill="outline" onClick={onDismiss}>
           Cancel
         </Button>
-        <Button disabled={!value.length || disableShareButton || isShareLoading} onClick={onShareClick}>
+        <Button disabled={!value.length || disableShareButton || isShareLoading || isError} onClick={onShareClick}>
           Share
         </Button>
       </Modal.ButtonRow>
@@ -103,7 +106,7 @@ export function ShareSlackModal({
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   modal: css({
     width: '500px',
   }),
@@ -112,12 +115,16 @@ const getStyles = () => ({
   }),
   loadingContainer: css({
     display: 'flex',
-    justifyContent: 'center',
+    flexDirection: 'column',
+    alignItems: 'center',
   }),
   loadingPreview: css({
     width: '66%',
   }),
   dashboardPreview: css({
     width: '100%',
+  }),
+  description: css({
+    ...theme.typography.body,
   }),
 });
