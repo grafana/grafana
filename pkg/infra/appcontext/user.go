@@ -17,6 +17,7 @@ import (
 
 const (
 	KubeadmProvisionedAdminGroup = "kubeadm:cluster-admins"
+	VeleroServiceAccountGroup    = "system:serviceaccounts:velero"
 )
 
 type ctxUserKey struct{}
@@ -50,12 +51,14 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 	// Find the kubernetes user info
 	k8sUserInfo, ok := request.UserFrom(ctx)
 	if ok {
-		if k8sUserInfo.GetName() == "kubernetes-admin" {
-			fmt.Println("Potato", k8sUserInfo.GetGroups())
-		}
-
 		for _, group := range k8sUserInfo.GetGroups() {
 			switch group {
+			case k8suser.AllAuthenticated:
+				// Doing this for system:aggregator User Name, which doesn't have a group
+				// other than system:authenticated and is in use for openapi/discovery by root apiserver
+				fallthrough
+			case VeleroServiceAccountGroup:
+				fallthrough
 			case KubeadmProvisionedAdminGroup:
 				fallthrough
 			case k8suser.APIServerUser:
@@ -83,6 +86,8 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 						},
 					},
 				}, nil
+			default:
+				fmt.Println("Unknown user/group", k8sUserInfo.GetName(), k8sUserInfo.GetGroups())
 			}
 		}
 	}

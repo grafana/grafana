@@ -9,6 +9,7 @@ cd $(dirname $0)
 MINIO_LOCALHOST_PORT=9000
 
 brew install velero
+brew install minio/stable/mc
 
 DATA_DIR="../../data"
 
