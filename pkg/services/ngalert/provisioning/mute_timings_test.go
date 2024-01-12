@@ -42,26 +42,35 @@ func TestGetMuteTimings(t *testing.T) {
 		},
 	}
 
+	provenances := map[string]models.Provenance{
+		"Test1": models.ProvenanceFile,
+		"Test2": models.ProvenanceAPI,
+	}
+
 	t.Run("service returns timings from config file", func(t *testing.T) {
-		sut, store, _ := createMuteTimingSvcSut()
+		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 			return revision, nil
 		}
+
+		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(provenances, nil)
 
 		result, err := sut.GetMuteTimings(context.Background(), 1)
 
 		require.NoError(t, err)
 		require.Len(t, result, len(revision.cfg.AlertmanagerConfig.MuteTimeIntervals))
 		require.Equal(t, "Test1", result[0].Name)
-		require.EqualValues(t, "", result[0].Provenance)
+		require.EqualValues(t, provenances["Test1"], result[0].Provenance)
 		require.Equal(t, "Test2", result[1].Name)
-		require.EqualValues(t, "", result[1].Provenance)
+		require.EqualValues(t, provenances["Test2"], result[1].Provenance)
 		require.Equal(t, "Test3", result[2].Name)
 		require.EqualValues(t, "", result[2].Provenance)
 
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
+
+		prov.AssertCalled(t, "GetProvenances", mock.Anything, orgID, (&definitions.MuteTimeInterval{}).ResourceType())
 	})
 
 	t.Run("service returns empty list when config file contains no mute timings", func(t *testing.T) {
@@ -83,6 +92,19 @@ func TestGetMuteTimings(t *testing.T) {
 			store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 				return nil, expected
 			}
+
+			_, err := sut.GetMuteTimings(context.Background(), orgID)
+
+			require.ErrorIs(t, err, expected)
+		})
+
+		t.Run("when unable to read provenance", func(t *testing.T) {
+			sut, store, prov := createMuteTimingSvcSut()
+			store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+				return revision, nil
+			}
+			expected := fmt.Errorf("failed")
+			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, expected)
 
 			_, err := sut.GetMuteTimings(context.Background(), orgID)
 
@@ -120,7 +142,7 @@ func TestGetMuteTiming(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Test1", result.Name)
-		require.EqualValues(t, "", result.Provenance) // TODO this is bug and that's how it works now. Fix it in follow up
+		require.EqualValues(t, models.ProvenanceAPI, result.Provenance)
 
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
