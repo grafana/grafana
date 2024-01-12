@@ -55,7 +55,7 @@ _Available in public preview in Grafana Open source and Enterprise_
 
 The improved navigation menu gives you a better overview by showing all levels of navigation items in a more compact design. We also implemented a better dock and improved scrolling behavior. Furthermore, we improved the structure of the nav menu and added several new items.
 
-<!--internal_enablement_video: https://drive.google.com/file/d/12OswdF0b1mLvL0eZ2CSuwLhJK1kBcChM/view?usp=drive_link -->
+<!--internal_enablement_video-->
 
 ## Dashboards and visualizations
 
@@ -63,10 +63,11 @@ The improved navigation menu gives you a better overview by showing all levels o
 
 <!--Oscar Kilhed-->
 <!--what is the status of this feature?-->
+<!--internal_enablement_video for either moving average or trend lines or both-->
 
 _Available in private preview in all editions of Grafana_
 
-### Moving average
+#### Moving average
 
 Sometimes your data is too noisy to quickly grasp what's going on. A common way to address this issue is to calculate the moving mean, or moving average, to filter out some of that noise. Luckily, many data sources already support calculating the moving mean, but when the support is lacking or you're not well versed in the query language, until now, you were stuck with the noise.
 
@@ -78,7 +79,9 @@ By selecting the **Window functions** mode and using **Mean** as the calculation
 
 The **Window functions** mode also supports moving variance and moving standard deviation calculations if you need to analyze the volatility of your metric.
 
-### Trend lines
+[Documentation](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
+
+#### Trend lines
 
 We're also adding some basic statistical analysis features as a way to help you visualize trends in your data. The **Regression analysis** transformation will fit a mathematical function to your data and display it as predicted data points in a separate data frame.
 
@@ -86,12 +89,10 @@ We're also adding some basic statistical analysis features as a way to help you 
 
 The transformation currently supports linear regression and polynomial regression to the fifth-degree.
 
-<!--documentation_url: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
-internal_enablement_video: https://drive.google.com/file/d/1VGUpVTmN-DNF8XnVTMGt_ZwM6sXaDas9/view-->
-
 ### Canvas visualization supports pan and zoom
 
 <!--Nathan Marrs-->
+<!--internal_enablement_video-->
 
 _Available in public preview in all editions of Grafana_
 
@@ -101,13 +102,11 @@ To enable this feature, you must first enable the `canvasPanelPanZoom` [feature 
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
 
-<!--documentation_url: https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas/
-internal_enablement_video: https://drive.google.com/file/d/1f4vSkUCm-m2emKXF5oYu5o_x-dX5xobf/view?usp=drive_link-->
+[Documentation](https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas/)
 
 ### Improved tooltips in visualizations
 
 <!--Nathan Marrs-->
-<!--internal_enablement_video: https://drive.google.com/file/d/1QkcAAGhC6F5Ul3-OLlnVk2NuxUWjaPuc/view?usp=drive_link-->
 
 _Available in public preview in all editions of Grafana_
 
@@ -131,8 +130,6 @@ Note: As this is an ongoing project, the dashboard shared cursor and annotations
 ### Plot enum values in your time series and state timeline visualizations
 
 <!--Nathan Marrs-->
-<!--documentation_url: https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#convert-field-type
-internal_enablement_video: https://drive.google.com/file/d/1gi9cZ3uY6cPa_xC7U2thi4-I-aigiGDU/view?usp=drive_link-->
 
 _Generally available in all editions of Grafana_
 
@@ -143,14 +140,14 @@ You can now plot enum values in your time series and state timeline visualizatio
 ### View percent change in stat visualizations
 
 <!--Nathan Marrs-->
-<!--documentation_url: https://grafana.com/docs/grafana/next/panels-visualizations/visualizations/stat/#show-percent-change
-internal_enablement_video: https://drive.google.com/file/d/1ZZli6fiYDfMkxzFlD1-aeJ1DPiX8JjR0/view?usp=drive_link-->
 
 _Generally available in all editions of Grafana_
 
 You can now view percent change in stat visualizations. This makes it easier to understand your data by showing how metrics are changing over time.
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Stat-Percent-Change-Enablement-Video-(USE).mp4" max-width="750px" caption="Stat percent change enablement video" >}}
+
+[Documentation](https://grafana.com/docs/grafana/next/panels-visualizations/visualizations/stat/#show-percent-change)
 
 ### Data visualization quality of life improvements
 
@@ -160,13 +157,13 @@ _Generally available in all editions of Grafana_
 
 We’ve made a few smaller improvements to the data visualization experience in Grafana.
 
-##### Apply data transformations to annotations
+#### Apply data transformations to annotations
 
 You can now apply data transformations to annotation data. For example, you can now configure how exemplar data is displayed in tooltips.
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-3-data-transformations-annotation-support.mp4" caption="Configure how exemplar data appears in tooltip" >}}
 
-##### Disable auto scaling units
+#### Disable auto scaling units
 
 By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana will display it as 140 W. You can now disable unit auto scaling. This is helpful in cases where you want to ensure that the same unit is shown in your visualization regardless of the magnitude of the data. See [the standard options documentation](/docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#scale-units) for more information.
 
@@ -175,19 +172,19 @@ By default, Grafana automatically scales the unit based on the magnitude of the 
 ### New Transformations UI experience and documentation upgrades
 
 <!--Jev Forsberg-->
-<!--internal_enablement_video: https://drive.google.com/file/d/1VGUpVTmN-DNF8XnVTMGt_ZwM6sXaDas9/view-->
+<!--internal_enablement_video-->
 
 _Generally available in all editions of Grafana_
 
 We've revamped the Transformations user interface to make it cleaner, more user-friendly, and overall better for visualizing, selecting, and comprehending transformation options for your data.
 
-### Improved UI
+#### Improved UI
 
 In the past, transformations were applied through a dropdown menu, indicated solely by text names like Merge, Sort, JoinByLabels, etc. Now, we've introduced a much more user-friendly interface. A convenient drawer allows seamless access to all transformation options, each accompanied by visual/graphical representations and a brief description. These enhancements are designed to enhance the user's comprehension of their data transformation choices.
 
 {{< figure src="/media/docs/grafana/transformations/transformations_ui_drawer_selector.png" caption="The new Transformation UI drawer" alt="Transformation UI drawer" >}}
 
-### In-App documentation
+#### In-App documentation
 
 We've also streamlined the user experience by integrating documentation directly into the core Grafana application. Gone are the days of navigating to a separate browser page for Transformation documentation. Now, users can conveniently access documentation within the app interface, providing a more seamless and efficient way to understand and utilize various features. This enhancement aims to save time and enhance user convenience, ensuring that valuable information is readily available at their fingertips.
 
@@ -196,8 +193,8 @@ We've also streamlined the user experience by integrating documentation directly
 ### Table data in PDF reports
 
 <!--Agnès Toulet-->
-<!--documentation_url: https://grafana.com/docs/grafana/next/dashboards/create-reports/#table-data-in-pdf
-internal_enablement_video: https://drive.google.com/file/d/1qFWWUwTbofiVOU0x3QwIpCPPwxIbQqcq/view?usp=drive_link-->
+
+<!--internal_enablement_video-->
 
 _Available in public preview in Grafana Enterprise and Cloud_
 
@@ -283,6 +280,7 @@ Flapping alerts occur when a metric hovers around the alert threshold condition 
 ### Trace to Profiles
 
 <!--Joey Tawadrous-->
+<!--internal_enablement_video-->
 
 _Experimental in all editions of Grafana_
 
@@ -303,15 +301,13 @@ If you would also like to try out the **Embedded Flame Graph** feature, please e
 
 Note: in order to determine that there is a profile for a given span and render the 'Profiles for this span' button or the embedded flame graph in the span details, the 'pyroscope.profile.id' key-value pair must exist in your span tags.
 
-<!-- documentation_url: https://grafana.com/docs/grafana/next/datasources/tempo/configure-tempo-data-source/#trace-to-profiles
-internal_enablement_video: https://drive.google.com/file/d/1_ErbAuzb3KTy4B6j-fY3syRSW376HUsw/view?usp=drive_link-->
+[Documentation](https://grafana.com/docs/grafana/next/datasources/tempo/configure-tempo-data-source/#trace-to-profiles)
 
 ## Profiles
 
 ### FlameGraph: Collapsing similar items in the graph
 
 <!--Andrej Ocenas-->
-<!--internal_enablement_video: https://drive.google.com/file/d/1e5-eFA8bRTtsO_X2kvHstqKuDGwP1R7b/view?usp=drive_link-->
 
 _Experimental in all editions of Grafana_
 
@@ -333,7 +329,34 @@ Table view was created to help facilitate ease of use in a point and click UI, a
 
 Tables can be configured and shared with team members via explore URLs or by adding the table to a dashboard panel.
 
-### Loki data source improvements: "or" filter syntax, filter by label types, derived fields by labels
+## Data sources
+
+<!--This item has a release date of October 24th but isn't in the 10.2 release notes; is it for 10.3?
+### Data source Admin permission
+<!--Ieva Vasiljeva
+_Generally available in Grafana Enterprise and Cloud_
+
+
+In addition to `Query` and `Edit` access, you can now grant users, teams, or basic roles `Admin` access to data sources. Users with `Admin` access to a data source can grant and revoke permissions to the data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access to data sources that they create. -->
+
+### Redshift and Athena: Async query caching
+
+<!--Isabella Siu-->
+<!--get review for note-->
+
+_Generally available in Grafana Enterprise, Cloud Advanced and Cloud Pro_
+
+<!--is this avail info still valid-->
+
+Introducing query caching for async queries in the Athena and Redshift data source plugins. We previously introduced async queries for the Athena and Redshift plugins, and this feature adds support for caching those queries. To use this, you must have query caching enabled for the Athena or Redshift data source you wish to cache. This feature was previously available behind a feature toggle and is now generally available and enabled by default.
+
+{{% admonition type="note" %}}
+
+The `useCachingService` feature toggle must also be enabled to use this feature.
+
+{{% /admonition %}}
+
+### Loki data source improvements: Filter syntax, filter by label types, derived fields by labels
 
 <!--Sven Grossmann-->
 <!--enablement videos to come?-->
@@ -364,34 +387,12 @@ The following example would add the derived field `traceID regex` based on a reg
 
 {{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" >}}
 
-## Data sources
-
-<!--This item has a release date of October 24th but isn't in the 10.2 release notes; is it for 10.3?
-### Data source Admin permission
-<!--Ieva Vasiljeva
-_Generally available in Grafana Enterprise and Cloud_
-
-
-In addition to `Query` and `Edit` access, you can now grant users, teams, or basic roles `Admin` access to data sources. Users with `Admin` access to a data source can grant and revoke permissions to the data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access to data sources that they create. -->
-
-### Redshift and Athena: Async query caching
-
-<!--Isabella Siu-->
-<!--The feature flag is `awsAsyncQueryCaching` and if you have any questions you can find us at `#grafana-aws-datasources` on Slack. It requires that the `useCachingService` feature toggle (also GA) is enabled and the datasource has caching and async query support enabled-->
-
-_Generally available in Grafana Enterprise, Cloud Advanced and Cloud Pro_
-
-<!--is this avail info still valid-->
-
-Introducing query caching for async queries in the Athena and Redshift data source plugins. We previously introduced async queries for the Athena and Redshift plugins, and this feature adds support for caching those queries. To use this, you must have query caching enabled for the Athena or Redshift data source you wish to cache. This feature was previously available behind a feature toggle and is now generally available and enabled by default.
-
 ## Authentication and authorization
 
 ### Grafana Anonymous Access
 
 <!--Eric Leijonmarck-->
-<!--documentation_url: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/grafana/#anonymous-devices
-internal_enablement_video: https://drive.google.com/file/d/1EbWULVFPhKGDtKwbys84hf0XDu7X-pk9/view?usp=drive_link-->
+<!--internal_enablement_video-->
 
 _Generally available in Grafana Open source and Enterprise_
 
@@ -412,3 +413,5 @@ When anonymous access has been enabled, any device which accesses Grafana in the
 - Navigate to Administration -> Users to access the anonymous devices tab.
 
 - A new statistic has been added to the Usage & Stats page, displaying active anonymous devices from the last 30 days.
+
+[Documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/grafana/)
