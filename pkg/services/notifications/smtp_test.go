@@ -57,7 +57,7 @@ func TestBuildMail(t *testing.T) {
 		require.NoError(t, err)
 
 		email := sc.buildEmail(ctx, message)
-		assert.Empty(t, email.GetHeader("Traceparent"))
+		assert.Empty(t, email.GetHeader("traceparent"))
 	})
 
 	t.Run("Adds trace headers when context has span", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestBuildMail(t *testing.T) {
 		defer span.End()
 
 		email := sc.buildEmail(ctx, message)
-		assert.NotEmpty(t, email.GetHeader("Traceparent"))
+		assert.NotEmpty(t, email.GetHeader("traceparent"))
 	})
 }
 
