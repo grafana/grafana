@@ -3,6 +3,7 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Collapse, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryStats } from 'app/plugins/datasource/loki/types';
@@ -19,7 +20,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.wrapper}>
+    <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options} className={styles.wrapper}>
       <Collapse
         className={styles.collapse}
         collapsible
