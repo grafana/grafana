@@ -63,6 +63,7 @@ import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { getLogLevelFromKey } from 'app/features/logs/utils';
 
 interface Props extends Themeable2 {
   width: number;
@@ -347,7 +348,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
-    const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
+    const hiddenLogLevels = hiddenRawLevels.map((level) => getLogLevelFromKey(level));
     this.setState({ hiddenLogLevels });
   };
 
