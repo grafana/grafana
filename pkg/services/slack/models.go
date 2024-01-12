@@ -9,6 +9,7 @@ import (
 type Service interface {
 	GetUserConversations(ctx context.Context) (*dtos.SlackChannels, error)
 	PostMessage(ctx context.Context, shareRequest dtos.ShareRequest, dashboardTitle string) error
+	PostUnfurl(ctx context.Context, linkEvent EventPayload, imagePath string, dashboardTitle string) error
 }
 
 type PreviewRequest struct {

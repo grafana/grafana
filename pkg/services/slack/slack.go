@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -97,7 +98,7 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 
 		jsonBody, err := json.Marshal(postMessageRequest)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not create request body: %w", err)
 		}
 		s.log.Info("Posting to slack api", "eventPayload", string(jsonBody))
 
@@ -105,9 +106,76 @@ func (s *SlackService) PostMessage(ctx context.Context, shareRequest dtos.ShareR
 		if err != nil {
 			return err
 		}
-		s.log.Info("successfully sent postMessage event payload", "channel", channelID, "body", string(resp))
+		s.log.Debug("successfully sent postMessage event payload", "channel", channelID, "response", string(resp))
 	}
 
+	return nil
+}
+
+func (s *SlackService) PostUnfurl(ctx context.Context, linkEvent EventPayload, imagePath string, dashboardTitle string) error {
+	unfurlEvent := &UnfurlEventPayload{
+		Channel: linkEvent.Event.Channel,
+		TS:      linkEvent.Event.MessageTS,
+		Unfurls: make(Unfurls),
+	}
+
+	imageFileName := filepath.Base(imagePath)
+	imageURL := s.getImageURL(imageFileName)
+	for _, link := range linkEvent.Event.Links {
+		unfurlEvent.Unfurls[link.URL] = Unfurl{
+			Blocks: []Block{
+				{
+					Type: "header",
+					Text: &Text{
+						Type: "plain_text",
+						Text: dashboardTitle,
+					},
+				},
+				{
+					Type: "section",
+					Text: &Text{
+						Type: "plain_text",
+						Text: "Here is the dashboard that I wanted to show you",
+					},
+				},
+				{
+					Type: "image",
+					Title: &Text{
+						Type: "plain_text",
+						Text: "Dashboard preview",
+					},
+					ImageURL: imageURL,
+					AltText:  "dashboard preview",
+				},
+				{
+					Type: "actions",
+					Elements: []Element{{
+						Type: "button",
+						Text: &Text{
+							Type: "plain_text",
+							Text: "View Dashboard",
+						},
+						Style: "primary",
+						Value: link.URL,
+						URL:   link.URL,
+					}},
+				},
+			},
+		}
+	}
+
+	jsonBody, err := json.Marshal(unfurlEvent)
+	if err != nil {
+		return fmt.Errorf("could not create request body: %w", err)
+	}
+	s.log.Info("Posting to slack api", "eventPayload", string(jsonBody))
+
+	resp, err := s.postRequest(ctx, "chat.unfurl", bytes.NewReader(jsonBody))
+	if err != nil {
+		return err
+	}
+
+	s.log.Debug("successfully sent unfurl event payload", "response", string(resp))
 	return nil
 }
 
