@@ -3091,7 +3091,7 @@ __metadata:
     "@types/jest": "npm:29.5.11"
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.202"
-    "@types/marked": "npm:5.0.1"
+    "@types/marked": "npm:5.0.2"
     "@types/node": "npm:20.8.10"
     "@types/papaparse": "npm:5.3.7"
     "@types/react": "npm:18.2.15"
@@ -8787,10 +8787,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:5.0.1":
-  version: 5.0.1
-  resolution: "@types/marked@npm:5.0.1"
-  checksum: bff0bec05bca110e098237559e2095c6df298978f277a9b1b4e570166beaa0a239c484bf74c0a016fa0232298a57a712412b24569919ef262380b8495410d3d0
+"@types/marked@npm:5.0.2":
+  version: 5.0.2
+  resolution: "@types/marked@npm:5.0.2"
+  checksum: a22999454a193243c9ad697859ead622a578bfce48ca6b2958509aacea55601627b02e74caedba06f88fa75004273ed39235d36f94869fec528bb5bc832cdfa2
   languageName: node
   linkType: hard
 
@@ -17126,7 +17126,7 @@ __metadata:
     "@types/lodash": "npm:4.14.202"
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
-    "@types/marked": "npm:5.0.1"
+    "@types/marked": "npm:5.0.2"
     "@types/mousetrap": "npm:1.6.11"
     "@types/node": "npm:20.8.10"
     "@types/node-forge": "npm:^1"

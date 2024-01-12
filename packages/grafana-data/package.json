@@ -75,7 +75,7 @@
     "@types/jest": "29.5.11",
     "@types/jquery": "3.5.16",
     "@types/lodash": "4.14.202",
-    "@types/marked": "5.0.1",
+    "@types/marked": "5.0.2",
     "@types/node": "20.8.10",
     "@types/papaparse": "5.3.7",
     "@types/react": "18.2.15",
