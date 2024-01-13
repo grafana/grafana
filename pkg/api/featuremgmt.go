@@ -44,7 +44,7 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response.Response {
-	featureMgmtCfg := hs.Cfg.FeatureManagement
+	featureMgmtCfg := hs.featureManager.Settings
 	if !featureMgmtCfg.AllowEditing {
 		return response.Error(http.StatusForbidden, "feature toggles are read-only", fmt.Errorf("feature toggles are configured to be read-only"))
 	}

@@ -29,7 +29,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 		enabled:   make(map[string]bool),
 		startup:   make(map[string]bool),
 		warnings:  make(map[string]string),
-		settings:  cfg.FeatureManagement,
+		Settings:  cfg.FeatureManagement,
 		log:       log.New("featuremgmt"),
 	}
 

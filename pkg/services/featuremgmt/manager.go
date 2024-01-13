@@ -18,7 +18,7 @@ type FeatureManager struct {
 	isDevMod        bool
 	restartRequired bool
 
-	settings setting.FeatureMgmtSettings
+	Settings setting.FeatureMgmtSettings
 
 	licensing licensing.Licensing
 	flags     map[string]*FeatureFlag
@@ -165,13 +165,13 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 func (fm *FeatureManager) GetState() *FeatureManagerState {
 	return &FeatureManagerState{
 		RestartRequired: fm.restartRequired,
-		AllowEditing:    fm.settings.AllowEditing,
+		AllowEditing:    fm.Settings.AllowEditing,
 	}
 }
 
 // isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
 func (fm *FeatureManager) IsFeatureEditingAllowed() bool {
-	return fm.settings.AllowEditing && fm.settings.UpdateWebhook != ""
+	return fm.Settings.AllowEditing && fm.Settings.UpdateWebhook != ""
 }
 
 // Flags that can be edited
@@ -189,14 +189,14 @@ func (fm *FeatureManager) IsEditableFromAdminPage(key string) bool {
 
 // Flags that should not be shown in the UI (regardless of their state)
 func (fm *FeatureManager) IsHiddenFromAdminPage(key string, lenient bool) bool {
-	_, hide := fm.settings.HiddenToggles[key]
+	_, hide := fm.Settings.HiddenToggles[key]
 	flag, ok := fm.flags[key]
 	if !ok || flag.HideFromAdminPage || hide {
 		return true // unknown flag (should we show it as a warning!)
 	}
 
 	// Explicitly hidden from configs
-	_, found := fm.settings.HiddenToggles[key]
+	_, found := fm.Settings.HiddenToggles[key]
 	if found {
 		return true
 	}
@@ -278,7 +278,7 @@ func WithFeatureManager(cfg setting.FeatureMgmtSettings, flags []*FeatureFlag, d
 	}
 
 	return &FeatureManager{
-		settings: cfg,
+		Settings: cfg,
 		enabled:  enabled,
 		flags:    features,
 		startup:  enabled,
