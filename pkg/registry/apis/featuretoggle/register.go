@@ -1,4 +1,4 @@
-package featureflags
+package featuretoggle
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -109,6 +109,7 @@ func (b *FeatureFlagAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 // Register additional routes with the server
 func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+	tags := []string{"Editor"}
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{
 			{
@@ -116,6 +117,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
+							Tags:        tags,
 							Summary:     "Current state",
 							Description: "Shows the current flag status and interesting properties",
 							Responses: &spec3.Responses{
@@ -142,6 +144,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
+							Tags:        tags,
 							Summary:     "modify",
 							Description: "change values at runtime",
 							RequestBody: &spec3.RequestBody{

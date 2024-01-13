@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	GROUP      = "featureflags.grafana.app"
+	GROUP      = "featuretoggle.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 )
@@ -19,8 +19,9 @@ var FeatureResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &FeatureList{} },
 )
 
+// This represents the actual configuration
 var TogglesResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"toggles", "toggles", "FeatureToggles",
+	"featuretoggles", "featuretoggles", "FeatureToggles",
 	func() runtime.Object { return &FeatureToggles{} },
 	func() runtime.Object { return &FeatureTogglesList{} },
 )

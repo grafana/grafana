@@ -1,10 +1,10 @@
-package featureflags
+package featuretoggle
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
 	"github.com/grafana/grafana/pkg/web"
 )
 

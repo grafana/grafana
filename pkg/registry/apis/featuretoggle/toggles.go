@@ -1,4 +1,4 @@
-package featureflags
+package featuretoggle
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
@@ -36,6 +36,7 @@ func NewTogglesStorage(features *featuremgmt.FeatureManager) *togglesStorage {
 	return &togglesStorage{
 		resource: &resourceInfo,
 		startup: &v0alpha1.FeatureToggles{
+			TypeMeta: resourceInfo.TypeMeta(),
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "startup",
 				Namespace:         "system",
