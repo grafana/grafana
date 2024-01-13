@@ -123,7 +123,7 @@ describe('TimeRangeForm', () => {
   it('should copy time range to clipboard', () => {
     const { getByRole } = setup();
 
-    fireEvent.click(getByRole('button', { name: 'Copy time range' }));
+    fireEvent.click(getByRole('button', { name: 'Copy time range to clipboard' }));
     expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith(
       JSON.stringify({ from: defaultTimeRange.raw.from, to: defaultTimeRange.raw.to })
     );
