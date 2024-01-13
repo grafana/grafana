@@ -90,7 +90,18 @@ export const Components = {
         type: 'data-testid prometheus type', //wrapper for radio button group
         exemplars: 'prometheus-exemplars', // id for editor switch component
         builder: {},
-        code: {},
+        code: {
+          metricsBrowser: {
+            openButton: 'data-testid open metrics browser',
+            selectMetric: 'data-testid select a metric',
+            labelNamesFilter: 'data-testid label names filter',
+            labelValuesFilter: 'data-testid label values filter',
+            useQuery: 'data-testid use query',
+            useAsRateQuery: 'data-testid use as rate query',
+            validateSelector: 'data-testid validate selector',
+            clear: 'data-testid clear',
+          },
+        },
       },
       exemplarMarker: 'data-testid Exemplar marker',
     },
