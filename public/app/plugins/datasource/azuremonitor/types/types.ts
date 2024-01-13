@@ -9,9 +9,9 @@ import {
   TimeRange,
 } from '@grafana/data';
 
+import { AzureAuthType } from "../components/AzureCredentials";
 import Datasource from '../datasource';
 
-import { AzureAuthType } from "../components/AzureCredentials";
 import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 

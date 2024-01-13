@@ -4,11 +4,11 @@ import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { AzureDataSourceSettings } from '../types';
-import { AzureCredentials } from './AzureCredentials';
+
+import { AzureCredentials, KnownAzureClouds } from './AzureCredentials';
 import { getCredentials, getDefaultCredentials, hasCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';
-import {KnownAzureClouds} from "../../prometheus/configuration/AzureCredentials";
 
 export interface Props {
   options: AzureDataSourceSettings;
