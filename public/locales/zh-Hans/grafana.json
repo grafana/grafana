@@ -1397,7 +1397,9 @@
       "default-error": {
         "message": "",
         "title": ""
-      }
+      },
+      "tooltip-copy": "",
+      "tooltip-paste": ""
     },
     "footer": {
       "change-settings-button": "更改时间设置",

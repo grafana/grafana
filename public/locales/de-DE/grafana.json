@@ -1403,7 +1403,9 @@
       "default-error": {
         "message": "",
         "title": ""
-      }
+      },
+      "tooltip-copy": "",
+      "tooltip-paste": ""
     },
     "footer": {
       "change-settings-button": "Zeiteinstellungen ändern",

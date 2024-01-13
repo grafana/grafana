@@ -201,7 +201,7 @@ export const TimeRangeContent = (props: Props) => {
           data-testid={selectors.components.TimePicker.copyTimeRange}
           icon="file-blank"
           variant="secondary"
-          tooltip="Copy time range to clipboard"
+          tooltip={t('time-picker.copy-paste.tooltip-copy', 'Copy time range to clipboard')}
           type="button"
           onClick={onCopy}
         />
@@ -210,7 +210,7 @@ export const TimeRangeContent = (props: Props) => {
           data-testid={selectors.components.TimePicker.pasteTimeRange}
           icon="copy"
           variant="secondary"
-          tooltip="Paste time range"
+          tooltip={t('time-picker.copy-paste.tooltip-paste', 'Paste time range')}
           type="button"
           onClick={onPaste}
         />

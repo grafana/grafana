@@ -1409,7 +1409,9 @@
       "default-error": {
         "message": "",
         "title": ""
-      }
+      },
+      "tooltip-copy": "",
+      "tooltip-paste": ""
     },
     "footer": {
       "change-settings-button": "Modifier les paramètres de l'heure",

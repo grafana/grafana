@@ -1403,7 +1403,9 @@
       "default-error": {
         "message": "is not a valid time range",
         "title": "Invalid time range"
-      }
+      },
+      "tooltip-copy": "Copy time range to clipboard",
+      "tooltip-paste": "Paste time range"
     },
     "footer": {
       "change-settings-button": "Change time settings",
