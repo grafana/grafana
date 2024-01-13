@@ -297,7 +297,7 @@ export const defaultCalcs: FieldCalcs = {
 };
 
 export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  const calcs: FieldCalcs = defaultCalcs;
+  const calcs: FieldCalcs = { ...defaultCalcs };
 
   const data = field.values;
 
