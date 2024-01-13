@@ -3,7 +3,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { e2e } from '../utils';
 
 const DATASOURCE_ID = 'Prometheus';
-// const DATASOURCE_TYPED_NAME = 'PrometheusDatasourceInstance';
 
 type editorType = 'Code' | 'Builder';
 
@@ -75,6 +74,25 @@ describe('Prometheus query editor', () => {
     it('navigates to the code editor with editor type as code', () => {
       navigateToEditor('Code', 'prometheusCode');
     });
+
+    it('navigates to the code editor and opens the metrics browser', () => {
+      navigateToEditor('Code', 'prometheusCode');
+
+      getResources();
+
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser
+        .openButton()
+        .contains('Metrics browser')
+        .click();
+
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric().should('exist');
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.labelNamesFilter().should('exist');
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.labelValuesFilter().should('exist');
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useQuery().should('exist');
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useAsRateQuery().should('exist');
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.validateSelector().should('exist');
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.clear().should('exist');
+    });
   });
 
   describe('Query builder', () => {
@@ -84,6 +102,44 @@ describe('Prometheus query editor', () => {
   });
 });
 
-export function selectOption(option: string) {
+function selectOption(option: string) {
   cy.get("[aria-label='Select option']").contains(option).should('be.visible').click();
 }
+
+function getResources() {
+  cy.intercept(/__name__/g, metricResponse);
+
+  cy.intercept(/metadata/g, metadataResponse);
+
+  cy.intercept(/labels/g, labelsResponse);
+}
+
+const metricResponse = {
+  status: 'success',
+  data: ['metric1', 'metric2'],
+};
+
+const metadataResponse = {
+  status: 'success',
+  data: {
+    metric1: [
+      {
+        type: 'counter',
+        help: 'metric1 help',
+        unit: '',
+      },
+    ],
+    metric2: [
+      {
+        type: 'counter',
+        help: 'metric2 help',
+        unit: '',
+      },
+    ],
+  },
+};
+
+const labelsResponse = {
+  status: 'success',
+  data: ['__name__', 'action', 'active', 'backend'],
+};
