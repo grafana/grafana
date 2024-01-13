@@ -1,6 +1,6 @@
 import { fireEvent, render, RenderResult } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-test-renderer';
 
 import { dateTimeParse, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -120,10 +120,10 @@ describe('TimeRangeForm', () => {
     expect(to).toHaveClass('react-calendar__tile--rangeEnd');
   });
 
-  it('should copy time range to clipboard', () => {
+  it('should copy time range to clipboard', async () => {
     const { getByRole } = setup();
 
-    fireEvent.click(getByRole('button', { name: 'Copy time range to clipboard' }));
+    await userEvent.click(getByRole('button', { name: 'Copy time range to clipboard' }));
     expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith(
       JSON.stringify({ from: defaultTimeRange.raw.from, to: defaultTimeRange.raw.to })
     );
@@ -134,9 +134,7 @@ describe('TimeRangeForm', () => {
 
     mockClipboard.readText.mockResolvedValue(JSON.stringify(customRawTimeRange));
 
-    await act(async () => {
-      fireEvent.click(getByRole('button', { name: 'Paste time range' }));
-    });
+    await userEvent.click(getByRole('button', { name: 'Paste time range' }));
 
     expect(getByLabelText('From')).toHaveValue(customRawTimeRange.from);
     expect(getByLabelText('To')).toHaveValue(customRawTimeRange.to);
