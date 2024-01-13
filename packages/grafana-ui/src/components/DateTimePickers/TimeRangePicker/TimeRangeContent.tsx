@@ -197,7 +197,7 @@ export const TimeRangeContent = (props: Props) => {
 
       <div className={style.buttonsContainer}>
         <Button
-          aria-label="Copy time range"
+          aria-label={t('time-picker.copy-paste.tooltip-copy', 'Copy time range to clipboard')}
           data-testid={selectors.components.TimePicker.copyTimeRange}
           icon="file-blank"
           variant="secondary"
@@ -206,7 +206,7 @@ export const TimeRangeContent = (props: Props) => {
           onClick={onCopy}
         />
         <Button
-          aria-label="Paste time range"
+          aria-label={t('time-picker.copy-paste.tooltip-paste', 'Paste time range')}
           data-testid={selectors.components.TimePicker.pasteTimeRange}
           icon="copy"
           variant="secondary"
