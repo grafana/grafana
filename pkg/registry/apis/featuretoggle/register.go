@@ -109,6 +109,9 @@ func (b *FeatureFlagAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 // Register additional routes with the server
 func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
+	stateSchema := defs["github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1.ResolvedToggleState"].Schema
+
 	tags := []string{"Editor"}
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{
@@ -118,15 +121,19 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        tags,
-							Summary:     "Current state",
-							Description: "Shows the current flag status and interesting properties",
+							Summary:     "Current configuration with details",
+							Description: "Show details about the current flags and where they come from",
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
 									StatusCodeResponses: map[int]*spec3.Response{
 										200: {
 											ResponseProps: spec3.ResponseProps{
 												Content: map[string]*spec3.MediaType{
-													"application/json": {},
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &stateSchema,
+														},
+													},
 												},
 												Description: "OK",
 											},
@@ -136,17 +143,11 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 							},
 						},
 					},
-				},
-				Handler: b.handleResolvedStatus,
-			},
-			{
-				Path: "current/update",
-				Spec: &spec3.PathProps{
-					Post: &spec3.Operation{
+					Patch: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        tags,
-							Summary:     "modify",
-							Description: "change values at runtime",
+							Summary:     "Update individual toggles",
+							Description: "Patch some of the toggles (keyed by the toggle name)",
 							RequestBody: &spec3.RequestBody{
 								RequestBodyProps: spec3.RequestBodyProps{
 									Required:    true,
@@ -154,10 +155,37 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 									Content: map[string]*spec3.MediaType{
 										"application/json": {
 											MediaTypeProps: spec3.MediaTypeProps{
-												Schema: spec.MapProperty(spec.BoolProperty()).WithExample(
-													map[string]bool{
-														featuremgmt.FlagAutoMigrateOldPanels: true,
-													}),
+												Schema: &stateSchema,
+												Examples: map[string]*spec3.Example{
+													"enable-auto-migrate": {
+														ExampleProps: spec3.ExampleProps{
+															Summary:     "enable auto-migrate panels",
+															Description: "example descr",
+															Value: &v0alpha1.ResolvedToggleState{
+																Toggles: []v0alpha1.ToggleStatus{
+																	{
+																		Name:    featuremgmt.FlagAutoMigrateOldPanels,
+																		Enabled: true,
+																	},
+																},
+															},
+														},
+													},
+													"disable-auto-migrate": {
+														ExampleProps: spec3.ExampleProps{
+															Summary:     "disable auto-migrate panels",
+															Description: "disable descr",
+															Value: &v0alpha1.ResolvedToggleState{
+																Toggles: []v0alpha1.ToggleStatus{
+																	{
+																		Name:    featuremgmt.FlagAutoMigrateOldPanels,
+																		Enabled: false,
+																	},
+																},
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -180,7 +208,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						},
 					},
 				},
-				Handler: b.handleResolvedUpdate,
+				Handler: b.handleCurrentStatus,
 			},
 		},
 	}

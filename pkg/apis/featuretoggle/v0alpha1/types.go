@@ -49,7 +49,6 @@ type FeatureSpec struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FeatureList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []Feature `json:"items,omitempty"`
@@ -68,7 +67,6 @@ type FeatureToggles struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FeatureTogglesList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []FeatureToggles `json:"items,omitempty"`
@@ -82,10 +80,10 @@ type ResolvedToggleState struct {
 	Writeable bool `json:"writeable"`
 
 	// The currently enabled flags
-	Enabled map[string]bool `json:"enabled"`
+	Enabled map[string]bool `json:"enabled,omitempty"`
 
 	// Details on the current status
-	Details []ToggleStatus `json:"details"`
+	Toggles []ToggleStatus `json:"toggles"`
 }
 
 type ToggleStatus struct {
@@ -93,17 +91,17 @@ type ToggleStatus struct {
 	Name string `json:"name"`
 
 	// The flag description
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 
 	// Is the flag enabled
 	Enabled bool `json:"enabled"`
 
 	// Can this flag be updated
-	Writeable bool `json:"writeable"`
+	Writeable bool `json:"writeable,omitempty"`
 
 	// Where was the value configured
 	// eg: default | startup | tenant|org | user | browser
-	Source string `json:"source"`
+	Source string `json:"source,omitempty"`
 
 	// eg: unknown flag
 	Warning string `json:"warning,omitempty"`

@@ -164,8 +164,8 @@ func (in *ResolvedToggleState) DeepCopyInto(out *ResolvedToggleState) {
 			(*out)[key] = val
 		}
 	}
-	if in.Details != nil {
-		in, out := &in.Details, &out.Details
+	if in.Toggles != nil {
+		in, out := &in.Toggles, &out.Toggles
 		*out = make([]ToggleStatus, len(*in))
 		copy(*out, *in)
 	}

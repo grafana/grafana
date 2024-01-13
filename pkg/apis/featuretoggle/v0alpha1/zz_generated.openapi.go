@@ -395,7 +395,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ResolvedToggleState(ref common.Refer
 							},
 						},
 					},
-					"details": {
+					"toggles": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Details on the current status",
 							Type:        []string{"array"},
@@ -410,7 +410,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ResolvedToggleState(ref common.Refer
 						},
 					},
 				},
-				Required: []string{"writeable", "enabled", "details"},
+				Required: []string{"writeable", "toggles"},
 			},
 		},
 		Dependencies: []string{
@@ -435,7 +435,6 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The flag description",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -451,7 +450,6 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 					"writeable": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Can this flag be updated",
-							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -459,7 +457,6 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 					"source": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Where was the value configured eg: default | startup | tenant|org | user | browser",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -472,7 +469,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"name", "description", "enabled", "writeable", "source"},
+				Required: []string{"name", "enabled"},
 			},
 		},
 	}
