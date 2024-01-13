@@ -5,6 +5,7 @@ import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data
 import {
   AdvancedHttpSettings,
   Auth,
+  ConfigDescriptionLink,
   ConfigSection,
   ConfigSubSection,
   ConnectionSettings,
@@ -13,7 +14,6 @@ import {
 } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
-import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 import { Divider } from 'app/core/components/Divider';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
