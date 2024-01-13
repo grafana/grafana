@@ -11,6 +11,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -107,12 +108,11 @@ func (b *FeatureFlagAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 // Register additional routes with the server
-
 func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "resolved/status",
+				Path: "current",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
@@ -138,12 +138,28 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				Handler: b.handleResolvedStatus,
 			},
 			{
-				Path: "resolved/enabled",
+				Path: "current/update",
 				Spec: &spec3.PathProps{
-					Get: &spec3.Operation{
+					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Summary:     "enabled values",
-							Description: "only the enabled flags",
+							Summary:     "modify",
+							Description: "change values at runtime",
+							RequestBody: &spec3.RequestBody{
+								RequestBodyProps: spec3.RequestBodyProps{
+									Required:    true,
+									Description: "flags to change",
+									Content: map[string]*spec3.MediaType{
+										"application/json": {
+											MediaTypeProps: spec3.MediaTypeProps{
+												Schema: spec.MapProperty(spec.BoolProperty()).WithExample(
+													map[string]bool{
+														featuremgmt.FlagAutoMigrateOldPanels: true,
+													}),
+											},
+										},
+									},
+								},
+							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
 									StatusCodeResponses: map[int]*spec3.Response{
@@ -157,23 +173,6 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 										},
 									},
 								},
-							},
-						},
-					},
-				},
-				Handler: b.handleResolvedEnabled,
-			},
-			{
-				Path: "resolved/update",
-				Spec: &spec3.PathProps{
-					Post: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Summary:     "modify",
-							Description: "change values at runtime",
-							Parameters: []*spec3.Parameter{
-								{ParameterProps: spec3.ParameterProps{
-									Name: "b",
-								}},
 							},
 						},
 					},

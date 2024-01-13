@@ -188,7 +188,7 @@ func (fm *FeatureManager) IsEditableFromAdminPage(key string) bool {
 }
 
 // Flags that should not be shown in the UI (regardless of their state)
-func (fm *FeatureManager) IsHiddenFromAdminPage(key string) bool {
+func (fm *FeatureManager) IsHiddenFromAdminPage(key string, lenient bool) bool {
 	_, hide := fm.settings.HiddenToggles[key]
 	flag, ok := fm.flags[key]
 	if !ok || flag.HideFromAdminPage || hide {
@@ -200,6 +200,9 @@ func (fm *FeatureManager) IsHiddenFromAdminPage(key string) bool {
 	if found {
 		return true
 	}
+	if lenient {
+		return false
+	}
 
 	return flag.Stage == FeatureStageUnknown ||
 		flag.Stage == FeatureStageExperimental ||
@@ -209,6 +212,11 @@ func (fm *FeatureManager) IsHiddenFromAdminPage(key string) bool {
 // Get the flags that were explicitly set on startup
 func (fm *FeatureManager) GetStartupFlags() map[string]bool {
 	return fm.startup
+}
+
+// Perhaps expose the flag warnings
+func (fm *FeatureManager) GetWarning() map[string]string {
+	return fm.warnings
 }
 
 func (fm *FeatureManager) SetRestartRequired() {

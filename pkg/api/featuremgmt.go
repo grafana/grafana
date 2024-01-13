@@ -24,7 +24,7 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 	// loop through features an add features that should be visible to dtos
 	for _, ft := range hs.featureManager.GetFlags() {
 		flag := ft.Name
-		if hs.featureManager.IsHiddenFromAdminPage(flag) {
+		if hs.featureManager.IsHiddenFromAdminPage(flag, false) {
 			continue
 		}
 		dto := featuremgmt.FeatureToggleDTO{

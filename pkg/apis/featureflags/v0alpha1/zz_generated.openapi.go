@@ -23,7 +23,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.FeatureToggles":      schema_pkg_apis_featureflags_v0alpha1_FeatureToggles(ref),
 		"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.FeatureTogglesList":  schema_pkg_apis_featureflags_v0alpha1_FeatureTogglesList(ref),
 		"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.ResolvedToggleState": schema_pkg_apis_featureflags_v0alpha1_ResolvedToggleState(ref),
-		"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.ToggleState":         schema_pkg_apis_featureflags_v0alpha1_ToggleState(ref),
+		"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.ToggleStatus":        schema_pkg_apis_featureflags_v0alpha1_ToggleStatus(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                 schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                             schema_pkg_apis_meta_v1_APIGroupList(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                              schema_pkg_apis_meta_v1_APIResource(ref),
@@ -371,69 +371,86 @@ func schema_pkg_apis_featureflags_v0alpha1_ResolvedToggleState(ref common.Refere
 							Format:      "",
 						},
 					},
-					"toggles": {
+					"writeable": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The toggles with state worth advertising",
+							Description: "Can any flag be updated",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The currently enabled flags",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
+										Default: false,
+										Type:    []string{"boolean"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Details on the current status",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.ToggleState"),
-									},
-								},
-							},
-						},
-					},
-					"editable": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Flags that can be edited in the UI When empty, nothing is editable",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"hidden": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Flags that should never be shown in the UI",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.ToggleStatus"),
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"toggles", "editable"},
+				Required: []string{"writeable", "enabled", "details"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.ToggleState"},
+			"github.com/grafana/grafana/pkg/apis/featureflags/v0alpha1.ToggleStatus"},
 	}
 }
 
-func schema_pkg_apis_featureflags_v0alpha1_ToggleState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_featureflags_v0alpha1_ToggleStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The feature toggle name",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The flag description",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"enabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Is the flag enabled",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"writeable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Can this flag be updated",
 							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
@@ -455,7 +472,7 @@ func schema_pkg_apis_featureflags_v0alpha1_ToggleState(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"enabled", "source"},
+				Required: []string{"name", "description", "enabled", "writeable", "source"},
 			},
 		},
 	}

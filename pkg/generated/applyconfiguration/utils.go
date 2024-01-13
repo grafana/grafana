@@ -5,8 +5,6 @@
 package applyconfiguration
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	servicev0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -14,12 +12,6 @@ import (
 // apply configuration type exists for the given GroupVersionKind.
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
-	// Group=service.grafana.app, Version=v0alpha1
-	case v0alpha1.SchemeGroupVersion.WithKind("ExternalName"):
-		return &servicev0alpha1.ExternalNameApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("ExternalNameSpec"):
-		return &servicev0alpha1.ExternalNameSpecApplyConfiguration{}
-
 	}
 	return nil
 }

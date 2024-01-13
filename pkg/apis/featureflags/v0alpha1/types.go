@@ -78,20 +78,28 @@ type FeatureTogglesList struct {
 type ResolvedToggleState struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// The toggles with state worth advertising
-	Toggles map[string]ToggleState `json:"toggles"`
+	// Can any flag be updated
+	Writeable bool `json:"writeable"`
 
-	// Flags that can be edited in the UI
-	// When empty, nothing is editable
-	Editable []string `json:"editable"`
+	// The currently enabled flags
+	Enabled map[string]bool `json:"enabled"`
 
-	// Flags that should never be shown in the UI
-	Hidden []string `json:"hidden,omitempty"`
+	// Details on the current status
+	Details []ToggleStatus `json:"details"`
 }
 
-type ToggleState struct {
+type ToggleStatus struct {
+	// The feature toggle name
+	Name string `json:"name"`
+
+	// The flag description
+	Description string `json:"description"`
+
 	// Is the flag enabled
 	Enabled bool `json:"enabled"`
+
+	// Can this flag be updated
+	Writeable bool `json:"writeable"`
 
 	// Where was the value configured
 	// eg: default | startup | tenant|org | user | browser
