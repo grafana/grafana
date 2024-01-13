@@ -7,7 +7,7 @@ interface VariableTextFieldProps {
   value: string;
   name: string;
   placeholder?: string;
-  onChange: (event: FormEvent<HTMLInputElement>) => void;
+  onChange?: (event: FormEvent<HTMLInputElement>) => void;
   testId?: string;
   required?: boolean;
   width?: number;
