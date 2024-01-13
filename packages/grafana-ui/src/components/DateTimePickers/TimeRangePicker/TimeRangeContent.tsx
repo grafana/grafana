@@ -33,8 +33,7 @@ interface Props {
   fiscalYearStartMonth?: number;
   roundup?: boolean;
   isReversed?: boolean;
-  // callback for when the user pastes invalid JSON
-  onError?: (clipboardContent: string) => void;
+  onError?: (error?: string) => void;
 }
 
 interface InputState {

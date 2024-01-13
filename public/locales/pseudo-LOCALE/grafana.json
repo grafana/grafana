@@ -1396,6 +1396,15 @@
       "empty-recent-list-info": "Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ'ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.",
       "filter-placeholder": "Ŝęäřčĥ qūįčĸ řäŉģęş"
     },
+    "copy-paste": {
+      "copy-success": {
+        "message": "Ŧįmę řäŉģę čőpįęđ ŧő čľįpþőäřđ"
+      },
+      "default-error": {
+        "message": "įş ŉőŧ ä väľįđ ŧįmę řäŉģę",
+        "title": "Ĩŉväľįđ ŧįmę řäŉģę"
+      }
+    },
     "footer": {
       "change-settings-button": "Cĥäŉģę ŧįmę şęŧŧįŉģş",
       "fiscal-year-option": "Fįşčäľ yęäř",

@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
+import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
 import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
@@ -179,7 +180,9 @@ export function copyTimeRangeToClipboard(): ThunkResult<void> {
     const range = getState().explore.panes[Object.keys(getState().explore.panes)[0]]!.range.raw;
     navigator.clipboard.writeText(JSON.stringify(range));
 
-    appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
+    appEvents.emit(AppEvents.alertSuccess, [
+      t('time-picker.copy-paste.copy-success.message', 'Time range copied to clipboard'),
+    ]);
   };
 }
 
@@ -188,7 +191,10 @@ export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
     const { range, isError } = await getCopiedTimeRange();
 
     if (isError === true) {
-      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${range}" is not a valid time range`]);
+      appEvents.emit(AppEvents.alertError, [
+        t('time-picker.copy-paste.default-error.title', 'Invalid time range'),
+        `"${range}" ${t('time-picker.copy-paste.default-error.message', 'is not a valid time range')}`,
+      ]);
       return;
     }
 

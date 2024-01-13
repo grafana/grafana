@@ -22,7 +22,7 @@ interface Props {
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   onChangeFiscalYearStartMonth?: (month: number) => void;
-  onError?: (clipboardContent: string) => void;
+  onError?: (error?: string) => void;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];

@@ -39,7 +39,7 @@ export interface TimeRangePickerProps {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
-  onError?: (clipboardContent: string) => void;
+  onError?: (error?: string) => void;
   history?: TimeRange[];
   hideQuickRanges?: boolean;
   widthOverride?: number;

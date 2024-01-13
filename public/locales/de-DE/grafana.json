@@ -1396,6 +1396,15 @@
       "empty-recent-list-info": "Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.",
       "filter-placeholder": "Schnellbereiche suchen"
     },
+    "copy-paste": {
+      "copy-success": {
+        "message": ""
+      },
+      "default-error": {
+        "message": "",
+        "title": ""
+      }
+    },
     "footer": {
       "change-settings-button": "Zeiteinstellungen ändern",
       "fiscal-year-option": "Geschäftsjahr",

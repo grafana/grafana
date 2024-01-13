@@ -3,6 +3,7 @@ import React from 'react';
 
 import { AppEvents, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
 import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
+import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
 
 import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
@@ -35,10 +36,10 @@ export const TimePickerWithHistory = (props: Props) => {
               onAppendToHistory(value, values, onSaveToStore);
               props.onChange(value);
             }}
-            onError={(clipboardContent: string) =>
+            onError={(error?: string) =>
               appEvents.emit(AppEvents.alertError, [
-                'Invalid time range',
-                `"${clipboardContent}" is not a valid time range`,
+                t('time-picker.copy-paste.default-error.title', 'Invalid time range'),
+                `"${error}" ${t('time-picker.copy-paste.default-error.message', 'is not a valid time range')}`,
               ])
             }
           />

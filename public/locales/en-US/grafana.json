@@ -1396,6 +1396,15 @@
       "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
     },
+    "copy-paste": {
+      "copy-success": {
+        "message": "Time range copied to clipboard"
+      },
+      "default-error": {
+        "message": "is not a valid time range",
+        "title": "Invalid time range"
+      }
+    },
     "footer": {
       "change-settings-button": "Change time settings",
       "fiscal-year-option": "Fiscal year",

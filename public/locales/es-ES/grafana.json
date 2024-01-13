@@ -1402,6 +1402,15 @@
       "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
     },
+    "copy-paste": {
+      "copy-success": {
+        "message": ""
+      },
+      "default-error": {
+        "message": "",
+        "title": ""
+      }
+    },
     "footer": {
       "change-settings-button": "Cambiar ajustes de tiempo",
       "fiscal-year-option": "Ejercicio fiscal",

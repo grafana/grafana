@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
+import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
@@ -380,14 +381,19 @@ export class TimeSrv {
   copyTimeRangeToClipboard() {
     const { raw } = this.timeRange();
     navigator.clipboard.writeText(JSON.stringify({ from: raw.from, to: raw.to }));
-    appEvents.emit(AppEvents.alertSuccess, ['Time range copied to clipboard']);
+    appEvents.emit(AppEvents.alertSuccess, [
+      t('time-picker.copy-paste.copy-success.message', 'Time range copied to clipboard'),
+    ]);
   }
 
   async pasteTimeRangeFromClipboard(updateUrl = true) {
     const { range, isError } = await getCopiedTimeRange();
 
     if (isError === true) {
-      appEvents.emit(AppEvents.alertError, ['Invalid time range', `"${range}" is not a valid time range`]);
+      appEvents.emit(AppEvents.alertError, [
+        t('time-picker.copy-paste.default-error.title', 'Invalid time range'),
+        `"${range}" ${t('time-picker.copy-paste.default-error.message', 'is not a valid time range')}`,
+      ]);
       return;
     }
 

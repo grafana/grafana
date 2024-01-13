@@ -1402,6 +1402,15 @@
       "empty-recent-list-info": "Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici.",
       "filter-placeholder": "Rechercher dans les plages rapides"
     },
+    "copy-paste": {
+      "copy-success": {
+        "message": ""
+      },
+      "default-error": {
+        "message": "",
+        "title": ""
+      }
+    },
     "footer": {
       "change-settings-button": "Modifier les paramètres de l'heure",
       "fiscal-year-option": "Exercice fiscal",
