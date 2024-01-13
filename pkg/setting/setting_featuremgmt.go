@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// This configuration is only relevant in hosted grafana and is subject to change without notice
 type FeatureMgmtSettings struct {
 	HiddenToggles      map[string]struct{}
 	ReadOnlyToggles    map[string]struct{}
