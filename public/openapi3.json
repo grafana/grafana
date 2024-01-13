@@ -8192,6 +8192,27 @@
         ],
         "type": "object"
       },
+      "PostForExportBody": {
+        "properties": {
+          "dashboard": {
+            "description": "Dashboard json containing legacy alert rules.",
+            "type": "object"
+          },
+          "interval": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/PostableExtendedRuleNode"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "PostGraphiteAnnotationsCmd": {
         "properties": {
           "data": {

@@ -1411,7 +1411,7 @@
     },
     "/ruler/grafana/api/v1/rules/{Namespace}/export": {
       "post": {
-        "description": "Converts submitted rule group to provisioning format",
+        "description": "Converts submitted rule group or dashboard with legacy alert definitions to provisioning format",
         "consumes": [
           "application/json",
           "application/yaml"
@@ -1432,7 +1432,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/PostableRuleGroupConfig"
+              "$ref": "#/definitions/PostForExportBody"
             }
           },
           {
@@ -6249,6 +6249,27 @@
     "PermissionDenied": {
       "type": "object"
     },
+    "PostForExportBody": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "description": "Dashboard json containing legacy alert rules.",
+          "type": "object"
+        },
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        }
+      }
+    },
     "PostableApiAlertingConfig": {
       "type": "object",
       "properties": {
@@ -8396,6 +8417,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8453,7 +8475,6 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
