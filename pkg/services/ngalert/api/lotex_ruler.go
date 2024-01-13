@@ -65,7 +65,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqContex
 		http.MethodDelete,
 		withPath(
 			*ctx.Req.URL,
-			fmt.Sprintf("%s/%s", legacyRulerPrefix, namespace),
+			fmt.Sprintf("%s/%s", legacyRulerPrefix, url.PathEscape(namespace)),
 		),
 		nil,
 		messageExtractor,
@@ -86,8 +86,8 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext, na
 			fmt.Sprintf(
 				"%s/%s/%s",
 				legacyRulerPrefix,
-				namespace,
-				group,
+				url.PathEscape(namespace),
+				url.PathEscape(group),
 			),
 		),
 		nil,
@@ -109,7 +109,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, 
 			fmt.Sprintf(
 				"%s/%s",
 				legacyRulerPrefix,
-				namespace,
+				url.PathEscape(namespace),
 			),
 		),
 		nil,
@@ -131,8 +131,8 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, name
 			fmt.Sprintf(
 				"%s/%s/%s",
 				legacyRulerPrefix,
-				namespace,
-				group,
+				url.PathEscape(namespace),
+				url.PathEscape(group),
 			),
 		),
 		nil,
@@ -216,7 +216,8 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 }
 
 func withPath(u url.URL, newPath string) *url.URL {
-	// TODO: handle path escaping
-	u.Path = newPath
+	u.Path, _ = url.PathUnescape(newPath)
+	u.RawPath = newPath
+
 	return &u
 }
