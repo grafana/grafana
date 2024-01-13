@@ -45,13 +45,13 @@ var subtypeToPrefix = map[string]string{
 
 type LotexRuler struct {
 	log log.Logger
-	*AlertingProxy
+	AlertingProxyInterface
 }
 
 func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 	return &LotexRuler{
-		log:           log,
-		AlertingProxy: proxy,
+		log:                    log,
+		AlertingProxyInterface: proxy,
 	}
 }
 
@@ -179,7 +179,7 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 		return "", fmt.Errorf("datasource UID is invalid")
 	}
 
-	ds, err := r.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipDSCache)
+	ds, err := r.DataProxy().DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipDSCache)
 	if err != nil {
 		return "", err
 	}

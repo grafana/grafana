@@ -93,8 +93,21 @@ func (p *AlertingProxy) createProxyContext(ctx *contextmodel.ReqContext, request
 	return &cpy
 }
 
+type AlertingProxyInterface interface {
+	withReq(
+		ctx *contextmodel.ReqContext,
+		method string,
+		u *url.URL,
+		body io.Reader,
+		extractor func(*response.NormalResponse) (any, error),
+		headers map[string]string,
+	) response.Response
+	createProxyContext(ctx *contextmodel.ReqContext, request *http.Request, response *response.NormalResponse) *contextmodel.ReqContext
+	DataProxy() *datasourceproxy.DataSourceProxyService
+}
+
 type AlertingProxy struct {
-	DataProxy *datasourceproxy.DataSourceProxyService
+	dataProxy *datasourceproxy.DataSourceProxyService
 	ac        accesscontrol.AccessControl
 }
 
@@ -124,13 +137,13 @@ func (p *AlertingProxy) withReq(
 		if err != nil {
 			return ErrResp(http.StatusBadRequest, err, "DatasourceID is invalid")
 		}
-		p.DataProxy.ProxyDatasourceRequestWithID(proxyContext, recipient)
+		p.DataProxy().ProxyDatasourceRequestWithID(proxyContext, recipient)
 	} else {
 		datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 		if datasourceUID == "" {
 			return ErrResp(http.StatusBadRequest, err, "DatasourceUID is empty")
 		}
-		p.DataProxy.ProxyDatasourceRequestWithUID(proxyContext, datasourceUID)
+		p.DataProxy().ProxyDatasourceRequestWithUID(proxyContext, datasourceUID)
 	}
 
 	status := resp.Status()
@@ -168,6 +181,10 @@ func (p *AlertingProxy) withReq(
 	}
 
 	return response.JSON(status, b)
+}
+
+func (p *AlertingProxy) DataProxy() *datasourceproxy.DataSourceProxyService {
+	return p.dataProxy
 }
 
 func yamlExtractor(v any) func(*response.NormalResponse) (any, error) {
