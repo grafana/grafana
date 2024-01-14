@@ -32,7 +32,7 @@
     "@types/node": "20.8.10",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.15",
-    "@types/testing-library__jest-dom": "5.14.8",
+    "@types/testing-library__jest-dom": "5.14.9",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.1",
     "typescript": "5.2.2",
