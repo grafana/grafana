@@ -9054,12 +9054,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-resizable@npm:3.0.4":
-  version: 3.0.4
-  resolution: "@types/react-resizable@npm:3.0.4"
+"@types/react-resizable@npm:3.0.7":
+  version: 3.0.7
+  resolution: "@types/react-resizable@npm:3.0.7"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 8c8ab9ec6481195f1875cbc76c95f26794d1d1ce7fcd833078252d6378e197a5b4483bdf4f8c90ae8f3f6f7a9503c518388bd7d09985e72fff3b4d77153f6ebd
+  checksum: e66dfabcb614f1da1f561d0ecaf1dc384fc0e361d97fa7b219f04f8b85ad9dd2576437117af52ae6bf33644061db2d9452e0a4aadfe457588d93a36d2db8de0b
   languageName: node
   linkType: hard
 
@@ -17132,7 +17132,7 @@ __metadata:
     "@types/react-dom": "npm:18.2.7"
     "@types/react-grid-layout": "npm:1.3.2"
     "@types/react-highlight-words": "npm:0.16.7"
-    "@types/react-resizable": "npm:3.0.4"
+    "@types/react-resizable": "npm:3.0.7"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.19"
     "@types/react-test-renderer": "npm:18.0.7"
