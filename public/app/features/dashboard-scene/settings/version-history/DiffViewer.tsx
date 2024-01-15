@@ -52,13 +52,13 @@ export const DiffViewer = ({ oldValue, newValue }: ReactDiffViewerProps) => {
 
   return (
     <div
-      className={css`
-        font-size: ${theme.typography.bodySmall.fontSize};
+      className={css({
+        fontSize: theme.typography.bodySmall.fontSize,
         // prevent global styles interfering with diff viewer
-        pre {
-          all: revert;
-        }
-      `}
+        pre: {
+          all: 'revert',
+        },
+      })}
     >
       <ReactDiffViewer
         styles={styles}

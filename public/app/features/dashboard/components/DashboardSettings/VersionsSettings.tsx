@@ -185,7 +185,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   }
 }
 
-const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
+export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
   <HorizontalGroup>
     <Spinner />
     <em>{msg}</em>
