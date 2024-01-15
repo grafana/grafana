@@ -17260,7 +17260,7 @@ __metadata:
     postcss: "npm:8.4.33"
     postcss-loader: "npm:7.3.4"
     postcss-reporter: "npm:7.0.5"
-    postcss-scss: "npm:4.0.6"
+    postcss-scss: "npm:4.0.9"
     prettier: "npm:3.0.0"
     prismjs: "npm:1.29.0"
     prop-types: "npm:15.8.1"
@@ -23670,12 +23670,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-scss@npm:4.0.6, postcss-scss@npm:^4.0.6":
-  version: 4.0.6
-  resolution: "postcss-scss@npm:4.0.6"
+"postcss-scss@npm:4.0.9, postcss-scss@npm:^4.0.6":
+  version: 4.0.9
+  resolution: "postcss-scss@npm:4.0.9"
   peerDependencies:
-    postcss: ^8.4.19
-  checksum: fa436a2c92555135f07135586798089b4d8b31ad9d7f3352563e5c9b722e8ff64c32f95071541f87bc78b63dc6dd1475a68c4683b05e5618aaf55adfc3b007d7
+    postcss: ^8.4.29
+  checksum: d191c771344357a28995a2f53041ec699070331b8238e076001cedde97215bd3ebf596d0a9882b22c566977c4b72816dafc00028dc09153c6f97f71cd28a70f7
   languageName: node
   linkType: hard
 
