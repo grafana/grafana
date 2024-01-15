@@ -33,22 +33,6 @@ export function getPageStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       width: '100%',
       height: '100%',
-
-      // @PERCONA
-      // @PERCONA TODO check if it's still needed
-      // This adjusts our settings page
-      // &.vertical-content > .page-container.page-body {
-      //   @media (min-width: ${theme.breakpoints.values.lg}px) {
-      //     margin-left: auto;
-      //     width: 70%;
-      //   }
-
-      //   @media (min-width: ${maxWidthBreakpoint}px) {
-      //     margin-left: auto;
-      //     width: 50%;
-      //   }
-      // }
-      // }
     },
 
     '.page-container': {

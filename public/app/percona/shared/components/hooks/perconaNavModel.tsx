@@ -3,7 +3,6 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types';
 import { StoreState } from 'app/types/store';
 
-// @PERCONA_TODO figure out if needed
 export const usePerconaNavModel = (id: string): NavModel => {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const model = getNavModel(navIndex, id);

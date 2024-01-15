@@ -104,7 +104,6 @@ describe('Public dashboards', () => {
       });
   });
 
-  // @PERCONA TODO check if it should be disabled
   it('Disable a public dashboard', () => {
     // Opening a dashboard without template variables
     cy.intercept({

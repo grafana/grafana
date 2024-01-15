@@ -9,7 +9,6 @@ const alwaysMonoIcons: IconName[] = [
   'library-panel',
   'circle-mono',
   // @PERCONA
-  // @PERCONA TODO - move out of this file
   'percona-database',
   'percona-analytics',
   'percona-cluster',

@@ -90,7 +90,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     };
 
     // @PERCONA
-    // @PERCONA_TODO
     // TODO: check window.forceRefresh
     if (!external) {
       this.dashboard.snapshot.originalUrl = window.location.href;

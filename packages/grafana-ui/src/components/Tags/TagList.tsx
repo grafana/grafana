@@ -24,7 +24,6 @@ export interface Props {
   /** Icon to show next to tag label */
   icon?: IconName;
   /** @Percona */
-  // @PERCONA TODO - check if it's still needed
   /** Set same color for all tags */
   colorIndex?: number;
 }

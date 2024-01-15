@@ -21,7 +21,6 @@ const durationMap: { [key in Required<keyof Duration>]: string[] } = {
  * @public
  */
 export function intervalToAbbreviatedDurationString(interval: Interval, includeSeconds = true): string {
-  // @PERCONA todo - check if their fix is alright
   // An edge case that causes the app to crash (e.g. browser's clock behind the rule/alert date)
   // The code will again return a proper duration when the browser's clock >= rule/alert date
   if (isAfter(interval.start, interval.end)) {

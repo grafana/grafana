@@ -460,7 +460,6 @@ export const saveRuleFormAction = createAsyncThunk(
             identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
             // @PERCONA
-            // @PERCONA_TODO check
             // Added our type case
           } else if (type === RuleFormType.templated) {
             await AlertRulesService.create(formatCreateAPIPayload(values), undefined, true);

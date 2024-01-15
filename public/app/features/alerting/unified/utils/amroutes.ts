@@ -53,7 +53,6 @@ export const emptyRoute: FormAmRoute = {
   id: '',
   overrideGrouping: false,
   // @PERCONA
-  // @PERCONA_TODO
   groupBy: [],
   object_matchers: [],
   routes: [],
