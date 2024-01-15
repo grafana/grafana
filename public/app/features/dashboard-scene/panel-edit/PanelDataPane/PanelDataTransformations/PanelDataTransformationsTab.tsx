@@ -1,11 +1,10 @@
 import React from 'react';
 import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 
-import { IconName } from '@grafana/data';
+import { DataTransformerConfig, IconName } from '@grafana/data';
 import { SceneObjectBase, SceneComponentProps, SceneDataTransformer } from '@grafana/scenes';
 import { Container, CustomScrollbar } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
-import { TransformationsEditorTransformation } from 'app/features/dashboard/components/TransformationsEditor/types';
 
 import { VizPanelManager } from '../../VizPanelManager';
 import { PanelDataPaneTabState, PanelDataPaneTab } from '../types';
@@ -28,7 +27,12 @@ export class PanelDataTransformationsTab
   }
 
   getItemsCount() {
-    return null;
+    const dataProvider = this._panelManager.state.panel.state.$data;
+    if (dataProvider instanceof SceneDataTransformer) {
+      return dataProvider.state.transformations.length;
+    } else {
+      return 0;
+    }
   }
 
   constructor(panelManager: VizPanelManager) {
@@ -44,19 +48,22 @@ export class PanelDataTransformationsTab
 
 interface TransformationEditorProps {
   sceneDataTransformer: SceneDataTransformer;
+  onChange: (transformations: DataTransformerConfig[]) => void;
 }
 
 function TransformationsEditor(props: TransformationEditorProps) {
+  const { onChange } = props;
   const dataState = props.sceneDataTransformer.useState();
-  const transformationEditorRows: TransformationsEditorTransformation[] = [];
 
-  let i = 0; // Ids need to be unique for drag to change order to work
+  const transformations: DataTransformerConfig[] = [];
+
   for (const t of dataState.transformations) {
     if ('id' in t) {
-      transformationEditorRows.push({ id: `${i} - ${t.id}`, transformation: t });
-      i++;
+      transformations.push(t);
     }
   }
+
+  const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
 
   return (
     <DragDropContext onDragEnd={() => {}}>
@@ -65,8 +72,16 @@ function TransformationsEditor(props: TransformationEditorProps) {
           return (
             <div ref={provided.innerRef} {...provided.droppableProps}>
               <TransformationOperationRows
-                onChange={() => {}}
-                onRemove={() => {}}
+                onChange={(index, transformation) => {
+                  const newTransformations = transformations.slice();
+                  newTransformations[index] = transformation;
+                  onChange(newTransformations);
+                }}
+                onRemove={(index) => {
+                  const newTransformations = transformations.slice();
+                  newTransformations.splice(index);
+                  onChange(newTransformations);
+                }}
                 configs={transformationEditorRows}
                 data={{
                   series: dataState.data?.series || [],
@@ -98,7 +113,12 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         {dataState.transformations.length < 1 ? (
           <EmptyTransformationsMessage onShowPicker={() => {}}></EmptyTransformationsMessage>
         ) : (
-          <TransformationsEditor sceneDataTransformer={panelState.$data}></TransformationsEditor>
+          <TransformationsEditor
+            onChange={(transformations) => {
+              model.panelManager.changeTransformations(transformations);
+            }}
+            sceneDataTransformer={panelState.$data}
+          ></TransformationsEditor>
         )}
       </Container>
     </CustomScrollbar>
