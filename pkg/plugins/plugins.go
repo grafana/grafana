@@ -194,7 +194,7 @@ type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
 	ReqRole      org.RoleType    `json:"reqRole"`
-	ReqAction    string          `json:"reqAction"`
+	Action       string          `json:"reqAction"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
@@ -205,7 +205,7 @@ type Route struct {
 }
 
 func (r *Route) RequiresRBACAction() bool {
-	return r.ReqAction != ""
+	return r.Action != ""
 }
 
 // Header describes an HTTP header that is forwarded with
