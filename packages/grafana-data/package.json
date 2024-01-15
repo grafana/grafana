@@ -81,7 +81,7 @@
     "@types/react": "18.2.15",
     "@types/react-dom": "18.2.7",
     "@types/testing-library__jest-dom": "5.14.9",
-    "@types/tinycolor2": "1.4.3",
+    "@types/tinycolor2": "1.4.6",
     "esbuild": "0.18.12",
     "react": "18.2.0",
     "react-dom": "18.2.0",
