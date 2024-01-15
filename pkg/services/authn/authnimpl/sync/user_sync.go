@@ -399,7 +399,9 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.Name = usr.Name
 	identity.Login = usr.Login
 	identity.Email = usr.Email
-	identity.OrgID = usr.OrgID
+	if identity.OrgID == 0 {
+		identity.OrgID = usr.OrgID
+	}
 	identity.OrgName = usr.OrgName
 	identity.OrgRoles = map[int64]org.RoleType{identity.OrgID: usr.OrgRole}
 	identity.HelpFlags1 = usr.HelpFlags1
