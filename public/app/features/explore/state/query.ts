@@ -10,6 +10,7 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
+  dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
@@ -30,13 +31,14 @@ import {
   generateEmptyQuery,
   generateNewKeyAndAddRefIdIfMissing,
   getQueryKeys,
+  getTimeRange,
   hasNonEmptyQuery,
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
-import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
   createAsyncThunk,
@@ -53,7 +55,7 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { visualisationTypeKey } from '../Logs/utils/logs';
-import { decorateData } from '../utils/decorators';
+import { decorateData, mergeDataSeries } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -65,7 +67,13 @@ import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
-import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
+import {
+  createCacheKey,
+  filterLogRowsByIndex,
+  getCorrelationsData,
+  getDatasourceUIDs,
+  getResultsFromCache,
+} from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -501,17 +509,21 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
     dispatch(cancelQueries(exploreId));
 
-    dispatch(updateTime({ exploreId }));
-
+    const { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(
+      getState(),
+      exploreId
+    );
     const correlations$ = getCorrelations(exploreId);
+
+    dispatch(updateTime({ exploreId }));
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
     if (preserveCache !== true) {
       dispatch(clearCache(exploreId));
     }
 
-    const exploreItemState = getState().explore.panes[exploreId]!;
-
+    const exploreState = getState();
+    const exploreItemState = exploreState.explore.panes[exploreId]!;
     const {
       datasourceInstance,
       containerWidth,
@@ -524,14 +536,8 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       absoluteRange,
       cache,
       supplementaryQueries,
-      correlationEditorHelperData,
     } = exploreItemState;
-    const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
-    const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
-    const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
-    const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
-    const interpolateCorrelationHelperVars =
-      isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
+
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
@@ -590,13 +596,6 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         maxDataPoints: containerWidth,
         liveStreaming: live,
       };
-
-      let scopedVars: ScopedVars = {};
-      if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
-        Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
-          scopedVars[variable[0]] = { value: variable[1] };
-        });
-      }
 
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(
@@ -699,6 +698,87 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySubscription }));
+  }
+);
+
+interface RunLoadMoreLogsQueriesOptions {
+  exploreId: string;
+  absoluteRange: AbsoluteTimeRange;
+}
+/**
+ * Dedicated action to run log queries requesting more results.
+ */
+export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQueriesOptions>(
+  'explore/runLoadMoreQueries',
+  async ({ exploreId, absoluteRange }, { dispatch, getState }) => {
+    dispatch(cancelQueries(exploreId));
+
+    const { datasourceInstance, containerWidth, queryResponse } = getState().explore.panes[exploreId]!;
+    const { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(
+      getState(),
+      exploreId
+    );
+    const correlations$ = getCorrelations(exploreId);
+
+    let newQuerySource: Observable<ExplorePanelData>;
+
+    const logQueries = queryResponse.logsResult?.queries || [];
+    const queries = logQueries.map((query: DataQuery) => ({
+      ...query,
+      datasource: query.datasource || datasourceInstance?.getRef(),
+    }));
+
+    if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
+      return;
+    }
+
+    const queryOptions: QueryOptions = {
+      minInterval: datasourceInstance?.interval,
+      maxDataPoints: containerWidth,
+    };
+
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRange(
+      timeZone,
+      {
+        from: dateTimeForTimeZone(timeZone, absoluteRange.from),
+        to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+      },
+      getFiscalYearStartMonth(getState().user)
+    );
+    const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, false, timeZone, scopedVars);
+
+    dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
+
+    newQuerySource = combineLatest([runRequest(datasourceInstance, transaction.request), correlations$]).pipe(
+      mergeMap(([data, correlations]) =>
+        decorateData(
+          // Query splitting, otherwise duplicates results
+          data.state === LoadingState.Done ? mergeDataSeries(queryResponse, data) : data,
+          queryResponse,
+          absoluteRange,
+          undefined,
+          queries,
+          correlations,
+          showCorrelationEditorLinks,
+          defaultCorrelationEditorDatasource
+        )
+      )
+    );
+
+    newQuerySource.subscribe({
+      next(data) {
+        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+      },
+      error(error) {
+        dispatch(notifyApp(createErrorNotification('Query processing error', error)));
+        dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
+        console.error(error);
+      },
+      complete() {
+        dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
+      },
+    });
   }
 );
 

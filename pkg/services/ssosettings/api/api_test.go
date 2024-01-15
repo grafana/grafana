@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -248,6 +249,119 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
+	type TestCase struct {
+		desc                string
+		key                 string
+		action              string
+		scope               string
+		expectedResult      *models.SSOSettings
+		expectedError       error
+		expectedServiceCall bool
+		expectedStatusCode  int
+	}
+
+	tests := []TestCase{
+		{
+			desc:   "successfully gets SSO settings",
+			key:    "azuread",
+			action: "settings:read",
+			scope:  "settings:auth.azuread:*",
+			expectedResult: &models.SSOSettings{
+				ID:        "1",
+				Provider:  "azuread",
+				Settings:  make(map[string]interface{}),
+				Created:   time.Now(),
+				Updated:   time.Now(),
+				IsDeleted: false,
+				Source:    models.DB,
+			},
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusOK,
+		},
+		{
+			desc:                "fails when action doesn't match",
+			key:                 "azuread",
+			action:              "settings:write",
+			scope:               "settings:auth.azuread:*",
+			expectedResult:      nil,
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails when scope doesn't match",
+			key:                 "azuread",
+			action:              "settings:read",
+			scope:               "settings:auth.azuread:write",
+			expectedResult:      nil,
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails when scope contains another provider",
+			key:                 "azuread",
+			action:              "settings:read",
+			scope:               "settings:auth.github:*",
+			expectedResult:      nil,
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails with not found when key was not found",
+			key:                 "nonexistant",
+			action:              "settings:read",
+			scope:               "settings:auth.nonexistant:*",
+			expectedResult:      nil,
+			expectedError:       ssosettings.ErrNotFound,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusNotFound,
+		},
+		{
+			desc:                "fails with internal server error when service returns an error",
+			key:                 "azuread",
+			action:              "settings:read",
+			scope:               "settings:auth.azuread:*",
+			expectedResult:      nil,
+			expectedError:       errors.New("something went wrong"),
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service := ssosettingstests.NewMockService(t)
+			if tt.expectedServiceCall {
+				service.On("GetForProviderWithRedactedSecrets", mock.AnythingOfType("*context.valueCtx"), tt.key).Return(tt.expectedResult, tt.expectedError).Once()
+			}
+			server := setupTests(t, service)
+
+			path := fmt.Sprintf("/api/v1/sso-settings/%s", tt.key)
+			req := server.NewRequest(http.MethodGet, path, nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+				OrgRole:     org.RoleEditor,
+				OrgID:       1,
+				Permissions: getPermissionsForActionAndScope(tt.action, tt.scope),
+			})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
+
+			if tt.expectedError == nil {
+				var data models.SSOSettings
+				require.NoError(t, json.NewDecoder(res.Body).Decode(&data))
+			}
+
 			require.NoError(t, res.Body.Close())
 		})
 	}

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Space } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Text, Box, Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { Trans, t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -37,6 +37,7 @@ export type Props = {
   resource: string;
   resourceId: ResourceId;
   canSetPermissions: boolean;
+  getWarnings?: (items: ResourcePermission[]) => ResourcePermission[];
 };
 
 export const Permissions = ({
@@ -47,15 +48,20 @@ export const Permissions = ({
   resourceId,
   canSetPermissions,
   addPermissionTitle,
+  getWarnings,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
 
-  const fetchItems = useCallback(() => {
-    return getPermissions(resource, resourceId).then((r) => setItems(r));
-  }, [resource, resourceId]);
+  const fetchItems = useCallback(async () => {
+    let items = await getPermissions(resource, resourceId);
+    if (getWarnings) {
+      items = getWarnings(items);
+    }
+    setItems(items);
+  }, [resource, resourceId, getWarnings]);
 
   useEffect(() => {
     getDescription(resource).then((r) => {
@@ -191,13 +197,9 @@ export const Permissions = ({
         </>
       )}
       {items.length === 0 && (
-        <table className="filter-table gf-form-group">
-          <tbody>
-            <tr>
-              <th>{emptyLabel}</th>
-            </tr>
-          </tbody>
-        </table>
+        <Box>
+          <Text>{emptyLabel}</Text>
+        </Box>
       )}
       <PermissionList
         title={titleRole}

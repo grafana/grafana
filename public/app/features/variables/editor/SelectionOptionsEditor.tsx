@@ -3,12 +3,12 @@ import React, { ChangeEvent, FormEvent, useCallback } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { VerticalGroup } from '@grafana/ui';
 
+import { VariableCheckboxField } from '../../dashboard-scene/settings/variables/components/VariableCheckboxField';
+import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
 import { KeyedVariableIdentifier } from '../state/types';
 import { VariableWithMultiSupport } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { VariableCheckboxField } from './VariableCheckboxField';
-import { VariableTextField } from './VariableTextField';
 import { VariableEditorProps } from './types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>

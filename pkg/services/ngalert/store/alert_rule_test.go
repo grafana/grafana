@@ -342,6 +342,8 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID)
 	createFolder(t, store, rule2.NamespaceUID, rule2.Title, rule2.OrgID)
 
+	createFolder(t, store, rule2.NamespaceUID, "same UID folder", generator().OrgID) // create a folder with the same UID but in the different org
+
 	tc := []struct {
 		name         string
 		rules        []string

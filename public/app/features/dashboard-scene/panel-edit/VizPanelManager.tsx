@@ -1,5 +1,4 @@
 import React from 'react';
-import { Unsubscribable } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -20,8 +19,6 @@ import {
   SceneComponentProps,
   sceneUtils,
   DeepPartial,
-  SceneObjectRef,
-  SceneObject,
   SceneQueryRunner,
   sceneGraph,
   SceneDataTransformer,
@@ -32,14 +29,13 @@ import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
+import { DASHBOARD_DATASOURCE_PLUGIN_ID, DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { ShareQueryDataProvider, findObjectInScene } from '../scene/ShareQueryDataProvider';
-import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../utils/utils';
+import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
 interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -60,57 +56,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
   > = {};
 
-  private _dataObjectSubscription: Unsubscribable | undefined;
-
-  public constructor(panel: VizPanel, dashboardRef: SceneObjectRef<DashboardScene>) {
+  public constructor(panel: VizPanel) {
     super({ panel });
-
-    /**
-     * If the panel uses a shared query, we clone the source runner and attach it as a data provider for the shared one.
-     * This way the source panel does not to be present in the edit scene hierarchy.
-     */
-    if (panel.state.$data instanceof ShareQueryDataProvider) {
-      const sharedProvider = panel.state.$data;
-      if (sharedProvider.state.query.panelId) {
-        const keyToFind = getVizPanelKeyForPanelId(sharedProvider.state.query.panelId);
-        const source = findObjectInScene(dashboardRef.resolve(), (scene: SceneObject) => scene.state.key === keyToFind);
-        if (source) {
-          sharedProvider.setState({
-            $data: source.state.$data!.clone(),
-          });
-        }
-      }
-    }
 
     this.addActivationHandler(() => this._onActivate());
   }
 
   private _onActivate() {
-    this.setupDataObjectSubscription();
-
     this.loadDataSource();
-
-    return () => {
-      this._dataObjectSubscription?.unsubscribe();
-    };
-  }
-
-  /**
-   * The subscription is updated whenever the data source type is changed so that we can update manager's stored
-   * data source and data source instance settings, which are needed for the query options and editors
-   */
-  private setupDataObjectSubscription() {
-    const runner = this.queryRunner;
-
-    if (this._dataObjectSubscription) {
-      this._dataObjectSubscription.unsubscribe();
-    }
-
-    this._dataObjectSubscription = runner.subscribeToState((n, p) => {
-      if (n.datasource !== p.datasource) {
-        this.loadDataSource();
-      }
-    });
   }
 
   private async loadDataSource() {
@@ -207,7 +160,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     this.setState({ panel: newPanel });
-    this.setupDataObjectSubscription();
   }
 
   public async changePanelDataSource(
@@ -249,8 +201,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           },
         });
         panel.setState({ $data: sharedProvider });
-        this.setupDataObjectSubscription();
-        this.loadDataSource();
       } else {
         dataObj.setState({
           datasource: {
@@ -272,8 +222,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         queries,
       });
       panel.setState({ $data: dataProvider });
-      this.setupDataObjectSubscription();
-      this.loadDataSource();
     } else if (dataObj instanceof SceneDataTransformer) {
       const data = dataObj.clone();
 
@@ -304,10 +252,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
 
       panel.setState({ $data: data });
-
-      this.setupDataObjectSubscription();
-      this.loadDataSource();
     }
+    this.loadDataSource();
   }
 
   public changeQueryOptions(options: QueryGroupOptions) {
@@ -346,10 +292,20 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     dataObj.runQueries();
   }
 
-  public changeQueries(queries: DataQuery[]) {
-    const dataObj = this.queryRunner;
-    dataObj.setState({ queries });
-    // TODO: Handle dashboard query
+  public changeQueries<T extends DataQuery>(queries: T[]) {
+    const dataObj = this.state.panel.state.$data;
+    const runner = this.queryRunner;
+
+    if (dataObj instanceof ShareQueryDataProvider && queries.length > 0) {
+      const dashboardQuery = queries[0] as DashboardQuery;
+      if (dashboardQuery.panelId) {
+        dataObj.setState({
+          query: dashboardQuery,
+        });
+      }
+    } else {
+      runner.setState({ queries });
+    }
   }
 
   public inspectPanel() {
@@ -374,5 +330,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     return dataObj as SceneQueryRunner;
+  }
+
+  get panelData(): SceneDataProvider {
+    return this.state.panel.state.$data!;
   }
 }

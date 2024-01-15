@@ -6,6 +6,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 
 import { contextSrv } from '../../../core/core';
 import { AccessControlAction } from '../../../types';
+import { isSharedWithMe } from '../components/utils';
 
 export const PAGE_SIZE = 50;
 
@@ -36,7 +37,7 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
-    url: `/dashboards/f/${item.uid}/`,
+    url: isSharedWithMe(item.uid) ? undefined : `/dashboards/f/${item.uid}/`,
   }));
 }
 

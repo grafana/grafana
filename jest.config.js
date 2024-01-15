@@ -12,6 +12,7 @@ const esModules = [
   'internmap',
   'robust-predicates',
   'leven',
+  'nanoid',
 ].join('|');
 
 module.exports = {
