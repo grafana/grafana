@@ -151,7 +151,7 @@
     "@types/tinycolor2": "1.4.6",
     "@types/uuid": "9.0.2",
     "@types/webpack-assets-manifest": "^5",
-    "@types/yargs": "17.0.24",
+    "@types/yargs": "17.0.32",
     "@typescript-eslint/eslint-plugin": "6.18.1",
     "@typescript-eslint/parser": "6.18.1",
     "autoprefixer": "10.4.14",
