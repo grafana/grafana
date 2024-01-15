@@ -69,7 +69,7 @@
     "@types/lodash": "4.14.202",
     "@types/react": "18.2.15",
     "@types/react-virtualized-auto-sizer": "1.0.1",
-    "@types/tinycolor2": "1.4.3",
+    "@types/tinycolor2": "1.4.6",
     "babel-jest": "29.7.0",
     "jest": "^29.6.4",
     "jest-canvas-mock": "2.5.2",
