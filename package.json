@@ -204,7 +204,7 @@
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
     "postcss": "8.4.33",
-    "postcss-loader": "7.3.3",
+    "postcss-loader": "7.3.4",
     "postcss-reporter": "7.0.5",
     "postcss-scss": "4.0.6",
     "prettier": "3.0.0",
