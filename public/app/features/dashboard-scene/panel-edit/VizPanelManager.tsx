@@ -19,7 +19,6 @@ import {
   DeepPartial,
   SceneQueryRunner,
   sceneGraph,
-  SceneDataTransformer,
   SceneDataProvider,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
