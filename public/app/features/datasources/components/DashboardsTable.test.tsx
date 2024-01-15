@@ -24,7 +24,7 @@ describe('DashboardsTable', () => {
   beforeEach(() => {
     mockDashboard = {
       dashboardId: 0,
-      description: '',      
+      description: '',
       imported: false,
       importedRevision: 0,
       importedUri: '',

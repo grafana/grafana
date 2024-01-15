@@ -2,7 +2,7 @@ import { PanelPlugin, PluginError, PluginMeta } from '@grafana/data';
 
 export interface PluginDashboard {
   dashboardId: number;
-  description: string;  
+  description: string;
   imported: boolean;
   importedRevision: number;
   importedUri: string;
