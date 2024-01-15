@@ -3601,7 +3601,7 @@ __metadata:
     rc-drawer: "npm:6.5.2"
     rc-slider: "npm:10.3.1"
     rc-time-picker: "npm:^3.7.3"
-    rc-tooltip: "npm:6.1.1"
+    rc-tooltip: "npm:6.1.3"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
     react-calendar: "npm:4.6.0"
@@ -5812,9 +5812,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/trigger@npm:^1.17.0, @rc-component/trigger@npm:^1.5.0":
-  version: 1.17.1
-  resolution: "@rc-component/trigger@npm:1.17.1"
+"@rc-component/trigger@npm:^1.18.0, @rc-component/trigger@npm:^1.5.0":
+  version: 1.18.2
+  resolution: "@rc-component/trigger@npm:1.18.2"
   dependencies:
     "@babel/runtime": "npm:^7.23.2"
     "@rc-component/portal": "npm:^1.1.0"
@@ -5825,7 +5825,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: e85ff0c35700e75919118bf37acd3cb5e39e10133a281c264b36043e48e8af5500b5512ce74023096409b13b6b6d7439141d11b5eac67ae5438cb07814bbcd0e
+  checksum: 920cf00157a2705606d3852ccbc9736e20e3869559b187dd65b2021bcd187470bd7157ae12de14e8bb91660a8dc5ad78a00929a8e493fddc414f264153d1ac43
   languageName: node
   linkType: hard
 
@@ -24404,17 +24404,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tooltip@npm:6.1.1":
-  version: 6.1.1
-  resolution: "rc-tooltip@npm:6.1.1"
+"rc-tooltip@npm:6.1.3":
+  version: 6.1.3
+  resolution: "rc-tooltip@npm:6.1.3"
   dependencies:
     "@babel/runtime": "npm:^7.11.2"
-    "@rc-component/trigger": "npm:^1.17.0"
+    "@rc-component/trigger": "npm:^1.18.0"
     classnames: "npm:^2.3.1"
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 58dc188d580ad1754da05e4ac01b1fe3c3fccf6019f048c7294d6e0fbe98592bfdb2c47e0f37bb11b863408f0eecec2781b91d5ff813efc1683bfd2624fe8033
+  checksum: cf98afe8ad44d5fa9e68ba33e58a763d63a66239c947a2a4ef90bd74ec480466ed876bb2c29b9e1203ff35e728f2b641aa8067fcbfd21fdbbb37b1a7b13d55dc
   languageName: node
   linkType: hard
 
