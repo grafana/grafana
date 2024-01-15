@@ -52,16 +52,15 @@ export const WindowOptionsEditor = (props: {
     });
   };
 
-  const onWindowSizeModeChange = (val: string) => {
-    const mode = val as WindowSizeMode;
+  const onWindowSizeModeChange = (val: WindowSizeMode) => {
     updateWindowOptions({
       ...window!,
       windowSize: window?.windowSize
-        ? mode === WindowSizeMode.Percentage
+        ? val === WindowSizeMode.Percentage
           ? window!.windowSize! / 100
           : window!.windowSize! * 100
         : undefined,
-      windowSizeMode: mode,
+      windowSizeMode: val,
     });
   };
 
@@ -71,10 +70,10 @@ export const WindowOptionsEditor = (props: {
     updateWindowOptions({ ...window, reducer });
   };
 
-  const onTypeChange = (val: string) => {
+  const onTypeChange = (val: WindowAlignment) => {
     updateWindowOptions({
       ...window!,
-      windowAlignment: val as WindowAlignment,
+      windowAlignment: val,
     });
   };
 
