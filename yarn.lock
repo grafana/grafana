@@ -9339,10 +9339,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/trusted-types@npm:*, @types/trusted-types@npm:2.0.3":
-  version: 2.0.3
-  resolution: "@types/trusted-types@npm:2.0.3"
-  checksum: 4794804bc4a4a173d589841b6d26cf455ff5dc4f3e704e847de7d65d215f2e7043d8757e4741ce3a823af3f08260a8d04a1a6e9c5ec9b20b7b04586956a6b005
+"@types/trusted-types@npm:*, @types/trusted-types@npm:2.0.7":
+  version: 2.0.7
+  resolution: "@types/trusted-types@npm:2.0.7"
+  checksum: 8e4202766a65877efcf5d5a41b7dd458480b36195e580a3b1085ad21e948bc417d55d6f8af1fd2a7ad008015d4117d5fdfe432731157da3c68678487174e4ba3
   languageName: node
   linkType: hard
 
@@ -17148,7 +17148,7 @@ __metadata:
     "@types/systemjs": "npm:6.13.1"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
-    "@types/trusted-types": "npm:2.0.3"
+    "@types/trusted-types": "npm:2.0.7"
     "@types/uuid": "npm:9.0.2"
     "@types/webpack-assets-manifest": "npm:^5"
     "@types/webpack-env": "npm:1.18.1"
