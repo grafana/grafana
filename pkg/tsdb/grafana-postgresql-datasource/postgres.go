@@ -105,7 +105,8 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 			driverName, err = createPostgresProxyDriver(cnnstr, proxyOpts)
 			if err != nil {
-				return "", nil
+				logger.Error("postgres proxy creation failed", "error", err)
+				return nil, fmt.Errorf("postgres proxy creation failed")
 			}
 		}
 
