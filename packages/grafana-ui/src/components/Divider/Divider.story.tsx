@@ -14,11 +14,11 @@ const meta: Meta<typeof Divider> = {
   },
 };
 
-export const Basic: StoryFn<typeof Divider> = ({ direction, spacing }) => {
+export const Basic: StoryFn<typeof Divider> = ({ direction, spacing, showLine }) => {
   return (
     <div style={{ display: direction === 'vertical' ? 'flex' : 'block', flexDirection: 'row', height: '50px' }}>
       <div>My text here</div>
-      <Divider direction={direction} spacing={spacing} />
+      <Divider direction={direction} spacing={spacing} showLine={showLine} />
       <div>My text here</div>
     </div>
   );
