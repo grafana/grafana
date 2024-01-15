@@ -20,7 +20,6 @@ trigger = {
         "exclude": [
             "*.md",
             "docs/**",
-            "latest.json",
         ],
         "include": ["scripts/**/*.sh"],
     },
