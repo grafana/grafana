@@ -24,6 +24,7 @@ docs_paths = {
         "*.md",
         "docs/**",
         "packages/**/*.md",
+        "latest.json",
     ],
 }
 

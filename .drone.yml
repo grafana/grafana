@@ -744,6 +744,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -1079,6 +1080,7 @@ trigger:
     - '*.md'
     - docs/**
     - packages/**/*.md
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -1122,6 +1124,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
     include:
     - scripts/**/*.sh
 type: docker
@@ -1433,6 +1436,7 @@ trigger:
     - '*.md'
     - docs/**
     - packages/**/*.md
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -1489,6 +1493,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -1556,6 +1561,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -1634,6 +1640,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -1707,6 +1714,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -2106,6 +2114,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -2335,6 +2344,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -2389,6 +2399,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -2434,6 +2445,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana-security-mirror
 type: docker
@@ -2474,6 +2486,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
   repo:
   - grafana/grafana
   status:
@@ -2874,6 +2887,7 @@ trigger:
     - '*.md'
     - docs/**
     - packages/**/*.md
+    - latest.json
   repo:
   - grafana/grafana
 type: docker
@@ -4717,6 +4731,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e3875bd413d1eb9f9446b87eaee2d917d1548c4476e3047f09adc242ddf5868e
+hmac: 0fb0bf8e3d7ea206f4e58a70ae01017d1e113a1241e78da7dd38d25f894ec04d
 
 ...

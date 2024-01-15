@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const grafanaStableVersionURL = "https://grafana.com/api/grafana/versions/stable"
+const grafanaLatestJSONURL = "https://raw.githubusercontent.com/grafana/grafana/main/latest.json"
 
 type GrafanaService struct {
 	hasUpdate     bool
@@ -92,13 +92,13 @@ func (s *GrafanaService) instrumentedCheckForUpdates(ctx context.Context) {
 func (s *GrafanaService) checkForUpdates(ctx context.Context) error {
 	ctxLogger := s.log.FromContext(ctx)
 	ctxLogger.Debug("Checking for updates")
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, grafanaStableVersionURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, grafanaLatestJSONURL, nil)
 	if err != nil {
 		return err
 	}
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to get stable version from grafana.com: %w", err)
+		return fmt.Errorf("failed to get latest.json repo from github.com: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -107,24 +107,27 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) error {
 	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("update check failed, reading response from grafana.com: %w", err)
+		return fmt.Errorf("update check failed, reading response from github.com: %w", err)
 	}
 
-	type grafanaVersionJSON struct {
-		Version string `json:"version"`
+	type latestJSON struct {
+		Stable  string `json:"stable"`
+		Testing string `json:"testing"`
 	}
-	var latest grafanaVersionJSON
+	var latest latestJSON
 	err = json.Unmarshal(body, &latest)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal response from grafana.com: %w", err)
+		return fmt.Errorf("failed to unmarshal latest.json: %w", err)
 	}
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	// only check for updates in stable versions
-	if !strings.Contains(s.grafanaVersion, "-") {
-		s.latestVersion = latest.Version
-		s.hasUpdate = latest.Version != s.grafanaVersion
+	if strings.Contains(s.grafanaVersion, "-") {
+		s.latestVersion = latest.Testing
+		s.hasUpdate = !strings.HasPrefix(s.grafanaVersion, latest.Testing)
+	} else {
+		s.latestVersion = latest.Stable
+		s.hasUpdate = latest.Stable != s.grafanaVersion
 	}
 
 	currVersion, err1 := version.NewVersion(s.grafanaVersion)

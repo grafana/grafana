@@ -55,6 +55,7 @@ trigger = {
         "exclude": [
             "*.md",
             "docs/**",
+            "latest.json",
         ],
     },
     "repo": [
