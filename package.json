@@ -331,7 +331,7 @@
     "i18next": "^22.0.0",
     "i18next-browser-languagedetector": "^7.0.2",
     "immer": "10.0.3",
-    "immutable": "4.3.1",
+    "immutable": "4.3.4",
     "jquery": "3.7.0",
     "js-yaml": "^4.1.0",
     "json-markup": "^1.1.0",
