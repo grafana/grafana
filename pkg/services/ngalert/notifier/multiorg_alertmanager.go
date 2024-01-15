@@ -298,10 +298,10 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		}
 
 		// Store the float64 representation of the configuration hash in the gauge.
-		hash := float64(binary.LittleEndian.Uint64([]byte(dbConfig.ConfigurationHash)))
-		moa.metrics.ConfigurationHash.WithLabelValues(strconv.FormatInt(orgID, 10)).Set(hash)
+		metricHash := hashToFloat64([]byte(dbConfig.ConfigurationHash))
+		moa.metrics.ConfigurationHash.WithLabelValues(strconv.FormatInt(orgID, 10)).Set(metricHash)
 
-		// MaMapp the new Alertmanager to the org.
+		// Map the new Alertmanager to the org.
 		moa.alertmanagers[orgID] = alertmanager
 	}
 
@@ -437,3 +437,19 @@ func (p *NilPeer) AddState(string, alertingCluster.State, prometheus.Registerer)
 type NilChannel struct{}
 
 func (c *NilChannel) Broadcast([]byte) {}
+
+func hashToFloat64(hash []byte) float64 {
+	// binary.LittleEndian.Uint64 expects a slice of 8 bytes.
+	bytes := make([]byte, 8)
+
+	// We only want 6 bytes as a float64 only has a 53 bit mantissa,
+	// we'll pad the rest with 0s.
+	for i := 0; i < 6; i++ {
+		if i == len(hash) { // avoid panics
+			break
+		}
+		bytes[i] = hash[i]
+	}
+
+	return float64(binary.LittleEndian.Uint64(bytes))
+}
