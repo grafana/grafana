@@ -1,3 +1,5 @@
+name: Build and release core plugins
+
 on:
   workflow_dispatch:
     inputs:
@@ -61,7 +63,12 @@ jobs:
         shell: bash
         id: get_dir
         run: |
-          dir=$(find public/app/plugins -name ${{ inputs.plugin_id }} -print -quit)
+          dir=$(dirname \
+            $(egrep -lir --include=plugin.json --exclude-dir=dist \
+              '"id": "${{ inputs.plugin_id }}"' \
+              public/app/plugins \
+            ) \
+          )
           echo "dir=${dir}" >> $GITHUB_OUTPUT
       - name: Install frontend dependencies
         shell: bash
