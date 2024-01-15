@@ -47,10 +47,10 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		var err error
 		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
-		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
+		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "general", true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
-		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod")
+		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "general", false, "prod")
 		insertTestRule(t, sqlStore, savedFolder.OrgID, savedFolder.UID)
 	}
 
@@ -473,7 +473,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		count, err := dashboardStore.CountDashboardsInFolder(
 			context.Background(),
 			// nolint:staticcheck
-			&dashboards.CountDashboardsInFolderRequest{FolderUID: "myDashboard", OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUID: "general", OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
