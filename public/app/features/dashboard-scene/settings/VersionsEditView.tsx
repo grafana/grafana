@@ -253,7 +253,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   );
 }
 
-export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
+const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
   <HorizontalGroup>
     <Spinner />
     <em>{msg}</em>
