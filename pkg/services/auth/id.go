@@ -20,7 +20,7 @@ type IDSigner interface {
 
 type IDClaims struct {
 	jwt.Claims
-	AuthenticatedBy string `json:"authenticatedBy"`
+	Extra map[string]any
 }
 
 const settingsKey = "forwardGrafanaIdToken"

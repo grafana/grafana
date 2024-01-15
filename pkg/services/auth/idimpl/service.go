@@ -78,16 +78,8 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		s.metrics.tokenSigningCounter.Inc()
 		s.logger.FromContext(ctx).Debug("Sign new id token", "namespace", namespace, "id", identifier)
 
-		claims := &auth.IDClaims{}
-
-		if identity.IsNamespace(namespace, identity.NamespaceUser) {
-			if err := s.setUserClaims(ctx, identifier, claims); err != nil {
-				return "", err
-			}
-		}
-
 		now := time.Now()
-		token, err := s.signer.SignIDToken(ctx, &auth.IDClaims{
+		claims := &auth.IDClaims{
 			Claims: jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
@@ -95,8 +87,15 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
 			},
-		})
+		}
 
+		if identity.IsNamespace(namespace, identity.NamespaceUser) {
+			if err := s.setUserClaims(ctx, identifier, claims); err != nil {
+				return "", err
+			}
+		}
+
+		token, err := s.signer.SignIDToken(ctx, claims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
 			return "", err
@@ -132,7 +131,13 @@ func (s *Service) setUserClaims(ctx context.Context, identifier string, claims *
 		s.logger.FromContext(ctx).Error("Failed to fetch auth info", "userId", id, "error", err)
 	}
 
-	claims.AuthenticatedBy = info.AuthModule
+	claims.Extra = map[string]any{}
+
+	if err != nil {
+		return nil
+	}
+
+	claims.Extra["authenticatedBy"] = info.AuthModule
 	return nil
 }
 
