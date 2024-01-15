@@ -3,10 +3,9 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { RevertDashboardModal } from 'app/features/dashboard/components/VersionHistory/RevertDashboardModal';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
-
-import { RevertDashboardModal } from './RevertDashboardModal';
 
 type VersionsTableProps = {
   versions: DecoratedRevisionModel[];
