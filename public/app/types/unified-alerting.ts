@@ -89,13 +89,13 @@ export interface RulesSourceResult {
 export type RulesSource = DataSourceInstanceSettings | 'grafana';
 
 // combined prom and ruler result
-export interface CombinedRule<T = RulerRuleDTO, U = Rule> {
+export interface CombinedRule {
   name: string;
   query: string;
   labels: Labels;
   annotations: Annotations;
-  promRule?: U;
-  rulerRule?: T;
+  promRule?: Rule;
+  rulerRule?: RulerRuleDTO;
   group: CombinedRuleGroup;
   namespace: CombinedRuleNamespace;
   instanceTotals: AlertInstanceTotals;

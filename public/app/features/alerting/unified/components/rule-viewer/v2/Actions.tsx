@@ -59,7 +59,7 @@ export const useAlertRulePageActions = ({ handleDelete, handleDuplicateRule }: P
             />
           )}
           {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
-          {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule} />}
+          {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
           <Menu.Divider />
           <Menu.Item label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />
           {canExport && (
