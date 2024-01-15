@@ -14,14 +14,15 @@ type ExtraConfig struct {
 }
 
 type Config struct {
-	Aggregator *aggregatorapiserver.Config
+	Aggregator    *aggregatorapiserver.Config
+	ApiExtensions *apiextensionsapiserver.Config
+
+	AggregatorComplete    aggregatorapiserver.CompletedConfig
+	ApiExtensionsComplete apiextensionsapiserver.CompletedConfig
 
 	recommendedOptions *options.RecommendedOptions
-
-	sharedConfig  *genericapiserver.RecommendedConfig
-	apiExtensions *apiextensionsapiserver.Config
-
-	extraConfig *ExtraConfig
+	SharedConfig       *genericapiserver.RecommendedConfig
+	extraConfig        *ExtraConfig
 }
 
 func (c *Config) AddFlags(fs *pflag.FlagSet) {
@@ -30,6 +31,15 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	}
 
 	c.recommendedOptions.AddFlags(fs)
+}
+
+func (c *Config) Complete() {
+	if c == nil {
+		return
+	}
+
+	c.AggregatorComplete = c.Aggregator.Complete()
+	c.ApiExtensionsComplete = c.ApiExtensions.Complete()
 }
 
 func (ec *ExtraConfig) AddFlags(fs *pflag.FlagSet) {

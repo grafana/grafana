@@ -30,8 +30,9 @@ import (
 	"k8s.io/apiserver/pkg/server/options"
 	apiserver "k8s.io/kube-aggregator/pkg/controllers/status"
 
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
-	apiextensionsoptions "k8s.io/apiextensions-apiserver/pkg/cmd/server/options"
+	apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -50,7 +51,7 @@ import (
 	"k8s.io/klog/v2"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
-	"k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
+	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	apiregistrationclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
@@ -69,6 +70,7 @@ type AggregatorServerOptions struct {
 	serviceResolver ServiceResolver
 
 	sharedInformerFactory informersv0alpha1.SharedInformerFactory
+	apiExtensionInformers apiextensionsinformers.SharedInformerFactory
 
 	StdOut io.Writer
 	StdErr io.Writer
@@ -116,11 +118,11 @@ func NewAggregatorServerOptions(out, errOut io.Writer,
 		sharedInformerFactory: sharedInformerFactory,
 		serviceResolver:       serviceResolver,
 		Config: &Config{
-			Aggregator: aggregatorConfig,
+			Aggregator:    aggregatorConfig,
+			ApiExtensions: extensionsConfig,
 
-			sharedConfig:  sharedConfig,
-			extraConfig:   extraConfig,
-			apiExtensions: extensionsConfig,
+			SharedConfig: sharedConfig,
+			extraConfig:  extraConfig,
 		},
 	}, nil
 }
@@ -251,15 +253,24 @@ func initApiExtensionsConfig(options *options.RecommendedOptions,
 	// of changes to StorageConfig as that may lead to unexpected behavior when the options are applied.
 	etcdOptions := *options.Etcd
 	// this is where the true decodable levels come from.
-	etcdOptions.StorageConfig.Codec = apiextensionsapiserver.Codecs.LegacyCodec(v1beta1.SchemeGroupVersion, v1.SchemeGroupVersion)
+	etcdOptions.StorageConfig.Codec = apiextensionsapiserver.Codecs.LegacyCodec(apiextensionsv1beta1.SchemeGroupVersion, v1.SchemeGroupVersion)
 	// prefer the more compact serialization (v1beta1) for storage until https://issue.k8s.io/82292 is resolved for objects whose v1 serialization is too big but whose v1beta1 serialization can be stored
-	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(v1beta1.SchemeGroupVersion, schema.GroupKind{Group: v1beta1.GroupName})
+	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(apiextensionsv1beta1.SchemeGroupVersion, schema.GroupKind{Group: apiextensionsv1beta1.GroupName})
 	etcdOptions.SkipHealthEndpoints = true // avoid double wiring of health checks
 	if err := etcdOptions.ApplyTo(&genericConfig); err != nil {
 		return nil, err
 	}
 
-	restOptionsGetter := apiextensionsoptions.NewCRDRESTOptionsGetter(etcdOptions, genericConfig.ResourceTransformers, genericConfig.StorageObjectCountTracker)
+	restOptionsGetter := filestorage.NewRESTOptionsGetter("/tmp/grafana.apiextensionsserver", etcdOptions.StorageConfig)
+	genericConfig.RESTOptionsGetter = restOptionsGetter
+	// := apiextensionsoptions.NewCRDRESTOptionsGetter(etcdOptions, genericConfig.ResourceTransformers, genericConfig.StorageObjectCountTracker)
+
+	// override MergedResourceConfig with apiextensions defaults and registry
+	mergedResourceConfig, err := resourceconfig.MergeAPIResourceConfigs(apiextensionsapiserver.DefaultAPIResourceConfigSource(), nil, apiextensionsapiserver.Scheme)
+	if err != nil {
+		return nil, err
+	}
+	genericConfig.MergedResourceConfig = mergedResourceConfig
 
 	apiextensionsConfig := &apiextensionsapiserver.Config{
 		GenericConfig: &genericapiserver.RecommendedConfig{
@@ -308,7 +319,7 @@ func initAggregatorConfig(options *options.RecommendedOptions,
 		}
 	}
 
-	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme)
+	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme, apiextensionsapiserver.Scheme)
 	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(getOpenAPIDefinitionsFunc(), namer)
 	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
 	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(getOpenAPIDefinitionsFunc(), namer)
@@ -327,12 +338,11 @@ func initAggregatorConfig(options *options.RecommendedOptions,
 	// of changes to StorageConfig as that may lead to unexpected behavior when the options are applied.
 	etcdOptions := *options.Etcd
 	etcdOptions.StorageConfig.Codec = aggregatorscheme.Codecs.LegacyCodec(v1.SchemeGroupVersion,
-		v1beta1.SchemeGroupVersion,
+		apiregistrationv1beta1.SchemeGroupVersion,
 		servicev0alpha1.SchemeGroupVersion)
 	etcdOptions.StorageConfig.EncodeVersioner = runtime.NewMultiGroupVersioner(v1.SchemeGroupVersion,
-		schema.GroupKind{Group: v1beta1.GroupName},
+		schema.GroupKind{Group: apiregistrationv1beta1.GroupName},
 		schema.GroupKind{Group: servicev0alpha1.GROUP})
-	// etcdOptions.StorageConfig.Transport.ServerList = []string{"127.0.0.1:2379"}
 	etcdOptions.SkipHealthEndpoints = true // avoid double wiring of health checks
 	if err := etcdOptions.ApplyTo(&genericConfig); err != nil {
 		return nil, err
@@ -365,7 +375,7 @@ func initAggregatorConfig(options *options.RecommendedOptions,
 	return aggregatorConfig, nil
 }
 
-func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*aggregatorapiserver.APIAggregator, error) {
+func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget, apiExtensionsInformers apiextensionsinformers.SharedInformerFactory) (*aggregatorapiserver.APIAggregator, error) {
 	completedConfig := aggregatorConfig.Complete()
 	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
 	if err != nil {
@@ -381,6 +391,10 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 	autoRegistrationController := autoregister.NewAutoRegisterController(aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(), apiRegistrationClient)
 	apiServices := apiServicesToRegister(delegateAPIServer, autoRegistrationController)
 
+	crdRegistrationController := NewCRDRegistrationController(
+		apiExtensionsInformers.Apiextensions().V1().CustomResourceDefinitions(),
+		autoRegistrationController)
+
 	// Imbue all builtin group-priorities onto the aggregated discovery
 	if aggregatorConfig.GenericConfig.AggregatedDiscoveryGroupManager != nil {
 		for gv, entry := range apiVersionPriorities {
@@ -389,7 +403,9 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 	}
 
 	err = aggregatorServer.GenericAPIServer.AddPostStartHook("kube-apiserver-autoregistration", func(context genericapiserver.PostStartHookContext) error {
+		go crdRegistrationController.Run(5, context.StopCh)
 		go func() {
+			crdRegistrationController.WaitForInitialSync()
 			autoRegistrationController.Run(5, context.StopCh)
 		}()
 		return nil

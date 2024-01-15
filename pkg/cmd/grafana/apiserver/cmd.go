@@ -5,8 +5,10 @@ import (
 	"path"
 
 	"github.com/spf13/cobra"
+	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/component-base/cli"
 	"k8s.io/klog/v2"
@@ -92,12 +94,14 @@ func newCommandStartAggregator() *cobra.Command {
 		Example: "grafana aggregator",
 		RunE: func(c *cobra.Command, args []string) error {
 			serverOptions, err := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr, recommendedOptions, extraConfig)
+			serverOptions.Config.Complete()
+
 			if err != nil {
 				klog.Errorf("Could not create aggregator server options: %s", err)
 				os.Exit(1)
 			}
 
-			return run(serverOptions, extraConfig)
+			return run(serverOptions)
 		},
 	}
 
@@ -107,16 +111,19 @@ func newCommandStartAggregator() *cobra.Command {
 	return cmd
 }
 
-func run(serverOptions *aggregator.AggregatorServerOptions, extraConfig *aggregator.ExtraConfig) error {
+func run(serverOptions *aggregator.AggregatorServerOptions) error {
 	if err := serverOptions.LoadAPIGroupBuilders(); err != nil {
 		klog.Errorf("Error loading prerequisite APIs: %s", err)
 		return err
 	}
 
-	// serverOptions.Config.RecommendedOptions.SecureServing.BindPort = 8443
-	delegationTarget := genericapiserver.NewEmptyDelegate()
+	notFoundHandler := notfoundhandler.New(serverOptions.Config.SharedConfig.Serializer, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
+	apiExtensionsServer, err := serverOptions.Config.ApiExtensionsComplete.New(genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
+	if err != nil {
+		return err
+	}
 
-	aggregator, err := serverOptions.CreateAggregatorServer(serverOptions.Config.Aggregator, delegationTarget)
+	aggregator, err := serverOptions.CreateAggregatorServer(serverOptions.Config.Aggregator, apiExtensionsServer.GenericAPIServer, apiExtensionsServer.Informers)
 	if err != nil {
 		klog.Errorf("Error creating aggregator server: %s", err)
 		return err
