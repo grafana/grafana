@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/maphash"
 	"sort"
 	"strconv"
 	"time"
@@ -36,7 +37,14 @@ var (
 	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
 	// annotations.
 	ErrNoPanel = errors.New("no panel")
+
+	// TODO do not use global seed for folder title hash
+	folderTitleMapHashSeed maphash.Seed
 )
+
+func init() {
+	folderTitleMapHashSeed = maphash.MakeSeed()
+}
 
 // swagger:enum NoDataState
 type NoDataState string
@@ -541,12 +549,35 @@ type CountAlertRulesQuery struct {
 	NamespaceUID string
 }
 
+// FolderTitleMap is a map of unique folder identifier to folder title
+// the keys are a maphash.Hash of the folder orgID and folder UID
+type FolderTitleMap map[uint64]string
+
+func FolderIdentifierHash(orgID int64, UID string) uint64 {
+	var h maphash.Hash
+	h.SetSeed(folderTitleMapHashSeed)
+	h.WriteString(strconv.FormatInt(orgID, 10))
+	h.WriteString(UID)
+	return h.Sum64()
+}
+
+func (f FolderTitleMap) Get(orgID int64, UID string) (string, bool) {
+	title, ok := f[FolderIdentifierHash(orgID, UID)]
+	return title, ok
+}
+
+func (f FolderTitleMap) Set(orgID int64, UID string, title string) {
+	f[FolderIdentifierHash(orgID, UID)] = title
+}
+
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 	RuleGroups      []string
 
-	ResultRules         []*AlertRule
-	ResultFoldersTitles map[string]string
+	ResultRules []*AlertRule
+	// ResultFoldersTitles is a map of unique folder identifier to folder title
+	// the keys are a base64 hash of the folder orgID and folder UID
+	ResultFoldersTitles FolderTitleMap
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules

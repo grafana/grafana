@@ -587,7 +587,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: folderTitle})
+		folderTitleMap := models.FolderTitleMap{}
+		folderTitleMap.Set(rule.OrgID, rule.NamespaceUID, folderTitle)
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, folderTitleMap)
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())

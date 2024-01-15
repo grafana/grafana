@@ -349,7 +349,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		rules        []string
 		ruleGroups   []string
 		disabledOrgs []int64
-		folders      map[string]string
+		folders      models.FolderTitleMap
 	}{
 		{
 			name:  "without a rule group filter, it returns all created rules",
@@ -366,15 +366,18 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 			disabledOrgs: []int64{rule2.OrgID},
 		},
 		{
-			name:    "with populate folders enabled, it returns them",
-			rules:   []string{rule1.Title, rule2.Title},
-			folders: map[string]string{rule1.NamespaceUID: rule1.Title, rule2.NamespaceUID: rule2.Title},
+			name:  "with populate folders enabled, it returns them",
+			rules: []string{rule1.Title, rule2.Title},
+			folders: models.FolderTitleMap{
+				models.FolderIdentifierHash(rule1.OrgID, rule1.NamespaceUID): rule1.Title,
+				models.FolderIdentifierHash(rule2.OrgID, rule2.NamespaceUID): rule2.Title,
+			},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
-			folders:      map[string]string{rule1.NamespaceUID: rule1.Title},
+			folders:      models.FolderTitleMap{models.FolderIdentifierHash(rule1.OrgID, rule1.NamespaceUID): rule1.Title},
 		},
 	}
 

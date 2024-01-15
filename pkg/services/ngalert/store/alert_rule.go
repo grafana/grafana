@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -515,11 +516,8 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
-	var folders []struct {
-		Uid   string
-		Title string
-	}
 	var rules []*ngmodels.AlertRule
+	foldersPerOrg := make(map[int64][]string)
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var disabledOrgs []int64
 		for orgID := range st.Cfg.DisabledOrgs {
@@ -561,25 +559,28 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				}
 			}
 			rules = append(rules, rule)
+
+			// TODO append only if folder is not present
+			foldersPerOrg[rule.OrgID] = append(foldersPerOrg[rule.OrgID], rule.NamespaceUID)
 		}
 
 		query.ResultRules = rules
+		query.ResultFoldersTitles = make(models.FolderTitleMap)
 
 		if query.PopulateFolders {
-			foldersSql := sess.Table("folder").Alias("d").Select("d.uid, d.title").
-				Where(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid AND d.org_id = a.org_id)`)
-			if len(disabledOrgs) > 0 {
-				foldersSql.NotIn("org_id", disabledOrgs)
-			}
+			for org := range foldersPerOrg {
+				folders, err := st.FolderService.GetFolders(ctx, org, foldersPerOrg[org])
+				if err != nil {
+					return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
+				}
 
-			if err := foldersSql.Find(&folders); err != nil {
-				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
-			}
-			query.ResultFoldersTitles = make(map[string]string, len(folders))
-			for _, folder := range folders {
-				query.ResultFoldersTitles[folder.Uid] = folder.Title
+				for _, folder := range folders {
+					query.ResultFoldersTitles.Set(org, folder.UID, folder.Title)
+				}
+
 			}
 		}
+
 		return nil
 	})
 }
