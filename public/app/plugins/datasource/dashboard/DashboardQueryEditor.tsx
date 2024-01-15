@@ -179,7 +179,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
               <Field label="Queries from panel">
                 <Stack direction="column">
                   {results.map((target, i) => (
-                    <Stack key={i} alignItems="center" gap={2}>
+                    <Stack key={i} alignItems="center" gap={1}>
                       <div>{target.refId}</div>
                       <img src={target.img} alt={target.name} title={target.name} width={16} />
                       <div>{target.query}</div>
