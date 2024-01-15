@@ -13,11 +13,12 @@ func GetSQLProxyOptions(cfg setting.SecureSocksDSProxySettings, dsInfo sqleng.Da
 			Username: dsInfo.UID,
 		},
 		ClientCfg: &sdkproxy.ClientCfg{
-			ClientCert:   cfg.ClientCert,
-			ClientKey:    cfg.ClientKey,
-			ServerName:   cfg.ServerName,
-			RootCA:       cfg.RootCA,
-			ProxyAddress: cfg.ProxyAddress,
+			ClientCert:    cfg.ClientCert,
+			ClientKey:     cfg.ClientKey,
+			ServerName:    cfg.ServerName,
+			RootCA:        cfg.RootCA,
+			ProxyAddress:  cfg.ProxyAddress,
+			AllowInsecure: cfg.AllowInsecure,
 		},
 	}
 	if dsInfo.JsonData.SecureDSProxyUsername != "" {
