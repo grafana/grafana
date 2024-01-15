@@ -17269,7 +17269,7 @@ __metadata:
     rc-drawer: "npm:6.5.2"
     rc-slider: "npm:10.3.1"
     rc-time-picker: "npm:3.7.3"
-    rc-tree: "npm:5.8.0"
+    rc-tree: "npm:5.8.2"
     re-resizable: "npm:6.9.9"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
@@ -24418,23 +24418,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.8.0":
-  version: 5.8.0
-  resolution: "rc-tree@npm:5.8.0"
-  dependencies:
-    "@babel/runtime": "npm:^7.10.1"
-    classnames: "npm:2.x"
-    rc-motion: "npm:^2.0.1"
-    rc-util: "npm:^5.16.1"
-    rc-virtual-list: "npm:^3.5.1"
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 130cc89f582aedbe252590f8078bd39535ed2de43fa7bf3be88695065d15405768340fb26dda12d90601296afd439d876ce859d4604659a6adde4f783ff7f26a
-  languageName: node
-  linkType: hard
-
-"rc-tree@npm:~5.8.1":
+"rc-tree@npm:5.8.2, rc-tree@npm:~5.8.1":
   version: 5.8.2
   resolution: "rc-tree@npm:5.8.2"
   dependencies:
