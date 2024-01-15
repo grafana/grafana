@@ -79,7 +79,6 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		} else {
 			rolesToRemove = append(rolesToRemove, fixedRole)
 		}
-
 	}
 
 	if len(rolesToAdd) != 1 {
