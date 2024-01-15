@@ -1,3 +1,5 @@
+import { Dashboard } from '@grafana/schema';
+
 import { Diff, getDiffOperationText, getDiffText, jsonDiff } from './utils';
 
 describe('getDiffOperationText', () => {
@@ -288,6 +290,6 @@ describe('jsonDiff', () => {
       ],
     };
 
-    expect(jsonDiff(lhs, rhs)).toStrictEqual(expected);
+    expect(jsonDiff(lhs as unknown as Dashboard, rhs as unknown as Dashboard)).toStrictEqual(expected);
   });
 });

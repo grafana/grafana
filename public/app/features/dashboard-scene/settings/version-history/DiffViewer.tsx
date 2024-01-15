@@ -42,12 +42,12 @@ export const DiffViewer = ({ oldValue, newValue }: ReactDiffViewerProps) => {
     codeFold: {
       fontSize: theme.typography.bodySmall.fontSize,
     },
-    gutter: `
-      pre {
-        color: ${tinycolor(theme.colors.text.disabled).setAlpha(1).toString()};
-        opacity: 0.61;
-      }
-    `,
+    gutter: {
+      pre: {
+        color: tinycolor(theme.colors.text.disabled).setAlpha(1).toString(),
+        opacity: 0.61,
+      },
+    },
   };
 
   return (

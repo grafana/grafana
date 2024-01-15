@@ -42,16 +42,16 @@ export const DiffGroup = ({ diffs, title }: DiffGroupProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    background-color: ${theme.colors.background.secondary};
-    font-size: ${theme.typography.h6.fontSize};
-    margin-bottom: ${theme.spacing(2)};
-    padding: ${theme.spacing(2)};
-  `,
-  list: css`
-    margin-left: ${theme.spacing(4)};
-  `,
-  listItem: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
+  container: css({
+    backgroundColor: theme.colors.background.secondary,
+    fontSize: theme.typography.h6.fontSize,
+    marginBottom: theme.spacing(2),
+    padding: theme.spacing(2),
+  }),
+  list: css({
+    marginLeft: theme.spacing(4),
+  }),
+  listItem: css({
+    marginBottom: theme.spacing(1),
+  }),
 });

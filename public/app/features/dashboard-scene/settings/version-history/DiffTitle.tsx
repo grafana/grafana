@@ -31,31 +31,31 @@ export const DiffTitle = ({ diff, title }: DiffTitleProps) => {
 };
 
 const getDiffTitleStyles = (theme: GrafanaTheme2) => ({
-  embolden: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  add: css`
-    color: ${theme.colors.success.main};
-  `,
-  replace: css`
-    color: ${theme.colors.success.main};
-  `,
-  move: css`
-    color: ${theme.colors.success.main};
-  `,
-  copy: css`
-    color: ${theme.colors.success.main};
-  `,
-  _get: css`
-    color: ${theme.colors.success.main};
-  `,
-  test: css`
-    color: ${theme.colors.success.main};
-  `,
-  remove: css`
-    color: ${theme.colors.success.main};
-  `,
-  withoutDiff: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  embolden: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
+  add: css({
+    color: theme.colors.success.main,
+  }),
+  replace: css({
+    color: theme.colors.success.main,
+  }),
+  move: css({
+    color: theme.colors.success.main,
+  }),
+  copy: css({
+    color: theme.colors.success.main,
+  }),
+  _get: css({
+    color: theme.colors.success.main,
+  }),
+  test: css({
+    color: theme.colors.success.main,
+  }),
+  remove: css({
+    color: theme.colors.success.main,
+  }),
+  withoutDiff: css({
+    marginBottom: theme.spacing(2),
+  }),
 });

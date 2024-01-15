@@ -3,12 +3,13 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles2 } from '@grafana/ui';
-import { DiffGroup } from 'app/features/dashboard/components/VersionHistory/DiffGroup';
-import { DiffViewer } from 'app/features/dashboard/components/VersionHistory/DiffViewer';
 import { RevertDashboardModal } from 'app/features/dashboard/components/VersionHistory/RevertDashboardModal';
-import { jsonDiff } from 'app/features/dashboard/components/VersionHistory/utils';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
+
+import { DiffGroup } from './DiffGroup';
+import { DiffViewer } from './DiffViewer';
+import { jsonDiff } from './utils';
 
 type DiffViewProps = {
   isNewLatest: boolean;
