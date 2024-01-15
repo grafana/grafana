@@ -225,7 +225,7 @@ export function getPanelLinksBehavior(panel: PanelModel) {
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
   const timeRange = sceneGraph.getTimeRange(panel);
   let queryRunner = getQueryRunnerFor(panel);
-  let targets: DataQuery[] = [];
+  let targets: DataQuery[] = queryRunner?.state.queries;
   const id = getPanelIdForVizPanel(panel);
 
   let scopedVars = {};
