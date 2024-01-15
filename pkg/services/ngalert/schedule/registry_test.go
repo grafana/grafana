@@ -239,7 +239,9 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	assert.Len(t, rules, 0)
 	assert.Len(t, folders, 0)
 
-	expectedFolders := models.FolderTitleMap{models.FolderIdentifierHash(1, "test-uid"): "test-title"}
+	h, err := models.FolderIdentifierHash(1, "test-uid")
+	require.NoError(t, err)
+	expectedFolders := models.FolderTitleMap{h: "test-title"}
 	// replace all rules in the registry with foo
 	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}}, expectedFolders)
 	rules, folders = r.all()

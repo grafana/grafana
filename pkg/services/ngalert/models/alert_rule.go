@@ -546,20 +546,35 @@ type CountAlertRulesQuery struct {
 // the keys are a maphash.Hash of the folder orgID and folder UID
 type FolderTitleMap map[uint64]string
 
-func FolderIdentifierHash(orgID int64, UID string) uint64 {
+func FolderIdentifierHash(orgID int64, UID string) (uint64, error) {
 	h := fnv.New64a()
-	h.Write([]byte(strconv.FormatInt(orgID, 10)))
-	h.Write([]byte(UID))
-	return h.Sum64()
+	_, err := h.Write([]byte(strconv.FormatInt(orgID, 10)))
+	if err != nil {
+		return 0, err
+	}
+	_, err = h.Write([]byte(UID))
+	if err != nil {
+		return 0, err
+	}
+	return h.Sum64(), nil
 }
 
-func (f FolderTitleMap) Get(orgID int64, UID string) (string, bool) {
-	title, ok := f[FolderIdentifierHash(orgID, UID)]
-	return title, ok
+func (f FolderTitleMap) Get(orgID int64, UID string) (string, bool, error) {
+	h, err := FolderIdentifierHash(orgID, UID)
+	if err != nil {
+		return "", false, err
+	}
+	title, ok := f[h]
+	return title, ok, nil
 }
 
-func (f FolderTitleMap) Set(orgID int64, UID string, title string) {
-	f[FolderIdentifierHash(orgID, UID)] = title
+func (f FolderTitleMap) Set(orgID int64, UID string, title string) error {
+	h, err := FolderIdentifierHash(orgID, UID)
+	if err != nil {
+		return err
+	}
+	f[h] = title
+	return nil
 }
 
 type GetAlertRulesForSchedulingQuery struct {

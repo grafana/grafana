@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -565,7 +564,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		}
 
 		query.ResultRules = rules
-		query.ResultFoldersTitles = make(models.FolderTitleMap)
+		query.ResultFoldersTitles = make(ngmodels.FolderTitleMap)
 
 		if query.PopulateFolders {
 			for org := range foldersPerOrg {
@@ -575,9 +574,11 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				}
 
 				for _, folder := range folders {
-					query.ResultFoldersTitles.Set(org, folder.UID, folder.Title)
+					err := query.ResultFoldersTitles.Set(org, folder.UID, folder.Title)
+					if err != nil {
+						return fmt.Errorf("failed to set a folder title: %w", err)
+					}
 				}
-
 			}
 		}
 

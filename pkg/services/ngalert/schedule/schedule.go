@@ -284,11 +284,15 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		var folderTitle string
 		if !sch.disableGrafanaFolder {
-			title, ok := folderTitles.Get(item.OrgID, item.NamespaceUID)
+			title, ok, err := folderTitles.Get(item.OrgID, item.NamespaceUID)
 			if ok {
 				folderTitle = title
 			} else {
-				missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
+				if err != nil {
+					sch.log.Error("Failed to obtain folder title for alert rule", append(key.LogContext(), "error", err)...)
+				} else {
+					missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
+				}
 			}
 		}
 

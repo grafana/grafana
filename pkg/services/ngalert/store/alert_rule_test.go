@@ -318,6 +318,13 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	})
 }
 
+func getHash(t *testing.T, rule *models.AlertRule) uint64 {
+	t.Helper()
+	h, err := models.FolderIdentifierHash(rule.OrgID, rule.NamespaceUID)
+	require.NoError(t, err)
+	return h
+}
+
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -369,15 +376,15 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 			name:  "with populate folders enabled, it returns them",
 			rules: []string{rule1.Title, rule2.Title},
 			folders: models.FolderTitleMap{
-				models.FolderIdentifierHash(rule1.OrgID, rule1.NamespaceUID): rule1.Title,
-				models.FolderIdentifierHash(rule2.OrgID, rule2.NamespaceUID): rule2.Title,
+				getHash(t, rule1): rule1.Title,
+				getHash(t, rule2): rule2.Title,
 			},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
-			folders:      models.FolderTitleMap{models.FolderIdentifierHash(rule1.OrgID, rule1.NamespaceUID): rule1.Title},
+			folders:      models.FolderTitleMap{getHash(t, rule1): rule1.Title},
 		},
 	}
 
