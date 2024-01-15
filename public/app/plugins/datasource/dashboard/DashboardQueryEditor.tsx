@@ -4,7 +4,7 @@ import pluralize from 'pluralize';
 import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataQuery, GrafanaTheme2, PanelData, SelectableValue, DataTopic } from '@grafana/data';
+import { DataQuery, GrafanaTheme2, SelectableValue, DataTopic, QueryEditorProps } from '@grafana/data';
 import {
   Card,
   Field,
@@ -22,27 +22,22 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
+import { DashboardDatasource } from './datasource';
 import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 
 function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
 }
 
-interface Props {
-  queries: DataQuery[];
-  panelData: PanelData;
-  onChange: (queries: DataQuery[]) => void;
-  onRunQueries?: () => void;
-}
+interface Props extends QueryEditorProps<DashboardDatasource, DashboardQuery> {}
 
 const topics = [
   { label: 'All data', value: false },
   { label: 'Annotations', value: true, description: 'Include annotations as regular data' },
 ];
 
-export function DashboardQueryEditor({ panelData, queries, onChange, onRunQueries }: Props) {
+export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Props) {
   const { value: defaultDatasource } = useAsync(() => getDatasourceSrv().get());
-  const query = queries[0] as DashboardQuery;
 
   const panel = useMemo(() => {
     const dashboard = getDashboardSrv().getCurrent();
@@ -50,7 +45,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
   }, [query.panelId]);
 
   const { value: results, loading: loadingResults } = useAsync(async (): Promise<ResultInfo[]> => {
-    if (!panel) {
+    if (!panel || !data) {
       return [];
     }
     const mainDS = await getDatasourceSrv().get(panel.datasource);
@@ -58,7 +53,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
       panel.targets.map(async (query) => {
         const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
         const fmt = ds.getQueryDisplayText || getQueryDisplayText;
-        const queryData = filterPanelDataToQuery(panelData, query.refId) ?? panelData;
+        const queryData = filterPanelDataToQuery(data, query.refId) ?? data;
         return {
           refId: query.refId,
           query: fmt(query),
@@ -69,16 +64,14 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
         };
       })
     );
-  }, [panelData, panel]);
+  }, [data, panel]);
 
   const onUpdateQuery = useCallback(
     (query: DashboardQuery) => {
-      onChange([query]);
-      if (onRunQueries) {
-        onRunQueries();
-      }
+      onChange(query);
+      onRunQuery();
     },
-    [onChange, onRunQueries]
+    [onChange, onRunQuery]
   );
 
   const onPanelChanged = useCallback(

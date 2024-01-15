@@ -1,16 +1,14 @@
 import React from 'react';
 
 import { DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
-import { SceneObjectBase, SceneComponentProps, SceneQueryRunner, sceneGraph } from '@grafana/scenes';
+import { SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
-import { DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
-import { ShareQueryDataProvider } from '../../scene/ShareQueryDataProvider';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
@@ -30,17 +28,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 
   getItemsCount() {
-    const dataObj = this._panelManager.state.panel.state.$data!;
-
-    if (dataObj instanceof ShareQueryDataProvider) {
-      return 1;
-    }
-
-    if (dataObj instanceof SceneQueryRunner) {
-      return dataObj.state.queries.length;
-    }
-
-    return null;
+    return this.getQueries().length;
   }
 
   constructor(panelManager: VizPanelManager) {
@@ -52,9 +40,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   buildQueryOptions(): QueryGroupOptions {
     const panelManager = this._panelManager;
     const panelObj = this._panelManager.state.panel;
-    const dataObj = panelObj.state.$data!;
     const queryRunner = this._panelManager.queryRunner;
-
     const timeRangeObj = sceneGraph.getTimeRange(panelObj);
 
     let timeRangeOpts: QueryGroupOptions['timeRange'] = {
@@ -71,14 +57,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       };
     }
 
-    let queries: QueryGroupOptions['queries'] = [];
-    if (dataObj instanceof ShareQueryDataProvider) {
-      queries = [dataObj.state.query];
-    }
-
-    if (dataObj instanceof SceneQueryRunner) {
-      queries = dataObj.state.queries;
-    }
+    let queries: QueryGroupOptions['queries'] = queryRunner.state.queries;
 
     return {
       // TODO
@@ -120,11 +99,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   getQueries() {
-    const dataObj = this._panelManager.state.panel.state.$data!;
-
-    if (dataObj instanceof ShareQueryDataProvider) {
-      return [dataObj.state.query];
-    }
     return this._panelManager.queryRunner.state.queries;
   }
 
@@ -134,9 +108,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 }
 
 function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
-  const { panel, datasource, dsSettings } = model.panelManager.useState();
-  const { $data: dataObj } = panel.useState();
-  const { data } = dataObj!.useState();
+  const { datasource, dsSettings } = model.panelManager.useState();
+  const { data } = model.panelManager.queryRunner.useState();
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -154,18 +127,14 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
         onOpenQueryInspector={model.onOpenInspector}
       />
 
-      {dataObj instanceof ShareQueryDataProvider ? (
-        <DashboardQueryEditor queries={model.getQueries()} panelData={data} onChange={model.onQueriesChange} />
-      ) : (
-        <QueryEditorRows
-          data={data}
-          queries={model.getQueries()}
-          dsSettings={dsSettings}
-          onAddQuery={() => {}}
-          onQueriesChange={model.onQueriesChange}
-          onRunQueries={model.onRunQueries}
-        />
-      )}
+      <QueryEditorRows
+        data={data}
+        queries={model.getQueries()}
+        dsSettings={dsSettings}
+        onAddQuery={() => {}}
+        onQueriesChange={model.onQueriesChange}
+        onRunQueries={model.onRunQueries}
+      />
     </>
   );
 }

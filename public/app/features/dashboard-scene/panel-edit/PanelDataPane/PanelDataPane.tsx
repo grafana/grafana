@@ -3,19 +3,15 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   SceneComponentProps,
-  SceneDataTransformer,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  SceneQueryRunner,
   VizPanel,
-  sceneGraph,
 } from '@grafana/scenes';
 import { Tab, TabContent, TabsBar } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
-import { ShareQueryDataProvider } from '../../scene/ShareQueryDataProvider';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
@@ -96,30 +92,10 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     });
   }
 
-  private getDataObjects(): [SceneQueryRunner | ShareQueryDataProvider | undefined, SceneDataTransformer | undefined] {
-    const dataObj = sceneGraph.getData(this.panelManager.state.panel);
-
-    let runner: SceneQueryRunner | ShareQueryDataProvider | undefined;
-    let transformer: SceneDataTransformer | undefined;
-
-    if (dataObj instanceof SceneQueryRunner || dataObj instanceof ShareQueryDataProvider) {
-      runner = dataObj;
-    }
-
-    if (dataObj instanceof SceneDataTransformer) {
-      transformer = dataObj;
-      if (transformer.state.$data instanceof SceneQueryRunner) {
-        runner = transformer.state.$data;
-      }
-    }
-
-    return [runner, transformer];
-  }
-
   private buildTabs() {
     const panelManager = this.panelManager;
     const panel = panelManager.state.panel;
-    const [runner] = this.getDataObjects();
+    const runner = this.panelManager.queryRunner;
     const tabs: PanelDataPaneTab[] = [];
 
     if (panel) {
@@ -129,6 +105,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
         this.setState({ tabs });
         return;
       }
+
       if (plugin.meta.skipDataQuery) {
         this.setState({ tabs });
         return;

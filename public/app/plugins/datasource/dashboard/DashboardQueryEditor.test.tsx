@@ -14,6 +14,7 @@ import {
 } from '../../../features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { DashboardQueryEditor } from './DashboardQueryEditor';
+import { DashboardDatasource } from './datasource';
 import { SHARED_DASHBOARD_QUERY } from './types';
 
 jest.mock('app/core/config', () => ({
@@ -78,10 +79,11 @@ describe('DashboardQueryEditor', () => {
   it('does not show a panel with the SHARED_DASHBOARD_QUERY datasource as an option in the dropdown', async () => {
     render(
       <DashboardQueryEditor
-        queries={mockQueries}
-        panelData={mockPanelData}
+        datasource={{} as DashboardDatasource}
+        query={mockQueries[0]}
+        data={mockPanelData}
         onChange={mockOnChange}
-        onRunQueries={mockOnRunQueries}
+        onRunQuery={mockOnRunQueries}
       />
     );
     const select = screen.getByText('Choose panel');
@@ -101,10 +103,11 @@ describe('DashboardQueryEditor', () => {
     mockDashboard.initEditPanel(mockDashboard.panels[0]);
     render(
       <DashboardQueryEditor
-        queries={mockQueries}
-        panelData={mockPanelData}
+        datasource={{} as DashboardDatasource}
+        query={mockQueries[0]}
+        data={mockPanelData}
         onChange={mockOnChange}
-        onRunQueries={mockOnRunQueries}
+        onRunQuery={mockOnRunQueries}
       />
     );
     const select = screen.getByText('Choose panel');
