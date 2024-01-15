@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Alert, CellProps, Column, Icon, InteractiveTable, Text, Tooltip } from '@grafana/ui';
+import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
@@ -28,13 +28,17 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
         id: 'available',
         cell: (serverInfo: CellProps<ServerInfo>) => {
           return serverInfo.available ? (
-            <Tooltip content="Connection is available">
-              <Icon name="check" className="pull-right" />
-            </Tooltip>
+            <Stack justifyContent="end">
+              <Tooltip content="Connection is available">
+                <Icon name="check" className="pull-right" />
+              </Tooltip>
+            </Stack>
           ) : (
-            <Tooltip content="Connection is not available">
-              <Icon name="exclamation-triangle" className="pull-right" />
-            </Tooltip>
+            <Stack justifyContent="end">
+              <Tooltip content="Connection is not available">
+                <Icon name="exclamation-triangle" />
+              </Tooltip>
+            </Stack>
           );
         },
       },
