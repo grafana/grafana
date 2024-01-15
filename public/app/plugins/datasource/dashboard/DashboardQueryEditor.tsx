@@ -165,7 +165,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
           </Field>
 
           {showTransforms && (
-            <Field label="Transform" description="Apply panel transformations from the source panel">
+            <Field label="Transform" description="Apply transformations from the source panel">
               <InlineSwitch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
             </Field>
           )}
