@@ -329,6 +329,9 @@ export const Pages = {
     UsersListPage: {
       container: 'data-testid users-list-page',
     },
+    UserAnonListPage: {
+      container: 'data-testid user-anon-list-page',
+    },
     UsersListPublicDashboardsPage: {
       container: 'data-testid users-list-public-dashboards-page',
       DashboardsListModal: {

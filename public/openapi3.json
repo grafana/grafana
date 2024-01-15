@@ -519,6 +519,16 @@
         },
         "description": "(empty)"
       },
+      "devicesSearchResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchDeviceQueryResult"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "folderResponse": {
         "content": {
           "application/json": {
@@ -4790,6 +4800,32 @@
               "type": "string"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "DeviceSearchHitDTO": {
+        "properties": {
+          "clientIp": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -9753,6 +9789,29 @@
             "type": "boolean"
           },
           "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SearchDeviceQueryResult": {
+        "properties": {
+          "devices": {
+            "items": {
+              "$ref": "#/components/schemas/DeviceSearchHitDTO"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "perPage": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalCount": {
             "format": "int64",
             "type": "integer"
           }
@@ -22920,6 +22979,30 @@
         },
         "tags": [
           "search"
+        ]
+      },
+      "post": {
+        "operationId": "SearchDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/devicesSearchResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Lists all devices within the last 30 days",
+        "tags": [
+          "devices"
         ]
       }
     },
