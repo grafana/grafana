@@ -22,7 +22,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       navItem = enrichHelpItem({ ...navItem });
       delete navItem.url;
     }
-    const { url, target, text, isCreateAction, children, onClick } = navItem;
+    const { url, target, text, isCreateAction, children, onClick, keywords } = navItem;
     const hasChildren = Boolean(children?.length);
 
     if (!(url || onClick || hasChildren)) {
@@ -44,6 +44,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       target,
       parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
       perform: onClick,
+      keywords: keywords?.join(' '),
       priority: priority,
       subtitle: isCreateAction ? undefined : subtitle,
     };
