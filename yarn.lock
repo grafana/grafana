@@ -9385,10 +9385,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/webpack-env@npm:1.18.1":
-  version: 1.18.1
-  resolution: "@types/webpack-env@npm:1.18.1"
-  checksum: 10a00618f7214502a8788951feda87f8f081caefd49ea6ddd5a5f378491e9c4004163b559f469db35346ddccfc5d71d5d25f0b83abb5a48ea2769de1c17d60c0
+"@types/webpack-env@npm:1.18.4":
+  version: 1.18.4
+  resolution: "@types/webpack-env@npm:1.18.4"
+  checksum: a1c37f8eb93fa86077b2406d3b8dd50c7505cd2b6ec46044786aa9681b0114ad6c3c3cd6402f8ecce9e4de6626c2fd91e5acda62d5d450c1f531533c3812b7c0
   languageName: node
   linkType: hard
 
@@ -17151,7 +17151,7 @@ __metadata:
     "@types/trusted-types": "npm:2.0.7"
     "@types/uuid": "npm:9.0.2"
     "@types/webpack-assets-manifest": "npm:^5"
-    "@types/webpack-env": "npm:1.18.1"
+    "@types/webpack-env": "npm:1.18.4"
     "@types/yargs": "npm:17.0.24"
     "@typescript-eslint/eslint-plugin": "npm:6.18.1"
     "@typescript-eslint/parser": "npm:6.18.1"
