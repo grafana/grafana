@@ -1,11 +1,13 @@
 import React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { HorizontalGroup, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -90,6 +92,20 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
   public getTimeRange() {
     return sceneGraph.getTimeRange(this._dashboard);
+  }
+
+  public async onRestore(version: DecoratedRevisionModel) {
+    await historySrv.restoreDashboard(version.uid, version.version);
+
+    const jsonObj = JSON.parse(JSON.stringify(version.data));
+
+    const dashboardModel = new DashboardModel(jsonObj);
+
+    const dashScene = transformSaveModelToScene({ dashboard: dashboardModel, meta: this._dashboard.state.meta });
+
+    const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
+
+    this._dashboard.setState(newState);
   }
 
   public fetchVersions(append = false): void {
@@ -216,7 +232,12 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
       {isLoading ? (
         <VersionsHistorySpinner msg="Fetching history list&hellip;" />
       ) : (
-        <VersionHistoryTable versions={model.versions} onCheck={model.onCheck} canCompare={canCompare} />
+        <VersionHistoryTable
+          versions={model.versions}
+          onCheck={model.onCheck}
+          canCompare={canCompare}
+          onRestore={model.onRestore.bind(model)}
+        />
       )}
       {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
       {showButtons && (

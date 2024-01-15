@@ -3,12 +3,12 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles2 } from '@grafana/ui';
-import { RevertDashboardModal } from 'app/features/dashboard/components/VersionHistory/RevertDashboardModal';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
 
 import { DiffGroup } from './DiffGroup';
 import { DiffViewer } from './DiffViewer';
+import { RevertDashboardModal } from './RevertDashboardModal';
 import { jsonDiff } from './utils';
 
 type DiffViewProps = {
@@ -44,7 +44,8 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
                   icon="history"
                   onClick={() => {
                     showModal(RevertDashboardModal, {
-                      version: baseInfo.version,
+                      version: baseInfo,
+                      onRestore: () => {},
                       hideModal,
                     });
                   }}
