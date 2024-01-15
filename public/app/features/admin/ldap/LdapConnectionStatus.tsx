@@ -50,11 +50,13 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
 
   return (
     <section>
-      <Text color="primary" element="h3">
-        LDAP Connection
-      </Text>
-      <InteractiveTable data={data} columns={columns} getRowId={(serverInfo) => serverInfo.host + serverInfo.port} />
-      <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
+      <Stack direction="column" gap={2}>
+        <Text color="primary" element="h3">
+          LDAP Connection
+        </Text>
+        <InteractiveTable data={data} columns={columns} getRowId={(serverInfo) => serverInfo.host + serverInfo.port} />
+        <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
+      </Stack>
     </section>
   );
 };
