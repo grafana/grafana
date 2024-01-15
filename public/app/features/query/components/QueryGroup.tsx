@@ -252,16 +252,6 @@ export class QueryGroup extends PureComponent<Props, State> {
   renderQueries(dsSettings: DataSourceInstanceSettings) {
     const { onRunQueries } = this.props;
     const { data, queries } = this.state;
-    // if (isSharedDashboardQuery(dsSettings.name)) {
-    //   return (
-    //     <DashboardQueryEditor
-    //       queries={queries}
-    //       panelData={data}
-    //       onChange={this.onQueriesChange}
-    //       onRunQueries={onRunQueries}
-    //     />
-    //   );
-    // }
 
     return (
       <div aria-label={selectors.components.QueryTab.content}>
