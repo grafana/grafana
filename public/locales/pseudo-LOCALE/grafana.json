@@ -1224,7 +1224,7 @@
   "return-to-previous": {
     "button": {
       "close": "Cľőşę",
-      "title": "ßäčĸ ŧő {{shortTitle}}"
+      "title": "ßäčĸ ŧő {{title}}"
     }
   },
   "search": {

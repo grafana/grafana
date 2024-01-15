@@ -1224,7 +1224,7 @@
   "return-to-previous": {
     "button": {
       "close": "Close",
-      "title": "Back to {{shortTitle}}"
+      "title": "Back to {{title}}"
     }
   },
   "search": {
