@@ -13,6 +13,7 @@ import { getCloudRule, getGrafanaRule, grantUserPermissions } from '../../../moc
 import { Annotation } from '../../../utils/constants';
 import * as ruleId from '../../../utils/rule-id';
 
+import { AlertRuleProvider } from './RuleContext';
 import RuleViewer from './RuleViewer.v2';
 import { createMockGrafanaServer } from './__mocks__/server';
 
@@ -125,7 +126,7 @@ describe('RuleViewer', () => {
       await userEvent.click(ELEMENTS.actions.more.button.get());
       const menuItems = Object.values(ELEMENTS.actions.more.actions);
       for (const menuItem of menuItems) {
-        expect(await menuItem.find()).toBeInTheDocument();
+        expect(menuItem.get()).toBeInTheDocument();
       }
     });
   });
@@ -157,7 +158,12 @@ describe('RuleViewer', () => {
 });
 
 const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier) => {
-  render(<RuleViewer rule={rule} identifier={identifier} />, { wrapper: TestProvider });
+  render(
+    <AlertRuleProvider identifier={identifier} rule={rule}>
+      <RuleViewer />
+    </AlertRuleProvider>,
+    { wrapper: TestProvider }
+  );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
 };
