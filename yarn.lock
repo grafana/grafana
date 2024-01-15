@@ -3089,7 +3089,7 @@ __metadata:
     "@types/dompurify": "npm:^2"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.11"
-    "@types/jquery": "npm:3.5.16"
+    "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.14.202"
     "@types/marked": "npm:5.0.2"
     "@types/node": "npm:20.8.10"
@@ -3550,7 +3550,7 @@ __metadata:
     "@types/hoist-non-react-statics": "npm:3.3.5"
     "@types/is-hotkey": "npm:0.1.10"
     "@types/jest": "npm:29.5.11"
-    "@types/jquery": "npm:3.5.16"
+    "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.14.202"
     "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.8.10"
@@ -3588,7 +3588,7 @@ __metadata:
     i18next-browser-languagedetector: "npm:^7.0.2"
     immutable: "npm:4.3.4"
     is-hotkey: "npm:0.2.0"
-    jquery: "npm:3.7.0"
+    jquery: "npm:3.7.1"
     lodash: "npm:4.17.21"
     micro-memoize: "npm:^4.1.2"
     mock-raf: "npm:1.0.1"
@@ -8686,12 +8686,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jquery@npm:3.5.16":
-  version: 3.5.16
-  resolution: "@types/jquery@npm:3.5.16"
+"@types/jquery@npm:3.5.29":
+  version: 3.5.29
+  resolution: "@types/jquery@npm:3.5.29"
   dependencies:
     "@types/sizzle": "npm:*"
-  checksum: 0f6aaed2616284cfd304083c27fa74fc2fc519199cbfef9c4be78cee5e919929dd5406799a2dd7b9add138699524872f575d9263cc5b7fe82f69a9eba378956b
+  checksum: 364facf2cb0bc935cb4b7f4af0b12c8e901b02b08a85af213172485166123b10aad8563f8e51e363f65a778c4105a59a64dedd0b0fd73f96557219d46477af56
   languageName: node
   linkType: hard
 
@@ -17091,7 +17091,7 @@ __metadata:
     "@types/history": "npm:4.7.11"
     "@types/hoist-non-react-statics": "npm:3.3.5"
     "@types/jest": "npm:29.5.11"
-    "@types/jquery": "npm:3.5.16"
+    "@types/jquery": "npm:3.5.29"
     "@types/js-yaml": "npm:^4.0.5"
     "@types/jsurl": "npm:^1.2.28"
     "@types/lodash": "npm:4.14.202"
@@ -17216,7 +17216,7 @@ __metadata:
     jest-fail-on-console: "npm:3.1.2"
     jest-junit: "npm:16.0.0"
     jest-matcher-utils: "npm:29.7.0"
-    jquery: "npm:3.7.0"
+    jquery: "npm:3.7.1"
     js-yaml: "npm:^4.1.0"
     json-markup: "npm:^1.1.0"
     json-source-map: "npm:0.6.1"
@@ -19802,10 +19802,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jquery@npm:3.7.0":
-  version: 3.7.0
-  resolution: "jquery@npm:3.7.0"
-  checksum: ff4c075740048157e0cd131c83b9359b4608b13c4493ab41a5459144a85c06450ae1a254b281a0d56d785d995fd9ad03d2caae17a3b408c53862241fd8ada494
+"jquery@npm:3.7.1":
+  version: 3.7.1
+  resolution: "jquery@npm:3.7.1"
+  checksum: 17be9929f5fa37697d9848284f0d108c543318ef79ec794e130cd0c49f6c050d60c803a69e8cfa16fa19f5ff7cdb814a6905cceab0831186560c65ed113cd579
   languageName: node
   linkType: hard
 
