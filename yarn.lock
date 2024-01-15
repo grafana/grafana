@@ -17213,7 +17213,7 @@ __metadata:
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.8"
     jest-environment-jsdom: "npm:29.7.0"
-    jest-fail-on-console: "npm:3.1.1"
+    jest-fail-on-console: "npm:3.1.2"
     jest-junit: "npm:16.0.0"
     jest-matcher-utils: "npm:29.7.0"
     jquery: "npm:3.7.0"
@@ -19424,12 +19424,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-fail-on-console@npm:3.1.1":
-  version: 3.1.1
-  resolution: "jest-fail-on-console@npm:3.1.1"
-  dependencies:
-    chalk: "npm:^4.1.0"
-  checksum: 6d0c79fd5c64a80ce56faf84cbb9b1325782e0bc0a3f1479f2a20d305e61b00bffcb5aba3622515deb75c76a16c8caeac3b33044ec601c55884b81ff13988313
+"jest-fail-on-console@npm:3.1.2":
+  version: 3.1.2
+  resolution: "jest-fail-on-console@npm:3.1.2"
+  checksum: 6f47a36cd9481121302660dbf29a6ce2443d0c2ad6ad872ee509fc538d674cdaa217f9bd041ce3771c1d8fda081ddcd85221027bbe6c9d2681cdae9d0922d329
   languageName: node
   linkType: hard
 
