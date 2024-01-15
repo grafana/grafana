@@ -486,6 +486,14 @@ require k8s.io/apiextensions-apiserver v0.29.0 // @grafana/grafana-app-platform-
 
 require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
 
+require github.com/jackc/pgx/v5 v5.5.1 // @grafana/oss-big-tent
+
+require (
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
+)
+
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
 
