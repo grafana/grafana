@@ -729,7 +729,7 @@ func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, f
 		return 0, err
 	}
 
-	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderUID: folder.UID, OrgID: orgID})
+	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: orgID})
 }
 
 func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) error {
