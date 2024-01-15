@@ -103,9 +103,13 @@ export async function parseResponseBody<T>(
   if (responseType) {
     switch (responseType) {
       case 'arraybuffer':
+        // this specifically returns a Promise<ArrayBuffer>
+        // TODO refactor this function to remove the type assertions
         return response.arrayBuffer() as Promise<T>;
 
       case 'blob':
+        // this specifically returns a Promise<Blob>
+        // TODO refactor this function to remove the type assertions
         return response.blob() as Promise<T>;
 
       case 'json':
@@ -113,12 +117,14 @@ export async function parseResponseBody<T>(
         // Sometimes (unfortunately) our APIs declare their Content-Type as JSON, however they return an empty body.
         if (response.headers.get('Content-Length') === '0') {
           console.warn(`${response.url} returned an invalid JSON`);
-          return {} as Promise<T>;
+          return {} as T;
         }
 
         return await response.json();
 
       case 'text':
+        // this specifically returns a Promise<string>
+        // TODO refactor this function to remove the type assertions
         return response.text() as Promise<T>;
     }
   }
