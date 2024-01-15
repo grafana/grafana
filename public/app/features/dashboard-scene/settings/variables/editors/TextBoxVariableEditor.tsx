@@ -19,5 +19,5 @@ export function TextBoxVariableEditor({ variable }: TextBoxVariableEditorProps) 
     variable.setState({ value: event.currentTarget.value });
   };
 
-  return <TextBoxVariableForm textValue={value} onTextValueBlur={onBlur} />;
+  return <TextBoxVariableForm value={value} onChange={onQueryChange} onBlur={onBlur} />;
 }

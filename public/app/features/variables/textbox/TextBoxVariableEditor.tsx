@@ -20,5 +20,5 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
   const onChange = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, false), [updateVariable]);
   const onBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, true), [updateVariable]);
 
-  return <TextBoxVariableForm textValue={query} onTextValueBlur={onBlur} />;
+  return <TextBoxVariableForm value={query} onChange={onChange} onBlur={onBlur} />;
 }
