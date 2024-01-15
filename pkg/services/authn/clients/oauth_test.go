@@ -268,7 +268,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 		{
 			desc:              "should generate redirect url with pkce if configured",
 			oauthCfg:          &social.OAuthInfo{UsePKCE: true},
-			numCallOptions:    2,
+			numCallOptions:    1,
 			authCodeUrlCalled: true,
 		},
 	}
@@ -402,6 +402,12 @@ func TestOAuth_Logout(t *testing.T) {
 			assert.True(t, invalidateTokenCalled)
 		})
 	}
+}
+
+func TestGenPKCECodeVerifier(t *testing.T) {
+	verifier, err := genPKCECodeVerifier()
+	assert.NoError(t, err)
+	assert.Len(t, verifier, 128)
 }
 
 type mockConnector struct {
