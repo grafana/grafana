@@ -287,6 +287,15 @@ func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQu
 	return availableNonRootFolders, nil
 }
 
+func (s *Service) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
+	dashFolders, err := s.store.GetFolders(ctx, orgID, uids)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	return dashFolders, nil
+}
+
 func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
 	permissions := user.GetPermissions()
 	folderPermissions := permissions[dashboards.ActionFoldersRead]
