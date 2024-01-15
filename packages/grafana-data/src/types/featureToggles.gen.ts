@@ -172,4 +172,5 @@ export interface FeatureToggles {
   alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
   alertingPreviewUpgrade?: boolean;
+  newFolderPicker?: boolean;
 }

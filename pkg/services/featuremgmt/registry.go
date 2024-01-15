@@ -1304,5 +1304,13 @@ var (
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:         "newFolderPicker",
+			Description:  "Enables the nested folder picker without having nested folders enabled",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Created:      time.Date(2024, time.January, 12, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )
