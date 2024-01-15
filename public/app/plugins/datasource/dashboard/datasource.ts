@@ -7,9 +7,13 @@ import {
   DataSourceInstanceSettings,
   TestDataSourceResponse,
 } from '@grafana/data';
-import { SceneDataTransformer, SceneObject } from '@grafana/scenes';
+import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import { PanelEditor } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import {
+  findVizPanelByKey,
+  getQueryRunnerFor,
+  getVizPanelKeyForPanelId,
+} from 'app/features/dashboard-scene/utils/utils';
 
 import { DashboardQuery } from './types';
 
@@ -49,14 +53,17 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [], error: { message: 'Could not find source panel' } });
     }
 
-    let sourceDataProvider = sourcePanel?.state.$data;
-
-    if (query.withTransforms && sourceDataProvider instanceof SceneDataTransformer) {
-      sourceDataProvider = sourceDataProvider.state.$data!;
-    }
+    let sourceDataProvider: SceneDataProvider | undefined = getQueryRunnerFor(sourcePanel);
 
     if (!sourceDataProvider || !sourceDataProvider.getResultsStream) {
       return of({ data: [] });
+    }
+
+    if (query.withTransforms && sourceDataProvider.parent) {
+      const transformer = sourceDataProvider.parent;
+      if (transformer && transformer instanceof SceneDataTransformer) {
+        sourceDataProvider = transformer;
+      }
     }
 
     if (!sourceDataProvider?.isActive) {
@@ -64,7 +71,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       sourceDataProvider.setContainerWidth!(500);
     }
 
-    return sourceDataProvider.getResultsStream().pipe(
+    return sourceDataProvider.getResultsStream!().pipe(
       map((result) => {
         return {
           data: result.data.series,

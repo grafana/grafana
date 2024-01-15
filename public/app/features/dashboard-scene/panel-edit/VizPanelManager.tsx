@@ -19,7 +19,6 @@ import {
   DeepPartial,
   SceneQueryRunner,
   sceneGraph,
-  SceneDataTransformer,
   SceneDataProvider,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
@@ -30,7 +29,7 @@ import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -229,13 +228,13 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   get queryRunner(): SceneQueryRunner {
-    const dataObj = this.state.panel.state.$data;
+    // Panel data object is always SceneQueryRunner wrapped in a SceneDataTransformer
+    const runner = getQueryRunnerFor(this.state.panel);
 
-    if (dataObj instanceof SceneDataTransformer) {
-      return dataObj.state.$data as SceneQueryRunner;
+    if (!runner) {
+      throw new Error('Query runner not found');
     }
-
-    return dataObj as SceneQueryRunner;
+    return runner;
   }
 
   get panelData(): SceneDataProvider {

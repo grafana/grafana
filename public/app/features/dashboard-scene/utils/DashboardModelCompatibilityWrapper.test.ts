@@ -16,7 +16,6 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene } from '../scene/DashboardScene';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
 import { DashboardModelCompatibilityWrapper } from './DashboardModelCompatibilityWrapper';
 
@@ -41,18 +40,14 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.panels[0].targets[0]).toEqual({ refId: 'A' });
     expect(wrapper.panels[1].targets).toHaveLength(0);
     expect(wrapper.panels[2].targets).toHaveLength(1);
-    expect(wrapper.panels[2].targets).toEqual([
-      { datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' }, refId: 'A', panelId: 1 },
-    ]);
+    expect(wrapper.panels[2].targets).toEqual([{ refId: 'A', panelId: 1 }]);
     expect(wrapper.panels[3].targets).toHaveLength(1);
     expect(wrapper.panels[3].targets[0]).toEqual({ refId: 'A' });
     expect(wrapper.panels[4].targets).toHaveLength(1);
-    expect(wrapper.panels[4].targets).toEqual([
-      { datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' }, refId: 'A', panelId: 1 },
-    ]);
+    expect(wrapper.panels[4].targets).toEqual([{ refId: 'A', panelId: 1 }]);
 
     expect(wrapper.panels[0].datasource).toEqual({ uid: 'gdev-testdata', type: 'grafana-testdata-datasource' });
-    expect(wrapper.panels[1].datasource).toEqual(null);
+    expect(wrapper.panels[1].datasource).toEqual(undefined);
     expect(wrapper.panels[2].datasource).toEqual({ uid: SHARED_DASHBOARD_QUERY, type: 'datasource' });
     expect(wrapper.panels[3].datasource).toEqual({ uid: 'gdev-testdata', type: 'grafana-testdata-datasource' });
     expect(wrapper.panels[4].datasource).toEqual({ uid: SHARED_DASHBOARD_QUERY, type: 'datasource' });
@@ -162,7 +157,11 @@ function setup() {
             title: 'Panel with a shared query',
             key: 'panel-3',
             pluginId: 'table',
-            $data: new ShareQueryDataProvider({ query: { refId: 'A', panelId: 1 } }),
+            $data: new SceneQueryRunner({
+              key: 'data-query-runner',
+              queries: [{ refId: 'A', panelId: 1 }],
+              datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
+            }),
           }),
         }),
 
@@ -187,7 +186,11 @@ function setup() {
             key: 'panel-4',
             pluginId: 'table',
             $data: new SceneDataTransformer({
-              $data: new ShareQueryDataProvider({ query: { refId: 'A', panelId: 1 } }),
+              $data: new SceneQueryRunner({
+                key: 'data-query-runner',
+                queries: [{ refId: 'A', panelId: 1 }],
+                datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
+              }),
               transformations: [],
             }),
           }),

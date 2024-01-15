@@ -26,12 +26,8 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
   });
 
   // Wrap inner data provider in a data transformer
-  if (panel.transformations?.length) {
-    dataProvider = new SceneDataTransformer({
-      $data: dataProvider,
-      transformations: panel.transformations,
-    });
-  }
-
-  return dataProvider;
+  return new SceneDataTransformer({
+    $data: dataProvider,
+    transformations: panel.transformations || [],
+  });
 }
