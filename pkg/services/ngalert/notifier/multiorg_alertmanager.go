@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -295,13 +296,13 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			moa.logger.Error("Failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "error", err)
 			continue
 		}
-		moa.alertmanagers[orgID] = alertmanager
 
-		if dbConfig.Default {
-			moa.metrics.UsingDefaultConfiguration.WithLabelValues(strconv.FormatInt(orgID, 10)).Set(1)
-			continue
-		}
-		moa.metrics.UsingDefaultConfiguration.WithLabelValues(strconv.FormatInt(orgID, 10)).Set(0)
+		// Store the float64 representation of the configuration hash in the gauge.
+		hash := float64(binary.LittleEndian.Uint64([]byte(dbConfig.ConfigurationHash)))
+		moa.metrics.ConfigurationHash.WithLabelValues(strconv.FormatInt(orgID, 10)).Set(hash)
+
+		// MaMapp the new Alertmanager to the org.
+		moa.alertmanagers[orgID] = alertmanager
 	}
 
 	amsToStop := map[int64]Alertmanager{}

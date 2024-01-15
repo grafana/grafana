@@ -15,9 +15,9 @@ type MultiOrgAlertmanager struct {
 	Registerer prometheus.Registerer
 	registries *metrics.TenantRegistries
 
-	ActiveConfigurations      prometheus.Gauge
-	DiscoveredConfigurations  prometheus.Gauge
-	UsingDefaultConfiguration *prometheus.GaugeVec
+	ActiveConfigurations     prometheus.Gauge
+	ConfigurationHash        *prometheus.GaugeVec
+	DiscoveredConfigurations prometheus.Gauge
 
 	aggregatedMetrics *AlertmanagerAggregatedMetrics
 }
@@ -39,11 +39,11 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Name:      "active_configurations",
 			Help:      "The number of active Alertmanager configurations.",
 		}),
-		UsingDefaultConfiguration: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+		ConfigurationHash: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "using_default_alertmanager_configuration",
-			Help:      "Whether or not an org is using the default configuration for their Alertmanager.",
+			Name:      "configuration_hash",
+			Help:      "Hash for the currently applied Alertmanager configuration for an org.",
 		}, []string{"org"}),
 		aggregatedMetrics: NewAlertmanagerAggregatedMetrics(registries),
 	}
