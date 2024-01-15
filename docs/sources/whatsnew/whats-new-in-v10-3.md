@@ -327,13 +327,13 @@ Tables can be configured and shared with team members via explore URLs or by add
 
 ## Data sources
 
-### Data source Admin permission
+### Data source Admin permission\*
 
-<!--This item has a release date of October 24th but isn't in the 10.2 release notes; is it for 10.3?
-<!--Ieva Vasiljeva
-_Generally available in Grafana Enterprise and Cloud_
+<!--Ieva Vasiljeva-->
 
-In addition to `Query` and `Edit` access, you can now grant users, teams, or basic roles `Admin` access to data sources. Users with `Admin` access to a data source can grant and revoke permissions to the data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access to data sources that they create. -->
+_Generally available in Grafana Enterprise and Grafana Cloud_
+
+In addition to `Query` and `Edit` access, you can now grant users, teams, or basic roles `Admin` access to data sources. Users with `Admin` access to a data source can grant and revoke permissions to the data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access to data sources that they create.
 
 ### Redshift and Athena: Async query caching
 
