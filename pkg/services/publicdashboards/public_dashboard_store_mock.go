@@ -190,32 +190,6 @@ func (_m *FakePublicDashboardStore) FindByAccessToken(ctx context.Context, acces
 	return r0, r1
 }
 
-// FindByDashboardFolder provides a mock function with given fields: ctx, dashboard
-func (_m *FakePublicDashboardStore) FindByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*models.PublicDashboard, error) {
-	ret := _m.Called(ctx, dashboard)
-
-	var r0 []*models.PublicDashboard
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *dashboards.Dashboard) ([]*models.PublicDashboard, error)); ok {
-		return rf(ctx, dashboard)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *dashboards.Dashboard) []*models.PublicDashboard); ok {
-		r0 = rf(ctx, dashboard)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.PublicDashboard)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *dashboards.Dashboard) error); ok {
-		r1 = rf(ctx, dashboard)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // FindByDashboardUid provides a mock function with given fields: ctx, orgId, dashboardUid
 func (_m *FakePublicDashboardStore) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, orgId, dashboardUid)
@@ -235,6 +209,32 @@ func (_m *FakePublicDashboardStore) FindByDashboardUid(ctx context.Context, orgI
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
 		r1 = rf(ctx, orgId, dashboardUid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindByFolder provides a mock function with given fields: ctx, dashboard
+func (_m *FakePublicDashboardStore) FindByFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, dashboard)
+
+	var r0 []*models.PublicDashboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *dashboards.Dashboard) ([]*models.PublicDashboard, error)); ok {
+		return rf(ctx, dashboard)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *dashboards.Dashboard) []*models.PublicDashboard); ok {
+		r0 = rf(ctx, dashboard)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*models.PublicDashboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *dashboards.Dashboard) error); ok {
+		r1 = rf(ctx, dashboard)
 	} else {
 		r1 = ret.Error(1)
 	}
