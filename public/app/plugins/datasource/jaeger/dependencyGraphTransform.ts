@@ -31,7 +31,7 @@ interface JaegerDependenciesResponseError {
 interface JaegerDependenciesResponse {
   data?: {
     errors?: JaegerDependenciesResponseError[];
-    data: JaegerServiceDependency[];
+    data?: JaegerServiceDependency[];
   };
 }
 

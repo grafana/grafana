@@ -23,7 +23,6 @@ describe('dependencyGraphTransform', () => {
       total: 0,
       limit: 0,
       offset: 0,
-      errors: null,
     };
 
     const res = mapJaegerDependenciesResponse({ data });
@@ -81,7 +80,6 @@ describe('dependencyGraphTransform', () => {
 
   it('should transform Jaeger API error', () => {
     const data = {
-      data: null,
       total: 0,
       limit: 0,
       offset: 0,
