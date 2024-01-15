@@ -113,6 +113,9 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 	inMemory := registry.ProvideService()
 	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 	loaderLoader, err := createLoader(configCfg, inMemory)
+	if err != nil {
+		return nil, err
+	}
 	pluginstoreService, err := pluginstore.ProvideService(inMemory, newTestDataPluginSource(cfg), loaderLoader)
 	if err != nil {
 		return nil, err
