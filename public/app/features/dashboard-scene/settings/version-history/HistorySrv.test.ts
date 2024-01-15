@@ -1,4 +1,4 @@
-import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { HistorySrv } from './HistorySrv';
 import { restore, versions } from './__mocks__/dashboardHistoryMocks';
