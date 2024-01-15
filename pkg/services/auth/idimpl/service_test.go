@@ -22,7 +22,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil, nil)
 		assert.True(t, hookRegistered)
 	})
 
@@ -36,7 +36,9 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil, nil)
 		assert.False(t, hookRegistered)
 	})
 }
+
+// TODO: Add tests
