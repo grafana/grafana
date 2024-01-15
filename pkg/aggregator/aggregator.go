@@ -104,13 +104,17 @@ func NewAggregatorServerOptions(out, errOut io.Writer,
 		service.NewServiceAPIBuilder(),
 	}
 
+	extensionsConfig, err := initApiExtensionsConfig(options, sharedConfig, fakeInformers, builders, serviceResolver)
+	if err != nil {
+		klog.Errorf("Error creating extensions config: %s", err)
+		return nil, err
+	}
+
 	aggregatorConfig, err := initAggregatorConfig(options, sharedConfig, extraConfig, fakeInformers, builders, serviceResolver)
 	if err != nil {
 		klog.Errorf("Error creating aggregator config: %s", err)
 		return nil, err
 	}
-
-	extensionsConfig, err := initApiExtensionsConfig(options, sharedConfig, fakeInformers, builders, serviceResolver)
 
 	return &AggregatorServerOptions{
 		StdOut:                out,
@@ -395,15 +399,15 @@ func initAggregatorConfig(options *options.RecommendedOptions,
 	return aggregatorConfig, nil
 }
 
-func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget, apiExtensionsInformers apiextensionsinformers.SharedInformerFactory) (*aggregatorapiserver.APIAggregator, error) {
-	completedConfig := aggregatorConfig.Complete()
+func (o *AggregatorServerOptions) CreateAggregatorServer(delegateAPIServer genericapiserver.DelegationTarget, apiExtensionsInformers apiextensionsinformers.SharedInformerFactory) (*aggregatorapiserver.APIAggregator, error) {
+	completedConfig := o.Config.AggregatorComplete
 	aggregatorServer, err := completedConfig.NewWithDelegate(delegateAPIServer)
 	if err != nil {
 		return nil, err
 	}
 
 	// create controllers for auto-registration
-	apiRegistrationClient, err := apiregistrationclient.NewForConfig(aggregatorConfig.GenericConfig.LoopbackClientConfig)
+	apiRegistrationClient, err := apiregistrationclient.NewForConfig(completedConfig.GenericConfig.LoopbackClientConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -416,9 +420,9 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 		autoRegistrationController)
 
 	// Imbue all builtin group-priorities onto the aggregated discovery
-	if aggregatorConfig.GenericConfig.AggregatedDiscoveryGroupManager != nil {
+	if completedConfig.GenericConfig.AggregatedDiscoveryGroupManager != nil {
 		for gv, entry := range apiVersionPriorities {
-			aggregatorConfig.GenericConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), int(entry.group), int(entry.version))
+			completedConfig.GenericConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), int(entry.group), int(entry.version))
 		}
 	}
 
@@ -476,7 +480,7 @@ func (o *AggregatorServerOptions) CreateAggregatorServer(aggregatorConfig *aggre
 
 	// Install the API Group+version
 	for _, b := range o.Builders {
-		g, err := b.GetAPIGroupInfo(aggregatorscheme.Scheme, aggregatorscheme.Codecs, aggregatorConfig.GenericConfig.RESTOptionsGetter)
+		g, err := b.GetAPIGroupInfo(aggregatorscheme.Scheme, aggregatorscheme.Codecs, completedConfig.GenericConfig.RESTOptionsGetter)
 		if err != nil {
 			return nil, err
 		}
@@ -569,6 +573,7 @@ var apiVersionPriorities = map[schema.GroupVersion]priority{
 	{Group: "admissionregistration.k8s.io", Version: "v1"}:       {group: 16700, version: 15},
 	{Group: "admissionregistration.k8s.io", Version: "v1beta1"}:  {group: 16700, version: 12},
 	{Group: "admissionregistration.k8s.io", Version: "v1alpha1"}: {group: 16700, version: 9},
+	{Group: "apiextensions.k8s.io", Version: "v1"}:               {group: 16700, version: 15},
 	// Append a new group to the end of the list if unsure.
 	// You can use min(existing group)-100 as the initial value for a group.
 	// Version can be set to 9 (to have space around) for a new group.

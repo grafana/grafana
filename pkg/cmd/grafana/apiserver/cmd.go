@@ -123,7 +123,7 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 		return err
 	}
 
-	aggregator, err := serverOptions.CreateAggregatorServer(serverOptions.Config.Aggregator, apiExtensionsServer.GenericAPIServer, apiExtensionsServer.Informers)
+	aggregator, err := serverOptions.CreateAggregatorServer(apiExtensionsServer.GenericAPIServer, apiExtensionsServer.Informers)
 	if err != nil {
 		klog.Errorf("Error creating aggregator server: %s", err)
 		return err
@@ -144,7 +144,6 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 		return err
 	}
 
-	// Finish the config (a noop for now)
 	prepared, err := aggregator.PrepareRun()
 	if err != nil {
 		return err
