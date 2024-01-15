@@ -1,4 +1,4 @@
-package apis
+package v0alpha1
 
 import (
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -8,6 +8,7 @@ import (
 )
 
 // ResourceInfo helps define a k8s resource
+// +k8s:openapi-gen=false
 type ResourceInfo struct {
 	group        string
 	version      string
