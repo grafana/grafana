@@ -56,6 +56,6 @@ const getDiffTitleStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.success.main,
   }),
   withoutDiff: css({
-    'margin-bottom': theme.spacing(2),
+    marginBottom: theme.spacing(2),
   }),
 });
