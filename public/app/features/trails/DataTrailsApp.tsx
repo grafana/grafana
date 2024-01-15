@@ -36,7 +36,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
       <Switch>
         <Route
           exact={true}
-          path="/data-trails"
+          path="/explore/metrics"
           render={() => (
             <Page navId="data-trails" layout={PageLayoutType.Custom}>
               <div className={styles.customPage}>
@@ -47,7 +47,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
         />
         <Route
           exact={true}
-          path="/data-trails/trail"
+          path="/explore/metrics/trail"
           render={() => (
             <Page navId="data-trails" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
               <div className={styles.customPage}>
