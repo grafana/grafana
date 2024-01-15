@@ -113,10 +113,12 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrEmailNotFound
 	}
 
+	info := s.GetOAuthInfo()
+
 	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
 	var role roletype.RoleType
 	var grafanaAdmin bool
-	if !s.info.SkipOrgRoleSync {
+	if !info.SkipOrgRoleSync {
 		role, grafanaAdmin, err = s.extractRoleAndAdmin(claims)
 		if err != nil {
 			return nil, err
@@ -143,11 +145,11 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	}
 
 	var isGrafanaAdmin *bool = nil
-	if s.info.AllowAssignGrafanaAdmin {
+	if info.AllowAssignGrafanaAdmin {
 		isGrafanaAdmin = &grafanaAdmin
 	}
 
-	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
+	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -176,14 +178,6 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 	// add specific validation rules for AzureAD
 
 	return nil
-}
-
-func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	return nil
-}
-
-func (s *SocialAzureAD) GetOAuthInfo() *social.OAuthInfo {
-	return s.info
 }
 
 func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
@@ -257,8 +251,10 @@ func (claims *azureClaims) extractEmail() string {
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
 func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool, error) {
+	info := s.GetOAuthInfo()
+
 	if len(claims.Roles) == 0 {
-		if s.info.RoleAttributeStrict {
+		if info.RoleAttributeStrict {
 			return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: unset role")
 		}
 		return s.defaultRole(), false, nil
@@ -276,7 +272,7 @@ func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, 
 		}
 	}
 
-	if s.info.RoleAttributeStrict {
+	if info.RoleAttributeStrict {
 		return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: idP did not return a valid role %q", claims.Roles)
 	}
 
@@ -400,9 +396,11 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 }
 
 func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
+	info := s.GetOAuthInfo()
+
 	bf.WriteString("## AzureAD specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.info.AllowedGroups))
+	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", info.AllowedGroups))
 	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
 	bf.WriteString("```\n\n")
 

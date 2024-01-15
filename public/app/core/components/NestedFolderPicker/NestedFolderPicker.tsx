@@ -4,6 +4,7 @@ import React, { useCallback, useId, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -58,6 +59,7 @@ export function NestedFolderPicker({
   const selectedFolder = useGetFolderQuery(value || skipToken);
 
   const rootStatus = useBrowseLoadingStatus(undefined);
+  const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
 
   const [search, setSearch] = useState('');
   const [autoFocusButton, setAutoFocusButton] = useState(false);
@@ -164,6 +166,10 @@ export function NestedFolderPicker({
       return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS, excludeUIDs);
     }
 
+    const allExcludedUIDs = config.sharedWithMeFolderUID
+      ? [...(excludeUIDs || []), config.sharedWithMeFolderUID]
+      : excludeUIDs;
+
     let flatTree = createFlatTree(
       undefined,
       rootCollection,
@@ -171,7 +177,7 @@ export function NestedFolderPicker({
       folderOpenState,
       0,
       EXCLUDED_KINDS,
-      excludeUIDs
+      allExcludedUIDs
     );
 
     if (showRootFolder) {
@@ -305,7 +311,7 @@ export function NestedFolderPicker({
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}
               idPrefix={overlayId}
-              foldersAreOpenable={!(search && searchState.value)}
+              foldersAreOpenable={nestedFoldersEnabled && !(search && searchState.value)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
             />

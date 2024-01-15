@@ -369,6 +369,7 @@ def rgm_promotion_pipeline():
             "-a $${ARTIFACTS} " +
             "--grafana-ref=$${GRAFANA_REF} " +
             "--enterprise-ref=$${ENTERPRISE_REF} " +
+            "--grafana-repo=$${GRAFANA_REPO} " +
             "--version=$${VERSION} ",
         ],
         "environment": rgm_env_secrets(env),
