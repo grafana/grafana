@@ -194,7 +194,7 @@
     "jest-canvas-mock": "2.5.2",
     "jest-date-mock": "1.0.8",
     "jest-environment-jsdom": "29.7.0",
-    "jest-fail-on-console": "3.1.1",
+    "jest-fail-on-console": "3.1.2",
     "jest-junit": "16.0.0",
     "jest-matcher-utils": "29.7.0",
     "lerna": "7.4.1",
