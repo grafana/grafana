@@ -89,6 +89,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             }}
             target={link.target}
             url={link.url}
+            ariaLabel={
+              sectionExpanded ? 'headline of expanded section' : showExpandButton ? 'headline of collapsed section' : ''
+            }
           >
             <div
               className={cx(styles.labelWrapper, {
