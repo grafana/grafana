@@ -813,7 +813,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 	var queryResult *dashboards.Dashboard
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		// nolint:staticcheck
-		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || query.FolderID == nil) {
+		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || (query.FolderID == nil && query.FolderUID == "")) {
 			return dashboards.ErrDashboardIdentifierNotSet
 		}
 
@@ -823,15 +823,17 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			dashboard.Title = *query.Title
 			mustCols = append(mustCols, "title")
 		}
-		// nolint:staticcheck
-		if query.FolderID != nil {
+
+		if query.FolderUID != "" {
+			dashboard.FolderUID = query.FolderUID
+			mustCols = append(mustCols, "folder_uid")
+		} else if query.FolderID != nil { // nolint:staticcheck
 			// nolint:staticcheck
 			dashboard.FolderID = *query.FolderID
 			mustCols = append(mustCols, "folder_id")
 		}
 
 		has, err := sess.MustCols(mustCols...).Get(&dashboard)
-
 		if err != nil {
 			return err
 		} else if !has {
