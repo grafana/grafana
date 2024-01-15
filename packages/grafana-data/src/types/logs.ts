@@ -1,5 +1,3 @@
-import { Observable } from 'rxjs';
-
 import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';

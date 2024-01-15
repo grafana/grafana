@@ -538,9 +538,6 @@ export class ElasticDatasource
     type: SupplementaryQueryType,
     request: DataQueryRequest<ElasticsearchQuery>
   ): DataQueryRequest<ElasticsearchQuery> | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
-      return undefined;
-    }
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         return this.getLogsVolumeDataProvider(request);
@@ -556,10 +553,6 @@ export class ElasticDatasource
   }
 
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
-      return undefined;
-    }
-
     let isQuerySuitable = false;
 
     switch (options.type) {
