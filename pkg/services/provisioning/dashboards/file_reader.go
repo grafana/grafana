@@ -339,7 +339,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 	}
 	result, err := fr.folderService.Get(ctx, &q)
 
-	isNotFound := errors.Is(err, dashboards.ErrDashboardNotFound) || errors.Is(err, folder.ErrFolderNotFound)
+	isNotFound := errors.Is(err, dashboards.ErrFolderNotFound) || errors.Is(err, folder.ErrFolderNotFound)
 	if err != nil && !isNotFound {
 		return 0, "", err
 	}
@@ -365,7 +365,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		// if a folder is not found in folder tbl, but found in dashboard tbl,
 		// we create a missing folder entry and set its UID to the dashboard's UID
 		if err == nil {
-			cfg.FolderUID = dash.FolderUID
+			cfg.FolderUID = dash.UID
 		}
 
 		createCmd := &folder.CreateFolderCommand{
