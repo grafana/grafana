@@ -3567,7 +3567,7 @@ __metadata:
     "@types/react-transition-group": "npm:4.4.10"
     "@types/react-window": "npm:1.8.5"
     "@types/slate": "npm:0.47.11"
-    "@types/slate-plain-serializer": "npm:0.7.2"
+    "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
@@ -9249,12 +9249,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/slate-plain-serializer@npm:0.7.2":
-  version: 0.7.2
-  resolution: "@types/slate-plain-serializer@npm:0.7.2"
+"@types/slate-plain-serializer@npm:0.7.5":
+  version: 0.7.5
+  resolution: "@types/slate-plain-serializer@npm:0.7.5"
   dependencies:
     "@types/slate": "npm:*"
-  checksum: b982c2241012e547eeba18e1104f2baa4ba0dbb674e4dcec9bf78bfe039fbde1599bd7a8c1d398baec67401a0949416c7543c0133ab80f81cddfdaff916c3f59
+  checksum: 8e8e7096f7656c51839a1d93b051cac7e5f106da682ccd5bd2eaba2e5364681471fd97a207261e232704f76ef24891728fbed015a9a801a220576255e9a46202
   languageName: node
   linkType: hard
 
@@ -17143,7 +17143,7 @@ __metadata:
     "@types/redux-mock-store": "npm:1.0.6"
     "@types/semver": "npm:7.5.6"
     "@types/slate": "npm:0.47.11"
-    "@types/slate-plain-serializer": "npm:0.7.2"
+    "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
     "@types/systemjs": "npm:6.13.1"
     "@types/testing-library__jest-dom": "npm:5.14.9"
