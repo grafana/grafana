@@ -109,7 +109,7 @@ describe('decodeGrafanaNamespace', () => {
     expect(decodeGrafanaNamespace(grafanaNamespace)).toBe(`[]`);
   });
 
-  it('should default to name if format is invalid: long array', () => {
+  it('grab folder name if format is long array', () => {
     const grafanaNamespace: CombinedRuleNamespace = {
       name: `["parentUID","my_rule_namespace","another_part"]`,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
@@ -122,7 +122,7 @@ describe('decodeGrafanaNamespace', () => {
       ],
     };
 
-    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe(`["parentUID","my_rule_namespace","another_part"]`);
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('another_part');
   });
 
   it('should not change output for cloud namespaces', () => {

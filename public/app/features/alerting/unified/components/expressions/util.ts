@@ -46,27 +46,17 @@ const formatLabels = (labels: Labels): string => {
  * where first element is parent UID and the second element is Title.
  */
 const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): string => {
-  const nameSpaceName = namespace.name;
+  const namespaceName = namespace.name;
 
   if (isCloudRulesSource(namespace.rulesSource)) {
-    return nameSpaceName;
+    return namespaceName;
   }
 
-  if (nameSpaceName.indexOf('[') !== 0) {
-    return nameSpaceName;
-  }
-
-  let arr: string[];
   try {
-    arr = JSON.parse(nameSpaceName);
+    return JSON.parse(namespaceName).at(-1) ?? namespaceName;
   } catch {
-    // if failed to parse, return as is
-    return nameSpaceName;
+    return namespaceName;
   }
-  if (arr.length !== 2) {
-    return nameSpaceName;
-  }
-  return arr[1];
 };
 
 const isEmptySeries = (series: DataFrame[]): boolean => {
