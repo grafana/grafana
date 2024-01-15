@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hash/maphash"
+	"hash/fnv"
 	"sort"
 	"strconv"
 	"time"
@@ -37,14 +37,7 @@ var (
 	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
 	// annotations.
 	ErrNoPanel = errors.New("no panel")
-
-	// TODO do not use global seed for folder title hash
-	folderTitleMapHashSeed maphash.Seed
 )
-
-func init() {
-	folderTitleMapHashSeed = maphash.MakeSeed()
-}
 
 // swagger:enum NoDataState
 type NoDataState string
@@ -554,10 +547,9 @@ type CountAlertRulesQuery struct {
 type FolderTitleMap map[uint64]string
 
 func FolderIdentifierHash(orgID int64, UID string) uint64 {
-	var h maphash.Hash
-	h.SetSeed(folderTitleMapHashSeed)
-	h.WriteString(strconv.FormatInt(orgID, 10))
-	h.WriteString(UID)
+	h := fnv.New64a()
+	h.Write([]byte(strconv.FormatInt(orgID, 10)))
+	h.Write([]byte(UID))
 	return h.Sum64()
 }
 
