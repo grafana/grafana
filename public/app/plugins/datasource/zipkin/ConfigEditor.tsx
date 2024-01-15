@@ -50,7 +50,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         isCollapsible={true}
         isInitiallyOpen={false}
       >
-        <Stack gap={3} direction="column">
+        <Stack gap={5} direction="column">
           <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
           <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>

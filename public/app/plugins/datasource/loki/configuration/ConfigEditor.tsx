@@ -70,7 +70,7 @@ export const ConfigEditor = (props: Props) => {
         isCollapsible={true}
         isInitiallyOpen
       >
-        <Stack gap={3} direction="column">
+        <Stack gap={5} direction="column">
           <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
           {config.secureSocksDSProxyEnabled && (
             <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
