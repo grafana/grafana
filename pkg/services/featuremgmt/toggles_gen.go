@@ -630,4 +630,8 @@ const (
 	// FlagAlertingQueryOptimization
 	// Optimizes eligible queries in order to reduce load on datasources
 	FlagAlertingQueryOptimization = "alertingQueryOptimization"
+
+	// FlagNewFolderPicker
+	// Enables the nested folder picker without having nested folders enabled
+	FlagNewFolderPicker = "newFolderPicker"
 )
