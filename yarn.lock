@@ -17275,7 +17275,7 @@ __metadata:
     react-beautiful-dnd: "npm:13.1.1"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:18.2.0"
-    react-draggable: "npm:4.4.5"
+    react-draggable: "npm:4.4.6"
     react-dropzone: "npm:^14.2.3"
     react-grid-layout: "npm:1.4.2"
     react-highlight-words: "npm:0.20.0"
@@ -24664,20 +24664,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-draggable@npm:4.4.5":
-  version: 4.4.5
-  resolution: "react-draggable@npm:4.4.5"
-  dependencies:
-    clsx: "npm:^1.1.1"
-    prop-types: "npm:^15.8.1"
-  peerDependencies:
-    react: ">= 16.3.0"
-    react-dom: ">= 16.3.0"
-  checksum: a6af765a71a62636a9c12868e9015e86e0160fbd9218a895200813f502e9ff848b8aab16ff7177faa808dd5a498b8a03c355edd2be0b823ec1035e91edf2103d
-  languageName: node
-  linkType: hard
-
-"react-draggable@npm:^4.0.0, react-draggable@npm:^4.0.3, react-draggable@npm:^4.4.5":
+"react-draggable@npm:4.4.6, react-draggable@npm:^4.0.0, react-draggable@npm:^4.0.3, react-draggable@npm:^4.4.5":
   version: 4.4.6
   resolution: "react-draggable@npm:4.4.6"
   dependencies:
