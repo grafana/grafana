@@ -517,3 +517,67 @@ func TestSocialGitlab_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestSocialGitlab_Reload(t *testing.T) {
+	testCases := []struct {
+		name         string
+		info         *social.OAuthInfo
+		settings     ssoModels.SSOSettings
+		expectError  bool
+		expectedInfo *social.OAuthInfo
+	}{
+		{
+			name: "SSO provider successfully updated",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      "some-new-url",
+				},
+			},
+			expectError: false,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				AuthUrl:      "some-new-url",
+			},
+		},
+		{
+			name: "fails if settings contain invalid values",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      []string{"first", "second"},
+				},
+			},
+			expectError: true,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGitLabProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Reload(context.Background(), tc.settings)
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.EqualValues(t, tc.expectedInfo, s.info)
+		})
+	}
+}
