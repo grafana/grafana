@@ -271,14 +271,6 @@ _Generally available in all editions of Grafana_
 
 The Contact points list view has been redesigned and split into two tabs: Contact Points and Notification Templates, making it easier to view all contact point information at a glance. You can now search for name and type of contact points and integrations, view how many notification policies each contact point is being used for, and navigate directly to the linked notification policies.
 
-### Quality of life enhancements for alerting contact points (possible dupe)\*
-
-<!--Ryan Kehoe-->
-
-_Generally available in all editions of Grafana_
-
-The contact point UI has received a major overhaul in Grafana 10.3. Contact point lists can now be searched and sorted. Contact Points now display the notification policies that utilize them as well as other useful metadata about the integration.
-
 ### Create alerts from panels\*
 
 <!-- Brenda Muir -->
@@ -286,14 +278,6 @@ The contact point UI has received a major overhaul in Grafana 10.3. Contact poin
 _Generally available in all editions of Grafana_
 
 Create alerts from dashboard panels. You can reuse the panel queries and create alerts based on them.
-
-### Add alert from any dashboard panel (duplicate)
-
-<!--Ryan Kehoe-->
-
-_Generally available in all editions of Grafana_
-
-Creating an alert from a panel just got easier. Users can now create an alert from any dashboard panel type via the **_More..._** section of a panel's action menu.
 
 ### Support for adding responders to Opsgenie alerting contact point\*
 
