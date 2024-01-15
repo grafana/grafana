@@ -33,6 +33,7 @@ import (
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
 	apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
+	apiextensionsopenapi "k8s.io/apiextensions-apiserver/pkg/generated/openapi"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -109,7 +110,7 @@ func NewAggregatorServerOptions(out, errOut io.Writer,
 		return nil, err
 	}
 
-	extensionsConfig, err := initApiExtensionsConfig(options, sharedConfig, fakeInformers, serviceResolver)
+	extensionsConfig, err := initApiExtensionsConfig(options, sharedConfig, fakeInformers, builders, serviceResolver)
 
 	return &AggregatorServerOptions{
 		StdOut:                out,
@@ -213,8 +214,13 @@ func getMergedOpenAPIDefinitions(builders []grafanaAPIServer.APIGroupBuilder, re
 	// Add OpenAPI specs for each group+version
 	prerequisiteAPIs := grafanaAPIServer.GetOpenAPIDefinitions(builders)(ref)
 	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
+	apiextensionsAPIs := apiextensionsopenapi.GetOpenAPIDefinitions(ref)
 
 	for k, v := range prerequisiteAPIs {
+		aggregatorAPIs[k] = v
+	}
+
+	for k, v := range apiextensionsAPIs {
 		aggregatorAPIs[k] = v
 	}
 
@@ -240,7 +246,9 @@ func initServiceResolver(factory informersv0alpha1.SharedInformerFactory) (apise
 func initApiExtensionsConfig(options *options.RecommendedOptions,
 	sharedConfig *genericapiserver.RecommendedConfig,
 	fakeInfomers informers.SharedInformerFactory,
-	serviceResolver apiserver.ServiceResolver) (*apiextensionsapiserver.Config, error) {
+	builders []grafanaAPIServer.APIGroupBuilder,
+	serviceResolver apiserver.ServiceResolver,
+) (*apiextensionsapiserver.Config, error) {
 	// make a shallow copy to let us twiddle a few things
 	// most of the config actually remains the same.  We only need to mess with a couple items related to the particulars of the api extensions
 	genericConfig := sharedConfig.Config
@@ -271,6 +279,18 @@ func initApiExtensionsConfig(options *options.RecommendedOptions,
 		return nil, err
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
+
+	getOpenAPIDefinitionsFunc := func() common.GetOpenAPIDefinitions {
+		return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+			return getMergedOpenAPIDefinitions(builders, ref)
+		}
+	}
+
+	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme, apiextensionsapiserver.Scheme)
+	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(getOpenAPIDefinitionsFunc(), namer)
+	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
+	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(getOpenAPIDefinitionsFunc(), namer)
+	genericConfig.OpenAPIConfig.Info.Title = "Kubernetes"
 
 	apiextensionsConfig := &apiextensionsapiserver.Config{
 		GenericConfig: &genericapiserver.RecommendedConfig{
