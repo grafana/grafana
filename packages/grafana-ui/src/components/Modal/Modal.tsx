@@ -32,7 +32,6 @@ export interface Props {
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
 }
-
 export function Modal(props: PropsWithChildren<Props>) {
   const {
     title,
@@ -49,6 +48,7 @@ export function Modal(props: PropsWithChildren<Props>) {
   const styles = useStyles2(getModalStyles);
 
   const ref = useRef<HTMLDivElement>(null);
+  const divContent = useRef<HTMLDivElement>(null);
 
   // Handle interacting outside the dialog and pressing
   // the Escape key to close the modal.
@@ -65,6 +65,9 @@ export function Modal(props: PropsWithChildren<Props>) {
   }
 
   const headerClass = cx(styles.modalHeader, typeof title !== 'string' && styles.modalHeaderWithTabs);
+  console.log(divContent.current);
+  const height = divContent.current?.clientHeight;
+  const childHeight = divContent.current?.lastElementChild?.clientHeight;
 
   return (
     <OverlayContainer>
@@ -92,7 +95,16 @@ export function Modal(props: PropsWithChildren<Props>) {
               />
             </div>
           </div>
-          <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
+          {
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          }{' '}
+          <div
+            className={cx(styles.modalContent, contentClassName)}
+            ref={divContent}
+            tabIndex={height && childHeight && height < childHeight ? 0 : -1}
+          >
+            {children}
+          </div>
         </div>
       </FocusScope>
     </OverlayContainer>
