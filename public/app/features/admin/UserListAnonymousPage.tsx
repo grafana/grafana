@@ -59,7 +59,7 @@ const UserListAnonymousDevicesPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
-            placeholder="Search devices by user agent."
+            placeholder="Search devices by ip adress."
             autoFocus={true}
             value={query}
             onChange={changeAnonQuery}
