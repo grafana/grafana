@@ -3108,7 +3108,7 @@ __metadata:
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
     marked: "npm:5.1.1"
-    marked-mangle: "npm:1.1.0"
+    marked-mangle: "npm:1.1.6"
     moment: "npm:2.29.4"
     moment-timezone: "npm:0.5.43"
     ol: "npm:7.4.0"
@@ -17221,7 +17221,7 @@ __metadata:
     json-markup: "npm:^1.1.0"
     json-source-map: "npm:0.6.1"
     jsurl: "npm:^0.1.5"
-    kbar: "npm:0.1.0-beta.44"
+    kbar: "npm:0.1.0-beta.45"
     lerna: "npm:7.4.1"
     leven: "npm:^4.0.0"
     lodash: "npm:4.17.21"
@@ -17230,9 +17230,9 @@ __metadata:
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
     marked: "npm:5.1.1"
-    marked-mangle: "npm:1.1.0"
+    marked-mangle: "npm:1.1.6"
     memoize-one: "npm:6.0.0"
-    mini-css-extract-plugin: "npm:2.7.6"
+    mini-css-extract-plugin: "npm:2.7.7"
     ml-regression-polynomial: "npm:^3.0.0"
     ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.29.4"
@@ -20171,9 +20171,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"kbar@npm:0.1.0-beta.44":
-  version: 0.1.0-beta.44
-  resolution: "kbar@npm:0.1.0-beta.44"
+"kbar@npm:0.1.0-beta.45":
+  version: 0.1.0-beta.45
+  resolution: "kbar@npm:0.1.0-beta.45"
   dependencies:
     "@radix-ui/react-portal": "npm:^1.0.1"
     fast-equals: "npm:^2.0.3"
@@ -20183,7 +20183,7 @@ __metadata:
   peerDependencies:
     react: ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 2d22a5d4ac348647b6fe2222f36a8023b8ebcfaccef18b84ac1173c6532a31fab5ce8795ce5a422fca1499265a6d0f0b2c8c233e9008e6782b0805a1707f6ba7
+  checksum: 16d161b8563400cc5bff15cf1ba881eb7a00e7bb8b5bd8b67c878fdb60a3db7380ee36f2ac29f15361ece0b214c7d5322d02c954381036d3f72a5227d8d3eb47
   languageName: node
   linkType: hard
 
@@ -20996,12 +20996,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked-mangle@npm:1.1.0":
-  version: 1.1.0
-  resolution: "marked-mangle@npm:1.1.0"
+"marked-mangle@npm:1.1.6":
+  version: 1.1.6
+  resolution: "marked-mangle@npm:1.1.6"
   peerDependencies:
-    marked: ^4 || ^5
-  checksum: 3897cb6b0ed580e9be029bf78f8b3b22534ca3e0c061fd9e45d0f256263c01f9667122d68235c767583c7109347bd1cc823dca5f428b95460123ba4b212cdb11
+    marked: ">=4 <12"
+  checksum: 70e7fa1e318cd69080e2f204e86263c419dd98d832571cfea03b09970206e5aea0aabb2921b43ebce6deec84b1c93c3365a03a1173d373a581423577c7f84325
   languageName: node
   linkType: hard
 
@@ -21269,14 +21269,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mini-css-extract-plugin@npm:2.7.6":
-  version: 2.7.6
-  resolution: "mini-css-extract-plugin@npm:2.7.6"
+"mini-css-extract-plugin@npm:2.7.7":
+  version: 2.7.7
+  resolution: "mini-css-extract-plugin@npm:2.7.7"
   dependencies:
     schema-utils: "npm:^4.0.0"
   peerDependencies:
     webpack: ^5.0.0
-  checksum: 1f718bfdcb7c2bf5e4336f694e5576432149d63f9dacaf94eae38ad046534050471a712a2d1bedf95e1722a2d3b56c3361d7352849e802e4875e716885e952c3
+  checksum: 55e9cb89a648e9d493dd66eb54cbf02783c6623d0e332ddb4c2374891fcd8de051d5f97473e40478eb2e091ea32fc9ac84c3cd583b445df9f444cc6b7483e1b1
   languageName: node
   linkType: hard
 
