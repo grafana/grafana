@@ -174,4 +174,5 @@ export interface FeatureToggles {
   enablePluginsTracingByDefault?: boolean;
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
+  newFolderPicker?: boolean;
 }

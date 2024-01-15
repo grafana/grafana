@@ -155,3 +155,4 @@ alertingPreviewUpgrade,experimental,@grafana/alerting-squad,2024-01-03,false,fal
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,2024-01-09,false,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,2024-01-10,false,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,2024-01-10,false,false,false,false
+newFolderPicker,experimental,@grafana/grafana-frontend-platform,2024-01-12,false,false,false,true
