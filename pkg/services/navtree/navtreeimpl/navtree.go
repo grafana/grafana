@@ -500,6 +500,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			SubTitle: "Browse and create new connections",
 			Url:      baseUrl + "/add-new-connection",
 			Children: []*navtree.NavLink{},
+			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
 		})
 
 		// Data sources
