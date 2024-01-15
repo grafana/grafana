@@ -131,7 +131,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     dockedMegaMenu: css({
       background: theme.colors.background.primary,
       borderRight: `1px solid ${theme.colors.border.weak}`,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
       display: 'none',
       zIndex: theme.zIndex.navbarFixed,
 
@@ -148,7 +147,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: config.featureToggles.dockedMegaMenu ? undefined : shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     panes: css({
       label: 'page-panes',

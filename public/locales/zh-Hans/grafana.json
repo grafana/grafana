@@ -306,6 +306,7 @@
       "save": "保存仪表板",
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
+      "share-button": "",
       "unmark-favorite": "取消标记为收藏"
     },
     "validation": {
@@ -406,9 +407,6 @@
     "datasource-add-button": {
       "label": "添加新数据源"
     }
-  },
-  "drawer": {
-    "close": ""
   },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
@@ -549,6 +547,9 @@
     "loading": "正在加载文件夹..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "关闭"
     },
@@ -703,6 +704,10 @@
     "alerting-silences": {
       "subtitle": "停止来自一个或多个警报规则的通知",
       "title": "静默"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "警报和事件管理应用",
@@ -1061,6 +1066,120 @@
       "passwords-must-match": "密码必须一致"
     }
   },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "usage-ack-desc": "",
+      "usage-ack-desc-tooltip": ""
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "",
+      "copy-button": "",
+      "dashboard-url-field-label": "",
+      "email-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "",
+      "public-share-type-option-label": "",
+      "revoke-public-URL-button": "",
+      "revoke-public-URL-button-title": "",
+      "settings-title": ""
+    },
+    "create-page": {
+      "generate-public-url-button": "",
+      "unsupported-features-desc": "",
+      "welcome-title": ""
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "",
+      "revoke-orphaned-body-text": "",
+      "revoke-title": ""
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": "",
+      "invite-field-desc": "",
+      "invite-field-label": "",
+      "resend-button": "",
+      "resend-button-title": "",
+      "revoke-button": "",
+      "revoke-button-title": ""
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "save-dashboard-changes-alert-title": "",
+      "unsupport-data-source-alert-readmore-link": "",
+      "unsupported-data-source-alert-desc": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert-desc": "",
+      "unsupported-template-variable-alert-title": ""
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "",
+      "expand-settings-tooltip": ""
+    },
+    "settings-configuration": {
+      "default-time-range-label": "",
+      "default-time-range-label-desc": "",
+      "show-annotations-label": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-label": "",
+      "time-range-picker-label-desc": ""
+    },
+    "settings-summary": {
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "dashboard-title": {
+      "orphaned-title": "",
+      "orphaned-tooltip": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "",
+      "open-dashboard-list-text": "",
+      "public-dashboard-link": "",
+      "public-dashboard-setting": ""
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "",
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "revoke-access-title": "",
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
+    },
+    "modal": {
+      "dashboard-modal-title": ""
+    },
+    "table-header": {
+      "activated-label": "",
+      "activated-tooltip": "",
+      "email-label": "",
+      "last-active-label": "",
+      "origin-label": "",
+      "role-label": ""
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "折叠查询行",
@@ -1190,6 +1309,7 @@
       "link": "链接",
       "panel-embed": "嵌入",
       "public-dashboard": "公共仪表板",
+      "public-dashboard-title": "",
       "snapshot": "快照"
     },
     "theme-picker": {
@@ -1337,6 +1457,11 @@
   },
   "user-sessions": {
     "loading": "正在加载会话..."
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": ""
+    }
   },
   "variable": {
     "adhoc": {
