@@ -123,7 +123,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         });
 
         if (res.errors?.length) {
-          this.alertOnErrors(res.errors, request)
+          this.alertOnErrors(res.errors, request);
         }
 
         return {
@@ -143,8 +143,10 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   }
 
   alertOnErrors(errors: DataQueryError[], request: DataQueryRequest<CloudWatchQuery>) {
-    const hasThrottlingError = errors.some((err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message)))
-    if(hasThrottlingError) {
+    const hasThrottlingError = errors.some(
+      (err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message))
+    );
+    if (hasThrottlingError) {
       const failedRefIds = errors.map((error) => error.refId).filter((refId) => refId);
       if (failedRefIds.length > 0) {
         const regionsAffected = Object.values(request.targets).reduce(
@@ -155,8 +157,8 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         regionsAffected.forEach((region) => {
           const actualRegion = this.getActualRegion(region);
           if (actualRegion) {
-            this.debouncedThrottlingAlert(this.instanceSettings.name, actualRegion)
-            }
+            this.debouncedThrottlingAlert(this.instanceSettings.name, actualRegion);
+          }
         });
       }
     }
