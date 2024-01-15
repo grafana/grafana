@@ -63,7 +63,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   getVersions = (append = false) => {
     this.setState({ isAppending: append });
     historySrv
-      .getHistoryList(this.props.dashboard, { limit: this.limit, start: this.start })
+      .getHistoryList(this.props.dashboard.uid, { limit: this.limit, start: this.start })
       .then((res) => {
         this.setState({
           isLoading: false,
@@ -186,7 +186,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   }
 }
 
-const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
+export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
   <HorizontalGroup>
     <Spinner />
     <em>{msg}</em>
