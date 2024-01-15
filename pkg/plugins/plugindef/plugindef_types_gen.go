@@ -442,6 +442,9 @@ type RoleRegistration struct {
 // For more information, refer to [Authentication for data source
 // plugins](https://grafana.com/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).
 type Route struct {
+	// RBAC action the user must have to access the route
+	Action *string `json:"action,omitempty"`
+
 	// For data source plugins. Route headers set the body content and
 	// length to the proxied request.
 	Body map[string]any `json:"body,omitempty"`
