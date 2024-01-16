@@ -587,7 +587,7 @@ func init() {
 	MAccessSearchPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "access_search_permissions_duration",
 		Help:    "Histogram for the runtime of permissions search function",
-		Buckets: prometheus.ExponentialBuckets(0.001, 4, 5),
+		Buckets: prometheus.ExponentialBuckets(0.01, 10, 5),
 	})
 
 	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
