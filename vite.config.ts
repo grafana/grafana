@@ -5,6 +5,28 @@ import { defineConfig } from 'vite';
 
 const require = createRequire(import.meta.url);
 
+// This is a Vite plugin for handling angular templates.
+// https://vitejs.dev/guide/api-plugin.html#simple-examples
+
+// The webpack output from https://github.com/WearyMonkey/ngtemplate-loader looks like this:
+// var code = "\n<div class=\"graph-annotation\">\n\t<div class=\"graph-annotation__header\">\n\t\t<div class=\"graph-annotation__user\" bs-tooltip=\"'Created by {{ctrl.login}}'\">\n\t\t</div>\n\n\t\t<div class=\"graph-annotation__title\">\n\t\t\t<span ng-if=\"!ctrl.event.id\">Add annotation</span>\n\t\t\t<span ng-if=\"ctrl.event.id\">Edit annotation</span>\n\t\t</div>\n\n    <div class=\"graph-annotation__time\">{{ctrl.timeFormated}}</div>\n\t</div>\n\n\t<form name=\"ctrl.form\" class=\"graph-annotation__body text-center\">\n\t\t<div style=\"display: inline-block\">\n\t\t\t<div class=\"gf-form gf-form--v-stretch\">\n\t\t\t\t<span class=\"gf-form-label width-7\">Description</span>\n\t\t\t\t<textarea class=\"gf-form-input width-20\" rows=\"2\" ng-model=\"ctrl.event.text\" placeholder=\"Description\"></textarea>\n\t\t\t</div>\n\n\t\t\t<div class=\"gf-form\">\n\t\t\t\t<span class=\"gf-form-label width-7\">Tags</span>\n\t\t\t\t<bootstrap-tagsinput ng-model=\"ctrl.event.tags\" tagclass=\"label label-tag\" placeholder=\"add tags\">\n\t\t\t\t</bootstrap-tagsinput>\n\t\t\t</div>\n\n\t\t\t<div class=\"gf-form-button-row\">\n\t\t\t\t<button type=\"submit\" class=\"btn btn-primary\" ng-click=\"ctrl.save()\">Save</button>\n\t\t\t\t<button ng-if=\"ctrl.event.id && ctrl.canDelete()\" type=\"submit\" class=\"btn btn-danger\" ng-click=\"ctrl.delete()\">Delete</button>\n\t\t\t\t<a class=\"btn-text\" ng-click=\"ctrl.close();\">Cancel</a>\n\t\t\t</div>\n\t\t</div>\n\t</form>\n</div>\n";
+// Exports
+// var _module_exports =code;;
+// var path = 'public/app/features/annotations/partials/event_editor.html';
+// window.angular.module('ng').run(['$templateCache', function(c) { c.put(path, _module_exports) }]);
+// module.exports = path;
+function angularHtmlImport() {
+  return {
+    name: 'transform-angular-html',
+    transform(src, id) {
+      if (/^.*\.html$/g.test(id)) {
+        const result = `let path = '${id}'; angular.module('ng').run(['$templateCache', c => { c.put(path, \`${src}\`) }]); export default path;`;
+        return { code: result, map: null };
+      }
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   root: './public',
@@ -21,7 +43,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
   },
-  plugins: [react()],
+  plugins: [react(), angularHtmlImport()],
   optimizeDeps: {
     // fix for $ is not a function
     exclude: ['jquery'],
