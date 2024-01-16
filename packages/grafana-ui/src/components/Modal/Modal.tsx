@@ -66,6 +66,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   const headerClass = cx(styles.modalHeader, typeof title !== 'string' && styles.modalHeaderWithTabs);
   console.log(divContent.current);
+  // https://www.w3.org/WAI/standards-guidelines/act/rules/0ssw9k/proposed/
   const height = divContent.current?.clientHeight;
   const childHeight = divContent.current?.lastElementChild?.clientHeight;
 
