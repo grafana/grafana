@@ -63,6 +63,9 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		if err != nil {
 			s.log.FromContext(ctx).Error("Failed to fetch oauth entry", "id", identity.ID, "error", err)
 		}
+
+		// cache the token check, so we don't perform it on every request if the user is not authenticated through oauth
+		s.cache.Set(identity.ID, struct{}{}, maxOAuthTokenCacheTTL)
 		return nil
 	}
 
@@ -84,11 +87,14 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	currentOAuthInfo := s.socialService.GetOAuthInfoProvider(provider)
 	if currentOAuthInfo == nil {
 		s.log.Warn("OAuth provider not found", "provider", provider)
+
+		s.cache.Set(identity.ID, struct{}{}, maxOAuthTokenCacheTTL)
 		return nil
 	}
 
 	// if refresh token handling is disabled for this provider, we can skip the hook
 	if !currentOAuthInfo.UseRefreshToken {
+		s.cache.Set(identity.ID, struct{}{}, maxOAuthTokenCacheTTL)
 		return nil
 	}
 
@@ -129,6 +135,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 			// if the access token has already been refreshed by another request (for example in HA scenario)
 			tokenExpires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
 			if !tokenExpires.Before(time.Now()) {
+				s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry, idTokenExpiry))
 				return nil, nil
 			}
 
@@ -144,6 +151,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 			return nil, refreshErr
 		}
+
 		return nil, nil
 	})
 
