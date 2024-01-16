@@ -1,5 +1,4 @@
 import { SyntaxNode } from '@lezer/common';
-import { MarkerSeverity } from 'monaco-editor';
 
 import {
   Aggregate,
@@ -118,7 +117,26 @@ export const setMarkers = (
   model: monacoTypes.editor.ITextModel,
   errorNodes: SyntaxNode[]
 ) => {
-  let markers = getErrorMarkers(monaco, model, errorNodes);
+  const markers = [
+    ...getErrorMarkers(monaco.MarkerSeverity.Error, model, errorNodes),
+    ...getWarningMarkers(monaco.MarkerSeverity.Warning, model),
+  ];
+  monaco.editor.setModelMarkers(
+    model,
+    'owner', // default value
+    markers
+  );
+};
+
+export const getErrorMarkers = (severity: number, model: monacoTypes.editor.ITextModel, errorNodes: SyntaxNode[]) => {
+  return errorNodes.map((errorNode) => {
+    const message = computeErrorMessage(errorNode);
+    return getMarker(severity, message, model, errorNode.from, errorNode.to);
+  });
+};
+
+export const getWarningMarkers = (severity: number, model: monacoTypes.editor.ITextModel) => {
+  let markers = [];
 
   // Check if there are issues that should result in a warning marker
   const text = model.getValue();
@@ -137,43 +155,18 @@ export const setMarkers = (
         ) {
           const from = node.prevSibling ? node.prevSibling.from : node.from - 1;
           const to = node.prevSibling ? node.prevSibling.to : node.from - 1;
-          const warnings = getWarningMarkers(monaco, model, from, to);
-          markers = [...markers, warnings];
+          const message = 'Add resource or span scope to attribute to improve query performance.';
+          markers.push(getMarker(severity, message, model, from, to));
         }
       }
     } while (cur.next());
   }
 
-  monaco.editor.setModelMarkers(
-    model,
-    'owner', // default value
-    markers
-  );
+  return markers;
 };
 
-export const getErrorMarkers = (
-  monaco: typeof monacoTypes,
-  model: monacoTypes.editor.ITextModel,
-  errorNodes: SyntaxNode[]
-) => {
-  return errorNodes.map((errorNode) => {
-    const message = computeErrorMessage(errorNode);
-    return getMarker(monaco.MarkerSeverity.Error, message, model, errorNode.from, errorNode.to);
-  });
-};
-
-const getWarningMarkers = (
-  monaco: typeof monacoTypes,
-  model: monacoTypes.editor.ITextModel,
-  from: number,
-  to: number
-) => {
-  const message = 'Add resource or span scope to attribute to improve query performance.';
-  return getMarker(monaco.MarkerSeverity.Warning, message, model, from, to);
-};
-
-const getMarker = (
-  severity: MarkerSeverity,
+export const getMarker = (
+  severity: number,
   message: string,
   model: monacoTypes.editor.ITextModel,
   from: number,
