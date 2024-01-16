@@ -826,11 +826,11 @@ var (
 		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
-			Stage:           FeatureStagePrivatePreview,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
-			Enabled:         true,
+			Expression:      "true", // enabled by default
 			Created:         time.Date(2023, time.August, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1296,6 +1296,40 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "enablePluginsTracingByDefault",
+			Description:     "Enable plugin tracing for all external plugins",
+			FrontendOnly:    false,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 9, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "cloudRBACRoles",
+			Description:     "Enabled grafana cloud specific RBAC roles",
+			Stage:           FeatureStageExperimental,
+			Owner:           identityAccessTeam,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:           "alertingQueryOptimization",
+			Description:    "Optimizes eligible queries in order to reduce load on datasources",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaAlertingSquad,
+			AllowSelfServe: false,
+			Created:        time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "newFolderPicker",
+			Description:  "Enables the nested folder picker without having nested folders enabled",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Created:      time.Date(2024, time.January, 12, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
