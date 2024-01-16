@@ -101,7 +101,8 @@ function cleanupDOM() {
   }
 
   // cleanup tether-drop
-  for (const drop of Drop.drops) {
-    drop.destroy();
-  }
+  // TODO: Vite doesn't like this. Pretty sure the lib is incompatible with Vite.
+  // for (const drop of Drop.drops) {
+  //   drop.destroy();
+  // }
 }
