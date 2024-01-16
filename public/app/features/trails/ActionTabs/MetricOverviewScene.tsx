@@ -1,7 +1,5 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import {
   QueryVariable,
   SceneComponentProps,
@@ -11,7 +9,7 @@ import {
   SceneObjectState,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Stack, useStyles2, TextLink } from '@grafana/ui';
+import { Stack, Text, TextLink } from '@grafana/ui';
 
 import PrometheusLanguageProvider from '../../../plugins/datasource/prometheus/language_provider';
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
@@ -82,7 +80,6 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
 
   public static Component = ({ model }: SceneComponentProps<MetricOverviewScene>) => {
     const { metadata } = model.useState();
-    const styles = useStyles2(getStyles);
     const variable = model.getVariable();
     const { loading } = variable.useState();
     const labelOptions = getLabelOptions(model, variable).filter((l) => l.value !== ALL_VARIABLE_VALUE);
@@ -94,19 +91,19 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
         ) : (
           <>
             <Stack direction="column" gap={0.5}>
-              <div className={styles.label}>Description</div>
+              <Text weight={'medium'}>Description</Text>
               {metadata?.help ? <div>{metadata?.help}</div> : <i>No description available</i>}
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <div className={styles.label}>Type</div>
+              <Text weight={'medium'}>Type</Text>
               {metadata?.type ? <div>{metadata?.type}</div> : <i>Unknown</i>}
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <div className={styles.label}>Unit</div>
+              <Text weight={'medium'}>Unit</Text>
               {metadata?.unit ? <div>{metadata?.unit}</div> : <i>Unknown</i>}
             </Stack>
             <Stack direction="column" gap={0.5}>
-              <div className={styles.label}>Labels</div>
+              <Text weight={'medium'}>Labels</Text>
               {labelOptions.map((l) => (
                 <TextLink
                   key={l.label}
@@ -126,24 +123,6 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
         )}
       </Stack>
     );
-  };
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    label: css({
-      fontWeight: 'bold',
-    }),
-    labelButton: css({
-      background: 'none',
-      border: 'none',
-      textAlign: 'left',
-      padding: 0,
-      ':hover': {
-        textDecoration: 'underline',
-        cursor: 'pointer',
-      },
-    }),
   };
 }
 
