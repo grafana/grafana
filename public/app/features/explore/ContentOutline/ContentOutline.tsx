@@ -15,6 +15,8 @@ const INDENT_LEVELS = {
   CHILD_EXPANDED: '62px',
 };
 
+const QUERY_ROW_TOP_OFFSET = -10;
+
 const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   const baseIndentStyle = {
     marginLeft: INDENT_LEVELS.ROOT,
@@ -82,7 +84,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     let el: HTMLElement | null | undefined = ref;
 
     // This is to handle ContentOutlineItem wrapping each QueryEditorRow
-    const customOffsetTop = itemPanelId === 'Queries' ? -10 : 0;
+    const customOffsetTop = itemPanelId === 'Queries' ? QUERY_ROW_TOP_OFFSET : 0;
 
     do {
       scrollValue += el?.offsetTop || customOffsetTop;
@@ -116,13 +118,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     });
   };
 
-  console.log('outlineItems', outlineItems);
-
   const outlineItemsHaveChildren = outlineItems.some((item) => item.children);
 
-  console.log('outlineItemsHaveChildren', outlineItemsHaveChildren);
-
-  // TODO: fix indenting for buttons that are not in a section
   useEffect(() => {
     let activeItem = null;
 
@@ -131,22 +128,18 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       let top = item?.ref?.getBoundingClientRect().top;
 
       // Check item
-      if (top && top >= -10) {
+      if (top && top >= 0) {
         activeItem = item;
         break;
       }
 
-      // if (sectionExpanded) {
-      //   continue;
-      // }
-
       // Check children
       const activeChild = item.children?.find((child) => {
         let childTop = child?.ref?.getBoundingClientRect().top;
-        return childTop && childTop >= -15;
+        return childTop && childTop >= QUERY_ROW_TOP_OFFSET;
       });
 
-      if (activeChild && !sectionExpanded) {
+      if (activeChild) {
         activeItem = activeChild;
         break;
       }
@@ -158,8 +151,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
     setActiveItemId(activeItem.id);
   }, [outlineItems, verticalScroll, sectionExpanded]);
-
-  console.log('activeItemId', activeItemId);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
