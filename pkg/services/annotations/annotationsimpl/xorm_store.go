@@ -532,8 +532,7 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 				return 0, err
 			}
 
-			x, y := r.deleteByIDs(ctx, "annotation", ids)
-			return x, y
+			return r.deleteByIDs(ctx, "annotation", ids)
 		})
 		totalAffected += affected
 		if err != nil {
@@ -550,8 +549,7 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 				return 0, err
 			}
 
-			x, y := r.deleteByIDs(ctx, "annotation", ids)
-			return x, y
+			return r.deleteByIDs(ctx, "annotation", ids)
 		})
 		totalAffected += affected
 		if err != nil {
@@ -570,8 +568,7 @@ func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (i
 			return 0, err
 		}
 
-		x, y := r.deleteByIDs(ctx, "annotation_tag", ids)
-		return x, y
+		return r.deleteByIDs(ctx, "annotation_tag", ids)
 	})
 }
 
