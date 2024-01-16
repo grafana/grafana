@@ -46,7 +46,10 @@ export const LogsTableActiveFields = (props: {
   reorderColumn: (sourceIndex: number, destinationIndex: number) => void;
   id: string;
 }): JSX.Element => {
-  const { reorderColumn } = props;
+  const { reorderColumn, labels, valueFilter, toggleColumn } = props;
+  const theme = useTheme2();
+  const styles = getLogsFieldsStyles(theme);
+  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination || !reorderColumn) {
@@ -54,11 +57,6 @@ export const LogsTableActiveFields = (props: {
     }
     reorderColumn(result.source.index, result.destination.index);
   };
-
-  const { labels, valueFilter, toggleColumn } = props;
-  const theme = useTheme2();
-  const styles = getLogsFieldsStyles(theme);
-  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
 
   const renderTitle = (labelName: string) => {
     const label = labels[labelName];
