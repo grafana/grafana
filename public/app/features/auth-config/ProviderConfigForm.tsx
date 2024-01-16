@@ -42,12 +42,12 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const onSubmit = async (data: SSOProviderDTO) => {
     setIsSaving(true);
     setSubmitError(false);
-    const requestData = dtoToData(data);
+    const requestData = dtoToData(data, provider);
     try {
       await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, {
         id: config?.id,
         provider: config?.provider,
-        settings: { ...config?.settings, ...requestData },
+        settings: { ...requestData },
       });
 
       appEvents.publish({
