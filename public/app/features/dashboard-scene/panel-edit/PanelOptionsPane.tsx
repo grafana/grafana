@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -54,9 +53,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 value={'All'}
                 fullWidth
               ></RadioButtonGroup>
-              <OptionsPaneCategory id="test" title="Panel options">
+              {/* <OptionsPaneCategory id="test" title="Panel options">
                 Placeholder
-              </OptionsPaneCategory>
+              </OptionsPaneCategory> */}
             </>
           )}
         </div>
