@@ -59,6 +59,7 @@ export function NestedFolderPicker({
   const selectedFolder = useGetFolderQuery(value || skipToken);
 
   const rootStatus = useBrowseLoadingStatus(undefined);
+  const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
 
   const [search, setSearch] = useState('');
   const [autoFocusButton, setAutoFocusButton] = useState(false);
@@ -310,7 +311,7 @@ export function NestedFolderPicker({
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}
               idPrefix={overlayId}
-              foldersAreOpenable={!(search && searchState.value)}
+              foldersAreOpenable={nestedFoldersEnabled && !(search && searchState.value)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
             />
