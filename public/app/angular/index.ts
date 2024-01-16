@@ -1,5 +1,6 @@
 import './panel/all';
-import './partials';
+// Vite: these partials still aren't working correctly so comment out for now.
+// import './partials';
 import './filters/filters';
 import './services/alert_srv';
 import './services/dynamic_directive_srv';
