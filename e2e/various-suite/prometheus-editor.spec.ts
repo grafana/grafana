@@ -99,6 +99,42 @@ describe('Prometheus query editor', () => {
     it('navigates to the query builder with editor type as code', () => {
       navigateToEditor('Builder', 'prometheusBuilder');
     });
+
+    it('the query builder contains metric select, label filters and operations', () => {
+      navigateToEditor('Builder', 'prometheusBuilder');
+
+      getResources();
+
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist');
+      e2e.components.QueryBuilder.labelSelect().should('exist');
+      e2e.components.QueryBuilder.matchOperatorSelect().should('exist');
+      e2e.components.QueryBuilder.valueSelect().should('exist');
+    });
+
+    it('should have the metrics explorer opened via the metric select', () => {
+      navigateToEditor('Builder', 'prometheusBuilder');
+
+      getResources();
+
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click();
+
+      selectOption('Metrics explorer');
+
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricsExplorer().should('exist');
+    });
+
+    // NEED TO COMPLETE QUEY ADVISOR WORK OR FIGURE OUT HOW TO ENABLE EXPERIMENTAL FEATURE TOGGLES
+    // it('should have a query advisor when enabled with feature toggle', () => {
+    //   cy.window().then((win) => {
+    //     win.localStorage.setItem('grafana.featureToggles', 'prometheusPromQAIL=0');
+
+    //     navigateToEditor('Builder', 'prometheusBuilder');
+
+    //     getResources();
+
+    //     e2e.components.DataSource.Prometheus.queryEditor.builder.queryAdvisor().should('exist');
+    //   });
+    // });
   });
 });
 
