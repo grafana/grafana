@@ -5,7 +5,7 @@ import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, Button, LinkButton, Stack, TabContent, Text, TextLink } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../../RuleViewer';
@@ -64,7 +64,7 @@ const RuleViewer = () => {
       navId="alert-list"
       isLoading={false}
       renderTitle={(title) => {
-        return <Title name={title} state={isAlertType ? promRule.state : undefined} />;
+        return <Title name={title} state={isAlertType ? promRule.state : undefined} health={rule.promRule?.health} />;
       }}
       actions={actions}
       info={createMetadata(rule)}
@@ -183,27 +183,30 @@ interface TitleProps {
   name: string;
   // recording rules don't have a state
   state?: PromAlertingRuleState;
+  health?: RuleHealth;
 }
 
-export const Title = ({ name, state }: TitleProps) => (
+export const Title = ({ name, state, health }: TitleProps) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
     <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
     <Text element="h1" truncate>
       {name}
     </Text>
     {/* recording rules won't have a state */}
-    {state && <StateBadge state={state} />}
+    {state && <StateBadge state={state} health={health} />}
   </div>
 );
 
+// we're making a distinction here between the "state" of the rule and its "health".
 interface StateBadgeProps {
   state: PromAlertingRuleState;
+  health?: RuleHealth;
 }
 
 // TODO move to separate component
-const StateBadge = ({ state }: StateBadgeProps) => {
+const StateBadge = ({ state, health }: StateBadgeProps) => {
   let stateLabel: string;
-  let textColor: 'success' | 'error' | 'warning';
+  let textColor: 'success' | 'error' | 'warning' | 'info';
 
   switch (state) {
     case PromAlertingRuleState.Inactive:
@@ -220,9 +223,20 @@ const StateBadge = ({ state }: StateBadgeProps) => {
       break;
   }
 
+  switch (health) {
+    case 'error':
+      textColor = 'error';
+      stateLabel = 'Error';
+      break;
+    case 'nodata':
+      textColor = 'info';
+      stateLabel = 'Insufficient data';
+      break;
+  }
+
   return (
     <Stack direction="row" gap={0.5}>
-      <AlertStateDot size="md" state={state} />
+      <AlertStateDot size="md" state={state} health={health} />
       <Text variant="bodySmall" color={textColor}>
         {stateLabel}
       </Text>

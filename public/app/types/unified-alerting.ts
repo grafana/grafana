@@ -26,8 +26,10 @@ export function hasAlertState(alert: Alert, state: PromAlertingRuleState | Grafa
   return mapStateWithReasonToBaseState(alert.state) === state;
 }
 
+export type RuleHealth = 'nodata' | 'error' | string;
+
 interface RuleBase {
-  health: string;
+  health: RuleHealth;
   name: string;
   query: string;
   lastEvaluation?: string;

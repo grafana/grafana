@@ -3,7 +3,15 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ComponentSize, Stack, useStyles2 } from '@grafana/ui';
+import { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
+interface DotStylesProps {
+  state: PromAlertingRuleState;
+  health?: RuleHealth;
+  includeState?: boolean;
+  size?: ComponentSize; // TODO support this
+}
 
 const AlertStateDot = (props: DotStylesProps) => {
   const styles = useStyles2(getDotStyles, props);
@@ -15,15 +23,18 @@ const AlertStateDot = (props: DotStylesProps) => {
   );
 };
 
-interface DotStylesProps {
-  state: PromAlertingRuleState;
-  includeState?: boolean;
-  size?: ComponentSize; // TODO support this
-}
-
 const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
   const size = theme.spacing(1.25);
   const outlineSize = `calc(${size} / 2.5)`;
+
+  const isFiring = props.state === PromAlertingRuleState.Firing;
+  const isError = props.health === 'error';
+  const isNoData = props.health === 'nodata';
+
+  const errorStyle = isFiring || isError;
+  const successStyle = props.state === PromAlertingRuleState.Inactive;
+  const pendingStyle = props.state === PromAlertingRuleState.Pending;
+  const noDataStyle = isNoData;
 
   return {
     dot: css`
@@ -36,23 +47,29 @@ const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
       outline: solid ${outlineSize} ${theme.colors.secondary.transparent};
       margin: ${outlineSize};
 
-      ${props.state === PromAlertingRuleState.Inactive &&
-      css`
-        background-color: ${theme.colors.success.main};
-        outline-color: ${theme.colors.success.transparent};
-      `}
+      ${successStyle &&
+      css({
+        backgroundColor: theme.colors.success.main,
+        outlineColor: theme.colors.success.transparent,
+      })}
 
-      ${props.state === PromAlertingRuleState.Pending &&
-      css`
-        background-color: ${theme.colors.warning.main};
-        outline-color: ${theme.colors.warning.transparent};
-      `}
+      ${pendingStyle &&
+      css({
+        backgroundColor: theme.colors.warning.main,
+        outlineColor: theme.colors.warning.transparent,
+      })}
 
-      ${props.state === PromAlertingRuleState.Firing &&
-      css`
-        background-color: ${theme.colors.error.main};
-        outline-color: ${theme.colors.error.transparent};
-      `}
+      ${errorStyle &&
+      css({
+        backgroundColor: theme.colors.error.main,
+        outlineColor: theme.colors.error.transparent,
+      })}
+
+      ${noDataStyle &&
+      css({
+        backgroundColor: theme.colors.info.main,
+        outlineColor: theme.colors.info.transparent,
+      })}
     `,
   };
 };
