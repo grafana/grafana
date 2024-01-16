@@ -9,10 +9,9 @@ import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
 import { DashboardDTO, DashboardMeta, DashboardRoutes } from 'app/types';
 
-import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { getVizPanelKeyForPanelId, findVizPanelByKey } from '../utils/utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
@@ -91,25 +90,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       dashboard.startUrlSync();
 
       this.setState({ dashboard: dashboard, isLoading: false });
-    } catch (err) {
-      this.setState({ isLoading: false, loadError: String(err) });
-    }
-  }
-
-  public async loadPanelEdit(uid: string, panelId: string) {
-    try {
-      const dashboard = await this.loadScene(uid);
-      const panel = findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(parseInt(panelId, 10)));
-
-      if (!panel) {
-        this.setState({ isLoading: false, loadError: 'Panel not found' });
-        return;
-      }
-
-      const panelEditor = buildPanelEditScene(dashboard, panel);
-      panelEditor.startUrlSync();
-
-      this.setState({ isLoading: false, panelEditor });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
