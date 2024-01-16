@@ -51,6 +51,7 @@ function convertTraceToGraph(spans: ZipkinSpan[]): { nodes: Node[]; edges: Edge[
 
   for (const span of spans) {
     const ranges: Array<[number, number]> = spanMap[span.id].children.map((c) => {
+      const span = spanMap[c].span;
       return [span.timestamp, span.timestamp + span.duration];
     });
     const childrenDuration = getNonOverlappingDuration(ranges);
