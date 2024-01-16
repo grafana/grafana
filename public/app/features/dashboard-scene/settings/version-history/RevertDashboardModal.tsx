@@ -1,21 +1,23 @@
 import React from 'react';
 
 import { ConfirmModal } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
 
 export interface RevertDashboardModalProps {
   hideModal: () => void;
-  version: DecoratedRevisionModel;
   onRestore: (version: DecoratedRevisionModel) => void;
+  version: DecoratedRevisionModel;
 }
 
 export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDashboardModalProps) => {
-  // TODO: how should state.error be handled?
-  // const { state, onRestoreDashboard } = useDashboardRestore(version);
+  const notifyApp = useAppNotification();
 
   const onRestoreDashboard = async () => {
-    await onRestore(version);
+    onRestore(version);
+    notifyApp.success('Dashboard restored', `Restored from version ${version.version}`);
+    hideModal();
   };
 
   return (

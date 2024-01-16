@@ -95,17 +95,23 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
   }
 
   public async onRestore(version: DecoratedRevisionModel) {
+    //todo: how do we actually do the restore? do we restore as soon as we press modal btn?
+    // or do we need to save dashboard and exit edit mode?
     await historySrv.restoreDashboard(version.uid, version.version);
 
-    const jsonObj = JSON.parse(JSON.stringify(version.data));
+    this._dashboard.onDiscard();
 
-    const dashboardModel = new DashboardModel(jsonObj);
-
+    // should I use dashboardModel? is this okay?
+    const dashboardModel = new DashboardModel(version.data);
     const dashScene = transformSaveModelToScene({ dashboard: dashboardModel, meta: this._dashboard.state.meta });
-
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
-
+    newState.version = this._dashboard.state.version! + 1;
     this._dashboard.setState(newState);
+    this._dashboard.forceRender();
+
+    this._start = 0;
+    this.setState({ versions: [] });
+    this.fetchVersions();
   }
 
   public fetchVersions(append = false): void {
@@ -221,6 +227,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
             baseInfo={baseInfo!}
             isNewLatest={isNewLatest!}
             diffData={model.diffData}
+            onRestore={model.onRestore.bind(model)}
           />
         )}
       </Page>

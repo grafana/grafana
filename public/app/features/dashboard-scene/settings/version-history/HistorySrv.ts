@@ -1,6 +1,7 @@
 import { isNumber } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 
 export interface HistoryListOpts {
   limit: number;
@@ -16,7 +17,7 @@ export interface RevisionsModel {
   created: Date;
   createdBy: string;
   message: string;
-  data: string;
+  data: Dashboard;
 }
 
 export class HistorySrv {
