@@ -9,8 +9,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/sims"
 )
+
+// ensures that testdata implements all client functions
+// var _ plugins.Client = &Service{}
 
 func ProvideService() *Service {
 	s := &Service{
@@ -65,4 +69,9 @@ func (s *Service) CheckHealth(_ context.Context, _ *backend.CheckHealthRequest) 
 		Status:  backend.HealthStatusOk,
 		Message: "Data source is working",
 	}, nil
+}
+
+// CollectMetricsHandler handles metric collection.
+func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	return nil, nil
 }
