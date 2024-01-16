@@ -21,6 +21,7 @@ type Scheduler struct {
 	ProcessDuration                     *prometheus.HistogramVec
 	SendDuration                        *prometheus.HistogramVec
 	GroupRules                          *prometheus.GaugeVec
+	Groups                              *prometheus.GaugeVec
 	SchedulePeriodicDuration            prometheus.Histogram
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
@@ -99,6 +100,15 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The number of alert rules that are scheduled, both active and paused.",
 			},
 			[]string{"org", "state"},
+		),
+		Groups: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_groups",
+				Help:      "The number of alert rule groups",
+			},
+			[]string{"org"},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
