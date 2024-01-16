@@ -27,16 +27,17 @@ type FeatureFlagAPIBuilder struct {
 	features *featuremgmt.FeatureManager
 }
 
+func NewFeatureFlagAPIBuilder(features *featuremgmt.FeatureManager) *FeatureFlagAPIBuilder {
+	return &FeatureFlagAPIBuilder{features}
+}
+
 func RegisterAPIService(features *featuremgmt.FeatureManager,
 	apiregistration grafanaapiserver.APIRegistrar,
 ) *FeatureFlagAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-
-	builder := &FeatureFlagAPIBuilder{
-		features: features,
-	}
+	builder := NewFeatureFlagAPIBuilder(features)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }

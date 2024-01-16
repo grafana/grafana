@@ -15,8 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -49,7 +52,11 @@ func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
 		case "example.grafana.app":
 			o.builders = append(o.builders, example.NewTestingAPIBuilder())
 		case "featuretoggle.grafana.app":
-			o.builders = append(o.builders, &featuretoggle.FeatureFlagAPIBuilder{})
+			features, err := featuremgmt.ProvideManagerService(&setting.Cfg{}, &licensing.OSSLicensingService{})
+			if err != nil {
+				return err
+			}
+			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
 		case "testdata.datasource.grafana.app":
 			ds, err := datasource.NewStandaloneDatasource(g)
 			if err != nil {
