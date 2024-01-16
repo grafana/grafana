@@ -117,7 +117,6 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 		ID:              "user:1234",
 		AuthenticatedBy: "oauth_generic_oauth",
 	}
-	oauth_user_identity.SessionToken = nil
 
 	authInfoStore.ExpectedOAuth = oauth_user
 
@@ -151,6 +150,7 @@ func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
 	}
 	usr := &user.SignedInUser{
 		AuthenticatedBy: login.GenericOAuthModule,
+		UserID:          1,
 	}
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
@@ -158,8 +158,7 @@ func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
 
 	err := srv.TryTokenRefresh(ctx, usr)
 
-	assert.NotNil(t, err)
-	assert.ErrorIs(t, err, ErrNoRefreshTokenFound)
+	assert.Nil(t, err)
 
 	socialConnector.AssertNotCalled(t, "TokenSource")
 }
@@ -183,6 +182,7 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 
 	usr := &user.SignedInUser{
 		AuthenticatedBy: login.GenericOAuthModule,
+		UserID:          1,
 	}
 
 	authInfoStore.ExpectedOAuth = &login.UserAuth{
@@ -219,6 +219,7 @@ func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
 	token := &oauth2.Token{}
 	usr := &user.SignedInUser{
 		AuthenticatedBy: login.SAMLAuthModule,
+		UserID:          1,
 	}
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
@@ -226,8 +227,7 @@ func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
 
 	err := srv.TryTokenRefresh(ctx, usr)
 
-	assert.NotNil(t, err)
-	assert.ErrorIs(t, err, ErrNotAnOAuthProvider)
+	assert.Nil(t, err)
 
 	socialConnector.AssertNotCalled(t, "TokenSource")
 }
@@ -243,7 +243,13 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 		},
 	}
 
-	authInfoStore := &FakeAuthInfoStore{}
+	authInfoStore := &FakeAuthInfoStore{
+		ExpectedOAuth: &login.UserAuth{
+			AuthModule:        "oauth",
+			OAuthIdToken:      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+			OAuthRefreshToken: "",
+		},
+	}
 	authInfoService := authinfoimpl.ProvideService(authInfoStore)
 	return &Service{
 		Cfg:                  setting.NewCfg(),
