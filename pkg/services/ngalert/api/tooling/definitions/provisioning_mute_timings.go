@@ -54,7 +54,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       200: MuteTimeInterval
+//       202: MuteTimeInterval
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming
@@ -63,6 +63,7 @@ import (
 //
 //     Responses:
 //       204: description: The mute timing was deleted successfully.
+//       409: GenericPublicError
 
 // swagger:route
 

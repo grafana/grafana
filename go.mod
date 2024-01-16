@@ -63,7 +63,7 @@ require (
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.11.0 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.198.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.199.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -100,7 +100,7 @@ require (
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/backend-platform
 	github.com/yalue/merged_fs v1.2.2 // @grafana/grafana-as-code
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/backend-platform
-	go.opentelemetry.io/collector/pdata v1.0.0-rc8 // @grafana/backend-platform
+	go.opentelemetry.io/collector/pdata v1.0.1 // @grafana/backend-platform
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.46.1 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.21.0 // @grafana/backend-platform
@@ -214,7 +214,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
@@ -287,6 +287,8 @@ require (
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 
 require github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces-and-profiling
+
+require github.com/grafana/pyroscope-go/godeltaprof v0.1.6 // @grafana/observability-traces-and-profiling
 
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
