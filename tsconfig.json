@@ -1,12 +1,29 @@
 {
   "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    // "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
     "baseUrl": "public/",
     "outDir": "public/dist",
     "rootDirs": ["public/"],
     "allowJs": true,
-    "strict": true,
-    "resolveJsonModule": true,
     "useUnknownInCatchVariables": true,
     "incremental": true,
     "isolatedModules": true,
@@ -32,5 +49,6 @@
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types"
   ],
-  "exclude": ["public/app/**/webpack.config.ts"]
+  "exclude": ["public/app/**/webpack.config.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }
