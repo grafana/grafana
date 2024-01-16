@@ -2,6 +2,7 @@ package ssosettingsimpl
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"testing"
@@ -99,6 +100,84 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "should decrypt secrets if data is coming from store",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":       true,
+						"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+						"other_secret":  base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+					},
+					Source: models.DB,
+				}
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"client_id": "client_id",
+					},
+				}
+
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":       true,
+					"client_id":     "client_id",
+					"client_secret": "decrypted-client-secret",
+					"other_secret":  "decrypted-other-secret",
+				},
+				Source: models.DB,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should not decrypt secrets if data is coming from the fallback strategy",
+			setup: func(env testEnv) {
+				env.store.ExpectedError = ssosettings.ErrNotFound
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled":       true,
+						"client_id":     "client_id",
+						"client_secret": "client_secret",
+					},
+				}
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Settings: map[string]any{
+					"enabled":       true,
+					"client_id":     "client_id",
+					"client_secret": "client_secret",
+				},
+				Source: models.System,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error if the data in the store is invalid",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":       true,
+						"client_secret": "not a valid base64 string",
+					},
+					Source: models.DB,
+				}
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"client_id": "client_id",
+					},
+				}
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -117,6 +196,8 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tc.want, actual)
+
+			env.secrets.AssertExpectations(t)
 		})
 	}
 }
@@ -135,12 +216,14 @@ func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
 					Provider: "github",
 					Settings: map[string]any{
 						"enabled":       true,
-						"secret":        "secret",
-						"client_secret": "client_secret",
+						"secret":        base64.RawStdEncoding.EncodeToString([]byte("secret")),
+						"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
 						"client_id":     "client_id",
 					},
 					Source: models.DB,
 				}
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("secret"), mock.Anything).Return([]byte("decrypted-secret"), nil).Once()
 			},
 			want: &models.SSOSettings{
 				Provider: "github",
@@ -444,7 +527,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		err := env.service.Upsert(context.Background(), settings)
 		require.NoError(t, err)
 
-		settings.Settings["client_secret"] = "encrypted-client-secret"
+		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-client-secret"))
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
 	})
 
@@ -573,7 +656,13 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		reloadable.On("Validate", mock.Anything, settings).Return(nil)
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
-		env.store.ExpectedError = errors.New("upsert failed")
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{}, nil
+		}
+
+		env.store.UpsertFn = func(ctx context.Context, settings models.SSOSettings) error {
+			return errors.New("failed to upsert settings")
+		}
 
 		err := env.service.Upsert(context.Background(), settings)
 		require.Error(t, err)
@@ -602,7 +691,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		err := env.service.Upsert(context.Background(), settings)
 		require.NoError(t, err)
 
-		settings.Settings["client_secret"] = "encrypted-client-secret"
+		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-client-secret"))
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
 	})
 }
@@ -692,6 +781,85 @@ func TestSSOSettingsService_DoReload(t *testing.T) {
 
 		env.service.doReload(context.Background())
 	})
+}
+
+func TestSSOSettingsService_decryptSecrets(t *testing.T) {
+	testCases := []struct {
+		name     string
+		setup    func(env testEnv)
+		settings map[string]any
+		want     map[string]any
+		wantErr  bool
+	}{
+		{
+			name: "should decrypt secrets successfully",
+			setup: func(env testEnv) {
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+			},
+			settings: map[string]any{
+				"enabled":       true,
+				"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+				"other_secret":  base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+			},
+			want: map[string]any{
+				"enabled":       true,
+				"client_secret": "decrypted-client-secret",
+				"other_secret":  "decrypted-other-secret",
+			},
+		},
+		{
+			name: "should return an error if data is not a string",
+			settings: map[string]any{
+				"enabled":       true,
+				"client_secret": 2,
+				"other_secret":  2,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if data is not a valid base64 string",
+			settings: map[string]any{
+				"enabled":       true,
+				"client_secret": "client_secret",
+				"other_secret":  "other_secret",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error decryption fails",
+			setup: func(env testEnv) {
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return(nil, errors.New("decryption failed")).Once()
+			},
+			settings: map[string]any{
+				"enabled":       true,
+				"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			env := setupTestEnv(t)
+
+			if tc.setup != nil {
+				tc.setup(env)
+			}
+
+			actual, err := env.service.decryptSecrets(context.Background(), tc.settings)
+
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.want, actual)
+
+			env.secrets.AssertExpectations(t)
+		})
+	}
 }
 
 func setupTestEnv(t *testing.T) testEnv {
