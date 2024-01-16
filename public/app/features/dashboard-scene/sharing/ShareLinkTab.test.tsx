@@ -30,7 +30,7 @@ describe('ShareLinkTab', () => {
     config.rendererAvailable = true;
     config.bootData.user.orgId = 1;
     config.featureToggles.dashboardSceneForViewers = true;
-    locationService.push('/scenes/dashboard/dash-1?from=now-6h&to=now');
+    locationService.push('/d/dash-1?from=now-6h&to=now');
   });
 
   describe('with locked time range (absolute) range', () => {
@@ -38,7 +38,7 @@ describe('ShareLinkTab', () => {
       buildAndRenderScenario({});
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://dashboards.grafana.com/grafana/scenes/dashboard/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12'
+        'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12'
       );
     });
   });
@@ -49,7 +49,7 @@ describe('ShareLinkTab', () => {
       act(() => tab.onToggleLockedTime());
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-        'http://dashboards.grafana.com/grafana/scenes/dashboard/dash-1?from=now-6h&to=now&viewPanel=panel-12'
+        'http://dashboards.grafana.com/grafana/d/dash-1?from=now-6h&to=now&viewPanel=panel-12'
       );
     });
   });
@@ -59,7 +59,7 @@ describe('ShareLinkTab', () => {
     act(() => tab.onThemeChange('light'));
 
     expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
-      'http://dashboards.grafana.com/grafana/scenes/dashboard/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12&theme=light'
+      'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12&theme=light'
     );
   });
 

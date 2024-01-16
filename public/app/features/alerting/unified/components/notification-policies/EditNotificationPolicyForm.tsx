@@ -258,7 +258,7 @@ export const AmRoutesExpandedForm = ({
               >
                 <PromDurationInput
                   {...register('repeatIntervalValue', {
-                    validate: (value: string) => {
+                    validate: (value = '') => {
                       const groupInterval = getValues('groupIntervalValue');
                       return repeatIntervalValidator(value, groupInterval);
                     },
@@ -322,6 +322,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };

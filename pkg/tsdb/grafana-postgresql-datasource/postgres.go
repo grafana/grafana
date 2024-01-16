@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -103,13 +105,12 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 			driverName, err = createPostgresProxyDriver(cnnstr, proxyOpts)
 			if err != nil {
-				return "", nil
+				logger.Error("postgres proxy creation failed", "error", err)
+				return nil, fmt.Errorf("postgres proxy creation failed")
 			}
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        driverName,
-			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 			RowLimit:          cfg.DataProxyRowLimit,
@@ -117,7 +118,16 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 
 		queryResultTransformer := postgresQueryResultTransformer{}
 
-		handler, err := sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+		db, err := sql.Open(driverName, cnnstr)
+		if err != nil {
+			return nil, err
+		}
+
+		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+		handler, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 			logger)
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)

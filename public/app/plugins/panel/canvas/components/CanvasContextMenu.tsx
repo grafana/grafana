@@ -71,6 +71,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
   };
 
   const renderMenuItems = () => {
+    // This is disabled when panel is in edit mode because opening inline editor over panel editor is not ideal UX
     const openCloseEditorMenuItem = !scene.isPanelEditing && (
       <MenuItem
         label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
@@ -139,7 +140,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       return submenuItems;
     };
 
-    const addItemMenuItem = !scene.isPanelEditing && (
+    const addItemMenuItem = (
       <MenuItem
         label="Add item"
         className={styles.menuItem}
@@ -148,7 +149,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       />
     );
 
-    const setBackgroundMenuItem = !scene.isPanelEditing && (
+    const setBackgroundMenuItem = (
       <MenuItem
         label={'Set background'}
         onClick={() => {

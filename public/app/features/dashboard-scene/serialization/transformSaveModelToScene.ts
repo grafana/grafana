@@ -29,6 +29,7 @@ import {
   UserActionEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -250,6 +251,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
       timeZone: oldModel.timezone,
       weekStart: oldModel.weekStart,
+      UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
     $behaviors: [
@@ -257,6 +259,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
     ],
     $data:
@@ -479,6 +482,18 @@ const getLimitedDescriptionReporter = () => {
     DashboardInteractions.panelDescriptionShown();
   };
 };
+
+function registerDashboardSceneTracking(model: DashboardModel) {
+  return () => {
+    const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
+
+    trackDashboardLoaded(model, model.version);
+
+    return () => {
+      unsetDashboardInteractionsScenesContext();
+    };
+  };
+}
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
   const descriptionReporter = getLimitedDescriptionReporter();

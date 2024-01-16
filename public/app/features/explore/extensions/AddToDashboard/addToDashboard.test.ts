@@ -23,11 +23,29 @@ describe('addPanelToDashboard', () => {
       queries: [],
       queryResponse: createEmptyQueryResponse(),
       datasource: { type: 'loki', uid: 'someUid' },
+      time: { from: 'now-1h', to: 'now' },
     });
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({
         dashboard: expect.objectContaining({
           panels: expect.arrayContaining([expect.objectContaining({ datasource: { type: 'loki', uid: 'someUid' } })]),
+        }),
+      })
+    );
+  });
+
+  it('Correct time range is used', async () => {
+    await setDashboardInLocalStorage({
+      queries: [],
+      queryResponse: createEmptyQueryResponse(),
+      datasource: { type: 'loki', uid: 'someUid' },
+      time: { from: 'now-10h', to: 'now' },
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dashboard: expect.objectContaining({
+          time: expect.objectContaining({ from: 'now-10h', to: 'now' }),
         }),
       })
     );
@@ -39,6 +57,7 @@ describe('addPanelToDashboard', () => {
     await setDashboardInLocalStorage({
       queries,
       queryResponse: createEmptyQueryResponse(),
+      time: { from: 'now-1h', to: 'now' },
     });
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -68,6 +87,7 @@ describe('addPanelToDashboard', () => {
       queryResponse: createEmptyQueryResponse(),
       dashboardUid: 'someUid',
       datasource: { type: '' },
+      time: { from: 'now-1h', to: 'now' },
     });
 
     expect(spy).toHaveBeenCalledWith(
@@ -95,7 +115,7 @@ describe('addPanelToDashboard', () => {
       ];
 
       it.each(cases)('%s', async (_, queries, queryResponse) => {
-        await setDashboardInLocalStorage({ queries, queryResponse });
+        await setDashboardInLocalStorage({ queries, queryResponse, time: { from: 'now-1h', to: 'now' } });
         expect(spy).toHaveBeenCalledWith(
           expect.objectContaining({
             dashboard: expect.objectContaining({
@@ -127,7 +147,7 @@ describe('addPanelToDashboard', () => {
             [framesType]: [new MutableDataFrame({ refId: 'A', fields: [] })],
           };
 
-          await setDashboardInLocalStorage({ queries, queryResponse });
+          await setDashboardInLocalStorage({ queries, queryResponse, time: { from: 'now-1h', to: 'now' } });
           expect(spy).toHaveBeenCalledWith(
             expect.objectContaining({
               dashboard: expect.objectContaining({
@@ -151,7 +171,7 @@ describe('addPanelToDashboard', () => {
           ],
         };
 
-        await setDashboardInLocalStorage({ queries, queryResponse });
+        await setDashboardInLocalStorage({ queries, queryResponse, time: { from: 'now-1h', to: 'now' } });
         expect(spy).toHaveBeenCalledWith(
           expect.objectContaining({
             dashboard: expect.objectContaining({
