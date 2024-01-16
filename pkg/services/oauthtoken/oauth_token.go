@@ -43,6 +43,7 @@ type Service struct {
 	tokenRefreshDuration *prometheus.HistogramVec
 }
 
+//go:generate mockery --name OAuthTokenService --structname MockService --outpkg oauthtokentest --filename service_mock.go --output ./oauthtokentest/
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool

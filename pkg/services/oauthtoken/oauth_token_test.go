@@ -17,8 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -272,6 +274,137 @@ func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.Updat
 func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
 	return f.ExpectedError
 }
+func TestService_TryTokenRefresh(t *testing.T) {
+	type testCase struct {
+		desc      string
+		identity  *authn.Identity
+		oauthInfo *social.OAuthInfo
+		setupEnv  func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService)
+
+		expectHasEntryCalled bool
+		expectedErr          error
+	}
+
+	tests := []testCase{
+		{
+			desc:        "should skip sync when identity is nil",
+			identity:    nil,
+			expectedErr: nil,
+		},
+		{
+			desc:        "should skip sync when identity is not a user",
+			identity:    &authn.Identity{ID: "service-account:1"},
+			expectedErr: nil,
+		},
+		{
+			desc:        "should fail if the user identity cannot be converted to an int",
+			identity:    &authn.Identity{ID: "user:invalidIdentifierFormat"},
+			expectedErr: nil,
+		},
+		{
+			desc:     "should skip if the expiration check has been cached",
+			identity: &authn.Identity{ID: "user:1234"},
+			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
+				cache.Set("oauth-refresh-token-1234", true, 1*time.Minute)
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:     "should skip if the expiration check has been cached",
+			identity: &authn.Identity{ID: "user:1234"},
+			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
+				authInfoService.ExpectedError = errors.New("some error")
+			},
+			expectHasEntryCalled: false,
+			expectedErr:          nil,
+		},
+		{
+			desc:     "should not find the user as the user was not logged via OAuth",
+			identity: &authn.Identity{ID: "user:1234"},
+			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
+				authInfoService.ExpectedError = user.ErrUserNotFound
+			},
+			expectHasEntryCalled: false,
+			expectedErr:          nil,
+		},
+		{
+			desc:     "should refresh the token if the auth module is oauth",
+			identity: &authn.Identity{ID: "user:1234"},
+			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
+				authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule: "oauth",
+				}
+			},
+			expectHasEntryCalled: false,
+			expectedErr:          nil,
+		},
+		{
+			desc:     "should skip sync with a valid JWT token and uses an unknown idp",
+			identity: &authn.Identity{ID: "user:1234"},
+			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
+				authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:   "oauth_generic_idp",
+					OAuthIdToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+				}
+			},
+			expectHasEntryCalled: false,
+			expectedErr:          nil,
+			oauthInfo:            nil,
+		},
+		{
+			desc:     "should skip refresh token if oauth provider token handling is disabled",
+			identity: &authn.Identity{ID: "user:1234"},
+			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
+				authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:   "oauth_generic_idp",
+					OAuthIdToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+				}
+			},
+			expectHasEntryCalled: false,
+			expectedErr:          nil,
+			oauthInfo: &social.OAuthInfo{
+				UseRefreshToken: false,
+			},
+		},
+		{
+			desc:     "should skip refresh token if oauth provider token handling is disabled",
+			identity: &authn.Identity{ID: "user:1234"},
+			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
+				authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:   "oauth_generic_idp",
+					OAuthIdToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+				}
+			},
+			expectHasEntryCalled: false,
+			expectedErr:          nil,
+			oauthInfo: &social.OAuthInfo{
+				UseRefreshToken: true,
+			},
+		},
+	}
+	for _, tt := range tests {
+		socialService := &socialtest.FakeSocialService{
+			ExpectedAuthInfoProvider: tt.oauthInfo,
+		}
+
+		authInfoService := &authinfotest.FakeService{}
+
+		service := &Service{
+			AuthInfoService:   authInfoService,
+			SocialService:     socialService,
+			singleFlightGroup: new(singleflight.Group),
+			cache:             localcache.New(0, 0),
+		}
+
+		if tt.setupEnv != nil {
+			tt.setupEnv(service.cache, authInfoService)
+		}
+
+		err := service.TryTokenRefresh(context.Background(), tt.identity)
+		assert.ErrorIs(t, err, tt.expectedErr)
+	}
+}
+
 func TestOAuthTokenSync_getOAuthTokenCacheTTL(t *testing.T) {
 	defaultTime := time.Now()
 	tests := []struct {
@@ -333,7 +466,7 @@ func TestOAuthTokenSync_getOAuthTokenCacheTTL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := GetOAuthTokenCacheTTL(tt.accessTokenExpiry, tt.idTokenExpiry)
+			got := getOAuthTokenCacheTTL(tt.accessTokenExpiry, tt.idTokenExpiry)
 
 			assert.Equal(t, tt.want.Round(time.Second), got.Round(time.Second))
 		})
