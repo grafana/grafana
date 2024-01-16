@@ -19,13 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-func ProvideService(cfg *config.Cfg, registry registry.Service, licensing plugins.Licensing,
-	features featuremgmt.FeatureToggles) (*Manager, error) {
-	l, err := createLoader(cfg, registry, licensing, features)
+func ProvideService(cfg *config.Cfg, registry registry.Service, licensing plugins.Licensing) (*Manager, error) {
+	l, err := createLoader(cfg, registry, licensing)
 	if err != nil {
 		return nil, err
 	}
@@ -77,22 +75,29 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 		return m.renderer, true
 	}
 
-	ps, err := m.loader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, []string{m.cfg.PluginsPath}))
+	srcs, err := sources.DirAsLocalSources(m.cfg.PluginsPath, plugins.ClassExternal)
 	if err != nil {
-		m.log.Error("Failed to load renderer plugin", "error", err)
+		m.log.Error("Failed to get renderer plugin sources", "error", err)
 		return nil, false
 	}
 
-	if len(ps) >= 1 {
-		m.renderer = &Plugin{plugin: ps[0]}
-		return m.renderer, true
+	for _, src := range srcs {
+		ps, err := m.loader.Load(ctx, src)
+		if err != nil {
+			m.log.Error("Failed to load renderer plugin", "error", err)
+			return nil, false
+		}
+
+		if len(ps) >= 1 {
+			m.renderer = &Plugin{plugin: ps[0]}
+			return m.renderer, true
+		}
 	}
 
 	return nil, false
 }
 
-func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
-	features featuremgmt.FeatureToggles) (loader.Service, error) {
+func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing) (loader.Service, error) {
 	d := discovery.New(cfg, discovery.Opts{
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{plugins.TypeRenderer}),
