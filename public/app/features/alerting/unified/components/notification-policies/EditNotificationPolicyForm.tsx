@@ -322,6 +322,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };

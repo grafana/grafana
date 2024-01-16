@@ -217,6 +217,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
             },
           ],
           matched: 1,
+          attributes: [{ key: 'attr-key-1', value: { intValue: '123' } }],
         },
       },
       {
@@ -233,6 +234,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
             },
           ],
           matched: 1,
+          attributes: [{ key: 'attr-key-2', value: { stringValue: '456' } }],
         },
       },
     ];
@@ -241,6 +243,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
 
     // Trace ID field
     expect(frame.fields[0].name).toBe('traceIdHidden');
+    expect(frame.fields[0].type).toBe('string');
     expect(frame.fields[0].values[0]).toBe('1');
     // Trace service field
     expect(frame.fields[1].name).toBe('traceService');
@@ -262,12 +265,23 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     expect(frame.fields[5].name).toBe('name');
     expect(frame.fields[5].type).toBe('string');
     expect(frame.fields[5].values[0]).toBe(undefined);
+    // Dynamic fields
+    expect(frame.fields[6].name).toBe('attr-key-1');
+    expect(frame.fields[6].type).toBe('string');
+    expect(frame.fields[6].values[0]).toBe('123');
+    expect(frame.fields[6].values[1]).toBe(undefined);
+    expect(frame.fields[6].values.length).toBe(2);
+    expect(frame.fields[7].name).toBe('attr-key-2');
+    expect(frame.fields[7].type).toBe('string');
+    expect(frame.fields[7].values[0]).toBe(undefined);
+    expect(frame.fields[7].values[1]).toBe('456');
+    expect(frame.fields[7].values.length).toBe(2);
     // Duration field
-    expect(frame.fields[6].name).toBe('duration');
-    expect(frame.fields[6].type).toBe('number');
-    expect(frame.fields[6].values[0]).toBe(1377608);
+    expect(frame.fields[8].name).toBe('duration');
+    expect(frame.fields[8].type).toBe('number');
+    expect(frame.fields[8].values[0]).toBe(1377608);
     // No more fields
-    expect(frame.fields.length).toBe(7);
+    expect(frame.fields.length).toBe(9);
   });
 
   test('transforms TraceQL response to DataFrame for Spans table type', () => {
@@ -287,7 +301,9 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
                 durationNanos: '1377608',
               },
             ],
+
             matched: 1,
+            attributes: [{ key: 'attr-key-1', value: { intValue: '123' } }],
           },
         ],
       },
@@ -306,6 +322,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
               },
             ],
             matched: 1,
+            attributes: [{ key: 'attr-key-2', value: { stringValue: '456' } }],
           },
         ],
       },
@@ -315,6 +332,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
 
     // Trace ID field
     expect(frame.fields[0].name).toBe('traceIdHidden');
+    expect(frame.fields[0].type).toBe('string');
     expect(frame.fields[0].values[0]).toBe('1');
     // Trace service field
     expect(frame.fields[1].name).toBe('traceService');
@@ -336,10 +354,57 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     expect(frame.fields[5].name).toBe('name');
     expect(frame.fields[5].type).toBe('string');
     expect(frame.fields[5].values[0]).toBe(undefined);
+    // Dynamic fields
+    expect(frame.fields[6].name).toBe('attr-key-1');
+    expect(frame.fields[6].type).toBe('string');
+    expect(frame.fields[6].values[0]).toBe('123');
+    expect(frame.fields[6].values[1]).toBe(undefined);
+    expect(frame.fields[6].values.length).toBe(2);
+    expect(frame.fields[7].name).toBe('attr-key-2');
+    expect(frame.fields[7].type).toBe('string');
+    expect(frame.fields[7].values[0]).toBe(undefined);
+    expect(frame.fields[7].values[1]).toBe('456');
+    expect(frame.fields[7].values.length).toBe(2);
+    // Duration field
+    expect(frame.fields[8].name).toBe('duration');
+    expect(frame.fields[8].type).toBe('number');
+    expect(frame.fields[8].values[0]).toBe(1377608);
+    // No more fields
+    expect(frame.fields.length).toBe(9);
+  });
+
+  it.each([[undefined], [[]]])('TraceQL response with no data', (traces: TraceSearchMetadata[] | undefined) => {
+    const frameList = createTableFrameFromTraceQlQueryAsSpans(traces, defaultSettings);
+    const frame = frameList[0];
+
+    // Trace ID field
+    expect(frame.fields[0].name).toBe('traceIdHidden');
+    expect(frame.fields[0].type).toBe('string');
+    expect(frame.fields[0].values).toMatchObject([]);
+    // Trace service field
+    expect(frame.fields[1].name).toBe('traceService');
+    expect(frame.fields[1].type).toBe('string');
+    expect(frame.fields[1].values).toMatchObject([]);
+    // Trace name field
+    expect(frame.fields[2].name).toBe('traceName');
+    expect(frame.fields[2].type).toBe('string');
+    expect(frame.fields[2].values).toMatchObject([]);
+    // Span ID field
+    expect(frame.fields[3].name).toBe('spanID');
+    expect(frame.fields[3].type).toBe('string');
+    expect(frame.fields[3].values).toMatchObject([]);
+    // Time field
+    expect(frame.fields[4].name).toBe('time');
+    expect(frame.fields[4].type).toBe('time');
+    expect(frame.fields[4].values).toMatchObject([]);
+    // Name field
+    expect(frame.fields[5].name).toBe('name');
+    expect(frame.fields[5].type).toBe('string');
+    expect(frame.fields[5].values).toMatchObject([]);
     // Duration field
     expect(frame.fields[6].name).toBe('duration');
     expect(frame.fields[6].type).toBe('number');
-    expect(frame.fields[6].values[0]).toBe(1377608);
+    expect(frame.fields[6].values).toMatchObject([]);
     // No more fields
     expect(frame.fields.length).toBe(7);
   });
