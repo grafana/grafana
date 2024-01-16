@@ -217,7 +217,10 @@ export function LogsTableWrap(props: Props) {
 
     // Normalize the other fields
     otherFields.forEach((field) => {
-      const isActive = pendingLabelState[field.name].active;
+      console.log('field', field, pendingLabelState[field.name]);
+      console.log('pendingLabelState', pendingLabelState);
+
+      const isActive = pendingLabelState[field.name]?.active;
       const index = pendingLabelState[field.name]?.index;
       if (isActive && index !== undefined) {
         pendingLabelState[field.name] = {
