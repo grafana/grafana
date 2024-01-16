@@ -2,15 +2,11 @@ package sync
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -143,26 +139,4 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			assert.Equal(t, tt.expectRevokeTokenCalled, revokeTokenCalled)
 		})
 	}
-}
-
-// fakeIDToken is used to create a fake invalid token to verify expiry logic
-func fakeIDToken(t *testing.T, expiryDate time.Time) string {
-	type Header struct {
-		Kid string `json:"kid"`
-		Alg string `json:"alg"`
-	}
-	type Payload struct {
-		Iss string `json:"iss"`
-		Sub string `json:"sub"`
-		Exp int64  `json:"exp"`
-	}
-
-	header, err := json.Marshal(Header{Kid: "123", Alg: "none"})
-	require.NoError(t, err)
-	u := expiryDate.UTC().Unix()
-	payload, err := json.Marshal(Payload{Iss: "fake", Sub: "a-sub", Exp: u})
-	require.NoError(t, err)
-
-	fakeSignature := []byte("6ICJm")
-	return fmt.Sprintf("%s.%s.%s", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload), base64.RawURLEncoding.EncodeToString(fakeSignature))
 }
