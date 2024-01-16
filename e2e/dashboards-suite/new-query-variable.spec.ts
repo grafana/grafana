@@ -99,7 +99,7 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().scrollIntoView().should('be.visible').click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton().scrollIntoView().should('be.visible').click();
 
     e2e.pages.Dashboard.Settings.Actions.close().click();
 
@@ -159,7 +159,7 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().scrollIntoView().should('be.visible').click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton().scrollIntoView().should('be.visible').click();
 
     e2e.pages.Dashboard.Settings.Actions.close().click();
 

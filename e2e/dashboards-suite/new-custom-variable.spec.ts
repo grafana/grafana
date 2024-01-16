@@ -34,7 +34,7 @@ describe('Variables - Custom', () => {
     assertPreviewValues(['one', 'two', 'three']);
 
     // Navigate back to the homepage and change the selected variable value
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton().click();
     e2e.pages.Dashboard.Settings.Actions.close().click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('one').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('two').click();
@@ -58,7 +58,7 @@ describe('Variables - Custom', () => {
     assertPreviewValues(['One', 'Two', 'Three']);
 
     // Navigate back to the homepage and change the selected variable value
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton().click();
     e2e.pages.Dashboard.Settings.Actions.close().click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('One').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('Two').click();

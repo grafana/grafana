@@ -35,7 +35,7 @@ describe('Variables - Interval', () => {
     assertPreviewValues(['10s', '10m', '60m', '90m', '1h30m']);
 
     // Navigate back to the homepage and change the selected variable value
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton().click();
     e2e.pages.Dashboard.Settings.Actions.close().click();
     e2e.components.RefreshPicker.runButtonV2().click();
 
