@@ -3660,7 +3660,7 @@ __metadata:
     "@types/react-table": "npm:7.7.19"
     "@types/react-test-renderer": "npm:18.0.7"
     "@types/react-transition-group": "npm:4.4.10"
-    "@types/react-window": "npm:1.8.5"
+    "@types/react-window": "npm:1.8.8"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
@@ -3717,7 +3717,7 @@ __metadata:
     react-test-renderer: "npm:18.2.0"
     react-transition-group: "npm:4.4.5"
     react-use: "npm:17.4.3"
-    react-window: "npm:1.8.9"
+    react-window: "npm:1.8.10"
     rimraf: "npm:5.0.1"
     rollup: "npm:2.79.1"
     rollup-plugin-copy: "npm:3.5.0"
@@ -9242,12 +9242,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-window@npm:*, @types/react-window@npm:1.8.5":
-  version: 1.8.5
-  resolution: "@types/react-window@npm:1.8.5"
+"@types/react-window@npm:*, @types/react-window@npm:1.8.8":
+  version: 1.8.8
+  resolution: "@types/react-window@npm:1.8.8"
   dependencies:
     "@types/react": "npm:*"
-  checksum: bb13aa0a27766efaee8a26cf293924a9b14428f786d6a4aab488baad11753169b709642906ab57aeb459feccd14d4e8edfdbbe1c6e3eaf6350f0aa0264972b83
+  checksum: 79b70b7c33161efb14bf69115792843de8e038594136a8373cfbbcc4066c49fd611dd2d3592a9a81d19d21c075bf14e5e73a64f4d9ad32e45d4d5493f5f53918
   languageName: node
   linkType: hard
 
@@ -17301,7 +17301,7 @@ __metadata:
     "@types/react-test-renderer": "npm:18.0.7"
     "@types/react-transition-group": "npm:4.4.10"
     "@types/react-virtualized-auto-sizer": "npm:1.0.1"
-    "@types/react-window": "npm:1.8.5"
+    "@types/react-window": "npm:1.8.8"
     "@types/react-window-infinite-loader": "npm:^1"
     "@types/redux-mock-store": "npm:1.0.6"
     "@types/semver": "npm:7.5.6"
@@ -17481,7 +17481,7 @@ __metadata:
     react-use: "npm:17.4.3"
     react-virtual: "npm:2.10.4"
     react-virtualized-auto-sizer: "npm:1.0.7"
-    react-window: "npm:1.8.9"
+    react-window: "npm:1.8.10"
     react-window-infinite-loader: "npm:1.0.9"
     react-zoom-pan-pinch: "npm:^3.3.0"
     redux: "npm:4.2.1"
@@ -25621,16 +25621,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-window@npm:1.8.9":
-  version: 1.8.9
-  resolution: "react-window@npm:1.8.9"
+"react-window@npm:1.8.10":
+  version: 1.8.10
+  resolution: "react-window@npm:1.8.10"
   dependencies:
     "@babel/runtime": "npm:^7.0.0"
     memoize-one: "npm:>=3.1.1 <6"
   peerDependencies:
     react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 946bf990b58cafe054c6a36ae9f56ce084a94ab69366c7bc6c9117d8ec94227fd0d0e8efc39f1aa0f9dc13e29b7f6bb7d0e7284d0c7546a50a9e51465269e221
+  checksum: 6f4a713a2012d605370ef4c7026a45ddd6801e428faa4cad558b12b05ba54c00de72de9a360db109db9666f972a3d955b63af9e5a4cd5fbc52411a382273107b
   languageName: node
   linkType: hard
 
