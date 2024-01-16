@@ -63,7 +63,7 @@ export type JaegerQuery = {
   limit?: number;
 } & DataQuery;
 
-export type JaegerQueryType = 'search' | 'upload';
+export type JaegerQueryType = 'search' | 'upload' | 'dependencyGraph';
 
 export type JaegerResponse = {
   data: TraceResponse[];
@@ -71,4 +71,13 @@ export type JaegerResponse = {
   limit: number;
   offset: number;
   errors?: string[] | null;
+};
+
+/**
+ * Type definition for service dependencies as returned by the Jaeger dependencies API.
+ */
+export type JaegerServiceDependency = {
+  parent: string;
+  child: string;
+  callCount: number;
 };

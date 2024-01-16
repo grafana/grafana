@@ -41,6 +41,12 @@ func AddSeedAssignmentMigrations(mg *migrator.Migrator) {
 			&migrator.Index{Cols: []string{"builtin_role", "action", "scope"}, Type: migrator.UniqueIndex}))
 
 	mg.AddMigration("add primary key to seed_assigment", &seedAssignmentPrimaryKeyMigrator{})
+
+	mg.AddMigration("add origin column to seed_assignment",
+		migrator.NewAddColumnMigration(seedAssignmentTable,
+			&migrator.Column{Name: "origin", Type: migrator.DB_Varchar, Length: 190, Nullable: true}))
+
+	mg.AddMigration("add origin to plugin seed_assignment", &seedAssignmentOnCallMigrator{})
 }
 
 type seedAssignmentPrimaryKeyMigrator struct {
@@ -118,4 +124,22 @@ func (m *seedAssignmentPrimaryKeyMigrator) Exec(sess *xorm.Session, mig *migrato
 	}
 
 	return nil
+}
+
+type seedAssignmentOnCallMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *seedAssignmentOnCallMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *seedAssignmentOnCallMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
+	_, err := sess.Exec(
+		`UPDATE seed_assignment SET origin = ? WHERE action LIKE ? OR scope = ?`,
+		"grafana-oncall-app",
+		"grafana-oncall-app%",
+		"plugins:id:grafana-oncall-app",
+	)
+	return err
 }
