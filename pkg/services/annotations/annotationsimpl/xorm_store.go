@@ -548,7 +548,6 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 			if err != nil {
 				return 0, err
 			}
-			r.log.Error("Annotations to clean by count", "count", len(ids), "ids", ids, "cond", cond, "err", err)
 
 			return r.deleteByIDs(ctx, "annotation", ids)
 		})
@@ -568,7 +567,6 @@ func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (i
 		if err != nil {
 			return 0, err
 		}
-		r.log.Error("Tags to clean", "count", len(ids), "ids", ids, "cond", cond, "err", err)
 
 		return r.deleteByIDs(ctx, "annotation_tag", ids)
 	})
