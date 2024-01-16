@@ -22,11 +22,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type SocialBase struct {
 	*oauth2.Config
 	info              *social.OAuthInfo
+	cfg               *setting.Cfg
 	infoMutex         sync.RWMutex
 	log               log.Logger
 	autoAssignOrgRole string
@@ -38,6 +40,7 @@ func newSocialBase(name string,
 	info *social.OAuthInfo,
 	autoAssignOrgRole string,
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
@@ -47,6 +50,7 @@ func newSocialBase(name string,
 		log:               logger,
 		autoAssignOrgRole: autoAssignOrgRole,
 		features:          features,
+		cfg:               cfg,
 	}
 }
 

@@ -75,7 +75,7 @@ type keySetJWKS struct {
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
 	config := createOAuthConfig(info, cfg, social.AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, cfg.AutoAssignOrgRole, features, cfg),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
@@ -162,6 +162,24 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil
+}
+
+func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	err := s.SocialBase.Reload(ctx, settings)
+	if err != nil {
+		s.log.Error("Failed to reload OAuth settings", "err", err)
+		return err
+	}
+
+	config := createOAuthConfig(s.info, s.cfg, social.AzureADProviderName)
+
+	if s.info.UseRefreshToken {
+		appendUniqueScope(config, social.OfflineAccessScope)
+	}
+
+	s.SocialBase.Config = config
+
+	return nil
 }
 
 func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
