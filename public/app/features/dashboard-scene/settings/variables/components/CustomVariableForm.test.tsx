@@ -77,13 +77,13 @@ describe('CustomVariableForm', () => {
     const includeAllCheckbox = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitchV2
     );
-    const allValueInput = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
-    );
 
     fireEvent.change(queryInput, { target: { value: 'test query' } });
     fireEvent.change(multiCheckbox, { target: { checked: true } });
     fireEvent.change(includeAllCheckbox, { target: { checked: true } });
+    const allValueInput = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
+    );
     fireEvent.change(allValueInput, { target: { value: 'test value' } });
 
     expect(onQueryChange).toHaveBeenCalledTimes(1);
