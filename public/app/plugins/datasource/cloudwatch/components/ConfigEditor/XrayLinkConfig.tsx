@@ -3,8 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2, DataSourceInstanceSettings } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
+import { DataSourcePicker } from '@grafana/runtime';
 import { Alert, Field, InlineField, useStyles2 } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 const getStyles = (theme: GrafanaTheme2) => ({

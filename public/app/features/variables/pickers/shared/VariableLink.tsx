@@ -3,7 +3,8 @@ import React, { MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
+import { LoadingIndicator } from '@grafana/ui/src/components/PanelChrome/LoadingIndicator';
 import { t } from 'app/core/internationalization';
 
 import { ALL_VARIABLE_TEXT } from '../../constants';
@@ -40,7 +41,7 @@ export const VariableLink = ({ loading, disabled, onClick: propsOnClick, text, o
         id={id}
       >
         <VariableLinkText text={text} />
-        <LoadingIndicator onCancel={onCancel} />
+        <LoadingIndicator loading onCancel={onCancel} />
       </div>
     );
   }
@@ -72,28 +73,6 @@ const VariableLinkText = ({ text }: VariableLinkTextProps) => {
     <span className={styles.textAndTags}>
       {text === ALL_VARIABLE_TEXT ? t('variable.picker.link-all', 'All') : text}
     </span>
-  );
-};
-
-const LoadingIndicator = ({ onCancel }: Pick<Props, 'onCancel'>) => {
-  const onClick = useCallback(
-    (event: MouseEvent) => {
-      event.preventDefault();
-      onCancel();
-    },
-    [onCancel]
-  );
-
-  return (
-    <Tooltip content="Cancel query">
-      <Icon
-        className="spin-clockwise"
-        name="sync"
-        size="sm"
-        onClick={onClick}
-        aria-label={selectors.components.LoadingIndicator.icon}
-      />
-    </Tooltip>
   );
 };
 

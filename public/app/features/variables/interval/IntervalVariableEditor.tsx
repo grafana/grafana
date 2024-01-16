@@ -5,10 +5,10 @@ import { GrafanaTheme2, IntervalVariableModel, SelectableValue } from '@grafana/
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
-import { VariableCheckboxField } from '../editor/VariableCheckboxField';
-import { VariableLegend } from '../editor/VariableLegend';
-import { VariableSelectField } from '../editor/VariableSelectField';
-import { VariableTextField } from '../editor/VariableTextField';
+import { VariableCheckboxField } from '../../dashboard-scene/settings/variables/components/VariableCheckboxField';
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableSelectField } from '../../dashboard-scene/settings/variables/components/VariableSelectField';
+import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
 import { VariableEditorProps } from '../editor/types';
 
 const STEP_OPTIONS = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500].map((count) => ({
