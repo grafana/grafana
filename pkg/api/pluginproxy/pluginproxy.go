@@ -126,8 +126,7 @@ func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 	if useRBAC {
 		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(ac.EvalPermission(route.Action))
 		if !hasAccess {
-			proxy.ctx.Logger.Debug("plugin route is covered by RBAC, user doesn't have access",
-				"route", proxy.ctx.Req.URL.Path)
+			proxy.ctx.Logger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path)
 		}
 		return hasAccess
 	}

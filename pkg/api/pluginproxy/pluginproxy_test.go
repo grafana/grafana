@@ -424,22 +424,41 @@ func TestPluginProxyRoutes(t *testing.T) {
 	}
 }
 
-func TestPluginProxyRoutesRBAC(t *testing.T) {
+func TestPluginProxyRoutesAccessControl(t *testing.T) {
 	routes := []*plugins.Route{
+		{
+			Path:    "settings",
+			Method:  "GET",
+			URL:     "http://localhost/api/settings",
+			ReqRole: org.RoleAdmin, // Protected by role
+		},
 		{
 			Path:   "projects",
 			Method: "GET",
 			URL:    "http://localhost/api/projects",
-			Action: "plugin-id.projects:read",
+			Action: "plugin-id.projects:read", // Protected by RBAC action
 		},
 	}
 
 	tcs := []struct {
 		proxyPath       string
+		usrRole         org.RoleType
 		usrPerms        map[string][]string
 		expectedURLPath string
 		expectedStatus  int
 	}{
+		{
+			proxyPath:       "/settings",
+			usrRole:         org.RoleAdmin,
+			expectedURLPath: "/api/settings",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/settings",
+			usrRole:         org.RoleViewer,
+			expectedURLPath: "/api/settings",
+			expectedStatus:  http.StatusForbidden,
+		},
 		{
 			proxyPath:       "/projects",
 			usrPerms:        map[string][]string{"plugin-id.projects:read": {}},
@@ -484,8 +503,12 @@ func TestPluginProxyRoutesRBAC(t *testing.T) {
 			responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
 
 			ctx := &contextmodel.ReqContext{
-				Logger:       logger.New("pluginproxy-test"),
-				SignedInUser: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: tc.usrPerms}},
+				Logger: logger.New("pluginproxy-test"),
+				SignedInUser: &user.SignedInUser{
+					OrgID:       1,
+					OrgRole:     tc.usrRole,
+					Permissions: map[int64]map[string][]string{1: tc.usrPerms},
+				},
 				Context: &web.Context{
 					Req:  httptest.NewRequest("GET", tc.proxyPath, nil),
 					Resp: responseWriter,
