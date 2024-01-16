@@ -117,6 +117,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if setting.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		exploreChildNavLinks := s.buildExploreNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
 			Id:         navtree.NavIDExplore,
@@ -124,6 +125,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,
 			Url:        s.cfg.AppSubURL + "/explore",
+			Children:   exploreChildNavLinks,
 		})
 	}
 
@@ -373,15 +375,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		}
 	}
 
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatatrails) {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Data trails",
-			Id:   "data-trails",
-			Url:  s.cfg.AppSubURL + "/data-trails",
-			Icon: "code-branch",
-		})
-	}
-
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
@@ -527,4 +520,18 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
+}
+
+func (s *ServiceImpl) buildExploreNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
+	exploreChildNavs := []*navtree.NavLink{}
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatatrails) {
+		exploreChildNavs = append(exploreChildNavs, &navtree.NavLink{
+			Text:     "Metrics",
+			SubTitle: "Queryless exploration of your metrics",
+			Id:       "explore/metrics",
+			Url:      s.cfg.AppSubURL + "/explore/metrics",
+			Icon:     "code-branch",
+		})
+	}
+	return exploreChildNavs
 }

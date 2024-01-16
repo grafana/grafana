@@ -487,7 +487,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/data-trails',
+      path: '/explore/metrics',
       chromeless: false,
       exact: false,
       component: SafeDynamicImport(
