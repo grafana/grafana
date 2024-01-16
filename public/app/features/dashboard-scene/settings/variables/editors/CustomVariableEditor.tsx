@@ -25,12 +25,13 @@ export function CustomVariableEditor({ variable }: CustomVariableEditorProps) {
   const onIncludeAllChange = (event: React.FormEvent<HTMLInputElement>) => {
     variable.setState({ includeAll: event.currentTarget.checked });
   };
-  const onQueryBlur = (event: React.FormEvent<HTMLTextAreaElement>) => {
-    variable.setState({ query: event.currentTarget.value });
+  const onQueryBlur = () => {
+    variable.setState({ query });
+    // Call validateAndUpdate() to update the variable options
     variable.validateAndUpdate();
   };
-  const onAllValueBlur = (event: React.FormEvent<HTMLInputElement>) => {
-    variable.setState({ allValue: event.currentTarget.value });
+  const onAllValueBlur = () => {
+    variable.setState({ allValue });
   };
 
   return (
