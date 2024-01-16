@@ -29,14 +29,22 @@ export class HistorySrv {
     return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions`, options);
   }
 
-  getDashboardVersion(uid: string, version: number) {
-    return getBackendSrv().get(`api/dashboards/uid/${uid}/versions/${version}`);
+  getDashboardVersion(dashboardUID: string, version: number) {
+    if (typeof dashboardUID !== 'string') {
+      return Promise.resolve({});
+    }
+
+    return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions/${version}`);
   }
 
   restoreDashboard(dashboardUID: string, version: number) {
+    if (typeof dashboardUID !== 'string' || !isNumber(version)) {
+      return Promise.resolve({});
+    }
+
     const url = `api/dashboards/uid/${dashboardUID}/restore`;
 
-    return isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
+    return getBackendSrv().post(url, { version });
   }
 }
 

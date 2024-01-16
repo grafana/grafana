@@ -5,6 +5,7 @@ import { SceneComponentProps, SceneObjectBase, sceneGraph, sceneUtils } from '@g
 import { HorizontalGroup, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -95,23 +96,22 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
   }
 
   public async onRestore(version: DecoratedRevisionModel) {
-    //todo: how do we actually do the restore? do we restore as soon as we press modal btn?
-    // or do we need to save dashboard and exit edit mode?
-    await historySrv.restoreDashboard(version.uid, version.version);
+    const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
+
+    if (isNaN(versionRsp.version)) {
+      return;
+    }
 
     this._dashboard.onDiscard();
 
-    // should I use dashboardModel? is this okay?
-    const dashboardModel = new DashboardModel(version.data);
-    const dashScene = transformSaveModelToScene({ dashboard: dashboardModel, meta: this._dashboard.state.meta });
+    const dashboardDTO: DashboardDTO = {
+      dashboard: new DashboardModel(version.data),
+      meta: this._dashboard.state.meta,
+    };
+    const dashScene = transformSaveModelToScene(dashboardDTO);
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
-    newState.version = this._dashboard.state.version! + 1;
+    newState.version = versionRsp.version;
     this._dashboard.setState(newState);
-    this._dashboard.forceRender();
-
-    this._start = 0;
-    this.setState({ versions: [] });
-    this.fetchVersions();
   }
 
   public fetchVersions(append = false): void {
