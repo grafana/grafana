@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
@@ -9,7 +9,22 @@ import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
 import { useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const INDENT_LEVELS = {
+  ROOT: '32px',
+  CHILD_COLLAPSED: '36px',
+  CHILD_EXPANDED: '62px',
+};
+
+const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
+  const baseIndentStyle = {
+    marginLeft: INDENT_LEVELS.ROOT,
+    width: '100%',
+    '&:hover': {
+      color: theme.colors.text.primary,
+      textDecoration: 'underline',
+    },
+  };
+
   return {
     wrapper: css({
       label: 'wrapper',
@@ -45,13 +60,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     sectionWrapper: css({
       display: 'flex',
     }),
-    indent: css({
-      marginLeft: '48px',
-      width: '100%',
-      '&:hover': {
-        color: theme.colors.text.primary,
-        textDecoration: 'underline',
-      },
+    indentRoot: css(baseIndentStyle),
+    indentChildren: css({
+      ...baseIndentStyle,
+      marginLeft: expanded ? INDENT_LEVELS.CHILD_EXPANDED : INDENT_LEVELS.CHILD_COLLAPSED, // override the marginLeft property
     }),
   };
 };
@@ -59,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(false);
   const [sectionExpanded, toggleSectionExpanded] = useToggle(false);
-  const styles = useStyles2((theme) => getStyles(theme));
+  const styles = useStyles2((theme) => getStyles(theme, contentOutlineExpanded));
   const { outlineItems } = useContentOutlineContext();
   const [activeItemId, setActiveItemId] = useState<string | undefined>(outlineItems[0]?.id);
   const scrollerRef = useRef(scroller || null);
@@ -111,7 +123,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   console.log('outlineItemsHaveChildren', outlineItemsHaveChildren);
 
   // TODO: fix indenting for buttons that are not in a section
-  // figure out why ellipsis is not working
   useEffect(() => {
     let activeItem = null;
 
@@ -166,17 +177,12 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
           {outlineItems.map((item) => (
             <React.Fragment key={item.id}>
               <div className={styles.sectionWrapper}>
-                {/* {item.children && item.children.length > 0 && contentOutlineExpanded && (
-                  <ContentOutlineItemButton
-                    icon={sectionExpanded ? 'angle-down' : 'angle-right'}
-                    className={styles.iconButton}
-                    onClick={toggleSection}
-                  />
-                )} */}
                 <ContentOutlineItemButton
                   key={item.id}
                   title={contentOutlineExpanded ? item.title : undefined}
-                  className={styles.buttonStyles}
+                  className={cx(styles.buttonStyles, {
+                    [styles.indentRoot]: outlineItemsHaveChildren && !item.id.includes('section'),
+                  })}
                   icon={item.icon}
                   onClick={() => scrollIntoView(item.ref, item.panelId)}
                   tooltip={!contentOutlineExpanded ? item.title : undefined}
@@ -193,7 +199,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                     key={child.id}
                     title={contentOutlineExpanded ? child.title : undefined}
                     icon={contentOutlineExpanded ? undefined : item.icon}
-                    className={contentOutlineExpanded ? styles.indent : styles.buttonStyles}
+                    className={styles.indentChildren}
                     onClick={() => scrollIntoView(child.ref, child.panelId)}
                     tooltip={!contentOutlineExpanded ? child.title : undefined}
                     isActive={activeItemId === child.id}
