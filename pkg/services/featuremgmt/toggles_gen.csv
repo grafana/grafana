@@ -100,7 +100,6 @@ angularDeprecationUI,experimental,@grafana/plugins-platform-backend,2023-08-29,f
 dashgpt,preview,@grafana/dashboards-squad,2023-11-17,false,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,2023-08-31,false,false,true,false
 sseGroupByDatasource,experimental,@grafana/observability-metrics,2023-09-07,false,false,false,false
-requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,2023-09-11,false,false,false,false
 libraryPanelRBAC,experimental,@grafana/dashboards-squad,2023-10-11,false,false,true,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,2023-09-19,false,false,false,false
 wargamesTesting,experimental,@grafana/hosted-grafana-team,2023-09-13,false,false,false,false

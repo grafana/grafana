@@ -866,14 +866,6 @@ var (
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "requestInstrumentationStatusSource",
-			Description:  "Include a status source label for request metrics and logs",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Created:      time.Date(2023, time.September, 11, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
 			Stage:           FeatureStageExperimental,

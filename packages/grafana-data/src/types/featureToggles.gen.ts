@@ -119,7 +119,6 @@ export interface FeatureToggles {
   dashgpt?: boolean;
   reportingRetries?: boolean;
   sseGroupByDatasource?: boolean;
-  requestInstrumentationStatusSource?: boolean;
   libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;

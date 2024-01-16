@@ -37,9 +37,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 
 	histogramLabels := []string{"handler", "status_code", "method"}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagRequestInstrumentationStatusSource) {
-		histogramLabels = append(histogramLabels, "status_source")
-	}
+	histogramLabels = append(histogramLabels, "status_source")
 
 	if cfg.MetricsIncludeTeamLabel {
 		histogramLabels = append(histogramLabels, "grafana_team")
@@ -104,9 +102,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 			labelValues := []string{handler, code, r.Method}
 			rmd := requestmeta.GetRequestMetaData(r.Context())
 
-			if features.IsEnabled(r.Context(), featuremgmt.FlagRequestInstrumentationStatusSource) {
-				labelValues = append(labelValues, string(rmd.StatusSource))
-			}
+			labelValues = append(labelValues, string(rmd.StatusSource))
 
 			if cfg.MetricsIncludeTeamLabel {
 				labelValues = append(labelValues, rmd.Team)
