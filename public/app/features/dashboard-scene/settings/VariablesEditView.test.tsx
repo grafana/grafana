@@ -1,9 +1,16 @@
-import { SceneVariableSet, CustomVariable, SceneGridItem, SceneGridLayout } from '@grafana/scenes';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { SceneVariableSet, CustomVariable, SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 describe('VariablesEditView', () => {
   describe('Dashboard Variables state', () => {
@@ -35,7 +42,7 @@ describe('VariablesEditView', () => {
         {
           type: 'custom',
           name: 'customVar2',
-          query: 'test3, test4',
+          query: 'test3, test4, $customVar',
           value: 'test3',
         },
       ];
@@ -99,6 +106,114 @@ describe('VariablesEditView', () => {
 
       errorSpy.mockRestore();
     });
+
+    it('should change the variable type creating a new variable object', () => {
+      const previousVariable = variableView.getVariables()[1] as CustomVariable;
+      variableView.onEdit('customVar2');
+
+      variableView.onTypeChange('constant');
+      expect(variableView.getVariables()).toHaveLength(2);
+      const variable = variableView.getVariables()[1];
+      expect(variable).not.toBe(previousVariable);
+      expect(variable.state.type).toBe('constant');
+
+      // Values to be kept between the old and new variable
+      expect(variable.state.name).toEqual(previousVariable.state.name);
+      expect(variable.state.label).toEqual(previousVariable.state.label);
+    });
+
+    it('should reset editing variable when going back', () => {
+      variableView.onEdit('customVar2');
+      expect(variableView.state.editIndex).toBe(1);
+
+      variableView.onGoBack();
+      expect(variableView.state.editIndex).toBeUndefined();
+    });
+
+    it('should reset editing variable when discarding changes', () => {
+      variableView.onEdit('customVar2');
+      const editIndex = variableView.state.editIndex!;
+      const variable = variableView.getVariables()[editIndex];
+      const originalState = { ...variable.state };
+
+      variable.setState({ name: 'newName' });
+      variableView.onDiscardChanges();
+
+      const newVariable = variableView.getVariables()[editIndex];
+      expect(newVariable.state).toEqual(originalState);
+    });
+
+    it('should reset editing variable when discarding changes after the type being changed', () => {
+      variableView.onEdit('customVar2');
+      const editIndex = variableView.state.editIndex!;
+      const variable = variableView.getVariables()[editIndex];
+      const originalState = { ...variable.state };
+
+      variableView.onTypeChange('constant');
+      variableView.onDiscardChanges();
+
+      const newVariable = variableView.getVariables()[editIndex];
+      expect(newVariable.state).toEqual(originalState);
+    });
+
+    it('should go back when discarding changes', () => {
+      variableView.onEdit('customVar2');
+      const editIndex = variableView.state.editIndex!;
+      expect(editIndex).toBeDefined();
+
+      variableView.onDiscardChanges();
+
+      expect(variableView.state.editIndex).toBeUndefined();
+    });
+  });
+
+  describe('Dashboard Variables dependencies', () => {
+    let variableView: VariablesEditView;
+    let dashboard: DashboardScene;
+
+    beforeEach(async () => {
+      const result = await buildTestScene();
+      variableView = result.variableView;
+      dashboard = result.dashboard;
+    });
+
+    // FIXME: This is not working because the variable is replaced or it is not resolved yet
+    it.skip('should keep dependencies between variables the type is changed so the variable is replaced', () => {
+      // Uses function to avoid store reference to previous existing variables
+      const getSourceVariable = () => variableView.getVariables()[0] as CustomVariable;
+      const getDependantVariable = () => variableView.getVariables()[1] as CustomVariable;
+
+      expect(getSourceVariable().getValue()).toBe('test');
+      // Using getOptionsForSelect to get the interpolated values
+      expect(getDependantVariable().getOptionsForSelect()[2].label).toBe('test');
+
+      variableView.onEdit(getSourceVariable().state.name);
+      // Simulating changing the type and update the value
+      variableView.onTypeChange('constant');
+      getSourceVariable().setState({ value: 'newValue' });
+
+      expect(getSourceVariable().getValue()).toBe('newValue');
+      expect(getDependantVariable().getOptionsForSelect()[2].label).toBe('newValue');
+    });
+
+    it('should keep dependencies with panels when the type is changed so the variable is replaced', async () => {
+      // Uses function to avoid store reference to previous existing variables
+      const getSourceVariable = () => variableView.getVariables()[0] as CustomVariable;
+      const getDependantPanel = () =>
+        ((dashboard.state.body as SceneGridLayout).state.children[0] as SceneGridItem).state.body as VizPanel;
+
+      expect(getSourceVariable().getValue()).toBe('test');
+      // Using description to get the interpolated value
+      expect(getDependantPanel().getDescription()).toContain('Panel A depends on customVar with current value test');
+
+      variableView.onEdit(getSourceVariable().state.name);
+      // Simulating changing the type and update the value
+      variableView.onTypeChange('constant');
+      getSourceVariable().setState({ value: 'newValue' });
+
+      expect(getSourceVariable().getValue()).toBe('newValue');
+      expect(getDependantPanel().getDescription()).toContain('newValue');
+    });
   });
 });
 
@@ -115,10 +230,14 @@ async function buildTestScene() {
         new CustomVariable({
           name: 'customVar',
           query: 'test, test2',
+          value: 'test',
+          text: 'test',
         }),
         new CustomVariable({
           name: 'customVar2',
-          query: 'test3, test4',
+          query: 'test3, test4, $customVar',
+          value: '$customVar',
+          text: '$customVar',
         }),
       ],
     }),
@@ -127,10 +246,12 @@ async function buildTestScene() {
         new SceneGridItem({
           key: 'griditem-1',
           x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: undefined,
+          body: new VizPanel({
+            title: 'Panel A',
+            description: 'Panel A depends on customVar with current value $customVar',
+            key: 'panel-1',
+            pluginId: 'table',
+          }),
         }),
       ],
     }),

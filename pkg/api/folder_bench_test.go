@@ -95,7 +95,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		desc        string
 		url         string
 		expectedLen int
-		features    *featuremgmt.FeatureManager
+		features    featuremgmt.FeatureToggles
 	}{
 		{
 			desc:        "impl=default nested_folders=on get root folders",
@@ -423,7 +423,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 }
 
-func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureManager) *web.Macaron {
+func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureToggles) *web.Macaron {
 	b.Helper()
 
 	m := web.New()
