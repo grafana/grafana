@@ -11,6 +11,7 @@ on:
           - grafana-azure-monitor-datasource
           - grafana-testdata-datasource
           - parca
+          - tempo
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}

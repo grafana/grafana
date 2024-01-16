@@ -18,7 +18,6 @@ import {
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
@@ -26,7 +25,6 @@ import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelEditorUrlSync } from './PanelEditorUrlSync';
 import { PanelOptionsPane } from './PanelOptionsPane';
-import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
@@ -106,13 +104,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const panelMngr = this.state.panelRef.resolve();
 
-    // Remove data provider if it's a share query. For editing purposes the data provider is cloned and attached to the
-    // ShareQueryDataProvider when panel is in edit mode.
-    // TODO: Handle transformations when we get on transformations edit.
-    if (panelMngr.state.panel.state.$data instanceof ShareQueryDataProvider) {
-      panelMngr.state.panel.state.$data.setState({ $data: undefined });
-    }
-
     if (sourcePanel.parent instanceof SceneGridItem) {
       sourcePanel.parent.setState({ body: panelMngr.state.panel.clone() });
     }
@@ -154,15 +145,16 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
         direction: 'column',
         primary: new SceneFlexLayout({
           direction: 'column',
+          minHeight: 200,
           children: [vizPanelMgr],
         }),
         secondary: new SceneFlexItem({
           body: new PanelDataPane(vizPanelMgr),
         }),
       }),
-      secondary: new SceneFlexLayout({
-        direction: 'column',
-        children: [new PanelOptionsPane(vizPanelMgr), new PanelVizTypePicker(vizPanelMgr)],
+      secondary: new SceneFlexItem({
+        body: new PanelOptionsPane(vizPanelMgr),
+        width: '100%',
       }),
     }),
   });
