@@ -1,6 +1,4 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import {
   DataFrame,
@@ -14,11 +12,17 @@ import {
   PluginType,
   CoreApp,
 } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import {
+  BackendDataSourceResponse,
+  FetchResponse,
+  setBackendSrv,
+  setDataSourceSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { TempoVariableQueryType } from './VariableQueryEditor';
+import { createFetchResponse } from './_importedDependencies/test/helpers/createFetchResponse';
 import { TraceqlSearchScope } from './dataquery.gen';
 import {
   DEFAULT_LIMIT,
@@ -34,6 +38,7 @@ import {
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
 import { createMetadataRequest, createTempoDatasource } from './mocks';
+import { initTemplateSrv } from './test_utils';
 import { TempoJsonData, TempoQuery } from './types';
 
 let mockObservable: () => Observable<any>;
@@ -88,21 +93,24 @@ describe('Tempo data source', () => {
     const textWithPipe = 'interpolationTextOne|interpolationTextTwo';
 
     beforeEach(() => {
-      templateSrv = initTemplateSrv('key', [
-        {
-          type: 'custom',
-          name: 'interpolationVar',
-          current: { value: [text] },
-        },
-        {
-          type: 'custom',
-          name: 'interpolationVarWithPipe',
-          current: { value: [textWithPipe] },
-        },
-      ]);
+      const expectedValues = {
+        interpolationVar: 'scopedInterpolationText',
+        interpolationText: 'interpolationText',
+        interpolationVarWithPipe: 'interpolationTextOne|interpolationTextTwo',
+        scopedInterpolationText: 'scopedInterpolationText',
+      };
+      templateSrv = initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], expectedValues);
     });
 
     it('when traceId query for dashboard->explore', async () => {
+      const expectedValues = {
+        interpolationVar: 'interpolationText',
+        interpolationText: 'interpolationText',
+        interpolationVarWithPipe: 'interpolationTextOne|interpolationTextTwo',
+        scopedInterpolationText: 'scopedInterpolationText',
+      };
+      templateSrv = initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], expectedValues);
+
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const queries = ds.interpolateVariablesInQueries([getQuery()], {});
       expect(queries[0].linkedQuery?.expr).toBe(`{instance=\"${text}\"}`);
@@ -1006,7 +1014,7 @@ const backendSrvWithPrometheus = {
     }
     throw new Error('unexpected uid');
   },
-  getDataSourceSettingsByUid(uid: string) {
+  getInstanceSettings(uid: string) {
     if (uid === 'prom') {
       return { name: 'Prometheus' };
     } else if (uid === 'gdev-tempo') {
