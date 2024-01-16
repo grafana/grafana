@@ -40,10 +40,11 @@ class MockDataSourceWithSupplementaryQuerySupport
   }
 
   query(_: DataQueryRequest): Observable<DataQueryResponse> {
-    const data = this.supplementaryQueriesResults[SupplementaryQueryType.LogsVolume] || this.supplementaryQueriesResults[SupplementaryQueryType.LogsSample] || [];
-    return from([
-      { state: LoadingState.Done, data },
-    ]);
+    const data =
+      this.supplementaryQueriesResults[SupplementaryQueryType.LogsVolume] ||
+      this.supplementaryQueriesResults[SupplementaryQueryType.LogsSample] ||
+      [];
+    return from([{ state: LoadingState.Done, data }]);
   }
 
   getDataProvider(
@@ -146,11 +147,11 @@ const setup = (targetSources: string[], type: SupplementaryQueryType) => {
   const explorePanelDataMock: Observable<ExplorePanelData> = mockExploreDataWithLogs();
 
   const groupedQueries = targetSources.map((source, i) => {
-    const datasource = datasources.find(datasource => datasource.name === source) || datasources[0];
+    const datasource = datasources.find((datasource) => datasource.name === source) || datasources[0];
     return {
       datasource,
       targets: [new MockQuery(`${i}`, 'a', { uid: datasource.name })],
-    }
+    };
   });
 
   return getSupplementaryQueryProvider(groupedQueries, type, requestMock, explorePanelDataMock);
@@ -240,10 +241,7 @@ describe('SupplementaryQueries utils', function () {
 
       describe('All data sources do not support full range logs volume', function () {
         it('Creates single fallback result', async () => {
-          const testProvider = setup(
-            ['no-data-providers', 'no-data-providers-2'],
-            SupplementaryQueryType.LogsVolume
-          );
+          const testProvider = setup(['no-data-providers', 'no-data-providers-2'], SupplementaryQueryType.LogsVolume);
 
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
@@ -319,10 +317,7 @@ describe('SupplementaryQueries utils', function () {
 
       describe('All data sources do not support full range logs volume', function () {
         it('Does not provide fallback result', async () => {
-          const testProvider = setup(
-            ['no-data-providers', 'no-data-providers-2'],
-            SupplementaryQueryType.LogsSample
-          );
+          const testProvider = setup(['no-data-providers', 'no-data-providers-2'], SupplementaryQueryType.LogsSample);
           await expect(testProvider).toBeUndefined();
         });
       });
