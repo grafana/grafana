@@ -52,7 +52,7 @@ export const LogsTableActiveFields = (props: {
   const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
 
   const onDragEnd = (result: DropResult) => {
-    if (!result.destination || !reorderColumn) {
+    if (!result.destination) {
       return;
     }
     reorderColumn(result.source.index, result.destination.index);
