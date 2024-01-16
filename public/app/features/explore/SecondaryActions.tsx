@@ -20,12 +20,12 @@ type Props = {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    containerMargin: css`
-      display: flex;
-      flex-wrap: wrap;
-      gap: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(2)};
-    `,
+    containerMargin: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.spacing(1),
+      marginTop: theme.spacing(2),
+    }),
   };
 };
 
