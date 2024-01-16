@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } from 'react-beautiful-dnd';
 
@@ -15,6 +15,10 @@ export function getLogsFieldsStyles(theme: GrafanaTheme2) {
       marginTop: theme.spacing(1),
       marginBottom: theme.spacing(1),
       display: 'flex',
+      background: theme.colors.background.primary,
+    }),
+    dragging: css({
+      background: theme.colors.background.secondary,
     }),
     columnWrapper: css({
       marginBottom: theme.spacing(1.5),
@@ -75,9 +79,9 @@ export const LogsTableActiveFields = (props: {
             <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
               {labelKeys.sort(sortLabels(labels)).map((labelName, index) => (
                 <Draggable draggableId={labelName} key={labelName} index={index}>
-                  {(provided: DraggableProvided) => (
+                  {(provided: DraggableProvided, snapshot) => (
                     <div
-                      className={styles.wrap}
+                      className={cx(styles.wrap, snapshot.isDragging ? styles.dragging : undefined)}
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
