@@ -55,7 +55,7 @@ export function SlatePrism(optsParam: OptionsFormat = {}, prismLanguages = Prism
           children: props.children,
           decoration: props.decoration,
         },
-        editor as any,
+        editor,
         next
       ),
   };

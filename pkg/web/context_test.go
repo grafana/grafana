@@ -2,7 +2,10 @@ package web
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -93,4 +96,18 @@ func TestContext_RemoteAddr(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestContext_noHandler(t *testing.T) {
+	recorder := httptest.NewRecorder()
+
+	method := http.MethodGet
+	c := &Context{
+		Req:  httptest.NewRequest(method, "/", nil),
+		Resp: NewResponseWriter(method, recorder),
+	}
+
+	c.run()
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 }

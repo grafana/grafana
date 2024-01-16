@@ -15,12 +15,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -113,8 +117,8 @@ func TestApi_getDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _ := setupTestEnvironment(t, tt.permissions, tt.options)
-			server := setupTestServer(t, &user.SignedInUser{OrgID: 1}, service)
+			service, _, _ := setupTestEnvironment(t, tt.options)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
 			require.NoError(t, err)
@@ -160,7 +164,7 @@ func TestApi_getPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, _ := setupTestEnvironment(t, tt.permissions, testOptions)
+			service, sql, _ := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			seedPermissions(t, tt.resourceID, sql, service)
@@ -237,7 +241,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _ := setupTestEnvironment(t, tt.permissions, testOptions)
+			service, _, _ := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
@@ -315,7 +319,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, teamSvc := setupTestEnvironment(t, tt.permissions, testOptions)
+			service, _, teamSvc := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
@@ -398,11 +402,18 @@ func TestApi_setUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, _ := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
+			service, sql, _ := setupTestEnvironment(t, testOptions)
+			server := setupTestServer(t, &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)},
+			}, service)
 
 			// seed user
-			_, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1})
+			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			require.NoError(t, err)
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+			require.NoError(t, err)
+			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "users", strconv.Itoa(int(tt.userID)))
@@ -434,11 +445,11 @@ type testContext struct {
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
 		signedIn := tc.user != nil
-		reqCtx := &models.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,
 			IsSignedIn:   signedIn,
-			SkipCache:    true,
+			SkipDSCache:  true,
 			Logger:       log.New("test"),
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
@@ -502,10 +513,14 @@ func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, se
 	teamSvc := teamimpl.ProvideService(sql, sql.Cfg)
 	team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 	require.NoError(t, err)
-	_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, resourceID, "Edit")
+	_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, resourceID, "Edit")
 	require.NoError(t, err)
 	// seed user 1 with "View" permission on dashboard 1
-	u, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1})
+	orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+	u, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 	require.NoError(t, err)
 	_, err = service.SetUserPermission(context.Background(), u.OrgID, accesscontrol.User{ID: u.ID}, resourceID, "View")
 	require.NoError(t, err)

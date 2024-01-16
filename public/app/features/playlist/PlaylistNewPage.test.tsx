@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+
+import { backendSrv } from '../../core/services/backend_srv';
 
 import { PlaylistNewPage } from './PlaylistNewPage';
 import { Playlist } from './types';
@@ -25,7 +27,11 @@ function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
   const playlist = { name, items, interval } as unknown as Playlist;
   const backendSrvMock = jest.spyOn(backendSrv, 'post');
 
-  const { rerender } = render(<PlaylistNewPage />);
+  const { rerender } = render(
+    <TestProvider>
+      <PlaylistNewPage />
+    </TestProvider>
+  );
 
   return { playlist, rerender, backendSrvMock };
 }
@@ -54,6 +60,7 @@ describe('PlaylistNewPage', () => {
       await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
       expect(backendSrvMock).toHaveBeenCalledWith('/api/playlists', {
         name: 'A new name',
+        uid: '',
         interval: '5m',
         items: [],
       });

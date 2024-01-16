@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "numeric-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "scalar"
 //      }
@@ -19,11 +23,16 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "numeric-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "scalar"
           }

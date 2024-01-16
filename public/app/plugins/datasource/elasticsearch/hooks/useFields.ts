@@ -2,15 +2,10 @@ import { lastValueFrom } from 'rxjs';
 
 import { MetricFindValue, SelectableValue } from '@grafana/data';
 
-import {
-  BucketAggregationType,
-  isBucketAggregationType,
-} from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { isBucketAggregationType } from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { useDatasource, useRange } from '../components/QueryEditor/ElasticsearchQueryContext';
-import {
-  isMetricAggregationType,
-  MetricAggregationType,
-} from '../components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { isMetricAggregationType } from '../components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { MetricAggregationType, BucketAggregationType } from '../types';
 
 type AggregationType = BucketAggregationType | MetricAggregationType;
 

@@ -1,9 +1,10 @@
-import { DataQuery } from '@grafana/data';
-import { DataSourceJsonData, KeyValue } from '@grafana/data/src';
+import { DataSourceJsonData } from '@grafana/data/src';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 
 import { LokiQuery } from '../loki/types';
+
+import { TempoQuery as TempoBase, TempoQueryType, TraceqlFilter } from './dataquery.gen';
 
 export interface SearchQueryParams {
   minDuration?: string;
@@ -21,6 +22,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   };
   search?: {
     hide?: boolean;
+    filters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
   lokiSearch?: {
@@ -36,21 +38,11 @@ export interface TempoJsonData extends DataSourceJsonData {
   };
 }
 
-// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'traceql' | 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
-
-export interface TempoQuery extends DataQuery {
-  query: string;
+export interface TempoQuery extends TempoBase {
   // Query to find list of traces, e.g., via Loki
+  // TODO change this field to the schema type when LokiQuery exists in the schema
   linkedQuery?: LokiQuery;
-  search?: string;
   queryType: TempoQueryType;
-  serviceName?: string;
-  spanName?: string;
-  minDuration?: string;
-  maxDuration?: string;
-  limit?: number;
-  serviceMapQuery?: string;
 }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}
@@ -61,19 +53,19 @@ export type TraceSearchMetadata = {
   traceID: string;
   rootServiceName: string;
   rootTraceName: string;
-  startTimeUnixNano: string;
-  durationMs: number;
+  startTimeUnixNano?: string;
+  durationMs?: number;
+  spanSet?: Spanset;
   spanSets?: Spanset[];
 };
 
 export type SearchMetrics = {
   inspectedTraces?: number;
   inspectedBytes?: number;
-  inspectedBlocks?: number;
-  skippedBlocks?: number;
-  skippedTraces?: number;
+  totalBlocks?: number;
+  completedJobs?: number;
+  totalJobs?: number;
   totalBlockBytes?: number;
-  spanSets?: Spanset[];
 };
 
 export enum SpanKind {
@@ -85,25 +77,47 @@ export enum SpanKind {
   CONSUMER,
 }
 
+export type SpanAttributes = {
+  key: string;
+  value: {
+    stringValue?: string;
+    intValue?: string;
+    boolValue?: boolean;
+    doubleValue?: string;
+    Value?: {
+      string_value?: string;
+      int_value?: string;
+      bool_value?: boolean;
+      double_value?: string;
+    };
+  };
+};
+
 export type Span = {
-  traceId: string;
-  spanId: string;
+  durationNanos: string;
+  traceId?: string;
+  spanID: string;
   traceState?: string;
   parentSpanId?: string;
-  name: string;
-  kind: SpanKind;
-  startTimeUnixNano: number;
-  endTimeUnixNano: number;
-  attributes?: KeyValue[];
+  name?: string;
+  kind?: SpanKind;
+  startTimeUnixNano: string;
+  endTimeUnixNano?: string;
+  attributes?: SpanAttributes[];
   dropped_attributes_count?: number;
 };
 
 export type Spanset = {
-  attributes: KeyValue[];
+  attributes?: SpanAttributes[];
   spans: Span[];
 };
 
 export type SearchResponse = {
   traces: TraceSearchMetadata[];
   metrics: SearchMetrics;
+};
+
+export type Scope = {
+  name: string;
+  tags: string[];
 };

@@ -26,7 +26,7 @@ export function GroupByRow({ sql, columns, onSqlChange }: GroupByRowProps) {
   );
 
   return (
-    <EditorList<QueryEditorGroupByExpression>
+    <EditorList
       items={sql.groupBy!}
       onChange={onGroupByChange}
       renderItem={makeRenderColumn({

@@ -1,24 +1,24 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { Icon, Tooltip, useForceUpdate } from '@grafana/ui';
+import { DashboardLink } from '@grafana/schema';
+import { Tooltip, useForceUpdate } from '@grafana/ui';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardModel } from '../../state';
-import { DashboardLink } from '../../state/DashboardModel';
 import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
 
-import { DashboardLinksDashboard } from './DashboardLinksDashboard';
+import { DashboardLinkButton, DashboardLinksDashboard } from './DashboardLinksDashboard';
 
 export interface Props {
   dashboard: DashboardModel;
   links: DashboardLink[];
 }
 
-export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
+export const DashboardLinks = ({ dashboard, links }: Props) => {
   const forceUpdate = useForceUpdate();
 
   useEffectOnce(() => {
@@ -43,16 +43,15 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
         const icon = linkIconMap[link.icon];
 
         const linkElement = (
-          <a
-            className="gf-form-label gf-form-label--dashlink"
+          <DashboardLinkButton
             href={sanitizeUrl(linkInfo.href)}
             target={link.targetBlank ? '_blank' : undefined}
             rel="noreferrer"
             data-testid={selectors.components.DashboardLinks.link}
+            icon={icon}
           >
-            {icon && <Icon aria-hidden name={icon} style={{ marginRight: '4px' }} />}
-            <span>{linkInfo.title}</span>
-          </a>
+            {linkInfo.title}
+          </DashboardLinkButton>
         );
 
         return (

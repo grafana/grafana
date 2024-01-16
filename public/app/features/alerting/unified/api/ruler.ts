@@ -1,5 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
+import { isObject } from '@grafana/data';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -155,8 +156,13 @@ async function rulerGetRequest<T>(url: string, empty: T, params?: Record<string,
 }
 
 function isResponseError(error: unknown): error is FetchResponse<ErrorResponseMessage> {
-  const hasErrorMessage = (error as FetchResponse<ErrorResponseMessage>).data != null;
-  const hasErrorCode = Number.isFinite((error as FetchResponse<ErrorResponseMessage>).status);
+  if (!isObject(error)) {
+    return false;
+  }
+
+  const hasErrorMessage = 'data' in error && error.data !== null && error.data !== undefined;
+  const hasErrorCode = 'status' in error && Number.isFinite(error.status);
+
   return hasErrorCode && hasErrorMessage;
 }
 

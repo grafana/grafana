@@ -1,6 +1,6 @@
 # CloudWatch data source - native plugin
 
-Grafana ships with **built in** support for CloudWatch. Simply add it as a data source and are ready to build dashboards for your CloudWatch metrics.
+Grafana ships with **built in** support for CloudWatch. Simply add it as a data source and you are ready to build dashboards for your CloudWatch metrics and logs.
 
 Read more about it here:
 

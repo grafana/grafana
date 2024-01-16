@@ -5,14 +5,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Service interface {
-	SearchUsers(c *models.ReqContext) response.Response
-	SearchUsersWithPaging(c *models.ReqContext) response.Response
+	SearchUsers(c *contextmodel.ReqContext) response.Response
+	SearchUsersWithPaging(c *contextmodel.ReqContext) response.Response
 }
 
 type OSSService struct {
@@ -39,10 +40,10 @@ func ProvideUsersService(searchUserFilter user.SearchUserFilter, userService use
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {
+func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
-		return response.Error(500, "Failed to fetch users", err)
+		return response.ErrOrFallback(500, "Failed to fetch users", err)
 	}
 
 	return response.JSON(http.StatusOK, result.Users)
@@ -53,21 +54,21 @@ func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {
 // Get users with paging.
 //
 // Responses:
-// 200: searchUsersResponse
+// 200: searchUsersWithPagingResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (s *OSSService) SearchUsersWithPaging(c *models.ReqContext) response.Response {
+func (s *OSSService) SearchUsersWithPaging(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
-		return response.Error(500, "Failed to fetch users", err)
+		return response.ErrOrFallback(500, "Failed to fetch users", err)
 	}
 
 	return response.JSON(http.StatusOK, result)
 }
 
-func (s *OSSService) SearchUser(c *models.ReqContext) (*user.SearchUserQueryResult, error) {
+func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQueryResult, error) {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -87,6 +88,11 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*user.SearchUserQueryResu
 		}
 	}
 
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return nil, err
+	}
+
 	query := &user.SearchUsersQuery{
 		// added SignedInUser to the query, as to only list the users that the user has permission to read
 		SignedInUser: c.SignedInUser,
@@ -94,6 +100,7 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*user.SearchUserQueryResu
 		Filters:      filters,
 		Page:         page,
 		Limit:        perPage,
+		SortOpts:     sortOpts,
 	}
 	res, err := s.userService.Search(c.Req.Context(), query)
 	if err != nil {
@@ -101,7 +108,7 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*user.SearchUserQueryResu
 	}
 
 	for _, user := range res.Users {
-		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
 		user.AuthLabels = make([]string, 0)
 		if user.AuthModule != nil && len(user.AuthModule) > 0 {
 			for _, authModule := range user.AuthModule {
@@ -114,4 +121,18 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*user.SearchUserQueryResu
 	res.PerPage = perPage
 
 	return res, nil
+}
+
+// swagger:response searchUsersResponse
+type SearchUsersResponse struct {
+	// The response message
+	// in: body
+	Body []*user.UserSearchHitDTO `json:"body"`
+}
+
+// swagger:response searchUsersWithPagingResponse
+type SearchUsersWithPagingResponse struct {
+	// The response message
+	// in: body
+	Body *user.SearchUserQueryResult `json:"body"`
 }

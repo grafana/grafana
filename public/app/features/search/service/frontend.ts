@@ -1,4 +1,6 @@
-import { DataFrameView, SelectableValue, ArrayVector } from '@grafana/data';
+import uFuzzy from '@leeoniya/ufuzzy';
+
+import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
@@ -12,6 +14,12 @@ export class FrontendSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
+
+    // we don't yet support anything except default (relevance)
+    if (query.sort != null) {
+      throw new Error('custom sorting is not supported yet');
+    }
+
     // Don't bother... not needed for this exercise
     if (query.tags?.length || query.ds_uid?.length) {
       return this.parent.search(query);
@@ -57,6 +65,8 @@ export class FrontendSearcher implements GrafanaSearcher {
     return this.parent.starred(query);
   }
 
+  sortPlaceholder = 'Default (Relevance)';
+
   // returns the appropriate sorting options
   async getSortOptions(): Promise<SelectableValue[]> {
     return this.parent.getSortOptions();
@@ -72,16 +82,24 @@ export class FrontendSearcher implements GrafanaSearcher {
 }
 
 class FullResultCache {
-  readonly lower: string[];
+  readonly names: string[];
   empty: DataFrameView<DashboardQueryResult>;
 
+  ufuzzy = new uFuzzy({
+    intraMode: 1,
+    intraIns: 1,
+    intraSub: 1,
+    intraTrn: 1,
+    intraDel: 1,
+  });
+
   constructor(private full: DataFrameView<DashboardQueryResult>) {
-    this.lower = this.full.fields.name.values.toArray().map((v) => (v ? v.toLowerCase() : ''));
+    this.names = this.full.fields.name.values;
 
     // Copy with empty values
     this.empty = new DataFrameView<DashboardQueryResult>({
       ...this.full.dataFrame, // copy folder metadata
-      fields: this.full.dataFrame.fields.map((v) => ({ ...v, values: new ArrayVector([]) })),
+      fields: this.full.dataFrame.fields.map((v) => ({ ...v, values: [] })),
       length: 0, // for now
     });
   }
@@ -91,23 +109,38 @@ class FullResultCache {
     if (!query?.length || query === '*') {
       return this.full;
     }
-    const match = query.toLowerCase();
+
     const allFields = this.full.dataFrame.fields;
+    const haystack = this.names;
 
     // eslint-disable-next-line
     const values = allFields.map((v) => [] as any[]); // empty value for each field
 
-    for (let i = 0; i < this.lower.length; i++) {
-      if (this.lower[i].indexOf(match) >= 0) {
-        for (let c = 0; c < allFields.length; c++) {
-          values[c].push(allFields[c].values.get(i));
+    let [idxs, info, order] = this.ufuzzy.search(haystack, query, true);
+
+    for (let c = 0; c < allFields.length; c++) {
+      let src = allFields[c].values;
+      let dst = values[c];
+
+      // <= 1000 matches (ranked)
+      if (info && order) {
+        for (let i = 0; i < order.length; i++) {
+          let haystackIdx = info.idx[order[i]];
+          dst.push(src[haystackIdx]);
+        }
+      }
+      // > 1000 matches (unranked)
+      else if (idxs) {
+        for (let i = 0; i < idxs.length; i++) {
+          let haystackIdx = idxs[i];
+          dst.push(src[haystackIdx]);
         }
       }
     }
 
     // mutates the search object
     this.empty.dataFrame.fields.forEach((f, idx) => {
-      f.values = new ArrayVector(values[idx]); // or just set it?
+      f.values = values[idx]; // or just set it?
     });
     this.empty.dataFrame.length = this.empty.dataFrame.fields[0].values.length;
 

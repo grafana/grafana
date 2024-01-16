@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 
-import { BucketAggregation } from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { useQuery } from '../components/QueryEditor/ElasticsearchQueryContext';
-import { MetricAggregation } from '../components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { MetricAggregation, BucketAggregation } from '../types';
 
 const toId = <T extends { id: unknown }>(e: T): T['id'] => e.id;
 

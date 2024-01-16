@@ -43,6 +43,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isEnterprise: boolean;
   isInstalled: boolean;
   isDisabled: boolean;
+  isDeprecated: boolean;
   // `isPublished` is TRUE if the plugin is published to grafana.com
   isPublished: boolean;
   name: string;
@@ -57,6 +58,10 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   installedVersion?: string;
   details?: CatalogPluginDetails;
   error?: PluginErrorCode;
+  angularDetected?: boolean;
+  // instance plugins may not be fully installed, which means a new instance
+  // running the plugin didn't started yet
+  isFullyInstalled?: boolean;
 }
 
 export interface CatalogPluginDetails {
@@ -68,6 +73,7 @@ export interface CatalogPluginDetails {
   }>;
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
+  statusContext?: string;
 }
 
 export interface CatalogPluginInfo {
@@ -110,7 +116,8 @@ export type RemotePlugin = {
   readme?: string;
   signatureType: PluginSignatureType | '';
   slug: string;
-  status: string;
+  status: RemotePluginStatus;
+  statusContext?: string;
   typeCode: PluginType;
   typeId: number;
   typeName: string;
@@ -123,7 +130,18 @@ export type RemotePlugin = {
   versionSignedByOrg: string;
   versionSignedByOrgName: string;
   versionStatus: string;
+  angularDetected?: boolean;
 };
+
+// The available status codes on GCOM are available here:
+// https://github.com/grafana/grafana-com/blob/main/packages/grafana-com-plugins-api/src/plugins/plugin.model.js#L74
+export enum RemotePluginStatus {
+  Deleted = 'deleted',
+  Active = 'active',
+  Pending = 'pending',
+  Deprecated = 'deprecated',
+  Enterprise = 'enterprise',
+}
 
 export type LocalPlugin = WithAccessControlMetadata & {
   category: string;
@@ -156,6 +174,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
   state: string;
   type: PluginType;
   dependencies: PluginDependencies;
+  angularDetected: boolean;
 };
 
 interface Rel {
@@ -242,7 +261,7 @@ export type RequestInfo = {
 
 export type PluginDetailsTab = {
   label: PluginTabLabels | string;
-  icon?: IconName | string;
+  icon?: IconName;
   id: PluginTabIds | string;
   href?: string;
 };
@@ -277,4 +296,8 @@ export type PluginVersion = {
   links: Array<{ rel: string; href: string }>;
   isCompatible: boolean;
   grafanaDependency: string | null;
+};
+
+export type InstancePlugin = {
+  pluginSlug: string;
 };

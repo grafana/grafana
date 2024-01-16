@@ -9,12 +9,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const pushoverEndpoint = "https://api.pushover.net/1/messages.json"
@@ -280,7 +279,7 @@ func (pn *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        pushoverEndpoint,
 		HttpMethod: "POST",
 		HttpHeader: headers,

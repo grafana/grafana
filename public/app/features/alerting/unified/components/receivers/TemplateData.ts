@@ -59,6 +59,29 @@ export const GlobalTemplateData: TemplateDataItem[] = [
   },
 ];
 
+export const AlertTemplatePreviewData: TemplateDataItem[] = [
+  {
+    name: 'Labels',
+    type: 'KeyValue',
+    notes: 'Set of labels attached to the alert.',
+  },
+  {
+    name: 'Annotations',
+    type: 'KeyValue',
+    notes: 'Set of annotations attached to the alert.',
+  },
+  {
+    name: 'StartsAt',
+    type: 'time.Time',
+    notes: 'Time the alert started firing.',
+  },
+  {
+    name: 'EndsAt',
+    type: 'time.Time',
+    notes: 'Time the alert ends firing.',
+  },
+];
+
 export const AlertTemplateData: TemplateDataItem[] = [
   {
     name: 'Status',
@@ -74,6 +97,12 @@ export const AlertTemplateData: TemplateDataItem[] = [
     name: 'Annotations',
     type: 'KeyValue',
     notes: 'Set of annotations attached to the alert.',
+  },
+  {
+    name: 'Values',
+    type: 'KeyValue',
+    notes:
+      'The values of all instant queries, reduce and math expressions, and classic conditions for the alert. It does not contain time series data.',
   },
   {
     name: 'StartsAt',

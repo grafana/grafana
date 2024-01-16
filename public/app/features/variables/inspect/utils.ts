@@ -118,7 +118,7 @@ const validVariableNames: Record<string, RegExp[]> = {
 };
 
 export const getPropsWithVariable = (variableId: string, parent: { key: string; value: any }, result: any) => {
-  const stringValues = Object.keys(parent.value).reduce((all, key) => {
+  const stringValues = Object.keys(parent.value).reduce<Record<string, any>>((all, key) => {
     const value = parent.value[key];
     if (!value || typeof value !== 'string') {
       return all;
@@ -142,9 +142,9 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     }
 
     return all;
-  }, {} as Record<string, any>);
+  }, {});
 
-  const objectValues = Object.keys(parent.value).reduce((all, key) => {
+  const objectValues = Object.keys(parent.value).reduce<Record<string, any>>((all, key) => {
     const value = parent.value[key];
     if (value && typeof value === 'object' && Object.keys(value).length) {
       let id = value.title || value.name || value.id || key;
@@ -163,7 +163,7 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     }
 
     return all;
-  }, {} as Record<string, any>);
+  }, {});
 
   if (Object.keys(stringValues).length || Object.keys(objectValues).length) {
     result = {
@@ -193,7 +193,7 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
 
   const unUsed: VariableModel[] = [];
   let usages: VariableUsageTree[] = [];
-  const model = dashboard.getSaveModelClone();
+  const model = dashboard.getSaveModelCloneOld();
 
   for (const variable of variables) {
     const variableId = variable.id;
@@ -233,7 +233,7 @@ function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardM
   }
 
   let unknown: VariableUsageTree[] = [];
-  const model = dashboard.getSaveModelClone();
+  const model = dashboard.getSaveModelCloneOld();
 
   const unknownVariables = getUnknownVariableStrings(variables, model);
   for (const unknownVariable of unknownVariables) {
@@ -335,7 +335,7 @@ export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToN
   return results;
 };
 
-const countLeaves = (object: any): number => {
+const countLeaves = (object: object): number => {
   const total = Object.values(object).reduce((count: number, value: any) => {
     if (typeof value === 'object') {
       return count + countLeaves(value);
@@ -344,7 +344,7 @@ const countLeaves = (object: any): number => {
     return count + 1;
   }, 0);
 
-  return total as unknown as number;
+  return total;
 };
 
 export const getVariableUsages = (variableId: string, usages: VariableUsageTree[]): number => {

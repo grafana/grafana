@@ -22,12 +22,12 @@ func (repo *fakeAnnotationsRepo) Delete(_ context.Context, params *annotations.D
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
 
-	if params.Id != 0 {
-		delete(repo.annotations, params.Id)
+	if params.ID != 0 {
+		delete(repo.annotations, params.ID)
 	} else {
 		for _, v := range repo.annotations {
-			if params.DashboardId == v.DashboardId && params.PanelId == v.PanelId {
-				delete(repo.annotations, v.Id)
+			if params.DashboardID == v.DashboardID && params.PanelID == v.PanelID {
+				delete(repo.annotations, v.ID)
 			}
 		}
 	}
@@ -39,10 +39,25 @@ func (repo *fakeAnnotationsRepo) Save(ctx context.Context, item *annotations.Ite
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
 
-	if item.Id == 0 {
-		item.Id = int64(len(repo.annotations) + 1)
+	if item.ID == 0 {
+		item.ID = int64(len(repo.annotations) + 1)
 	}
-	repo.annotations[item.Id] = *item
+	repo.annotations[item.ID] = *item
+
+	return nil
+}
+
+func (repo *fakeAnnotationsRepo) SaveMany(ctx context.Context, items []annotations.Item) error {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+
+	for _, i := range items {
+		if i.ID == 0 {
+			i.ID = int64(len(repo.annotations) + 1)
+		}
+		repo.annotations[i.ID] = i
+	}
+
 	return nil
 }
 
@@ -54,10 +69,10 @@ func (repo *fakeAnnotationsRepo) Find(_ context.Context, query *annotations.Item
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
 
-	if annotation, has := repo.annotations[query.AnnotationId]; has {
-		return []*annotations.ItemDTO{{Id: annotation.Id, DashboardId: annotation.DashboardId}}, nil
+	if annotation, has := repo.annotations[query.AnnotationID]; has {
+		return []*annotations.ItemDTO{{ID: annotation.ID, DashboardID: annotation.DashboardID}}, nil
 	}
-	annotations := []*annotations.ItemDTO{{Id: 1, DashboardId: 0}}
+	annotations := []*annotations.ItemDTO{{ID: 1, DashboardID: 0}}
 	return annotations, nil
 }
 
@@ -78,6 +93,9 @@ func (repo *fakeAnnotationsRepo) Len() int {
 func (repo *fakeAnnotationsRepo) Items() map[int64]annotations.Item {
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
-
-	return repo.annotations
+	ret := make(map[int64]annotations.Item)
+	for k, v := range repo.annotations {
+		ret[k] = v
+	}
+	return ret
 }

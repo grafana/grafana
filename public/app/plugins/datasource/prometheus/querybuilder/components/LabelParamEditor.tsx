@@ -11,19 +11,19 @@ import { PromVisualQuery } from '../types';
 export function LabelParamEditor({
   onChange,
   index,
-  operationIndex,
+  operationId,
   value,
   query,
   datasource,
 }: QueryBuilderOperationParamEditorProps) {
   const [state, setState] = useState<{
-    options?: Array<SelectableValue<any>>;
+    options?: SelectableValue[];
     isLoading?: boolean;
   }>({});
 
   return (
     <Select
-      inputId={getOperationParamId(operationIndex, index)}
+      inputId={getOperationParamId(operationId, index)}
       autoFocus={value === '' ? true : undefined}
       openMenuOnFocus
       onOpenMenu={async () => {
@@ -42,10 +42,7 @@ export function LabelParamEditor({
   );
 }
 
-async function loadGroupByLabels(
-  query: PromVisualQuery,
-  datasource: DataSourceApi
-): Promise<Array<SelectableValue<any>>> {
+async function loadGroupByLabels(query: PromVisualQuery, datasource: DataSourceApi): Promise<SelectableValue[]> {
   let labels: QueryBuilderLabelFilter[] = query.labels;
 
   // This function is used by both Prometheus and Loki and this the only difference.

@@ -10,7 +10,7 @@ export const styles = {
       padding-bottom: 10px;
     }
 
-    & > div:first-child label {
+    & > div label {
       display: none;
     }
   `,

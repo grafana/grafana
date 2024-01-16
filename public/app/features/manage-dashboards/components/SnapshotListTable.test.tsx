@@ -1,9 +1,9 @@
-import { locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { getSnapshots } from './SnapshotListTable';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: jest.fn().mockResolvedValue([
       {
@@ -24,35 +24,27 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('getSnapshots', () => {
-  (global as any).window = Object.create(window);
-  Object.defineProperty(window, 'location', {
-    value: {
-      href: 'http://localhost:3000/grafana/dashboard/snapshots',
-    },
-    writable: true,
-  });
-
-  locationService.push('/dashboard/snapshots');
+  config.appUrl = 'http://snapshots.grafana.com/';
 
   test('returns correct snapshot urls', async () => {
     const results = await getSnapshots();
 
     expect(results).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "external": true,
           "externalUrl": "https://www.externalSnapshotUrl.com",
           "key": "JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
           "name": "Snap 1",
-          "url": "/dashboard/snapshot/JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
+          "url": "http://snapshots.grafana.com/dashboard/snapshot/JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
         },
-        Object {
+        {
           "external": false,
           "externalUrl": "",
           "id": 3,
           "key": "RziRfhlBDTjwyYGoHAjnWyrMNQ1zUg3j",
           "name": "Snap 2",
-          "url": "/dashboard/snapshot/RziRfhlBDTjwyYGoHAjnWyrMNQ1zUg3j",
+          "url": "http://snapshots.grafana.com/dashboard/snapshot/RziRfhlBDTjwyYGoHAjnWyrMNQ1zUg3j",
         },
       ]
     `);

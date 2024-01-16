@@ -15,6 +15,8 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'valu
   value?: Date | string;
   /** The minimum date the value can be set to */
   minDate?: Date;
+  /** The maximum date the value can be set to */
+  maxDate?: Date;
   /** Handles changes when a new date is selected */
   onChange: (value: Date | string) => void;
   /** Hide the calendar when date is selected */
@@ -27,6 +29,7 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'valu
 export const DatePickerWithInput = ({
   value,
   minDate,
+  maxDate,
   onChange,
   closeOnSelect,
   placeholder = 'Date',
@@ -56,6 +59,7 @@ export const DatePickerWithInput = ({
         isOpen={open}
         value={value && typeof value !== 'string' ? value : dateTime().toDate()}
         minDate={minDate}
+        maxDate={maxDate}
         onChange={(ev) => {
           onChange(ev);
           if (closeOnSelect) {
@@ -70,15 +74,15 @@ export const DatePickerWithInput = ({
 
 const getStyles = () => {
   return {
-    container: css`
-      position: relative;
-    `,
-    input: css`
-    /* hides the native Calendar picker icon given when using type=date */
-    input[type='date']::-webkit-inner-spin-button,
-    input[type='date']::-webkit-calendar-picker-indicator {
-    display: none;
-    -webkit-appearance: none;
-    `,
+    container: css({
+      position: 'relative',
+    }),
+    input: css({
+      /* hides the native Calendar picker icon given when using type=date */
+      "input[type='date']::-webkit-inner-spin-button, input[type='date']::-webkit-calendar-picker-indicator": {
+        display: 'none',
+        WebkitAppearance: 'none',
+      },
+    }),
   };
 };

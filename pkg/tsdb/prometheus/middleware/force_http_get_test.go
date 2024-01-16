@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +14,7 @@ func TestEnsureHttpMethodMiddleware(t *testing.T) {
 		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			return &http.Response{StatusCode: http.StatusOK}, nil
 		})
-		mw := ForceHttpGet(log.New("test"))
+		mw := ForceHttpGet(backend.NewLoggerWith("logger", "test"))
 		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
 		middlewareName, ok := mw.(httpclient.MiddlewareName)
@@ -27,7 +27,7 @@ func TestEnsureHttpMethodMiddleware(t *testing.T) {
 			return &http.Response{StatusCode: http.StatusOK}, nil
 		})
 
-		mw := ForceHttpGet(log.New("test"))
+		mw := ForceHttpGet(backend.NewLoggerWith("logger", "test"))
 		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)
 		require.NotNil(t, rt)
 

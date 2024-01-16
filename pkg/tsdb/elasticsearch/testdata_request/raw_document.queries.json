@@ -1,0 +1,25 @@
+[
+  {
+    "metrics": [
+      {
+        "id": "1",
+        "type": "raw_document",
+        "settings": {
+          "size": "500"
+        }
+      }
+    ],
+    "query": "",
+    "refId": "A",
+    "datasource": {
+      "type": "elasticsearch",
+      "uid": "PE50363A9B6833EE7"
+    },
+    "alias": "",
+    "bucketAggs": [],
+    "key": "Q-ee8fea91-a4c4-4ded-9827-b362476a4083-0",
+    "datasourceId": 39,
+    "intervalMs": 2000,
+    "maxDataPoints": 1318
+  }
+]

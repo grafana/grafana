@@ -18,7 +18,7 @@ export type LoadingIndicatorProps = {
 /**
  * @internal
  */
-export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ onCancel, loading }) => {
+export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) => {
   const styles = useStyles2(getStyles);
 
   if (!loading) {
@@ -40,8 +40,8 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ onCancel, lo
 
 const getStyles = () => {
   return {
-    clickable: css`
-      cursor: pointer;
-    `,
+    clickable: css({
+      cursor: 'pointer',
+    }),
   };
 };

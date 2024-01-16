@@ -101,6 +101,8 @@ $font-family-sans-serif: ${theme.typography.fontFamily};
 /* stylelint-disable-next-line string-quotes */
 $font-family-monospace: ${theme.typography.fontFamilyMonospace};
 
+$font-file-path: '../fonts' !default;
+
 $font-size-base: ${theme.typography.fontSize}px !default;
 
 $font-size-lg: ${theme.typography.size.lg} !default;
@@ -128,9 +130,9 @@ $headings-line-height: ${theme.typography.bodySmall.lineHeight} !default;
 
 $border-width: 1px !default;
 
-$border-radius: ${theme.shape.borderRadius(1)} !default;
+$border-radius: ${theme.shape.radius.default} !default;
 $border-radius-lg: ${theme.shape.borderRadius(3)} !default;
-$border-radius-sm: ${theme.shape.borderRadius(1)} !default;
+$border-radius-sm: ${theme.shape.radius.default} !default;
 
 // Page
 
@@ -159,6 +161,7 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // -------------------------
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
+$zindex-active-panel: ${theme.zIndex.activePanel};
 $zindex-dropdown: ${theme.zIndex.dropdown};
 $zindex-navbar-fixed: ${theme.zIndex.navbarFixed};
 $zindex-sidemenu: ${theme.zIndex.sidemenu};

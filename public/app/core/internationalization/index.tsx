@@ -1,78 +1,75 @@
-import { I18n, i18n } from '@lingui/core';
-import { I18nProvider as LinguiI18nProvider } from '@lingui/react';
-import React, { useEffect } from 'react';
+import i18n, { BackendModule, InitOptions } from 'i18next';
+import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
+import React from 'react';
+import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import config from 'app/core/config';
+import { LANGUAGES, VALID_LANGUAGES } from './constants';
 
-import { messages as fallbackMessages } from '../../../locales/en-US/messages';
+const getLanguagePartFromCode = (code: string) => code.split('-')[0].toLowerCase();
 
-import { DEFAULT_LOCALE, VALID_LOCALES } from './constants';
+const loadTranslations: BackendModule = {
+  type: 'backend',
+  init() {},
+  async read(language, namespace, callback) {
+    let localeDef = LANGUAGES.find((v) => v.code === language);
+    if (!localeDef) {
+      localeDef = LANGUAGES.find((v) => getLanguagePartFromCode(v.code) === getLanguagePartFromCode(language));
+    }
+    if (!localeDef) {
+      return callback(new Error('No message loader available for ' + language), null);
+    }
+    const messages = await localeDef.loader();
+    callback(null, messages);
+  },
+};
 
-let i18nInstance: I18n;
+export function initializeI18n(language: string) {
+  // This is a placeholder so we can put a 'comment' in the message json files.
+  // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
+  // t('_comment', 'This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.');
 
-export async function initI18n(localInput: string = DEFAULT_LOCALE) {
-  const validatedLocale = VALID_LOCALES.includes(localInput) ? localInput : DEFAULT_LOCALE;
+  const options: InitOptions = {
+    // We don't bundle any translations, we load them async
+    partialBundledLanguages: true,
+    resources: {},
 
-  if (i18nInstance && i18nInstance.locale === validatedLocale) {
-    return i18nInstance;
-  }
-
-  // Dynamically load the messages for the user's locale
-  const imp =
-    config.featureToggles.internationalization &&
-    (await import(`../../../locales/${validatedLocale}/messages`).catch((err) => {
-      // TODO: Properly return an error if we can't find the messages for a locale
-      return err;
-    }));
-
-  i18n.load(validatedLocale, imp?.messages || fallbackMessages);
-
-  // Browser support for Intl.PluralRules is good and covers what we support in .browserlistrc,
-  // but because this could potentially be in a the critical path of loading the frontend lets
-  // be extra careful
-  // If this isnt loaded, Lingui will log a warning and plurals will not be translated correctly.
-  const supportsPluralRules = 'Intl' in window && 'PluralRules' in Intl;
-  if (supportsPluralRules) {
-    const pluralsOrdinal = new Intl.PluralRules(validatedLocale, { type: 'ordinal' });
-    const pluralsCardinal = new Intl.PluralRules(validatedLocale, { type: 'cardinal' });
-    i18n.loadLocaleData(validatedLocale, {
-      plurals(count: number, ordinal: boolean) {
-        return (ordinal ? pluralsOrdinal : pluralsCardinal).select(count);
-      },
-    });
-  }
-
-  i18n.activate(validatedLocale);
-  i18nInstance = i18n;
-
-  return i18nInstance;
-}
-
-interface I18nProviderProps {
-  children: React.ReactNode;
-}
-export function I18nProvider({ children }: I18nProviderProps) {
-  useEffect(() => {
-    const locale = config.featureToggles.internationalization ? config.bootData.user.locale : DEFAULT_LOCALE;
-
-    initI18n(locale);
-  }, []);
-
-  return (
-    <LinguiI18nProvider i18n={i18n} forceRenderOnLocaleChange={false}>
-      {children}
-    </LinguiI18nProvider>
-  );
-}
-
-// This is only really used for ModalManager, as that creates a new react root we need to make sure is localisable.
-export function provideI18n<P extends {}>(WrappedWithI18N: React.ComponentType<P>) {
-  const I18nProviderWrapper = (props: P) => {
-    return (
-      <I18nProvider>
-        <WrappedWithI18N {...props} />
-      </I18nProvider>
-    );
+    // If translations are empty strings (no translation), fall back to the default value in source code
+    returnEmptyString: false,
   };
-  return I18nProviderWrapper;
+  let init = i18n;
+  if (language === 'detect') {
+    init = init.use(LanguageDetector);
+    const detection: DetectorOptions = { order: ['navigator'], caches: [] };
+    options.detection = detection;
+  } else {
+    options.lng = VALID_LANGUAGES.includes(language) ? language : undefined;
+  }
+  return init
+    .use(loadTranslations)
+    .use(initReactI18next) // passes i18n down to react-i18next
+    .init(options);
 }
+
+export function changeLanguage(locale: string) {
+  const validLocale = VALID_LANGUAGES.includes(locale) ? locale : undefined;
+  return i18n.changeLanguage(validLocale);
+}
+
+export const Trans: typeof I18NextTrans = (props) => {
+  return <I18NextTrans {...props} />;
+};
+
+// Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
+const tFunc = i18n.t;
+
+export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
+  return tFunc(id, defaultMessage, values);
+};
+
+export const i18nDate = (value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
+  if (typeof value === 'string') {
+    return i18nDate(new Date(value), format);
+  }
+  const dateFormatter = new Intl.DateTimeFormat(i18n.language, format);
+  return dateFormatter.format(value);
+};

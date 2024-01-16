@@ -3,6 +3,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { DATABASE_LABELS } from 'app/percona/shared/core';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -44,7 +45,7 @@ describe('DBCluster::', () => {
           },
         } as StoreState)}
       >
-        <DBCluster />
+        {wrapWithGrafanaContextMock(<DBCluster />)}
       </Provider>
     );
 
@@ -84,7 +85,7 @@ describe('DBCluster::', () => {
           },
         } as StoreState)}
       >
-        <DBCluster />
+        {wrapWithGrafanaContextMock(<DBCluster />)}
       </Provider>
     );
 
@@ -124,7 +125,7 @@ describe('DBCluster::', () => {
           },
         } as StoreState)}
       >
-        <DBCluster />
+        {wrapWithGrafanaContextMock(<DBCluster />)}
       </Provider>
     );
 
@@ -165,7 +166,7 @@ describe('DBCluster::', () => {
           },
         } as StoreState)}
       >
-        <DBCluster />
+        {wrapWithGrafanaContextMock(<DBCluster />)}
       </Provider>
     );
 
@@ -218,7 +219,7 @@ describe('DBCluster::', () => {
           },
         } as StoreState)}
       >
-        <DBCluster />
+        {wrapWithGrafanaContextMock(<DBCluster />)}
       </Provider>
     );
 

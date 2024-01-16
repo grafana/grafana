@@ -9,14 +9,17 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) ProxyPluginRequest(c *models.ReqContext) {
-	var once sync.Once
-	var pluginProxyTransport *http.Transport
+var (
+	once                 sync.Once
+	pluginProxyTransport *http.Transport
+)
+
+func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 	once.Do(func() {
 		pluginProxyTransport = &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -40,7 +43,7 @@ func (hs *HTTPServer) ProxyPluginRequest(c *models.ReqContext) {
 		return
 	}
 
-	query := pluginsettings.GetByPluginIDArgs{OrgID: c.OrgID, PluginID: plugin.ID}
+	query := pluginsettings.GetByPluginIDArgs{OrgID: c.SignedInUser.GetOrgID(), PluginID: plugin.ID}
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to fetch plugin settings", err)
@@ -48,7 +51,7 @@ func (hs *HTTPServer) ProxyPluginRequest(c *models.ReqContext) {
 	}
 
 	proxyPath := getProxyPath(c)
-	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes, c, proxyPath, hs.Cfg, hs.SecretsService, hs.tracer, pluginProxyTransport)
+	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes, c, proxyPath, hs.Cfg, hs.SecretsService, hs.tracer, pluginProxyTransport, hs.Features)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to create plugin proxy", err)
 		return
@@ -63,6 +66,6 @@ func extractProxyPath(originalRawPath string) string {
 	return pluginProxyPathRegexp.ReplaceAllString(originalRawPath, "")
 }
 
-func getProxyPath(c *models.ReqContext) string {
+func getProxyPath(c *contextmodel.ReqContext) string {
 	return extractProxyPath(c.Req.URL.EscapedPath())
 }

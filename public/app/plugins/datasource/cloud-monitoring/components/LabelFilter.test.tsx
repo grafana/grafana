@@ -26,6 +26,13 @@ describe('LabelFilter', () => {
     expect(screen.getByText('value_1')).toBeInTheDocument();
   });
 
+  it('should render skip "protected" filters', () => {
+    const filters = ['metric.type', '=', 'value_1'];
+    render(<LabelFilter labels={{}} filters={filters} onChange={() => {}} variableOptionGroup={[]} />);
+    expect(screen.queryByText('metric.type')).not.toBeInTheDocument();
+    expect(screen.queryByText('value_1')).not.toBeInTheDocument();
+  });
+
   it('can add filters', async () => {
     const onChange = jest.fn();
     render(<LabelFilter labels={{}} filters={[]} onChange={onChange} variableOptionGroup={[]} />);

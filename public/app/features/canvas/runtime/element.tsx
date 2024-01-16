@@ -10,6 +10,7 @@ import {
 } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -35,7 +36,11 @@ export class ElementState implements LayerElement {
   // Calculated
   data?: any; // depends on the type
 
-  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: FrameState) {
+  constructor(
+    public item: CanvasElementItem,
+    public options: CanvasElementOptions,
+    public parent?: FrameState
+  ) {
     const fallbackName = `Element ${Date.now()}`;
     if (!options) {
       this.options = { type: item.id, name: fallbackName };
@@ -81,7 +86,7 @@ export class ElementState implements LayerElement {
 
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
-    const placement = this.options.placement ?? ({} as Placement);
+    const placement: Placement = this.options.placement ?? {};
 
     const editingEnabled = this.getScene()?.isEditingEnabled;
 
@@ -224,7 +229,7 @@ export class ElementState implements LayerElement {
         ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right)
         : 0;
 
-    const placement = {} as Placement;
+    const placement: Placement = {};
 
     const width = elementContainer?.width ?? 100;
     const height = elementContainer?.height ?? 100;
@@ -382,6 +387,12 @@ export class ElementState implements LayerElement {
 
     const scene = this.getScene();
     if (oldName !== newName && scene) {
+      if (isConnectionTarget(this, scene.byName)) {
+        getConnectionsByTarget(this, scene).forEach((connection) => {
+          connection.info.targetName = newName;
+        });
+      }
+
       scene.byName.delete(oldName);
       scene.byName.set(newName, this);
     }
@@ -446,6 +457,59 @@ export class ElementState implements LayerElement {
     }
   };
 
+  handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
+    const scene = this.getScene();
+    if (!scene?.isEditingEnabled) {
+      this.handleTooltip(event);
+    } else if (!isSelected) {
+      scene?.connections.handleMouseEnter(event);
+    }
+  };
+
+  handleTooltip = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback) {
+      const rect = this.div?.getBoundingClientRect();
+      scene.tooltipCallback({
+        anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },
+        element: this,
+        isOpen: false,
+      });
+    }
+  };
+
+  handleMouseLeave = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+      scene.tooltipCallback(undefined);
+    }
+  };
+
+  onElementClick = (event: React.MouseEvent) => {
+    this.onTooltipCallback();
+  };
+
+  onElementKeyDown = (event: React.KeyboardEvent) => {
+    if (
+      event.key === 'Enter' &&
+      (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
+    ) {
+      const scene = this.getScene();
+      scene?.select({ targets: [event.currentTarget] });
+    }
+  };
+
+  onTooltipCallback = () => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
+      scene.tooltipCallback({
+        anchorPoint: { x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y },
+        element: this,
+        isOpen: true,
+      });
+    }
+  };
+
   render() {
     const { item, div } = this;
     const scene = this.getScene();
@@ -453,7 +517,16 @@ export class ElementState implements LayerElement {
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (
-      <div key={this.UID} ref={this.initElement}>
+      <div
+        key={this.UID}
+        ref={this.initElement}
+        onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
+        onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
+        onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
+        onKeyDown={!scene?.isEditingEnabled ? this.onElementKeyDown : undefined}
+        role="button"
+        tabIndex={0}
+      >
         <item.display
           key={`${this.UID}/${this.revId}`}
           config={this.options.config}

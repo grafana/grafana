@@ -1,36 +1,29 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Templating',
-  itName: 'Tests dashboard links and variables in links',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
-    e2e()
-      .intercept({
-        method: 'GET',
-        url: '/api/search?tag=templating&limit=100',
-      })
-      .as('tagsTemplatingSearch');
-    e2e()
-      .intercept({
-        method: 'GET',
-        url: '/api/search?tag=demo&limit=100',
-      })
-      .as('tagsDemoSearch');
+describe('Templating', () => {
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
+
+  it('Tests dashboard links and variables in links', () => {
+    cy.intercept({
+      method: 'GET',
+      url: '/api/search?tag=templating&limit=100',
+    }).as('tagsTemplatingSearch');
+    cy.intercept({
+      method: 'GET',
+      url: '/api/search?tag=demo&limit=100',
+    }).as('tagsDemoSearch');
 
     e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
 
     // waiting for network requests first
-    e2e().wait(['@tagsTemplatingSearch', '@tagsDemoSearch']);
-    // and then waiting for links to render
-    e2e().wait(1000);
+    cy.wait(['@tagsTemplatingSearch', '@tagsDemoSearch']);
 
     const verifyLinks = (variableValue: string) => {
       e2e.components.DashboardLinks.link()
         .should('be.visible')
-        .and((links) => {
+        .should((links) => {
           expect(links).to.have.length.greaterThan(13);
 
           for (let index = 0; index < links.length; index++) {
@@ -48,7 +41,7 @@ e2e.scenario({
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('p2').should('be.visible').click();
 
-    e2e.components.PageToolbar.container().click();
+    e2e.components.NavToolbar.container().click();
     e2e.components.DashboardLinks.dropDown()
       .scrollIntoView()
       .should('be.visible')
@@ -57,5 +50,5 @@ e2e.scenario({
 
     // verify all links, should have p2 value
     verifyLinks('p2');
-  },
+  });
 });

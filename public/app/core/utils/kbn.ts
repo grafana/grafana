@@ -9,10 +9,12 @@ import {
   TimeRange,
   ValueFormatterIndex,
   rangeUtil,
+  escapeRegex,
 } from '@grafana/data';
 
+const valueFormats: ValueFormatterIndex = {};
 const kbn = {
-  valueFormats: {} as ValueFormatterIndex,
+  valueFormats,
   intervalRegex: /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/,
   intervalsInSeconds: {
     y: 31536000,
@@ -23,8 +25,12 @@ const kbn = {
     m: 60,
     s: 1,
     ms: 0.001,
-  } as { [index: string]: number },
-  regexEscape: (value: string) => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
+  } as const,
+  /** @deprecated since 9.4, use grafana/data */
+  regexEscape: (value: string): string => {
+    deprecationWarning('kbn.ts', 'kbn.regexEscape()', 'escapeRegex from @grafana/data');
+    return escapeRegex(value);
+  },
 
   /** @deprecated since 7.2, use grafana/data */
   roundInterval: (interval: number) => {

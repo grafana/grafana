@@ -1,10 +1,8 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { PureComponent } from 'react';
 
 import { StatsPicker } from '@grafana/ui';
-
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 interface State {
   stats: string[];
@@ -53,10 +51,9 @@ class WrapperWithState extends PureComponent<any, State> {
   }
 }
 
-const meta: ComponentMeta<typeof StatsPicker> = {
+const meta: Meta<typeof StatsPicker> = {
   title: 'Pickers and Editors/StatsPicker',
   component: StatsPicker,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['onChange', 'stats', 'defaultStat', 'className'],
@@ -64,7 +61,7 @@ const meta: ComponentMeta<typeof StatsPicker> = {
   },
 };
 
-export const Picker: ComponentStory<typeof StatsPicker> = (args) => {
+export const Picker: StoryFn<typeof StatsPicker> = (args) => {
   return (
     <div>
       <WrapperWithState {...args} />

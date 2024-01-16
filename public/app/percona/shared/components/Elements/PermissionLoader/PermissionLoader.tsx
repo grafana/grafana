@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { useSelector } from 'react-redux';
 
 import { Spinner, useStyles } from '@grafana/ui';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
+import { useSelector } from 'app/types';
 
 import { EmptyBlock } from '../EmptyBlock';
 

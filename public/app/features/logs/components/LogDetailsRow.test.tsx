@@ -1,23 +1,25 @@
-import { screen, render, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
 import { LogDetailsRow } from './LogDetailsRow';
+import { createLogRow } from './__mocks__/logRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    parsedValue: '',
-    parsedKey: '',
+    parsedValues: ['value'],
+    parsedKeys: ['key'],
     isLabel: true,
     wrapLogMessage: false,
     getStats: () => null,
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
-    onClickShowDetectedField: () => {},
-    onClickHideDetectedField: () => {},
-    showDetectedFields: [],
+    onClickShowField: () => {},
+    onClickHideField: () => {},
+    displayedFields: [],
+    row: createLogRow(),
+    disableActions: false,
   };
 
   Object.assign(props, propOverrides);
@@ -31,59 +33,86 @@ const setup = (propOverrides?: Partial<Props>) => {
   );
 };
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 describe('LogDetailsRow', () => {
   it('should render parsed key', () => {
-    setup({ parsedKey: 'test key' });
+    setup({ parsedKeys: ['test key'] });
     expect(screen.getByText('test key')).toBeInTheDocument();
   });
   it('should render parsed value', () => {
-    setup({ parsedValue: 'test value' });
+    setup({ parsedValues: ['test value'] });
     expect(screen.getByText('test value')).toBeInTheDocument();
   });
 
   it('should render metrics button', () => {
     setup();
-    expect(screen.getAllByTitle('Ad-hoc statistics')).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Ad-hoc statistics' })).toHaveLength(1);
   });
 
-  describe('if props is a label', () => {
-    it('should render filter label button', () => {
+  describe('toggleable filters', () => {
+    it('should render filter buttons', () => {
       setup();
-      expect(screen.getAllByTitle('Filter for value')).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Filter for value in query A' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Filter out value in query A' })).toHaveLength(1);
+      expect(screen.queryByRole('button', { name: 'Remove filter in query A' })).not.toBeInTheDocument();
     });
-    it('should render filter out label button', () => {
-      setup();
-      expect(screen.getAllByTitle('Filter out value')).toHaveLength(1);
+    it('should render remove filter button when the filter is active', async () => {
+      setup({
+        isFilterLabelActive: jest.fn().mockResolvedValue(true),
+      });
+      expect(await screen.findByRole('button', { name: 'Remove filter in query A' })).toBeInTheDocument();
     });
-    it('should not render filtering buttons if no filtering functions provided', () => {
-      setup({ onClickFilterLabel: undefined, onClickFilterOutLabel: undefined });
-      expect(screen.queryByTitle('Filter out value')).not.toBeInTheDocument();
+    it('should trigger a call to `onClickFilterOutLabel` when the filter out button is clicked', () => {
+      const onClickFilterOutLabel = jest.fn();
+      setup({ onClickFilterOutLabel });
+      fireEvent.click(screen.getByRole('button', { name: 'Filter out value in query A' }));
+      expect(onClickFilterOutLabel).toHaveBeenCalledWith(
+        'key',
+        'value',
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ values: [0] }),
+            expect.objectContaining({ values: ['line1'] }),
+            expect.objectContaining({ values: [{ app: 'app01' }] }),
+          ],
+          length: 1,
+        })
+      );
+    });
+    it('should trigger a call to `onClickFilterLabel` when the filter  button is clicked', () => {
+      const onClickFilterLabel = jest.fn();
+      setup({ onClickFilterLabel });
+      fireEvent.click(screen.getByRole('button', { name: 'Filter for value in query A' }));
+      expect(onClickFilterLabel).toHaveBeenCalledWith(
+        'key',
+        'value',
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ values: [0] }),
+            expect.objectContaining({ values: ['line1'] }),
+            expect.objectContaining({ values: [{ app: 'app01' }] }),
+          ],
+          length: 1,
+        })
+      );
     });
   });
 
   describe('if props is not a label', () => {
-    it('should not render a filter label button', () => {
-      setup({ isLabel: false });
-      expect(screen.queryByTitle('Filter for value')).not.toBeInTheDocument();
-    });
     it('should render a show toggleFieldButton button', () => {
       setup({ isLabel: false });
-      expect(screen.getAllByTitle('Show this field instead of the message')).toHaveLength(1);
-    });
-    it('should not render a show toggleFieldButton button if no detected fields toggling functions provided', () => {
-      setup({
-        isLabel: false,
-        onClickShowDetectedField: undefined,
-        onClickHideDetectedField: undefined,
-      });
-      expect(screen.queryByTitle('Show this field instead of the message')).not.toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: 'Show this field instead of the message' })).toHaveLength(1);
     });
   });
 
   it('should render stats when stats icon is clicked', () => {
     setup({
-      parsedKey: 'key',
-      parsedValue: 'value',
+      parsedKeys: ['key'],
+      parsedValues: ['value'],
       getStats: () => {
         return [
           {
@@ -101,21 +130,18 @@ describe('LogDetailsRow', () => {
     });
 
     expect(screen.queryByTestId('logLabelStats')).not.toBeInTheDocument();
-    const adHocStatsButton = screen.getByTitle('Ad-hoc statistics');
+    const adHocStatsButton = screen.getByRole('button', { name: 'Ad-hoc statistics' });
     fireEvent.click(adHocStatsButton);
     expect(screen.getByTestId('logLabelStats')).toBeInTheDocument();
     expect(screen.getByTestId('logLabelStats')).toHaveTextContent('another value');
   });
 
-  it('should render clipboard button on hover of log row table value', async () => {
-    setup({ parsedKey: 'key', parsedValue: 'value' });
-
-    const valueCell = screen.getByRole('cell', { name: 'value' });
-    await userEvent.hover(valueCell);
-
-    expect(screen.getByRole('button', { name: 'Copy value to clipboard' })).toBeInTheDocument();
-    await userEvent.unhover(valueCell);
-
-    expect(screen.queryByRole('button', { name: 'Copy value to clipboard' })).not.toBeInTheDocument();
+  describe('copy button', () => {
+    it('should be invisible unless mouse is over', () => {
+      setup({ parsedValues: ['test value'] });
+      // This tests a regression where the button was always visible.
+      expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
+      // Asserting visibility on mouse-over is currently not possible.
+    });
   });
 });

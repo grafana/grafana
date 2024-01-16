@@ -72,7 +72,7 @@ func (e *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 	return simplejson.NewFromAny(e.evalObject(e.template)), nil
 }
 
-func (e *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
+func (e *DashTemplateEvaluator) evalValue(source *simplejson.Json) any {
 	sourceValue := source.Interface()
 
 	switch v := sourceValue.(type) {
@@ -89,10 +89,10 @@ func (e *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
 		return v
 	case json.Number:
 		return v
-	case map[string]interface{}:
+	case map[string]any:
 		return e.evalObject(source)
-	case []interface{}:
-		array := make([]interface{}, 0)
+	case []any:
+		array := make([]any, 0)
 		for _, item := range v {
 			array = append(array, e.evalValue(simplejson.NewFromAny(item)))
 		}
@@ -102,8 +102,8 @@ func (e *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
 	return nil
 }
 
-func (e *DashTemplateEvaluator) evalObject(source *simplejson.Json) interface{} {
-	result := make(map[string]interface{})
+func (e *DashTemplateEvaluator) evalObject(source *simplejson.Json) any {
+	result := make(map[string]any)
 
 	for key, value := range source.MustMap() {
 		if key == "__inputs" {

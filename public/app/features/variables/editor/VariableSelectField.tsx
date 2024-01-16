@@ -1,58 +1,52 @@
 import { css } from '@emotion/css';
-import React, { PropsWithChildren, ReactElement } from 'react';
+import React, { PropsWithChildren, ReactElement, useId } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { InlineFormLabel, Select, useStyles } from '@grafana/ui';
-import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, Select, useStyles2 } from '@grafana/ui';
 
 interface VariableSelectFieldProps<T> {
   name: string;
   value: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
   onChange: (option: SelectableValue<T>) => void;
-  tooltip?: string;
   testId?: string;
   width?: number;
-  labelWidth?: number;
+  description?: React.ReactNode;
 }
 
 export function VariableSelectField({
   name,
+  description,
   value,
   options,
-  tooltip,
   onChange,
   testId,
   width,
-  labelWidth,
 }: PropsWithChildren<VariableSelectFieldProps<any>>): ReactElement {
-  const styles = useStyles(getStyles);
-  const uniqueId = useUniqueId();
+  const styles = useStyles2(getStyles);
+  const uniqueId = useId();
   const inputId = `variable-select-input-${name}-${uniqueId}`;
 
   return (
-    <>
-      <InlineFormLabel width={labelWidth ?? 6} tooltip={tooltip} htmlFor={inputId}>
-        {name}
-      </InlineFormLabel>
+    <Field label={name} description={description} htmlFor={inputId}>
       <div data-testid={testId}>
         <Select
           inputId={inputId}
           onChange={onChange}
           value={value}
-          width={width ?? 25}
+          width={width ?? 30}
           options={options}
           className={styles.selectContainer}
         />
       </div>
-    </>
+    </Field>
   );
 }
 
-function getStyles(theme: GrafanaTheme) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     selectContainer: css`
-      margin-right: ${theme.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
     `,
   };
 }

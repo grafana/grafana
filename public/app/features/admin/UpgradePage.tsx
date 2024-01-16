@@ -21,6 +21,11 @@ export function UpgradePage({ navModel }: Props) {
     <Page navModel={navModel}>
       <Page.Contents>
         <ServerStats />
+        {/* @PERCONA */}
+        {/* <UpgradeInfo
+          editionNotice="You are running the open-source version of Grafana.
+        You have to install the Enterprise edition in order enable Enterprise features."
+        /> */}
       </Page.Contents>
     </Page>
   );
@@ -32,7 +37,7 @@ interface UpgradeInfoProps {
   editionNotice?: string;
 }
 
-export const UpgradeInfo: React.FC<UpgradeInfoProps> = ({ editionNotice }) => {
+export const UpgradeInfo = ({ editionNotice }: UpgradeInfoProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -66,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const GetEnterprise: React.FC = () => {
+const GetEnterprise = () => {
   return (
     <div style={{ marginTop: '40px', marginBottom: '30px' }}>
       <h2 style={titleStyles}>Get Grafana Enterprise</h2>
@@ -79,7 +84,7 @@ const GetEnterprise: React.FC = () => {
   );
 };
 
-const CallToAction: React.FC = () => {
+const CallToAction = () => {
   return (
     <LinkButton
       variant="primary"
@@ -91,7 +96,7 @@ const CallToAction: React.FC = () => {
   );
 };
 
-const ServiceInfo: React.FC = () => {
+const ServiceInfo = () => {
   return (
     <div>
       <h4>At your service</h4>
@@ -123,7 +128,7 @@ const ServiceInfo: React.FC = () => {
   );
 };
 
-const FeatureInfo: React.FC = () => {
+const FeatureInfo = () => {
   return (
     <div style={{ paddingRight: '11px' }}>
       <h4>Enhanced functionality</h4>
@@ -132,7 +137,7 @@ const FeatureInfo: React.FC = () => {
   );
 };
 
-const FeatureListing: React.FC = () => {
+const FeatureListing = () => {
   return (
     <List>
       <Item title="Data source permissions" />
@@ -178,7 +183,7 @@ interface ListProps {
   nested?: boolean;
 }
 
-const List: React.FC<ListProps> = ({ children, nested }) => {
+const List = ({ children, nested }: React.PropsWithChildren<ListProps>) => {
   const listStyle = css`
     display: flex;
     flex-direction: column;
@@ -197,7 +202,7 @@ interface ItemProps {
   image?: string;
 }
 
-const Item: React.FC<ItemProps> = ({ children, title, image }) => {
+const Item = ({ children, title, image }: React.PropsWithChildren<ItemProps>) => {
   const imageUrl = image ? image : 'public/img/licensing/checkmark.svg';
   const itemStyle = css`
     display: flex;

@@ -1,18 +1,16 @@
 import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { of } from 'rxjs';
 
-import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
+import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
+import { FetchResponse, TemplateSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-
-import { PromApplication } from '../../../types/unified-alerting-dto';
 
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { PromOptions } from './types';
+import { PromApplication, PromOptions } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -21,33 +19,25 @@ const fetchMock = jest.spyOn(backendSrv, 'fetch');
 const instanceSettings = {
   url: 'proxied',
   id: 1,
-  directUrl: 'direct',
+  uid: 'ABCDEF',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },
 } as Partial<DataSourceInstanceSettings<PromOptions>> as DataSourceInstanceSettings<PromOptions>;
-const raw = {
+
+const raw: TimeRange = {
   from: toUtc('2018-04-25 10:00'),
   to: toUtc('2018-04-25 11:00'),
+  raw: {
+    from: '2018-04-25 10:00',
+    to: '2018-04-25 11:00',
+  },
 };
 
-jest.mock('app/features/dashboard/services/TimeSrv', () => ({
-  __esModule: true,
-  getTimeSrv: jest.fn().mockReturnValue({
-    timeRange(): any {
-      return {
-        from: raw.from,
-        to: raw.to,
-        raw: raw,
-      };
-    },
-  }),
-}));
-
 const templateSrvStub = {
-  getAdhocFilters: jest.fn(() => [] as any[]),
-  replace: jest.fn((a: string) => a),
-} as any;
+  getAdhocFilters: jest.fn().mockImplementation(() => []),
+  replace: jest.fn().mockImplementation((a: string) => a),
+} as unknown as TemplateSrv;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -80,16 +70,18 @@ describe('PrometheusMetricFindQuery', () => {
           data: ['name1', 'name2', 'name3'],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         showErrorAlert: false,
-        headers: {},
+        headers: {
+          'X-Grafana-Cache': 'private, max-age=60',
+        },
       });
     });
 
@@ -100,15 +92,39 @@ describe('PrometheusMetricFindQuery', () => {
           data: ['value1', 'value2', 'value3'],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
+      });
+    });
+
+    const emptyFilters = ['{}', '{   }', ' {   }  ', '   {}  '];
+
+    emptyFilters.forEach((emptyFilter) => {
+      const queryString = `label_values(${emptyFilter}, resource)`;
+      it(`Empty filter, query, ${queryString} should just generate label search query`, async () => {
+        const query = setupMetricFindQuery({
+          query: queryString,
+          response: {
+            data: ['value1', 'value2', 'value3'],
+          },
+        });
+        const results = await query.process(raw);
+
+        expect(results).toHaveLength(3);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledWith({
+          method: 'GET',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+          hideFromInspector: true,
+          headers: {},
+        });
       });
     });
 
@@ -124,13 +140,13 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent(
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent(
           '[]'
         )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
@@ -150,13 +166,13 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: '/api/datasources/1/resources/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
+        url: '/api/datasources/uid/ABCDEF/resources/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
         hideFromInspector: true,
         showErrorAlert: false,
         headers: {},
@@ -174,7 +190,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(2);
       expect(results[0].text).toBe('value1');
@@ -182,7 +198,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent(
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent(
           '[]'
         )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
@@ -199,13 +215,13 @@ describe('PrometheusMetricFindQuery', () => {
           data: ['metric1', 'metric2', 'metric3', 'nomatch'],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });
@@ -226,16 +242,17 @@ describe('PrometheusMetricFindQuery', () => {
           },
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(1);
       expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
-        requestId: undefined,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric`,
         headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
       });
     });
 
@@ -249,15 +266,16 @@ describe('PrometheusMetricFindQuery', () => {
           },
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
       expect(results).toHaveLength(1);
       expect(results[0].text).toBe('2');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
-        requestId: undefined,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1`,
         headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
       });
     });
 
@@ -272,7 +290,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(results[0].text).toBe('up{instance="127.0.0.1:1234",job="job1"}');
@@ -281,7 +299,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
           'up{job="job1"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
@@ -307,13 +325,13 @@ describe('PrometheusMetricFindQuery', () => {
         },
         prometheusDatasource
       );
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/label/${resourceName}/values?match${encodeURIComponent(
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${resourceName}/values?match${encodeURIComponent(
           '[]'
         )}=${metricName}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
@@ -335,13 +353,13 @@ describe('PrometheusMetricFindQuery', () => {
         },
         prometheusDatasource
       );
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/1/resources/api/v1/label/${resourceName}/values?match%5B%5D=${metricName}%7B${label1Name}%3D%22${label1Value}%22%7D&start=1524650400&end=1524654000`,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${resourceName}/values?match%5B%5D=${metricName}%7B${label1Name}%3D%22${label1Value}%22%7D&start=1524650400&end=1524654000`,
         hideFromInspector: true,
         headers: {},
       });

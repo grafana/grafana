@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent, useCallback } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -24,7 +24,7 @@ export interface Props extends Omit<LabelProps, 'css' | 'description' | 'categor
   as?: React.ElementType;
 }
 
-export const InlineLabel: FunctionComponent<Props> = ({
+export const InlineLabel = ({
   children,
   className,
   tooltip,
@@ -33,10 +33,8 @@ export const InlineLabel: FunctionComponent<Props> = ({
   interactive,
   as: Component = 'label',
   ...rest
-}) => {
-  const styles = useStyles2(
-    useCallback((theme) => getInlineLabelStyles(theme, transparent, width), [transparent, width])
-  );
+}: Props) => {
+  const styles = useStyles2(getInlineLabelStyles, transparent, width);
 
   return (
     <Component className={cx(styles.label, className)} {...rest}>
@@ -52,30 +50,30 @@ export const InlineLabel: FunctionComponent<Props> = ({
 
 export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?: number | 'auto') => {
   return {
-    label: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      padding: 0 ${theme.spacing(1)};
-      font-weight: ${theme.typography.fontWeightMedium};
-      font-size: ${theme.typography.size.sm};
-      background-color: ${transparent ? 'transparent' : theme.colors.background.secondary};
-      height: ${theme.spacing(theme.components.height.md)};
-      line-height: ${theme.spacing(theme.components.height.md)};
-      margin-right: ${theme.spacing(0.5)};
-      border-radius: ${theme.shape.borderRadius(2)};
-      border: none;
-      width: ${width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%'};
-      color: ${theme.colors.text.primary};
-    `,
-    icon: css`
-      color: ${theme.colors.text.secondary};
-      margin-left: 10px;
+    label: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexShrink: 0,
+      padding: theme.spacing(0, 1),
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.size.sm,
+      backgroundColor: transparent ? 'transparent' : theme.colors.background.secondary,
+      height: theme.spacing(theme.components.height.md),
+      lineHeight: theme.spacing(theme.components.height.md),
+      marginRight: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+      border: 'none',
+      width: width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%',
+      color: theme.colors.text.primary,
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: '10px',
 
-      :hover {
-        color: ${theme.colors.text.primary};
-      }
-    `,
+      ':hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
   };
 };

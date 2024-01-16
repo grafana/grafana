@@ -11,7 +11,7 @@ describe('LoaderButton::', () => {
 
     expect(await screen.findByRole('button')).toBeInTheDocument();
     expect(await screen.queryByText('Loading test')).not.toBeInTheDocument();
-    expect(container.querySelectorAll('i').length).toEqual(1);
+    expect(container.querySelectorAll('svg').length).toEqual(1);
   });
 
   it('should display the children if not in loading state', async () => {
@@ -19,6 +19,6 @@ describe('LoaderButton::', () => {
 
     expect(await screen.findByRole('button')).toBeInTheDocument();
     expect(await screen.queryByText(buttonLabel)).toBeInTheDocument();
-    expect(container.querySelectorAll('i').length).toEqual(0);
+    expect(container.querySelectorAll('svg').length).toEqual(0);
   });
 });

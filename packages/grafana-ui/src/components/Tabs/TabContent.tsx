@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, HTMLAttributes, ReactNode } from 'react';
+import React, { HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -9,13 +9,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
-const getTabContentStyle = (theme: GrafanaTheme2) => ({
-  tabContent: css`
-    background: ${theme.colors.background.canvas};
-  `,
-});
-
-export const TabContent: FC<Props> = ({ children, className, ...restProps }) => {
+export const TabContent = ({ children, className, ...restProps }: Props) => {
   const styles = useStyles2(getTabContentStyle);
 
   return (
@@ -24,3 +18,9 @@ export const TabContent: FC<Props> = ({ children, className, ...restProps }) => 
     </div>
   );
 };
+
+const getTabContentStyle = (theme: GrafanaTheme2) => ({
+  tabContent: css({
+    background: theme.colors.background.primary,
+  }),
+});

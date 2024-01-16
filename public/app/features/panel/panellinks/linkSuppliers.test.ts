@@ -108,7 +108,7 @@ describe('getFieldLinksSupplier', () => {
       view: new DataFrameView(data),
       rowIndex,
       colIndex,
-      display: field.display!(field.values.get(rowIndex)),
+      display: field.display!(field.values[rowIndex]),
       hasLinks: true,
     };
 
@@ -120,36 +120,36 @@ describe('getFieldLinksSupplier', () => {
       };
     });
     expect(links).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "href": "http://go/100.200 kW",
+      [
+        {
+          "href": "http://go/100.200%20kW",
           "title": "By Name",
         },
-        Object {
-          "href": "http://go/100.200 kW",
+        {
+          "href": "http://go/100.200%20kW",
           "title": "By Index",
         },
-        Object {
-          "href": "http://go/100.200 kW",
+        {
+          "href": "http://go/100.200%20kW",
           "title": "By Title",
         },
-        Object {
+        {
           "href": "http://go/100.2000001",
           "title": "Numeric Value",
         },
-        Object {
+        {
           "href": "http://go/100.200",
           "title": "Text (no suffix)",
         },
-        Object {
+        {
           "href": "http://go/\${__data.fields.XYZ}",
           "title": "Unknown Field",
         },
-        Object {
-          "href": "http://go/Hello Templates",
+        {
+          "href": "http://go/Hello%20Templates",
           "title": "Data Frame name",
         },
-        Object {
+        {
           "href": "http://go/ZZZ",
           "title": "Data Frame refId",
         },

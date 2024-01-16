@@ -1,25 +1,19 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { ConnectedProps, connect } from 'react-redux';
 
-import { NavModel } from '@grafana/data';
 import { VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
-import { contextSrv } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, Organization, StoreState } from 'app/types';
+import { AccessControlAction, StoreState } from 'app/types';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';
 import { setOrganizationName } from './state/reducers';
 
-export interface Props {
-  navModel: NavModel;
-  organization: Organization;
-  loadOrganization: typeof loadOrganization;
-  setOrganizationName: typeof setOrganizationName;
-  updateOrganization: typeof updateOrganization;
-}
+interface OwnProps {}
 
 export class OrgDetailsPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -29,6 +23,21 @@ export class OrgDetailsPage extends PureComponent<Props> {
   onUpdateOrganization = (orgName: string) => {
     this.props.setOrganizationName(orgName);
     this.props.updateOrganization();
+  };
+
+  handleConfirm = () => {
+    return new Promise<boolean>((resolve) => {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: 'Confirm preferences update',
+          text: 'This will update the preferences for the whole organization. Are you sure you want to update the preferences?',
+          yesText: 'Save',
+          yesButtonVariant: 'primary',
+          onConfirm: async () => resolve(true),
+          onDismiss: async () => resolve(false),
+        })
+      );
+    });
   };
 
   render() {
@@ -44,7 +53,14 @@ export class OrgDetailsPage extends PureComponent<Props> {
           {!isLoading && (
             <VerticalGroup spacing="lg">
               {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
-              {canReadPreferences && <SharedPreferences resourceUri="org" disabled={!canWritePreferences} />}
+              {canReadPreferences && (
+                <SharedPreferences
+                  resourceUri="org"
+                  disabled={!canWritePreferences}
+                  preferenceType="org"
+                  onConfirm={this.handleConfirm}
+                />
+              )}
             </VerticalGroup>
           )}
         </Page.Contents>
@@ -66,4 +82,7 @@ const mapDispatchToProps = {
   updateOrganization,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export default connector(OrgDetailsPage);

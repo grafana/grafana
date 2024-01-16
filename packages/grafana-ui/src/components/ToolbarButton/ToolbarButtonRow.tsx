@@ -7,6 +7,7 @@ import React, { forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, c
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
+import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';
 export interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -17,14 +18,23 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
 
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
-    const [childVisibility, setChildVisibility] = useState<boolean[]>(
-      Array(React.Children.toArray(children).length).fill(true)
-    );
+    // null/undefined are valid react children so we need to filter them out to prevent unnecessary padding
+    const childrenWithoutNull = React.Children.toArray(children).filter((child) => child != null);
+    const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(false));
     const containerRef = useRef<HTMLDivElement>(null);
     const [showOverflowItems, setShowOverflowItems] = useState(false);
+    const overflowRef = useRef<HTMLDivElement>(null);
     const overflowItemsRef = createRef<HTMLDivElement>();
     const { overlayProps } = useOverlay(
-      { onClose: () => setShowOverflowItems(false), isDismissable: true, isOpen: showOverflowItems },
+      {
+        onClose: () => setShowOverflowItems(false),
+        isDismissable: true,
+        isOpen: showOverflowItems,
+        shouldCloseOnInteractOutside: (element: Element) => {
+          const portalContainer = getPortalContainer();
+          return !overflowRef.current?.contains(element) && !portalContainer.contains(element);
+        },
+      },
       overflowItemsRef
     );
     const { dialogProps } = useDialog({}, overflowItemsRef);
@@ -53,7 +63,10 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
       );
       if (containerRef.current) {
         Array.from(containerRef.current.children).forEach((item) => {
-          intersectionObserver.observe(item);
+          // don't observe the overflow button
+          if (item instanceof HTMLElement && item !== overflowRef.current) {
+            intersectionObserver.observe(item);
+          }
         });
       }
       return () => intersectionObserver.disconnect();
@@ -61,8 +74,9 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={containerRef} className={cx(styles.container, className)} {...rest}>
-        {React.Children.map(children, (child, index) => (
+        {childrenWithoutNull.map((child, index) => (
           <div
+            key={index}
             style={{ order: index, visibility: childVisibility[index] ? 'visible' : 'hidden' }}
             className={styles.childWrapper}
           >
@@ -70,12 +84,11 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
           </div>
         ))}
         {childVisibility.includes(false) && (
-          <>
+          <div ref={overflowRef} className={styles.overflowButton}>
             <ToolbarButton
               variant={showOverflowItems ? 'active' : 'default'}
               tooltip="Show more items"
               onClick={() => setShowOverflowItems(!showOverflowItems)}
-              className={styles.overflowButton}
               icon="ellipsis-v"
               iconOnly
               narrow
@@ -83,11 +96,11 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
             {showOverflowItems && (
               <FocusScope contain autoFocus>
                 <div className={styles.overflowItems} ref={overflowItemsRef} {...overlayProps} {...dialogProps}>
-                  {React.Children.toArray(children).map((child, index) => !childVisibility[index] && child)}
+                  {childrenWithoutNull.map((child, index) => !childVisibility[index] && child)}
                 </div>
               </FocusScope>
             )}
-          </>
+          </div>
         )}
       </div>
     );
@@ -97,37 +110,37 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
 ToolbarButtonRow.displayName = 'ToolbarButtonRow';
 
 const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment: Props['alignment']) => ({
-  overflowButton: css`
-    order: ${overflowButtonOrder};
-  `,
-  overflowItems: css`
-    align-items: center;
-    background-color: ${theme.colors.background.primary};
-    border-radius: ${theme.shape.borderRadius()};
-    box-shadow: ${theme.shadows.z3};
-    display: flex;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(1)};
-    max-width: 80vw;
-    padding: ${theme.spacing(0.5, 1)};
-    position: absolute;
-    right: 0;
-    top: 100%;
-    width: max-content;
-    z-index: ${theme.zIndex.sidemenu};
-  `,
-  container: css`
-    align-items: center;
-    display: flex;
-    gap: ${theme.spacing(1)};
-    justify-content: ${alignment === 'left' ? 'flex-start' : 'flex-end'};
-    min-width: 0;
-    position: relative;
-  `,
-  childWrapper: css`
-    align-items: center;
-    display: flex;
-    gap: ${theme.spacing(1)};
-  `,
+  overflowButton: css({
+    order: overflowButtonOrder,
+  }),
+  overflowItems: css({
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1),
+    maxWidth: '80vw',
+    padding: theme.spacing(0.5, 1),
+    position: 'absolute',
+    right: 0,
+    top: '100%',
+    width: 'max-content',
+    zIndex: theme.zIndex.sidemenu,
+  }),
+  container: css({
+    alignItems: 'center',
+    display: 'flex',
+    gap: theme.spacing(1),
+    justifyContent: alignment === 'left' ? 'flex-start' : 'flex-end',
+    minWidth: 0,
+    position: 'relative',
+  }),
+  childWrapper: css({
+    alignItems: 'center',
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
 });

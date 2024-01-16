@@ -102,8 +102,25 @@ function getDecimalsForValue(value: number): number {
 export function toFixedScaled(value: number, decimals: DecimalCount, ext?: string): FormattedValue {
   return {
     text: toFixed(value, decimals),
-    suffix: ext,
+    suffix: appendPluralIf(ext, Math.abs(value) > 1),
   };
+}
+
+function appendPluralIf(ext: string | undefined, condition: boolean): string | undefined {
+  if (!condition) {
+    return ext;
+  }
+
+  switch (ext) {
+    case ' min':
+    case ' hour':
+    case ' day':
+    case ' week':
+    case ' year':
+      return `${ext}s`;
+    default:
+      return ext;
+  }
 }
 
 export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
@@ -127,7 +144,7 @@ export function isBooleanUnit(unit?: string) {
 }
 
 export function booleanValueFormatter(t: string, f: string): ValueFormatter {
-  return (value: any) => {
+  return (value) => {
     return { text: value ? t : f };
   };
 }
@@ -136,7 +153,7 @@ const logb = (b: number, x: number) => Math.log10(x) / Math.log10(b);
 
 export function scaledUnits(factor: number, extArray: string[], offset = 0): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {
-    if (size === null) {
+    if (size === null || size === undefined) {
       return { text: '' };
     }
 
@@ -159,7 +176,7 @@ export function locale(value: number, decimals: DecimalCount): FormattedValue {
     return { text: '' };
   }
   return {
-    text: value.toLocaleString(undefined, { maximumFractionDigits: decimals as number }),
+    text: value.toLocaleString(undefined, { maximumFractionDigits: decimals ?? undefined }),
   };
 }
 

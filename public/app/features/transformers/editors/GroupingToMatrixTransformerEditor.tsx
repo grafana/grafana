@@ -7,16 +7,19 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   GroupingToMatrixTransformerOptions,
+  SpecialValue,
+  TransformerCategory,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
-export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<GroupingToMatrixTransformerOptions>> = ({
+export const GroupingToMatrixTransformerEditor = ({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<GroupingToMatrixTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
 
   const onSelectColumn = useCallback(
@@ -49,6 +52,23 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     [onChange, options]
   );
 
+  const specialValueOptions: Array<SelectableValue<SpecialValue>> = [
+    { label: 'Null', value: SpecialValue.Null, description: 'Null value' },
+    { label: 'True', value: SpecialValue.True, description: 'Boolean true value' },
+    { label: 'False', value: SpecialValue.False, description: 'Boolean false value' },
+    { label: 'Empty', value: SpecialValue.Empty, description: 'Empty string' },
+  ];
+
+  const onSelectEmptyValue = useCallback(
+    (value: SelectableValue<SpecialValue>) => {
+      onChange({
+        ...options,
+        emptyValue: value?.value,
+      });
+    },
+    [onChange, options]
+  );
+
   return (
     <>
       <InlineFieldRow>
@@ -61,6 +81,9 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
         <InlineField label="Cell Value" labelWidth={10}>
           <Select options={fieldNames} value={options.valueField} onChange={onSelectValue} isClearable />
         </InlineField>
+        <InlineField label="Empty Value">
+          <Select options={specialValueOptions} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
+        </InlineField>
       </InlineFieldRow>
     </>
   );
@@ -70,6 +93,8 @@ export const groupingToMatrixTransformRegistryItem: TransformerRegistryItem<Grou
   id: DataTransformerID.groupingToMatrix,
   editor: GroupingToMatrixTransformerEditor,
   transformation: standardTransformers.groupingToMatrixTransformer,
-  name: 'Grouping to matrix',
-  description: `Takes a three fields combination and produces a Matrix`,
+  name: standardTransformers.groupingToMatrixTransformer.name,
+  description: 'Takes a three fields combination and produces a Matrix.',
+  categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.groupingToMatrix).helperDocs,
 };

@@ -1,32 +1,29 @@
-import { NavModelItem, NavSection } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 import { ServiceType } from 'app/percona/shared/services/services/Services.types';
+
+export const WEIGHTS = {
+  dashboards: -1700,
+  alerting: -1500,
+  config: -900,
+};
 
 export const PMM_DBAAS_PAGE: NavModelItem = {
   id: 'dbaas',
   text: 'DBaaS',
   subTitle: 'Percona DBaaS',
   icon: 'database',
-  section: NavSection.Core,
   url: `${config.appSubUrl}/dbaas`,
-  breadcrumbs: [
-    {
-      title: 'DBaaS',
-      url: `${config.appSubUrl}/dbaas`,
-    },
-  ],
   children: [
     {
       id: 'dbclusters',
       text: 'DB Cluster',
       url: `${config.appSubUrl}/dbaas/dbclusters`,
-      hideFromMenu: true,
     },
     {
       id: 'kubernetes',
       text: 'Kubernetes Cluster',
       url: `${config.appSubUrl}/dbaas/kubernetes`,
-      hideFromMenu: true,
     },
   ],
 };
@@ -37,13 +34,7 @@ export const PMM_BACKUP_PAGE: NavModelItem = {
   text: 'Backup',
   subTitle: 'Percona Backups',
   url: `${config.appSubUrl}/backup`,
-  section: NavSection.Core,
-  breadcrumbs: [
-    {
-      title: 'Backup',
-      url: `${config.appSubUrl}/backup`,
-    },
-  ],
+  sortWeight: WEIGHTS.alerting,
   children: [
     {
       id: 'backup-inventory',
@@ -83,32 +74,25 @@ export const PMM_ALERTING_PERCONA_ALERTS: NavModelItem[] = [
   },
 ];
 
+export const PMM_SERVICES_PAGE: NavModelItem = {
+  id: 'inventory-services',
+  text: 'Services',
+  url: `${config.appSubUrl}/inventory/services`,
+};
+
+export const PMM_NODES_PAGE: NavModelItem = {
+  id: 'inventory-nodes',
+  text: 'Nodes',
+  url: `${config.appSubUrl}/inventory/nodes`,
+};
+
 export const PMM_INVENTORY_PAGE: NavModelItem = {
   id: 'inventory',
   icon: 'server-network',
   text: 'PMM Inventory',
   url: `${config.appSubUrl}/inventory`,
   subTitle: 'Percona PMM Inventory',
-  breadcrumbs: [
-    {
-      title: 'PMM Inventory',
-      url: `${config.appSubUrl}/inventory`,
-    },
-  ],
-  children: [
-    {
-      id: 'inventory-services',
-      text: 'Services',
-      url: `${config.appSubUrl}/inventory/services`,
-      hideFromMenu: true,
-    },
-    {
-      id: 'inventory-nodes',
-      text: 'Nodes',
-      url: `${config.appSubUrl}/inventory/nodes`,
-      hideFromMenu: true,
-    },
-  ],
+  children: [PMM_SERVICES_PAGE, PMM_NODES_PAGE],
 };
 
 export const PMM_HEADING_LINK: NavModelItem = {
@@ -123,7 +107,16 @@ export const PMM_ADD_INSTANCE_PAGE: NavModelItem = {
   subTitle: 'PMM Inventory',
   text: 'Add Service',
   hideFromTabs: true,
-  showIconInNavbar: true,
+};
+
+/**
+ * Add separate page with isCreateAction to show the item both in
+ * navigation and "New" shortcut
+ */
+export const PMM_ADD_INSTANCE_CREATE_PAGE: NavModelItem = {
+  ...PMM_ADD_INSTANCE_PAGE,
+  text: 'Add service',
+  isCreateAction: true,
 };
 
 export const PMM_EDIT_INSTANCE_PAGE: NavModelItem = {
@@ -131,27 +124,23 @@ export const PMM_EDIT_INSTANCE_PAGE: NavModelItem = {
   url: `${config.appSubUrl}/edit-instance`,
   text: 'Edit Instance',
   hideFromTabs: true,
-  showIconInNavbar: false,
 };
 
 export const PMM_ACCESS_ROLE_CREATE_PAGE: NavModelItem = {
   id: 'rbac-create-role',
   url: `${config.appSubUrl}/roles/create`,
   icon: 'plus',
-  subTitle: 'Roles',
-  text: 'Roles',
-  hideFromTabs: false,
-  showIconInNavbar: false,
+  text: 'Create role',
+  hideFromTabs: true,
+  isCreateAction: true,
 };
 
 export const PMM_ACCESS_ROLE_EDIT_PAGE: NavModelItem = {
   id: 'rbac-edit-role',
-  url: `${config.appSubUrl}/roles/:id/create`,
+  url: `${config.appSubUrl}/roles/:id/edit`,
   icon: 'plus',
-  subTitle: 'Roles',
-  text: 'Roles',
-  hideFromTabs: false,
-  showIconInNavbar: false,
+  text: 'Edit role',
+  hideFromTabs: true,
 };
 
 export const PMM_ACCESS_ROLES_PAGE: NavModelItem = {
@@ -159,7 +148,6 @@ export const PMM_ACCESS_ROLES_PAGE: NavModelItem = {
   icon: 'user-square',
   url: `${config.appSubUrl}/roles`,
   text: 'Access Roles',
-  hideFromTabs: false,
 };
 
 export const getPmmSettingsPage = (alertingEnabled = false): NavModelItem => {
@@ -198,14 +186,9 @@ export const getPmmSettingsPage = (alertingEnabled = false): NavModelItem => {
     id: 'settings',
     icon: 'percona-setting',
     text: 'Settings',
+    sortWeight: WEIGHTS.config,
     url: `${config.appSubUrl}/settings`,
     subTitle: 'Percona Settings',
-    breadcrumbs: [
-      {
-        title: 'Settings',
-        url: `${config.appSubUrl}/settings`,
-      },
-    ],
     children,
   };
 
@@ -218,7 +201,6 @@ export const PMM_TICKETS_PAGE: NavModelItem = {
   text: 'List of tickets opened by Customer Organization',
   subTitle: 'Percona Support Tickets from Portal',
   url: `${config.appSubUrl}/tickets`,
-  section: NavSection.Core,
 };
 
 export const PMM_ENTITLEMENTS_PAGE: NavModelItem = {
@@ -227,7 +209,6 @@ export const PMM_ENTITLEMENTS_PAGE: NavModelItem = {
   text: 'Entitlements',
   subTitle: 'Percona Entitlements',
   url: `${config.appSubUrl}/entitlements`,
-  section: NavSection.Core,
 };
 
 export const PMM_ENVIRONMENT_OVERVIEW_PAGE: NavModelItem = {
@@ -236,7 +217,6 @@ export const PMM_ENVIRONMENT_OVERVIEW_PAGE: NavModelItem = {
   text: 'Environment Overview',
   subTitle: 'Percona Environment Overview',
   url: `${config.appSubUrl}/environment-overview`,
-  section: NavSection.Core,
 };
 
 /**
@@ -261,3 +241,315 @@ export const NAV_ID_TO_SERVICE: Record<string, ServiceType> = {
 
 // 5 mins
 export const ACTIVE_SERVICE_TYPES_CHECK_INTERVAL_MS = 300000;
+
+export const PMM_NAV_OS: NavModelItem = {
+  id: 'system',
+  text: 'Operating System (OS)',
+  icon: 'percona-system',
+  url: `${config.appSubUrl}/d/node-instance-overview/nodes-overview`,
+  sortWeight: WEIGHTS.dashboards,
+  hideFromTabs: true,
+
+  children: [
+    {
+      id: 'node-overview',
+      text: 'Overview',
+      icon: 'percona-nav-overview',
+      url: `${config.appSubUrl}/d/node-instance-overview/nodes-overview`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'node-summary',
+      text: 'Summary',
+      icon: 'percona-nav-summary',
+      url: `${config.appSubUrl}/d/node-instance-summary/node-summary`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'cpu-utilization',
+      text: 'CPU utilization',
+      icon: 'percona-cpu',
+      url: `${config.appSubUrl}/d/node-cpu/cpu-utilization-details`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'disk',
+      text: 'Disk',
+      icon: 'percona-disk',
+      url: `${config.appSubUrl}/d/node-disk/disk-details`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'memory',
+      text: 'Memory',
+      icon: 'percona-memory',
+      url: `${config.appSubUrl}/d/node-memory/memory-details`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'network',
+      text: 'Network',
+      icon: 'percona-network',
+      url: `${config.appSubUrl}/d/node-network/network-details`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'temperature',
+      text: 'Temperature',
+      icon: 'percona-temperature',
+      url: `${config.appSubUrl}/d/node-temp/node-temperature-details`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'numa',
+      text: 'NUMA',
+      icon: 'percona-cluster-network',
+      url: `${config.appSubUrl}/d/node-memory-numa/numa-details`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'processes',
+      text: 'Processes',
+      icon: 'percona-process',
+      url: `${config.appSubUrl}/d/node-cpu-process/processes-details`,
+      hideFromTabs: true,
+    },
+  ],
+};
+
+export const PMM_NAV_MYSQL: NavModelItem = {
+  id: 'mysql',
+  text: 'MySQL',
+  icon: 'percona-database-mysql',
+  url: `${config.appSubUrl}/d/mysql-instance-overview/mysql-instances-overview`,
+  sortWeight: WEIGHTS.dashboards,
+  hideFromTabs: true,
+
+  children: [
+    {
+      id: 'mysql-overview',
+      text: 'Overview',
+      icon: 'percona-nav-overview',
+      url: `${config.appSubUrl}/d/mysql-instance-overview/mysql-instances-overview`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'mysql-summary',
+      text: 'Summary',
+      icon: 'percona-nav-summary',
+      url: `${config.appSubUrl}/d/mysql-instance-summary/mysql-instance-summary`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'mysql-ha',
+      text: 'High availability',
+      icon: 'percona-cluster',
+      hideFromTabs: true,
+      showChildren: true,
+
+      children: [
+        {
+          id: 'mysql-group-replication-summary',
+          text: 'Group replication summary',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/mysql-group-replicaset-summary/mysql-group-replication-summary`,
+          hideFromTabs: true,
+        },
+        {
+          id: 'mysql-replication-summary',
+          text: 'Replication summary',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/mysql-replicaset-summary/mysql-replication-summary`,
+          hideFromTabs: true,
+        },
+        {
+          id: 'pxc-cluster-summary',
+          text: 'PXC/Galera cluster summary',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/pxc-cluster-summary/pxc-galera-cluster-summary`,
+          hideFromTabs: true,
+        },
+        {
+          id: 'pxc-node-summary',
+          text: 'PXC/Galera node summary',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/pxc-node-summary/pxc-galera-node-summary`,
+          hideFromTabs: true,
+        },
+        {
+          id: 'pxc-nodes-compare',
+          text: 'PXC/Galera nodes compare',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/pxc-nodes-compare/pxc-galera-nodes-compare`,
+          hideFromTabs: true,
+        },
+      ],
+    },
+    {
+      id: 'mysql-command-handler-counters-compare',
+      text: 'Command/Handler counters compare',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mysql-commandhandler-compare/mysql-command-handler-counters-compare`,
+    },
+    {
+      id: 'mysql-innodb-details',
+      text: 'InnoDB details',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mysql-innodb/mysql-innodb-details`,
+    },
+    {
+      id: 'mysql-innodb-compression-details',
+      text: 'InnoDB compression',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mysql-innodb-compression/mysql-innodb-compression-details`,
+    },
+    {
+      id: 'mysql-performance-schema-details',
+      text: 'Performance schema',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mysql-performance-schema/mysql-performance-schema-details`,
+    },
+    {
+      id: 'mysql-query-response-time-details',
+      text: 'Query response time',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mysql-queryresponsetime/mysql-query-response-time-details`,
+    },
+    {
+      id: 'mysql-table-details',
+      text: 'Table details',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mysql-table/mysql-table-details`,
+    },
+    {
+      id: 'mysql-tokudb-details',
+      text: 'TokuDB details',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mysql-tokudb/mysql-tokudb-details`,
+    },
+  ],
+};
+
+export const PMM_NAV_MONGO: NavModelItem = {
+  id: 'mongo',
+  text: 'MongoDB',
+  icon: 'percona-database-mongodb',
+  url: `${config.appSubUrl}/d/mongodb-instance-overview/mongodb-instances-overview`,
+  sortWeight: WEIGHTS.dashboards,
+  hideFromTabs: true,
+
+  children: [
+    {
+      id: 'mongo-overview',
+      text: 'Overview',
+      icon: 'percona-nav-overview',
+      url: `${config.appSubUrl}/d/mongodb-instance-overview/mongodb-instances-overview`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'mongo-summary',
+      text: 'Summary',
+      icon: 'percona-nav-summary',
+      url: `${config.appSubUrl}/d/mongodb-instance-summary/mongodb-instance-summary`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'mongo-ha',
+      text: 'High availability',
+      icon: 'percona-cluster',
+      hideFromTabs: true,
+      showChildren: true,
+
+      children: [
+        {
+          id: 'mongo-cluster-summary',
+          text: 'Cluster summary',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/mongodb-cluster-summary/mongodb-cluster-summary`,
+          hideFromTabs: true,
+        },
+        {
+          id: 'mongo-rplset-summary',
+          text: 'ReplSet summary',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/mongodb-replicaset-summary/mongodb-replset-summary`,
+          hideFromTabs: true,
+        },
+      ],
+    },
+    {
+      id: 'mongo-memory-details',
+      text: 'InMemory',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mongodb-inmemory/mongodb-inmemory-details`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'mongo-mmap-details',
+      text: 'MMAPv1',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mongodb-mmapv1/mongodb-mmapv1-details`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'mondo-wiredtiger-details',
+      text: 'WiredTiger',
+      icon: 'sitemap',
+      url: `${config.appSubUrl}/d/mongodb-wiredtiger/mongodb-wiredtiger-details`,
+      hideFromTabs: true,
+    },
+  ],
+};
+
+export const PMM_NAV_POSTGRE: NavModelItem = {
+  id: 'postgre',
+  text: 'PostgreSQL',
+  icon: 'percona-database-postgresql',
+  url: `${config.appSubUrl}/d/postgresql-instance-overview/postgresql-instances-overview`,
+  sortWeight: WEIGHTS.dashboards,
+  hideFromTabs: true,
+
+  children: [
+    {
+      id: 'postgre-overwiew',
+      text: 'Overview',
+      icon: 'percona-nav-overview',
+      url: `${config.appSubUrl}/d/postgresql-instance-overview/postgresql-instances-overview`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'postgre-summary',
+      text: 'Summary',
+      icon: 'percona-nav-summary',
+      url: `${config.appSubUrl}/d/postgresql-instance-summary/postgresql-instance-summary`,
+      hideFromTabs: true,
+    },
+  ],
+};
+
+export const PMM_NAV_PROXYSQL: NavModelItem = {
+  id: 'proxysql',
+  text: 'ProxySQL',
+  icon: 'percona-database-proxysql',
+  url: `${config.appSubUrl}/d/proxysql-instance-summary/proxysql-instance-summary`,
+  sortWeight: WEIGHTS.dashboards,
+  hideFromTabs: true,
+};
+
+export const PMM_NAV_HAPROXY: NavModelItem = {
+  id: 'haproxy',
+  text: 'HAProxy',
+  icon: 'percona-database-haproxy',
+  url: `${config.appSubUrl}/d/haproxy-instance-summary/haproxy-instance-summary`,
+  sortWeight: WEIGHTS.dashboards,
+  hideFromTabs: true,
+};
+
+export const PMM_NAV_QAN: NavModelItem = {
+  id: 'qan',
+  text: 'Query Analytics (QAN)',
+  icon: 'qan-logo',
+  url: `${config.appSubUrl}/d/pmm-qan/pmm-query-analytics`,
+  sortWeight: WEIGHTS.dashboards,
+  hideFromTabs: true,
+};

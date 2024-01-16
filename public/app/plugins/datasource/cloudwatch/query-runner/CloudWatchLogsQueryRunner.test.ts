@@ -1,13 +1,38 @@
 import { interval, lastValueFrom, of } from 'rxjs';
 
-import { LogRowModel, MutableDataFrame, FieldType, LogLevel, dataFrameToJSON, DataQueryErrorType } from '@grafana/data';
+import {
+  DataQueryErrorType,
+  FieldType,
+  LogLevel,
+  LogRowModel,
+  MutableDataFrame,
+  dateTime,
+  DataQueryRequest,
+  LogRowContextQueryDirection,
+} from '@grafana/data';
 
-import { genMockFrames, setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
+import {
+  CloudWatchSettings,
+  limitVariable,
+  logGroupNamesVariable,
+  regionVariable,
+} from '../__mocks__/CloudWatchDataSource';
+import { genMockFrames, genMockCloudWatchLogsRequest, setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
+import { LogsRequestMock } from '../__mocks__/Request';
 import { validLogsQuery } from '../__mocks__/queries';
-import { LogAction } from '../types';
+import { CloudWatchLogsQuery, LogAction, StartQueryRequest } from '../types';
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
+
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  getDefaultTimeRange: jest.fn().mockImplementation(() => {
+    const from = dateTime(1111);
+    const to = dateTime(2222);
+    return { from, to, raw: { from, to } };
+  }),
+}));
 
 describe('CloudWatchLogsQueryRunner', () => {
   beforeEach(() => {
@@ -16,7 +41,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   describe('getLogRowContext', () => {
     it('replaces parameters correctly in the query', async () => {
-      const { runner, fetchMock } = setupMockedLogsQueryRunner();
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
       const row: LogRowModel = {
         entryFieldIndex: 0,
         rowIndex: 0,
@@ -42,40 +67,16 @@ describe('CloudWatchLogsQueryRunner', () => {
         uid: '1',
       };
       await runner.getLogRowContext(row);
-      expect(fetchMock.mock.calls[0][0].data.queries[0].endTime).toBe(4);
-      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe(undefined);
+      expect(queryMock.mock.calls[0][0].targets[0].endTime).toBe(4);
+      expect(queryMock.mock.calls[0][0].targets[0].region).toBe('');
 
-      await runner.getLogRowContext(row, { direction: 'FORWARD' }, { ...validLogsQuery, region: 'eu-east' });
-      expect(fetchMock.mock.calls[1][0].data.queries[0].startTime).toBe(4);
-      expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
-    });
-  });
-
-  describe('getLogGroupFields', () => {
-    it('passes region correctly', async () => {
-      const { runner, fetchMock } = setupMockedLogsQueryRunner();
-      fetchMock.mockReturnValueOnce(
-        of({
-          data: {
-            results: {
-              A: {
-                frames: [
-                  dataFrameToJSON(
-                    new MutableDataFrame({
-                      fields: [
-                        { name: 'key', values: [] },
-                        { name: 'val', values: [] },
-                      ],
-                    })
-                  ),
-                ],
-              },
-            },
-          },
-        })
+      await runner.getLogRowContext(
+        row,
+        { direction: LogRowContextQueryDirection.Forward },
+        { ...validLogsQuery, region: 'eu-east' }
       );
-      await runner.getLogGroupFields({ region: 'us-west-1', logGroupName: 'test' });
-      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe('us-west-1');
+      expect(queryMock.mock.calls[1][0].targets[0].startTime).toBe(4);
+      expect(queryMock.mock.calls[1][0].targets[0].region).toBe('eu-east');
     });
   });
 
@@ -211,6 +212,114 @@ describe('CloudWatchLogsQueryRunner', () => {
         state: 'Done',
       });
       expect(i).toBe(3);
+    });
+  });
+
+  const legacyLogGroupNamesQuery: CloudWatchLogsQuery = {
+    queryMode: 'Logs',
+    logGroupNames: ['group-A', 'templatedGroup-1', `$${logGroupNamesVariable.name}`],
+    hide: false,
+    id: '',
+    region: 'us-east-2',
+    refId: 'A',
+    expression: `fields @timestamp, @message | sort @timestamp desc | limit $${limitVariable.name}`,
+  };
+
+  const logGroupNamesQuery: CloudWatchLogsQuery = {
+    queryMode: 'Logs',
+    logGroups: [
+      { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:group-A:*', name: 'group-A' },
+      { arn: `$${logGroupNamesVariable.name}`, name: logGroupNamesVariable.name },
+    ],
+    hide: false,
+    id: '',
+    region: '$' + regionVariable.name,
+    refId: 'A',
+    expression: `fields @timestamp, @message | sort @timestamp desc | limit 1`,
+  };
+
+  const logsScopedVarQuery: CloudWatchLogsQuery = {
+    queryMode: 'Logs',
+    logGroups: [{ arn: `$${logGroupNamesVariable.name}`, name: logGroupNamesVariable.name }],
+    hide: false,
+    id: '',
+    region: '$' + regionVariable.name,
+    refId: 'A',
+    expression: `stats count(*) by queryType, bin($__interval)`,
+  };
+
+  describe('handleLogQueries', () => {
+    it('should map log queries to start query requests correctly', async () => {
+      const { runner } = setupMockedLogsQueryRunner({
+        variables: [logGroupNamesVariable, regionVariable, limitVariable],
+        settings: {
+          ...CloudWatchSettings,
+          jsonData: {
+            ...CloudWatchSettings.jsonData,
+            logsTimeout: '500ms',
+          },
+        },
+        mockGetVariableName: false,
+      });
+      const spy = jest.spyOn(runner, 'makeLogActionRequest');
+      await lastValueFrom(
+        runner.handleLogQueries([legacyLogGroupNamesQuery, logGroupNamesQuery, logsScopedVarQuery], LogsRequestMock)
+      );
+      const startQueryRequests: StartQueryRequest[] = [
+        {
+          queryString: `fields @timestamp, @message | sort @timestamp desc | limit ${limitVariable.current.value}`,
+          logGroupNames: ['group-A', ...logGroupNamesVariable.current.text],
+          logGroups: [],
+          refId: legacyLogGroupNamesQuery.refId,
+          region: legacyLogGroupNamesQuery.region,
+        },
+        {
+          queryString: logGroupNamesQuery.expression!,
+          logGroupNames: [],
+          logGroups: [
+            {
+              arn: 'arn:aws:logs:us-east-2:123456789012:log-group:group-A:*',
+              name: 'arn:aws:logs:us-east-2:123456789012:log-group:group-A:*',
+            },
+            ...(logGroupNamesVariable.current.value as string[]).map((v) => ({ arn: v, name: v })),
+          ],
+          refId: legacyLogGroupNamesQuery.refId,
+          region: regionVariable.current.value as string,
+        },
+        {
+          queryString: `stats count(*) by queryType, bin(20s)`,
+          logGroupNames: [],
+          logGroups: [...(logGroupNamesVariable.current.value as string[]).map((v) => ({ arn: v, name: v }))],
+          refId: legacyLogGroupNamesQuery.refId,
+          region: regionVariable.current.value as string,
+        },
+      ];
+      expect(spy).toHaveBeenNthCalledWith(1, 'StartQuery', startQueryRequests, LogsRequestMock);
+    });
+  });
+
+  describe('makeLogActionRequest', () => {
+    it('should use the time range from the options if it is available', async () => {
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
+      const from = dateTime(0);
+      const to = dateTime(1000);
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        range: { from, to, raw: { from, to } },
+      };
+      await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()], options));
+      expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);
+      expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));
+    });
+
+    it('should use the default time range if the time range in the options is not available', async () => {
+      const from = dateTime(1111);
+      const to = dateTime(2222);
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
+      await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()]));
+
+      expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);
+      expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));
     });
   });
 });

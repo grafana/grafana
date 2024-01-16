@@ -1,12 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, defaults as lodashDefaults } from 'lodash';
 
-import { LoadingState, VariableType } from '@grafana/data';
+import { LoadingState, VariableType, TypedVariableModel, VariableOption } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { hasOptions } from '../guard';
-import { VariableModel, VariableOption } from '../types';
 import { ensureStringValues } from '../utils';
 
 import { getInstanceState, getNextVariableIndex } from './selectors';
@@ -52,7 +51,7 @@ const sharedReducerSlice = createSlice({
       instanceState.state = LoadingState.Done;
       instanceState.error = null;
     },
-    variableStateFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: any }>>) => {
+    variableStateFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: unknown }>>) => {
       const instanceState = getInstanceState(state, action.payload.id);
       if (!instanceState) {
         // we might have cancelled a batch so then this state has been removed
@@ -67,14 +66,35 @@ const sharedReducerSlice = createSlice({
         return;
       }
 
-      const variableStates = Object.values(state);
-      for (let index = 0; index < variableStates.length; index++) {
-        variableStates[index].index = index;
+      const variableStates = Object.values(state).sort((a, b) => a.index - b.index);
+      for (let i = 0; i < variableStates.length; i++) {
+        variableStates[i].index = i;
       }
     },
     duplicateVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ newId: string }>>) => {
-      const original = cloneDeep<VariableModel>(state[action.payload.id]);
-      const name = `copy_of_${original.name}`;
+      function escapeRegExp(string: string): string {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
+      const original = cloneDeep<TypedVariableModel>(state[action.payload.id]);
+      const copyRegex = new RegExp(`^copy_of_${escapeRegExp(original.name)}(_(\\d+))?$`);
+
+      const copies = Object.values(state)
+        .map(({ name }) => name.match(copyRegex))
+        .filter((v): v is RegExpMatchArray => v != null);
+      const numberedCopies = copies.map((match) => match[2]).filter((v): v is string => v != null);
+
+      const suffix = ((): number | null => {
+        if (copies.length === 0) {
+          return null;
+        }
+        if (numberedCopies.length === 0) {
+          return 1;
+        }
+        return numberedCopies.map((v) => +v).sort((a, b) => b - a)[0] + 1;
+      })();
+
+      const name = `copy_of_${original.name}${suffix ? `_${suffix}` : ''}`;
       const newId = action.payload.data?.newId ?? name;
       const index = getNextVariableIndex(Object.values(state));
       state[newId] = {

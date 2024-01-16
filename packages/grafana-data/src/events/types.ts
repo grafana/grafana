@@ -7,7 +7,7 @@ import { Unsubscribable, Observable } from 'rxjs';
 export interface BusEvent {
   readonly type: string;
   readonly payload?: any;
-  readonly origin?: EventBus;
+  origin?: EventBus;
 }
 
 /**
@@ -68,7 +68,7 @@ export interface EventFilterOptions {
  */
 export interface EventBus {
   /**
-   * Publish single vent
+   * Publish single event
    */
   publish<T extends BusEvent>(event: T): void;
 

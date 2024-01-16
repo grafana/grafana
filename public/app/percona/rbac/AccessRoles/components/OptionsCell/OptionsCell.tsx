@@ -62,7 +62,7 @@ const OptionsCell: FC<OptionsCellProps> = ({ role }) => {
     <div className={styles.Cell}>
       <DeleteRoleModal isOpen={deleteModalOpen} onCancel={handleDeleteCancel} role={role} />
       <Dropdown overlay={menu}>
-        <IconButton ariaLabel={Messages.options.iconLabel} name="ellipsis-v" />
+        <IconButton aria-label={Messages.options.iconLabel} name="ellipsis-v" />
       </Dropdown>
     </div>
   );

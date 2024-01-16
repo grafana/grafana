@@ -14,13 +14,12 @@ type ReplaceFn = (
 export async function addDataLinksToLogsResponse(
   response: DataQueryResponse,
   request: DataQueryRequest<CloudWatchQuery>,
-  range: TimeRange,
   replaceFn: ReplaceFn,
   getVariableValueFn: (value: string, scopedVars: ScopedVars) => string[],
   getRegion: (region: string) => string,
   tracingDatasourceUid?: string
 ): Promise<void> {
-  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, true, fieldName);
+  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, false, fieldName);
   const getVariableValue = (target: string) => getVariableValueFn(target, request.scopedVars);
 
   for (const dataFrame of response.data as DataFrame[]) {
@@ -37,13 +36,15 @@ export async function addDataLinksToLogsResponse(
       } else {
         // Right now we add generic link to open the query in xray console to every field so it shows in the logs row
         // details. Unfortunately this also creates link for all values inside table which look weird.
-        field.config.links = [createAwsConsoleLink(curTarget, range, interpolatedRegion, replace, getVariableValue)];
+        field.config.links = [
+          createAwsConsoleLink(curTarget, request.range, interpolatedRegion, replace, getVariableValue),
+        ];
       }
     }
   }
 }
 
-async function createInternalXrayLink(datasourceUid: string, region: string) {
+async function createInternalXrayLink(datasourceUid: string, region: string): Promise<DataLink | undefined> {
   let ds;
   try {
     ds = await getDataSourceSrv().get(datasourceUid);
@@ -60,7 +61,7 @@ async function createInternalXrayLink(datasourceUid: string, region: string) {
       datasourceUid: datasourceUid,
       datasourceName: ds.name,
     },
-  } as DataLink;
+  };
 }
 
 function createAwsConsoleLink(
@@ -70,8 +71,13 @@ function createAwsConsoleLink(
   replace: (target: string, fieldName?: string) => string,
   getVariableValue: (value: string) => string[]
 ) {
+  const arns = (target.logGroups ?? [])
+    .filter((group) => group?.arn)
+    .map((group) => (group.arn ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
+  const logGroupNames = target.logGroupNames ?? [];
+  const sources = arns?.length ? arns : logGroupNames;
   const interpolatedExpression = target.expression ? replace(target.expression) : '';
-  const interpolatedGroups = target.logGroupNames?.flatMap(getVariableValue) ?? [];
+  const interpolatedGroups = sources?.flatMap(getVariableValue);
 
   const urlProps: AwsUrl = {
     end: range.to.toISOString(),

@@ -1,19 +1,18 @@
 import { cx } from '@emotion/css';
 import React, { FC, useCallback, useState } from 'react';
 import { Field, Form } from 'react-final-form';
-import { useSelector } from 'react-redux';
 
 import { Button, Spinner, TextArea, useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
 
@@ -30,7 +29,6 @@ export const SSHKey: FC = () => {
   const [generateToken] = useCancelToken();
   const { result: settings } = useSelector(getPerconaSettings);
   const dispatch = useAppDispatch();
-  const navModel = usePerconaNavModel('settings-ssh');
   const { sshKey } = settings!;
   const isEqual = (a: string, b: string) => (!a && !b) || a === b;
 
@@ -47,8 +45,8 @@ export const SSHKey: FC = () => {
   }, []);
 
   return (
-    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <Page navId="settings-ssh">
+      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={cx(settingsStyles.wrapper, styles.sshKeyWrapper)}>
             <Form
@@ -79,8 +77,8 @@ export const SSHKey: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

@@ -2,17 +2,22 @@ import React from 'react';
 
 import {
   DataTransformerID,
+  TransformerRegistryItem,
+  TransformerUIProps,
   FieldNamePickerConfigSettings,
   SelectableValue,
   StandardEditorsRegistryItem,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, InlineSwitch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
-import { ExtractFieldsOptions, extractFieldsTransformer } from './extractFields';
-import { FieldExtractorID, fieldExtractors } from './fieldExtractors';
+import { getTransformationContent } from '../docs/getTransformationContent';
+
+import { JSONPathEditor } from './components/JSONPathEditor';
+import { extractFieldsTransformer } from './extractFields';
+import { fieldExtractors } from './fieldExtractors';
+import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: {
@@ -24,11 +29,11 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
   editor: () => null,
 };
 
-export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<ExtractFieldsOptions>> = ({
+export const extractFieldsTransformerEditor = ({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<ExtractFieldsOptions>) => {
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,
@@ -43,10 +48,28 @@ export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<Extract
     });
   };
 
+  const onJSONPathsChange = (jsonPaths: JSONPath[]) => {
+    onChange({
+      ...options,
+      jsonPaths,
+    });
+  };
+
   const onToggleReplace = () => {
+    if (options.replace) {
+      options.keepTime = false;
+    }
+
     onChange({
       ...options,
       replace: !options.replace,
+    });
+  };
+
+  const onToggleKeepTime = () => {
+    onChange({
+      ...options,
+      keepTime: !options.keepTime,
     });
   };
 
@@ -60,7 +83,7 @@ export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<Extract
             context={{ data: input }}
             value={options.source ?? ''}
             onChange={onPickSourceField}
-            item={fieldNamePickerSettings as any}
+            item={fieldNamePickerSettings}
           />
         </InlineField>
       </InlineFieldRow>
@@ -75,11 +98,19 @@ export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<Extract
           />
         </InlineField>
       </InlineFieldRow>
+      {options.format === 'json' && <JSONPathEditor options={options.jsonPaths ?? []} onChange={onJSONPathsChange} />}
       <InlineFieldRow>
         <InlineField label={'Replace all fields'} labelWidth={16}>
           <InlineSwitch value={options.replace ?? false} onChange={onToggleReplace} />
         </InlineField>
       </InlineFieldRow>
+      {options.replace && (
+        <InlineFieldRow>
+          <InlineField label={'Keep time'} labelWidth={16}>
+            <InlineSwitch value={options.keepTime ?? false} onChange={onToggleKeepTime} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
     </div>
   );
 };
@@ -88,6 +119,8 @@ export const extractFieldsTransformRegistryItem: TransformerRegistryItem<Extract
   id: DataTransformerID.extractFields,
   editor: extractFieldsTransformerEditor,
   transformation: extractFieldsTransformer,
-  name: 'Extract fields',
-  description: `Parse fields from content (JSON, labels, etc)`,
+  name: extractFieldsTransformer.name,
+  description: `Parse fields from content (JSON, labels, etc).`,
+  categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
 };

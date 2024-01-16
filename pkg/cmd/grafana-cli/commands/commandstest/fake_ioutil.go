@@ -51,6 +51,6 @@ func (ffi FakeFileInfo) ModTime() time.Time {
 	return time.Time{}
 }
 
-func (ffi FakeFileInfo) Sys() interface{} {
+func (ffi FakeFileInfo) Sys() any {
 	return nil
 }

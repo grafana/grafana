@@ -9,14 +9,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Command is an interface for all expression commands.
 type Command interface {
 	NeedsVars() []string
-	Execute(c context.Context, vars mathexp.Vars) (mathexp.Results, error)
+	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error)
 }
 
 // MathCommand is a command for a math expression such as "1 + $GA / 2"
@@ -66,8 +68,11 @@ func (gm *MathCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gm *MathCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
-	return gm.Expression.Execute(gm.refID, vars)
+func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+	_, span := tracer.Start(ctx, "SSE.ExecuteMath")
+	span.SetAttributes(attribute.String("expression", gm.RawExpression))
+	defer span.End()
+	return gm.Expression.Execute(gm.refID, vars, tracer)
 }
 
 // ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
@@ -118,7 +123,7 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 	settings, ok := rn.Query["settings"]
 	if ok {
 		switch s := settings.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			mode, ok := s["mode"]
 			if ok && mode != "" {
 				switch mode {
@@ -154,9 +159,14 @@ func (gr *ReduceCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ReduceCommand) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+	_, span := tracer.Start(ctx, "SSE.ExecuteReduce")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("reducer", gr.Reducer))
+
 	newRes := mathexp.Results{}
-	for _, val := range vars[gr.VarToReduce].Values {
+	for i, val := range vars[gr.VarToReduce].Values {
 		switch v := val.(type) {
 		case mathexp.Series:
 			num, err := v.Reduce(gr.refID, gr.Reducer, gr.seriesMapper)
@@ -165,12 +175,21 @@ func (gr *ReduceCommand) Execute(_ context.Context, vars mathexp.Vars) (mathexp.
 			}
 			newRes.Values = append(newRes.Values, num)
 		case mathexp.Number: // if incoming vars is just a number, any reduce op is just a noop, add it as it is
+			value := v.GetFloat64Value()
+			if gr.seriesMapper != nil {
+				value = gr.seriesMapper.MapInput(value)
+				if value == nil { // same logic as in mapSeries
+					continue
+				}
+			}
 			copyV := mathexp.NewNumber(gr.refID, v.GetLabels())
-			copyV.SetValue(v.GetFloat64Value())
-			copyV.AddNotice(data.Notice{
-				Severity: data.NoticeSeverityWarning,
-				Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
-			})
+			copyV.SetValue(value)
+			if gr.seriesMapper == nil && i == 0 { // Add notice to only the first result to not multiple them in presentation
+				copyV.AddNotice(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
+				})
+			}
 			newRes.Values = append(newRes.Values, copyV)
 		case mathexp.NoData:
 			newRes.Values = append(newRes.Values, v.New())
@@ -210,6 +229,9 @@ func NewResampleCommand(refID, rawWindow, varToResample string, downsampler stri
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
 func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
+	if rn.TimeRange == nil {
+		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
+	}
 	rawVar, ok := rn.Query["expression"]
 	if !ok {
 		return nil, errors.New("no expression ID to resample. must be a reference to an existing query or expression")
@@ -259,18 +281,28 @@ func (gr *ResampleCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+	_, span := tracer.Start(ctx, "SSE.ExecuteResample")
+	defer span.End()
 	newRes := mathexp.Results{}
+	timeRange := gr.TimeRange.AbsoluteTime(now)
 	for _, val := range vars[gr.VarToResample].Values {
-		series, ok := val.(mathexp.Series)
-		if !ok {
+		if val == nil {
+			continue
+		}
+		switch v := val.(type) {
+		case mathexp.Series:
+			num, err := v.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, timeRange.From, timeRange.To)
+			if err != nil {
+				return newRes, err
+			}
+			newRes.Values = append(newRes.Values, num)
+		case mathexp.NoData:
+			newRes.Values = append(newRes.Values, v.New())
+			return newRes, nil
+		default:
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange.From, gr.TimeRange.To)
-		if err != nil {
-			return newRes, err
-		}
-		newRes.Values = append(newRes.Values, num)
 	}
 	return newRes, nil
 }
@@ -289,6 +321,8 @@ const (
 	TypeResample
 	// TypeClassicConditions is the CMDType for the classic condition operation.
 	TypeClassicConditions
+	// TypeThreshold is the CMDType for checking if a threshold has been crossed
+	TypeThreshold
 )
 
 func (gt CommandType) String() string {
@@ -317,6 +351,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeResample, nil
 	case "classic_conditions":
 		return TypeClassicConditions, nil
+	case "threshold":
+		return TypeThreshold, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

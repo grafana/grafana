@@ -47,31 +47,50 @@ describe('EventBus', () => {
     expect(events.length).toBe(1);
   });
 
-  describe('EventBusWithSource', () => {
+  describe('ScopedEventBus', () => {
     it('can add sources to the source path', () => {
       const bus = new EventBusSrv();
       const busWithSource = bus.newScopedBus('foo');
-      expect((busWithSource as any).path).toEqual(['foo']);
+      expect(busWithSource.path).toEqual(['foo']);
     });
 
     it('adds the source to the event payload', () => {
       const bus = new EventBusSrv();
-      let events: BusEvent[] = [];
+      const events: BusEvent[] = [];
 
       bus.subscribe(DataHoverEvent, (event) => events.push(event));
 
-      const busWithSource = bus.newScopedBus('foo');
-      busWithSource.publish({ type: DataHoverEvent.type });
+      const scopedBus = bus.newScopedBus('foo');
+      scopedBus.publish({ type: DataHoverEvent.type });
 
       expect(events.length).toEqual(1);
-      expect(events[0].origin).toEqual(busWithSource);
+      expect(events[0].origin).toEqual(scopedBus);
+    });
+
+    it('Can subscribe to only local events', () => {
+      const bus = new EventBusSrv();
+      const allEvents: BusEvent[] = [];
+      const scopedEvents: BusEvent[] = [];
+
+      bus.subscribe(DataHoverEvent, (event) => allEvents.push(event));
+
+      const scopedBus1 = bus.newScopedBus('foo', { onlyLocal: true });
+      const scopedBus2 = bus.newScopedBus('foo', { onlyLocal: true });
+
+      scopedBus1.subscribe(DataHoverEvent, (event) => scopedEvents.push(event));
+
+      scopedBus1.publish({ type: DataHoverEvent.type });
+      scopedBus2.publish({ type: DataHoverEvent.type });
+
+      expect(allEvents.length).toEqual(2);
+      expect(scopedEvents.length).toEqual(1);
     });
   });
 
   describe('Legacy emitter behavior', () => {
     it('Supports legacy events', () => {
       const bus = new EventBusSrv();
-      const events: any = [];
+      const events: LegacyEventPayload[] = [];
       const handler = (event: LegacyEventPayload) => {
         events.push(event);
       };
@@ -88,8 +107,8 @@ describe('EventBus', () => {
 
     it('Interoperability with legacy events', () => {
       const bus = new EventBusSrv();
-      const legacyEvents: any = [];
-      const newEvents: any = [];
+      const legacyEvents: LegacyEventPayload[] = [];
+      const newEvents: AlertSuccessEvent[] = [];
 
       bus.on(legacyEvent, (event) => {
         legacyEvents.push(event);
@@ -181,15 +200,18 @@ describe('EventBus', () => {
     it('removeAllListeners should unsubscribe to all', () => {
       const bus = new EventBusSrv();
       const events: LoginEvent[] = [];
+      let completed = false;
 
-      bus.subscribe(LoginEvent, (event) => {
-        events.push(event);
+      bus.getStream(LoginEvent).subscribe({
+        next: (evt) => events.push(evt),
+        complete: () => (completed = true),
       });
 
       bus.removeAllListeners();
       bus.publish(new LoginEvent({ logins: 10 }));
 
       expect(events.length).toBe(0);
+      expect(completed).toBe(true);
     });
   });
 });

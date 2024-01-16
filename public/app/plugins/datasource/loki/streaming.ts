@@ -1,8 +1,14 @@
 import { map, Observable, defer, mergeMap } from 'rxjs';
 
-import { DataFrameJSON, DataQueryRequest, DataQueryResponse, LiveChannelScope, LoadingState } from '@grafana/data';
-import { getGrafanaLiveSrv } from '@grafana/runtime';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
+import {
+  DataFrameJSON,
+  DataQueryRequest,
+  DataQueryResponse,
+  LiveChannelScope,
+  LoadingState,
+  StreamingDataFrame,
+} from '@grafana/data';
+import { getGrafanaLiveSrv, config } from '@grafana/runtime';
 
 import { LokiDatasource } from './datasource';
 import { LokiQuery } from './types';
@@ -39,7 +45,7 @@ export function doLokiChannelStream(
   let frame: StreamingDataFrame | undefined = undefined;
   const updateFrame = (msg: any) => {
     if (msg?.message) {
-      const p = msg.message as DataFrameJSON;
+      const p: DataFrameJSON = msg.message;
       if (!frame) {
         frame = StreamingDataFrame.fromDataFrameJSON(p, {
           maxLength,
@@ -80,3 +86,12 @@ export function doLokiChannelStream(
     })
   );
 }
+
+export const convertToWebSocketUrl = (url: string) => {
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
+  if (backend.endsWith('/')) {
+    backend = backend.slice(0, -1);
+  }
+  return `${backend}${url}`;
+};

@@ -7,9 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
-
 	"xorm.io/xorm"
 )
 
@@ -17,10 +15,9 @@ type PostgresDialect struct {
 	BaseDialect
 }
 
-func NewPostgresDialect(engine *xorm.Engine) Dialect {
+func NewPostgresDialect() Dialect {
 	d := PostgresDialect{}
 	d.BaseDialect.dialect = &d
-	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = Postgres
 	return &d
 }
@@ -45,14 +42,8 @@ func (db *PostgresDialect) BooleanStr(value bool) string {
 	return strconv.FormatBool(value)
 }
 
-func (db *PostgresDialect) Default(col *Column) string {
-	if col.Type == DB_Bool {
-		if col.Default == "0" {
-			return "FALSE"
-		}
-		return "TRUE"
-	}
-	return col.Default
+func (db *PostgresDialect) BatchSize() int {
+	return 1000
 }
 
 func (db *PostgresDialect) SQLType(c *Column) string {
@@ -105,8 +96,8 @@ func (db *PostgresDialect) SQLType(c *Column) string {
 	return res
 }
 
-func (db *PostgresDialect) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
-	args := []interface{}{tableName, indexName}
+func (db *PostgresDialect) IndexCheckSQL(tableName, indexName string) (string, []any) {
+	args := []any{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("pg_indexes") + " WHERE" + db.Quote("tablename") + "=? AND " + db.Quote("indexname") + "=?"
 	return sql, args
 }
@@ -127,8 +118,8 @@ func (db *PostgresDialect) UpdateTableSQL(tableName string, columns []*Column) s
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
 
-func (db *PostgresDialect) CleanDB() error {
-	sess := db.engine.NewSession()
+func (db *PostgresDialect) CleanDB(engine *xorm.Engine) error {
+	sess := engine.NewSession()
 	defer sess.Close()
 
 	if _, err := sess.Exec("DROP SCHEMA public CASCADE;"); err != nil {
@@ -144,12 +135,12 @@ func (db *PostgresDialect) CleanDB() error {
 
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
-func (db *PostgresDialect) TruncateDBTables() error {
-	tables, err := db.engine.DBMetas()
+func (db *PostgresDialect) TruncateDBTables(engine *xorm.Engine) error {
+	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
 	}
-	sess := db.engine.NewSession()
+	sess := engine.NewSession()
 	defer sess.Close()
 
 	for _, table := range tables {
@@ -235,7 +226,6 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 	}
 	columnsStr := strings.Builder{}
 	onConflictStr := strings.Builder{}
-	colPlaceHoldersStr := strings.Builder{}
 	setStr := strings.Builder{}
 
 	const separator = ", "
@@ -246,8 +236,7 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 		}
 
 		columnsStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
-		colPlaceHoldersStr.WriteString(fmt.Sprintf("?%s", separatorVar))
-		setStr.WriteString(fmt.Sprintf("%s=excluded.%s%s", db.Quote(c), db.Quote(c), separatorVar))
+		setStr.WriteString(fmt.Sprintf("%s=EXCLUDED.%s%s", db.Quote(c), db.Quote(c), separatorVar))
 	}
 
 	separatorVar = separator
@@ -260,21 +249,36 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 
 	valuesStr := strings.Builder{}
 	separatorVar = separator
-	colPlaceHolders := colPlaceHoldersStr.String()
+	nextPlaceHolder := 1
+
 	for i := 0; i < count; i++ {
 		if i == count-1 {
 			separatorVar = ""
 		}
+
+		colPlaceHoldersStr := strings.Builder{}
+		placeHolderSep := separator
+		for j := 1; j <= len(updateCols); j++ {
+			if j == len(updateCols) {
+				placeHolderSep = ""
+			}
+			placeHolder := fmt.Sprintf("$%v%s", nextPlaceHolder, placeHolderSep)
+			nextPlaceHolder++
+			colPlaceHoldersStr.WriteString(placeHolder)
+		}
+		colPlaceHolders := colPlaceHoldersStr.String()
+
 		valuesStr.WriteString(fmt.Sprintf("(%s)%s", colPlaceHolders, separatorVar))
 	}
 
-	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON CONFLICT(%s) DO UPDATE SET %s`,
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON CONFLICT (%s) DO UPDATE SET %s;`,
 		tableName,
 		columnsStr.String(),
 		valuesStr.String(),
 		onConflictStr.String(),
 		setStr.String(),
 	)
+
 	return s, nil
 }
 
@@ -287,11 +291,7 @@ func (db *PostgresDialect) Lock(cfg LockCfg) error {
 	query := "SELECT pg_try_advisory_lock(?)"
 	var success bool
 
-	key, err := db.getLockKey()
-	if err != nil {
-		return fmt.Errorf("failed to generate advisory lock key: %w", err)
-	}
-	_, err = cfg.Session.SQL(query, key).Get(&success)
+	_, err := cfg.Session.SQL(query, cfg.Key).Get(&success)
 	if err != nil {
 		return err
 	}
@@ -322,11 +322,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 	query := "SELECT pg_advisory_unlock(?)"
 	var success bool
 
-	key, err := db.getLockKey()
-	if err != nil {
-		return fmt.Errorf("failed to generate advisory lock key: %w", err)
-	}
-	_, err = cfg.Session.SQL(query, key).Get(&success)
+	_, err := cfg.Session.SQL(query, cfg.Key).Get(&success)
 	if err != nil {
 		return err
 	}
@@ -336,7 +332,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 	return nil
 }
 
-func getDBName(dsn string) (string, error) {
+func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
 		parsedDSN, err := pq.ParseURL(dsn)
 		if err != nil {
@@ -350,16 +346,4 @@ func getDBName(dsn string) (string, error) {
 		return "", fmt.Errorf("failed to get database name")
 	}
 	return string(submatch[1]), nil
-}
-
-func (db *PostgresDialect) getLockKey() (string, error) {
-	dbName, err := getDBName(db.engine.DataSourceName())
-	if err != nil {
-		return "", err
-	}
-	key, err := database.GenerateAdvisoryLockId(dbName)
-	if err != nil {
-		return "", err
-	}
-	return key, nil
 }

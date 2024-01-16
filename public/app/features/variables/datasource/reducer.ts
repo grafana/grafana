@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, matchPluginId } from '@grafana/data';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { getInstanceState } from '../state/selectors';
@@ -10,7 +10,7 @@ import { DataSourceVariableModel, initialVariableModelState, VariableOption, Var
 export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   ...initialVariableModelState,
   type: 'datasource',
-  current: {} as VariableOption,
+  current: {},
   regex: '',
   options: [],
   query: '',
@@ -36,13 +36,13 @@ export const dataSourceVariableSlice = createSlice({
 
       for (let i = 0; i < sources.length; i++) {
         const source = sources[i];
-        // must match on type
-        if (source.meta.id !== instanceState.query) {
+
+        if (!matchPluginId(instanceState.query, source.meta)) {
           continue;
         }
 
         if (isValid(source, regex)) {
-          options.push({ text: source.name, value: source.name, selected: false });
+          options.push({ text: source.name, value: source.uid, selected: false });
         }
 
         if (isDefault(source, regex)) {

@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	issvg "github.com/grafana/grafana/pkg/services/store/go-is-svg"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -52,7 +52,7 @@ func fail(reason string) validationResult {
 
 func (s *standardStorageService) detectMimeType(ctx context.Context, user *user.SignedInUser, uploadRequest *UploadRequest) string {
 	if strings.HasSuffix(uploadRequest.Path, ".svg") {
-		if issvg.IsSVG(uploadRequest.Contents) {
+		if util.IsSVG(uploadRequest.Contents) {
 			return "image/svg+xml"
 		}
 	}

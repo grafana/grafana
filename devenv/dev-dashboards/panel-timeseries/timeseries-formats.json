@@ -1,0 +1,937 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana",
+        "uid": "grafana"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dim1"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "showRowNums": false,
+        "sortBy": []
+      },
+      "pluginVersion": "10.0.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana",
+            "uid": "grafana"
+          },
+          "queryType": "snapshot",
+          "refId": "A",
+          "snapshot": [
+            {
+              "data": {
+                "values": [
+                  [
+                    1677256641358,
+                    1677257007358,
+                    1677257373358,
+                    1677257739358,
+                    1677258105358,
+                    1677258471358,
+                    1677258837358,
+                    1677259203358,
+                    1677259569358,
+                    1677259935358,
+                    1677260301358,
+                    1677260667358,
+                    1677261033358,
+                    1677261399358,
+                    1677261765358,
+                    1677262131358,
+                    1677262497358,
+                    1677262863358,
+                    1677263229358,
+                    1677263595358,
+                    1677263961358,
+                    1677264327358,
+                    1677264693358,
+                    1677265059358,
+                    1677265425358,
+                    1677265791358,
+                    1677266157358,
+                    1677266523358,
+                    1677266889358,
+                    1677267255358,
+                    1677267621358,
+                    1677267987358,
+                    1677268353358,
+                    1677268719358,
+                    1677269085358,
+                    1677269451358,
+                    1677269817358,
+                    1677270183358,
+                    1677270549358,
+                    1677270915358,
+                    1677271281358,
+                    1677271647358,
+                    1677272013358,
+                    1677272379358,
+                    1677272745358,
+                    1677273111358,
+                    1677273477358,
+                    1677273843358,
+                    1677274209358,
+                    1677274575358,
+                    1677274941358,
+                    1677275307358,
+                    1677275673358,
+                    1677276039358,
+                    1677276405358,
+                    1677276771358,
+                    1677277137358,
+                    1677277503358,
+                    1677277869358,
+                    1677278235358
+                  ],
+                  [
+                    1,
+                    3,
+                    5,
+                    7,
+                    4,
+                    6,
+                    8,
+                    10,
+                    1,
+                    3,
+                    5,
+                    7,
+                    4,
+                    6,
+                    8,
+                    10,
+                    1,
+                    3,
+                    5,
+                    7,
+                    4,
+                    6,
+                    8,
+                    10,
+                    1,
+                    3,
+                    5,
+                    7,
+                    4,
+                    6,
+                    8,
+                    10,
+                    1,
+                    3,
+                    5,
+                    7,
+                    4,
+                    6,
+                    8,
+                    10,
+                    1,
+                    3,
+                    5,
+                    7,
+                    4,
+                    6,
+                    8,
+                    10,
+                    1,
+                    3,
+                    5,
+                    7,
+                    4,
+                    6,
+                    8,
+                    10,
+                    1,
+                    3,
+                    5,
+                    7
+                  ],
+                  [
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d",
+                    "a",
+                    "b",
+                    "c",
+                    "d"
+                  ],
+                  [
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y",
+                    "x",
+                    "y"
+                  ]
+                ]
+              },
+              "schema": {
+                "fields": [
+                  {
+                    "config": {},
+                    "labels": {},
+                    "name": "timestamp",
+                    "type": "time",
+                    "typeInfo": {
+                      "frame": "time.Time"
+                    }
+                  },
+                  {
+                    "config": {},
+                    "labels": {},
+                    "name": "numericData",
+                    "type": "number",
+                    "typeInfo": {
+                      "frame": "float64",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "config": {},
+                    "labels": {},
+                    "name": "dim1",
+                    "type": "string",
+                    "typeInfo": {
+                      "frame": "string"
+                    }
+                  },
+                  {
+                    "config": {},
+                    "labels": {},
+                    "name": "dim2",
+                    "type": "string",
+                    "typeInfo": {
+                      "frame": "string"
+                    }
+                  }
+                ],
+                "meta": {
+                  "type": "timeseries-long",
+                  "typeVersion": [
+                    0,
+                    0
+                  ]
+                },
+                "name": "New Frame",
+                "refId": "A"
+              }
+            },
+            {
+              "data": {
+                "values": [
+                  [
+                    1677256641358,
+                    1677257007358,
+                    1677257373358,
+                    1677257739358,
+                    1677258105358,
+                    1677258471358,
+                    1677258837358,
+                    1677259203358,
+                    1677259569358,
+                    1677259935358,
+                    1677260301358,
+                    1677260667358,
+                    1677261033358,
+                    1677261399358,
+                    1677261765358,
+                    1677262131358,
+                    1677262497358,
+                    1677262863358,
+                    1677263229358,
+                    1677263595358,
+                    1677263961358,
+                    1677264327358,
+                    1677264693358,
+                    1677265059358,
+                    1677265425358,
+                    1677265791358,
+                    1677266157358,
+                    1677266523358,
+                    1677266889358,
+                    1677267255358,
+                    1677267621358,
+                    1677267987358,
+                    1677268353358,
+                    1677268719358,
+                    1677269085358,
+                    1677269451358,
+                    1677269817358,
+                    1677270183358,
+                    1677270549358,
+                    1677270915358,
+                    1677271281358,
+                    1677271647358,
+                    1677272013358,
+                    1677272379358,
+                    1677272745358,
+                    1677273111358,
+                    1677273477358,
+                    1677273843358,
+                    1677274209358,
+                    1677274575358,
+                    1677274941358,
+                    1677275307358,
+                    1677275673358,
+                    1677276039358,
+                    1677276405358,
+                    1677276771358,
+                    1677277137358,
+                    1677277503358,
+                    1677277869358,
+                    1677278235358
+                  ],
+                  [
+                    1,
+                    2,
+                    3,
+                    2,
+                    3,
+                    5,
+                    6,
+                    3,
+                    1,
+                    2,
+                    3,
+                    2,
+                    3,
+                    5,
+                    6,
+                    3,
+                    1,
+                    2,
+                    3,
+                    2,
+                    3,
+                    5,
+                    6,
+                    3,
+                    1,
+                    2,
+                    3,
+                    2,
+                    3,
+                    5,
+                    6,
+                    3,
+                    1,
+                    2,
+                    3,
+                    2,
+                    3,
+                    5,
+                    6,
+                    3,
+                    1,
+                    2,
+                    3,
+                    2,
+                    3,
+                    5,
+                    6,
+                    3,
+                    1,
+                    2,
+                    3,
+                    2,
+                    3,
+                    5,
+                    6,
+                    3,
+                    1,
+                    2,
+                    3,
+                    2
+                  ],
+                  [
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h",
+                    "e",
+                    "f",
+                    "g",
+                    "h"
+                  ],
+                  [
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r",
+                    "q",
+                    "r"
+                  ]
+                ]
+              },
+              "schema": {
+                "fields": [
+                  {
+                    "config": {},
+                    "labels": {},
+                    "name": "timestamp",
+                    "type": "time",
+                    "typeInfo": {
+                      "frame": "time.Time"
+                    }
+                  },
+                  {
+                    "config": {},
+                    "labels": {},
+                    "name": "value",
+                    "type": "number",
+                    "typeInfo": {
+                      "frame": "float64",
+                      "nullable": true
+                    }
+                  },
+                  {
+                    "config": {},
+                    "labels": {},
+                    "name": "dim3",
+                    "type": "string",
+                    "typeInfo": {
+                      "frame": "string"
+                    }
+                  },
+                  {
+                    "config": {},
+                    "labels": {},
+                    "name": "dim4",
+                    "type": "string",
+                    "typeInfo": {
+                      "frame": "string"
+                    }
+                  }
+                ],
+                "meta": {
+                  "type": "timeseries-long",
+                  "typeVersion": [
+                    0,
+                    0
+                  ]
+                },
+                "name": "New Frame",
+                "refId": "B"
+              }
+            }
+          ]
+        }
+      ],
+      "title": "timeseries-long",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 11,
+        "x": 8,
+        "y": 0
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 8,
+          "refId": "A"
+        }
+      ],
+      "title": "Timeseries panel requires a transform to render timeseries-long",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 19,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "The timeseries panel can not show timeseries-long directly, it must first be converted to `timeseries-wide` or `timeseries-multi` first.\n\nThe UI should show a button indicating this.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.0.0-pre",
+      "title": "Timeseries-long info",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 0
+        }
+      ],
+      "title": "Expected no-data message (empty series",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 38,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2023-02-24T16:37:21.358Z",
+    "to": "2023-02-24T22:37:15.358Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - Timeseries - Supported input formats",
+  "uid": "f4ca24309dd4",
+  "version": 1,
+  "weekStart": ""
+}

@@ -2,12 +2,13 @@ import { Placement } from '@popperjs/core';
 import { uniqueId } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { Icon } from '../../..';
+import { Icon } from '../../../Icon/Icon';
 import { Tooltip } from '../../../Tooltip/Tooltip';
 
 export interface Props {
   label: string;
   checked: boolean;
+  disabled?: boolean;
   className?: string;
   labelClass?: string;
   switchClass?: string;
@@ -21,6 +22,7 @@ export interface State {
   id: string;
 }
 
+/** @deprecated Please use the `Switch` component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-switch--controlled as seen in Storybook} */
 export class Switch extends PureComponent<Props, State> {
   state = {
     id: uniqueId(),
@@ -37,6 +39,7 @@ export class Switch extends PureComponent<Props, State> {
       switchClass = '',
       label,
       checked,
+      disabled,
       transparent,
       className,
       tooltip,
@@ -55,15 +58,19 @@ export class Switch extends PureComponent<Props, State> {
               {label}
               {tooltip && (
                 <Tooltip placement={tooltipPlacement ? tooltipPlacement : 'auto'} content={tooltip} theme={'info'}>
-                  <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                    <Icon name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
-                  </div>
+                  <Icon name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
                 </Tooltip>
               )}
             </div>
           )}
           <div className={switchClassName}>
-            <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
+            <input
+              disabled={disabled}
+              id={labelId}
+              type="checkbox"
+              checked={checked}
+              onChange={this.internalOnChange}
+            />
             <span className="gf-form-switch__slider" />
           </div>
         </label>

@@ -3,17 +3,20 @@ package jwt
 import (
 	"testing"
 
+	jose "github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/require"
-	jose "gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 type noneSigner struct{}
 
-func sign(t *testing.T, key interface{}, claims interface{}) string {
+func sign(t *testing.T, key any, claims any, opts *jose.SignerOptions) string {
 	t.Helper()
 
-	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
+	if opts == nil {
+		opts = &jose.SignerOptions{}
+	}
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: key}, (opts).WithType("JWT"))
 	require.NoError(t, err)
 	token, err := jwt.Signed(sig).Claims(claims).CompactSerialize()
 	require.NoError(t, err)
@@ -32,7 +35,7 @@ func (s noneSigner) SignPayload(payload []byte, alg jose.SignatureAlgorithm) ([]
 	return nil, nil
 }
 
-func signNone(t *testing.T, claims interface{}) string {
+func signNone(t *testing.T, claims any) string {
 	t.Helper()
 
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: "none", Key: noneSigner{}}, (&jose.SignerOptions{}).WithType("JWT"))

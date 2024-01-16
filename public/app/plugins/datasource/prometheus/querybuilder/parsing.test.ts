@@ -1,5 +1,5 @@
 import { buildVisualQueryFromString } from './parsing';
-import { PromVisualQuery } from './types';
+import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   it('creates no errors for empty query', () => {
@@ -10,6 +10,50 @@ describe('buildVisualQueryFromString', () => {
         metric: '',
       })
     );
+  });
+  it('parses simple binary comparison', () => {
+    expect(buildVisualQueryFromString('{app="aggregator"} == 11')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        metric: '',
+        operations: [
+          {
+            id: PromOperationId.EqualTo,
+            params: [11, false],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
+  // This still fails because loki doesn't properly parse the bool operator
+  it('parses simple query with with boolean operator', () => {
+    expect(buildVisualQueryFromString('{app="aggregator"} == bool 12')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        metric: '',
+        operations: [
+          {
+            id: PromOperationId.EqualTo,
+            params: [12, true],
+          },
+        ],
+      },
+      errors: [],
+    });
   });
   it('parses simple query', () => {
     expect(buildVisualQueryFromString('counters_logins{app="frontend"}')).toEqual(
@@ -25,6 +69,72 @@ describe('buildVisualQueryFromString', () => {
         operations: [],
       })
     );
+  });
+
+  describe('nested binary operation errors in visual query editor', () => {
+    // Visual query builder does not currently have support for nested binary operations, for now we should throw an error in the UI letting users know that their query will be misinterpreted
+    it('throws error when visual query parse is ambiguous', () => {
+      expect(
+        buildVisualQueryFromString('topk(5, node_arp_entries / node_arp_entries{cluster="dev-eu-west-2"})')
+      ).toMatchObject({
+        errors: [
+          {
+            from: 8,
+            text: 'Query parsing is ambiguous.',
+            to: 68,
+          },
+        ],
+      });
+    });
+    it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
+      expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
+        errors: [
+          {
+            from: 8,
+            text: 'Query parsing is ambiguous.',
+            to: 13,
+          },
+        ],
+      });
+    });
+    it('throws error when visual query parse with functionCall is ambiguous', () => {
+      expect(
+        buildVisualQueryFromString(
+          'clamp_min(sum by(cluster)(rate(X{le="2.5"}[5m]))+sum by (cluster) (rate(X{le="5"}[5m])), 0.001)'
+        )
+      ).toMatchObject({
+        errors: [
+          {
+            from: 10,
+            text: 'Query parsing is ambiguous.',
+            to: 87,
+          },
+        ],
+      });
+    });
+    it('does not throw error when visual query parse is unambiguous', () => {
+      expect(
+        buildVisualQueryFromString('topk(5, node_arp_entries) / node_arp_entries{cluster="dev-eu-west-2"}')
+      ).toMatchObject({
+        errors: [],
+      });
+    });
+    it('does not throw error when visual query parse is unambiguous (scalar)', () => {
+      // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
+      expect(buildVisualQueryFromString('topk(5, 1) / 2')).toMatchObject({
+        errors: [],
+      });
+    });
+    it('does not throw error when visual query parse is unambiguous, function call', () => {
+      // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
+      expect(
+        buildVisualQueryFromString(
+          'clamp_min(sum by(cluster) (rate(X{le="2.5"}[5m])), 0.001) + sum by(cluster) (rate(X{le="5"}[5m]))'
+        )
+      ).toMatchObject({
+        errors: [],
+      });
+    });
   });
 
   it('parses query with rate and interval', () => {
@@ -54,17 +164,7 @@ describe('buildVisualQueryFromString', () => {
         'avg(rate(access_evaluation_duration_count{instance="host.docker.internal:3000"}[$__rate_interval]))'
       )
     ).toEqual({
-      // after upgrading @prometheus-io/lezer-promql, strings containing global grafana variables such as $__rate_interval (https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/)
-      // started returning error nodes upon parse, but the resultant tree was otherwise the same.
-      // My assumption is that the newer version of lezer is more verbose in returning error nodes, and there should be no functional change to the parsed trees.
-      errors: [
-        {
-          from: 107,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 107,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'access_evaluation_duration_count',
         labels: [
@@ -172,14 +272,7 @@ describe('buildVisualQueryFromString', () => {
     expect(
       buildVisualQueryFromString('histogram_quantile(0.99, rate(counters_logins{app="backend"}[$__rate_interval]))')
     ).toEqual({
-      errors: [
-        {
-          from: 88,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 88,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'counters_logins',
         labels: [{ label: 'app', op: '=', value: 'backend' }],
@@ -203,14 +296,7 @@ describe('buildVisualQueryFromString', () => {
         'label_replace(avg_over_time(http_requests_total{instance="foo"}[$__interval]), "instance", "$1", "", "(.*)")'
       )
     ).toEqual({
-      errors: [
-        {
-          from: 86,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 86,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],
@@ -230,14 +316,7 @@ describe('buildVisualQueryFromString', () => {
 
   it('parses binary operation with scalar', () => {
     expect(buildVisualQueryFromString('avg_over_time(http_requests_total{instance="foo"}[$__interval]) / 2')).toEqual({
-      errors: [
-        {
-          from: 72,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 72,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],
@@ -259,14 +338,7 @@ describe('buildVisualQueryFromString', () => {
     expect(
       buildVisualQueryFromString('avg_over_time(http_requests_total{instance="foo"}[$__interval]) / sum(logins_count)')
     ).toEqual({
-      errors: [
-        {
-          from: 72,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 72,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],
@@ -326,6 +398,22 @@ describe('buildVisualQueryFromString', () => {
       noErrors({
         metric: 'metric',
         labels: [{ label: '${variable_label}', op: '=', value: 'foo' }],
+        operations: [],
+      })
+    );
+  });
+
+  it('Throws error when undefined', () => {
+    expect(() => buildVisualQueryFromString(undefined as unknown as string)).toThrow(
+      "Cannot read properties of undefined (reading 'replace')"
+    );
+  });
+
+  it('Works with empty string', () => {
+    expect(buildVisualQueryFromString('')).toEqual(
+      noErrors({
+        metric: '',
+        labels: [],
         operations: [],
       })
     );

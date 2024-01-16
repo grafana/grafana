@@ -23,6 +23,7 @@ import perconaDBaaSReducer from './dbaas/dbaas';
 import perconaK8SCluster from './dbaas/k8sCluster/k8sCluster';
 import perconaK8SClusterListReducer, { fetchK8sListAction } from './dbaas/k8sClusterList/k8sClusterList';
 import perconaUpdateDBCluster from './dbaas/updateDBCluster/updateDBCluster';
+import navigationReducer from './navigation';
 import nodesReducer from './nodes';
 import rolesReducers from './roles/roles';
 import servicesReducer from './services';
@@ -232,6 +233,8 @@ const updateSettingsReducer = createAsyncSlice('updateSettings', updateSettingsA
 const templatesReducer = createAsyncSlice('templates', fetchTemplatesAction).reducer;
 
 export default {
+  // Extend grafana navBarTree
+  navBarTree: navigationReducer,
   percona: combineReducers({
     settings: settingsReducer,
     updateSettings: updateSettingsReducer,

@@ -1,25 +1,24 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, GrafanaTheme, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, useStyles } from '@grafana/ui';
+import {
+  DataSourceInstanceSettings,
+  DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
+} from '@grafana/data';
+import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { TempoJsonData } from '../types';
+
+import { getStyles } from './QuerySettings';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 
 export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
-    <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Service Graph</h3>
-
-      <div className={styles.infoText}>
-        To allow querying service graph data you have to select a Prometheus instance where the data is stored.
-      </div>
-
+    <div className={styles.container}>
       <InlineFieldRow className={styles.row}>
         <InlineField
           tooltip="The Prometheus data source with the service graph data"
@@ -32,7 +31,7 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
             current={options.jsonData.serviceMap?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'serviceMap', {
                 datasourceUid: ds.uid,
               })
@@ -58,16 +57,3 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
     </div>
   );
 }
-
-const getStyles = (theme: GrafanaTheme) => ({
-  infoText: css`
-    label: infoText;
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textSemiWeak};
-  `,
-
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
-});

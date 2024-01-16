@@ -16,8 +16,9 @@ import {
   StandardEditorContext,
 } from '../field';
 import { PanelOptionsSupplier } from '../panel/PanelPlugin';
+import { isObject } from '../types';
 import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
-import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
+import { FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 
 /**
@@ -25,15 +26,15 @@ import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel
  */
 export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
-  FieldConfigEditorProps<any, any>,
+  StandardEditorProps<any, any>,
   FieldConfigPropertyItem<TOptions>
 > {
   addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      override: standardEditorsRegistry.get('number').editor as any,
-      editor: standardEditorsRegistry.get('number').editor as any,
+      override: standardEditorsRegistry.get('number').editor,
+      editor: standardEditorsRegistry.get('number').editor,
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
@@ -44,8 +45,8 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      override: standardEditorsRegistry.get('slider').editor as any,
-      editor: standardEditorsRegistry.get('slider').editor as any,
+      override: standardEditorsRegistry.get('slider').editor,
+      editor: standardEditorsRegistry.get('slider').editor,
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
@@ -56,8 +57,8 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      override: standardEditorsRegistry.get('text').editor as any,
-      editor: standardEditorsRegistry.get('text').editor as any,
+      override: standardEditorsRegistry.get('text').editor,
+      editor: standardEditorsRegistry.get('text').editor,
       process: stringOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
@@ -70,8 +71,8 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      override: standardEditorsRegistry.get('select').editor as any,
-      editor: standardEditorsRegistry.get('select').editor as any,
+      override: standardEditorsRegistry.get('select').editor,
+      editor: standardEditorsRegistry.get('select').editor,
       process: selectOverrideProcessor,
       // ???
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
@@ -83,8 +84,8 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      override: standardEditorsRegistry.get('radio').editor as any,
-      editor: standardEditorsRegistry.get('radio').editor as any,
+      override: standardEditorsRegistry.get('radio').editor,
+      editor: standardEditorsRegistry.get('radio').editor,
       process: selectOverrideProcessor,
       // ???
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
@@ -96,8 +97,8 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('boolean').editor as any,
-      override: standardEditorsRegistry.get('boolean').editor as any,
+      editor: standardEditorsRegistry.get('boolean').editor,
+      override: standardEditorsRegistry.get('boolean').editor,
       process: booleanOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
       settings: config.settings || {},
@@ -108,8 +109,8 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('color').editor as any,
-      override: standardEditorsRegistry.get('color').editor as any,
+      editor: standardEditorsRegistry.get('color').editor,
+      override: standardEditorsRegistry.get('color').editor,
       process: identityOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
       settings: config.settings || {},
@@ -122,9 +123,38 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('unit').editor as any,
-      override: standardEditorsRegistry.get('unit').editor as any,
+      editor: standardEditorsRegistry.get('unit').editor,
+      override: standardEditorsRegistry.get('unit').editor,
       process: unitOverrideProcessor,
+      shouldApply: config.shouldApply ? config.shouldApply : () => true,
+      settings: config.settings || {},
+    });
+  }
+
+  addFieldNamePicker<TSettings = any>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
+  ): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('field-name').editor,
+      override: standardEditorsRegistry.get('field-name').editor,
+      process: identityOverrideProcessor,
+      shouldApply: config.shouldApply ? config.shouldApply : () => true,
+      settings: config.settings || {},
+    });
+  }
+
+  addGenericEditor<TSettings = any>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & any>, // & any... i give up!
+    editor: (props: StandardEditorProps<TSettings>) => JSX.Element
+  ): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: editor,
+      override: editor,
+      process: identityOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
       settings: config.settings || {},
     });
@@ -175,8 +205,8 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
   };
 }
 
-export function isNestedPanelOptions(item: any): item is NestedPanelOptionsBuilder {
-  return item.id === 'nested-panel-options';
+export function isNestedPanelOptions(item: unknown): item is NestedPanelOptionsBuilder {
+  return isObject(item) && 'id' in item && item.id === 'nested-panel-options';
 }
 
 /**
@@ -196,7 +226,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('number').editor as any,
+      editor: standardEditorsRegistry.get('number').editor,
     });
   }
 
@@ -204,7 +234,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('slider').editor as any,
+      editor: standardEditorsRegistry.get('slider').editor,
     });
   }
 
@@ -212,7 +242,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('text').editor as any,
+      editor: standardEditorsRegistry.get('text').editor,
     });
   }
 
@@ -222,7 +252,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('strings').editor as any,
+      editor: standardEditorsRegistry.get('strings').editor,
     });
   }
 
@@ -232,7 +262,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('select').editor as any,
+      editor: standardEditorsRegistry.get('select').editor,
     });
   }
 
@@ -242,7 +272,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('multi-select').editor as any,
+      editor: standardEditorsRegistry.get('multi-select').editor,
     });
   }
 
@@ -252,7 +282,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('radio').editor as any,
+      editor: standardEditorsRegistry.get('radio').editor,
     });
   }
 
@@ -260,7 +290,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('boolean').editor as any,
+      editor: standardEditorsRegistry.get('boolean').editor,
     });
   }
 
@@ -268,7 +298,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('color').editor as any,
+      editor: standardEditorsRegistry.get('color').editor,
       settings: config.settings || {},
     });
   }
@@ -277,7 +307,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('timezone').editor as any,
+      editor: standardEditorsRegistry.get('timezone').editor,
       settings: config.settings || {},
     });
   }
@@ -288,7 +318,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('unit').editor as any,
+      editor: standardEditorsRegistry.get('unit').editor,
     });
   }
 
@@ -298,7 +328,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('field-name').editor as any,
+      editor: standardEditorsRegistry.get('field-name').editor,
     });
   }
 
@@ -308,7 +338,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('dashboard-uid').editor as any, // added at runtime
+      editor: standardEditorsRegistry.get('dashboard-uid').editor, // added at runtime
     });
   }
 }

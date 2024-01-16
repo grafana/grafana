@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React, { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';
@@ -11,16 +11,6 @@ import AccessRolesEnabledCheck from '../AccessRolesEnabledCheck/AccessRolesEnabl
 import { stubRoles, stubUsers, stubUserSingleRole, stubUsersMap, subUserMultipleRoles } from '../__mocks__/stubs';
 
 import AccessRoleCell from './AccessRoleCell';
-
-const wrapWithTable = (element: ReactElement) => (
-  <table>
-    <tbody>
-      <tr>
-        <AccessRolesEnabledCheck>{element}</AccessRolesEnabledCheck>
-      </tr>
-    </tbody>
-  </table>
-);
 
 const wrapWithProvider = (element: ReactElement, enableAccessControl = true) => (
   <Provider
@@ -43,7 +33,7 @@ const wrapWithProvider = (element: ReactElement, enableAccessControl = true) => 
       },
     } as StoreState)}
   >
-    {wrapWithTable(element)}
+    <AccessRolesEnabledCheck>{element}</AccessRolesEnabledCheck>
   </Provider>
 );
 
@@ -100,9 +90,9 @@ describe('AccessRoleCell', () => {
     const assignRoleActionSpy = jest.spyOn(RolesReducer, 'assignRoleAction');
     render(wrapWithProvider(<AccessRoleCell user={subUserMultipleRoles} />));
 
-    const removeButton = screen.getByLabelText('Remove Role #1');
+    const removeButton = screen.getAllByLabelText('Remove')[0];
 
-    removeButton.click();
+    await waitFor(() => removeButton.click());
 
     expect(assignRoleActionSpy).toHaveBeenCalledWith({
       userId: 3,

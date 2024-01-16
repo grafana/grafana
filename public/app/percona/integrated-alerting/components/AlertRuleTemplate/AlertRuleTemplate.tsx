@@ -5,7 +5,7 @@ import { Column } from 'react-table';
 
 import { Button, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -122,20 +122,22 @@ export const AlertRuleTemplate: FC = () => {
   }, [pageSize, pageIndex]);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents>
+    <Page
+      navModel={navModel}
+      actions={
+        <Button
+          size="md"
+          icon="plus-square"
+          fill="text"
+          onClick={handleAddButton}
+          data-testid="alert-rule-template-add-modal-button"
+        >
+          {Messages.alertRuleTemplate.addAction}
+        </Button>
+      }
+    >
+      <Page.Contents>
         <FeatureLoader featureName={Messages.alerting} featureSelector={featureSelector}>
-          <div className={styles.actionsWrapper}>
-            <Button
-              size="md"
-              icon="plus-square"
-              fill="text"
-              onClick={handleAddButton}
-              data-testid="alert-rule-template-add-modal-button"
-            >
-              {Messages.alertRuleTemplate.addAction}
-            </Button>
-          </div>
           <AddAlertRuleTemplateModal
             isVisible={addModalVisible}
             setVisible={setAddModalVisible}
@@ -161,8 +163,8 @@ export const AlertRuleTemplate: FC = () => {
             }
           />
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

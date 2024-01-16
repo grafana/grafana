@@ -4,17 +4,11 @@ import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } fr
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
-import {
-  createErrorNotification,
-  createSuccessNotification,
-  createWarningNotification,
-} from 'app/core/copy/appNotification';
+import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
-import { config } from '../config';
-import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
-import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
 import {
   RichHistoryResults,
   RichHistoryServiceError,
@@ -64,7 +58,14 @@ export async function addToRichHistory(
           richHistoryStorageFull = true;
           showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
         } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
-          dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
+          dispatch(
+            notifyApp(
+              createErrorNotification(
+                t('explore.rich-history-utils-notification.update-failed', 'Rich History update failed'),
+                error.message
+              )
+            )
+          );
         }
       }
       // Saving failed. Do not add new entry.
@@ -105,7 +106,14 @@ export async function updateStarredInRichHistory(id: string, starred: boolean) {
     return await getRichHistoryStorage().updateStarred(id, starred);
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
   }
@@ -116,7 +124,14 @@ export async function updateCommentInRichHistory(id: string, newComment: string 
     return await getRichHistoryStorage().updateComment(id, newComment);
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
   }
@@ -128,56 +143,28 @@ export async function deleteQueryInRichHistory(id: string) {
     return id;
   } catch (error) {
     if (error instanceof Error) {
-      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-utils-notification.saving-failed', 'Saving rich history failed'),
+            error.message
+          )
+        )
+      );
     }
     return undefined;
-  }
-}
-
-export enum LocalStorageMigrationStatus {
-  Successful = 'successful',
-  Failed = 'failed',
-  NotNeeded = 'not-needed',
-}
-
-export interface LocalStorageMigrationResult {
-  status: LocalStorageMigrationStatus;
-  error?: Error;
-}
-
-export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationResult> {
-  const richHistoryLocalStorage = new RichHistoryLocalStorage();
-  const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
-
-  try {
-    const { richHistory } = await richHistoryLocalStorage.getRichHistory({
-      datasourceFilters: [],
-      from: 0,
-      search: '',
-      sortOrder: SortOrder.Descending,
-      starred: false,
-      to: 14,
-    });
-    if (richHistory.length === 0) {
-      return { status: LocalStorageMigrationStatus.NotNeeded };
-    }
-    await richHistoryRemoteStorage.migrate(richHistory);
-    dispatch(notifyApp(createSuccessNotification('Query history successfully migrated from local storage')));
-    return { status: LocalStorageMigrationStatus.Successful };
-  } catch (error) {
-    const errorToThrow = error instanceof Error ? error : new Error('Uknown error occurred.');
-    dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${errorToThrow.message}`)));
-    return { status: LocalStorageMigrationStatus.Failed, error: errorToThrow };
   }
 }
 
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
-    range: { from: 'now-1h', to: 'now' },
+    range: {
+      from: t('explore.rich-history-utils.default-from', 'now-1h'),
+      to: t('explore.rich-history-utils.default-to', 'now'),
+    },
     datasource: query.datasourceName,
     queries: query.queries,
-    context: 'explore',
   };
 
   const serializedState = serializeStateToUrlParam(exploreState);
@@ -191,19 +178,19 @@ export const mapNumbertoTimeInSlider = (num: number) => {
   let str;
   switch (num) {
     case 0:
-      str = 'today';
+      str = t('explore.rich-history-utils.today', 'today');
       break;
     case 1:
-      str = 'yesterday';
+      str = t('explore.rich-history-utils.yesterday', 'yesterday');
       break;
     case 7:
-      str = 'a week ago';
+      str = t('explore.rich-history-utils.a-week-ago', 'a week ago');
       break;
     case 14:
-      str = 'two weeks ago';
+      str = t('explore.rich-history-utils.two-weeks-ago', 'two weeks ago');
       break;
     default:
-      str = `${num} days ago`;
+      str = t('explore.rich-history-utils.days-ago', '{{num}} days ago', { num: `${num}` });
   }
 
   return str;
@@ -234,19 +221,16 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   return heading;
 }
 
-export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi | undefined) {
-  /* query DatasourceInstance is necessary because we use its getQueryDisplayText method
-   * to format query text
-   */
-  if (queryDsInstance?.getQueryDisplayText) {
-    return queryDsInstance.getQueryDisplayText(query);
+export function createQueryText(query: DataQuery, dsApi?: DataSourceApi) {
+  if (dsApi?.getQueryDisplayText) {
+    return dsApi.getQueryDisplayText(query);
   }
 
   return getQueryDisplayText(query);
 }
 
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
-  let mappedQueriesToHeadings: any = {};
+  let mappedQueriesToHeadings: Record<string, RichHistoryQuery[]> = {};
 
   query.forEach((q) => {
     let heading = createQueryHeading(q, sortOrder);
@@ -265,12 +249,11 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  */
 export function createDatasourcesList() {
   return getDataSourceSrv()
-    .getList({ mixed: config.featureToggles.exploreMixedDatasource === true })
+    .getList({ mixed: true })
     .map((dsSettings) => {
       return {
         name: dsSettings.name,
         uid: dsSettings.uid,
-        imgUrl: dsSettings.meta.info.logos.small,
       };
     });
 }

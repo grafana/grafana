@@ -12,18 +12,19 @@ type NotifierPlugin struct {
 
 // NotifierOption holds information about options specific for the NotifierPlugin.
 type NotifierOption struct {
-	Element        ElementType    `json:"element"`
-	InputType      InputType      `json:"inputType"`
-	Label          string         `json:"label"`
-	Description    string         `json:"description"`
-	Placeholder    string         `json:"placeholder"`
-	PropertyName   string         `json:"propertyName"`
-	SelectOptions  []SelectOption `json:"selectOptions"`
-	ShowWhen       ShowWhen       `json:"showWhen"`
-	Required       bool           `json:"required"`
-	ValidationRule string         `json:"validationRule"`
-	Secure         bool           `json:"secure"`
-	DependsOn      string         `json:"dependsOn"`
+	Element        ElementType      `json:"element"`
+	InputType      InputType        `json:"inputType"`
+	Label          string           `json:"label"`
+	Description    string           `json:"description"`
+	Placeholder    string           `json:"placeholder"`
+	PropertyName   string           `json:"propertyName"`
+	SelectOptions  []SelectOption   `json:"selectOptions"`
+	ShowWhen       ShowWhen         `json:"showWhen"`
+	Required       bool             `json:"required"`
+	ValidationRule string           `json:"validationRule"`
+	Secure         bool             `json:"secure"`
+	DependsOn      string           `json:"dependsOn"`
+	SubformOptions []NotifierOption `json:"subformOptions"`
 }
 
 // ElementType is the type of element that can be rendered in the frontend.
@@ -38,6 +39,12 @@ const (
 	ElementTypeCheckbox = "checkbox"
 	// ElementTypeTextArea will render a textarea
 	ElementTypeTextArea = "textarea"
+	// ElementTypeKeyValueMap will render inputs to add arbitrary key-value pairs
+	ElementTypeKeyValueMap = "key_value_map"
+	// ElementSubformArray will render a sub-form with schema defined in SubformOptions
+	ElementTypeSubform = "subform"
+	// ElementSubformArray will render a multiple sub-forms with schema defined in SubformOptions
+	ElementSubformArray = "subform_array"
 )
 
 // InputType is the type of input that can be rendered in the frontend.
@@ -57,6 +64,8 @@ type SelectOption struct {
 }
 
 // ShowWhen holds information about when options are dependant on other options.
+// Should be used when Element is ElementTypeSelect.
+// Does not work for ElementTypeCheckbox.
 type ShowWhen struct {
 	Field string `json:"field"`
 	Is    string `json:"is"`

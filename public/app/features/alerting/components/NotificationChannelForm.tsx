@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, FormAPI, HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Button, FormAPI, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { NotificationChannelType, NotificationChannelDTO, NotificationChannelSecureFields } from '../../../types';
@@ -26,7 +26,7 @@ export interface NotificationSettingsProps
   currentFormValues: NotificationChannelDTO;
 }
 
-export const NotificationChannelForm: FC<Props> = ({
+export const NotificationChannelForm = ({
   control,
   errors,
   selectedChannel,
@@ -38,8 +38,8 @@ export const NotificationChannelForm: FC<Props> = ({
   onTestChannel,
   resetSecureField,
   secureFields,
-}) => {
-  const styles = getStyles(useTheme());
+}: Props) => {
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     /*
@@ -117,15 +117,15 @@ export const NotificationChannelForm: FC<Props> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     formContainer: css``,
     formItem: css`
       flex-grow: 1;
-      padding-top: ${theme.spacing.md};
+      padding-top: ${theme.spacing(2)};
     `,
     formButtons: css`
-      padding-top: ${theme.spacing.xl};
+      padding-top: ${theme.spacing(4)};
     `,
   };
-});
+};

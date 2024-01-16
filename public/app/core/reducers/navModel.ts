@@ -4,22 +4,51 @@ import { cloneDeep } from 'lodash';
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
+import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
+
+export const HOME_NAV_ID = 'home';
+
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = cloneDeep(config.bootData.navTree as NavModelItem[]);
-  buildNavIndex(navIndex, rootNodes);
+  const rootNodes = cloneDeep(config.bootData.navTree);
+  const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
+  const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
+
+  if (homeNav) {
+    buildNavIndex(navIndex, [homeNav]);
+  }
+  // set home as parent for the other rootNodes
+  // need to use the translated home node from the navIndex
+  buildNavIndex(navIndex, otherRootNodes, navIndex[HOME_NAV_ID]);
+
   return navIndex;
 }
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
+  const translatedChildren: NavModelItem[] = [];
+
   for (const node of children) {
-    node.parentItem = parentItem;
+    const translatedNode: NavModelItem = {
+      ...node,
+      text: getNavTitle(node.id) ?? node.text,
+      subTitle: getNavSubTitle(node.id) ?? node.subTitle,
+      emptyMessage: getNavTitle(node.emptyMessageId),
+      parentItem: parentItem,
+    };
 
-    navIndex[node.id!] = node;
-
-    if (node.children) {
-      buildNavIndex(navIndex, node.children, node);
+    if (translatedNode.id) {
+      navIndex[translatedNode.id] = translatedNode;
     }
+
+    if (translatedNode.children) {
+      buildNavIndex(navIndex, translatedNode.children, translatedNode);
+    }
+    translatedChildren.push(translatedNode);
+  }
+
+  // need to update the parentItem children with the new translated children
+  if (parentItem) {
+    parentItem.children = translatedChildren;
   }
 
   navIndex['not-found'] = { ...buildWarningNav('Page not found', '404 Error').node };
@@ -62,22 +91,21 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
   if (updateNavIndex.match(action)) {
     const newPages: NavIndex = {};
     const payload = action.payload;
-    if (payload) {
-      if (payload.children && payload.children.length) {
-        for (const node of payload.children) {
-          if (node.id) {
-            newPages[node.id] = {
-              ...node,
-              parentItem: payload,
-            };
-          }
+
+    function addNewPages(node: NavModelItem) {
+      if (node.children) {
+        for (const child of node.children) {
+          newPages[child.id!] = {
+            ...child,
+            parentItem: node,
+          };
         }
-      } else if (payload.id) {
-        newPages[payload.id] = {
-          ...payload,
-        };
+      }
+      if (node.parentItem) {
+        addNewPages(node.parentItem);
       }
     }
+    addNewPages(payload);
 
     return { ...state, ...newPages };
   } else if (updateConfigurationSubtitle.match(action)) {

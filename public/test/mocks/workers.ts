@@ -1,16 +1,19 @@
+import { Config } from 'app/plugins/panel/nodeGraph/layout';
+import { EdgeDatum, NodeDatum } from 'app/plugins/panel/nodeGraph/types';
+
 const { layout } = jest.requireActual('../../app/plugins/panel/nodeGraph/layout.worker.js');
 
 class LayoutMockWorker {
   timeout: number | undefined;
   constructor() {}
-  postMessage(data: any) {
+  postMessage(data: { nodes: NodeDatum[]; edges: EdgeDatum[]; config: Config }) {
     const { nodes, edges, config } = data;
-    this.timeout = setTimeout(() => {
+    this.timeout = window.setTimeout(() => {
       this.timeout = undefined;
       layout(nodes, edges, config);
       // @ts-ignore
       this.onmessage({ data: { nodes, edges } });
-    }, 1) as any;
+    }, 1);
   }
   terminate() {
     if (this.timeout) {

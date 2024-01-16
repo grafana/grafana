@@ -1,4 +1,4 @@
-import { clone } from 'lodash';
+import { clone, some } from 'lodash';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
@@ -69,7 +69,8 @@ export async function checkOtherSegments(
     return;
   }
 
-  const path = state.queryModel.getSegmentPathUpTo(fromIndex + 1);
+  const currentFromIndex = fromIndex + 1;
+  const path = state.queryModel.getSegmentPathUpTo(currentFromIndex);
   if (path === '') {
     return;
   }
@@ -78,15 +79,17 @@ export async function checkOtherSegments(
     const segments = await state.datasource.metricFindQuery(path);
     if (segments.length === 0) {
       if (path !== '' && modifyLastSegment) {
-        state.queryModel.segments = state.queryModel.segments.splice(0, fromIndex);
-        state.segments = state.segments.splice(0, fromIndex);
-        addSelectMetricSegment(state);
+        state.queryModel.segments = state.queryModel.segments.splice(0, currentFromIndex);
+        state.segments = state.segments.splice(0, currentFromIndex);
+        if (!some(state.segments, { fake: true })) {
+          addSelectMetricSegment(state);
+        }
       }
     } else if (segments[0].expandable) {
       if (state.segments.length === fromIndex) {
         addSelectMetricSegment(state);
       } else {
-        await checkOtherSegments(state, fromIndex + 1);
+        await checkOtherSegments(state, currentFromIndex);
       }
     }
   } catch (err) {

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { Store } from 'redux';
 
 import { LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -50,7 +51,7 @@ function setupTestContext({ pickerState = {}, variable = {} }: Args = {}) {
     optionsPicker,
   };
   const getState = jest.fn().mockReturnValue(getPreloadedState('key', templatingState));
-  const store: any = { getState, dispatch, subscribe };
+  const store = { getState, dispatch, subscribe } as unknown as Store;
   const { rerender } = render(
     <Provider store={store}>
       <Picker {...props} />

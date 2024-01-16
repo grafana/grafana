@@ -5,7 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
+import { DashboardSearchItemType } from 'app/features/search/types';
 import { FolderInfo, PermissionLevelString } from 'app/types';
 
 export interface FolderFilterProps {
@@ -72,10 +72,10 @@ async function getFoldersAsOptions(
   };
 
   // FIXME: stop using id from search and use UID instead
-  const searchHits: DashboardSearchHit[] = await getBackendSrv().search(params);
-  const options = searchHits.map((d) => ({ label: d.title, value: { id: d.id, title: d.title } }));
+  const searchHits = await getBackendSrv().search(params);
+  const options = searchHits.map((d) => ({ label: d.title, value: { uid: d.uid, title: d.title } }));
   if (!searchString || 'general'.includes(searchString.toLowerCase())) {
-    options.unshift({ label: 'General', value: { id: 0, title: 'General' } });
+    options.unshift({ label: 'General', value: { uid: 'general', title: 'General' } });
   }
 
   setLoading(false);
@@ -85,18 +85,18 @@ async function getFoldersAsOptions(
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      label: container;
-      position: relative;
-      min-width: 180px;
-      flex-grow: 1;
-    `,
-    clear: css`
-      label: clear;
-      font-size: ${theme.spacing(1.5)};
-      position: absolute;
-      top: -${theme.spacing(4.5)};
-      right: 0;
-    `,
+    container: css({
+      label: 'container',
+      position: 'relative',
+      minWidth: '180px',
+      flexGrow: 1,
+    }),
+    clear: css({
+      label: 'clear',
+      fontSize: theme.spacing(1.5),
+      position: 'absolute',
+      top: -theme.spacing(4.5),
+      right: 0,
+    }),
   };
 }

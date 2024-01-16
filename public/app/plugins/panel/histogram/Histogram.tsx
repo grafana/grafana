@@ -3,6 +3,7 @@ import uPlot, { AlignedData } from 'uplot';
 
 import {
   DataFrame,
+  FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldSeriesColor,
@@ -23,7 +24,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './models.gen';
+import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -34,7 +35,7 @@ function incrRoundUp(num: number, incr: number) {
 }
 
 export interface HistogramProps extends Themeable2 {
-  options: PanelOptions; // used for diff
+  options: Options; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
   bucketSize: number;
   width: number;
@@ -47,16 +48,32 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
+  return frame.fields[0].type === FieldType.string ? 1 : frame.fields[1].values[0] - frame.fields[0].values[0];
+}
+
+export function getBucketSize1(frame: DataFrame) {
+  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  return frame.fields[0].type === FieldType.string ? 1 : frame.fields[1].values[1] - frame.fields[0].values[1];
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   // todo: scan all values in BucketMin and BucketMax fields to assert if uniform bucketSize
 
+  // since this is x axis range, this should ideally come from xMin or xMax fields, not a count field
+  // though both methods are probably hacks, and we should just accept explicit opts into this prepConfig
+  let { min: xScaleMin, max: xScaleMax } = frame.fields[2].config;
+
   let builder = new UPlotConfigBuilder();
+
+  let isOrdinalX = frame.fields[0].type === FieldType.string;
 
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = getBucketSize(frame);
+  let bucketSize1 = getBucketSize1(frame);
+
+  let bucketFactor = bucketSize1 / bucketSize;
+
+  let useLogScale = bucketSize1 !== bucketSize; // (imperfect floats)
 
   // splits shifter, to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
@@ -64,8 +81,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     let minSpace = u.axes[axisIdx]._space;
     let bucketWidth = u.valToPos(u.data[0][0] + bucketSize, 'x') - u.valToPos(u.data[0][0], 'x');
 
-    let firstSplit = u.data[0][0];
-    let lastSplit = u.data[0][u.data[0].length - 1] + bucketSize;
+    let firstSplit = incrRoundDn(xScaleMin ?? u.data[0][0], bucketSize);
+    let lastSplit = incrRoundUp(xScaleMax ?? u.data[0][u.data[0].length - 1] + bucketSize, bucketSize);
 
     let splits = [];
     let skip = Math.ceil(minSpace / bucketWidth);
@@ -80,27 +97,44 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   builder.addScale({
     scaleKey: 'x', // bukkits
     isTime: false,
-    distribution: ScaleDistribution.Linear,
+    distribution: isOrdinalX
+      ? ScaleDistribution.Ordinal
+      : useLogScale
+      ? ScaleDistribution.Log
+      : ScaleDistribution.Linear,
+    log: 2,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u, wantedMin, wantedMax) => {
-      let fullRangeMin = u.data[0][0];
-      let fullRangeMax = u.data[0][u.data[0].length - 1];
+    range: useLogScale
+      ? (u, wantedMin, wantedMax) => {
+          return uPlot.rangeLog(wantedMin, wantedMax * bucketFactor, 2, true);
+        }
+      : (u, wantedMin, wantedMax) => {
+          // these settings will prevent zooming, probably okay?
+          if (xScaleMin != null) {
+            wantedMin = xScaleMin;
+          }
+          if (xScaleMax != null) {
+            wantedMax = xScaleMax;
+          }
 
-      // snap to bucket divisors...
+          let fullRangeMin = u.data[0][0];
+          let fullRangeMax = u.data[0][u.data[0].length - 1];
 
-      if (wantedMax === fullRangeMax) {
-        wantedMax += bucketSize;
-      } else {
-        wantedMax = incrRoundUp(wantedMax, bucketSize);
-      }
+          // snap to bucket divisors...
 
-      if (wantedMin > fullRangeMin) {
-        wantedMin = incrRoundDn(wantedMin, bucketSize);
-      }
+          if (wantedMax === fullRangeMax) {
+            wantedMax += bucketSize;
+          } else {
+            wantedMax = incrRoundUp(wantedMax, bucketSize);
+          }
 
-      return [wantedMin, wantedMax];
-    },
+          if (wantedMin > fullRangeMin) {
+            wantedMin = incrRoundDn(wantedMin, bucketSize);
+          }
+
+          return [wantedMin, wantedMax];
+        },
   });
 
   builder.addScale({
@@ -120,22 +154,24 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'x',
     isTime: false,
     placement: AxisPlacement.Bottom,
-    incrs: histogramBucketSizes,
-    splits: xSplits,
-    values: (u: uPlot, splits: any[]) => {
-      const tickLabels = splits.map(xAxisFormatter);
+    incrs: isOrdinalX ? [1] : useLogScale ? undefined : histogramBucketSizes,
+    splits: useLogScale || isOrdinalX ? undefined : xSplits,
+    values: isOrdinalX
+      ? (u, splits) => splits
+      : (u, splits) => {
+          const tickLabels = splits.map(xAxisFormatter);
 
-      const maxWidth = tickLabels.reduce(
-        (curMax, label) => Math.max(measureText(label, UPLOT_AXIS_FONT_SIZE).width, curMax),
-        0
-      );
+          const maxWidth = tickLabels.reduce(
+            (curMax, label) => Math.max(measureText(label, UPLOT_AXIS_FONT_SIZE).width, curMax),
+            0
+          );
 
-      const labelSpacing = 10;
-      const maxCount = u.bbox.width / ((maxWidth + labelSpacing) * devicePixelRatio);
-      const keepMod = Math.ceil(tickLabels.length / maxCount);
+          const labelSpacing = 10;
+          const maxCount = u.bbox.width / ((maxWidth + labelSpacing) * devicePixelRatio);
+          const keepMod = Math.ceil(tickLabels.length / maxCount);
 
-      return tickLabels.map((label, i) => (i % keepMod === 0 ? label : null));
-    },
+          return tickLabels.map((label, i) => (i % keepMod === 0 ? label : null));
+        },
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,
@@ -153,7 +189,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'y',
     isTime: false,
     placement: AxisPlacement.Left,
-    formatValue: (v, decimals) => formattedValueToString(dispY!(v, countField.config.decimals ?? decimals)),
+    formatValue: (v, decimals) => formattedValueToString(dispY!(v, decimals)),
     //splits: config.xSplits,
     //values: config.xValues,
     //grid: false,
@@ -175,14 +211,14 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   let seriesIndex = 0;
 
-  // assumes BucketMax is [1]
+  // assumes xMin is [0], xMax is [1]
   for (let i = 2; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
     field.state = field.state ?? {};
     field.state.seriesIndex = seriesIndex++;
 
-    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
+    const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);
@@ -209,10 +245,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       softMax: customConfig.axisSoftMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-      dataFrameFieldIndex: {
-        fieldIndex: 1,
-        frameIndex: i - 2,
-      },
+      dataFrameFieldIndex: field.state.origin,
     });
   }
 
@@ -224,7 +257,7 @@ const preparePlotData = (frame: DataFrame) => {
 
   for (const field of frame.fields) {
     if (field.name !== histogramFrameBucketMaxFieldName) {
-      data.push(field.values.toArray());
+      data.push(field.values);
     }
   }
 
@@ -272,11 +305,12 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
-    if (!config || legend.showLegend === false || !this.props.rawSeries) {
+
+    if (!config || legend.showLegend === false) {
       return null;
     }
 
-    return <PlotLegend data={this.props.rawSeries} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    return <PlotLegend data={this.props.rawSeries!} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
@@ -313,13 +347,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
     return (
       <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart
-            config={this.state.config!}
-            data={this.state.alignedData}
-            width={vizWidth}
-            height={vizHeight}
-            timeRange={null as any}
-          >
+          <UPlotChart config={this.state.config!} data={this.state.alignedData} width={vizWidth} height={vizHeight}>
             {children ? children(config, alignedFrame) : null}
           </UPlotChart>
         )}

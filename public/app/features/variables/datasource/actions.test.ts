@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { variableAdapters } from '../adapters';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
@@ -29,7 +29,12 @@ function getTestContext({ sources = [], query, regex }: Args = {}) {
   const getListMock = jest.fn().mockReturnValue(sources);
   const getDatasourceSrvMock = jest.fn().mockReturnValue({ getList: getListMock });
   const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-  const datasource = datasourceBuilder().withId('0').withRootStateKey('key').withQuery(query).withRegEx(regex).build();
+  const datasource = datasourceBuilder()
+    .withId('0')
+    .withRootStateKey('key')
+    .withQuery(query!)
+    .withRegEx(regex!)
+    .build();
 
   return { getListMock, getDatasourceSrvMock, dependencies, datasource };
 }

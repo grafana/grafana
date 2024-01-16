@@ -73,7 +73,6 @@ export const Connected: FC = () => {
   return (
     <>
       <section data-testid="connected-wrapper" className={styles.wrapper}>
-        <header className={styles.title}>{Messages.title}</header>
         <p>{Messages.connected}</p>
         <Form
           initialValues={{ pmmServerId: serverId, pmmServerName: serverName }}

@@ -47,8 +47,7 @@
 .login-page {
   .footer {
     display: block;
-    bottom: $spacer;
-    position: absolute;
+    // @PERCONA
     padding: $space-md 0;
 
     li::after {

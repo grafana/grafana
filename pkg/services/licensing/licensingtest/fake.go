@@ -3,10 +3,10 @@ package licensingtest
 import (
 	"github.com/stretchr/testify/mock"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
-var _ models.Licensing = new(FakeLicensing)
+var _ licensing.Licensing = new(FakeLicensing)
 
 func NewFakeLicensing() *FakeLicensing {
 	return &FakeLicensing{&mock.Mock{}}

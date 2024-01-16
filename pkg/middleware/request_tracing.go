@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -33,7 +33,7 @@ func ProvideRouteOperationName(name string) web.Handler {
 
 func addRouteNameToContext(req *http.Request, operationName string) *http.Request {
 	// don't set route name if it's set
-	if _, exists := routeOperationName(req); exists {
+	if _, exists := RouteOperationName(req); exists {
 		return req
 	}
 
@@ -55,8 +55,8 @@ var unnamedHandlers = []struct {
 	{handler: "/debug/pprof-handlers", pathPattern: regexp.MustCompile("^/debug/pprof")},
 }
 
-// routeOperationName receives the route operation name from context, if set.
-func routeOperationName(req *http.Request) (string, bool) {
+// RouteOperationName receives the route operation name from context, if set.
+func RouteOperationName(req *http.Request) (string, bool) {
 	if val := req.Context().Value(routeOperationNameKey); val != nil {
 		op, ok := val.(string)
 		return op, ok
@@ -90,16 +90,16 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			// Only call span.Finish when a route operation name have been set,
 			// meaning that not set the span would not be reported.
 			// TODO: do not depend on web.Context from the future
-			if routeOperation, exists := routeOperationName(web.FromContext(req.Context()).Req); exists {
+			if routeOperation, exists := RouteOperationName(web.FromContext(req.Context()).Req); exists {
 				defer span.End()
 				span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
 			}
 
 			status := rw.Status()
 
-			span.SetAttributes("http.status_code", status, attribute.Int("http.status_code", status))
-			span.SetAttributes("http.url", req.RequestURI, attribute.String("http.url", req.RequestURI))
-			span.SetAttributes("http.method", req.Method, attribute.String("http.method", req.Method))
+			span.SetAttributes(semconv.HTTPStatusCode(status))
+			span.SetAttributes(semconv.HTTPURL(req.RequestURI))
+			span.SetAttributes(semconv.HTTPMethod(req.Method))
 			if status >= 400 {
 				span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(status)))
 			}

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { FC } from 'react';
 
 import { BaseCheckbox } from '../../Checkbox';
 
 import { TableCheckboxProps } from './TableCheckbox.types';
 
-export const TableCheckbox: React.FC<TableCheckboxProps> = ({ id, checked, onChange, title }) => (
+export const TableCheckbox: FC<TableCheckboxProps> = ({ id, checked, onChange, title }) => (
   <BaseCheckbox
     name={`table-select-${id}`}
     title={title}

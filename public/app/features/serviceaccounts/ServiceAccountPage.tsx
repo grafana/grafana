@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { getTimeZone, NavModelItem } from '@grafana/data';
-import { Button, ConfirmModal, HorizontalGroup } from '@grafana/ui';
+import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
+import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -26,7 +26,6 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   serviceAccount?: ServiceAccountDTO;
   tokens: ApiKey[];
   isLoading: boolean;
-  roleOptions: Role[];
 }
 
 function mapStateToProps(state: StoreState) {
@@ -34,7 +33,6 @@ function mapStateToProps(state: StoreState) {
     serviceAccount: state.serviceAccountProfile.serviceAccount,
     tokens: state.serviceAccountProfile.tokens,
     isLoading: state.serviceAccountProfile.isLoading,
-    roleOptions: state.serviceAccounts.roleOptions,
     timezone: getTimeZone(state.user),
   };
 }
@@ -58,7 +56,6 @@ export const ServiceAccountPageUnconnected = ({
   tokens,
   timezone,
   isLoading,
-  roleOptions,
   createServiceAccountToken,
   deleteServiceAccount,
   deleteServiceAccountToken,
@@ -73,19 +70,19 @@ export const ServiceAccountPageUnconnected = ({
 
   const serviceAccountId = parseInt(match.params.id, 10);
   const tokenActionsDisabled =
-    !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
+    serviceAccount.isDisabled ||
+    serviceAccount.isExternal ||
+    !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
-  const canReadPermissions = contextSrv.hasAccessInMetadata(
+  const canReadPermissions = contextSrv.hasPermissionInMetadata(
     AccessControlAction.ServiceAccountsPermissionsRead,
-    serviceAccount!,
-    false
+    serviceAccount!
   );
 
   const pageNav: NavModelItem = {
     text: serviceAccount.name,
     img: serviceAccount.avatarUrl,
-    breadcrumbs: [{ title: 'Service accounts', url: 'org/serviceaccounts' }],
     subTitle: 'Manage settings for an individual service account.',
   };
 
@@ -139,7 +136,7 @@ export const ServiceAccountPageUnconnected = ({
     <Page navId="serviceaccounts" pageNav={pageNav}>
       <Page.Contents isLoading={isLoading}>
         <div>
-          {serviceAccount && (
+          {serviceAccount && !serviceAccount.isExternal && (
             <HorizontalGroup spacing="md" height="auto" justify="flex-end">
               <Button
                 type={'button'}
@@ -170,19 +167,26 @@ export const ServiceAccountPageUnconnected = ({
               )}
             </HorizontalGroup>
           )}
+          {serviceAccount && serviceAccount.isExternal && (
+            <HorizontalGroup spacing="md" height="auto" justify="flex-end">
+              <IconButton
+                disabled={true}
+                name="lock"
+                size="md"
+                tooltip={`This is a managed service account and cannot be modified.`}
+              />
+            </HorizontalGroup>
+          )}
           {serviceAccount && (
-            <ServiceAccountProfile
-              serviceAccount={serviceAccount}
-              timeZone={timezone}
-              roleOptions={roleOptions}
-              onChange={onProfileChange}
-            />
+            <ServiceAccountProfile serviceAccount={serviceAccount} timeZone={timezone} onChange={onProfileChange} />
           )}
           <HorizontalGroup justify="space-between" height="auto">
             <h3>Tokens</h3>
-            <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
-              Add service account token
-            </Button>
+            {!serviceAccount.isExternal && (
+              <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
+                Add service account token
+              </Button>
+            )}
           </HorizontalGroup>
           {tokens && (
             <ServiceAccountTokensTable
@@ -192,7 +196,9 @@ export const ServiceAccountPageUnconnected = ({
               tokenActionsDisabled={tokenActionsDisabled}
             />
           )}
-          {canReadPermissions && <ServiceAccountPermissions serviceAccount={serviceAccount} />}
+          {!serviceAccount.isExternal && canReadPermissions && (
+            <ServiceAccountPermissions serviceAccount={serviceAccount} />
+          )}
         </div>
 
         <ConfirmModal
@@ -223,4 +229,4 @@ export const ServiceAccountPageUnconnected = ({
   );
 };
 
-export const ServiceAccountPage = connector(ServiceAccountPageUnconnected);
+export default connector(ServiceAccountPageUnconnected);

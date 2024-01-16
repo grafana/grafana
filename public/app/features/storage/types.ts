@@ -4,12 +4,11 @@ export enum StorageView {
   Data = 'data',
   Config = 'config',
   Perms = 'perms',
-  Export = 'export',
   History = 'history',
   AddRoot = 'add',
 }
 
-export interface UploadReponse {
+export interface UploadResponse {
   status: number;
   statusText: string;
 

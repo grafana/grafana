@@ -1,19 +1,18 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"sort"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/dashboards"
-	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/plugins"
+	dashmodels "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 )
 
 func TestGetPluginDashboards(t *testing.T) {
@@ -39,10 +38,10 @@ func TestGetPluginDashboards(t *testing.T) {
 		},
 	}
 	dashboardPluginService := &dashboardPluginServiceMock{
-		pluginDashboards: map[string][]*models.Dashboard{
+		pluginDashboards: map[string][]*dashmodels.Dashboard{
 			"test-app": {
-				models.NewDashboardFromJson(testDashboardOld),
-				models.NewDashboardFromJson(testDashboardDeleted),
+				dashmodels.NewDashboardFromJson(testDashboardOld),
+				dashmodels.NewDashboardFromJson(testDashboardDeleted),
 			},
 		},
 	}
@@ -191,9 +190,8 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, 
 func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Context, args *dashboards.GetPluginDashboardFileContentsArgs) (*dashboards.GetPluginDashboardFileContentsResult, error) {
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		if content, exists := dashboardFiles[args.FileReference]; exists {
-			r := bytes.NewReader(content)
 			return &dashboards.GetPluginDashboardFileContentsResult{
-				Content: io.NopCloser(r),
+				Content: content,
 			}, nil
 		}
 	} else if !exists {
@@ -204,22 +202,22 @@ func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Con
 }
 
 type dashboardPluginServiceMock struct {
-	pluginDashboards map[string][]*models.Dashboard
-	args             []*models.GetDashboardsByPluginIdQuery
+	pluginDashboards map[string][]*dashmodels.Dashboard
+	args             []*dashmodels.GetDashboardsByPluginIDQuery
 }
 
-func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	query.Result = []*models.Dashboard{}
+func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *dashmodels.GetDashboardsByPluginIDQuery) ([]*dashmodels.Dashboard, error) {
+	queryResult := []*dashmodels.Dashboard{}
 
-	if dashboards, exists := d.pluginDashboards[query.PluginId]; exists {
-		query.Result = dashboards
+	if dashboards, exists := d.pluginDashboards[query.PluginID]; exists {
+		queryResult = dashboards
 	}
 
 	if d.args == nil {
-		d.args = []*models.GetDashboardsByPluginIdQuery{}
+		d.args = []*dashmodels.GetDashboardsByPluginIDQuery{}
 	}
 
 	d.args = append(d.args, query)
 
-	return nil
+	return queryResult, nil
 }

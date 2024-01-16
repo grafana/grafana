@@ -436,7 +436,6 @@
   ],
   "refresh": false,
   "schemaVersion": 25,
-  "style": "dark",
   "tags": ["gdev", "templating"],
   "templating": {
     "list": [

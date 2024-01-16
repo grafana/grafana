@@ -1,89 +1,36 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { dateTime, LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
-
-import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { ExploreItemState } from 'app/types';
 
 import { createDefaultInitialState } from './helpers';
-import { changeRangeAction, changeRefreshIntervalAction, timeReducer, updateTime } from './time';
-import { makeExplorePaneState } from './utils';
-
-const MOCK_TIME_RANGE = {};
+import { changeRangeAction, timeReducer, updateTime } from './time';
 
 const mockTimeSrv = {
   init: jest.fn(),
-  timeRange: jest.fn().mockReturnValue(MOCK_TIME_RANGE),
 };
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
   getTimeSrv: () => mockTimeSrv,
 }));
-
 const mockTemplateSrv = {
   updateTimeRange: jest.fn(),
 };
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => mockTemplateSrv,
 }));
 
 describe('Explore item reducer', () => {
-  silenceConsoleOutput();
-
   describe('When time is updated', () => {
     it('Time service is re-initialized and template service is updated with the new time range', async () => {
-      const { dispatch } = configureStore({
-        ...(createDefaultInitialState() as any),
-      });
-      await dispatch(updateTime({ exploreId: ExploreId.left }));
+      const state = createDefaultInitialState().defaultInitialState as any;
+      const { dispatch } = configureStore(state);
+      dispatch(updateTime({ exploreId: 'left' }));
+      expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(state.explore.panes.left.range);
       expect(mockTimeSrv.init).toBeCalled();
-      expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
-    });
-  });
-
-  describe('changing refresh intervals', () => {
-    it("should result in 'streaming' state, when live-tailing is active", () => {
-      const initialState = makeExplorePaneState();
-      const expectedState = {
-        ...initialState,
-        refreshInterval: 'LIVE',
-        isLive: true,
-        loading: true,
-        logsResult: {
-          hasUniqueLabels: false,
-          rows: [] as any[],
-        },
-        queryResponse: {
-          ...initialState.queryResponse,
-          state: LoadingState.Streaming,
-        },
-      };
-      reducerTester<ExploreItemState>()
-        .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
-        .thenStateShouldEqual(expectedState);
-    });
-
-    it("should result in 'done' state, when live-tailing is stopped", () => {
-      const initialState = makeExplorePaneState();
-      const expectedState = {
-        ...initialState,
-        refreshInterval: '',
-        logsResult: {
-          hasUniqueLabels: false,
-          rows: [] as any[],
-        },
-        queryResponse: {
-          ...initialState.queryResponse,
-          state: LoadingState.Done,
-        },
-      };
-      reducerTester<ExploreItemState>()
-        .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
-        .thenStateShouldEqual(expectedState);
+      expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(state.explore.panes.left.range);
     });
   });
 
@@ -97,7 +44,7 @@ describe('Explore item reducer', () => {
           } as unknown as ExploreItemState)
           .whenActionIsDispatched(
             changeRangeAction({
-              exploreId: ExploreId.left,
+              exploreId: 'left',
               absoluteRange: { from: 1546297200000, to: 1546383600000 },
               range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
             })

@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -10,13 +11,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 // To run this test, set runMssqlTests=true
@@ -34,23 +35,21 @@ func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
 	const runMssqlTests = false
 
-	if !(sqlstore.IsTestDBMSSQL() || runMssqlTests) {
+	if !(db.IsTestDBMSSQL() || runMssqlTests) {
 		t.Skip()
 	}
 
 	x := initMSSQLTestDB(t)
-	origXormEngine := sqleng.NewXormEngine
+	origDB := sqleng.NewDB
 	t.Cleanup(func() {
-		sqleng.NewXormEngine = origXormEngine
+		sqleng.NewDB = origDB
 	})
 
-	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+	sqleng.NewDB = func(d, c string) (*sql.DB, error) {
 		return x, nil
 	}
 
-	queryResultTransformer := mssqlQueryResultTransformer{
-		log: logger,
-	}
+	queryResultTransformer := mssqlQueryResultTransformer{}
 	dsInfo := sqleng.DataSourceInfo{}
 	config := sqleng.DataPluginConfiguration{
 		DriverName:        "mssql",
@@ -59,11 +58,10 @@ func TestMSSQL(t *testing.T) {
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 		RowLimit:          1000000,
 	}
-	endpoint, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+	endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	require.NoError(t, err)
 
-	sess := x.NewSession()
-	t.Cleanup(sess.Close)
+	db := x
 
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
@@ -106,7 +104,7 @@ func TestMSSQL(t *testing.T) {
 					)
 				`
 
-		_, err := sess.Exec(sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
@@ -128,7 +126,7 @@ func TestMSSQL(t *testing.T) {
 					CONVERT(uniqueidentifier, '%s')
 		`, d, d2, d, d, d, d2, uuid)
 
-		_, err = sess.Exec(sql)
+		_, err = db.Exec(sql)
 		require.NoError(t, err)
 
 		t.Run("When doing a table query should map MSSQL column types to Go types", func(t *testing.T) {
@@ -195,7 +193,7 @@ func TestMSSQL(t *testing.T) {
 							)
 						`
 
-		_, err := sess.Exec(sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		type metric struct {
@@ -221,8 +219,10 @@ func TestMSSQL(t *testing.T) {
 			})
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		for _, m := range series {
+			_, err := db.Exec(`INSERT INTO metric ("time", value) VALUES (?, ?)`, m.Time.UTC(), m.Value)
+			require.NoError(t, err)
+		}
 
 		t.Run("When doing a metric query using timeGroup", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
@@ -379,31 +379,35 @@ func TestMSSQL(t *testing.T) {
 	t.Run("Given a table with metrics having multiple values and measurements", func(t *testing.T) {
 		type metric_values struct {
 			Time                time.Time
-			TimeInt64           int64    `xorm:"bigint 'timeInt64' not null"`
-			TimeInt64Nullable   *int64   `xorm:"bigint 'timeInt64Nullable' null"`
-			TimeFloat64         float64  `xorm:"float 'timeFloat64' not null"`
-			TimeFloat64Nullable *float64 `xorm:"float 'timeFloat64Nullable' null"`
-			TimeInt32           int32    `xorm:"int(11) 'timeInt32' not null"`
-			TimeInt32Nullable   *int32   `xorm:"int(11) 'timeInt32Nullable' null"`
-			TimeFloat32         float32  `xorm:"float(11) 'timeFloat32' not null"`
-			TimeFloat32Nullable *float32 `xorm:"float(11) 'timeFloat32Nullable' null"`
+			TimeInt64           int64
+			TimeInt64Nullable   *int64
+			TimeFloat64         float64
+			TimeFloat64Nullable *float64
+			TimeInt32           int32
+			TimeInt32Nullable   *int32
+			TimeFloat32         float32
+			TimeFloat32Nullable *float32
 			Measurement         string
-			ValueOne            int64 `xorm:"integer 'valueOne'"`
-			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
+			ValueOne            int64
+			ValueTwo            int64
 		}
 
-		exists, err := sess.IsTableExist(metric_values{})
+		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable(metric_values{})
-			require.NoError(t, err)
-		}
-		err = sess.CreateTable(metric_values{})
+		_, err = db.Exec(`CREATE TABLE metric_values (
+			"time" DATETIME NULL,
+			timeInt64 BIGINT NOT NULL, timeInt64Nullable BIGINT NULL,
+			timeFloat64 FLOAT NOT NULL, timeFloat64Nullable FLOAT NULL,
+			timeInt32 INT NOT NULL, timeInt32Nullable INT NULL,
+			timeFloat32 FLOAT(11) NOT NULL, timeFloat32Nullable FLOAT(11) NULL,
+			measurement VARCHAR(255) NULL, valueOne INTEGER NULL, valueTwo INTEGER NULL
+		);
+		`)
 		require.NoError(t, err)
 
-		rand.Seed(time.Now().Unix())
+		rng := rand.New(rand.NewSource(time.Now().Unix()))
 		rnd := func(min, max int64) int64 {
-			return rand.Int63n(max-min) + min
+			return rng.Int63n(max-min) + min
 		}
 
 		var tInitial time.Time
@@ -441,8 +445,23 @@ func TestMSSQL(t *testing.T) {
 			series = append(series, &second)
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		for _, m := range series {
+			_, err := db.Exec(`INSERT INTO metric_values (
+					"time",
+					timeInt64, timeInt64Nullable,
+					timeFloat64, timeFloat64Nullable,
+					timeInt32, timeInt32Nullable,
+					timeFloat32, timeFloat32Nullable,
+					measurement, valueOne, valueTwo
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			`, m.Time,
+				m.TimeInt64, m.TimeInt64Nullable,
+				m.TimeFloat64, m.TimeFloat64Nullable,
+				m.TimeInt32, m.TimeInt32Nullable,
+				m.TimeFloat32, m.TimeFloat32Nullable,
+				m.Measurement, m.ValueOne, m.ValueTwo)
+			require.NoError(t, err)
+		}
 
 		t.Run("When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in time.Time", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
@@ -748,7 +767,7 @@ func TestMSSQL(t *testing.T) {
 									DROP PROCEDURE sp_test_epoch
 							`
 
-			_, err := sess.Exec(sql)
+			_, err := db.Exec(sql)
 			require.NoError(t, err)
 
 			sql = `
@@ -782,13 +801,11 @@ func TestMSSQL(t *testing.T) {
 				END
 			`
 
-			_, err = sess.Exec(sql)
+			_, err = db.Exec(sql)
 			require.NoError(t, err)
 
 			t.Run("When doing a metric query using stored procedure should return correct result", func(t *testing.T) {
-				queryResultTransformer := mssqlQueryResultTransformer{
-					log: logger,
-				}
+				queryResultTransformer := mssqlQueryResultTransformer{}
 				dsInfo := sqleng.DataSourceInfo{}
 				config := sqleng.DataPluginConfiguration{
 					DriverName:        "mssql",
@@ -797,7 +814,7 @@ func TestMSSQL(t *testing.T) {
 					MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 					RowLimit:          1000000,
 				}
-				endpoint, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+				endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 				require.NoError(t, err)
 				query := &backend.QueryDataRequest{
 					Queries: []backend.DataQuery{
@@ -840,7 +857,7 @@ func TestMSSQL(t *testing.T) {
 									DROP PROCEDURE sp_test_datetime
 							`
 
-			_, err := sess.Exec(sql)
+			_, err := db.Exec(sql)
 			require.NoError(t, err)
 
 			sql = `
@@ -874,7 +891,7 @@ func TestMSSQL(t *testing.T) {
 				END
 			`
 
-			_, err = sess.Exec(sql)
+			_, err = db.Exec(sql)
 			require.NoError(t, err)
 
 			t.Run("When doing a metric query using stored procedure should return correct result", func(t *testing.T) {
@@ -927,7 +944,7 @@ func TestMSSQL(t *testing.T) {
 			)
 		`
 
-		_, err := sess.Exec(sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		type event struct {
@@ -937,7 +954,7 @@ func TestMSSQL(t *testing.T) {
 		}
 
 		events := []*event{}
-		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
+		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
 				Description: "Someone deployed something",
@@ -956,7 +973,7 @@ func TestMSSQL(t *testing.T) {
 							VALUES(%d, '%s', '%s')
 						`, e.TimeSec, e.Description, e.Tags)
 
-			_, err = sess.Exec(sql)
+			_, err = db.Exec(sql)
 			require.NoError(t, err)
 		}
 
@@ -1193,9 +1210,7 @@ func TestMSSQL(t *testing.T) {
 		})
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
-			queryResultTransformer := mssqlQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := mssqlQueryResultTransformer{}
 			dsInfo := sqleng.DataSourceInfo{}
 			config := sqleng.DataPluginConfiguration{
 				DriverName:        "mssql",
@@ -1205,7 +1220,7 @@ func TestMSSQL(t *testing.T) {
 				RowLimit:          1,
 			}
 
-			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1269,12 +1284,46 @@ func TestMSSQL(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("Given an empty table", func(t *testing.T) {
+		_, err := db.Exec("DROP TABLE IF EXISTS empty_obj")
+		require.NoError(t, err)
+
+		_, err = db.Exec("CREATE TABLE empty_obj (empty_key VARCHAR(255) NULL, empty_val BIGINT NULL)")
+		require.NoError(t, err)
+
+		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						JSON: []byte(`{
+							"rawSql": "SELECT empty_key, empty_val FROM empty_obj",
+							"format": "table"
+						}`),
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Now(),
+							To:   time.Now().Add(1 * time.Minute),
+						},
+					},
+				},
+			}
+
+			resp, err := endpoint.QueryData(context.Background(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["A"]
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+			require.Equal(t, 0, frames[0].Rows())
+			require.NotNil(t, frames[0].Fields)
+			require.Empty(t, frames[0].Fields)
+		})
+	})
 }
 
 func TestTransformQueryError(t *testing.T) {
-	transformer := &mssqlQueryResultTransformer{
-		log: log.New("test"),
-	}
+	transformer := &mssqlQueryResultTransformer{}
 
 	randomErr := fmt.Errorf("random error")
 
@@ -1288,7 +1337,7 @@ func TestTransformQueryError(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		resultErr := transformer.TransformQueryError(tc.err)
+		resultErr := transformer.TransformQueryError(logger, tc.err)
 		assert.ErrorIs(t, resultErr, tc.expectedErr)
 	}
 }
@@ -1423,25 +1472,20 @@ func TestGenerateConnectionString(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			connStr, err := generateConnectionString(tc.dataSource)
+			connStr, err := generateConnectionString(tc.dataSource, nil, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expConnStr, connStr)
 		})
 	}
 }
 
-func initMSSQLTestDB(t *testing.T) *xorm.Engine {
+func initMSSQLTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
 	testDB := sqlutil.MSSQLTestDB()
-	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
+	x, err := sql.Open(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
 		serverIP, 1))
 	require.NoError(t, err)
-
-	x.DatabaseTZ = time.UTC
-	x.TZLocation = time.UTC
-
-	// x.ShowSQL()
 
 	return x
 }

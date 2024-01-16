@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
@@ -22,7 +22,7 @@ interface OwnProps {
 }
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
-export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
+export const TeamSettings = ({ team, updateTeam }: Props) => {
   const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
   const currentOrgId = contextSrv.user.orgId;
 
@@ -30,8 +30,12 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
 
   const canUpdateRoles =
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
+
+  const canListRoles =
+    contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRolesList, team) &&
+    contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
   return (
     <VerticalGroup spacing="lg">
@@ -41,7 +45,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
             await updateTeamRoles(pendingRoles, team.id);
           }
-          updateTeam(formTeam.name, formTeam.email);
+          updateTeam(formTeam.name, formTeam.email || '');
         }}
         disabled={!canWriteTeamSettings}
       >
@@ -57,12 +61,12 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
               <Input {...register('name', { required: true })} id="name-input" />
             </Field>
 
-            {contextSrv.licensedAccessControlEnabled() && (
+            {contextSrv.licensedAccessControlEnabled() && canListRoles && (
               <Field label="Role">
                 <TeamRolePicker
                   teamId={team.id}
                   roleOptions={roleOptions}
-                  disabled={false}
+                  disabled={!canUpdateRoles}
                   apply={true}
                   onApplyRoles={setPendingRoles}
                   pendingRoles={pendingRoles}
@@ -84,7 +88,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           </FieldSet>
         )}
       </Form>
-      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} />
+      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} preferenceType="team" />
     </VerticalGroup>
   );
 };

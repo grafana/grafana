@@ -1,0 +1,44 @@
+[
+  {
+    "alias": "",
+    "bucketAggs": [
+      {
+        "field": "label",
+        "id": "3",
+        "settings": {
+          "min_doc_count": "1",
+          "order": "desc",
+          "orderBy": "_term",
+          "size": "10"
+        },
+        "type": "terms"
+      },
+      {
+        "field": "testtime",
+        "id": "2",
+        "settings": {
+          "interval": "1m"
+        },
+        "type": "date_histogram"
+      }
+    ],
+    "datasource": {
+      "type": "elasticsearch",
+      "uid": "haha"
+    },
+    "datasourceId": 42,
+    "expression": "",
+    "hide": true,
+    "intervalMs": 200,
+    "maxDataPoints": 1248,
+    "metrics": [
+      {
+        "id": "1",
+        "type": "count"
+      }
+    ],
+    "query": "",
+    "refId": "a",
+    "window": ""
+  }
+]

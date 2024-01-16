@@ -1,12 +1,19 @@
-import { BaseTransport, TransportItem } from '@grafana/agent-core';
-import { getEchoSrv, EchoEventType } from '@grafana/runtime';
+import { BaseTransport, TransportItem } from '@grafana/faro-core';
+import { getEchoSrv, EchoEventType, config } from '@grafana/runtime';
 export class EchoSrvTransport extends BaseTransport {
-  send(event: TransportItem) {
+  readonly name: string = 'EchoSrvTransport';
+  readonly version: string = config.buildInfo.version;
+  send(items: TransportItem[]) {
     getEchoSrv().addEvent({
       type: EchoEventType.GrafanaJavascriptAgent,
-      payload: event,
+      payload: items,
     });
   }
+
+  isBatched() {
+    return true;
+  }
+
   getIgnoreUrls() {
     return [];
   }

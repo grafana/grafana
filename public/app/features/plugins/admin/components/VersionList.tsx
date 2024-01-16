@@ -26,6 +26,7 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
         <tr>
           <th>Version</th>
           <th>Last updated</th>
+          <th>Grafana Dependency</th>
         </tr>
       </thead>
       <tbody>
@@ -46,6 +47,8 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
                 {dateTimeFormatTimeAgo(version.createdAt)}
               </td>
+              {/* Dependency */}
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
             </tr>
           );
         })}

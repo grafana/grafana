@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/correlations/
+canonical: /docs/grafana/latest/developers/http_api/correlations/
 description: Grafana Correlations HTTP API
 keywords:
   - grafana
@@ -9,6 +10,10 @@ keywords:
   - api
   - correlations
   - Glue
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Correlations HTTP API '
 ---
 
@@ -33,6 +38,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 	"targetUID": "PDDA8E780A17E7EF1",
 	"label": "My Label",
 	"description": "Logs to Traces",
+  "config": {
+    "type": "query",
+    "field": "message",
+    "target": {},
+  }
 }
 ```
 
@@ -54,7 +64,12 @@ Content-Type: application/json
     "label": "My Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
-    "uid": "50xhMlg9k"
+    "uid": "50xhMlg9k",
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   }
 }
 ```
@@ -137,7 +152,12 @@ Content-Type: application/json
     "label": "My Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
-    "uid": "J6gn7d31L"
+    "uid": "J6gn7d31L",
+    "config": {
+			"type": "query",
+			"field": "message",
+			"target": {}
+		}
   }
 }
 ```
@@ -145,6 +165,7 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
+- **400** – Bad request
 - **401** – Unauthorized
 - **403** – Forbidden, source data source is read-only
 - **404** – Not found, either source or target data source could not be found
@@ -174,7 +195,13 @@ Content-Type: application/json
   "label": "My Label",
   "sourceUID": "uyBf2637k",
   "targetUID": "PDDA8E780A17E7EF1",
-  "uid": "J6gn7d31L"
+  "uid": "J6gn7d31L",
+  "provisioned": false,
+  "config": {
+    "type": "query",
+    "field": "message",
+    "target": {},
+  }
 }
 ```
 
@@ -210,14 +237,26 @@ Content-Type: application/json
     "label": "My Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
-    "uid": "J6gn7d31L"
+    "uid": "J6gn7d31L",
+    "provisioned": false,
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   },
   {
     "description": "Logs to Metrics",
     "label": "Another Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "P15396BDD62B2BE29",
-    "uid": "uWCpURgVk"
+    "uid": "uWCpURgVk",
+    "provisioned": false,
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   }
 ]
 ```
@@ -234,6 +273,12 @@ Status codes:
 `GET /api/datasources/correlations`
 
 Get all correlations.
+
+Query parameters:
+
+- **page** - Optional. Specify which page number to return. Use the limit parameter to specify the number of correlations per page. The default is page 1.
+- **limit** - Optional. Limits the number of returned correlations per page. The default is 100 correlations per page. The maximum limit is 1000 correlations in a page.
+- **sourceUID** - Optional. Specify a source datasource UID to filter by. This can be repeated to filter by multiple datasources.
 
 **Example request:**
 
@@ -254,14 +299,26 @@ Content-Type: application/json
     "label": "My Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
-    "uid": "J6gn7d31L"
+    "uid": "J6gn7d31L",
+    "provisioned": false,
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   },
   {
     "description": "Loki to Tempo",
     "label": "Another Label",
     "sourceUID": "PDDA8E780A17E7EF1",
     "targetUID": "P15396BDD62B2BE29",
-    "uid": "uWCpURgVk"
+    "uid": "uWCpURgVk",
+    "provisioned": false,
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   }
 ]
 ```

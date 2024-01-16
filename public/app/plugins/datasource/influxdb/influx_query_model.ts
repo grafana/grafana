@@ -1,11 +1,10 @@
-import { map, find, filter, indexOf } from 'lodash';
+import { filter, find, indexOf, map } from 'lodash';
 
-import { ScopedVars } from '@grafana/data';
+import { escapeRegex, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
-import kbn from 'app/core/utils/kbn';
 
 import queryPart from './query_part';
-import { InfluxQuery, InfluxQueryTag } from './types';
+import { DEFAULT_POLICY, InfluxQuery, InfluxQueryTag } from './types';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
@@ -16,13 +15,12 @@ export default class InfluxQueryModel {
   scopedVars: any;
   refId?: string;
 
-  /** @ngInject */
   constructor(target: InfluxQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    target.policy = target.policy || 'default';
+    target.policy = target.policy || DEFAULT_POLICY;
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
@@ -41,7 +39,7 @@ export default class InfluxQueryModel {
   }
 
   updateProjection() {
-    this.selectModels = map(this.target.select, (parts: any) => {
+    this.selectModels = map(this.target.select, (parts) => {
       return map(parts, queryPart.create);
     });
     this.groupByParts = map(this.target.groupBy, queryPart.create);
@@ -49,18 +47,18 @@ export default class InfluxQueryModel {
 
   updatePersistedParts() {
     this.target.select = map(this.selectModels, (selectParts) => {
-      return map(selectParts, (part: any) => {
+      return map(selectParts, (part) => {
         return { type: part.def.type, params: part.params };
       });
     });
   }
 
   hasGroupByTime() {
-    return find(this.target.groupBy, (g: any) => g.type === 'time');
+    return find(this.target.groupBy, (g) => g.type === 'time');
   }
 
   hasFill() {
-    return find(this.target.groupBy, (g: any) => g.type === 'fill');
+    return find(this.target.groupBy, (g) => g.type === 'fill');
   }
 
   addGroupBy(value: string) {
@@ -97,10 +95,10 @@ export default class InfluxQueryModel {
 
     if (part.def.type === 'time') {
       // remove fill
-      this.target.groupBy = filter(this.target.groupBy, (g: any) => g.type !== 'fill');
+      this.target.groupBy = filter(this.target.groupBy, (g) => g.type !== 'fill');
       // remove aggregations
-      this.target.select = map(this.target.select, (s: any) => {
-        return filter(s, (part: any) => {
+      this.target.select = map(this.target.select, (s) => {
+        return filter(s, (part) => {
           const partModel = queryPart.create(part);
           if (partModel.def.category === categories.Aggregations) {
             return false;
@@ -143,6 +141,42 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
+  private isOperatorTypeHandler(operator: string, value: string, fieldName: string) {
+    let textValue;
+    if (operator === 'Is Not') {
+      operator = '!=';
+    } else {
+      operator = '=';
+    }
+
+    // Tags should always quote
+    if (fieldName.endsWith('::tag')) {
+      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+      return {
+        operator: operator,
+        value: textValue,
+      };
+    }
+
+    let lowerValue = value.toLowerCase();
+
+    // Try and discern type
+    if (!isNaN(parseFloat(value))) {
+      // Integer or float, don't quote
+      textValue = value;
+    } else if (['true', 'false'].includes(lowerValue)) {
+      // It's a boolean, don't quite
+      textValue = lowerValue;
+    } else {
+      // String or unrecognised: quote
+      textValue = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+    }
+    return {
+      operator: operator,
+      value: textValue,
+    };
+  }
+
   private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate?: boolean) {
     // FIXME: merge this function with query_builder/renderTagCondition
     let str = '';
@@ -165,17 +199,32 @@ export default class InfluxQueryModel {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      if (operator !== '>' && operator !== '<') {
+
+      if (operator.startsWith('Is')) {
+        let r = this.isOperatorTypeHandler(operator, value, tag.key);
+        operator = r.operator;
+        value = r.value;
+      } else if ((!operator.startsWith('>') && !operator.startsWith('<')) || operator === '<>') {
         value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
       }
     } else if (interpolate) {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
-    return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    let escapedKey = `"${tag.key}"`;
+
+    if (tag.key.endsWith('::tag')) {
+      escapedKey = `"${tag.key.slice(0, -5)}"::tag`;
+    }
+
+    if (tag.key.endsWith('::field')) {
+      escapedKey = `"${tag.key.slice(0, -7)}"::field`;
+    }
+
+    return str + escapedKey + ' ' + operator + ' ' + value;
   }
 
-  getMeasurementAndPolicy(interpolate: any) {
+  getMeasurementAndPolicy(interpolate?: boolean) {
     let policy = this.target.policy;
     let measurement = this.target.measurement || 'measurement';
 
@@ -185,7 +234,7 @@ export default class InfluxQueryModel {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
-    if (policy !== 'default') {
+    if (policy !== DEFAULT_POLICY) {
       policy = '"' + this.target.policy + '".';
     } else {
       policy = '';
@@ -201,10 +250,10 @@ export default class InfluxQueryModel {
     }
 
     if (typeof value === 'string') {
-      return kbn.regexEscape(value);
+      return escapeRegex(value);
     }
 
-    const escapedValues = map(value, kbn.regexEscape);
+    const escapedValues = map(value, escapeRegex);
     return '(' + escapedValues.join('|') + ')';
   }
 

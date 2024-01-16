@@ -49,6 +49,12 @@ export enum PluginErrorCode {
 export interface PluginError {
   errorCode: PluginErrorCode;
   pluginId: string;
+  pluginType?: PluginType;
+}
+
+export interface AngularMeta {
+  detected: boolean;
+  hideDeprecation: boolean;
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {
@@ -58,6 +64,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   info: PluginMetaInfo;
   includes?: PluginInclude[];
   state?: PluginState;
+  aliasIDs?: string[];
 
   // System.load & relative URLS
   module: string;
@@ -80,6 +87,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   signatureType?: PluginSignatureType;
   signatureOrg?: string;
   live?: boolean;
+  angular?: AngularMeta;
 }
 
 interface PluginDependencyInfo {
@@ -110,8 +118,11 @@ export interface PluginInclude {
   path?: string;
   icon?: string;
 
-  role?: string; // "Viewer", Admin, editor???
-  addToNav?: boolean; // Show in the sidebar... only if type=page?
+  // "Admin", "Editor" or "Viewer". If set then the include will only show up in the navigation if the user has the required roles.
+  role?: string;
+
+  // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
+  addToNav?: boolean;
 
   // Angular app pages
   component?: string;
@@ -120,6 +131,7 @@ export interface PluginInclude {
 interface PluginMetaInfoLink {
   name: string;
   url: string;
+  target?: '_blank' | '_self' | '_parent' | '_top';
 }
 
 export interface PluginBuildInfo {
@@ -191,7 +203,7 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   /**
    * @deprecated -- this is no longer necessary and will be removed
    */
-  setChannelSupport(support: any) {
+  setChannelSupport() {
     console.warn('[deprecation] plugin is using ignored option: setChannelSupport', this.meta);
     return this;
   }

@@ -5,7 +5,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { getLabelSelects } from '../testUtils';
 
-import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE } from './LabelFilters';
+import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE, Props } from './LabelFilters';
 
 describe('LabelFilters', () => {
   it('renders empty input without labels', async () => {
@@ -66,8 +66,24 @@ describe('LabelFilters', () => {
 
   it('removes label', async () => {
     const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
-    await userEvent.click(screen.getByLabelText(/remove/));
+    await userEvent.click(screen.getByLabelText(/remove-foo/));
     expect(onChange).toBeCalledWith([]);
+  });
+
+  it('removes label but preserves a label with a value of empty string', async () => {
+    const { onChange } = setup({
+      labelsFilters: [
+        { label: 'lab', op: '=', value: 'bel' },
+        { label: 'foo', op: '=', value: 'bar' },
+        { label: 'le', op: '=', value: '' },
+      ],
+    });
+    await userEvent.click(screen.getByLabelText(/remove-foo/));
+    expect(onChange).toBeCalledWith([
+      { label: 'lab', op: '=', value: 'bel' },
+      { label: 'le', op: '=', value: '' },
+    ]);
+    expect(screen.queryByText('bar')).toBeNull();
   });
 
   it('renders empty input when labels are deleted from outside ', async () => {
@@ -81,12 +97,25 @@ describe('LabelFilters', () => {
         getLabelValuesAutofillSuggestions={jest.fn()}
         onGetLabelValues={jest.fn()}
         labelsFilters={[]}
+        debounceDuration={300}
       />
     );
     expect(screen.getAllByText('Select label')).toHaveLength(1);
     expect(screen.getAllByText('Select value')).toHaveLength(1);
     expect(screen.getByText(/=/)).toBeInTheDocument();
     expect(getAddButton()).toBeInTheDocument();
+  });
+
+  it('does split regex in the middle of a label value when the value contains the char |', () => {
+    setup({ labelsFilters: [{ label: 'foo', op: '=~', value: 'boop|par' }] });
+
+    expect(screen.getByText('boop')).toBeInTheDocument();
+    expect(screen.getByText('par')).toBeInTheDocument();
+  });
+  it('does not split regex in between parentheses inside of a label value that contains the char |', () => {
+    setup({ labelsFilters: [{ label: 'foo', op: '=~', value: '(b|p)ar' }] });
+
+    expect(screen.getByText('(b|p)ar')).toBeInTheDocument();
   });
 
   it('shows error when filter with empty strings  and label filter is required', async () => {
@@ -101,9 +130,8 @@ describe('LabelFilters', () => {
 });
 
 function setup(propOverrides?: Partial<ComponentProps<typeof LabelFilters>>) {
-  const defaultProps = {
+  const defaultProps: Props = {
     onChange: jest.fn(),
-    getLabelValues: jest.fn(),
     getLabelValuesAutofillSuggestions: async (query: string, labelName?: string) => [
       { label: 'bar', value: 'bar' },
       { label: 'qux', value: 'qux' },
@@ -119,6 +147,7 @@ function setup(propOverrides?: Partial<ComponentProps<typeof LabelFilters>>) {
       { label: 'qux', value: 'qux' },
       { label: 'quux', value: 'quux' },
     ],
+    debounceDuration: 300,
     labelsFilters: [],
   };
 

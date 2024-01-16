@@ -10,29 +10,29 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{},
-	}
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
 
 	tmpDir := t.TempDir()
-	kvStore := NewFakeKVStore(t)
+	kvStore := ngfakes.NewFakeKVStore(t)
 	provStore := provisioning.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
@@ -62,6 +62,13 @@ grafana_alerting_active_configurations 3
 # TYPE grafana_alerting_discovered_configurations gauge
 grafana_alerting_discovered_configurations 3
 `), "grafana_alerting_discovered_configurations", "grafana_alerting_active_configurations"))
+
+		// Configurations should be marked as successfully applied.
+		for _, org := range orgStore.orgs {
+			configs, err := configStore.GetAppliedConfigurations(ctx, org, 10)
+			require.NoError(t, err)
+			require.Len(t, configs, 1)
+		}
 	}
 	// When an org is removed, it should detect it.
 	{
@@ -107,27 +114,27 @@ grafana_alerting_discovered_configurations 4
 		err := os.Mkdir(orphanDir, 0750)
 		require.NoError(t, err)
 
-		silencesPath := filepath.Join(orphanDir, silencesFilename)
+		silencesPath := filepath.Join(orphanDir, SilencesFilename)
 		err = os.WriteFile(silencesPath, []byte("file_1"), 0644)
 		require.NoError(t, err)
 
-		notificationPath := filepath.Join(orphanDir, notificationLogFilename)
+		notificationPath := filepath.Join(orphanDir, NotificationLogFilename)
 		err = os.WriteFile(notificationPath, []byte("file_2"), 0644)
 		require.NoError(t, err)
 
 		// We make sure that both files are on disk.
 		info, err := os.Stat(silencesPath)
 		require.NoError(t, err)
-		require.Equal(t, info.Name(), silencesFilename)
+		require.Equal(t, info.Name(), SilencesFilename)
 		info, err = os.Stat(notificationPath)
 		require.NoError(t, err)
-		require.Equal(t, info.Name(), notificationLogFilename)
+		require.Equal(t, info.Name(), NotificationLogFilename)
 
 		// We also populate the kvstore with orphaned records.
-		err = kvStore.Set(ctx, orgID, KVNamespace, silencesFilename, "file_1")
+		err = kvStore.Set(ctx, orgID, KVNamespace, SilencesFilename, "file_1")
 		require.NoError(t, err)
 
-		err = kvStore.Set(ctx, orgID, KVNamespace, notificationLogFilename, "file_1")
+		err = kvStore.Set(ctx, orgID, KVNamespace, NotificationLogFilename, "file_1")
 		require.NoError(t, err)
 
 		// Now re run the sync job once.
@@ -138,27 +145,28 @@ grafana_alerting_discovered_configurations 4
 		require.True(t, errors.Is(err, fs.ErrNotExist))
 
 		// The organization kvstore records should be gone by now.
-		_, exists, _ := kvStore.Get(ctx, orgID, KVNamespace, silencesFilename)
+		_, exists, _ := kvStore.Get(ctx, orgID, KVNamespace, SilencesFilename)
 		require.False(t, exists)
 
-		_, exists, _ = kvStore.Get(ctx, orgID, KVNamespace, notificationLogFilename)
+		_, exists, _ = kvStore.Get(ctx, orgID, KVNamespace, NotificationLogFilename)
 		require.False(t, exists)
 	}
 }
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
 	// Include a broken configuration for organization 2.
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{
-			2: {AlertmanagerConfiguration: brokenConfig, OrgID: 2},
-		},
-	}
+	var orgWithBadConfig int64 = 2
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
+		2: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
+	})
+
+	orgs := []int64{1, 2, 3}
 	orgStore := &FakeOrgStore{
-		orgs: []int64{1, 2, 3},
+		orgs: orgs,
 	}
 
 	tmpDir := t.TempDir()
-	kvStore := NewFakeKVStore(t)
+	kvStore := ngfakes.NewFakeKVStore(t)
 	provStore := provisioning.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
@@ -175,22 +183,53 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	require.NoError(t, err)
 	ctx := context.Background()
 
+	// No successfully applied configurations should be found at first.
+	{
+		for _, org := range orgs {
+			configs, err := configStore.GetAppliedConfigurations(ctx, org, 10)
+			require.NoError(t, err)
+			require.Len(t, configs, 0)
+		}
+	}
+
 	// When you sync the first time, the alertmanager is created but is doesn't become ready until you have a configuration applied.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.False(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.False(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
+
+		// Configurations should be marked as successfully applied for all orgs except for org 2.
+		for _, org := range orgs {
+			configs, err := configStore.GetAppliedConfigurations(ctx, org, 10)
+			require.NoError(t, err)
+			if org == orgWithBadConfig {
+				require.Len(t, configs, 0)
+			} else {
+				require.Len(t, configs, 1)
+			}
+		}
 	}
 
 	// On the next sync, it never panics and alertmanager is still not ready.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.False(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.False(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
+
+		// The configuration should still be marked as successfully applied for all orgs except for org 2.
+		for _, org := range orgs {
+			configs, err := configStore.GetAppliedConfigurations(ctx, org, 10)
+			require.NoError(t, err)
+			if org == orgWithBadConfig {
+				require.Len(t, configs, 0)
+			} else {
+				require.Len(t, configs, 1)
+			}
+		}
 	}
 
 	// If we fix the configuration, it becomes ready.
@@ -198,16 +237,21 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		configStore.configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.True(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.True(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
+
+		// All configurations should be marked as successfully applied.
+		for _, org := range orgs {
+			configs, err := configStore.GetAppliedConfigurations(ctx, org, 10)
+			require.NoError(t, err)
+			require.NotEqual(t, 0, len(configs))
+		}
 	}
 }
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{},
-	}
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
@@ -216,7 +260,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		DataPath:        tmpDir,
 		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration()}, // do not poll in tests.
 	}
-	kvStore := NewFakeKVStore(t)
+	kvStore := ngfakes.NewFakeKVStore(t)
 	provStore := provisioning.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
@@ -238,23 +282,14 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
 	}
 
-	// Now, let's try to request an Alertmanager that is not ready.
-	{
-		// let's delete its "running config" to make it non-ready
-		mam.alertmanagers[1].config = nil
-		am, err := mam.AlertmanagerFor(1)
-		require.NotNil(t, am)
-		require.False(t, am.Ready())
-		require.EqualError(t, err, ErrAlertmanagerNotReady.Error())
-	}
-
 	// With an Alertmanager that exists, it responds correctly.
 	{
 		am, err := mam.AlertmanagerFor(2)
 		require.NoError(t, err)
-		require.Equal(t, *am.GetStatus().VersionInfo.Version, "N/A")
-		require.Equal(t, am.orgID, int64(2))
-		require.NotNil(t, am.config)
+		internalAm, ok := am.(*alertmanager)
+		require.True(t, ok)
+		require.Equal(t, "N/A", *am.GetStatus().VersionInfo.Version)
+		require.Equal(t, int64(2), internalAm.orgID)
 	}
 
 	// Let's now remove the previous queried organization.
@@ -264,6 +299,76 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		_, err := mam.AlertmanagerFor(2)
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
 	}
+}
+
+func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
+	orgStore := &FakeOrgStore{
+		orgs: []int64{1, 2, 3},
+	}
+	tmpDir := t.TempDir()
+	defaultConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"email receiver","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+	cfg := &setting.Cfg{
+		DataPath:        tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: defaultConfig}, // do not poll in tests.
+	}
+	kvStore := ngfakes.NewFakeKVStore(t)
+	provStore := provisioning.NewFakeProvisioningStore()
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	decryptFn := secretsService.GetDecryptedValue
+	reg := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(reg)
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	require.NoError(t, err)
+	ctx := context.Background()
+
+	// Ensure that one Alertmanager is created per org.
+	{
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.Len(t, mam.alertmanagers, 3)
+	}
+
+	// First, let's confirm the default configs are active.
+	cfgs, err := mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
+	require.Equal(t, defaultConfig, cfgs[1].AlertmanagerConfiguration)
+	require.Equal(t, defaultConfig, cfgs[2].AlertmanagerConfiguration)
+	// Store id for later use.
+	originalId := cfgs[2].ID
+	require.Equal(t, defaultConfig, cfgs[3].AlertmanagerConfiguration)
+
+	// Now let's save a new config for org 2.
+	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+	am, err := mam.AlertmanagerFor(2)
+	require.NoError(t, err)
+
+	postable, err := Load([]byte(newConfig))
+	require.NoError(t, err)
+
+	err = am.SaveAndApplyConfig(ctx, postable)
+	require.NoError(t, err)
+
+	// Verify that the org has the new config.
+	cfgs, err = mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
+	require.Equal(t, newConfig, cfgs[2].AlertmanagerConfiguration)
+
+	// First, let's try to activate a historical alertmanager config that doesn't exist.
+	{
+		err := mam.ActivateHistoricalConfiguration(ctx, 1, 42)
+		require.Error(t, err, store.ErrNoAlertmanagerConfiguration)
+	}
+
+	// Finally, we activate the default config for org 2.
+	{
+		err := mam.ActivateHistoricalConfiguration(ctx, 2, originalId)
+		require.NoError(t, err)
+	}
+
+	// Verify that the org has the old default config.
+	cfgs, err = mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
+	require.Equal(t, defaultConfig, cfgs[2].AlertmanagerConfiguration)
 }
 
 var brokenConfig = `

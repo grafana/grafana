@@ -1,23 +1,33 @@
-import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
+import { uniq } from 'lodash';
 
 import {
   AbsoluteTimeRange,
   DataSourceApi,
-  DataSourceRef,
+  dateMath,
+  DateTime,
   EventBusExtended,
-  ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
+  isDateTime,
   LoadingState,
+  LogRowModel,
   PanelData,
+  RawTimeRange,
+  TimeFragment,
+  TimeRange,
+  toUtc,
+  URLRange,
+  URLRangeValue,
 } from '@grafana/data';
+import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData } from 'app/types';
-import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
-import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { toRawTimeRange } from '../utils/time';
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -29,18 +39,12 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
-const loadGraphStyle = (): ExploreGraphStyle => {
-  const data = store.get(GRAPH_STYLE_KEY);
-  return toGraphStyle(data);
-};
-
 /**
  * Returns a fresh Explore area state
  */
-export const makeExplorePaneState = (): ExploreItemState => ({
+export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
-  datasourceMissing: false,
   history: [],
   queries: [],
   initialized: false,
@@ -54,7 +58,6 @@ export const makeExplorePaneState = (): ExploreItemState => ({
     to: null,
   } as any,
   scanning: false,
-  loading: false,
   queryKeys: [],
   isLive: false,
   isPaused: false,
@@ -62,13 +65,15 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  clearedAtIndex: null,
+  rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  logsVolumeDataProvider: undefined,
-  logsVolumeData: undefined,
-  graphStyle: loadGraphStyle(),
+  supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
+  correlations: undefined,
+  ...overrides,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
@@ -79,7 +84,11 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   logsFrames: [],
   traceFrames: [],
   nodeGraphFrames: [],
+  flameGraphFrames: [],
+  customFrames: [],
   tableFrames: [],
+  rawPrometheusFrames: [],
+  rawPrometheusResult: null,
   graphResult: null,
   logsResult: null,
   tableResult: null,
@@ -112,31 +121,8 @@ export async function loadAndInitDatasource(
   const history = store.getObject<HistoryItem[]>(historyKey, []);
   // Save last-used datasource
 
-  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);
+  setLastUsedDatasourceUID(orgId, instance.uid);
   return { history, instance };
-}
-
-// recursively walks an object, removing keys where the value is undefined
-// if the resulting object is empty, returns undefined
-function pruneObject(obj: object): object | undefined {
-  let pruned = mapValues(obj, (value) => (isObject(value) ? pruneObject(value) : value));
-  pruned = omitBy<typeof pruned>(pruned, isEmpty);
-  if (isEmpty(pruned)) {
-    return undefined;
-  }
-  return pruned;
-}
-
-export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
-  return {
-    // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
-    // lets just fallback instead of crashing.
-    datasource: pane.datasourceInstance?.uid || '',
-    queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
-    // don't include panelsState in the url unless a piece of state is actually set
-    panelsState: pruneObject(pane.panelsState),
-  };
 }
 
 export function createCacheKey(absRange: AbsoluteTimeRange) {
@@ -160,3 +146,92 @@ export function getResultsFromCache(
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
 }
+
+export function getRange(raw: RawTimeRange, timeZone: TimeZone): TimeRange {
+  return {
+    from: dateMath.parse(raw.from, false, timeZone)!,
+    to: dateMath.parse(raw.to, true, timeZone)!,
+    raw,
+  };
+}
+
+export function fromURLRange(range: URLRange): RawTimeRange {
+  let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
+  let parsedRange = {
+    from: parseRawTime(range.from),
+    to: parseRawTime(range.to),
+  };
+  if (parsedRange.from !== null && parsedRange.to !== null) {
+    rawTimeRange = { from: parsedRange.from, to: parsedRange.to };
+  }
+  return rawTimeRange;
+}
+
+function parseRawTime(urlRangeValue: URLRangeValue | DateTime): TimeFragment | null {
+  if (urlRangeValue === null) {
+    return null;
+  }
+
+  if (isDateTime(urlRangeValue)) {
+    return urlRangeValue;
+  }
+
+  if (typeof urlRangeValue !== 'string') {
+    return null;
+  }
+
+  // it can only be a string now
+  const value = urlRangeValue;
+
+  if (value.indexOf('now') !== -1) {
+    return value;
+  }
+  if (value.length === 8) {
+    return toUtc(value, 'YYYYMMDD');
+  }
+  if (value.length === 15) {
+    return toUtc(value, 'YYYYMMDDTHHmmss');
+  }
+  // Backward compatibility
+  if (value.length === 19) {
+    return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
+  }
+
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
+    const epoch = parseInt(value, 10);
+    return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
+  }
+
+  return null;
+}
+
+export const filterLogRowsByIndex = (
+  clearedAtIndex: ExploreItemState['clearedAtIndex'],
+  logRows?: LogRowModel[]
+): LogRowModel[] => {
+  if (!logRows) {
+    return [];
+  }
+
+  if (clearedAtIndex) {
+    const filteredRows = logRows.slice(clearedAtIndex + 1);
+    return filteredRows;
+  }
+
+  return logRows;
+};
+
+export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): string[] => {
+  if (datasourceUID === MIXED_DATASOURCE_NAME) {
+    return uniq(queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid));
+  } else {
+    return [datasourceUID];
+  }
+};

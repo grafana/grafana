@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 func TestPersistTemplates(t *testing.T) {
@@ -76,7 +78,8 @@ func TestPersistTemplates(t *testing.T) {
 			}
 			c := &api.PostableUserConfig{TemplateFiles: tt.templates}
 
-			paths, changed, persistErr := PersistTemplates(c, dir)
+			testLogger := logtest.Fake{}
+			paths, changed, persistErr := PersistTemplates(&testLogger, c, dir)
 
 			files := map[string]string{}
 			readFiles, err := os.ReadDir(dir)
@@ -91,11 +94,6 @@ func TestPersistTemplates(t *testing.T) {
 				// nolint:gosec
 				require.NoError(t, err)
 				files[f.Name()] = string(content)
-			}
-
-			// Given we use a temporary directory in tests, we need to prepend the expected paths with it.
-			for i, p := range tt.expectedPaths {
-				tt.expectedPaths[i] = filepath.Join(dir, p)
 			}
 
 			require.Equal(t, tt.expectedError, persistErr)

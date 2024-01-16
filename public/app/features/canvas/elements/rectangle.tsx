@@ -15,6 +15,7 @@ class RectangleDisplay extends PureComponent<CanvasElementProps<TextConfig, Text
   render() {
     const { data } = this.props;
     const styles = getStyles(config.theme2, data);
+
     return (
       <div className={styles.container}>
         <span className={styles.span}>{data?.text}</span>
@@ -22,21 +23,23 @@ class RectangleDisplay extends PureComponent<CanvasElementProps<TextConfig, Text
     );
   }
 }
+
 const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
-  container: css`
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    display: table;
-  `,
-  span: css`
-    display: table-cell;
-    vertical-align: ${data?.valign};
-    text-align: ${data?.align};
-    font-size: ${data?.size}px;
-    color: ${data?.color};
-  `,
+  container: css({
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+    display: 'table',
+  }),
+  span: css({
+    display: 'table-cell',
+    verticalAlign: data?.valign,
+    textAlign: data?.align,
+    fontSize: `${data?.size}px`,
+    color: data?.color,
+  }),
 }));
+
 export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
   id: 'rectangle',
   name: 'Rectangle',

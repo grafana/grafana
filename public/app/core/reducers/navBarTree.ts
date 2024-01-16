@@ -1,16 +1,32 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { cloneDeep } from 'lodash';
 
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { traverseMenuTree, updateExpandedState } from './navBarTree.utils';
+import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
-export const initialState: NavModelItem[] = updateExpandedState(config.bootData?.navTree ?? []);
+export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
+
+function translateNav(navTree: NavModelItem[]): NavModelItem[] {
+  return navTree.map((navItem) => {
+    const children = navItem.children && translateNav(navItem.children);
+
+    return {
+      ...navItem,
+      children: children,
+      text: getNavTitle(navItem.id) ?? navItem.text,
+      subTitle: getNavSubTitle(navItem.id) ?? navItem.subTitle,
+      emptyMessage: getNavTitle(navItem.emptyMessageId),
+    };
+  });
+}
+
+// this matches the prefix set in the backend navtree
+export const ID_PREFIX = 'starred/';
 
 const navTreeSlice = createSlice({
   name: 'navBarTree',
-  initialState,
+  initialState: () => translateNav(config.bootData?.navTree ?? []),
   reducers: {
     setStarred: (state, action: PayloadAction<{ id: string; title: string; url: string; isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');
@@ -21,14 +37,14 @@ const navTreeSlice = createSlice({
             starredItems.children = [];
           }
           const newStarredItem: NavModelItem = {
-            id,
+            id: ID_PREFIX + id,
             text: title,
             url,
           };
           starredItems.children.push(newStarredItem);
           starredItems.children.sort((a, b) => a.text.localeCompare(b.text));
         } else {
-          const index = starredItems.children?.findIndex((item) => item.id === id) ?? -1;
+          const index = starredItems.children?.findIndex((item) => item.id === ID_PREFIX + id) ?? -1;
           if (index > -1) {
             starredItems?.children?.splice(index, 1);
           }
@@ -47,44 +63,15 @@ const navTreeSlice = createSlice({
         }
       }
     },
-    // @Percona
-    updateMenuTree: (state, action: PayloadAction<{ id: string; active: boolean }>) => {
-      const { id, active } = action.payload;
-
-      const nodeMap: Record<string, NavModelItem> = {};
-      const parentMap: Record<string, NavModelItem> = {};
-
-      // Close all other menu items
-      traverseMenuTree(state, (item) => {
-        item.expanded = false;
-
-        item.children?.map((child) => {
-          parentMap[child.id || ''] = item;
-        });
-
-        nodeMap[item.id || ''] = item;
-      });
-
-      // Expand menu tree for the currently active menu item
-      let current = nodeMap[id];
-      let parent = parentMap[id];
-
-      current.expanded = active;
-
-      while (current && parent) {
-        current = parent;
-        parent = parentMap[current.id || ''];
-
-        if (current) {
-          current.expanded = true;
-        }
+    removePluginFromNavTree: (state, action: PayloadAction<{ pluginID: string }>) => {
+      const navID = 'plugin-page-' + action.payload.pluginID;
+      const pluginItemIndex = state.findIndex((navItem) => navItem.id === navID);
+      if (pluginItemIndex > -1) {
+        state.splice(pluginItemIndex, 1);
       }
-    },
-    updateNavTree: (_, action: PayloadAction<{ items: NavModelItem[] }>) => {
-      return updateExpandedState(cloneDeep(action.payload.items));
     },
   },
 });
 
-export const { setStarred, updateDashboardName, updateMenuTree, updateNavTree } = navTreeSlice.actions;
+export const { setStarred, removePluginFromNavTree, updateDashboardName } = navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
@@ -17,6 +17,6 @@ interface Props {
 }
 
 // @PERCONA
-export const AmAlertStateTag: FC<Props> = ({ state, silenced }) => (
+export const AmAlertStateTag = ({ state, silenced }: Props) => (
   <StateTag state={alertStateToState[state]}>{state === 'suppressed' && silenced ? silenced : state}</StateTag>
 );

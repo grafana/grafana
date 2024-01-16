@@ -1,12 +1,10 @@
 ## Prerequisites
 
 - npm install
-- gem install premailer
 
 ## Tasks
 
-- npm run build (default task will build new inlines email templates)
-- npm start (builds on source HTML, text, or CSS change)
+- make (default task will build new inlines email templates)
 
 ## Result
 

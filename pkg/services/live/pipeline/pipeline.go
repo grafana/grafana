@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/user"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
@@ -17,8 +14,11 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
 const (
@@ -108,17 +108,17 @@ type FrameOutputter interface {
 // Subscriber can handle channel subscribe events.
 type Subscriber interface {
 	Type() string
-	Subscribe(ctx context.Context, vars Vars, data []byte) (models.SubscribeReply, backend.SubscribeStreamStatus, error)
+	Subscribe(ctx context.Context, vars Vars, data []byte) (model.SubscribeReply, backend.SubscribeStreamStatus, error)
 }
 
 // PublishAuthChecker checks whether current user can publish to a channel.
 type PublishAuthChecker interface {
-	CanPublish(ctx context.Context, u *user.SignedInUser) (bool, error)
+	CanPublish(ctx context.Context, u identity.Requester) (bool, error)
 }
 
 // SubscribeAuthChecker checks whether current user can subscribe to a channel.
 type SubscribeAuthChecker interface {
-	CanSubscribe(ctx context.Context, u *user.SignedInUser) (bool, error)
+	CanSubscribe(ctx context.Context, u identity.Requester) (bool, error)
 }
 
 // LiveChannelRule is an in-memory representation of each specific rule to be executed by Pipeline.

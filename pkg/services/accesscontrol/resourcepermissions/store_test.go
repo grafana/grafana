@@ -9,9 +9,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 type setUserResourcePermissionTest struct {
@@ -26,6 +35,9 @@ type setUserResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setUserResourcePermissionTest{
 		{
 			desc:              "should set resource permission for user",
@@ -108,6 +120,9 @@ type setTeamResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetTeamResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setTeamResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for team",
@@ -193,6 +208,9 @@ type setBuiltInResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetBuiltInResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for builtin role",
@@ -274,6 +292,9 @@ type setResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setResourcePermissionsTest{
 		{
 			desc:              "should set all permissions provided",
@@ -335,14 +356,18 @@ func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 }
 
 type getResourcePermissionsTest struct {
-	desc        string
-	user        *user.SignedInUser
-	numUsers    int
-	query       GetResourcePermissionsQuery
-	expectedLen int
+	desc               string
+	user               *user.SignedInUser
+	numUsers           int
+	numServiceAccounts int
+	query              GetResourcePermissionsQuery
+	expectedLen        int
 }
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
@@ -398,6 +423,28 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			expectedLen: 2,
 		},
 		{
+			desc: "should return users and service accounts caller can read",
+			user: &user.SignedInUser{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {
+						accesscontrol.ActionOrgUsersRead: {"users:id:1", "users:id:2", "users:id:3"},
+						serviceaccounts.ActionRead:       {"serviceaccounts:id:5"},
+					},
+				}},
+			numUsers:           3,
+			numServiceAccounts: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				OnlyManaged:          true,
+				EnforceAccessControl: true,
+			},
+			expectedLen: 4,
+		},
+		{
 			desc: "should return permissions for all users when access control is not enforces",
 			user: &user.SignedInUser{
 				OrgID:       1,
@@ -418,8 +465,10 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, sql := setupTestEnv(t)
+			orgService, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			require.NoError(t, err)
 
-			err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 				role := &accesscontrol.Role{
 					OrgID:   tt.user.OrgID,
 					UID:     "seeded",
@@ -454,7 +503,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			seedResourcePermissions(t, store, sql, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers)
+			seedResourcePermissions(t, store, sql, orgService, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers, tt.numServiceAccounts)
 
 			tt.query.User = tt.user
 			permissions, err := store.GetResourcePermissions(context.Background(), tt.user.OrgID, tt.query)
@@ -464,24 +513,28 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	}
 }
 
-func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
+func seedResourcePermissions(
+	t *testing.T, store *store, sql *sqlstore.SQLStore, orgService org.Service,
+	actions []string, resource, resourceID, resourceAttribute string, numUsers, numServiceAccounts int,
+) {
 	t.Helper()
-	for i := 0; i < numUsers; i++ {
-		org, _ := sql.GetOrgByName("test")
 
-		if org == nil {
-			addedOrg, err := sql.CreateOrgWithMember("test", int64(i))
-			require.NoError(t, err)
-			org = &addedOrg
-		}
+	orgID, err := orgService.GetOrCreate(context.Background(), "test")
+	require.NoError(t, err)
 
-		u, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
-			Login: fmt.Sprintf("user:%s%d", resourceID, i),
-			OrgID: org.Id,
+	usrSvc, err := userimpl.ProvideService(sql, orgService, sql.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	create := func(login string, isServiceAccount bool) {
+		u, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+			Login:            login,
+			IsServiceAccount: isServiceAccount,
+			OrgID:            orgID,
 		})
+
 		require.NoError(t, err)
 
-		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.ID}, SetResourcePermissionCommand{
+		_, err = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: u.ID}, SetResourcePermissionCommand{
 			Actions:           actions,
 			Resource:          resource,
 			ResourceID:        resourceID,
@@ -489,9 +542,209 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 		}, nil)
 		require.NoError(t, err)
 	}
+
+	for i := 0; i < numUsers; i++ {
+		create(fmt.Sprintf("user:%s:%d", resourceID, i), false)
+	}
+
+	for i := 0; i < numServiceAccounts; i++ {
+		create(fmt.Sprintf("sa:%s:%d", resourceID, i), true)
+	}
 }
 
 func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
-	sql := sqlstore.InitTestDB(t)
-	return NewStore(sql), sql
+	sql := db.InitTestDB(t)
+	return NewStore(sql, featuremgmt.WithFeatures()), sql
+}
+
+func TestStore_IsInherited(t *testing.T) {
+	type testCase struct {
+		description   string
+		permission    *flatResourcePermission
+		requiredScope string
+		expected      bool
+	}
+
+	testCases := []testCase{
+		{
+			description: "same scope is not inherited",
+			permission: &flatResourcePermission{
+				Scope:    dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
+			},
+			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			expected:      false,
+		},
+		{
+			description: "specific folder scope for dashboards is inherited",
+			permission: &flatResourcePermission{
+				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
+			},
+			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			expected:      true,
+		},
+		{
+			description: "wildcard scope from a fixed role is not inherited",
+			permission: &flatResourcePermission{
+				Scope:    dashboards.ScopeDashboardsAll,
+				RoleName: fmt.Sprintf("%sfixed_role", accesscontrol.FixedRolePrefix),
+			},
+			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			expected:      false,
+		},
+		{
+			description: "parent folder scope for nested folders is inherited",
+			permission: &flatResourcePermission{
+				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
+			},
+			requiredScope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
+			expected:      true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			isInherited := tc.permission.IsInherited(tc.requiredScope)
+			assert.Equal(t, tc.expected, isInherited)
+		})
+	}
+}
+
+type orgPermission struct {
+	OrgID  int64  `xorm:"org_id"`
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
+}
+
+func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type deleteResourcePermissionsTest struct {
+		desc              string
+		orgID             int64
+		resourceAttribute string
+		command           DeleteResourcePermissionsCmd
+		shouldExist       []orgPermission
+		shouldNotExist    []orgPermission
+	}
+
+	tests := []deleteResourcePermissionsTest{
+		{
+			desc:              "should delete all permissions for resource id in org 1",
+			orgID:             1,
+			resourceAttribute: "uid",
+			command: DeleteResourcePermissionsCmd{
+				Resource:          "datasources",
+				ResourceID:        "1",
+				ResourceAttribute: "uid",
+			},
+			shouldExist: []orgPermission{
+				{
+					OrgID:  2,
+					Action: "datasources:query",
+					Scope:  "datasources:uid:1",
+				}, {
+					OrgID:  2,
+					Action: "datasources:write",
+					Scope:  "datasources:uid:1",
+				},
+				{
+					OrgID:  1,
+					Action: "datasources:query",
+					Scope:  "datasources:uid:2",
+				}, {
+					OrgID:  1,
+					Action: "datasources:write",
+					Scope:  "datasources:uid:2",
+				}},
+			shouldNotExist: []orgPermission{
+				{
+					OrgID:  1,
+					Action: "datasources:query",
+					Scope:  "datasources:uid:1",
+				}, {
+					OrgID:  1,
+					Action: "datasources:write",
+					Scope:  "datasources:uid:1",
+				}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, _ := setupTestEnv(t)
+
+			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           []string{"datasources:query", "datasources:write"},
+						Resource:          "datasources",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			_, err = store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           []string{"datasources:query", "datasources:write"},
+						Resource:          "datasources",
+						ResourceID:        "2",
+						ResourceAttribute: "uid",
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			_, err = store.SetResourcePermissions(context.Background(), 2, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           []string{"datasources:query", "datasources:write"},
+						Resource:          "datasources",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			err = store.DeleteResourcePermissions(context.Background(), tt.orgID, &tt.command)
+			require.NoError(t, err)
+
+			permissions := retrievePermissionsHelper(store, t)
+
+			for _, p := range tt.shouldExist {
+				assert.Contains(t, permissions, p)
+			}
+
+			for _, p := range tt.shouldNotExist {
+				assert.NotContains(t, permissions, p)
+			}
+		})
+	}
+}
+
+func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
+	permissions := []orgPermission{}
+	err := store.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+		err := sess.SQL(`
+    SELECT permission.*, role.org_id
+    FROM permission
+    INNER JOIN role ON permission.role_id = role.id
+`).Find(&permissions)
+		require.NoError(t, err)
+		return nil
+	})
+
+	require.NoError(t, err)
+	return permissions
 }

@@ -5,7 +5,7 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
 import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { AmAlertStateTag } from 'app/features/alerting/unified/components/silences/AmAlertStateTag';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
@@ -73,7 +73,7 @@ export const Alerts: FC = () => {
       {
         Header: 'Summary',
         accessor: 'annotations',
-        Cell: ({ value: { summary } }) => summary || '',
+        Cell: ({ value: { summary } }) => <>{summary || ''}</>,
         width: '30%',
       },
       {
@@ -92,13 +92,13 @@ export const Alerts: FC = () => {
       {
         Header: activeSinceColumn,
         accessor: 'startsAt',
-        Cell: ({ value }) => (value ? format(new Date(value), 'yyyy-MM-dd HH:mm:ss') : null),
+        Cell: ({ value }) => <>{value ? format(new Date(value), 'yyyy-MM-dd HH:mm:ss') : null}</>,
         width: '10%',
       },
       {
         Header: lastNotifiedColumn,
         accessor: 'updatedAt',
-        Cell: ({ value }) => (value ? format(new Date(value), 'yyyy-MM-dd HH:mm:ss') : null),
+        Cell: ({ value }) => <>{value ? format(new Date(value), 'yyyy-MM-dd HH:mm:ss') : null}</>,
         width: '10%',
       },
       {
@@ -168,8 +168,8 @@ export const Alerts: FC = () => {
   }, [getData]);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents>
+    <Page navModel={navModel}>
+      <Page.Contents>
         <FeatureLoader featureName={Messages.alerting} featureSelector={featureSelector}>
           <Table
             totalItems={alertsRequest?.result?.length || 0}
@@ -186,8 +186,8 @@ export const Alerts: FC = () => {
             renderExpandedRow={renderSelectedSubRow}
           />
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

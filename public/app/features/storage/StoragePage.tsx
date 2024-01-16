@@ -3,8 +3,8 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
-import { useStyles2, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert, toIconName } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { useStyles2, Spinner, TabsBar, Tab, Button, HorizontalGroup, Alert, toIconName } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -14,7 +14,6 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { AddRootView } from './AddRootView';
 import { Breadcrumb } from './Breadcrumb';
 import { CreateNewFolderModal } from './CreateNewFolderModal';
-import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
@@ -69,7 +68,7 @@ export default function StoragePage(props: Props) {
           frame.fields[0] = {
             ...name,
             getLinks: (cfg: ValueLinkConfig) => {
-              const n = name.values.get(cfg.valueRowIndex ?? 0);
+              const n = name.values[cfg.valueRowIndex ?? 0];
               const p = path + '/' + n;
               return [
                 {
@@ -94,7 +93,7 @@ export default function StoragePage(props: Props) {
     if (listing.value) {
       const length = listing.value.length;
       if (length === 1) {
-        const first = listing.value.fields[0].values.get(0) as string;
+        const first: string = listing.value.fields[0].values[0];
         isFolder = !path.endsWith(first);
       } else {
         // TODO: handle files/folders which do not exist
@@ -105,24 +104,12 @@ export default function StoragePage(props: Props) {
   }, [path, listing]);
 
   const fileNames = useMemo(() => {
-    return (
-      listing.value?.fields
-        ?.find((f) => f.name === 'name')
-        ?.values?.toArray()
-        ?.filter((v) => typeof v === 'string') ?? []
-    );
+    return listing.value?.fields?.find((f) => f.name === 'name')?.values.filter((v) => typeof v === 'string') ?? [];
   }, [listing]);
 
   const renderView = () => {
     const isRoot = !path?.length || path === '/';
     switch (view) {
-      case StorageView.Export:
-        if (!isRoot) {
-          setPath('');
-          return <Spinner />;
-        }
-        return <ExportView onPathChange={setPath} />;
-
       case StorageView.AddRoot:
         if (!isRoot) {
           setPath('');
@@ -149,7 +136,7 @@ export default function StoragePage(props: Props) {
 
     // Lets only apply permissions to folders (for now)
     if (isFolder) {
-      opts.push({ what: StorageView.Perms, text: 'Permissions' });
+      // opts.push({ what: StorageView.Perms, text: 'Permissions' });
     } else {
       // TODO: only if the file exists in a storage engine with
       opts.push({ what: StorageView.History, text: 'History' });
@@ -157,7 +144,6 @@ export default function StoragePage(props: Props) {
 
     const canAddFolder = isFolder && (path.startsWith('resources') || path.startsWith('content'));
     const canDelete = path.startsWith('resources/') || path.startsWith('content/');
-    const canViewDashboard = config.featureToggles.dashboardsFromStorage && path.startsWith('content/');
 
     const getErrorMessages = () => {
       return (
@@ -180,12 +166,6 @@ export default function StoragePage(props: Props) {
         <HorizontalGroup width="100%" justify="space-between" spacing={'md'} height={25}>
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={toIconName(navModel.node.icon ?? '')} />
           <HorizontalGroup>
-            {canViewDashboard && (
-              <LinkButton icon="dashboard" href={`g/${path}`}>
-                Dashboard
-              </LinkButton>
-            )}
-
             {canAddFolder && (
               <>
                 <UploadButton path={path} setErrorMessages={setErrorMessages} fileNames={fileNames} setPath={setPath} />

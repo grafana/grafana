@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -20,9 +21,11 @@ describe('Platform::', () => {
           },
         } as StoreState)}
       >
-        <Router history={locationService.getHistory()}>
-          <Platform />
-        </Router>
+        {wrapWithGrafanaContextMock(
+          <Router history={locationService.getHistory()}>
+            <Platform />
+          </Router>
+        )}
       </Provider>
     );
 
@@ -39,9 +42,11 @@ describe('Platform::', () => {
           },
         } as StoreState)}
       >
-        <Router history={locationService.getHistory()}>
-          <Platform />
-        </Router>
+        {wrapWithGrafanaContextMock(
+          <Router history={locationService.getHistory()}>
+            <Platform />
+          </Router>
+        )}
       </Provider>
     );
 

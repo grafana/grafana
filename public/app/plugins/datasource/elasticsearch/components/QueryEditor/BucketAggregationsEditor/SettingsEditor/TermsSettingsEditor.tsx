@@ -5,17 +5,11 @@ import { SelectableValue } from '@grafana/data';
 import { InlineField, Select, Input } from '@grafana/ui';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { MetricAggregation, Percentiles, ExtendedStatMetaType, ExtendedStats, Terms } from '../../../../types';
 import { describeMetric } from '../../../../utils';
 import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 import { useQuery } from '../../ElasticsearchQueryContext';
-import {
-  ExtendedStatMetaType,
-  ExtendedStats,
-  isPipelineAggregation,
-  MetricAggregation,
-  Percentiles,
-} from '../../MetricAggregationsEditor/aggregations';
-import { Terms } from '../aggregations';
+import { isPipelineAggregation } from '../../MetricAggregationsEditor/aggregations';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { bucketAggregationConfig, orderByOptions, orderOptions, sizeOptions } from '../utils';
 
@@ -108,7 +102,7 @@ function createOrderByOptionsForExtendedStats(metric: ExtendedStats): Selectable
   return metaKeys
     .filter((key) => metric.meta?.[key])
     .map((key) => {
-      let method = key as string;
+      let method: string = key;
       // The bucket path for std_deviation_bounds.lower and std_deviation_bounds.upper
       // is accessed via std_lower and std_upper, respectively.
       if (key === 'std_deviation_bounds_lower') {

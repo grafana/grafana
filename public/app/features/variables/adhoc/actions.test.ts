@@ -59,7 +59,6 @@ describe('adhoc actions', () => {
         key: 'filter-key',
         value: 'filter-existing',
         operator: '!=',
-        condition: '',
       };
 
       const variable = adHocBuilder()
@@ -76,7 +75,7 @@ describe('adhoc actions', () => {
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
       const expectedQuery = { 'var-Filters': ['filter-key|!=|filter-existing', 'filter-key|=|filter-value'] };
-      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
+      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=' };
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction(key, filterAdded(toVariablePayload(variable, expectedFilter)))
@@ -108,7 +107,7 @@ describe('adhoc actions', () => {
         .build();
 
       const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
-      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
+      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=' };
 
       tester.thenDispatchedActionsShouldEqual(
         createAddVariableAction(variable),
@@ -142,7 +141,7 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
+      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=' };
       const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
 
       tester.thenDispatchedActionsShouldEqual(
@@ -181,7 +180,7 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(existing))
         .whenAsyncActionIsDispatched(applyFilterFromTable(options), true);
 
-      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
+      const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=' };
       const expectedQuery = { 'var-elastic-filter': [] as string[], 'var-Filters': ['filter-key|=|filter-value'] };
 
       tester.thenDispatchedActionsShouldEqual(
@@ -200,7 +199,6 @@ describe('adhoc actions', () => {
         key: 'key',
         value: 'value',
         operator: '=',
-        condition: '',
       };
 
       const updated = {
@@ -241,7 +239,6 @@ describe('adhoc actions', () => {
         key: 'key',
         value: 'value',
         operator: '=',
-        condition: '',
       };
 
       const adding = {
@@ -263,7 +260,7 @@ describe('adhoc actions', () => {
         .whenAsyncActionIsDispatched(addFilter(toKeyedVariableIdentifier(variable), adding), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|!=|value'] };
-      const expectedFilter = { key: 'key', value: 'value', operator: '!=', condition: '' };
+      const expectedFilter = { key: 'key', value: 'value', operator: '!=' };
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction(key, filterAdded(toVariablePayload(variable, expectedFilter)))
@@ -279,7 +276,6 @@ describe('adhoc actions', () => {
         key: 'key',
         value: 'value',
         operator: '=',
-        condition: '',
       };
 
       const variable = adHocBuilder()
@@ -332,7 +328,6 @@ describe('adhoc actions', () => {
         key: 'key',
         value: 'value',
         operator: '=',
-        condition: '',
       };
 
       const variable = adHocBuilder()
@@ -362,7 +357,6 @@ describe('adhoc actions', () => {
         key: 'key',
         value: 'value',
         operator: '=',
-        condition: '',
       };
 
       const variable = adHocBuilder()
@@ -373,21 +367,15 @@ describe('adhoc actions', () => {
         .withDatasource({ uid: 'elasticsearch' })
         .build();
 
-      const fromUrl = [
-        { ...existing, condition: '>' },
-        { ...existing, name: 'value-2' },
-      ];
+      const fromUrl = [{ ...existing, name: 'value-2' }];
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(setFiltersFromUrl(toKeyedVariableIdentifier(variable), fromUrl), true);
 
-      const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|=|value'] };
-      const expectedFilters = [
-        { key: 'key', value: 'value', operator: '=', condition: '>' },
-        { key: 'key', value: 'value', operator: '=', condition: '', name: 'value-2' },
-      ];
+      const expectedQuery = { 'var-elastic-filter': ['key|=|value'] };
+      const expectedFilters = [{ key: 'key', value: 'value', operator: '=', name: 'value-2' }];
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction(key, filtersRestored(toVariablePayload(variable, expectedFilters)))

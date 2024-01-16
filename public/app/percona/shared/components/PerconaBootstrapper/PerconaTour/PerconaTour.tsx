@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { FC, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { contextSrv } from 'app/core/core';
@@ -10,7 +10,7 @@ import getAlertingTourSteps from 'app/percona/tour/steps/alerting';
 import getProductTourSteps from 'app/percona/tour/steps/product';
 import { useSelector } from 'app/types';
 
-const PerconaTourBootstrapper: React.FC = () => {
+const PerconaTourBootstrapper: FC = () => {
   const { startTour, setSteps } = usePerconaTour();
   const location = useLocation();
   const user = useSelector(getPerconaUser);

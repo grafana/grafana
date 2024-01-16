@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useId, useState } from 'react';
+import { SemVer } from 'semver';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { Alert, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
@@ -8,24 +9,46 @@ import { ElasticDatasource } from '../../datasource';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
-import { isSupportedVersion } from '../../utils';
+import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
+import { QueryTypeSelector } from './QueryTypeSelector';
 import { changeAliasPattern, changeQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => {
-  if (!isSupportedVersion(datasource.esVersion)) {
-    return (
-      <Alert
-        title={`Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed`}
-      ></Alert>
+// a react hook that returns the elasticsearch database version,
+// or `null`, while loading, or if it is not possible to determine the value.
+function useElasticVersion(datasource: ElasticDatasource): SemVer | null {
+  const [version, setVersion] = useState<SemVer | null>(null);
+  useEffect(() => {
+    let canceled = false;
+    datasource.getDatabaseVersion().then(
+      (version) => {
+        if (!canceled) {
+          setVersion(version);
+        }
+      },
+      (error) => {
+        // we do nothing
+        console.log(error);
+      }
     );
-  }
+
+    return () => {
+      canceled = true;
+    };
+  }, [datasource]);
+
+  return version;
+}
+
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => {
+  const elasticVersion = useElasticVersion(datasource);
+  const showUnsupportedMessage = elasticVersion != null && !isSupportedVersion(elasticVersion);
   return (
     <ElasticsearchProvider
       datasource={datasource}
@@ -34,6 +57,7 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: 
       query={query}
       range={range || getDefaultTimeRange()}
     >
+      {showUnsupportedMessage && <Alert title={unsupportedVersionMessage} />}
       <QueryEditorForm value={query} />
     </ElasticsearchProvider>
   );
@@ -43,7 +67,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   root: css`
     display: flex;
   `,
-  queryFieldWrapper: css`
+  queryItem: css`
     flex-grow: 1;
     margin: 0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0;
   `,
@@ -57,16 +81,8 @@ export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; o
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.queryFieldWrapper}>
-      <QueryField
-        query={value}
-        // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-        // And slate will claim the focus, making it impossible to leave the field.
-        onBlur={() => {}}
-        onChange={onChange}
-        placeholder="Lucene Query"
-        portalOrigin="elasticsearch"
-      />
+    <div className={styles.queryItem}>
+      <QueryField query={value} onChange={onChange} placeholder="Enter a lucene query" portalOrigin="elasticsearch" />
     </div>
   );
 };
@@ -74,34 +90,42 @@ export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; o
 const QueryEditorForm = ({ value }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
+  const inputId = useId();
   const styles = useStyles2(getStyles);
 
-  // To be considered a time series query, the last bucked aggregation must be a Date Histogram
-  const isTimeSeriesQuery = value?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+  const isTimeSeries = isTimeSeriesQuery(value);
 
   const showBucketAggregationsEditor = value.metrics?.every(
-    (metric) => !metricAggregationConfig[metric.type].isSingleMetric
+    (metric) => metricAggregationConfig[metric.type].impliedQueryType === 'metrics'
   );
 
   return (
     <>
       <div className={styles.root}>
-        <InlineLabel width={17}>Query</InlineLabel>
+        <InlineLabel width={17}>Query type</InlineLabel>
+        <div className={styles.queryItem}>
+          <QueryTypeSelector />
+        </div>
+      </div>
+      <div className={styles.root}>
+        <InlineLabel width={17}>Lucene Query</InlineLabel>
         <ElasticSearchQueryField onChange={(query) => dispatch(changeQuery(query))} value={value?.query} />
 
-        <InlineField
-          label="Alias"
-          labelWidth={15}
-          disabled={!isTimeSeriesQuery}
-          tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
-        >
-          <Input
-            id={`ES-query-${value.refId}_alias`}
-            placeholder="Alias Pattern"
-            onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
-            defaultValue={value.alias}
-          />
-        </InlineField>
+        {isTimeSeries && (
+          <InlineField
+            label="Alias"
+            labelWidth={15}
+            tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
+            htmlFor={inputId}
+          >
+            <Input
+              id={inputId}
+              placeholder="Alias Pattern"
+              onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
+              defaultValue={value.alias}
+            />
+          </InlineField>
+        )}
       </div>
 
       <MetricAggregationsEditor nextId={nextId} />

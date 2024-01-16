@@ -10,7 +10,7 @@ import { getStyles } from './Close.styles';
 const Close: FC<CloseProps> = ({ onClick }) => {
   const styles = useStyles2(getStyles);
 
-  return <IconButton className={styles.button} onClick={onClick} name="times" size="lg" />;
+  return <IconButton aria-label="Close tour" className={styles.button} onClick={onClick} name="times" size="lg" />;
 };
 
 export default Close;

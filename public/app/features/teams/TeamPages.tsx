@@ -2,7 +2,6 @@ import { includes } from 'lodash';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -14,12 +13,11 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, StoreState } from 'app/types';
 
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
-import TeamMembers from './TeamMembers';
 import TeamPermissions from './TeamPermissions';
 import TeamSettings from './TeamSettings';
-import { loadTeam, loadTeamMembers } from './state/actions';
+import { loadTeam } from './state/actions';
 import { getTeamLoadingNav } from './state/navModel';
-import { getTeam, getTeamMembers, isSignedInUserTeamAdmin } from './state/selectors';
+import { getTeam } from './state/selectors';
 
 interface TeamPageRouteParams {
   id: string;
@@ -43,31 +41,24 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const teamId = parseInt(props.match.params.id, 10);
   const team = getTeam(state.team, teamId);
   let defaultPage = 'members';
-  if (contextSrv.accessControlEnabled()) {
-    // With RBAC the settings page will always be available
-    if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
-      defaultPage = 'settings';
-    }
+  // With RBAC the settings page will always be available
+  if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
+    defaultPage = 'settings';
   }
   const pageName = props.match.params.page ?? defaultPage;
-  const teamLoadingNav = getTeamLoadingNav(pageName as string);
+  const teamLoadingNav = getTeamLoadingNav(pageName);
   const pageNav = getNavModel(state.navIndex, `team-${pageName}-${teamId}`, teamLoadingNav).main;
-  const members = getTeamMembers(state.team);
 
   return {
     pageNav,
     teamId: teamId,
     pageName: pageName,
     team,
-    members,
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 
 const mapDispatchToProps = {
   loadTeam,
-  loadTeamMembers,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -92,10 +83,6 @@ export class TeamPages extends PureComponent<Props, State> {
     const { loadTeam, teamId } = this.props;
     this.setState({ isLoading: true });
     const team = await loadTeam(teamId);
-    // With accesscontrol, the TeamPermissions will fetch team members
-    if (!contextSrv.accessControlEnabled()) {
-      await this.props.loadTeamMembers();
-    }
     this.setState({ isLoading: false });
     return team;
   }
@@ -118,49 +105,25 @@ export class TeamPages extends PureComponent<Props, State> {
     return text1.toLocaleLowerCase() === text2.toLocaleLowerCase();
   };
 
-  hideTabsFromNonTeamAdmin = (pageNav: NavModelItem, isSignedInUserTeamAdmin: boolean) => {
-    if (contextSrv.accessControlEnabled()) {
-      return pageNav;
-    }
-
-    if (!isSignedInUserTeamAdmin && pageNav && pageNav.children) {
-      pageNav.children
-        .filter((navItem) => !this.textsAreEqual(navItem.text, PageTypes.Members))
-        .map((navItem) => {
-          navItem.hideFromTabs = true;
-        });
-    }
-
-    return pageNav;
-  };
-
-  renderPage(isSignedInUserTeamAdmin: boolean): React.ReactNode {
+  renderPage(): React.ReactNode {
     const { isSyncEnabled } = this.state;
-    const { members, team } = this.props;
+    const { team } = this.props;
     const currentPage = this.getCurrentPage();
 
-    const canReadTeam = contextSrv.hasAccessInMetadata(
-      AccessControlAction.ActionTeamsRead,
-      team!,
-      isSignedInUserTeamAdmin
-    );
-    const canReadTeamPermissions = contextSrv.hasAccessInMetadata(
+    const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, team!);
+    const canReadTeamPermissions = contextSrv.hasPermissionInMetadata(
       AccessControlAction.ActionTeamsPermissionsRead,
-      team!,
-      isSignedInUserTeamAdmin
+      team!
     );
-    const canWriteTeamPermissions = contextSrv.hasAccessInMetadata(
+    const canWriteTeamPermissions = contextSrv.hasPermissionInMetadata(
       AccessControlAction.ActionTeamsPermissionsWrite,
-      team!,
-      isSignedInUserTeamAdmin
+      team!
     );
 
     switch (currentPage) {
       case PageTypes.Members:
-        if (contextSrv.accessControlEnabled()) {
+        if (canReadTeamPermissions) {
           return <TeamPermissions team={team!} />;
-        } else {
-          return <TeamMembers syncEnabled={isSyncEnabled} members={members} />;
         }
       case PageTypes.Settings:
         return canReadTeam && <TeamSettings team={team!} />;
@@ -183,13 +146,12 @@ export class TeamPages extends PureComponent<Props, State> {
   }
 
   render() {
-    const { team, pageNav, members, editorsCanAdmin, signedInUser } = this.props;
-    const isTeamAdmin = isSignedInUserTeamAdmin({ members, editorsCanAdmin, signedInUser });
+    const { team, pageNav } = this.props;
 
     return (
-      <Page navId="teams" pageNav={this.hideTabsFromNonTeamAdmin(pageNav, isTeamAdmin)}>
+      <Page navId="teams" pageNav={pageNav}>
         <Page.Contents isLoading={this.state.isLoading}>
-          {team && Object.keys(team).length !== 0 && this.renderPage(isTeamAdmin)}
+          {team && Object.keys(team).length !== 0 && this.renderPage()}
         </Page.Contents>
       </Page>
     );

@@ -6,18 +6,20 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -33,29 +35,15 @@ type ExternalAlertmanagerProvider interface {
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 }
 
-type Alertmanager interface {
-	// Configuration
-	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig(ctx context.Context) error
-	GetStatus() apimodels.GettableStatus
-
-	// Silences
-	CreateSilence(ps *apimodels.PostableSilence) (string, error)
-	DeleteSilence(silenceID string) error
-	GetSilence(silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(filter []string) (apimodels.GettableSilences, error)
-
-	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
-
-	// Receivers
-	GetReceivers(ctx context.Context) []apimodels.Receiver
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
+type AlertingStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
 }
 
-type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
+type RuleAccessControlService interface {
+	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error)
+	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 }
 
 // API handlers.
@@ -64,25 +52,30 @@ type API struct {
 	DatasourceCache      datasources.CacheService
 	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
-	ExpressionService    *expr.Service
 	QuotaService         quota.Service
-	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            store.RuleStore
-	InstanceStore        store.InstanceStore
+	RuleStore            RuleStore
 	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
-	AccessControl        accesscontrol.AccessControl
+	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
+	EvaluatorFactory     eval.EvaluatorFactory
+	FeatureManager       featuremgmt.FeatureToggles
+	Historian            Historian
+	Tracer               tracing.Tracer
+	AppUrl               *url.URL
+
+	// Hooks can be used to replace API handlers for specific paths.
+	Hooks *Hooks
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -92,8 +85,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		DataProxy: api.DataProxy,
 		ac:        api.AccessControl,
 	}
-
-	evaluator := eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService)
+	ruleAuthzService := accesscontrol.NewRuleService(api.AccessControl)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
@@ -105,22 +97,21 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			conditionValidator: evaluator,
+			conditionValidator: api.EvaluatorFactory,
 			QuotaService:       api.QuotaService,
-			scheduleService:    api.Schedule,
 			store:              api.RuleStore,
 			provenanceStore:    api.ProvenanceStore,
 			xactManager:        api.TransactionManager,
 			log:                logger,
 			cfg:                &api.Cfg.UnifiedAlerting,
-			ac:                 api.AccessControl,
+			authz:              ruleAuthzService,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -128,8 +119,13 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			AlertingProxy:   proxy,
 			DatasourceCache: api.DatasourceCache,
 			log:             logger,
-			accessControl:   api.AccessControl,
-			evaluator:       evaluator,
+			authz:           ruleAuthzService,
+			evaluator:       api.EvaluatorFactory,
+			cfg:             &api.Cfg.UnifiedAlerting,
+			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory, api.Tracer),
+			featureManager:  api.FeatureManager,
+			appUrl:          api.AppUrl,
+			tracer:          api.Tracer,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
@@ -147,5 +143,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		templates:           api.Templates,
 		muteTimings:         api.MuteTimings,
 		alertRules:          api.AlertRules,
+	}), m)
+
+	api.RegisterHistoryApiEndpoints(NewStateHistoryApi(&HistorySrv{
+		logger: logger,
+		hist:   api.Historian,
 	}), m)
 }

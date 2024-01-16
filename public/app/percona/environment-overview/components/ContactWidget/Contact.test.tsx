@@ -1,5 +1,5 @@
 import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
@@ -10,7 +10,7 @@ import { StoreState } from 'app/types';
 import Contact from './Contact';
 import { ContactService } from './Contact.service';
 
-const MockWrapper: FC = ({ children }) => {
+const MockWrapper: FC<PropsWithChildren> = ({ children }) => {
   return (
     <Provider
       store={configureStore({

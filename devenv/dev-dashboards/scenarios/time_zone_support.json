@@ -675,7 +675,6 @@
   "refresh": false,
   "revision": 8,
   "schemaVersion": 25,
-  "style": "dark",
   "tags": ["gdev", "panel-tests", "graph", "table"],
   "templating": {
     "list": []

@@ -1,28 +1,28 @@
 import { debounce } from 'lodash';
-import React, { FunctionComponent, useState } from 'react';
+import React, { useState } from 'react';
 
 import { EditorField } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 export interface Props {
   refId: string;
-  onChange: (alias: any) => void;
+  onChange: (alias: string) => void;
   value?: string;
 }
 
-export const AliasBy: FunctionComponent<Props> = ({ refId, value = '', onChange }) => {
+export const AliasBy = ({ refId, value = '', onChange }: Props) => {
   const [alias, setAlias] = useState(value ?? '');
 
   const propagateOnChange = debounce(onChange, 1000);
 
-  onChange = (e: any) => {
-    setAlias(e.target.value);
-    propagateOnChange(e.target.value);
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAlias(e.currentTarget.value);
+    propagateOnChange(e.currentTarget.value);
   };
 
   return (
     <EditorField label="Alias by">
-      <Input id={`${refId}-alias-by`} value={alias} onChange={onChange} />
+      <Input id={`${refId}-alias-by`} value={alias} onChange={onInputChange} />
     </EditorField>
   );
 };

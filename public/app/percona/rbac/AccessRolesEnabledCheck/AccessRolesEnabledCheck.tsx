@@ -1,9 +1,9 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { useSelector } from 'app/types';
 
-const AccessRolesEnabledCheck: FC = ({ children }) => {
+const AccessRolesEnabledCheck: FC<PropsWithChildren> = ({ children }) => {
   const { result: settings } = useSelector(getPerconaSettings);
 
   if (!settings?.enableAccessControl) {

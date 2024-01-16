@@ -1,10 +1,10 @@
-import React, { FC, useEffect, ReactNode } from 'react';
+import React, { FC, useEffect, ReactNode, PropsWithChildren } from 'react';
 
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { getStyles } from './Modal.styles';
 
-export interface ModalWindow {
+export interface ModalWindow extends PropsWithChildren {
   onClose: () => void;
   closeOnClickaway?: boolean;
   closeOnEscape?: boolean;
@@ -34,6 +34,7 @@ export const Modal: FC<ModalWindow> = (props) => {
 
   return isVisible ? (
     <div data-testid="modal-wrapper">
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         className={styles.background}
         onClick={closeOnClickaway ? onClose : undefined}
@@ -43,7 +44,13 @@ export const Modal: FC<ModalWindow> = (props) => {
         <div className={styles.modalHeader} data-testid="modal-header">
           {title}
           <div className={styles.modalHeaderClose}>
-            <IconButton data-testid="modal-close-button" name="times" size="lg" onClick={onClose} />
+            <IconButton
+              data-testid="modal-close-button"
+              name="times"
+              size="lg"
+              onClick={onClose}
+              aria-label="Close modal"
+            />
           </div>
         </div>
         <div className={styles.content} data-testid="modal-content">

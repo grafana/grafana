@@ -6,9 +6,7 @@ import {
   createOrUpdateSilenceAction,
   deleteAlertManagerConfigAction,
   fetchAlertGroupsAction,
-  fetchAlertManagerConfigAction,
   fetchAmAlertsAction,
-  fetchContactPointsStateAction,
   fetchEditableRuleAction,
   fetchExternalAlertmanagersAction,
   fetchExternalAlertmanagersConfigAction,
@@ -34,11 +32,6 @@ export const reducer = combineReducers({
   promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
   rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
     .reducer,
-  amConfigs: createAsyncMapSlice(
-    'amConfigs',
-    fetchAlertManagerConfigAction,
-    (alertManagerSourceName) => alertManagerSourceName
-  ).reducer,
   silences: createAsyncMapSlice('silences', fetchSilencesAction, (alertManagerSourceName) => alertManagerSourceName)
     .reducer,
   ruleForm: combineReducers({
@@ -46,7 +39,6 @@ export const reducer = combineReducers({
     existingRule: createAsyncSlice('existingRule', fetchEditableRuleAction).reducer,
   }),
   grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
-  contactPointsState: createAsyncSlice('contactPointsState', fetchContactPointsStateAction).reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
   deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
   updateSilence: createAsyncSlice('updateSilence', createOrUpdateSilenceAction).reducer,

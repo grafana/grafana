@@ -9,14 +9,25 @@ import store from 'app/core/store';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  DashboardDTO,
+  DashboardInitPhase,
+  DashboardMeta,
+  DashboardRoutes,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
+import { trackDashboardLoaded } from '../utils/tracking';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -27,12 +38,13 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  urlFolderId?: string;
+  urlFolderUid?: string;
   panelType?: string;
   accessToken?: string;
   routeName?: string;
   fixUrl: boolean;
   keybindingSrv: KeybindingSrv;
+  dashboardDto?: DashboardDTO;
 }
 
 async function fetchDashboard(
@@ -50,6 +62,13 @@ async function fetchDashboard(
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
+        const stateManager = getDashboardScenePageStateManager();
+        const cachedDashboard = stateManager.getFromCache(DashboardRoutes.Home);
+
+        if (cachedDashboard) {
+          return cachedDashboard;
+        }
+
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
@@ -69,8 +88,24 @@ async function fetchDashboard(
       case DashboardRoutes.Public: {
         return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
       }
+      case DashboardRoutes.Embedded: {
+        if (args.dashboardDto) {
+          return args.dashboardDto;
+        }
+      }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+
+        // only the folder API has information about ancestors
+        // get parent folder (if it exists) and put it in the store
+        // this will be used to populate the full breadcrumb trail
+        if (dashDTO.meta.folderUid) {
+          try {
+            await dispatch(getFolderByUid(dashDTO.meta.folderUid));
+          } catch (err) {
+            console.warn('Error fetching parent folder', dashDTO.meta.folderUid, 'for dashboard', err);
+          }
+        }
 
         if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
           // check if the current url is correct (might be old slug)
@@ -89,7 +124,13 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
-        return getNewDashboardModelData(args.urlFolderId, args.panelType);
+        // only the folder API has information about ancestors
+        // get parent folder (if it exists) and put it in the store
+        // this will be used to populate the full breadcrumb trail
+        if (args.urlFolderUid) {
+          await dispatch(getFolderByUid(args.urlFolderUid));
+        }
+        return getNewDashboardModelData(args.urlFolderUid, args.panelType);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';
@@ -148,6 +189,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
+
+    const versionBeforeMigration = dashDTO?.dashboard?.version;
 
     // returns null if there was a redirect or error
     if (!dashDTO) {
@@ -250,34 +293,43 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       })
     );
 
+    trackDashboardLoaded(dashboard, versionBeforeMigration);
+
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
 
-export function getNewDashboardModelData(urlFolderId?: string, panelType?: string): any {
+export function getNewDashboardModelData(
+  urlFolderUid?: string,
+  panelType?: string
+): { dashboard: any; meta: DashboardMeta } {
+  const panels = config.featureToggles.emptyDashboardPage
+    ? []
+    : [
+        {
+          type: panelType ?? 'add-panel',
+          gridPos: { x: 0, y: 0, w: 12, h: 9 },
+          title: 'Panel Title',
+        },
+      ];
+
   const data = {
     meta: {
       canStar: false,
       canShare: false,
       canDelete: false,
       isNew: true,
-      folderId: 0,
+      folderUid: '',
     },
     dashboard: {
       title: 'New dashboard',
-      panels: [
-        {
-          type: panelType ?? 'add-panel',
-          gridPos: { x: 0, y: 0, w: 12, h: 9 },
-          title: 'Panel Title',
-        },
-      ],
+      panels,
     },
   };
 
-  if (urlFolderId) {
-    data.meta.folderId = parseInt(urlFolderId, 10);
+  if (urlFolderUid) {
+    data.meta.folderUid = urlFolderUid;
   }
 
   return data;

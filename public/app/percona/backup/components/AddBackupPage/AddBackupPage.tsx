@@ -163,7 +163,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
     setModalTitle(Messages.getModalTitle(true, editing));
   }, [editing, setQueryParams]);
 
-  const onToggle = useCallback((open) => setAdvancedSectionOpen(open), []);
+  const onToggle = useCallback((open: boolean) => setAdvancedSectionOpen(open), []);
 
   const pageSwitcherValues: Array<PageSwitcherValue<BackupType>> = useMemo(
     () => [

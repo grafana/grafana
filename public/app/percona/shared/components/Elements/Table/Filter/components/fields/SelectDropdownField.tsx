@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Field } from 'react-final-form';
 
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
@@ -16,7 +16,7 @@ export const SelectDropdownField = ({ column }: { column: ExtendedColumn }) => {
           <SelectField
             options={columnOptions}
             defaultValue={{ value: ALL_VALUE, label: ALL_LABEL }}
-            label={column.label ?? column.Header}
+            label={column.label ?? (column.Header as ReactNode)}
             {...input}
             data-testid="select-dropdown"
           />

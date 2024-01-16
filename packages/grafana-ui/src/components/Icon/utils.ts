@@ -7,6 +7,8 @@ const alwaysMonoIcons: IconName[] = [
   'heart',
   'panel-add',
   'library-panel',
+  'circle-mono',
+  // @PERCONA
   'percona-database',
   'percona-analytics',
   'percona-cluster',
@@ -71,4 +73,21 @@ export function getSvgSize(size: IconSize) {
     case 'xxxl':
       return 48;
   }
+}
+
+let iconRoot: string | undefined;
+
+export function getIconRoot(): string {
+  if (iconRoot) {
+    return iconRoot;
+  }
+
+  const grafanaPublicPath = typeof window !== 'undefined' && window.__grafana_public_path__;
+  if (grafanaPublicPath) {
+    iconRoot = grafanaPublicPath + 'img/icons/';
+  } else {
+    iconRoot = 'public/img/icons/';
+  }
+
+  return iconRoot;
 }

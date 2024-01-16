@@ -37,8 +37,10 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
   return (
     <div
       className={cx(styles.container, { [styles.error]: func.def.unknown })}
+      onBlur={() => setIsMouseOver(false)}
+      onFocus={() => setIsMouseOver(true)}
       onMouseOver={() => setIsMouseOver(true)}
-      onMouseLeave={() => setIsMouseOver(false)}
+      onMouseOut={() => setIsMouseOver(false)}
     >
       <HorizontalGroup spacing="none">
         <FunctionEditor
@@ -82,7 +84,7 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.borderRadius(),
+    borderRadius: theme.shape.radius.default,
     marginRight: theme.spacing(0.5),
     padding: `0 ${theme.spacing(1)}`,
     height: `${theme.v1.spacing.formInputHeight}px`,

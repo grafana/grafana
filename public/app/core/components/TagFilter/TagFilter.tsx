@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { components } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { TagBadge } from './TagBadge';
 import { TagOption } from './TagOption';
@@ -38,18 +39,18 @@ const filterOption = (option: any, searchQuery: string) => {
   return regex.test(option.value);
 };
 
-export const TagFilter: FC<Props> = ({
+export const TagFilter = ({
   allowCustomValue = false,
   formatCreateLabel,
   hideValues,
   inputId,
   isClearable,
   onChange,
-  placeholder = 'Filter by tag',
+  placeholder,
   tagOptions,
   tags,
   width,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const currentlySelectedTags = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
@@ -134,15 +135,15 @@ export const TagFilter: FC<Props> = ({
     getOptionValue: (i: any) => i.value,
     inputId,
     isMulti: true,
-    loadingMessage: 'Loading...',
-    noOptionsMessage: 'No tags found',
     onChange: onTagChange,
-    placeholder,
+    loadingMessage: t('tag-filter.loading', 'Loading...'),
+    noOptionsMessage: t('tag-filter.no-tags', 'No tags found'),
+    placeholder: placeholder || t('tag-filter.placeholder', 'Filter by tag'),
     value: currentlySelectedTags,
     width,
     components: {
       Option: TagOption,
-      MultiValueLabel: (): any => {
+      MultiValueLabel: () => {
         return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
       },
       MultiValueRemove(props: any) {
@@ -154,16 +155,16 @@ export const TagFilter: FC<Props> = ({
           </components.MultiValueRemove>
         );
       },
-      MultiValueContainer: hideValues ? (): any => null : components.MultiValueContainer,
+      MultiValueContainer: hideValues ? () => null : components.MultiValueContainer,
     },
   };
 
   return (
     <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
-        <span className={styles.clear} onClick={() => onTagChange([])} tabIndex={0}>
+        <button className={styles.clear} onClick={() => onTagChange([])}>
           Clear tags
-        </span>
+        </button>
       )}
       <MultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
@@ -184,8 +185,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   clear: css`
+    background: none;
+    border: none;
     text-decoration: underline;
     font-size: 12px;
+    padding: none;
     position: absolute;
     top: -17px;
     right: 0;

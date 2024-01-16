@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
-import React, { memo, RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Popper as ReactPopper } from 'react-popper';
 import usePrevious from 'react-use/lib/usePrevious';
 import { Value } from 'slate';
@@ -9,13 +9,12 @@ import { Editor } from 'slate-react';
 
 import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
 
-import { makeValue } from '../../index';
 import { SlatePrism } from '../../slate-plugins';
 import { useStyles2 } from '../../themes';
-import { SCHEMA } from '../../utils/slate';
+import { SCHEMA, makeValue } from '../../utils/slate';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { getInputStyles } from '../Input/Input';
-import { Portal } from '../index';
+import { Portal } from '../Portal/Portal';
 
 import { DataLinkSuggestions } from './DataLinkSuggestions';
 import { SelectionReference } from './SelectionReference';
@@ -38,7 +37,7 @@ const datalinksSyntax: Grammar = {
 const plugins = [
   SlatePrism(
     {
-      onlyIn: (node: any) => node.type === 'code_block',
+      onlyIn: (node) => 'type' in node && node.type === 'code_block',
       getSyntax: () => 'links',
     },
     { ...(Prism.languages as LanguageMap), links: datalinksSyntax }
@@ -47,34 +46,39 @@ const plugins = [
 
 const getStyles = (theme: GrafanaTheme2) => ({
   input: getInputStyles({ theme, invalid: false }).input,
-  editor: css`
-    .token.builtInVariable {
-      color: ${theme.colors.success.text};
-    }
-    .token.variable {
-      color: ${theme.colors.primary.text};
-    }
-  `,
-  suggestionsWrapper: css`
-    box-shadow: ${theme.shadows.z2};
-  `,
+  editor: css({
+    '.token.builtInVariable': {
+      color: theme.colors.success.text,
+    },
+    '.token.variable': {
+      color: theme.colors.primary.text,
+    },
+  }),
+  suggestionsWrapper: css({
+    boxShadow: theme.shadows.z2,
+  }),
   // Wrapper with child selector needed.
   // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
-  wrapperOverrides: css`
-    width: 100%;
-    > .slate-query-field__wrapper {
-      padding: 0;
-      background-color: transparent;
-      border: none;
-    }
-  `,
+  wrapperOverrides: css({
+    width: '100%',
+    '> .slate-query-field__wrapper': {
+      padding: 0,
+      backgroundColor: 'transparent',
+      border: 'none',
+    },
+  }),
 });
 
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
-export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
-  ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
-    const editorRef = useRef<Editor>() as RefObject<Editor>;
+export const DataLinkInput = memo(
+  ({
+    value,
+    onChange,
+    suggestions,
+    placeholder = 'http://your-grafana.com/d/000000010/annotations',
+  }: DataLinkInputProps) => {
+    const editorRef = useRef<Editor>(null);
     const styles = useStyles2(getStyles);
     const [showingSuggestions, setShowingSuggestions] = useState(false);
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -95,7 +99,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
 
-    const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => any) => {
+    const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => void) => {
       if (!stateRef.current.showingSuggestions) {
         if (event.key === '=' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
           return setShowingSuggestions(true);
@@ -233,9 +237,9 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
               className={cx(
                 styles.editor,
                 styles.input,
-                css`
-                  padding: 3px 8px;
-                `
+                css({
+                  padding: '3px 8px',
+                })
               )}
             />
           </div>

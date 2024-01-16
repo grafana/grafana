@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 
-interface Props {
+interface Props extends PropsWithChildren {
   title: string;
 }
 

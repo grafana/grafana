@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
+import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 import { HorizontalGroup, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 
@@ -52,7 +52,9 @@ const dotOptions: Array<SelectableValue<string>> = [
   value: txt,
 }));
 
-export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>> = ({ value, onChange }) => {
+type Props = StandardEditorProps<LineStyle, unknown>;
+
+export const LineStyleEditor = ({ value, onChange }: Props) => {
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {
@@ -111,7 +113,7 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
               target="_blank"
               rel="noreferrer"
             >
-              <IconButton name="question-circle" />
+              <IconButton name="question-circle" tooltip="Help" />
             </a>
           </div>
         </>

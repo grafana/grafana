@@ -1,4 +1,6 @@
-import { TimeRange } from '@grafana/data';
+import { DataFrame, TimeRange } from '@grafana/data';
+
+import { LabelType } from './types';
 
 function roundMsToMin(milliseconds: number): number {
   return roundSecToMin(milliseconds / 1000);
@@ -33,6 +35,10 @@ function escapeLokiRegexp(value: string): string {
 // - "  ... the double-quote character
 export function escapeLabelValueInExactSelector(labelValue: string): string {
   return labelValue.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/"/g, '\\"');
+}
+
+export function unescapeLabelValue(labelValue: string): string {
+  return labelValue.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
 }
 
 export function escapeLabelValueInRegexSelector(labelValue: string): string {
@@ -83,4 +89,25 @@ export function isBytesString(string: string) {
   const regex = new RegExp(`^(?:-?\\d+(?:\\.\\d+)?)(?:${BYTES_KEYWORDS.join('|')})$`);
   const match = string.match(regex);
   return !!match;
+}
+
+export function getLabelTypeFromFrame(labelKey: string, frame?: DataFrame, index?: number): null | LabelType {
+  if (!frame || index === undefined) {
+    return null;
+  }
+
+  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
+  if (!typeField) {
+    return null;
+  }
+  switch (typeField[labelKey]) {
+    case 'I':
+      return LabelType.Indexed;
+    case 'S':
+      return LabelType.StructuredMetadata;
+    case 'P':
+      return LabelType.Parsed;
+    default:
+      return null;
+  }
 }

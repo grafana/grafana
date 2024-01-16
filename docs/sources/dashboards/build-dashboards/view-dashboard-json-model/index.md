@@ -8,6 +8,11 @@ keywords:
   - documentation
   - json
   - model
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: JSON model
 weight: 700
 ---
@@ -26,7 +31,9 @@ To view the JSON of a dashboard:
 
 When a user creates a new dashboard, a new dashboard JSON object is initialized with the following fields:
 
-> **Note:** In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved. Once a dashboard is saved, an integer value is assigned to the `id` field.
+{{% admonition type="note" %}}
+In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved. Once a dashboard is saved, an integer value is assigned to the `id` field.
+{{% /admonition %}}
 
 ```json
 {
@@ -34,7 +41,6 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
   "uid": "cLV5GDCkz",
   "title": "New dashboard",
   "tags": [],
-  "style": "dark",
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,
@@ -75,7 +81,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **time**          | time range for dashboard, i.e. last 6 hours, last 7 days, etc                                                     |
 | **timepicker**    | timepicker metadata, see [timepicker section](#timepicker) for details                                            |
 | **templating**    | templating metadata, see [templating section](#templating) for details                                            |
-| **annotations**   | annotations metadata, see [annotations section](#annotations) for details                                         |
+| **annotations**   | annotations metadata, see [annotations][] for how to add them                                                     |
 | **refresh**       | auto-refresh interval                                                                                             |
 | **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to said schema        |
 | **version**       | version of the dashboard (integer), incremented each time the dashboard is updated                                |
@@ -144,11 +150,11 @@ Usage of the fields is explained below:
 | --------------------- | -------------------------------------- |
 | **collapse**          | whether timepicker is collapsed or not |
 | **enable**            | whether timepicker is enabled or not   |
-| **notice**            | TODO                                   |
-| **now**               | TODO                                   |
-| **refresh_intervals** | TODO                                   |
-| **status**            | TODO                                   |
-| **type**              | TODO                                   |
+| **notice**            |                                        |
+| **now**               |                                        |
+| **refresh_intervals** |                                        |
+| **status**            |                                        |
+| **type**              |                                        |
 
 ### templating
 
@@ -236,6 +242,11 @@ Usage of the above mentioned fields in the templating section is explained below
 | **name**        | name of variable                                                                                        |
 | **options**     | array of variable text/value pairs available for selection on dashboard                                 |
 | **query**       | data source query used to fetch values for a variable                                                   |
-| **refresh**     | TODO                                                                                                    |
-| **regex**       | TODO                                                                                                    |
+| **refresh**     |                                                                                                         |
+| **regex**       |                                                                                                         |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
+
+{{% docs/reference %}}
+[annotations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+{{% /docs/reference %}}

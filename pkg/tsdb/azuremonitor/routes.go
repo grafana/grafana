@@ -11,6 +11,7 @@ const (
 	azureMonitor       = "Azure Monitor"
 	azureLogAnalytics  = "Azure Log Analytics"
 	azureResourceGraph = "Azure Resource Graph"
+	azureTraces        = "Azure Traces"
 )
 
 var azManagement = types.AzRoute{
@@ -22,12 +23,6 @@ var azManagement = types.AzRoute{
 var azUSGovManagement = types.AzRoute{
 	URL:     "https://management.usgovcloudapi.net",
 	Scopes:  []string{"https://management.usgovcloudapi.net/.default"},
-	Headers: map[string]string{"x-ms-app": "Grafana"},
-}
-
-var azGermanyManagement = types.AzRoute{
-	URL:     "https://management.microsoftazure.de",
-	Scopes:  []string{"https://management.microsoftazure.de/.default"},
 	Headers: map[string]string{"x-ms-app": "Grafana"},
 }
 
@@ -63,14 +58,12 @@ var (
 			azureMonitor:       azManagement,
 			azureLogAnalytics:  azLogAnalytics,
 			azureResourceGraph: azManagement,
+			azureTraces:        azLogAnalytics,
 		},
 		azsettings.AzureUSGovernment: {
 			azureMonitor:       azUSGovManagement,
 			azureLogAnalytics:  azUSGovLogAnalytics,
 			azureResourceGraph: azUSGovManagement,
-		},
-		azsettings.AzureGermany: {
-			azureMonitor: azGermanyManagement,
 		},
 		azsettings.AzureChina: {
 			azureMonitor:       azChinaManagement,

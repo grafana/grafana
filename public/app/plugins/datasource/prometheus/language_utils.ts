@@ -1,11 +1,21 @@
 import { invert } from 'lodash';
 import { Token } from 'prismjs';
 
-import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
+import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  AbstractQuery,
+  DataQuery,
+  dateMath,
+  DateTime,
+  incrRoundDn,
+  TimeRange,
+} from '@grafana/data';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './querybuilder/components/MetricSelect';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -55,6 +65,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
 export const selectorRegexp = /\{[^}]*?(\}|$)/;
 export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
+
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics
@@ -231,6 +242,11 @@ export function roundSecToMin(seconds: number): number {
   return Math.floor(seconds / 60);
 }
 
+// Returns number of minutes rounded up to the nearest nth minute
+export function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
+  return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % secondsToRound);
+}
+
 export function limitSuggestions(items: string[]) {
   return items.slice(0, SUGGESTIONS_LIMIT);
 }
@@ -248,6 +264,7 @@ export function addLimitInfo(items: any[] | undefined): string {
 // the list of metacharacters is: *+?()|\.[]{}^$
 // we make a javascript regular expression that matches those characters:
 const RE2_METACHARACTERS = /[*+?()|\\.\[\]{}^$]/g;
+
 function escapePrometheusRegexp(value: string): string {
   return value.replace(RE2_METACHARACTERS, '\\$&');
 }
@@ -270,6 +287,7 @@ const FromPromLikeMap: Record<string, AbstractLabelOperator> = {
   '=~': AbstractLabelOperator.EqualRegEx,
   '!~': AbstractLabelOperator.NotEqualRegEx,
 };
+
 const ToPromLikeMap: Record<AbstractLabelOperator, string> = invert(FromPromLikeMap) as Record<
   AbstractLabelOperator,
   string
@@ -304,38 +322,49 @@ export interface PromLikeQuery extends DataQuery {
   range: boolean;
 }
 
+function getMaybeTokenStringContent(token: Token): string {
+  if (typeof token.content === 'string') {
+    return token.content;
+  }
+
+  return '';
+}
+
 export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {
   const labelMatchers: AbstractLabelMatcher[] = [];
 
-  for (let prop in tokens) {
-    if (tokens[prop] instanceof Token) {
-      let token: Token = tokens[prop] as Token;
-      if (token.type === 'context-labels') {
-        let labelKey = '';
-        let labelValue = '';
-        let labelOperator = '';
-        let contentTokens: any[] = token.content as any[];
-        for (let currentToken in contentTokens) {
-          if (typeof contentTokens[currentToken] === 'string') {
-            let currentStr: string;
-            currentStr = contentTokens[currentToken] as string;
-            if (currentStr === '=' || currentStr === '!=' || currentStr === '=~' || currentStr === '!~') {
-              labelOperator = currentStr;
-            }
-          } else if (contentTokens[currentToken] instanceof Token) {
-            switch (contentTokens[currentToken].type) {
-              case 'label-key':
-                labelKey = contentTokens[currentToken].content as string;
-                break;
-              case 'label-value':
-                labelValue = contentTokens[currentToken].content as string;
-                labelValue = labelValue.substring(1, labelValue.length - 1);
-                const labelComparator = FromPromLikeMap[labelOperator];
-                if (labelComparator) {
-                  labelMatchers.push({ name: labelKey, operator: labelComparator, value: labelValue });
-                }
-                break;
-            }
+  for (const token of tokens) {
+    if (!(token instanceof Token)) {
+      continue;
+    }
+
+    if (token.type === 'context-labels') {
+      let labelKey = '';
+      let labelValue = '';
+      let labelOperator = '';
+
+      const contentTokens = Array.isArray(token.content) ? token.content : [token.content];
+
+      for (let currentToken of contentTokens) {
+        if (typeof currentToken === 'string') {
+          let currentStr: string;
+          currentStr = currentToken;
+          if (currentStr === '=' || currentStr === '!=' || currentStr === '=~' || currentStr === '!~') {
+            labelOperator = currentStr;
+          }
+        } else if (currentToken instanceof Token) {
+          switch (currentToken.type) {
+            case 'label-key':
+              labelKey = getMaybeTokenStringContent(currentToken);
+              break;
+            case 'label-value':
+              labelValue = getMaybeTokenStringContent(currentToken);
+              labelValue = labelValue.substring(1, labelValue.length - 1);
+              const labelComparator = FromPromLikeMap[labelOperator];
+              if (labelComparator) {
+                labelMatchers.push({ name: labelKey, operator: labelComparator, value: labelValue });
+              }
+              break;
           }
         }
       }
@@ -343,4 +372,68 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
   }
 
   return labelMatchers;
+}
+
+/**
+ * Calculates new interval "snapped" to the closest Nth minute, depending on cache level datasource setting
+ * @param cacheLevel
+ * @param range
+ */
+export function getRangeSnapInterval(
+  cacheLevel: PrometheusCacheLevel,
+  range: TimeRange
+): { start: string; end: string } {
+  // Don't round the range if we're not caching
+  if (cacheLevel === PrometheusCacheLevel.None) {
+    return {
+      start: getPrometheusTime(range.from, false).toString(),
+      end: getPrometheusTime(range.to, true).toString(),
+    };
+  }
+  // Otherwise round down to the nearest nth minute for the start time
+  const startTime = getPrometheusTime(range.from, false);
+  // const startTimeQuantizedSeconds = roundSecToLastMin(startTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+  const startTimeQuantizedSeconds = incrRoundDn(startTime, getClientCacheDurationInMinutes(cacheLevel) * 60);
+
+  // And round up to the nearest nth minute for the end time
+  const endTime = getPrometheusTime(range.to, true);
+  const endTimeQuantizedSeconds = roundSecToNextMin(endTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+
+  // If the interval was too short, we could have rounded both start and end to the same time, if so let's add one step to the end
+  if (startTimeQuantizedSeconds === endTimeQuantizedSeconds) {
+    const endTimePlusOneStep = endTimeQuantizedSeconds + getClientCacheDurationInMinutes(cacheLevel) * 60;
+    return { start: startTimeQuantizedSeconds.toString(), end: endTimePlusOneStep.toString() };
+  }
+
+  const start = startTimeQuantizedSeconds.toString();
+  const end = endTimeQuantizedSeconds.toString();
+
+  return { start, end };
+}
+
+export function getClientCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel) {
+  switch (cacheLevel) {
+    case PrometheusCacheLevel.Medium:
+      return 10;
+    case PrometheusCacheLevel.High:
+      return 60;
+    default:
+      return 1;
+  }
+}
+
+export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
+  if (typeof date === 'string') {
+    date = dateMath.parse(date, roundUp)!;
+  }
+
+  return Math.ceil(date.valueOf() / 1000);
+}
+
+export function truncateResult<T>(array: T[], limit?: number): T[] {
+  if (limit === undefined) {
+    limit = PROMETHEUS_QUERY_BUILDER_MAX_RESULTS;
+  }
+  array.length = Math.min(array.length, limit);
+  return array;
 }

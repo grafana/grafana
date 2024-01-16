@@ -791,7 +791,6 @@
   ],
   "refresh": false,
   "schemaVersion": 19,
-  "style": "dark",
   "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []

@@ -3,6 +3,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import * as reducers from 'app/percona/shared/core/reducers';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -36,7 +37,7 @@ describe('Advanced::', () => {
           },
         } as StoreState)}
       >
-        <Advanced />
+        {wrapWithGrafanaContextMock(<Advanced />)}
       </Provider>
     );
 
@@ -70,7 +71,7 @@ describe('Advanced::', () => {
           },
         } as StoreState)}
       >
-        <Advanced />
+        {wrapWithGrafanaContextMock(<Advanced />)}
       </Provider>
     );
     fireEvent.change(screen.getByTestId('retention-number-input'), { target: { value: 70 } });
@@ -115,7 +116,7 @@ describe('Advanced::', () => {
           },
         } as StoreState)}
       >
-        <Advanced />
+        {wrapWithGrafanaContextMock(<Advanced />)}
       </Provider>
     );
 
@@ -150,7 +151,7 @@ describe('Advanced::', () => {
           },
         } as StoreState)}
       >
-        <Advanced />
+        {wrapWithGrafanaContextMock(<Advanced />)}
       </Provider>
     );
 
@@ -192,7 +193,7 @@ describe('Advanced::', () => {
           navIndex: {},
         } as StoreState)}
       >
-        <Advanced />
+        {wrapWithGrafanaContextMock(<Advanced />)}
       </Provider>
     );
 
@@ -240,7 +241,7 @@ describe('Advanced::', () => {
           },
         } as StoreState)}
       >
-        <Advanced />
+        {wrapWithGrafanaContextMock(<Advanced />)}
       </Provider>
     );
 

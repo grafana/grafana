@@ -39,7 +39,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     logsStatsBody: css`
       label: logs-stats__body;
-      padding: 5px 0;
+      padding: 5px 0px;
     `,
   };
 });

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
-import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
+import { StandardEditorProps, SelectableValue } from '@grafana/data';
+import { Alert, Select, useStyles2 } from '@grafana/ui';
 
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 
@@ -28,15 +28,15 @@ export interface GazetteerPathEditorConfigSettings {
   options?: Array<SelectableValue<string>>;
 }
 
-export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>> = ({
+export const GazetteerPathEditor = ({
   value,
   onChange,
   context,
   item,
-}) => {
-  const styles = getStyles(useTheme2());
+}: StandardEditorProps<string, GazetteerPathEditorConfigSettings>) => {
+  const styles = useStyles2(getStyles);
   const [gaz, setGaz] = useState<Gazetteer>();
-  const settings = item.settings as any;
+  const settings = item.settings;
 
   useEffect(() => {
     async function fetchData() {
@@ -86,17 +86,15 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, Gazet
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    keys: css`
-      margin-top: 4px;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
+const getStyles = () => ({
+  keys: css`
+    margin-top: 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 
-      > span {
-        margin-left: 4px;
-      }
-    `,
-  };
+    > span {
+      margin-left: 4px;
+    }
+  `,
 });

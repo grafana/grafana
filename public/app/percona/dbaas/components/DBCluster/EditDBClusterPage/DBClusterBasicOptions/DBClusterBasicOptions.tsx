@@ -50,7 +50,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
   const [databaseVersions, setDatabaseVersions] = useState<SelectableValue[]>([]);
   const [loadingDatabaseVersions, setLoadingDatabaseVersions] = useState(false);
 
-  const onChangeDatabase = useCallback((databaseType) => {
+  const onChangeDatabase = useCallback((databaseType: SelectableValue<string>) => {
     change(BasicOptionsFields.databaseType, databaseType);
     form.mutators.setClusterName(databaseType.value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,7 +65,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
     return DATABASE_OPTIONS;
   });
 
-  const onChangeCluster = useCallback((selectedKubernetes) => {
+  const onChangeCluster = useCallback((selectedKubernetes: Kubernetes) => {
     const availableDatabaseOptions = getAvailableDatabaseOptions(selectedKubernetes);
 
     if (availableDatabaseOptions.length === 1) {

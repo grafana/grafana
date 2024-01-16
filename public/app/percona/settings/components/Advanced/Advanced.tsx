@@ -3,7 +3,8 @@ import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
 import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
+import DbaasDeprecationWarning from 'app/percona/dbaas/components/DeprecationWarning';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
@@ -11,7 +12,6 @@ import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import validators from 'app/percona/shared/helpers/validators';
@@ -49,7 +49,6 @@ export const Advanced: FC = () => {
   const [generateToken] = useCancelToken();
   const { result: settings } = useSelector(getPerconaSettings);
   const dispatch = useAppDispatch();
-  const navModel = usePerconaNavModel('settings-advanced');
   const {
     sttCheckIntervals,
     dataRetention,
@@ -104,6 +103,7 @@ export const Advanced: FC = () => {
       backupLabel,
       backupLink,
       backupTooltip,
+      deprecatedFeatures,
     },
     tooltipLinkText,
   } = Messages;
@@ -183,8 +183,8 @@ export const Advanced: FC = () => {
   const { Form } = withTypes<AdvancedFormProps>();
 
   return (
-    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <Page navId="settings-advanced">
+      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={styles.advancedWrapper}>
             <Form
@@ -341,20 +341,6 @@ export const Advanced: FC = () => {
                       </p>
                     </div>
                     <Field
-                      name="dbaas"
-                      type="checkbox"
-                      label={dbaasLabel}
-                      tooltip={dbaasTooltip}
-                      tooltipLinkText={tooltipLinkText}
-                      link={dbaasLink}
-                      dataTestId="advanced-dbaas"
-                      component={SwitchRow}
-                      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>, input: any) => {
-                        dBaaSToggleOnChange(event, input, mutators);
-                      }}
-                    />
-                    <Field
                       name="azureDiscover"
                       type="checkbox"
                       label={azureDiscoverLabel}
@@ -375,6 +361,24 @@ export const Advanced: FC = () => {
                       component={SwitchRow}
                     />
                   </fieldset>
+                  <fieldset className={styles.technicalPreview}>
+                    <legend>{deprecatedFeatures}</legend>
+                    {!!values.dbaas && <DbaasDeprecationWarning />}
+                    <Field
+                      name="dbaas"
+                      type="checkbox"
+                      label={dbaasLabel}
+                      tooltip={dbaasTooltip}
+                      tooltipLinkText={tooltipLinkText}
+                      link={dbaasLink}
+                      dataTestId="advanced-dbaas"
+                      component={SwitchRow}
+                      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>, input: any) => {
+                        dBaaSToggleOnChange(event, input, mutators);
+                      }}
+                    />
+                  </fieldset>
                   <Button
                     className={settingsStyles.actionButton}
                     type="submit"
@@ -389,8 +393,8 @@ export const Advanced: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

@@ -19,6 +19,8 @@ const SORT_OPTIONS = [
   { label: 'Numerical (desc)', value: VariableSort.numericalDesc },
   { label: 'Alphabetical (case-insensitive, asc)', value: VariableSort.alphabeticalCaseInsensitiveAsc },
   { label: 'Alphabetical (case-insensitive, desc)', value: VariableSort.alphabeticalCaseInsensitiveDesc },
+  { label: 'Natural (asc)', value: VariableSort.naturalAsc },
+  { label: 'Natural (desc)', value: VariableSort.naturalDesc },
 ];
 
 export function QueryVariableSortSelect({ onChange, sort }: PropsWithChildren<Props>) {
@@ -27,12 +29,12 @@ export function QueryVariableSortSelect({ onChange, sort }: PropsWithChildren<Pr
   return (
     <VariableSelectField
       name="Sort"
+      description="How to sort the values of this variable"
       value={value}
       options={SORT_OPTIONS}
       onChange={onChange}
-      labelWidth={10}
       testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
-      tooltip="How to sort the values of this variable."
+      width={25}
     />
   );
 }

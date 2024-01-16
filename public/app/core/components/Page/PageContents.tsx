@@ -1,21 +1,26 @@
 // Libraries
-import { cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-// Components
 import PageLoader from '../PageLoader/PageLoader';
 
 interface Props {
   isLoading?: boolean;
   children: React.ReactNode;
   className?: string;
+
+  // @PERCONA
   dataTestId?: string;
 }
 
-export const PageContents: FC<Props> = ({ isLoading, children, className, dataTestId }) => {
-  return (
-    <div data-testid={dataTestId} className={cx('page-container', 'page-body', className)}>
-      {isLoading ? <PageLoader /> : children}
-    </div>
-  );
+export const PageContents = ({ isLoading, children, className, dataTestId }: Props) => {
+  let content =
+    className || dataTestId ? (
+      <div className={className} data-testid={dataTestId}>
+        {children}
+      </div>
+    ) : (
+      children
+    );
+
+  return <>{isLoading ? <PageLoader /> : content}</>;
 };

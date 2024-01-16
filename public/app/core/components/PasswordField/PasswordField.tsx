@@ -1,45 +1,34 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Input, IconButton } from '@grafana/ui';
+import { Props as InputProps } from '@grafana/ui/src/components/Input/Input';
 
-export interface Props {
-  autoFocus?: boolean;
-  autoComplete?: string;
-  id?: string;
-  passwordHint?: string;
-}
+interface Props extends Omit<InputProps, 'type'> {}
 
-export const PasswordField: FC<Props> = React.forwardRef<HTMLInputElement, Props>(
-  ({ autoComplete, autoFocus, id, passwordHint, ...props }, ref) => {
-    const [showPassword, setShowPassword] = useState(false);
+export const PasswordField = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+  const [showPassword, setShowPassword] = useState(false);
 
-    return (
-      <Input
-        id={id}
-        autoFocus={autoFocus}
-        autoComplete={autoComplete}
-        {...props}
-        type={showPassword ? 'text' : 'password'}
-        placeholder={passwordHint}
-        aria-label={selectors.pages.Login.password}
-        ref={ref}
-        suffix={
-          <IconButton
-            name={showPassword ? 'eye-slash' : 'eye'}
-            type="button"
-            aria-controls={id}
-            role="switch"
-            aria-checked={showPassword}
-            aria-label="Show password"
-            onClick={() => {
-              setShowPassword(!showPassword);
-            }}
-          />
-        }
-      />
-    );
-  }
-);
+  return (
+    <Input
+      {...props}
+      type={showPassword ? 'text' : 'password'}
+      data-testid={selectors.pages.Login.password}
+      ref={ref}
+      suffix={
+        <IconButton
+          name={showPassword ? 'eye-slash' : 'eye'}
+          aria-controls={props.id}
+          role="switch"
+          aria-checked={showPassword}
+          onClick={() => {
+            setShowPassword(!showPassword);
+          }}
+          tooltip={showPassword ? 'Hide password' : 'Show password'}
+        />
+      }
+    />
+  );
+});
 
 PasswordField.displayName = 'PasswordField';

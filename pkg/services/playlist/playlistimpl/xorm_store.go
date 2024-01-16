@@ -2,11 +2,11 @@ package playlistimpl
 
 import (
 	"context"
+	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -14,33 +14,42 @@ type sqlStore struct {
 	db db.DB
 }
 
+var _ store = &sqlStore{}
+
 func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	p := playlist.Playlist{}
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		uid, err := generateAndValidateNewPlaylistUid(sess, cmd.OrgId)
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	} else {
+		err := util.ValidateUID(cmd.UID)
 		if err != nil {
-			return err
+			return nil, err
 		}
+	}
 
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		ts := time.Now().UnixMilli()
 		p = playlist.Playlist{
-			Name:     cmd.Name,
-			Interval: cmd.Interval,
-			OrgId:    cmd.OrgId,
-			UID:      uid,
+			Name:      cmd.Name,
+			Interval:  cmd.Interval,
+			OrgId:     cmd.OrgId,
+			UID:       cmd.UID,
+			CreatedAt: ts,
+			UpdatedAt: ts,
 		}
 
-		_, err = sess.Insert(&p)
+		_, err := sess.Insert(&p)
 		if err != nil {
 			return err
 		}
 
 		playlistItems := make([]playlist.PlaylistItem, 0)
-		for _, item := range cmd.Items {
+		for order, item := range cmd.Items {
 			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
 				Type:       item.Type,
 				Value:      item.Value,
-				Order:      item.Order,
+				Order:      order + 1,
 				Title:      item.Title,
 			})
 		}
@@ -54,7 +63,7 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 
 func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
 	dto := playlist.PlaylistDTO{}
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		p := playlist.Playlist{
 			UID:      cmd.UID,
 			OrgId:    cmd.OrgId,
@@ -68,17 +77,16 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 			return err
 		}
 		p.Id = existingPlaylist.Id
+		p.CreatedAt = existingPlaylist.CreatedAt
+		p.UpdatedAt = time.Now().UnixMilli()
 
 		dto = playlist.PlaylistDTO{
-
-			Id:       p.Id,
-			UID:      p.UID,
-			OrgId:    p.OrgId,
+			Uid:      p.UID,
 			Name:     p.Name,
 			Interval: p.Interval,
 		}
 
-		_, err = sess.Where("id=?", p.Id).Cols("name", "interval").Update(&p)
+		_, err = sess.Where("id=?", p.Id).Cols("name", "interval", "updated_at").Update(&p)
 		if err != nil {
 			return err
 		}
@@ -90,10 +98,10 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 			return err
 		}
 
-		playlistItems := make([]models.PlaylistItem, 0)
+		playlistItems := make([]playlist.PlaylistItem, 0)
 
 		for index, item := range cmd.Items {
-			playlistItems = append(playlistItems, models.PlaylistItem{
+			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
 				Type:       item.Type,
 				Value:      item.Value,
@@ -114,7 +122,7 @@ func (s *sqlStore) Get(ctx context.Context, query *playlist.GetPlaylistByUidQuer
 	}
 
 	p := playlist.Playlist{}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		p = playlist.Playlist{UID: query.UID, OrgId: query.OrgId}
 		exists, err := sess.Get(&p)
 		if !exists {
@@ -131,7 +139,7 @@ func (s *sqlStore) Delete(ctx context.Context, cmd *playlist.DeletePlaylistComma
 		return playlist.ErrCommandValidationFailed
 	}
 
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		playlist := playlist.Playlist{UID: cmd.UID, OrgId: cmd.OrgId}
 		_, err := sess.Get(&playlist)
 		if err != nil {
@@ -157,7 +165,7 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 		return playlists, playlist.ErrCommandValidationFailed
 	}
 
-	err := s.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		sess := dbSess.Limit(query.Limit)
 
 		if query.Name != "" {
@@ -175,9 +183,9 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 func (s *sqlStore) GetItems(ctx context.Context, query *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
 	var playlistItems = make([]playlist.PlaylistItem, 0)
 	if query.PlaylistUID == "" || query.OrgId == 0 {
-		return playlistItems, models.ErrCommandValidationFailed
+		return playlistItems, star.ErrCommandValidationFailed
 	}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		// getQuery the playlist Id
 		getQuery := &playlist.GetPlaylistByUidQuery{UID: query.PlaylistUID, OrgId: query.OrgId}
 		p, err := s.Get(ctx, getQuery)
@@ -191,26 +199,3 @@ func (s *sqlStore) GetItems(ctx context.Context, query *playlist.GetPlaylistItem
 	})
 	return playlistItems, err
 }
-
-// generateAndValidateNewPlaylistUid generates a playlistUID and verifies that
-// the uid isn't already in use. This is deliberately overly cautious, since users
-// can also specify playlist uids during provisioning.
-func generateAndValidateNewPlaylistUid(sess *sqlstore.DBSession, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := generateNewUid()
-
-		playlist := models.Playlist{OrgId: orgId, UID: uid}
-		exists, err := sess.Get(&playlist)
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", models.ErrPlaylistFailedGenerateUniqueUid
-}
-
-var generateNewUid func() string = util.GenerateShortUID

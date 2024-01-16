@@ -47,7 +47,7 @@ export const useOperatorsComponentsVersions = (
   SetComponentOptionsAction,
   SetVersionsOptionsAction,
   SetVersionsFieldNameAction,
-  SetDefaultFieldNameAction
+  SetDefaultFieldNameAction,
 ] => {
   const [initialValues, setInitialValues] = useState({} as ManageComponentsVersionsRenderProps);
   const [operatorsOptions, setOperatorsOptions] = useState<SelectableValue[]>([]);

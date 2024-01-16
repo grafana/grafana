@@ -20,5 +20,13 @@ export function SQLSelectRow({ fields, query, onQueryChange, db }: SQLSelectRowP
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
   const functions = [...COMMON_AGGREGATE_FNS, ...(db.functions?.() || [])].map(toOption);
 
-  return <SelectRow columns={fields} sql={query.sql!} functions={functions} onSqlChange={onSqlChange} />;
+  return (
+    <SelectRow
+      columns={fields}
+      sql={query.sql!}
+      format={query.format}
+      functions={functions}
+      onSqlChange={onSqlChange}
+    />
+  );
 }

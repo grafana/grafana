@@ -1,24 +1,45 @@
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
-import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
-import { getNestedScene } from './nested';
+import { getGridWithMultipleTimeRanges } from './gridMultiTimeRange';
+import { getMultipleGridLayoutTest } from './gridMultiple';
+import { getGridWithMultipleData } from './gridWithMultipleData';
+import { getQueryVariableDemo } from './queryVariableDemo';
+import { getRepeatingPanelsDemo, getRepeatingRowsDemo } from './repeatingPanels';
 import { getSceneWithRows } from './sceneWithRows';
+import { getTransformationsDemo } from './transformations';
+import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
-export function getScenes(): Scene[] {
-  return [getFlexLayoutTest(), getScenePanelRepeaterTest(), getNestedScene(), getSceneWithRows()];
+interface SceneDef {
+  title: string;
+  getScene: () => DashboardScene;
+}
+export function getScenes(): SceneDef[] {
+  return [
+    { title: 'Scene with rows', getScene: getSceneWithRows },
+    { title: 'Grid with rows and different queries', getScene: getGridWithMultipleData },
+    { title: 'Grid with rows and different queries and time ranges', getScene: getGridWithMultipleTimeRanges },
+    { title: 'Multiple grid layouts test', getScene: getMultipleGridLayoutTest },
+    { title: 'Variables', getScene: getVariablesDemo },
+    { title: 'Variables with All values', getScene: getVariablesDemoWithAll },
+    { title: 'Variables - Repeating panels', getScene: getRepeatingPanelsDemo },
+    { title: 'Variables - Repeating rows', getScene: getRepeatingRowsDemo },
+    { title: 'Query variable', getScene: getQueryVariableDemo },
+    { title: 'Transformations demo', getScene: getTransformationsDemo },
+  ];
 }
 
-const cache: Record<string, Scene> = {};
+const cache: Record<string, DashboardScene> = {};
 
 export function getSceneByTitle(title: string) {
   if (cache[title]) {
     return cache[title];
   }
 
-  const scene = getScenes().find((x) => x.state.title === title);
+  const scene = getScenes().find((x) => x.title === title);
+
   if (scene) {
-    cache[title] = scene;
+    cache[title] = scene.getScene();
   }
 
-  return scene;
+  return cache[title];
 }

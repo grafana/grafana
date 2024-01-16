@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react';
-import { Field, FieldInputProps, FieldMetaState, UseFieldConfig } from 'react-final-form';
+import { Field, UseFieldConfig } from 'react-final-form';
 
 import { compose, Validator } from 'app/percona/shared/helpers/validatorsForm';
 
@@ -13,11 +13,6 @@ export interface CheckboxProps extends UseFieldConfig<boolean>, LabeledFieldProp
   inputProps?: FieldInputAttrs;
   validators?: Validator[];
   noError?: boolean;
-}
-
-interface CheckboxFieldRenderProps {
-  input: FieldInputProps<string, HTMLInputElement>;
-  meta: FieldMetaState<string>;
 }
 
 export const CheckboxField: FC<CheckboxProps> = React.memo(
@@ -41,8 +36,8 @@ export const CheckboxField: FC<CheckboxProps> = React.memo(
     const validate = useMemo(() => (Array.isArray(validators) ? compose(validators) : undefined), [validators]);
 
     return (
-      <Field<boolean> {...fieldConfig} type="checkbox" name={name} validate={validate}>
-        {({ input, meta }: CheckboxFieldRenderProps) => (
+      <Field {...fieldConfig} type="checkbox" name={name} validate={validate}>
+        {({ input, meta }) => (
           <BaseCheckbox
             className={fieldClassName}
             disabled={disabled}

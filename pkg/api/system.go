@@ -1,13 +1,15 @@
+// @PERCONA
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 	"os"
+
+	"github.com/grafana/grafana/pkg/api/response"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetPerconaSaasHost(c *models.ReqContext) response.Response {
+func GetPerconaSaasHost(c *contextmodel.ReqContext) response.Response {
 	saasHost := "https://portal.percona.com"
 	envHost, ok := os.LookupEnv("PERCONA_PORTAL_URL")
 

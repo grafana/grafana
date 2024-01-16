@@ -5,12 +5,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -22,13 +22,14 @@ var (
 	}, []string{"name"})
 )
 
-func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*FeatureManager, error) {
+func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*FeatureManager, error) {
 	mgmt := &FeatureManager{
-		isDevMod:  setting.Env != setting.Prod,
-		licensing: licensing,
-		flags:     make(map[string]*FeatureFlag, 30),
-		enabled:   make(map[string]bool),
-		log:       log.New("featuremgmt"),
+		isDevMod:     setting.Env != setting.Prod,
+		licensing:    licensing,
+		flags:        make(map[string]*FeatureFlag, 30),
+		enabled:      make(map[string]bool),
+		allowEditing: cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateWebhook != "",
+		log:          log.New("featuremgmt"),
 	}
 
 	// Register the standard flags
@@ -42,11 +43,17 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	for key, val := range flags {
 		flag, ok := mgmt.flags[key]
 		if !ok {
-			flag = &FeatureFlag{
-				Name:  key,
-				State: FeatureStateUnknown,
+			switch key {
+			// renamed the flag so it supports more panels
+			case "autoMigrateGraphPanels":
+				flag = mgmt.flags[FlagAutoMigrateOldPanels]
+			default:
+				flag = &FeatureFlag{
+					Name:  key,
+					Stage: FeatureStageUnknown,
+				}
+				mgmt.flags[key] = flag
 			}
-			mgmt.flags[key] = flag
 		}
 		flag.Expression = fmt.Sprintf("%t", val) // true | false
 	}
@@ -66,7 +73,8 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 	mgmt.update()
 
 	// Minimum approach to avoid circular dependency
-	cfg.IsFeatureToggleEnabled = mgmt.IsEnabled
+	// nolint:staticcheck
+	cfg.IsFeatureToggleEnabled = mgmt.IsEnabledGlobally
 	return mgmt, nil
 }
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { dump, load } from 'js-yaml';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -20,9 +20,9 @@ interface Props {
   onClose: () => void;
 }
 
-const tabs = [{ label: 'Yaml', value: 'yaml' }];
+const cloudRulesTabs = [{ label: 'Yaml', value: 'yaml' }];
 
-export const RuleInspector: FC<Props> = ({ onClose }) => {
+export const RuleInspector = ({ onClose }: Props) => {
   const [activeTab, setActiveTab] = useState('yaml');
   const { setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(drawerStyles);
@@ -42,7 +42,7 @@ export const RuleInspector: FC<Props> = ({ onClose }) => {
       title="Inspect Alert rule"
       subtitle={
         <div className={styles.subtitle}>
-          <RuleInspectorSubtitle setActiveTab={setActiveTab} activeTab={activeTab} />
+          <RuleInspectorTabs tabs={cloudRulesTabs} setActiveTab={setActiveTab} activeTab={activeTab} />
         </div>
       }
       onClose={onClose}
@@ -52,12 +52,13 @@ export const RuleInspector: FC<Props> = ({ onClose }) => {
   );
 };
 
-interface SubtitleProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+interface RuleInspectorTabsProps<T = string> {
+  tabs: Array<{ label: string; value: T }>;
+  activeTab: T;
+  setActiveTab: (tab: T) => void;
 }
 
-const RuleInspectorSubtitle: FC<SubtitleProps> = ({ activeTab, setActiveTab }) => {
+export function RuleInspectorTabs<T extends string>({ tabs, activeTab, setActiveTab }: RuleInspectorTabsProps<T>) {
   return (
     <TabsBar>
       {tabs.map((tab, index) => {
@@ -73,13 +74,13 @@ const RuleInspectorSubtitle: FC<SubtitleProps> = ({ activeTab, setActiveTab }) =
       })}
     </TabsBar>
   );
-};
+}
 
 interface YamlTabProps {
   onSubmit: (newModel: RuleFormValues) => void;
 }
 
-const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
+const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
   const styles = useStyles2(yamlTabStyle);
   const { getValues } = useFormContext<RuleFormValues>();
 
@@ -153,7 +154,7 @@ function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormVal
   return {};
 }
 
-const yamlTabStyle = (theme: GrafanaTheme2) => ({
+export const yamlTabStyle = (theme: GrafanaTheme2) => ({
   content: css`
     flex-grow: 1;
     height: 100%;
@@ -170,7 +171,7 @@ const yamlTabStyle = (theme: GrafanaTheme2) => ({
   `,
 });
 
-const drawerStyles = () => ({
+export const drawerStyles = () => ({
   subtitle: css`
     display: flex;
     align-items: center;

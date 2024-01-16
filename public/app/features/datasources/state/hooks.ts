@@ -1,14 +1,14 @@
 import { useContext, useEffect } from 'react';
 
-import { DataSourcePluginMeta, DataSourceSettings, NavModelItem, urlUtil } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DataSourceRights } from '../types';
+import { constructDataSourceExploreUrl } from '../utils';
 
 import {
   initDataSourceSettings,
@@ -21,7 +21,6 @@ import {
   deleteLoadedDataSource,
 } from './actions';
 import { DataSourcesRoutesContext } from './contexts';
-import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from './navModel';
 import { initialDataSourceSettingsState } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
 
@@ -43,16 +42,21 @@ export const useInitDataSourceSettings = (uid: string) => {
 
 export const useTestDataSource = (uid: string) => {
   const dispatch = useDispatch();
+  const dataSourcesRoutes = useDataSourcesRoutes();
 
-  return () => dispatch(testDataSource(uid));
+  return () => dispatch(testDataSource(uid, dataSourcesRoutes.Edit));
 };
 
 export const useLoadDataSources = () => {
   const dispatch = useDispatch();
+  const isLoading = useSelector((state) => state.dataSources.isLoadingDataSources);
+  const dataSources = useSelector((state) => state.dataSources.dataSources);
 
   useEffect(() => {
     dispatch(loadDataSources());
   }, [dispatch]);
+
+  return { isLoading, dataSources };
 };
 
 export const useLoadDataSource = (uid: string) => {
@@ -109,10 +113,7 @@ export const useDataSource = (uid: string) => {
 
 export const useDataSourceExploreUrl = (uid: string) => {
   const dataSource = useDataSource(uid);
-  const exploreState = JSON.stringify({ datasource: dataSource.name, context: 'explore' });
-  const exploreUrl = urlUtil.renderUrl('/explore', { left: exploreState });
-
-  return exploreUrl;
+  return constructDataSourceExploreUrl(dataSource);
 };
 
 export const useDataSourceMeta = (pluginType: string): DataSourcePluginMeta => {
@@ -121,32 +122,6 @@ export const useDataSourceMeta = (pluginType: string): DataSourcePluginMeta => {
 
 export const useDataSourceSettings = () => {
   return useSelector((state) => state.dataSourceSettings);
-};
-
-export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | null) => {
-  const dataSource = useDataSource(dataSourceId);
-  const { plugin, loadError, loading } = useDataSourceSettings();
-  const navIndex = useSelector((state) => state.navIndex);
-  const navIndexId = pageId ? `datasource-${pageId}-${dataSourceId}` : `datasource-settings-${dataSourceId}`;
-
-  if (loadError) {
-    const node: NavModelItem = {
-      text: loadError,
-      subTitle: 'Data Source Error',
-      icon: 'exclamation-triangle',
-    };
-
-    return {
-      node: node,
-      main: node,
-    };
-  }
-
-  if (loading || !plugin) {
-    return getNavModel(navIndex, navIndexId, getDataSourceLoadingNav('settings'));
-  }
-
-  return getNavModel(navIndex, navIndexId, getDataSourceNav(buildNavModel(dataSource, plugin), pageId || 'settings'));
 };
 
 export const useDataSourceRights = (uid: string): DataSourceRights => {

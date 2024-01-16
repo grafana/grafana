@@ -18,8 +18,7 @@ func ToFolderErrorResponse(err error) response.Response {
 	if errors.Is(err, dashboards.ErrFolderTitleEmpty) ||
 		errors.Is(err, dashboards.ErrDashboardTypeMismatch) ||
 		errors.Is(err, dashboards.ErrDashboardInvalidUid) ||
-		errors.Is(err, dashboards.ErrDashboardUidTooLong) ||
-		errors.Is(err, dashboards.ErrFolderContainsAlertRules) {
+		errors.Is(err, dashboards.ErrDashboardUidTooLong) {
 		return response.Error(400, err.Error(), nil)
 	}
 
@@ -40,5 +39,5 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.JSON(412, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
 	}
 
-	return response.Error(500, "Folder API error", err)
+	return response.ErrOrFallback(500, "Folder API error", err)
 }

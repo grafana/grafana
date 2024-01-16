@@ -120,7 +120,7 @@ func sanitizeLabelName(name string) (string, bool) {
 }
 
 // sampleValue converts a field value into a value suitable for a simple sample value.
-func sampleValue(value interface{}) (float64, bool) {
+func sampleValue(value any) (float64, bool) {
 	switch v := value.(type) {
 	case float64:
 		return v, true

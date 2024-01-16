@@ -24,7 +24,6 @@ export const Connect: FC<ConnectProps> = ({ onConnect, connecting, initialValues
 
   const ConnectForm: FC<FormRenderProps<ConnectRenderProps>> = ({ valid, handleSubmit }) => (
     <>
-      <h2 className={styles.titles}>{Messages.perconaPlatform}</h2>
       <h4>{Messages.whatIsPerconaPlatform}</h4>
       <p>{Messages.perconaPlatformExplanation}</p>
       <h4>{Messages.whyConnect}</h4>

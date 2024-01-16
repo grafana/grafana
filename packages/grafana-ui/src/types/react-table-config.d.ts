@@ -106,13 +106,13 @@ declare module 'react-table' {
       UseGroupByColumnProps<D>,
       UseResizeColumnsColumnProps<D>,
       UseSortByColumnProps<D> {
-    className?: string;
-    style?: CSSProperties;
     // @PERCONA
     // By default, cells with too much text get their content hidden using ellipsis. This allows to override that config.
     // tooltipInfo allows for an "i" icon with tooltip content
     noHiddenOverflow?: boolean;
     tooltipInfo?: PopoverContent;
+    className?: string;
+    style?: CSSProperties;
   }
 
   export interface Cell<D extends Record<string, unknown> = Record<string, unknown>, V = any>

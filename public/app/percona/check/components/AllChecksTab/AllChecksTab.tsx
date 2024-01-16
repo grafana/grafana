@@ -4,7 +4,7 @@ import { AppEvents, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { CheckService } from 'app/percona/check/Check.service';
@@ -17,6 +17,7 @@ import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaN
 import { fetchAdvisors } from 'app/percona/shared/core/reducers/advisors/advisors';
 import { getAdvisors, getCategorizedAdvisors, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { logger } from 'app/percona/shared/helpers/logger';
+import { Advisor } from 'app/percona/shared/services/advisors/Advisors.types';
 import { dispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
@@ -45,7 +46,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
   }
   const getCheckNamesListInCategory = () => {
     return Object.values(advisors)
-      .map((advisor) => advisor.checks)
+      .map((advisor) => (advisor as Advisor).checks)
       .flat()
       .map((check) => check.name);
   };
@@ -76,7 +77,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
     const action = !!check.disabled ? 'enable' : 'disable';
     try {
       await CheckService.changeCheck({ params: [{ name: check.name, [action]: true }] });
-      await dispatch(fetchAdvisors());
+      await dispatch(fetchAdvisors({}));
     } catch (e) {
       logger.error(e);
     }
@@ -94,7 +95,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
 
   const handleIntervalChanged = useCallback(
     async (check: CheckDetails) => {
-      await dispatch(fetchAdvisors());
+      await dispatch(fetchAdvisors({}));
       handleModalClose();
     },
     [handleModalClose]
@@ -116,7 +117,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
       {
         Header: Messages.table.columns.status,
         accessor: 'disabled',
-        Cell: ({ value }) => (!!value ? Messages.disabled : Messages.enabled),
+        Cell: ({ value }) => <>{!!value ? Messages.disabled : Messages.enabled}</>,
         type: FilterFieldTypes.RADIO_BUTTON,
         options: [
           {
@@ -138,7 +139,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
       {
         Header: Messages.table.columns.interval,
         accessor: 'interval',
-        Cell: ({ value }) => Interval[value],
+        Cell: ({ value }) => <>{Interval[value]}</>,
         type: FilterFieldTypes.DROPDOWN,
         options: [
           {
@@ -181,8 +182,8 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
   };
 
   return (
-    <OldPage navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
-      <OldPage.Contents dataTestId="db-check-tab-content">
+    <Page navId={navModel.node.id} data-testid="db-check-panel">
+      <Page.Contents dataTestId="db-check-tab-content">
         <FeatureLoader
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}
@@ -248,8 +249,8 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
             </UpgradePlanWrapper> */}
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

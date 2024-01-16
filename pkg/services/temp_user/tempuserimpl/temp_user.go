@@ -3,9 +3,9 @@ package tempuserimpl
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/infra/db"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
@@ -14,13 +14,14 @@ type Service struct {
 
 func ProvideService(
 	db db.DB,
+	cfg *setting.Cfg,
 ) tempuser.Service {
 	return &Service{
-		store: &xormStore{db: db},
+		store: &xormStore{db: db, cfg: cfg},
 	}
 }
 
-func (s *Service) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
+func (s *Service) UpdateTempUserStatus(ctx context.Context, cmd *tempuser.UpdateTempUserStatusCommand) error {
 	err := s.store.UpdateTempUserStatus(ctx, cmd)
 	if err != nil {
 		return err
@@ -28,15 +29,15 @@ func (s *Service) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTe
 	return nil
 }
 
-func (s *Service) CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error {
-	err := s.store.CreateTempUser(ctx, cmd)
+func (s *Service) CreateTempUser(ctx context.Context, cmd *tempuser.CreateTempUserCommand) (*tempuser.TempUser, error) {
+	res, err := s.store.CreateTempUser(ctx, cmd)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return res, nil
 }
 
-func (s *Service) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error {
+func (s *Service) UpdateTempUserWithEmailSent(ctx context.Context, cmd *tempuser.UpdateTempUserWithEmailSentCommand) error {
 	err := s.store.UpdateTempUserWithEmailSent(ctx, cmd)
 	if err != nil {
 		return err
@@ -44,23 +45,23 @@ func (s *Service) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.U
 	return nil
 }
 
-func (s *Service) GetTempUsersQuery(ctx context.Context, cmd *models.GetTempUsersQuery) error {
-	err := s.store.GetTempUsersQuery(ctx, cmd)
+func (s *Service) GetTempUsersQuery(ctx context.Context, cmd *tempuser.GetTempUsersQuery) ([]*tempuser.TempUserDTO, error) {
+	res, err := s.store.GetTempUsersQuery(ctx, cmd)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return res, nil
 }
 
-func (s *Service) GetTempUserByCode(ctx context.Context, cmd *models.GetTempUserByCodeQuery) error {
-	err := s.store.GetTempUserByCode(ctx, cmd)
+func (s *Service) GetTempUserByCode(ctx context.Context, cmd *tempuser.GetTempUserByCodeQuery) (*tempuser.TempUserDTO, error) {
+	res, err := s.store.GetTempUserByCode(ctx, cmd)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return res, nil
 }
 
-func (s *Service) ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
+func (s *Service) ExpireOldUserInvites(ctx context.Context, cmd *tempuser.ExpireTempUsersCommand) error {
 	err := s.store.ExpireOldUserInvites(ctx, cmd)
 	if err != nil {
 		return err

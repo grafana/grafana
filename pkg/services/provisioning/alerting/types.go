@@ -3,6 +3,7 @@ package alerting
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -15,7 +16,7 @@ type OrgID int64
 type AlertingFile struct {
 	configVersion
 	Filename            string
-	Groups              []AlertRuleGroup
+	Groups              []models.AlertRuleGroupWithFolderTitle
 	DeleteRules         []RuleDelete
 	ContactPoints       []ContactPoint
 	DeleteContactPoints []DeleteContactPoint
@@ -51,7 +52,9 @@ func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
 	if err := fileV1.mapContactPoint(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing contact points: %w", err)
 	}
-	fileV1.mapPolicies(&alertingFile)
+	if err := fileV1.mapPolicies(&alertingFile); err != nil {
+		return AlertingFile{}, fmt.Errorf("failure parsing policies: %w", err)
+	}
 	if err := fileV1.mapMuteTimes(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing mute times: %w", err)
 	}
@@ -89,13 +92,18 @@ func (fileV1 *AlertingFileV1) mapMuteTimes(alertingFile *AlertingFile) error {
 	return nil
 }
 
-func (fileV1 *AlertingFileV1) mapPolicies(alertingFile *AlertingFile) {
+func (fileV1 *AlertingFileV1) mapPolicies(alertingFile *AlertingFile) error {
 	for _, npV1 := range fileV1.Policies {
-		alertingFile.Policies = append(alertingFile.Policies, npV1.mapToModel())
+		np, err := npV1.mapToModel()
+		if err != nil {
+			return err
+		}
+		alertingFile.Policies = append(alertingFile.Policies, np)
 	}
 	for _, orgIDV1 := range fileV1.ResetPolicies {
 		alertingFile.ResetPolicies = append(alertingFile.ResetPolicies, OrgID(orgIDV1.Value()))
 	}
+	return nil
 }
 
 func (fileV1 *AlertingFileV1) mapContactPoint(alertingFile *AlertingFile) error {

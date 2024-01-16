@@ -1,3 +1,5 @@
+// @PERCONA
+
 import { css } from '@emotion/css';
 
 import { GrafanaTheme } from '@grafana/data';

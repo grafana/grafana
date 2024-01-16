@@ -27,12 +27,19 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
           to={`/alerting/new?returnTo=%2Falerting%2Falert-rule-templates&template=${template.name}`}
           className={styles.actionLink}
         >
-          <IconButton data-testid="create-from-template-button" name="plus" size="lg" className={styles.button} />
+          <IconButton
+            data-testid="create-from-template-button"
+            aria-label="Create from template"
+            name="plus"
+            size="lg"
+            className={styles.button}
+          />
         </Link>
       </Tooltip>
       <Tooltip placement="top" content="Edit">
         <IconButton
           data-testid="edit-template-button"
+          aria-label="Edit template"
           name="pen"
           size="lg"
           className={cx(styles.button, styles.editButton)}
@@ -43,6 +50,7 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
       <Tooltip placement="top" content="Delete">
         <IconButton
           data-testid="delete-template-button"
+          aria-label="Delete template"
           name="times"
           size="xl"
           className={cx(styles.button)}

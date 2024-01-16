@@ -1,6 +1,7 @@
-import { ExplorePanelsState } from './explore';
+import { ExploreCorrelationHelperData, ExplorePanelsState } from './explore';
 import { InterpolateFunction } from './panel';
 import { DataQuery } from './query';
+import { TimeRange } from './time';
 
 /**
  * Callback info for DataLink click events
@@ -9,6 +10,16 @@ export interface DataLinkClickEvent<T = any> {
   origin: T;
   replaceVariables: InterpolateFunction | undefined;
   e?: any; // mouse|react event
+}
+
+/**
+ * Data Links can be created by data source plugins or correlations.
+ * Origin is set in DataLink object and indicates where the link was created.
+ */
+export enum DataLinkConfigOrigin {
+  Datasource = 'Datasource',
+  Correlations = 'Correlations',
+  ExploreCorrelationsEditor = 'CorrelationsEditor',
 }
 
 /**
@@ -38,6 +49,27 @@ export interface DataLink<T extends DataQuery = any> {
   // more custom onClick behaviour if needed.
   // @internal and subject to change in future releases
   internal?: InternalDataLink<T>;
+
+  origin?: DataLinkConfigOrigin;
+}
+
+/**
+ * We provide tooltips with information about these to guide the user, please
+ * check for validity when adding more transformation types.
+ *
+ * @internal
+ */
+export enum SupportedTransformationType {
+  Regex = 'regex',
+  Logfmt = 'logfmt',
+}
+
+/** @internal */
+export interface DataLinkTransformationConfig {
+  type: SupportedTransformationType;
+  field?: string;
+  expression?: string;
+  mapValue?: string;
 }
 
 /** @internal */
@@ -46,6 +78,11 @@ export interface InternalDataLink<T extends DataQuery = any> {
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
+  meta?: {
+    correlationData?: ExploreCorrelationHelperData;
+  };
+  transformations?: DataLinkTransformationConfig[];
+  range?: TimeRange;
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;

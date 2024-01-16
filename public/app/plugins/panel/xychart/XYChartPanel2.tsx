@@ -11,6 +11,7 @@ import {
   ReducerID,
   getDisplayProcessor,
 } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
 import {
   Portal,
@@ -26,14 +27,14 @@ import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TooltipView } from './TooltipView';
-import { SeriesMapping, XYChartOptions } from './models.gen';
+import { Options, SeriesMapping } from './panelcfg.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
 import { ScatterHoverEvent, ScatterSeries } from './types';
 
-type Props = PanelProps<XYChartOptions>;
+type Props = PanelProps<Options>;
 const TOOLTIP_OFFSET = 10;
 
-export const XYChartPanel2: React.FC<Props> = (props: Props) => {
+export const XYChartPanel2 = (props: Props) => {
   const [error, setError] = useState<string | undefined>();
   const [series, setSeries] = useState<ScatterSeries[]>([]);
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
@@ -90,7 +91,7 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (oldOptions !== props.options || oldData?.structureRev !== props.data.structureRev) {
       initSeries();
-    } else if (oldData !== props.data) {
+    } else if (oldData?.series !== props.data.series) {
       initFacets();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -174,6 +175,8 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
             item.label = props.options.series?.[si]?.name ?? `Series ${si + 1}`;
           }
 
+          item.color = alpha(s.lineColor(frame) as string, 1);
+
           items.push(item);
         }
       }
@@ -215,7 +218,7 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     <>
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight} timeRange={props.timeRange} />
+          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight} />
         )}
       </VizLayout>
       <Portal>
@@ -252,7 +255,6 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
               rowIndex={hover.xIndex}
               hoveredPointIndex={hover.scatterIndex}
               data={props.data.series}
-              range={props.timeRange}
             />
           </VizTooltipContainer>
         )}

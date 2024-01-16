@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { VariableType } from '@grafana/data';
+import { TypedVariableModel, VariableType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { ThunkResult } from '../../../types';
@@ -11,7 +11,6 @@ import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getNewVariableIndex, getVariable, getVariablesByKey } from '../state/selectors';
 import { addVariable, removeVariable } from '../state/sharedReducer';
 import { AddVariable, KeyedVariableIdentifier, VariableIdentifier } from '../state/types';
-import { VariableModel } from '../types';
 import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from '../utils';
 
 import {
@@ -46,7 +45,7 @@ export const changeVariableName = (identifier: KeyedVariableIdentifier, newName:
     }
 
     if (!newName.match(/^\w+$/)) {
-      errorText = 'Only word and digit characters are allowed in variable names';
+      errorText = 'Only word characters are allowed in variable names';
     }
 
     const variables = getVariablesByKey(uid, getState());
@@ -90,11 +89,12 @@ export const createNewVariable =
   (key: string | null | undefined, type: VariableType = 'query'): ThunkResult<void> =>
   (dispatch, getState) => {
     const rootStateKey = toStateKey(key);
-    const id = getNextAvailableId(type, getVariablesByKey(rootStateKey, getState()));
+    const varsByKey = getVariablesByKey(rootStateKey, getState());
+    const id = getNextAvailableId(type, varsByKey);
     const identifier: VariableIdentifier = { type, id };
     const global = false;
     const index = getNewVariableIndex(rootStateKey, getState());
-    const model: VariableModel = cloneDeep(variableAdapters.get(type).initialState);
+    const model: TypedVariableModel = cloneDeep(variableAdapters.get(type).initialState);
     model.id = id;
     model.name = id;
     model.rootStateKey = rootStateKey;
@@ -102,7 +102,7 @@ export const createNewVariable =
       toKeyedAction(rootStateKey, addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })))
     );
 
-    locationService.partial({ editIndex: index });
+    locationService.partial({ editIndex: varsByKey.length });
   };
 
 export const initListMode =
@@ -118,7 +118,7 @@ export const initListMode =
     dispatch(toKeyedAction(rootStateKey, initInspect({ usages, usagesNetwork })));
   };
 
-export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {
+export function getNextAvailableId(type: VariableType, variables: TypedVariableModel[]): string {
   let counter = 0;
   let nextId = `${type}${counter}`;
 

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/dataplane/sdata/timeseries"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
@@ -132,17 +133,55 @@ func NewSeries(refID string, labels data.Labels, size int) Series {
 	fields := make([]*data.Field, 2)
 	fields[seriesTypeTimeIdx] = data.NewField("Time", nil, make([]time.Time, size))
 	fields[seriesTypeValIdx] = data.NewField(refID, labels, make([]*float64, size))
+	frame := data.NewFrame("", fields...)
+	frame.RefID = refID
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	}
 
 	return Series{
-		Frame: data.NewFrame("", fields...),
+		Frame: frame,
 	}
+}
+
+// NewSeries returns a dataframe of type Series.
+func NewSeriesFromRef(refID string, s timeseries.MetricRef) (Series, error) {
+	frame := data.NewFrame("")
+	frame.RefID = refID
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	}
+
+	valField := s.ValueField
+	if valField.Type() != data.FieldTypeNullableFloat64 {
+		convertedField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, valField.Len())
+		convertedField.Name = valField.Name
+		convertedField.Labels = valField.Labels
+		convertedField.Config = valField.Config
+		for j := 0; j < valField.Len(); j++ {
+			ff, err := valField.NullableFloatAt(j)
+			if err != nil {
+				break
+			}
+
+			convertedField.Set(j, ff)
+		}
+		valField = convertedField
+	}
+	frame.Fields = []*data.Field{s.TimeField, valField}
+
+	return Series{
+		Frame: frame, // No Data Frame
+	}, nil
 }
 
 // Type returns the Value type and allows it to fulfill the Value interface.
 func (s Series) Type() parse.ReturnType { return parse.TypeSeriesSet }
 
 // Value returns the actual value allows it to fulfill the Value interface.
-func (s Series) Value() interface{} { return &s }
+func (s Series) Value() any { return &s }
 
 func (s Series) GetLabels() data.Labels { return s.Frame.Fields[seriesTypeValIdx].Labels }
 
@@ -150,11 +189,11 @@ func (s Series) SetLabels(ls data.Labels) { s.Frame.Fields[seriesTypeValIdx].Lab
 
 func (s Series) GetName() string { return s.Frame.Fields[seriesTypeValIdx].Name }
 
-func (s Series) GetMeta() interface{} {
+func (s Series) GetMeta() any {
 	return s.Frame.Meta.Custom
 }
 
-func (s Series) SetMeta(v interface{}) {
+func (s Series) SetMeta(v any) {
 	m := s.Frame.Meta
 	if m == nil {
 		m = &data.FrameMeta{}

@@ -255,7 +255,7 @@ var fileDescriptor_7a8976f235a02f79 = []byte{
 	0x10, 0x6d, 0x6a, 0x02, 0x00, 0x00,
 }
 
-func (this *PushRequest) Equal(that interface{}) bool {
+func (this *PushRequest) Equal(that any) bool {
 	if that == nil {
 		return this == nil
 	}
@@ -284,7 +284,7 @@ func (this *PushRequest) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *PushResponse) Equal(that interface{}) bool {
+func (this *PushResponse) Equal(that any) bool {
 	if that == nil {
 		return this == nil
 	}
@@ -305,7 +305,7 @@ func (this *PushResponse) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *StreamAdapter) Equal(that interface{}) bool {
+func (this *StreamAdapter) Equal(that any) bool {
 	if that == nil {
 		return this == nil
 	}
@@ -340,7 +340,7 @@ func (this *StreamAdapter) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *EntryAdapter) Equal(that interface{}) bool {
+func (this *EntryAdapter) Equal(that any) bool {
 	if that == nil {
 		return this == nil
 	}
@@ -415,7 +415,7 @@ func (this *EntryAdapter) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
-func valueToGoStringLogproto(v interface{}, typ string) string {
+func valueToGoStringLogproto(v any, typ string) string {
 	rv := reflect.ValueOf(v)
 	if rv.IsNil() {
 		return "nil"
@@ -473,7 +473,7 @@ func RegisterPusherServer(s *grpc.Server, srv PusherServer) {
 	s.RegisterService(&_Pusher_serviceDesc, srv)
 }
 
-func _Pusher_Push_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Pusher_Push_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(PushRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -485,7 +485,7 @@ func _Pusher_Push_Handler(srv interface{}, ctx context.Context, dec func(interfa
 		Server:     srv,
 		FullMethod: "/logproto.Pusher/Push",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(PusherServer).Push(ctx, req.(*PushRequest))
 	}
 	return interceptor(ctx, in, info, handler)
@@ -776,7 +776,7 @@ func (this *EntryAdapter) String() string {
 	}, "")
 	return s
 }
-func valueToStringLogproto(v interface{}) string {
+func valueToStringLogproto(v any) string {
 	rv := reflect.ValueOf(v)
 	if rv.IsNil() {
 		return "nil"

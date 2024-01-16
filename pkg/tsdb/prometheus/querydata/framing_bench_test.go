@@ -15,12 +15,16 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/kindsys"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
 // when memory-profiling this benchmark, these commands are recommended:
-// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkExemplarJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/buffered
+// - go test -benchmem -run=^$ -bench ^BenchmarkExemplarJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/querydata -memprofile memprofile.out -count 6 | tee old.txt
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkExemplarJson(b *testing.B) {
 	queryFileName := filepath.Join("../testdata", "exemplar.query.json")
@@ -34,7 +38,7 @@ func BenchmarkExemplarJson(b *testing.B) {
 	responseBytes, err := os.ReadFile(responseFileName)
 	require.NoError(b, err)
 
-	tCtx, err := setup(true)
+	tCtx, err := setup()
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -43,23 +47,27 @@ func BenchmarkExemplarJson(b *testing.B) {
 			Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 		}
 		tCtx.httpProvider.setResponse(&res)
-		_, err := tCtx.queryData.Execute(context.Background(), query)
+		resp, err := tCtx.queryData.Execute(context.Background(), query)
 		require.NoError(b, err)
+		for _, r := range resp.Responses {
+			require.NoError(b, r.Error)
+		}
 	}
 }
 
 var resp *backend.QueryDataResponse
 
 // when memory-profiling this benchmark, these commands are recommended:
-// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
+// - go test -benchmem -run=^$ -bench ^BenchmarkRangeJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/querydata -memprofile memprofile.out -count 6 | tee old.txt
 // - go tool pprof -http=localhost:6061 memprofile.out
+// - benchstat old.txt new.txt
 func BenchmarkRangeJson(b *testing.B) {
 	var (
 		r   *backend.QueryDataResponse
 		err error
 	)
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
-	tCtx, err := setup(true)
+	tCtx, err := setup()
 	require.NoError(b, err)
 
 	b.ResetTimer()
@@ -119,8 +127,10 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
 	qm := models.QueryModel{
-		RangeQuery: true,
-		Expr:       "test",
+		PrometheusDataQuery: dataquery.PrometheusDataQuery{
+			Range: kindsys.Ptr(true),
+			Expr:  "test",
+		},
 	}
 
 	data, err := json.Marshal(&qm)

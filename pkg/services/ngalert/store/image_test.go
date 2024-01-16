@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
@@ -29,7 +30,7 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	// create an image with a path on disk
 	image1 := models.Image{Path: "example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image1))
-	require.NotEqual(t, "", image1.Token)
+	require.NotEqual(t, image1.Token, "")
 
 	// image should not have expired
 	assert.False(t, image1.HasExpired())
@@ -48,7 +49,12 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	// create an image with a URL
 	image2 := models.Image{URL: "https://example.com/example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
-	require.NotEqual(t, "", image2.Token)
+	require.NotEqual(t, image2.Token, "")
+
+	// create another image with the same URL
+	image3 := models.Image{URL: "https://example.com/example.png"}
+	require.NoError(t, dbstore.SaveImage(ctx, &image3))
+	require.NotEqual(t, image3.Token, "")
 
 	// image should not have expired
 	assert.False(t, image2.HasExpired())
@@ -59,12 +65,24 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, image2, *result2)
 
+	// querying by URL should yield the same result even though we have two images with the same URL
+	result2, err = dbstore.GetImageByURL(ctx, image2.URL)
+	require.NoError(t, err)
+	assert.Equal(t, image2, *result2)
+
 	// expired image should not be returned
 	image1.ExpiresAt = time.Now().Add(-time.Second)
 	require.NoError(t, dbstore.SaveImage(ctx, &image1))
 	result1, err = dbstore.GetImage(ctx, image1.Token)
 	assert.EqualError(t, err, "image not found")
 	assert.Nil(t, result1)
+
+	// Querying by URL should yield the same result.
+	image2.ExpiresAt = time.Now().Add(-time.Second)
+	require.NoError(t, dbstore.SaveImage(ctx, &image1))
+	result2, err = dbstore.GetImage(ctx, image2.URL)
+	assert.EqualError(t, err, "image not found")
+	assert.Nil(t, result2)
 }
 
 func TestIntegrationGetImages(t *testing.T) {
@@ -168,30 +186,32 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	image2 := models.Image{URL: "https://example.com/example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
 
-	s := dbstore.SQLStore.NewSession(ctx)
-	t.Cleanup(s.Close)
+	err := dbstore.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// should return both images
+		var result1, result2 models.Image
+		ok, err := sess.Where("token = ?", image1.Token).Get(&result1)
+		require.NoError(t, err)
+		assert.True(t, ok)
+		ok, err = sess.Where("token = ?", image2.Token).Get(&result2)
+		require.NoError(t, err)
+		assert.True(t, ok)
 
-	// should return both images
-	var result1, result2 models.Image
-	ok, err := s.Where("token = ?", image1.Token).Get(&result1)
-	require.NoError(t, err)
-	assert.True(t, ok)
-	ok, err = s.Where("token = ?", image2.Token).Get(&result2)
-	require.NoError(t, err)
-	assert.True(t, ok)
+		// should delete expired image
+		image1.ExpiresAt = time.Now().Add(-time.Second)
+		require.NoError(t, dbstore.SaveImage(ctx, &image1))
+		n, err := dbstore.DeleteExpiredImages(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), n)
 
-	// should delete expired image
-	image1.ExpiresAt = time.Now().Add(-time.Second)
-	require.NoError(t, dbstore.SaveImage(ctx, &image1))
-	n, err := dbstore.DeleteExpiredImages(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), n)
+		// should return just the second image
+		ok, err = sess.Where("token = ?", image1.Token).Get(&result1)
+		require.NoError(t, err)
+		assert.False(t, ok)
+		ok, err = sess.Where("token = ?", image2.Token).Get(&result2)
+		require.NoError(t, err)
+		assert.True(t, ok)
 
-	// should return just the second image
-	ok, err = s.Where("token = ?", image1.Token).Get(&result1)
+		return nil
+	})
 	require.NoError(t, err)
-	assert.False(t, ok)
-	ok, err = s.Where("token = ?", image2.Token).Get(&result2)
-	require.NoError(t, err)
-	assert.True(t, ok)
 }

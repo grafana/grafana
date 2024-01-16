@@ -16,12 +16,18 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"html/template"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"syscall"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
 
 // Context represents the runtime context of current request of Macaron instance.
@@ -33,6 +39,8 @@ type Context struct {
 	Resp     ResponseWriter
 	template *template.Template
 }
+
+var errMissingWrite = errutil.Internal("web.missingWrite")
 
 func (ctx *Context) run() {
 	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -47,18 +55,26 @@ func (ctx *Context) run() {
 	// This indicates nearly always that a middleware is misbehaving and not calling its next.ServeHTTP().
 	// In rare cases where a blank http.StatusOK without any body is wished, explicitly state that using w.WriteStatus(http.StatusOK)
 	if !rw.Written() {
-		panic("chain did not write HTTP response")
+		errhttp.Write(
+			ctx.Req.Context(),
+			errMissingWrite.Errorf("chain did not write HTTP response: %s", ctx.Req.URL.Path),
+			rw,
+		)
 	}
 }
 
 // RemoteAddr returns more real IP address.
 func (ctx *Context) RemoteAddr() string {
-	addr := ctx.Req.Header.Get("X-Real-IP")
+	return RemoteAddr(ctx.Req)
+}
+
+func RemoteAddr(req *http.Request) string {
+	addr := req.Header.Get("X-Real-IP")
 
 	if len(addr) == 0 {
 		// X-Forwarded-For may contain multiple IP addresses, separated by
 		// commas.
-		addr = strings.TrimSpace(strings.Split(ctx.Req.Header.Get("X-Forwarded-For"), ",")[0])
+		addr = strings.TrimSpace(strings.Split(req.Header.Get("X-Forwarded-For"), ",")[0])
 	}
 
 	// parse user inputs from headers to prevent log forgery
@@ -70,7 +86,7 @@ func (ctx *Context) RemoteAddr() string {
 	}
 
 	if len(addr) == 0 {
-		addr = ctx.Req.RemoteAddr
+		addr = req.RemoteAddr
 		if i := strings.LastIndex(addr, ":"); i > -1 {
 			addr = addr[:i]
 		}
@@ -86,15 +102,18 @@ const (
 )
 
 // HTML renders the HTML with default template set.
-func (ctx *Context) HTML(status int, name string, data interface{}) {
+func (ctx *Context) HTML(status int, name string, data any) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
-		panic("Context.HTML:" + err.Error())
+		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
+			return
+		}
+		panic(fmt.Sprintf("Context.HTML - Error rendering template: %s. You may need to build frontend assets \n %s", name, err.Error()))
 	}
 }
 
-func (ctx *Context) JSON(status int, data interface{}) {
+func (ctx *Context) JSON(status int, data any) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeJSON)
 	ctx.Resp.WriteHeader(status)
 	enc := json.NewEncoder(ctx.Resp)
@@ -166,6 +185,14 @@ func (ctx *Context) QueryInt(name string) int {
 // QueryInt64 returns query result in int64 type.
 func (ctx *Context) QueryInt64(name string) int64 {
 	n, _ := strconv.ParseInt(ctx.Query(name), 10, 64)
+	return n
+}
+
+func (ctx *Context) QueryInt64WithDefault(name string, d int64) int64 {
+	n, err := strconv.ParseInt(ctx.Query(name), 10, 64)
+	if err != nil {
+		return d
+	}
 	return n
 }
 

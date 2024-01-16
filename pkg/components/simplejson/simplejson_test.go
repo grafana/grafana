@@ -86,8 +86,8 @@ func TestSimplejson(t *testing.T) {
 	ms2 := js.Get("test").Get("missing_string").MustString("fyea")
 	assert.Equal(t, "fyea", ms2)
 
-	ma2 := js.Get("test").Get("missing_array").MustArray([]interface{}{"1", 2, "3"})
-	assert.Equal(t, ma2, []interface{}{"1", 2, "3"})
+	ma2 := js.Get("test").Get("missing_array").MustArray([]any{"1", 2, "3"})
+	assert.Equal(t, ma2, []any{"1", 2, "3"})
 
 	msa := js.Get("test").Get("string_array").MustStringArray()
 	assert.Equal(t, msa[0], "asdf")
@@ -102,8 +102,8 @@ func TestSimplejson(t *testing.T) {
 	msa3 := js.Get("test").Get("missing_array").MustStringArray([]string{"1", "2", "3"})
 	assert.Equal(t, msa3, []string{"1", "2", "3"})
 
-	mm2 := js.Get("test").Get("missing_map").MustMap(map[string]interface{}{"found": false})
-	assert.Equal(t, mm2, map[string]interface{}{"found": false})
+	mm2 := js.Get("test").Get("missing_map").MustMap(map[string]any{"found": false})
+	assert.Equal(t, mm2, map[string]any{"found": false})
 
 	strs, err := js.Get("test").Get("string_array").StringArray()
 	assert.Equal(t, err, nil)
@@ -207,7 +207,7 @@ func TestSetPathNoPath(t *testing.T) {
 	f := js.GetPath("some_number").MustFloat64(99.0)
 	assert.Equal(t, f, 1.0)
 
-	js.SetPath([]string{}, map[string]interface{}{"foo": "bar"})
+	js.SetPath([]string{}, map[string]any{"foo": "bar"})
 
 	s, err := js.GetPath("foo").String()
 	assert.Equal(t, nil, err)

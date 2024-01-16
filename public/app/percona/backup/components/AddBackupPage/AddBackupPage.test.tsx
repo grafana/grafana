@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
@@ -18,7 +18,7 @@ jest.mock('../BackupInventory/BackupInventory.service');
 jest.mock('./AddBackupPage.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
 
-const AddBackupPageWrapper: React.FC = ({ children }) => {
+const AddBackupPageWrapper: FC<PropsWithChildren> = ({ children }) => {
   return (
     <Provider
       store={configureStore({

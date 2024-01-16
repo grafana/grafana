@@ -1,4 +1,4 @@
-import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
+import { getProcessedDataFrames } from '@grafana/data';
 
 import { DataProcessor } from '../data_processor';
 

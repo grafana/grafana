@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -25,7 +25,7 @@ describe('FormField', () => {
 
   it('should render a custom inputEl instead if specified', () => {
     setup({
-      inputEl: <input role="checkbox" />,
+      inputEl: <input type="checkbox" />,
     });
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
@@ -42,8 +42,6 @@ describe('FormField', () => {
     screen.getAllByRole('textbox')[0].focus();
     await userEvent.tab();
 
-    await waitFor(() => {
-      screen.getByText(tooltip);
-    });
+    expect(await screen.findByText(tooltip)).toBeInTheDocument();
   });
 });

@@ -6,7 +6,8 @@ import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental'
 import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { alignmentPeriodLabel } from '../functions';
-import { AlignmentTypes, CustomMetaData, SLOQuery } from '../types';
+import { AlignmentTypes, SLOQuery } from '../types/query';
+import { CustomMetaData } from '../types/types';
 
 import { AliasBy } from './AliasBy';
 import { LookbackPeriodSelect } from './LookbackPeriodSelect';
@@ -24,6 +25,8 @@ export interface Props {
   onRunQuery: () => void;
   query: SLOQuery;
   datasource: CloudMonitoringDatasource;
+  aliasBy?: string;
+  onChangeAliasBy: (aliasBy: string) => void;
 }
 
 export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery = (dataSource) => ({
@@ -46,6 +49,8 @@ export function SLOQueryEditor({
   onChange,
   variableOptionGroup,
   customMetaData,
+  aliasBy,
+  onChangeAliasBy,
 }: React.PropsWithChildren<Props>) {
   const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
@@ -100,7 +105,7 @@ export function SLOQueryEditor({
           </EditorField>
         </EditorFieldGroup>
 
-        <AliasBy refId={refId} value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />
+        <AliasBy refId={refId} value={aliasBy} onChange={onChangeAliasBy} />
       </EditorRow>
     </>
   );

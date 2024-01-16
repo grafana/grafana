@@ -4,9 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type sqlStore struct {
@@ -15,7 +14,7 @@ type sqlStore struct {
 
 func (s *sqlStore) Get(ctx context.Context, query *pref.Preference) (*pref.Preference, error) {
 	var prefs pref.Preference
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgID, query.UserID, query.TeamID).Get(&prefs)
 		if err != nil {
 			return err
@@ -33,7 +32,7 @@ func (s *sqlStore) Get(ctx context.Context, query *pref.Preference) (*pref.Prefe
 
 func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Preference, error) {
 	prefs := make([]*pref.Preference, 0)
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 	filter := ""
 
 	if len(query.Teams) > 0 {
@@ -49,7 +48,7 @@ func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Pr
 	params = append(params, query.UserID)
 	params = append(params, query.OrgID)
 
-	err := s.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		err := dbSession.Where(filter, params...).
 			OrderBy("user_id ASC, team_id ASC").
 			Find(&prefs)
@@ -64,7 +63,7 @@ func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Pr
 }
 
 func (s *sqlStore) Update(ctx context.Context, cmd *pref.Preference) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.ID(cmd.ID).AllCols().Update(cmd)
 		return err
 	})
@@ -73,15 +72,16 @@ func (s *sqlStore) Update(ctx context.Context, cmd *pref.Preference) error {
 func (s *sqlStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, error) {
 	var ID int64
 	var err error
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		ID, err = sess.Insert(cmd)
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err = sess.Insert(cmd)
+		ID = cmd.ID
 		return err
 	})
 	return ID, err
 }
 
 func (s *sqlStore) DeleteByUser(ctx context.Context, userID int64) error {
-	return s.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var rawSQL = "DELETE FROM preferences WHERE user_id = ?"
 		_, err := dbSession.Exec(rawSQL, userID)
 		return err

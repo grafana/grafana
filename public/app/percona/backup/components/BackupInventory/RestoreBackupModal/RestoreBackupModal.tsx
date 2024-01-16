@@ -135,12 +135,12 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
     const disabledHours = [];
     for (let i = 0; i < 24; i++) {
       if (isSameStartDate) {
-        if (i < hoursFromStartDate) {
+        if (hoursFromStartDate !== false && i < hoursFromStartDate) {
           disabledHours.push(i);
         }
       }
       if (isSameEndDate) {
-        if (i > hoursFromEndDate) {
+        if (hoursFromEndDate !== false && i > hoursFromEndDate) {
           disabledHours.push(i);
         }
       }
@@ -149,16 +149,16 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
   }, [hoursFromEndDate, hoursFromStartDate, isSameEndDate, isSameStartDate]);
 
   const calculateDisableMinutes = useCallback(
-    (hour) => {
+    (hour: number) => {
       const disabledMinutes = [];
       for (let i = 0; i < 60; i++) {
         if (isSameStartDate && hour === hoursFromStartDate) {
-          if (i < minutesFromStartDate) {
+          if (minutesFromStartDate !== false && i < minutesFromStartDate) {
             disabledMinutes.push(i);
           }
         }
         if (isSameEndDate && hour === hoursFromEndDate) {
-          if (i > minutesFromEndDate) {
+          if (minutesFromEndDate !== false && i > minutesFromEndDate) {
             disabledMinutes.push(i);
           }
         }
@@ -169,17 +169,17 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
   );
 
   const calculateDisableSeconds = useCallback(
-    (hour, minute) => {
+    (hour: number, minute: number) => {
       const disabledSeconds = [];
 
       for (let i = 0; i < 60; i++) {
         if (isSameStartDate && hour === hoursFromStartDate && minute === minutesFromStartDate) {
-          if (i < secondsFromStartDate) {
+          if (secondsFromStartDate !== false && i < secondsFromStartDate) {
             disabledSeconds.push(i);
           }
         }
         if (isSameEndDate && hour === hoursFromEndDate && minute === minutesFromEndDate) {
-          if (i > secondsFromEndDate) {
+          if (secondsFromEndDate !== false && i > secondsFromEndDate) {
             disabledSeconds.push(i);
           }
         }

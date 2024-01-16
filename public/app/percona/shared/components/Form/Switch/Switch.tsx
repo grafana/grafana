@@ -33,7 +33,7 @@ export const SwitchField: FC<SwitchFieldProps> = ({
 
   return (
     <Field<boolean> {...fieldConfig} type="checkbox" name={name} validate={validate}>
-      {({ input, meta }: SwitchFieldRenderProps) => (
+      {({ input, meta }: SwitchFieldRenderProps<boolean>) => (
         <div className={cx(styles.field, fieldClassName)} data-testid={`${name}-field-container`}>
           <LabelCore
             name={name}

@@ -5,21 +5,19 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
-type OrgStore interface {
-	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
-}
-
 type DashboardStore interface {
-	GetDashboard(context.Context, *models.GetDashboardQuery) error
+	GetDashboard(context.Context, *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error)
 }
 
-func CheckOrgExists(ctx context.Context, store OrgStore, orgID int64) error {
-	query := models.GetOrgByIdQuery{Id: orgID}
-	if err := store.GetOrgById(ctx, &query); err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
+func CheckOrgExists(ctx context.Context, orgService org.Service, orgID int64) error {
+	query := org.GetOrgByIDQuery{ID: orgID}
+	_, err := orgService.GetByID(ctx, &query)
+	if err != nil {
+		if errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 		return fmt.Errorf("failed to check whether org. with the given ID exists: %w", err)

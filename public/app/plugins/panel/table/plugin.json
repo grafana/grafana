@@ -3,11 +3,6 @@
   "name": "Table",
   "id": "table",
 
-  "models": {
-    "version": [1, 0],
-    "changed": "2021/03/30"
-  },
-
   "info": {
     "description": "Supports many column styles",
     "author": {

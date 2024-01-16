@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
+import React, { ComponentProps } from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -43,7 +43,7 @@ const props = {
       { text: 'Prometheus', value: null }, // default datasource
       { text: 'Loki', value: { type: 'loki-ds', uid: 'abc' } },
     ],
-  },
+  } as ComponentProps<typeof AdHocVariableEditor>['extended'],
   variable: adHocBuilder().withId('adhoc').withRootStateKey('key').withName('adhoc').build(),
   onPropChange: jest.fn(),
 
@@ -60,12 +60,14 @@ describe('AdHocVariableEditor', () => {
   it('has a datasource select menu', async () => {
     render(<AdHocVariableEditor {...props} />);
 
-    expect(await screen.findByLabelText(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
+    expect(await screen.getByTestId(selectors.components.DataSourcePicker.container)).toBeInTheDocument();
   });
 
   it('calls the callback when changing the datasource', async () => {
     render(<AdHocVariableEditor {...props} />);
-    const selectEl = screen.getByLabelText(selectors.components.DataSourcePicker.inputV2);
+    const selectEl = screen
+      .getByTestId(selectors.components.DataSourcePicker.container)
+      .getElementsByTagName('input')[0];
     await selectOptionInTest(selectEl, 'Loki');
 
     expect(props.changeVariableDatasource).toBeCalledWith(

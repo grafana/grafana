@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/team/
+canonical: /docs/grafana/latest/developers/http_api/team/
 description: Grafana Team HTTP API
 keywords:
   - grafana
@@ -10,6 +11,10 @@ keywords:
   - team
   - teams
   - group
+labels:
+  products:
+    - enterprise
+    - oss
 title: Team HTTP API
 ---
 
@@ -24,11 +29,11 @@ Access to these API endpoints is restricted as follows:
 - If you enable `editors_can_admin` configuration flag, then Organization Editors can create teams and manage teams where they are Admin.
   - If you enable `editors_can_admin` configuration flag, Editors can find out whether a team that they are not members of exists by trying to create a team with the same name.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Team Search With Paging
 
-`GET /api/teams/search?perpage=50&page=1&query=myteam`
+`GET /api/teams/search?perpage=50&page=1&query=myteam&sort=memberCount-desc`
 
 or
 
@@ -82,6 +87,8 @@ The `totalCount` field in the response can be used for pagination of the teams l
 
 The `query` parameter is optional and it will return results where the query value is contained in the `name` field. Query values with spaces need to be URL encoded e.g. `query=my%20team`.
 
+The `sort` param is an optional comma separated list of options to order the search result. Accepted values for the sort filter are: ` name-asc`, `name-desc`, `email-asc`, `email-desc`, `memberCount-asc`, `memberCount-desc`. By default, if `sort` is not specified, the teams list will be ordered by `name` in ascending order.
+
 ### Using the name parameter
 
 The `name` parameter returns a single team if the parameter matches the `name` field.
@@ -89,6 +96,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 #### Status Codes:
 
 - **200** - Ok
+- **400** - Bad Request
 - **401** - Unauthorized
 - **403** - Permission denied
 - **404** - Team not found (if searching by name)

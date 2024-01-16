@@ -1,17 +1,15 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VerticalGroup } from '../Layout/Layout';
 
 import { TagsInput } from './TagsInput';
 import mdx from './TagsInput.mdx';
 
-const meta: ComponentMeta<typeof TagsInput> = {
+const meta: Meta<typeof TagsInput> = {
   title: 'Forms/TagsInput',
   component: TagsInput,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -22,7 +20,7 @@ const meta: ComponentMeta<typeof TagsInput> = {
   },
 };
 
-export const Basic: ComponentStory<typeof TagsInput> = (props) => {
+export const Basic: StoryFn<typeof TagsInput> = (props) => {
   const [tags, setTags] = useState<string[]>([]);
   return <TagsInput {...props} tags={tags} onChange={setTags} />;
 };

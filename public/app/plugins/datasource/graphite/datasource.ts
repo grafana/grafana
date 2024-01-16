@@ -19,17 +19,16 @@ import {
   TimeRange,
   TimeZone,
   toDataFrame,
+  getSearchFilterScopedVar,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 
-import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-
 import { AnnotationEditor } from './components/AnnotationsEditor';
 import { convertToGraphiteQueryObject } from './components/helpers';
-import gfunc, { FuncDefs, FuncInstance } from './gfunc';
+import gfunc, { FuncDef, FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
 import { prepareAnnotation } from './migrations';
 // Types
@@ -79,12 +78,15 @@ export class GraphiteDatasource
   cacheTimeout: any;
   withCredentials: boolean;
   funcDefs: FuncDefs | null = null;
-  funcDefsPromise: Promise<any> | null = null;
+  funcDefsPromise: Promise<FuncDefs> | null = null;
   _seriesRefLetters: string;
   requestCounter = 100;
   private readonly metricMappings: GraphiteLokiMapping[];
 
-  constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
+  constructor(
+    instanceSettings: any,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
@@ -369,15 +371,15 @@ export class GraphiteDatasource
 
       return lastValueFrom(
         this.query(graphiteQuery).pipe(
-          map((result: any) => {
+          map((result) => {
             const list = [];
 
             for (let i = 0; i < result.data.length; i++) {
               const target = result.data[i];
 
               for (let y = 0; y < target.length; y++) {
-                const time = target.fields[0].values.get(y);
-                const value = target.fields[1].values.get(y);
+                const time = target.fields[0].values[y];
+                const value = target.fields[1].values[y];
 
                 if (!value) {
                   continue;
@@ -398,7 +400,7 @@ export class GraphiteDatasource
     } else {
       // Graphite event/tag as annotation
       const tags = this.templateSrv.replace(target.tags?.join(' '));
-      return this.events({ range: range, tags: tags }).then((results: any) => {
+      return this.events({ range: range, tags: tags }).then((results) => {
         const list = [];
         if (!isArray(results.data)) {
           console.error(`Unable to get annotations from ${results.url}.`);
@@ -486,8 +488,8 @@ export class GraphiteDatasource
     const options: any = optionalOptions || {};
 
     const queryObject = convertToGraphiteQueryObject(findQuery);
-    if (queryObject.queryType === GraphiteQueryType.Value) {
-      return this.requestMetricRender(queryObject, options);
+    if (queryObject.queryType === GraphiteQueryType.Value || queryObject.queryType === GraphiteQueryType.MetricName) {
+      return this.requestMetricRender(queryObject, options, queryObject.queryType);
     }
 
     let query = queryObject.target ?? '';
@@ -531,7 +533,7 @@ export class GraphiteDatasource
       };
     }
 
-    if (useExpand || queryObject.queryType === GraphiteQueryType.MetricName) {
+    if (useExpand) {
       return this.requestMetricExpand(interpolatedQuery, options.requestId, range);
     } else {
       return this.requestMetricFind(interpolatedQuery, options.requestId, range);
@@ -540,14 +542,22 @@ export class GraphiteDatasource
 
   /**
    * Search for metrics matching giving pattern using /metrics/render endpoint.
-   * It will return all possible values and parse them based on queryType.
+   * It will return all possible values or names and parse them based on queryType.
    * For example:
    *
    * queryType: GraphiteQueryType.Value
    * query: groupByNode(movingAverage(apps.country.IE.counters.requests.count, 10), 2, 'sum')
    * result: 239.4, 233.4, 230.8, 230.4, 233.9, 238, 239.8, 236.8, 235.8
+   *
+   * queryType: GraphiteQueryType.MetricName
+   * query: highestAverage(carbon.agents.*.*, 5)
+   * result: carbon.agents.aa6338c54341-a.memUsage, carbon.agents.aa6338c54341-a.committedPoints, carbon.agents.aa6338c54341-a.updateOperations, carbon.agents.aa6338c54341-a.metricsReceived, carbon.agents.aa6338c54341-a.activeConnections
    */
-  private async requestMetricRender(queryObject: GraphiteQuery, options: any): Promise<MetricFindValue[]> {
+  private async requestMetricRender(
+    queryObject: GraphiteQuery,
+    options: any,
+    queryType: GraphiteQueryType
+  ): Promise<MetricFindValue[]> {
     const requestId: string = options.requestId ?? `Q${this.requestCounter++}`;
     const range: TimeRange = options.range ?? {
       from: dateTime().subtract(6, 'hour'),
@@ -568,14 +578,28 @@ export class GraphiteDatasource
       requestId,
       range,
     };
-    const data = await lastValueFrom(this.query(queryReq));
-    const result: MetricFindValue[] = data.data[0].fields[1].values
-      .filter((f?: number) => !!f)
-      .map((v: number) => ({
-        text: v.toString(),
-        value: v,
+    const data: DataQueryResponse = await lastValueFrom(this.query(queryReq));
+
+    let result: MetricFindValue[];
+
+    if (queryType === GraphiteQueryType.Value) {
+      result = data.data[0].fields[1].values
+        .filter((f?: number) => !!f)
+        .map((v: number) => ({
+          text: v.toString(),
+          value: v,
+          expandable: false,
+        }));
+    } else if (queryType === GraphiteQueryType.MetricName) {
+      result = data.data.map((series) => ({
+        text: series.name,
+        value: series.name,
         expandable: false,
       }));
+    } else {
+      result = [];
+    }
+
     return Promise.resolve(result);
   }
 
@@ -803,7 +827,7 @@ export class GraphiteDatasource
     );
   }
 
-  createFuncInstance(funcDef: any, options?: any): FuncInstance {
+  createFuncInstance(funcDef: string | FuncDef, options?: any): FuncInstance {
     return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
   }
 
@@ -846,7 +870,7 @@ export class GraphiteDatasource
           this.funcDefs = gfunc.parseFuncDefs(fixedData);
           return this.funcDefs;
         }),
-        catchError((error: any) => {
+        catchError((error) => {
           console.error('Fetching graphite functions error', error);
           this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
           return of(this.funcDefs);
@@ -900,7 +924,7 @@ export class GraphiteDatasource
     return getBackendSrv()
       .fetch(options)
       .pipe(
-        catchError((err: any) => {
+        catchError((err) => {
           return throwError(reduceError(err));
         })
       );
@@ -917,7 +941,7 @@ export class GraphiteDatasource
 
     options['format'] = 'json';
 
-    function fixIntervalFormat(match: any) {
+    function fixIntervalFormat(match: string) {
       return match.replace('m', 'min').replace('M', 'mon');
     }
 
@@ -983,7 +1007,7 @@ function supportsFunctionIndex(version: string): boolean {
 
 function mapToTags(): OperatorFunction<any, Array<{ text: string }>> {
   return pipe(
-    map((results: any) => {
+    map((results) => {
       if (results.data) {
         return _map(results.data, (value) => {
           return { text: value };

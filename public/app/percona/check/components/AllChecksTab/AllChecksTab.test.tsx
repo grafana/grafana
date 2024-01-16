@@ -7,6 +7,7 @@ import { NavIndex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { logger } from 'app/percona/shared/helpers/logger';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -77,18 +78,20 @@ describe('AllChecksTab::', () => {
           navIndex: navIndex,
         } as StoreState)}
       >
-        <Router history={locationService.getHistory()}>
-          <AllChecksTab
-            {...getRouteComponentProps({
-              match: {
-                params: { category: 'configuration' },
-                isExact: true,
-                path: '/advisors/:category',
-                url: '/advisors/configuration',
-              },
-            })}
-          />
-        </Router>
+        {wrapWithGrafanaContextMock(
+          <Router history={locationService.getHistory()}>
+            <AllChecksTab
+              {...getRouteComponentProps({
+                match: {
+                  params: { category: 'configuration' },
+                  isExact: true,
+                  path: '/advisors/:category',
+                  url: '/advisors/configuration',
+                },
+              })}
+            />
+          </Router>
+        )}
       </Provider>
     );
 
@@ -199,18 +202,20 @@ const AllChecksTabTesting = () => {
         navIndex: navIndex,
       } as StoreState)}
     >
-      <Router history={locationService.getHistory()}>
-        <AllChecksTab
-          {...getRouteComponentProps({
-            match: {
-              params: { category: 'security' },
-              isExact: true,
-              path: '/advisors/:category',
-              url: '/advisors/security',
-            },
-          })}
-        />
-      </Router>
+      {wrapWithGrafanaContextMock(
+        <Router history={locationService.getHistory()}>
+          <AllChecksTab
+            {...getRouteComponentProps({
+              match: {
+                params: { category: 'security' },
+                isExact: true,
+                path: '/advisors/:category',
+                url: '/advisors/security',
+              },
+            })}
+          />
+        </Router>
+      )}
     </Provider>
   );
 };

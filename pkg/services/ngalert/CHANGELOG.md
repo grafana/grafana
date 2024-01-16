@@ -1,49 +1,34 @@
 # Changelog
 
-**Please note that this is not a direct replacement of Grafana's "add to changelog" label. It is _mostly_ for internal consumption of the Alerting team that owns this part of Grafana.**
+This is not a direct replacement of Grafana's "add to changelog" label. This is a manually managed document used by docs and PMs to know what to add to "What's New" documents. Adding a PR to a changelog item is recommended but not necessary as some changes require more than one PR.
+
+**Expected contributors: engineers once something noteworthy has been merged.**
 
 ## Scope Glossary
 
-### `[ADMIN]`
-The ADMIN scope denotes a change that affect the structure and layout of this repository. This includes updates to the following:
+### `[CHANGED]`
 
-- CODEOWNERS
-- README
-- DotFiles (.gitignore, .git-attributes, etc)
+The CHANGED label is for features that has changed in a visible/impactful way, e.g. "[CHANGED] Time series visualization added in cloud rules editor. [#54950](https://github.com/grafana/grafana/pull/54950)"
 
-Anything that a developer working on this repo should be aware of from a standards and practice perspective.
+### `[NEW]`
 
-### `[BUGFIX]`
+The NEW label is for a new functionality or a change that is big enough to stand on its own feet. E.g. "[NEW] Provisioning now supports Terraform."
 
-The BUGFIX scope denotes a change that fixes an issue with the project in question. A BUGFIX should align the behaviour of the service with the current expected behaviour of the service. If a BUGFIX introduces new unexpected behaviour to ameliorate the issue, a corresponding FEATURE or ENHANCEMENT scope should also be added to the changelog.
+### `[DEPRECATED]`
 
-### `[CHANGE]`
+The DEPRECATED label is for a feature is planned for deprecation. We should ideally tell customers about those 1 or 2 versions before removing the feature.
 
-The CHANGE scope denotes a change that changes the expected behavior of the project while not adding new functionality or fixing an underling issue. This commonly occurs when renaming things to make them more consistent or to accommodate updated versions of vendored dependencies.
+### `[REMOVED]`
 
-### `[FEATURE]`
+Self explanatory.
 
-The FEATURE scope denotes a change that adds new functionality to the project/service.
+## Next (9.3)
 
-### `[ENHANCEMENT]`
+## 9.2
 
-The ENHANCEMENT scope denotes a change that improves upon the current functionality of the project/service. Generally, an enhancement is something that improves upon something that is already present. Either by making it simpler, more powerful, or more performant. For Example:
+# Previous use of that CHANGELOG, will be removed soon
 
-An optimization on a particular process in a service that makes it more performant
-Simpler syntax for setting a configuration value, like allowing 1m instead of 60 for a duration setting.
-
-## Order
-
-Scopes must have an order to ensure consistency and ease of search, this helps us identify which section do we need to look for what. The order must be:
-
-1. `[CHANGE]`
-2. `[FEATURE]`
-3. `[BUGFIX]`
-4. `[ENHANCEMENT]`
-5. `[ADMIN]`
-
-
-## Grafana Alerting - main / unreleased
+## Items that happened somewhere between 9.0 and 9.2
 
 - [CHANGE] Rule API to reject request to update rules that affects provisioned rules #50835
 - [FEATURE] Add first Grafana reserved label, grafana_folder is created during runtime and stores an alert's folder/namespace title #50262

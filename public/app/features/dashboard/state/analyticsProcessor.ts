@@ -4,12 +4,12 @@ import { DashboardModel } from './DashboardModel';
 
 export function emitDashboardViewEvent(dashboard: DashboardModel) {
   const eventData: DashboardViewEventPayload = {
+    /** @deprecated */
     dashboardId: dashboard.id,
     dashboardName: dashboard.title,
     dashboardUid: dashboard.uid,
     folderName: dashboard.meta.folderTitle,
     eventName: MetaAnalyticsEventName.DashboardView,
-    publicDashboardUid: dashboard.meta.publicDashboardUid,
   };
 
   reportMetaAnalytics(eventData);

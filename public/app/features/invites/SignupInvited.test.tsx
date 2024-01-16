@@ -1,6 +1,8 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { match } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
@@ -15,7 +17,7 @@ jest.mock('app/core/core', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -39,11 +41,15 @@ async function setupTestContext({ get = defaultGet }: { get?: typeof defaultGet 
     ...getRouteComponentProps({
       match: {
         params: { code: 'some code' },
-      } as any,
+      } as unknown as match,
     }),
   };
 
-  render(<SignupInvitedPage {...props} />);
+  render(
+    <TestProvider>
+      <SignupInvitedPage {...props} />
+    </TestProvider>
+  );
 
   await waitFor(() => expect(getSpy).toHaveBeenCalled());
   expect(getSpy).toHaveBeenCalledTimes(1);

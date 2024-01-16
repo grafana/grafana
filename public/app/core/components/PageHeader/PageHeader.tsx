@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
+import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { Tab, TabsBar, Icon, useStyles2, toIconName } from '@grafana/ui';
-import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
+import { PanelHeaderMenuItem } from 'app/core/components/PageHeader/PanelHeaderMenuItem';
 
 import { PageInfoItem } from '../Page/types';
 import { PageInfo } from '../PageInfo/PageInfo';
@@ -15,9 +15,6 @@ export interface Props {
   actions?: React.ReactNode;
   info?: PageInfoItem[];
   subTitle?: React.ReactNode;
-  // @PERCONA
-  vertical?: boolean;
-  tabsDataTestId?: string;
 }
 
 const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCss: string }) => {
@@ -32,10 +29,15 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
   return (
     <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
       <div className="dropdown">
-        <div className="gf-form-input dropdown-toggle" data-toggle="dropdown">
+        <button
+          type="button"
+          className="gf-form-input dropdown-toggle"
+          data-toggle="dropdown"
+          style={{ textAlign: 'left' }}
+        >
           {defaultSelectedItem?.text}
-        </div>
-        <ul className="dropdown-menu dropdown-menu--menu">
+        </button>
+        <ul role="menu" className="dropdown-menu dropdown-menu--menu">
           {children.map((navItem: NavModelItem) => {
             if (navItem.hideFromTabs) {
               // TODO: Rename hideFromTabs => hideFromNav
@@ -56,27 +58,15 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
   );
 };
 
-const Navigation = ({
-  children,
-  vertical = false,
-  dataTestId = '',
-}: {
-  children: NavModelItem[];
-  // @PERCONA
-  vertical?: boolean;
-  dataTestId?: string;
-  tabsdataTestId?: string;
-}) => {
-  const styles = useStyles2(getStyles);
-
+const Navigation = ({ children }: { children: NavModelItem[] }) => {
   if (!children || children.length === 0) {
     return null;
   }
 
   return (
-    <nav className={cx({ [styles.verticalNav]: !!vertical })}>
+    <nav>
       <SelectNav customCss="page-header__select-nav">{children}</SelectNav>
-      <TabsBar className="page-header__tabs" hideBorder={true} vertical={vertical} dataTestId={dataTestId}>
+      <TabsBar className="page-header__tabs" hideBorder={true}>
         {children.map((child, index) => {
           return (
             !child.hideFromTabs && (
@@ -96,15 +86,7 @@ const Navigation = ({
   );
 };
 
-export const PageHeader: FC<Props> = ({
-  navItem: model,
-  renderTitle,
-  actions,
-  info,
-  subTitle,
-  vertical = false,
-  tabsDataTestId = '',
-}) => {
+export const PageHeader = ({ navItem: model, renderTitle, actions, info, subTitle }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!model) {
@@ -120,13 +102,11 @@ export const PageHeader: FC<Props> = ({
       <div className="page-header__inner">
         <span className="page-header__logo">
           {icon && <Icon name={icon} size="xxxl" style={{ marginTop }} />}
-          {main.img && <img className="page-header__img" src={main.img} alt={`logo of ${main.text}`} />}
+          {main.img && <img className="page-header__img" src={main.img} alt="" />}
         </span>
 
         <div className={cx('page-header__info-block', styles.headerText)}>
-          {renderTitle
-            ? renderTitle(main.text)
-            : renderHeaderTitle(main.text, main.breadcrumbs ?? [], main.highlightText)}
+          {renderTitle ? renderTitle(main.text) : renderHeaderTitle(main.text, main.highlightText)}
           {info && <PageInfo info={info} />}
           {sub && <div className="page-header__sub-title">{sub}</div>}
           {actions && <div className={styles.actions}>{actions}</div>}
@@ -140,94 +120,45 @@ export const PageHeader: FC<Props> = ({
       <div className="page-container">
         <div className="page-header">
           {renderHeader(model)}
-          {model.children && model.children.length > 0 && (
-            <Navigation vertical={vertical} dataTestId={tabsDataTestId}>
-              {model.children}
-            </Navigation>
-          )}
+          {model.children && model.children.length > 0 && <Navigation>{model.children}</Navigation>}
         </div>
       </div>
     </div>
   );
 };
 
-function renderHeaderTitle(
-  title: string,
-  breadcrumbs: NavModelBreadcrumb[],
-  highlightText: NavModelItem['highlightText']
-) {
-  if (!title && (!breadcrumbs || breadcrumbs.length === 0)) {
+function renderHeaderTitle(title: string, highlightText: NavModelItem['highlightText']) {
+  if (!title) {
     return null;
   }
 
-  if (!breadcrumbs || breadcrumbs.length === 0) {
-    return (
-      <h1 className="page-header__title">
-        {title}
-        {highlightText && (
-          <ProBadge
-            text={highlightText}
-            className={css`
-              vertical-align: middle;
-            `}
-          />
-        )}
-      </h1>
-    );
-  }
-
-  const breadcrumbsResult = [];
-  for (const bc of breadcrumbs) {
-    if (bc.url) {
-      breadcrumbsResult.push(
-        <a data-testid="breadcrumb-section" className="page-header__link" key={breadcrumbsResult.length} href={bc.url}>
-          {bc.title}
-        </a>
-      );
-    } else {
-      breadcrumbsResult.push(
-        <span data-testid="breadcrumb-section" key={breadcrumbsResult.length}>
-          {' '}
-          / {bc.title}
-        </span>
-      );
-    }
-  }
-  breadcrumbsResult.push(
-    <span data-testid="breadcrumb-section" key={breadcrumbs.length + 1}>
-      {' '}
-      / {title}
-    </span>
+  return (
+    <h1 className="page-header__title">
+      {title}
+      {highlightText && (
+        <ProBadge
+          text={highlightText}
+          className={css`
+            vertical-align: middle;
+          `}
+        />
+      )}
+    </h1>
   );
-
-  return <h1 className="page-header__title">{breadcrumbsResult}</h1>;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
-  // @PERCONA
-  const maxWidthBreakpoint =
-    theme.breakpoints.values.xxl + theme.spacing.gridSize * 2 + theme.components.sidemenu.width;
-
-  return {
-    actions: css({
-      display: 'flex',
-      flexDirection: 'row',
-      gap: theme.spacing(1),
-    }),
-    headerText: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-    }),
-    headerCanvas: css`
-      background: ${theme.colors.background.canvas};
-    `,
-    // @PERCONA
-    verticalNav: css`
-      width: 20%;
-      @media (min-width: ${maxWidthBreakpoint}px) {
-        width: 12%;
-      }
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  actions: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+  }),
+  headerText: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+  }),
+  headerCanvas: css`
+    background: ${theme.colors.background.canvas};
+  `,
+});

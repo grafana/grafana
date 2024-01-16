@@ -13,7 +13,7 @@ func TestReadingFeatureSettings(t *testing.T) {
 	config, err := readConfigFile("testdata/features.yaml")
 	require.NoError(t, err, "No error when reading feature configs")
 
-	assert.Equal(t, map[string]interface{}{
+	assert.Equal(t, map[string]any{
 		"level": "free",
 		"stack": "something",
 		"valA":  "value from features.yaml",

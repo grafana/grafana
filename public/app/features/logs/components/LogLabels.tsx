@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -11,7 +11,7 @@ interface Props {
   labels: Labels;
 }
 
-export const LogLabels: FunctionComponent<Props> = ({ labels }) => {
+export const LogLabels = ({ labels }: Props) => {
   const styles = useStyles2(getStyles);
   const displayLabels = Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
 
@@ -53,10 +53,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     logsLabel: css`
       label: logs-label;
       display: flex;
-      padding: 0 2px;
+      padding: ${theme.spacing(0, 0.25)};
       background-color: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius(1)};
-      margin: 1px 4px 0 0;
+      border-radius: ${theme.shape.radius.default};
+      margin: ${theme.spacing(0.125, 0.5, 0, 0)};
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
@@ -64,7 +64,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     logsLabelValue: css`
       label: logs-label__value;
       display: inline-block;
-      max-width: 20em;
+      max-width: ${theme.spacing(25)};
       text-overflow: ellipsis;
       overflow: hidden;
     `,

@@ -21,18 +21,7 @@ import (
 )
 
 const (
-	screenshotCacheTTL = 60 * time.Second
-	screenshotTimeout  = 10 * time.Second
-)
-
-var (
-	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
-	// in its annotations or the dashboard does not exist.
-	ErrNoDashboard = errors.New("no dashboard")
-
-	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
-	// annotations.
-	ErrNoPanel = errors.New("no panel")
+	screenshotCacheTTL = time.Minute
 )
 
 // DeleteExpiredService is a service to delete expired images.
@@ -48,7 +37,6 @@ func ProvideDeleteExpiredService(store *store.DBstore) *DeleteExpiredService {
 	return &DeleteExpiredService{store: store}
 }
 
-//go:generate mockgen -destination=mock.go -package=image github.com/grafana/grafana/pkg/services/ngalert/image ImageService
 type ImageService interface {
 	// NewImage returns a new image for the alert instance.
 	NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error)
@@ -59,13 +47,14 @@ type ImageService interface {
 // as an annotation or label to the Alertmanager. This service cannot take
 // screenshots of alert rules that are not associated with a dashboard panel.
 type ScreenshotImageService struct {
-	cache        CacheService
-	limiter      screenshot.RateLimiter
-	logger       log.Logger
-	screenshots  screenshot.ScreenshotService
-	singleflight singleflight.Group
-	store        store.ImageStore
-	uploads      *UploadingService
+	cache             CacheService
+	limiter           screenshot.RateLimiter
+	logger            log.Logger
+	screenshots       screenshot.ScreenshotService
+	screenshotTimeout time.Duration
+	singleflight      singleflight.Group
+	store             store.ImageStore
+	uploads           *UploadingService
 }
 
 // NewScreenshotImageService returns a new ScreenshotImageService.
@@ -74,15 +63,17 @@ func NewScreenshotImageService(
 	limiter screenshot.RateLimiter,
 	logger log.Logger,
 	screenshots screenshot.ScreenshotService,
+	screenshotTimeout time.Duration,
 	store store.ImageStore,
 	uploads *UploadingService) ImageService {
 	return &ScreenshotImageService{
-		cache:       cache,
-		limiter:     limiter,
-		logger:      logger,
-		screenshots: screenshots,
-		store:       store,
-		uploads:     uploads,
+		cache:             cache,
+		limiter:           limiter,
+		logger:            logger,
+		screenshots:       screenshots,
+		screenshotTimeout: screenshotTimeout,
+		store:             store,
+		uploads:           uploads,
 	}
 }
 
@@ -91,10 +82,11 @@ func NewScreenshotImageService(
 func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds dashboards.DashboardService,
 	rs rendering.Service, r prometheus.Registerer) (ImageService, error) {
 	var (
-		cache       CacheService                 = &NoOpCacheService{}
-		limiter     screenshot.RateLimiter       = &screenshot.NoOpRateLimiter{}
-		screenshots screenshot.ScreenshotService = &screenshot.ScreenshotUnavailableService{}
-		uploads     *UploadingService            = nil
+		cache             CacheService                 = &NoOpCacheService{}
+		limiter           screenshot.RateLimiter       = &screenshot.NoOpRateLimiter{}
+		screenshots       screenshot.ScreenshotService = &screenshot.ScreenshotUnavailableService{}
+		screenshotTimeout time.Duration                = 0
+		uploads           *UploadingService            = nil
 	)
 
 	// If screenshots are enabled
@@ -102,6 +94,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 		cache = NewInmemCacheService(screenshotCacheTTL, r)
 		limiter = screenshot.NewTokenRateLimiter(cfg.UnifiedAlerting.Screenshots.MaxConcurrentScreenshots)
 		screenshots = screenshot.NewHeadlessScreenshotService(ds, rs, r)
+		screenshotTimeout = cfg.UnifiedAlerting.Screenshots.CaptureTimeout
 
 		// Image uploading is an optional feature
 		if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
@@ -113,40 +106,40 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 		}
 	}
 
-	return NewScreenshotImageService(cache, limiter, log.New("ngalert.image"), screenshots, db, uploads), nil
+	return NewScreenshotImageService(cache, limiter, log.New("ngalert.image"),
+		screenshots, screenshotTimeout, db, uploads), nil
 }
 
 // NewImage returns a screenshot of the alert rule or an error.
 //
 // The alert rule must be associated with a dashboard panel for a screenshot to be
 // taken. If the alert rule does not have a Dashboard UID in its annotations,
-// or the dashboard does not exist, an ErrNoDashboard error is returned. If the
+// or the dashboard does not exist, a models.ErrNoDashboard error is returned. If the
 // alert rule has a Dashboard UID and the dashboard exists, but does not have a
-// Panel ID in its annotations then an ErrNoPanel error is returned.
+// Panel ID in its annotations then a models.ErrNoPanel error is returned.
 func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
 	logger := s.logger.FromContext(ctx)
 
 	dashboardUID := r.GetDashboardUID()
 	if dashboardUID == "" {
 		logger.Debug("Cannot take screenshot for alert rule as it is not associated with a dashboard")
-		return nil, ErrNoDashboard
+		return nil, models.ErrNoDashboard
 	}
 
 	panelID := r.GetPanelID()
 	if panelID <= 0 {
 		logger.Debug("Cannot take screenshot for alert rule as it is not associated with a panel")
-		return nil, ErrNoPanel
+		return nil, models.ErrNoPanel
 	}
 
 	logger = logger.New("dashboard", dashboardUID, "panel", panelID)
 
 	opts := screenshot.ScreenshotOptions{
+		OrgID:        r.OrgID,
 		DashboardUID: dashboardUID,
 		PanelID:      panelID,
-		Timeout:      screenshotTimeout,
+		Timeout:      s.screenshotTimeout,
 	}
-
-	logger = logger.New("dashboard", opts.DashboardUID, "panel", opts.PanelID)
 
 	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,
 	// deduplicated on a base64 hash of the screenshot options.
@@ -158,22 +151,22 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		return &image, nil
 	}
 
-	// We create both a context with timeout and set a timeout in ScreenshotOptions. The timeout
-	// in the context is used for both database queries and the request to the rendering service,
-	// while the timeout in ScreenshotOptions is passed to the rendering service where it is used as
-	// a client timeout. It is not recommended to pass a context without a deadline and the context
-	// deadline should be at least as long as the timeout in ScreenshotOptions.
-	ctx, cancelFunc := context.WithTimeout(ctx, screenshotTimeout)
-	defer cancelFunc()
-
 	logger.Debug("Requesting screenshot")
 
-	result, err, _ := s.singleflight.Do(optsHash, func() (interface{}, error) {
+	result, err, _ := s.singleflight.Do(optsHash, func() (any, error) {
+		// We create both a context with timeout and set a timeout in ScreenshotOptions. The timeout
+		// in the context is used for both database queries and the request to the rendering service,
+		// while the timeout in ScreenshotOptions is passed to the rendering service where it is used as
+		// a client timeout. It is not recommended to pass a context without a deadline and the context
+		// deadline should be at least as long as the timeout in ScreenshotOptions.
+		screenshotCtx, cancelFunc := context.WithTimeout(ctx, s.screenshotTimeout)
+		defer cancelFunc()
+
 		// Once deduplicated concurrent screenshots are then rate-limited
-		screenshot, err := s.limiter.Do(ctx, opts, s.screenshots.Take)
+		screenshot, err := s.limiter.Do(screenshotCtx, opts, s.screenshots.Take)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return nil, ErrNoDashboard
+				return nil, models.ErrNoDashboard
 			}
 			return nil, err
 		}
@@ -209,18 +202,4 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	}
 
 	return &image, nil
-}
-
-// NotAvailableImageService is a service that returns ErrScreenshotsUnavailable.
-type NotAvailableImageService struct{}
-
-func (s *NotAvailableImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
-	return nil, screenshot.ErrScreenshotsUnavailable
-}
-
-// NoopImageService is a no-op image service.
-type NoopImageService struct{}
-
-func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
-	return &models.Image{}, nil
 }

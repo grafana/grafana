@@ -34,8 +34,13 @@ type staticIndexPattern struct {
 	indexName string
 }
 
+// TODO: This never returns an error, we should refactor and remove it
 func (ip *staticIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string, error) {
-	return []string{ip.indexName}, nil
+	if ip.indexName != "" {
+		return []string{ip.indexName}, nil
+	} else {
+		return []string{}, nil
+	}
 }
 
 type intervalGenerator interface {

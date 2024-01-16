@@ -1,24 +1,27 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
-import { FC, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { ExploreId, useDispatch, useSelector } from 'app/types';
+import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 
-import { splitOpen, splitClose } from './state/main';
+import { splitOpen, splitClose, changeCorrelationEditorDetails } from './state/main';
 import { runQueries } from './state/query';
-import { isSplit } from './state/selectors';
+import { isSplit, selectPanes } from './state/selectors';
 
-interface Props {
-  exploreIdLeft: ExploreId;
-  exploreIdRight?: ExploreId;
-}
-
-export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Props) => {
+// FIXME: this should use the new IDs
+export const ExploreActions = () => {
   const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
   const dispatch = useDispatch();
+  const panes = useSelector(selectPanes);
   const splitted = useSelector(isSplit);
 
+  const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+
   useEffect(() => {
+    const keys = Object.keys(panes);
     const exploreSection = {
       name: 'Explore',
       priority: Priority.HIGH + 1,
@@ -32,18 +35,18 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
         name: 'Run query (left)',
         keywords: 'query left',
         perform: () => {
-          dispatch(runQueries(exploreIdLeft));
+          dispatch(runQueries({ exploreId: keys[0] }));
         },
         section: exploreSection,
       });
-      if (exploreIdRight) {
+      if ([panes[1]]) {
         // we should always have the right exploreId if split
         actionsArr.push({
           id: 'explore/run-query-right',
           name: 'Run query (right)',
           keywords: 'query right',
           perform: () => {
-            dispatch(runQueries(exploreIdRight));
+            dispatch(runQueries({ exploreId: keys[1] }));
           },
           section: exploreSection,
         });
@@ -52,7 +55,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
           name: 'Close split view left',
           keywords: 'split',
           perform: () => {
-            dispatch(splitClose(exploreIdLeft));
+            dispatch(splitClose(keys[0]));
           },
           section: exploreSection,
         });
@@ -61,18 +64,35 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
           name: 'Close split view right',
           keywords: 'split',
           perform: () => {
-            dispatch(splitClose(exploreIdRight));
+            dispatch(splitClose(keys[1]));
           },
           section: exploreSection,
         });
       }
     } else {
+      // command palette doesn't know what pane we're in, only show option if not split and no datasource is mixed
+      const hasMixed = Object.values(panes).some((pane) => {
+        return pane?.datasourceInstance?.uid === MIXED_DATASOURCE_NAME;
+      });
+
+      if (config.featureToggles.correlations && canWriteCorrelations && !hasMixed) {
+        actionsArr.push({
+          id: 'explore/correlations-editor',
+          name: 'Correlations editor',
+          perform: () => {
+            dispatch(changeCorrelationEditorDetails({ editorMode: true }));
+            dispatch(runQueries({ exploreId: keys[0] }));
+          },
+          section: exploreSection,
+        });
+      }
+
       actionsArr.push({
         id: 'explore/run-query',
         name: 'Run query',
         keywords: 'query',
         perform: () => {
-          dispatch(runQueries(exploreIdLeft));
+          dispatch(runQueries({ exploreId: keys[0] }));
         },
         section: exploreSection,
       });
@@ -87,7 +107,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
       });
     }
     setActions(actionsArr);
-  }, [exploreIdLeft, exploreIdRight, splitted, query, dispatch]);
+  }, [panes, splitted, query, dispatch, canWriteCorrelations]);
 
   useRegisterActions(!query ? [] : actions, [actions, query]);
 

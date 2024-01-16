@@ -39,7 +39,7 @@ type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
-  private series: UPlotSeriesBuilder[] = [];
+  series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
@@ -74,7 +74,7 @@ export class UPlotConfigBuilder {
       this.hooks[type] = [];
     }
 
-    this.hooks[type]!.push(hook as any);
+    this.hooks[type].push(hook);
   }
 
   addThresholds(options: UPlotThresholdOptions) {
@@ -220,7 +220,7 @@ export class UPlotConfigBuilder {
         // interpolate for gradients/thresholds
         if (typeof s !== 'string') {
           let field = this.frames![0].fields[seriesIdx];
-          s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
+          s = field.display!(field.values[u.cursor.idxs![seriesIdx]!]).color!;
         }
 
         return s + alphaHex;
@@ -295,7 +295,7 @@ export type Renderers = Array<{
 }>;
 
 /** @alpha */
-type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
+type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
   timeZones: TimeZone[];
@@ -305,6 +305,8 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   renderers?: Renderers;
   tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
+  // Identifies the shared key for uPlot cursor sync
+  eventsScope?: string;
 } & T;
 
 /** @alpha */

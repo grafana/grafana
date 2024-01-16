@@ -1,7 +1,7 @@
-import { ComponentStory } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { ComponentSize } from '../../types/size';
+import { ComponentSize } from '../../types';
 import { Card } from '../Card/Card';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
@@ -24,14 +24,7 @@ export default {
       options: sizes,
     },
     tooltip: {
-      table: {
-        disable: true,
-      },
-    },
-    tooltipPlacement: {
-      table: {
-        disable: true,
-      },
+      control: 'text',
     },
     className: {
       table: {
@@ -41,7 +34,7 @@ export default {
   },
 };
 
-export const Examples: ComponentStory<typeof Button> = () => {
+export const Examples: StoryFn<typeof Button> = () => {
   return (
     <VerticalGroup>
       {allButtonFills.map((buttonFill) => (
@@ -74,12 +67,6 @@ export const Examples: ComponentStory<typeof Button> = () => {
         </Button>
       </HorizontalGroup>
       <div />
-      <HorizontalGroup spacing="lg">
-        <div>With icon only</div>
-        <Button icon="cloud" size="sm" />
-        <Button icon="cloud" size="md" />
-        <Button icon="cloud" size="lg" />
-      </HorizontalGroup>
       <div />
       <Button icon="plus" fullWidth>
         Button with fullWidth
@@ -109,7 +96,7 @@ export const Examples: ComponentStory<typeof Button> = () => {
   );
 };
 
-export const Basic: ComponentStory<typeof Button> = (args: ButtonProps) => <Button {...args} />;
+export const Basic: StoryFn<typeof Button> = (args: ButtonProps) => <Button {...args} />;
 
 Basic.args = {
   children: 'Example button',

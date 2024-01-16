@@ -38,6 +38,9 @@ scrape_configs:
     static_configs:
       - targets: ['prometheus-random-data:8080']
 
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
   # - job_name: 'grafana-test-datasource'
   #   metrics_path: /metrics/plugins/grafana-test-datasource
   #   static_configs:

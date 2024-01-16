@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Stack } from '@grafana/experimental';
 import { Field, Icon, Input, InputControl, Label, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
+import { FolderPickerFilter } from 'app/core/components/Select/OldFolderPicker';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -15,8 +15,8 @@ import { fetchTemplatesAction } from 'app/percona/shared/core/reducers';
 import { getTemplates } from 'app/percona/shared/core/selectors';
 import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 
-import { fetchAlertManagerConfigAction } from '../../../state/actions';
-import { RuleForm, RuleFormValues } from '../../../types/rule-form';
+import { fetchExternalAlertmanagersConfigAction } from '../../../state/actions';
+import { RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import { durationValidationPattern, parseDurationToMilliseconds } from '../../../utils/time';
 import { RuleEditorSection } from '../RuleEditorSection';
@@ -30,21 +30,18 @@ import { Messages } from './TemplateStep.messages';
 import { getStyles } from './TemplateStep.styles';
 import { formatTemplateOptions } from './TemplateStep.utils';
 
-const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
+const useRuleFolderFilter = (existingRuleForm: null) => {
   const isSearchHitAvailable = useCallback(
     (hit: DashboardSearchHit) => {
-      const rbacDisabledFallback = contextSrv.hasEditPermissionInFolders;
+      // @PERCONA_TODO
+      // const rbacDisabledFallback = contextSrv.hasEditPermissionInFolders;
 
-      const canCreateRuleInFolder = contextSrv.hasAccessInMetadata(
-        AccessControlAction.AlertingRuleCreate,
-        hit,
-        rbacDisabledFallback
-      );
+      const canCreateRuleInFolder = contextSrv.hasPermissionInMetadata(AccessControlAction.AlertingRuleCreate, hit);
 
       const canUpdateInCurrentFolder =
         existingRuleForm &&
-        hit.folderId === existingRuleForm.id &&
-        contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
+        // hit.folderId === existingRuleForm.id &&
+        contextSrv.hasPermissionInMetadata(AccessControlAction.AlertingRuleUpdate, hit);
 
       return canCreateRuleInFolder || canUpdateInCurrentFolder;
     },
@@ -122,7 +119,9 @@ export const TemplateStep: FC = () => {
 
   useEffect(() => {
     const getData = async () => {
-      dispatch(fetchAlertManagerConfigAction('grafana'));
+      // @PERCONA_TODO check if it's fetching the correct one
+      dispatch(fetchExternalAlertmanagersConfigAction());
+      // dispatch(fetchExternalAlertmanagersConfigAction('grafana'));
       const { templates } = await dispatch(fetchTemplatesAction()).unwrap();
 
       if (selectedTemplate) {
@@ -285,7 +284,8 @@ export const TemplateStep: FC = () => {
                 enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
                 enableReset={true}
                 filter={folderFilter}
-                dissalowSlashes={true}
+                // @PERCONA_TODO
+                // dissalowSlashes={true}
               />
             )}
             name="folder"

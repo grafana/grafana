@@ -14,12 +14,8 @@ export function UserInvitePage() {
   );
 
   return (
-    <Page navId="users" pageNav={{ text: 'Invite user' }} subTitle={subTitle}>
+    <Page navId="global-users" pageNav={{ text: 'Invite user' }} subTitle={subTitle}>
       <Page.Contents>
-        <Page.OldNavOnly>
-          <h3 className="page-sub-heading">Invite user</h3>
-          <div className="p-b-2">{subTitle}</div>
-        </Page.OldNavOnly>
         <UserInviteForm />
       </Page.Contents>
     </Page>

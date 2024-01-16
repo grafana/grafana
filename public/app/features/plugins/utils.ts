@@ -1,8 +1,4 @@
-import { Location as HistoryLocation } from 'history';
-
-import { GrafanaPlugin, NavIndex, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { GrafanaPlugin, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
 
 import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { getPluginSettings } from './pluginSettings';
@@ -33,38 +29,57 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   return result;
 }
 
-export function buildPluginSectionNav(location: HistoryLocation, pluginNav: NavModel | null, navIndex: NavIndex) {
-  // When topnav is disabled we only just show pluginNav like before
-  if (!config.featureToggles.topnav) {
-    return pluginNav;
-  }
-
-  const originalSection = getNavModel(navIndex, 'apps').main;
-  const section = { ...originalSection };
-
-  // If we have plugin nav don't set active page in section as it will cause double breadcrumbs
-  const currentUrl = config.appSubUrl + location.pathname + location.search;
+export function buildPluginSectionNav(
+  pluginNavSection: NavModelItem,
+  pluginNav: NavModel | null,
+  currentUrl: string
+): NavModel | undefined {
+  // shallow clone as we set active flag
+  const MAX_RECURSION_DEPTH = 10;
+  let copiedPluginNavSection = { ...pluginNavSection };
   let activePage: NavModelItem | undefined;
 
-  // Set active page
-  section.children = (section?.children ?? []).map((child) => {
+  function setPageToActive(page: NavModelItem, currentUrl: string): NavModelItem {
+    if (!currentUrl.startsWith(page.url ?? '')) {
+      return page;
+    }
+
+    // Check if there is already an active page found with with a more specific url (possibly a child of the current page)
+    // (In this case we bail out early and don't mark the parent as active)
+    if (activePage && (activePage.url?.length ?? 0) > (page.url?.length ?? 0)) {
+      return page;
+    }
+
+    if (activePage) {
+      activePage.active = false;
+    }
+
+    activePage = { ...page, active: true };
+
+    return activePage;
+  }
+
+  function findAndSetActivePage(child: NavModelItem, depth = 0): NavModelItem {
+    if (depth > MAX_RECURSION_DEPTH) {
+      return child;
+    }
+
     if (child.children) {
+      // Doing this here to make sure that first we check if any of the children is active
+      // (In case yes, then the check for the parent will not mark it as active)
+      const children = child.children.map((pluginPage) => findAndSetActivePage(pluginPage, depth + 1));
+
       return {
-        ...child,
-        children: child.children.map((pluginPage) => {
-          if (currentUrl.startsWith(pluginPage.url ?? '')) {
-            activePage = {
-              ...pluginPage,
-              active: true,
-            };
-            return activePage;
-          }
-          return pluginPage;
-        }),
+        ...setPageToActive(child, currentUrl),
+        children,
       };
     }
-    return child;
-  });
 
-  return { main: section, node: activePage ?? section };
+    return setPageToActive(child, currentUrl);
+  }
+
+  // Find and set active page
+  copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map(findAndSetActivePage);
+
+  return { main: copiedPluginNavSection, node: activePage ?? copiedPluginNavSection };
 }

@@ -14,7 +14,7 @@ interface Props {
 interface State {}
 
 const format = 'dddd YYYY-MM-DD HH:mm zz';
-const debugLDAPMappingBaseURL = '/admin/ldap';
+const debugLDAPMappingBaseURL = '/admin/authentication/ldap';
 
 export class UserLdapSyncInfo extends PureComponent<Props, State> {
   onUserSync = () => {

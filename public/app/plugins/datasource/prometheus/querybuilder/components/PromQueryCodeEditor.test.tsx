@@ -24,7 +24,6 @@ function createDatasource() {
       meta: {} as DataSourcePluginMeta,
     } as DataSourceInstanceSettings,
     undefined,
-    undefined,
     languageProvider
   );
   return { datasource, languageProvider };
@@ -45,13 +44,21 @@ describe('PromQueryCodeEditor', () => {
     const props = createProps(datasource);
     props.showExplain = true;
     render(<PromQueryCodeEditor {...props} query={{ expr: '', refId: 'refid', interval: '1s' }} />);
-    expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
+
+    // wait for component to render
+    await screen.findByRole('button');
+
+    expect(screen.getByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
   it('does not show explain section when showExplain is false', async () => {
     const { datasource } = createDatasource();
     const props = createProps(datasource);
     render(<PromQueryCodeEditor {...props} query={{ expr: '', refId: 'refid', interval: '1s' }} />);
-    expect(await screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+
+    // wait for component to render
+    await screen.findByRole('button');
+
+    expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
   });
 });

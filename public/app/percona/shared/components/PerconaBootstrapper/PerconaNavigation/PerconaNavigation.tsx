@@ -1,10 +1,11 @@
 import { cloneDeep } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { contextSrv } from 'app/core/core';
-import { initialState, updateNavTree } from 'app/core/reducers/navBarTree';
+import { initialState } from 'app/core/reducers/navBarTree';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { fetchFolders } from 'app/features/manage-dashboards/state/actions';
+import { updateNavTree } from 'app/percona/shared/core/reducers/navigation';
 import { fetchActiveServiceTypesAction } from 'app/percona/shared/core/reducers/services';
 import { useAppDispatch } from 'app/store/store';
 import { FolderDTO, useSelector } from 'app/types';
@@ -14,6 +15,7 @@ import { getCategorizedAdvisors, getPerconaSettings, getPerconaUser, getServices
 import {
   ACTIVE_SERVICE_TYPES_CHECK_INTERVAL_MS,
   getPmmSettingsPage,
+  PMM_NAV_QAN,
   PMM_ACCESS_ROLES_PAGE,
   PMM_ACCESS_ROLE_CREATE_PAGE,
   PMM_ACCESS_ROLE_EDIT_PAGE,
@@ -28,18 +30,20 @@ import {
 } from './PerconaNavigation.constants';
 import {
   addAccessRolesLink,
+  addDashboardsLinks,
   addFolderLinks,
   buildAdvisorsNavItem,
   buildIntegratedAlertingMenuItem,
   buildInventoryAndSettings,
   filterByServices,
   removeAlertingMenuItem,
+  sortNavigation,
 } from './PerconaNavigation.utils';
 
-const PerconaNavigation: React.FC = () => {
+const PerconaNavigation: FC = () => {
   const [folders, setFolders] = useState<FolderDTO[]>([]);
   const { result } = useSelector(getPerconaSettings);
-  const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result!;
+  const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result || {};
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const categorizedAdvisors = useSelector(getCategorizedAdvisors);
   const isLoggedIn = !!contextSrv.user.isSignedIn;
@@ -61,7 +65,7 @@ const PerconaNavigation: React.FC = () => {
   dispatch(updateNavIndex(advisorsPage));
 
   useEffect(() => {
-    let interval: NodeJS.Timer;
+    let interval: NodeJS.Timeout;
 
     if (isLoggedIn) {
       fetchFolders().then(setFolders);
@@ -78,6 +82,12 @@ const PerconaNavigation: React.FC = () => {
   useEffect(() => {
     const updatedNavTree = cloneDeep(initialState);
 
+    // Add Dashboards
+    addDashboardsLinks(updatedNavTree);
+
+    // QAN
+    updatedNavTree.push(PMM_NAV_QAN);
+
     if (isPlatformUser) {
       updatedNavTree.push(PMM_ENTITLEMENTS_PAGE);
       updatedNavTree.push(PMM_TICKETS_PAGE);
@@ -91,6 +101,7 @@ const PerconaNavigation: React.FC = () => {
         // update nav index with the access roles tab
         if (cfg) {
           addAccessRolesLink(cfg);
+          dispatch(updateNavIndex(PMM_ACCESS_ROLES_PAGE));
           dispatch(updateNavIndex(cfg));
         }
       }
@@ -122,7 +133,9 @@ const PerconaNavigation: React.FC = () => {
 
     addFolderLinks(updatedNavTree, folders);
 
-    dispatch(updateNavTree({ items: filterByServices(updatedNavTree, activeTypes) }));
+    sortNavigation(updatedNavTree);
+
+    dispatch(updateNavTree(filterByServices(updatedNavTree, activeTypes)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result, folders, activeTypes, isAuthorized, isPlatformUser, advisorsPage]);
 

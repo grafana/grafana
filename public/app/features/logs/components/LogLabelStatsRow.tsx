@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -28,23 +28,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRowCount: css`
     label: logs-stats-row__count;
     text-align: right;
-    margin-left: 0.5em;
+    margin-left: ${theme.spacing(0.75)};
   `,
   logsStatsRowPercent: css`
     label: logs-stats-row__percent;
     text-align: right;
-    margin-left: 0.5em;
-    width: 3em;
+    margin-left: ${theme.spacing(0.75)};
+    width: ${theme.spacing(4.5)};
   `,
   logsStatsRowBar: css`
     label: logs-stats-row__bar;
-    height: 4px;
+    height: ${theme.spacing(0.5)};
     overflow: hidden;
     background: ${theme.colors.text.disabled};
   `,
   logsStatsRowInnerBar: css`
     label: logs-stats-row__innerbar;
-    height: 4px;
+    height: ${theme.spacing(0.5)};
     overflow: hidden;
     background: ${theme.colors.primary.main};
   `,
@@ -57,7 +57,7 @@ export interface Props {
   value?: string;
 }
 
-export const LogLabelStatsRow: FunctionComponent<Props> = ({ active, count, proportion, value }) => {
+export const LogLabelStatsRow = ({ active, count, proportion, value }: Props) => {
   const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };

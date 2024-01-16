@@ -15,6 +15,7 @@ import { EditDBClusterPage } from './EditDBClusterPage';
 import { DB_CLUSTER_CREATION_URL, DB_CLUSTER_EDIT_URL } from './EditDBClusterPage.constants';
 
 jest.mock('app/core/app_events');
+jest.mock('app/percona/dbaas/components/DBCluster/DBCluster.service');
 
 describe('EditDBClusterPage::', () => {
   it('renders correctly for create mode', () => {

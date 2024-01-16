@@ -3,9 +3,10 @@ package featuremgmt
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestFeatureService(t *testing.T) {
@@ -42,12 +43,12 @@ func TestFeatureService(t *testing.T) {
 	require.NotNil(t, mgmt)
 
 	// Enterprise features do not fall though automatically
-	require.False(t, mgmt.IsEnabled("a.yes.default"))
-	require.False(t, mgmt.IsEnabled("a.yes")) // licensed, but not enabled
+	require.False(t, mgmt.IsEnabledGlobally("a.yes.default"))
+	require.False(t, mgmt.IsEnabledGlobally("a.yes")) // licensed, but not enabled
 }
 
 var (
-	_ models.Licensing = (*stubLicenseServier)(nil)
+	_ licensing.Licensing = (*stubLicenseServier)(nil)
 )
 
 type stubLicenseServier struct {

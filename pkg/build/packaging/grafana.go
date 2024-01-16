@@ -381,6 +381,9 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		"--vendor", vendor,
 		"-a", string(options.packageArch),
 	}
+	if options.prermSrc != "" {
+		args = append(args, "--before-remove", options.prermSrc)
+	}
 	if options.edition == config.EditionEnterprise || options.edition == config.EditionEnterprise2 || options.goArch == config.ArchARMv6 {
 		args = append(args, "--conflicts", "grafana")
 	}
@@ -390,6 +393,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 	switch options.packageType {
 	case packageTypeRpm:
 		args = append(args, "-t", "rpm", "--rpm-posttrans", "packaging/rpm/control/posttrans")
+		args = append(args, "--rpm-digest", "sha256")
 	case packageTypeDeb:
 		args = append(args, "-t", "deb", "--deb-no-default-config-files")
 	default:
@@ -529,7 +533,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 		if err != nil {
 			return fmt.Errorf("failed to read %q: %w", filepath.Join(srcDir, "plugin.json"), err)
 		}
-		var plugJSON map[string]interface{}
+		var plugJSON map[string]any
 		if err := json.Unmarshal(jsonB, &plugJSON); err != nil {
 			return err
 		}
@@ -728,6 +732,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 			initdScriptFilePath:    "/etc/init.d/grafana-server",
 			systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 			postinstSrc:            filepath.Join(grafanaDir, "packaging", "deb", "control", "postinst"),
+			prermSrc:               filepath.Join(grafanaDir, "packaging", "deb", "control", "prerm"),
 			initdScriptSrc:         filepath.Join(grafanaDir, "packaging", "deb", "init.d", "grafana-server"),
 			defaultFileSrc:         filepath.Join(grafanaDir, "packaging", "deb", "default", "grafana-server"),
 			systemdFileSrc:         filepath.Join(grafanaDir, "packaging", "deb", "systemd", "grafana-server.service"),
@@ -766,8 +771,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 		defaultFileSrc:         filepath.Join(grafanaDir, "packaging", "rpm", "sysconfig", "grafana-server"),
 		systemdFileSrc:         filepath.Join(grafanaDir, "packaging", "rpm", "systemd", "grafana-server.service"),
 		wrapperFilePath:        filepath.Join(grafanaDir, "packaging", "wrappers"),
-		// chkconfig is depended on since our systemd service wraps a SysV init script, and that requires chkconfig
-		depends: []string{"/sbin/service", "chkconfig", "fontconfig", "freetype", "urw-fonts"},
+		depends:                []string{"/sbin/service", "fontconfig", "freetype"},
 	}); err != nil {
 		return err
 	}
@@ -844,6 +848,7 @@ type linuxPackageOptions struct {
 	initdScriptFilePath    string
 	systemdServiceFilePath string
 	postinstSrc            string
+	prermSrc               string
 	initdScriptSrc         string
 	defaultFileSrc         string
 	systemdFileSrc         string

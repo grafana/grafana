@@ -151,6 +151,7 @@ export const Dropdown: FC<DropdownProps> = memo(function Dropdown({ className, c
         data-testid="dropdown-menu-container"
       >
         {visible ? (
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div
             className={cx(styles.dropdownMenu, className)}
             style={popperStyles.offset}

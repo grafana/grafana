@@ -234,12 +234,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: limit },
-            color: config.theme.visualization.getColorByName(fillColor),
+            color: config.theme2.visualization.getColorByName(fillColor),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: limit },
-            color: config.theme.visualization.getColorByName(fillColor),
+            color: config.theme2.visualization.getColorByName(fillColor),
           });
         }
       }
@@ -247,12 +247,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: threshold.value },
-            color: config.theme.visualization.getColorByName(lineColor),
+            color: config.theme2.visualization.getColorByName(lineColor),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: threshold.value },
-            color: config.theme.visualization.getColorByName(lineColor),
+            color: config.theme2.visualization.getColorByName(lineColor),
           });
         }
       }

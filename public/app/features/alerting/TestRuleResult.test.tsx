@@ -1,35 +1,47 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DashboardModel, PanelModel } from '../dashboard/state';
+import { PanelModel } from '../dashboard/state';
+import { createDashboardModelFixture, createPanelSaveModel } from '../dashboard/state/__fixtures__/dashboardFixtures';
 
-import { TestRuleResult, Props } from './TestRuleResult';
+import { TestRuleResult } from './TestRuleResult';
+
+const backendSrv = {
+  post: jest.fn(),
+};
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
 
   return {
     ...original,
-    getBackendSrv: () => ({
-      post: jest.fn(),
-    }),
+    getBackendSrv: () => backendSrv,
   };
 });
 
-const props: Props = {
+const props: React.ComponentProps<typeof TestRuleResult> = {
   panel: new PanelModel({ id: 1 }),
-  dashboard: new DashboardModel({ panels: [{ id: 1 }] }),
+  dashboard: createDashboardModelFixture({
+    panels: [createPanelSaveModel({ id: 1 })],
+  }),
 };
 
 describe('TestRuleResult', () => {
-  it('should render without error', () => {
-    expect(() => render(<TestRuleResult {...props} />)).not.toThrow();
+  it('should render without error', async () => {
+    render(<TestRuleResult {...props} />);
+    await screen.findByRole('button', { name: 'Copy to Clipboard' });
   });
 
-  it('should call testRule when mounting', () => {
-    jest.spyOn(TestRuleResult.prototype, 'testRule');
+  it('should call testRule when mounting', async () => {
+    jest.spyOn(backendSrv, 'post');
     render(<TestRuleResult {...props} />);
+    await screen.findByRole('button', { name: 'Copy to Clipboard' });
 
-    expect(TestRuleResult.prototype.testRule).toHaveBeenCalled();
+    expect(backendSrv.post).toHaveBeenCalledWith(
+      '/api/alerts/test',
+      expect.objectContaining({
+        panelId: 1,
+      })
+    );
   });
 });

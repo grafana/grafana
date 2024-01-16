@@ -1,0 +1,377 @@
+{
+  "name": "Panel Tests - Graph",
+  "labels": {
+    "gdev": "",
+    "graph": "",
+    "panel-tests": ""
+  },
+  "URL": "/d/graph_tests.json/panel-tests-graph",
+  "nested": [
+    {
+      "uid": "graph_tests.json#1",
+      "kind": "panel",
+      "name": "No Data Points Warning",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=1",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#2",
+      "kind": "panel",
+      "name": "Datapoints Outside Range Warning",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=2",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#3",
+      "kind": "panel",
+      "name": "Random walk series",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=3",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#4",
+      "kind": "panel",
+      "name": "Millisecond res x-axis and tooltip",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=4",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#6",
+      "kind": "panel",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=6",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#5",
+      "kind": "panel",
+      "name": "2 yaxis and axis labels",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=5",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#7",
+      "kind": "panel",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=7",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#8",
+      "kind": "panel",
+      "name": "null value connected",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=8",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#10",
+      "kind": "panel",
+      "name": "null value null as zero",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=10",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#13",
+      "kind": "panel",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=13",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#9",
+      "kind": "panel",
+      "name": "Stacking value ontop of nulls",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=9",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#14",
+      "kind": "panel",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=14",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#12",
+      "kind": "panel",
+      "name": "Stacking all series null segment",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=12",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#15",
+      "kind": "panel",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=15",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#21",
+      "kind": "panel",
+      "name": "Null between points",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=21",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#22",
+      "kind": "panel",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=22",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#20",
+      "kind": "panel",
+      "name": "Legend Table Single Series Should Take Minimum Height",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=20",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#16",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=16",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#17",
+      "kind": "panel",
+      "name": "Legend Table Should Scroll",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=17",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#18",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=18",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph_tests.json#19",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=19",
+      "references": [
+        {
+          "kind": "ds",
+          "type": "default.type",
+          "UID": "default.uid"
+        },
+        {
+          "kind": "panel",
+          "type": "graph"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "kind": "ds",
+      "type": "default.type",
+      "UID": "default.uid"
+    },
+    {
+      "kind": "panel",
+      "type": "graph"
+    },
+    {
+      "kind": "panel",
+      "type": "text"
+    }
+  ]
+}

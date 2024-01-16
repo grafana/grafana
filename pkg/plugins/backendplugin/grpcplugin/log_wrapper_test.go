@@ -10,14 +10,14 @@ import (
 
 func TestLogWrapper(t *testing.T) {
 	tcs := []struct {
-		args           []interface{}
-		expectedResult []interface{}
+		args           []any
+		expectedResult []any
 	}{
-		{args: []interface{}{}, expectedResult: []interface{}{}},
-		{args: []interface{}{"1", "2", "3"}, expectedResult: []interface{}{"1", "2", "3"}},
-		{args: []interface{}{"1", "2"}, expectedResult: []interface{}{"1", "2"}},
-		{args: []interface{}{"1", "2", "timestamp", time.Now()}, expectedResult: []interface{}{"1", "2"}},
-		{args: []interface{}{"1", "2", "timestamp", time.Now(), "3", "4"}, expectedResult: []interface{}{"1", "2", "3", "4"}},
+		{args: []any{}, expectedResult: []any{}},
+		{args: []any{"1", "2", "3"}, expectedResult: []any{"1", "2", "3"}},
+		{args: []any{"1", "2"}, expectedResult: []any{"1", "2"}},
+		{args: []any{"1", "2", "timestamp", time.Now()}, expectedResult: []any{"1", "2"}},
+		{args: []any{"1", "2", "timestamp", time.Now(), "3", "4"}, expectedResult: []any{"1", "2", "3", "4"}},
 	}
 
 	for i, tc := range tcs {

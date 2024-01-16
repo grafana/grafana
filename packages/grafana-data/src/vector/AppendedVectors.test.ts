@@ -3,11 +3,15 @@ import { ArrayVector } from './ArrayVector';
 
 describe('Check Appending Vector', () => {
   it('should transparently join them', () => {
+    jest.spyOn(console, 'warn').mockImplementation();
     const appended = new AppendedVectors();
     appended.append(new ArrayVector([1, 2, 3]));
     appended.append(new ArrayVector([4, 5, 6]));
     appended.append(new ArrayVector([7, 8, 9]));
     expect(appended.length).toEqual(9);
+    expect(appended[0]).toEqual(1);
+    expect(appended[1]).toEqual(2);
+    expect(appended[100]).toEqual(undefined);
 
     appended.setLength(5);
     expect(appended.length).toEqual(5);

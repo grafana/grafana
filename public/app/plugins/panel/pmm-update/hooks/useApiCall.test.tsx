@@ -17,6 +17,7 @@ const HookWrapper: FC<{ fn: () => any; apiFnArgs?: any; apiFnArgsRetry?: any; re
 
   return (
     <>
+      {/* @ts-ignore */}
       <span data-testid="hook-wrapper-data">{data}</span>
       <span data-testid="hook-wrapper-error">
         {typeof errorMessage === 'string' ? errorMessage : (errorMessage as any).message}

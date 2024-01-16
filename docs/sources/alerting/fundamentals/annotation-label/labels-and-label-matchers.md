@@ -1,17 +1,24 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/labels-and-label-matchers/
 description: Learn about labels and label matchers in alerting
 keywords:
   - grafana
   - alerting
   - guide
   - fundamentals
-title: Label matchers
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Label matchers
+title: How label matching works
 weight: 117
 ---
 
 # How label matching works
 
-Use labels and label matchers to link alert rules to [notification policies]({{< relref "../../notifications/" >}}) and [silences]({{< relref "../../silences/" >}}). This allows for a very flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
+Use labels and label matchers to link alert rules to notification policies and silences. This allows for a very flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
 
 A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
 
@@ -43,3 +50,15 @@ then:
 - A label matcher defined as `id=~[0-9]+` matches this alert rule.
 - A label matcher defined as `baz!~[0-9]+` matches this alert rule.
 - Two label matchers defined as `foo=bar` and `id=~[0-9]+` match this alert rule.
+
+## Exclude labels
+
+You can also write label matchers to exclude labels.
+
+Here is an example that shows how to exclude the label `Team`. You can choose between any of the values below to exclude labels.
+
+| Label  | Operator | Value |
+| ------ | -------- | ----- |
+| `team` | `=`      | `""`  |
+| `team` | `!~`     | `.+`  |
+| `team` | `=~`     | `^$`  |

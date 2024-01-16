@@ -89,6 +89,9 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
   if (!options.data || typeof options.data === 'string') {
     return options.data;
   }
+  if (options.data instanceof Blob) {
+    return options.data;
+  }
 
   return isAppJson ? JSON.stringify(options.data) : new URLSearchParams(options.data);
 };
@@ -127,7 +130,7 @@ export async function parseResponseBody<T>(
   return textData as any;
 }
 
-export function serializeParams(data: Record<string, any>): string {
+function serializeParams(data: Record<string, any>): string {
   return Object.keys(data)
     .map((key) => {
       const value = data[key];

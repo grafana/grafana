@@ -1,14 +1,11 @@
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React, { useState, ChangeEvent } from 'react';
-
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { SecretTextArea } from './SecretTextArea';
 
-const meta: ComponentMeta<typeof SecretTextArea> = {
+const meta: Meta<typeof SecretTextArea> = {
   title: 'Forms/SecretTextArea',
   component: SecretTextArea,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: [
@@ -36,7 +33,7 @@ const meta: ComponentMeta<typeof SecretTextArea> = {
   },
 };
 
-const Template: ComponentStory<typeof SecretTextArea> = (args) => {
+const Template: StoryFn<typeof SecretTextArea> = (args) => {
   const [secret, setSecret] = useState('');
 
   return (

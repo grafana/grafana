@@ -1,7 +1,5 @@
 import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
 
-import { TemplateSrv } from '../../../features/templating/template_srv';
-
 import LanguageProvider from './LanguageProvider';
 import { ElasticDatasource } from './datasource';
 import { createElasticDatasource } from './mocks';
@@ -14,12 +12,7 @@ const baseLogsQuery: Partial<ElasticsearchQuery> = {
 describe('transform abstract query to elasticsearch query', () => {
   let datasource: ElasticDatasource;
   beforeEach(() => {
-    const templateSrvStub = {
-      getAdhocFilters: jest.fn(() => []),
-      replace: jest.fn((a: string) => a),
-    } as unknown as TemplateSrv;
-
-    datasource = createElasticDatasource({}, templateSrvStub);
+    datasource = createElasticDatasource();
   });
 
   it('With some labels', () => {
@@ -37,7 +30,7 @@ describe('transform abstract query to elasticsearch query', () => {
 
     expect(result).toEqual({
       ...baseLogsQuery,
-      query: 'label1:"value1" AND NOT label2:"value2" AND label3:/value3/ AND NOT label4:/value4/',
+      query: 'label1:"value1" AND -label2:"value2" AND label3:/value3/ AND -label4:/value4/',
       refId: abstractQuery.refId,
     });
   });

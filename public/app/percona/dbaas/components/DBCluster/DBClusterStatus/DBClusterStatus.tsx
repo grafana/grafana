@@ -79,6 +79,7 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setLogsMo
       )}
       {showMessage && showProgressBar && (
         <div className={styles.logsWrapper}>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events */}
           <a className={styles.logsLabel} onClick={() => openLogs()}>
             {Messages.dbcluster.table.status.logs}
           </a>

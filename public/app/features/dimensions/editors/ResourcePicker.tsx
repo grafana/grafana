@@ -32,17 +32,24 @@ interface Props {
   name?: string;
   placeholder?: string;
   color?: string;
+  maxFiles?: number;
 }
 
 export const ResourcePicker = (props: Props) => {
-  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color } = props;
+  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color, maxFiles } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const pickerTriggerRef = createRef<any>();
+  const pickerTriggerRef = createRef<HTMLDivElement>();
   const popoverElement = (
-    <ResourcePickerPopover onChange={onChange} value={value} mediaType={mediaType} folderName={folderName} />
+    <ResourcePickerPopover
+      onChange={onChange}
+      value={value}
+      mediaType={mediaType}
+      folderName={folderName}
+      maxFiles={maxFiles}
+    />
   );
 
   let sanitizedSrc = src;
@@ -70,7 +77,7 @@ export const ResourcePicker = (props: Props) => {
     <InlineFieldRow>
       <InlineField label={null} grow>
         <Input
-          value={name}
+          value={getDisplayName(src, name)}
           placeholder={placeholder}
           readOnly={true}
           prefix={sanitizedSrc && <SanitizedSVG src={sanitizedSrc} className={styles.icon} style={{ ...colorStyle }} />}
@@ -96,7 +103,18 @@ export const ResourcePicker = (props: Props) => {
               />
             )}
 
-            <div ref={pickerTriggerRef} onClick={showPopper} className={styles.pointer}>
+            <div
+              ref={pickerTriggerRef}
+              className={styles.pointer}
+              onClick={showPopper}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  showPopper();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
               {size === ResourcePickerSize.SMALL && renderSmallResourcePicker()}
               {size === ResourcePickerSize.NORMAL && renderNormalResourcePicker()}
             </div>
@@ -106,6 +124,17 @@ export const ResourcePicker = (props: Props) => {
     </PopoverController>
   );
 };
+
+// strip the SVG off icons in the icons folder
+function getDisplayName(src?: string, name?: string): string | undefined {
+  if (src?.startsWith('public/img/icons')) {
+    const idx = name?.lastIndexOf('.svg') ?? 0;
+    if (idx > 0) {
+      return name!.substring(0, idx);
+    }
+  }
+  return name;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pointer: css`

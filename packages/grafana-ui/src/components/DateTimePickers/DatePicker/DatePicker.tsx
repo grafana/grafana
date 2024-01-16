@@ -16,6 +16,7 @@ export interface DatePickerProps {
   onChange: (value: Date) => void;
   value?: Date;
   minDate?: Date;
+  maxDate?: Date;
 }
 
 /** @public */
@@ -38,7 +39,7 @@ export const DatePicker = memo<DatePickerProps>((props) => {
 
 DatePicker.displayName = 'DatePicker';
 
-const Body = memo<DatePickerProps>(({ value, minDate, onChange }) => {
+const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
   const styles = useStyles2(getBodyStyles);
 
   return (
@@ -47,10 +48,11 @@ const Body = memo<DatePickerProps>(({ value, minDate, onChange }) => {
       tileClassName={styles.title}
       value={value || new Date()}
       minDate={minDate}
+      maxDate={maxDate}
       nextLabel={<Icon name="angle-right" />}
       prevLabel={<Icon name="angle-left" />}
-      onChange={(ev: Date | Date[]) => {
-        if (!Array.isArray(ev)) {
+      onChange={(ev) => {
+        if (ev && !Array.isArray(ev)) {
           onChange(ev);
         }
       }}
@@ -63,17 +65,18 @@ Body.displayName = 'Body';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    modal: css`
-      z-index: ${theme.zIndex.modal};
-      position: absolute;
-      box-shadow: ${theme.shadows.z3};
-      background-color: ${theme.colors.background.primary};
-      border: 1px solid ${theme.colors.border.weak};
-      border-radius: 2px 0 0 2px;
+    modal: css({
+      zIndex: theme.zIndex.modal,
+      position: 'absolute',
+      boxShadow: theme.shadows.z3,
+      backgroundColor: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderTopLeftRadius: theme.shape.radius.default,
+      borderBottomLeftRadius: theme.shape.radius.default,
 
-      button:disabled {
-        color: ${theme.colors.text.disabled};
-      }
-    `,
+      'button:disabled': {
+        color: theme.colors.text.disabled,
+      },
+    }),
   };
 };

@@ -1,6 +1,8 @@
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { Role } from 'app/types';
 
 import { OrgRole } from '.';
+
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
@@ -10,8 +12,12 @@ export interface OrgUser extends WithAccessControlMetadata {
   name: string;
   orgId: number;
   role: OrgRole;
+  // RBAC roles
+  roles?: Role[];
   userId: number;
   isDisabled: boolean;
+  authLabels?: string[];
+  isExternallySynced?: boolean;
 }
 
 export interface User {
@@ -40,11 +46,14 @@ export interface UserDTO extends WithAccessControlMetadata {
   theme?: string;
   avatarUrl?: string;
   orgId?: number;
+  lastSeenAt?: string;
   lastSeenAtAge?: string;
   licensedRole?: string;
   permissions?: string[];
   teams?: Unit[];
   orgs?: Unit[];
+  isExternallySynced?: boolean;
+  isGrafanaAdminExternallySynced?: boolean;
 }
 
 export interface Invitee {
@@ -67,12 +76,15 @@ export interface Invitee {
 export interface UsersState {
   users: OrgUser[];
   searchQuery: string;
-  searchPage: number;
-  canInvite: boolean;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
-  hasFetched: boolean;
+  isLoading: boolean;
+  rolesLoading?: boolean;
+  page: number;
+  perPage: number;
+  totalPages: number;
+  sort?: string;
 }
 
 export interface UserSession {
@@ -117,4 +129,19 @@ export interface UserListAdminState {
   showPaging: boolean;
   filters: UserFilter[];
   isLoading: boolean;
+  sort?: string;
+}
+
+export interface UserAnonymousDeviceDTO {
+  login?: string;
+  clientIp: string;
+  deviceId: string;
+  userAgent: string;
+  updatedAt: string;
+  lastSeenAt: string;
+  avatarUrl?: string;
+}
+
+export interface UserListAnonymousDevicesState {
+  devices: UserAnonymousDeviceDTO[];
 }

@@ -1,9 +1,11 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Portal,
   TooltipDisplayMode,
+  TooltipPlugin2,
   UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
@@ -11,25 +13,30 @@ import {
   ZoomPlugin,
 } from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
+import {
+  prepareTimelineFields,
+  prepareTimelineLegendItems,
+  TimelineMode,
+} from 'app/core/components/TimelineChart/utils';
 
-import { TimelineChart } from '../state-timeline/TimelineChart';
-import { TimelineMode } from '../state-timeline/types';
-import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
-import { StatusPanelOptions } from './types';
+import { StatusHistoryTooltip2 } from './StatusHistoryTooltip2';
+import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
 
-interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
+interface TimelinePanelProps extends PanelProps<Options> {}
 
 /**
  * @alpha
  */
-export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
+export const StatusHistoryPanel = ({
   data,
   timeRange,
   timeZone,
@@ -37,7 +44,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   width,
   height,
   onChangeTimeRange,
-}) => {
+}: TimelinePanelProps) => {
   const theme = useTheme2();
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
@@ -65,8 +72,8 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   };
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data?.series, false, timeRange, theme),
-    [data, timeRange, theme]
+    () => prepareTimelineFields(data.series, false, timeRange, theme),
+    [data.series, timeRange, theme]
   );
 
   const legendItems = useMemo(
@@ -193,13 +200,12 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       height={height}
       legendItems={legendItems}
       {...options}
-      // hardcoded
       mode={TimelineMode.Samples}
     >
-      {(config, alignedFrame) => {
-        if (oldConfig.current !== config) {
+      {(builder, alignedFrame) => {
+        if (oldConfig.current !== builder) {
           oldConfig.current = addTooltipSupport({
-            config,
+            config: builder,
             onUPlotClick,
             setFocusedSeriesIdx,
             setFocusedPointIdx,
@@ -211,13 +217,41 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
           });
         }
 
-        return (
-          <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            {renderTooltip(alignedFrame)}
-            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
-          </>
-        );
+        if (config.featureToggles.newVizTooltips) {
+          return (
+            <>
+              {options.tooltip.mode !== TooltipDisplayMode.None && (
+                <TooltipPlugin2
+                  config={builder}
+                  hoverMode={TooltipHoverMode.xyOne}
+                  queryZoom={onChangeTimeRange}
+                  render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+                    return (
+                      <StatusHistoryTooltip2
+                        data={frames ?? []}
+                        dataIdxs={dataIdxs}
+                        alignedData={alignedFrame}
+                        seriesIdx={seriesIdx}
+                        timeZone={timeZone}
+                        mode={options.tooltip.mode}
+                        sortOrder={options.tooltip.sort}
+                        isPinned={isPinned}
+                      />
+                    );
+                  }}
+                />
+              )}
+            </>
+          );
+        } else {
+          return (
+            <>
+              <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />
+              {renderTooltip(alignedFrame)}
+              <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+            </>
+          );
+        }
       }}
     </TimelineChart>
   );

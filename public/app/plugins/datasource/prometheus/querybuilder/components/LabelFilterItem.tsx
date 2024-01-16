@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { AsyncSelect, Select } from '@grafana/ui';
 
-import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from '../components/MetricSelect';
+import { truncateResult } from '../../language_utils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 
 export interface Props {
@@ -19,6 +19,7 @@ export interface Props {
   invalidLabel?: boolean;
   invalidValue?: boolean;
   getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
+  debounceDuration: number;
 }
 
 export function LabelFilterItem({
@@ -31,6 +32,7 @@ export function LabelFilterItem({
   invalidLabel,
   invalidValue,
   getLabelValuesAutofillSuggestions,
+  debounceDuration,
 }: Props) {
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
@@ -38,6 +40,11 @@ export function LabelFilterItem({
     isLoadingLabelNames?: boolean;
     isLoadingLabelValues?: boolean;
   }>({});
+  // there's a bug in react-select where the menu doesn't recalculate its position when the options are loaded asynchronously
+  // see https://github.com/grafana/grafana/issues/63558
+  // instead, we explicitly control the menu visibility and prevent showing it until the options have fully loaded
+  const [labelNamesMenuOpen, setLabelNamesMenuOpen] = useState(false);
+  const [labelValuesMenuOpen, setLabelValuesMenuOpen] = useState(false);
 
   const isMultiSelect = (operator = item.op) => {
     return operators.find((op) => op.label === operator)?.isMultiValue;
@@ -45,18 +52,31 @@ export function LabelFilterItem({
 
   const getSelectOptionsFromString = (item?: string): string[] => {
     if (item) {
+      const regExp = /\(([^)]+)\)/;
+      const matches = item?.match(regExp);
+
+      if (matches && matches[0].indexOf('|') > 0) {
+        return [item];
+      }
+
       if (item.indexOf('|') > 0) {
         return item.split('|');
       }
+
       return [item];
     }
     return [];
   };
 
-  const labelValueSearch = debounce((query: string) => getLabelValuesAutofillSuggestions(query, item.label), 350);
+  const labelValueSearch = debounce(
+    (query: string) => getLabelValuesAutofillSuggestions(query, item.label),
+    debounceDuration
+  );
+
+  const itemValue = item?.value ?? '';
 
   return (
-    <div data-testid="prometheus-dimensions-filter-item">
+    <div key={itemValue} data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         {/* Label name select, loads all values at once */}
         <Select
@@ -69,8 +89,13 @@ export function LabelFilterItem({
           onOpenMenu={async () => {
             setState({ isLoadingLabelNames: true });
             const labelNames = await onGetLabelNames(item);
+            setLabelNamesMenuOpen(true);
             setState({ labelNames, isLoadingLabelNames: undefined });
           }}
+          onCloseMenu={() => {
+            setLabelNamesMenuOpen(false);
+          }}
+          isOpen={labelNamesMenuOpen}
           isLoading={state.isLoadingLabelNames ?? false}
           options={state.labelNames}
           onChange={(change) => {
@@ -89,6 +114,7 @@ export function LabelFilterItem({
         {/* Operator select i.e.   = =~ != !~   */}
         <Select
           aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
+          className="query-segment-operator"
           value={toOption(item.op ?? defaultOp)}
           options={operators}
           width="auto"
@@ -112,22 +138,25 @@ export function LabelFilterItem({
           width="auto"
           value={
             isMultiSelect()
-              ? getSelectOptionsFromString(item?.value).map(toOption)
-              : getSelectOptionsFromString(item?.value).map(toOption)[0]
+              ? getSelectOptionsFromString(itemValue).map(toOption)
+              : getSelectOptionsFromString(itemValue).map(toOption)[0]
           }
           allowCustomValue
           onOpenMenu={async () => {
             setState({ isLoadingLabelValues: true });
             const labelValues = await onGetLabelValues(item);
-            if (labelValues.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-              labelValues.splice(0, labelValues.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-            }
+            truncateResult(labelValues);
+            setLabelValuesMenuOpen(true);
             setState({
               ...state,
               labelValues,
               isLoadingLabelValues: undefined,
             });
           }}
+          onCloseMenu={() => {
+            setLabelValuesMenuOpen(false);
+          }}
+          isOpen={labelValuesMenuOpen}
           defaultOptions={state.labelValues}
           isMulti={isMultiSelect()}
           isLoading={state.isLoadingLabelValues}
@@ -152,15 +181,17 @@ export function LabelFilterItem({
           }}
           invalid={invalidValue}
         />
-        <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
+        <AccessoryButton aria-label={`remove-${item.label}`} icon="times" variant="secondary" onClick={onDelete} />
       </InputGroup>
     </div>
   );
 }
 
 const operators = [
-  { label: '=~', value: '=~', isMultiValue: true },
   { label: '=', value: '=', isMultiValue: false },
   { label: '!=', value: '!=', isMultiValue: false },
+  { label: '<', value: '<', isMultiValue: false },
+  { label: '>', value: '>', isMultiValue: false },
+  { label: '=~', value: '=~', isMultiValue: true },
   { label: '!~', value: '!~', isMultiValue: true },
 ];

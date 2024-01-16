@@ -8,19 +8,13 @@ import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Role } from 'app/types';
-
-interface TeamDTO {
-  email: string;
-  name: string;
-}
+import { AccessControlAction, Role, TeamDTO } from 'app/types';
 
 const pageNav: NavModelItem = {
   icon: 'users-alt',
   id: 'team-new',
   text: 'New team',
   subTitle: 'Create a new team. Teams let you grant permissions to a group of users.',
-  breadcrumbs: [{ title: 'Configuration', url: 'org/teams' }],
 };
 
 export const CreateTeam = (): JSX.Element => {
@@ -52,35 +46,36 @@ export const CreateTeam = (): JSX.Element => {
       <Page.Contents>
         <Form onSubmit={createTeam}>
           {({ register, errors }) => (
-            <FieldSet>
-              <Field label="Name" required invalid={!!errors.name} error="Team name is required">
-                <Input {...register('name', { required: true })} id="team-name" />
-              </Field>
-              {contextSrv.licensedAccessControlEnabled() && (
-                <Field label="Role">
-                  <TeamRolePicker
-                    teamId={0}
-                    roleOptions={roleOptions}
-                    disabled={false}
-                    apply={true}
-                    onApplyRoles={setPendingRoles}
-                    pendingRoles={pendingRoles}
-                    maxWidth="100%"
-                  />
+            <>
+              <FieldSet>
+                <Field label="Name" required invalid={!!errors.name} error="Team name is required">
+                  <Input {...register('name', { required: true })} id="team-name" />
                 </Field>
-              )}
-              <Field
-                label={'Email'}
-                description={'This is optional and is primarily used for allowing custom team avatars.'}
-              >
-                <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />
-              </Field>
-              <div className="gf-form-button-row">
-                <Button type="submit" variant="primary">
-                  Create
-                </Button>
-              </div>
-            </FieldSet>
+                {contextSrv.licensedAccessControlEnabled() && (
+                  <Field label="Role">
+                    <TeamRolePicker
+                      teamId={0}
+                      roleOptions={roleOptions}
+                      disabled={false}
+                      apply={true}
+                      onApplyRoles={setPendingRoles}
+                      pendingRoles={pendingRoles}
+                      maxWidth="100%"
+                    />
+                  </Field>
+                )}
+                <Field
+                  label={'Email'}
+                  description={'This is optional and is primarily used for allowing custom team avatars.'}
+                >
+                  <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />
+                </Field>
+              </FieldSet>
+
+              <Button type="submit" variant="primary">
+                Create
+              </Button>
+            </>
           )}
         </Form>
       </Page.Contents>

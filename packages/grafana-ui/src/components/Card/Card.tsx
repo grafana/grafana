@@ -3,7 +3,7 @@ import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'r
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 
 import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
@@ -49,17 +49,13 @@ const CardContext = React.createContext<{
  */
 export const Card: CardInterface = ({ disabled, href, onClick, children, isSelected, className, ...htmlProps }) => {
   const hasHeadingComponent = useMemo(
-    () =>
-      React.Children.toArray(children).some(
-        (c) => React.isValidElement(c) && (c.type as any).displayName === Heading.displayName
-      ),
+    () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Heading),
     [children]
   );
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
-  const theme = useTheme2();
-  const styles = getCardContainerStyles(theme, disabled, disableHover, isSelected);
+  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected);
 
   return (
     <CardContainer
@@ -88,7 +84,11 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
-  const { href, onClick, isSelected } = context ?? { href: undefined, onClick: undefined, isSelected: undefined };
+  const { href, onClick, isSelected } = context ?? {
+    href: undefined,
+    onClick: undefined,
+    isSelected: undefined,
+  };
 
   return (
     <h2 className={cx(styles.heading, className)}>
@@ -103,7 +103,8 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly checked={isSelected} />}
+      {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
+      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} readOnly />}
     </h2>
   );
 };
@@ -123,6 +124,9 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
     lineHeight: theme.typography.body.lineHeight,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
+    '& input[readonly]': {
+      cursor: 'inherit',
+    },
   }),
   linkHack: css({
     all: 'unset',
@@ -133,7 +137,7 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
       bottom: 0,
       left: 0,
       right: 0,
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
     },
 
     '&:focus-visible': {
@@ -187,9 +191,9 @@ const Figure = ({ children, align = 'start', className }: ChildProps & { align?:
       className={cx(
         styles.media,
         className,
-        css`
-          align-self: ${align};
-        `
+        css({
+          alignSelf: align,
+        })
       )}
     >
       {children}
@@ -286,22 +290,22 @@ const BaseActions = ({ children, disabled, variant, className }: ActionsProps) =
 
 const getActionStyles = (theme: GrafanaTheme2) => ({
   actions: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
     gridArea: 'Actions',
     marginTop: theme.spacing(2),
-    '& > *': {
-      marginRight: theme.spacing(1),
-    },
   }),
   secondaryActions: css({
-    display: 'flex',
-    gridArea: 'Secondary',
     alignSelf: 'center',
     color: theme.colors.text.secondary,
-    marginTtop: theme.spacing(2),
-
-    '& > *': {
-      marginRight: `${theme.spacing(1)} !important`,
-    },
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    gridArea: 'Secondary',
+    marginTop: theme.spacing(2),
   }),
 });
 
@@ -329,13 +333,13 @@ SecondaryActions.displayName = 'SecondaryActions';
  */
 export const getCardStyles = (theme: GrafanaTheme2) => {
   return {
-    inner: css`
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      flex-wrap: wrap;
-    `,
+    inner: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      flexWrap: 'wrap',
+    }),
     ...getHeadingStyles(theme),
     ...getMetaStyles(theme),
     ...getDescriptionStyles(theme),

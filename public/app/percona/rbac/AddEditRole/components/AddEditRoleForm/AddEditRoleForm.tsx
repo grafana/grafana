@@ -2,7 +2,7 @@ import React, { FC, useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
 
-import { Field, Input, PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Field, Input, useStyles2, PageToolbar, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
@@ -16,13 +16,12 @@ import { AddEditRoleFormProps } from './AddEditRoleForm.types';
 const AddEditRoleForm: FC<AddEditRoleFormProps> = ({
   initialValues,
   isLoading,
-  title,
   cancelLabel,
   onCancel,
   submitLabel,
   onSubmit,
+  title,
 }) => {
-  const history = useHistory();
   const methods = useForm({
     defaultValues: initialValues,
   });
@@ -30,6 +29,7 @@ const AddEditRoleForm: FC<AddEditRoleFormProps> = ({
   const styles = useStyles2(getStyles);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('enableAccessControl'), []);
+  const history = useHistory();
 
   useEffect(() => {
     methods.reset(initialValues);
@@ -43,7 +43,7 @@ const AddEditRoleForm: FC<AddEditRoleFormProps> = ({
   return (
     <FormProvider {...methods}>
       <PageToolbar title={title} onGoBack={handleGoBack}>
-        <ToolbarButton data-testid="add-edit-role-cancel" type="button" onClick={onCancel}>
+        <ToolbarButton data-testid="add-edit-role-cancel" type="button" onClick={onCancel} variant="canvas">
           {cancelLabel}
         </ToolbarButton>
         <ToolbarButton

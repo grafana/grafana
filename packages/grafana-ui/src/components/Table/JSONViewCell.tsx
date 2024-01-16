@@ -2,19 +2,21 @@ import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
 import React from 'react';
 
+import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
+import { Button, clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
-import { TableCellProps, TableFieldOptions } from './types';
+import { TableCellProps } from './types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;
-  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
-  const txt = css`
-    cursor: pointer;
-    font-family: monospace;
-  `;
+  const inspectEnabled = Boolean(field.config.custom?.inspect);
+  const txt = css({
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+  });
 
   let value = cell.value;
   let displayValue = value;
@@ -28,6 +30,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   }
 
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
@@ -36,11 +39,15 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
         {hasLinks && (
           <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
             {(api) => {
-              return (
-                <div onClick={api.openMenu} className={api.targetClassName}>
-                  {displayValue}
-                </div>
-              );
+              if (api.openMenu) {
+                return (
+                  <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
+                    {displayValue}
+                  </Button>
+                );
+              } else {
+                return <>{displayValue}</>;
+              }
             }}
           </DataLinksContextMenu>
         )}

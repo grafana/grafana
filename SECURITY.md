@@ -1,12 +1,16 @@
 # Reporting security issues
 
-If you think you have found a security vulnerability, please send a report to [security@grafana.com](mailto:security@grafana.com). This address can be used for all of Grafana Labs's open source and commercial products (including but not limited to Grafana, Grafana Cloud, Grafana Enterprise, and grafana.com). We can accept only vulnerability reports at this address.
+This product is in scope for our Bug Bounty Program. To submit a vulnerability report, please visit [Grafana Labs Bug Bounty Policy page](https://github.com/grafana/bugbounty) and follow the instructions provided. Our security team will review your submission and get back to you as soon as possible.
+
+---
+
+For any other security issues, please send an email to security@grafana.com
 
 Please encrypt your message to us; please use our PGP key. The key fingerprint is:
 
-F988 7BEA 027A 049F AE8E 5CAA D125 8932 BE24 C5CA
+225E 6A9B BB15 A37E 95EB 6312 C66A 51CC B44C 27E0
 
-The key is available from [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=0xF9887BEA027A049FAE8E5CAAD1258932BE24C5CA&fingerprint=on&op=index).
+The key is available from [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=0x225E6A9BBB15A37E95EB6312C66A51CCB44C27E0&fingerprint=on&op=index).
 
 Grafana Labs will send you a response indicating the next steps in handling your report. After the initial reply to your report, the security team will keep you informed of the progress towards a fix and full announcement, and may ask for additional information or guidance.
 
@@ -14,7 +18,6 @@ Grafana Labs will send you a response indicating the next steps in handling your
 
 ## Security announcements
 
-We maintain a category on the community site called [Security Announcements](https://community.grafana.com/c/support/security-announcements),
-where we will post a summary, remediation, and mitigation details for any patch containing security fixes.
+We will post a summary, remediation, and mitigation details for any patch containing security fixes on the Grafana blog. The security announcement blog posts will be tagged with the [security tag](https://grafana.com/tags/security/).
 
-You can also subscribe to email updates to this category if you have a grafana.com account and sign on to the community site or track updates via an [RSS feed](https://community.grafana.com/c/support/security-announcements.rss).
+You can also track security announcements via the [RSS feed](https://grafana.com/tags/security/index.xml).

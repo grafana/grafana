@@ -1,4 +1,6 @@
-export interface DeleteModalProps {
+import { PropsWithChildren } from 'react';
+
+export interface DeleteModalProps extends PropsWithChildren {
   title?: string;
   message?: string;
   confirm?: string;

@@ -5,7 +5,7 @@ import { useLocalStorage } from 'react-use';
 
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, InlineSwitch, Tooltip, useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { ReadMoreLink } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -23,9 +23,9 @@ import { FlattenService } from '../Inventory.types';
 import DeleteServiceModal from '../components/DeleteServiceModal';
 import DeleteServicesModal from '../components/DeleteServicesModal';
 
-import { getAgentsMonitoringStatus } from './Services.utils';
 import Clusters from './Services/Clusters';
 import ServicesTable from './Services/ServicesTable';
+import { getAgentsMonitoringStatus } from './Services.utils';
 import { getStyles } from './Tabs.styles';
 
 export const Services = () => {
@@ -95,8 +95,8 @@ export const Services = () => {
   }, [onModalClose, loadData]);
 
   return (
-    <OldPage navModel={navModel}>
-      <OldPage.Contents isLoading={isLoading}>
+    <Page navModel={navModel}>
+      <Page.Contents isLoading={isLoading}>
         <FeatureLoader>
           <HorizontalGroup height={40} justify="flex-end" align="flex-start">
             <HorizontalGroup align="center">
@@ -160,8 +160,8 @@ export const Services = () => {
             />
           )}
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

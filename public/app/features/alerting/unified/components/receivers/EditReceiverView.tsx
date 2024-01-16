@@ -1,8 +1,9 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { CloudReceiverForm } from './form/CloudReceiverForm';
@@ -14,7 +15,9 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-export const EditReceiverView: FC<Props> = ({ config, receiverName, alertManagerSourceName }) => {
+export const EditReceiverView = ({ config, receiverName, alertManagerSourceName }: Props) => {
+  const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
+
   const receiver = config.alertmanager_config.receivers?.find(({ name }) => name === receiverName);
   if (!receiver) {
     return (
@@ -24,9 +27,25 @@ export const EditReceiverView: FC<Props> = ({ config, receiverName, alertManager
     );
   }
 
+  const readOnly = !editSupported || !editAllowed;
+
   if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return <GrafanaReceiverForm config={config} alertManagerSourceName={alertManagerSourceName} existing={receiver} />;
+    return (
+      <GrafanaReceiverForm
+        config={config}
+        alertManagerSourceName={alertManagerSourceName}
+        existing={receiver}
+        readOnly={readOnly}
+      />
+    );
   } else {
-    return <CloudReceiverForm config={config} alertManagerSourceName={alertManagerSourceName} existing={receiver} />;
+    return (
+      <CloudReceiverForm
+        config={config}
+        alertManagerSourceName={alertManagerSourceName}
+        existing={receiver}
+        readOnly={readOnly}
+      />
+    );
   }
 };

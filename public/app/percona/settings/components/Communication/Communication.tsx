@@ -1,9 +1,8 @@
 import { cx } from '@emotion/css';
 import React, { FC, useCallback, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 
 import { Alert, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -11,6 +10,7 @@ import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaN
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
 import { EmailPayload, SettingsAPIChangePayload } from '../../Settings.types';
@@ -70,8 +70,8 @@ export const Communication: FC = () => {
   );
 
   return (
-    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <Page navModel={navModel}>
+      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={cx(settingsStyles.wrapper)}>
             <Alert title="Communication settings" severity="warning" data-testid="communication-warning">
@@ -93,8 +93,8 @@ export const Communication: FC = () => {
             </TabContent>
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

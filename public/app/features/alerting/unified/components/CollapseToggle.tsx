@@ -1,8 +1,6 @@
-import { css, cx } from '@emotion/css';
-import React, { FC, HTMLAttributes } from 'react';
+import React, { HTMLAttributes } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { IconSize, useStyles2, Button } from '@grafana/ui';
+import { IconSize, Button } from '@grafana/ui';
 
 interface Props extends HTMLAttributes<HTMLButtonElement> {
   isCollapsed: boolean;
@@ -14,7 +12,7 @@ interface Props extends HTMLAttributes<HTMLButtonElement> {
   text?: string;
 }
 
-export const CollapseToggle: FC<Props> = ({
+export const CollapseToggle = ({
   isCollapsed,
   onToggle,
   idControlled,
@@ -22,16 +20,15 @@ export const CollapseToggle: FC<Props> = ({
   text,
   size = 'xl',
   ...restOfProps
-}) => {
-  const styles = useStyles2(getStyles);
-
+}: Props) => {
   return (
     <Button
       type="button"
       fill="text"
+      variant="secondary"
       aria-expanded={!isCollapsed}
       aria-controls={idControlled}
-      className={cx(styles.expandButton, className)}
+      className={className}
       icon={isCollapsed ? 'angle-right' : 'angle-down'}
       onClick={() => onToggle(!isCollapsed)}
       {...restOfProps}
@@ -40,10 +37,3 @@ export const CollapseToggle: FC<Props> = ({
     </Button>
   );
 };
-
-export const getStyles = (theme: GrafanaTheme2) => ({
-  expandButton: css`
-    color: ${theme.colors.text.secondary};
-    margin-right: ${theme.spacing(1)};
-  `,
-});

@@ -12,16 +12,17 @@ interface TransformationOperationRowsProps {
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
-export const TransformationOperationRows: React.FC<TransformationOperationRowsProps> = ({
+export const TransformationOperationRows = ({
   data,
   onChange,
   onRemove,
   configs,
-}) => {
+}: TransformationOperationRowsProps) => {
   return (
     <>
       {configs.map((t, i) => {
         const uiConfig = standardTransformersRegistry.getIfExists(t.transformation.id);
+
         if (!uiConfig) {
           return null;
         }

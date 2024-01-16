@@ -51,7 +51,12 @@ export const CheckActions: FC<CheckActionsProps> = ({
       >
         {!!check.disabled ? Messages.enable : Messages.disable}
       </LoaderButton>
-      <IconButton title={Messages.changeIntervalButtonTitle} name="pen" onClick={handleIntervalChangeClick} />
+      <IconButton
+        title={Messages.changeIntervalButtonTitle}
+        aria-label={Messages.changeIntervalButtonTitle}
+        name="pen"
+        onClick={handleIntervalChangeClick}
+      />
     </div>
   );
 };

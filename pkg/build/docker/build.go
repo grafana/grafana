@@ -56,7 +56,7 @@ func verifyArchive(archive string) error {
 
 // BuildImage builds a Docker image.
 // The image tag is returned.
-func BuildImage(version string, arch config.Architecture, grafanaDir string, useUbuntu, shouldSave bool, edition config.Edition) ([]string, error) {
+func BuildImage(version string, arch config.Architecture, grafanaDir string, useUbuntu, shouldSave bool, edition config.Edition, mode config.VersionMode) ([]string, error) {
 	var baseArch string
 
 	switch arch {
@@ -70,11 +70,11 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	}
 
 	libc := "-musl"
-	baseImage := fmt.Sprintf("%salpine:3.17", baseArch)
+	baseImage := fmt.Sprintf("%salpine:3.18.3", baseArch)
 	tagSuffix := ""
 	if useUbuntu {
 		libc = ""
-		baseImage = fmt.Sprintf("%subuntu:20.04", baseArch)
+		baseImage = fmt.Sprintf("%subuntu:22.04", baseArch)
 		tagSuffix = "-ubuntu"
 	}
 
@@ -127,6 +127,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 		"--no-cache",
 		"--file", "../../Dockerfile",
 		".",
+		"--label", fmt.Sprintf("mode=%s", string(mode)),
 	}
 
 	//nolint:gosec

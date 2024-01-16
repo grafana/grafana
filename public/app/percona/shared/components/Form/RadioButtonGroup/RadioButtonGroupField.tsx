@@ -53,7 +53,7 @@ export function RadioButtonGroupField({
   ...fieldConfig
 }: RadioButtonGroupFieldProps) {
   const handleOnChange = useCallback(
-    (option: SelectableValue<string>, input) => () => {
+    (option: SelectableValue<string>, input: FieldInputProps<string, HTMLElement>) => () => {
       if (option.disabled || disabled) {
         return;
       }

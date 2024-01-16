@@ -1,6 +1,7 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { DataSourceRef, SelectableValue } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 import { AdHocVariableFilter } from 'app/features/variables/types';
 
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
@@ -10,10 +11,10 @@ interface Props {
   datasource: DataSourceRef;
   onCompleted: (filter: AdHocVariableFilter) => void;
   appendBefore?: React.ReactNode;
-  getTagKeysOptions?: any;
+  allFilters: AdHocVariableFilter[];
 }
 
-export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onCompleted, getTagKeysOptions }) => {
+export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, allFilters }: Props) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 
@@ -38,7 +39,6 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
       onCompleted({
         value: item.value ?? '',
         operator: operator,
-        condition: '',
         key: key!,
       });
       setKey(null);
@@ -48,14 +48,7 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
   );
 
   if (key === null) {
-    return (
-      <AdHocFilterKey
-        datasource={datasource}
-        filterKey={key}
-        onChange={onKeyChanged}
-        getTagKeysOptions={getTagKeysOptions}
-      />
-    );
+    return <AdHocFilterKey datasource={datasource} filterKey={key} onChange={onKeyChanged} allFilters={allFilters} />;
   }
 
   return (
@@ -63,12 +56,12 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
       {appendBefore}
       <AdHocFilterRenderer
         datasource={datasource}
-        filter={{ key, value: '', operator, condition: '' }}
-        placeHolder="select value"
+        filter={{ key, value: '', operator }}
+        placeHolder={t('variable.adhoc.placeholder', 'Select value')}
         onKeyChange={onKeyChanged}
         onOperatorChange={onOperatorChanged}
         onValueChange={onValueChanged}
-        getTagKeysOptions={getTagKeysOptions}
+        allFilters={allFilters}
       />
     </React.Fragment>
   );

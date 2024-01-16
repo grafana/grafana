@@ -6,22 +6,27 @@ import { HorizontalGroup } from '../Layout/Layout';
 import { TooltipPlacement } from '../Tooltip';
 
 import { TableCellInspectModal } from './TableCellInspectModal';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps, TableFieldOptions } from './types';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
   previewMode: 'text' | 'code';
 }
 
-export function CellActions({ field, cell, previewMode, onCellFilterAdded }: CellActionProps) {
+interface CommonButtonProps {
+  size: IconSize;
+  showFilters?: boolean;
+  tooltipPlacement: TooltipPlacement;
+}
+
+export function CellActions({ field, cell, previewMode, showFilters, onCellFilterAdded }: CellActionProps) {
   const [isInspecting, setIsInspecting] = useState(false);
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
-  const showFilters = Boolean(field.config.filterable) && cell.value !== undefined;
-  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
-  const commonButtonProps = {
-    size: 'sm' as IconSize,
-    tooltipPlacement: 'top' as TooltipPlacement,
+  const inspectEnabled = Boolean(field.config.custom?.inspect);
+  const commonButtonProps: CommonButtonProps = {
+    size: 'sm',
+    tooltipPlacement: 'top',
   };
 
   const onFilterFor = useCallback(

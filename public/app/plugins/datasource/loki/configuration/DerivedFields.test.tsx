@@ -1,4 +1,5 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { DerivedFields } from './DerivedFields';
@@ -23,7 +24,7 @@ describe('DerivedFields', () => {
   });
 
   it('renders correctly when there are fields', async () => {
-    render(<DerivedFields value={testValue} onChange={() => {}} />);
+    render(<DerivedFields fields={testFields} onChange={() => {}} />);
 
     await waitFor(() => expect(screen.getAllByTestId('derived-field')).toHaveLength(2));
     expect(screen.getByText('Add')).toBeInTheDocument();
@@ -34,22 +35,58 @@ describe('DerivedFields', () => {
     const onChange = jest.fn();
     render(<DerivedFields onChange={onChange} />);
 
-    fireEvent.click(screen.getByText('Add'));
+    userEvent.click(screen.getByText('Add'));
 
     await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
   });
 
   it('removes a field', async () => {
     const onChange = jest.fn();
-    render(<DerivedFields value={testValue} onChange={onChange} />);
+    render(<DerivedFields fields={testFields} onChange={onChange} />);
 
-    fireEvent.click((await screen.findAllByTitle('Remove field'))[0]);
+    userEvent.click((await screen.findAllByTitle('Remove field'))[0]);
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith([testValue[1]]));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith([testFields[1]]));
+  });
+
+  it('validates duplicated field names', async () => {
+    const repeatedFields = [
+      {
+        matcherRegex: '',
+        name: 'repeated',
+      },
+      {
+        matcherRegex: '',
+        name: 'repeated',
+      },
+    ];
+    render(<DerivedFields onChange={jest.fn()} fields={repeatedFields} />);
+
+    userEvent.click(screen.getAllByPlaceholderText('Field name')[0]);
+
+    expect(await screen.findAllByText('The name is already in use')).toHaveLength(2);
+  });
+
+  it('does not validate empty names as repeated', () => {
+    const repeatedFields = [
+      {
+        matcherRegex: '',
+        name: '',
+      },
+      {
+        matcherRegex: '',
+        name: '',
+      },
+    ];
+    render(<DerivedFields onChange={jest.fn()} fields={repeatedFields} />);
+
+    userEvent.click(screen.getAllByPlaceholderText('Field name')[0]);
+
+    expect(screen.queryByText('The name is already in use')).not.toBeInTheDocument();
   });
 });
 
-const testValue = [
+const testFields = [
   {
     matcherRegex: 'regex1',
     name: 'test1',

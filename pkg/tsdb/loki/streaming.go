@@ -13,11 +13,10 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
@@ -61,7 +60,7 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 
 // Single instance for each channel (results are shared with all listeners)
 func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return err
 	}
@@ -74,6 +73,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return fmt.Errorf("missing expr in cuannel")
 	}
 
+	logger := logger.FromContext(ctx)
 	count := int64(0)
 
 	interrupt := make(chan os.Signal, 1)
@@ -82,15 +82,9 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	params := url.Values{}
 	params.Add("query", query.Expr)
 
-	lokiDataframeApi := s.features.IsEnabled(featuremgmt.FlagLokiDataframeApi)
-
 	wsurl, _ := url.Parse(dsInfo.URL)
 
-	if lokiDataframeApi {
-		wsurl.Path = "/loki/api/v2alpha/tail"
-	} else {
-		wsurl.Path = "/loki/api/v1/tail"
-	}
+	wsurl.Path = "/loki/api/v2alpha/tail"
 
 	if wsurl.Scheme == "https" {
 		wsurl.Scheme = "wss"
@@ -99,10 +93,10 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	}
 	wsurl.RawQuery = params.Encode()
 
-	s.plog.Info("connecting to websocket", "url", wsurl)
+	logger.Info("Connecting to websocket", "url", wsurl)
 	c, r, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
 	if err != nil {
-		s.plog.Error("error connecting to websocket", "err", err)
+		logger.Error("Error connecting to websocket", "err", err)
 		return fmt.Errorf("error connecting to websocket")
 	}
 
@@ -114,7 +108,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 			_ = r.Body.Close()
 		}
 		err = c.Close()
-		s.plog.Error("closing loki websocket", "err", err)
+		logger.Error("Closing loki websocket", "err", err)
 	}()
 
 	prev := data.FrameJSONCache{}
@@ -126,16 +120,12 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				s.plog.Error("websocket read:", "err", err)
+				logger.Error("Websocket read:", "err", err)
 				return
 			}
 
 			frame := &data.Frame{}
-			if !lokiDataframeApi {
-				frame, err = lokiBytesToLabeledFrame(message)
-			} else {
-				err = json.Unmarshal(message, &frame)
-			}
+			err = json.Unmarshal(message, &frame)
 
 			if err == nil && frame != nil {
 				next, _ := data.FrameToJSONCache(frame)
@@ -153,7 +143,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 			}
 
 			if err != nil {
-				s.plog.Error("websocket write:", "err", err, "raw", message)
+				logger.Error("Websocket write:", "err", err, "raw", message)
 				return
 			}
 		}
@@ -165,14 +155,14 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	for {
 		select {
 		case <-done:
-			s.plog.Info("socket done")
+			logger.Info("Socket done")
 			return nil
 		case <-ctx.Done():
-			s.plog.Info("stop streaming (context canceled)")
+			logger.Info("Stop streaming (context canceled)")
 			return nil
 		case t := <-ticker.C:
 			count++
-			s.plog.Error("loki websocket ping?", "time", t, "count", count)
+			logger.Error("Loki websocket ping?", "time", t, "count", count)
 		}
 	}
 }

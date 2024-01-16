@@ -1,14 +1,14 @@
 import React from 'react';
 
-import { FieldConfigEditorProps, StatsPickerConfigSettings } from '@grafana/data';
+import { StandardEditorProps, StatsPickerConfigSettings } from '@grafana/data';
 import { StatsPicker } from '@grafana/ui';
 
-export const StatsPickerEditor: React.FC<FieldConfigEditorProps<string[], StatsPickerConfigSettings>> = ({
+export const StatsPickerEditor = ({
   value,
   onChange,
   item,
   id,
-}) => {
+}: StandardEditorProps<string[], StatsPickerConfigSettings>) => {
   return (
     <StatsPicker
       stats={value}

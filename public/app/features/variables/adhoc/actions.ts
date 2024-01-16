@@ -48,7 +48,7 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
 
     if (index === -1) {
       const { value, key, operator } = options;
-      const filter = { value, key, operator, condition: '' };
+      const filter = { value, key, operator };
       return await dispatch(addFilter(toKeyedVariableIdentifier(variable), filter));
     }
 

@@ -7,7 +7,8 @@ export class ThresholdFormCtrl {
   panel: any;
   disabled = false;
 
-  /** @ngInject */
+  static $inject = ['$scope'];
+
   constructor(private $scope: any) {}
 
   $onInit() {
@@ -64,8 +65,8 @@ export class ThresholdFormCtrl {
   onThresholdTypeChange(index: number) {
     // Because of the ng-model binding, threshold's color mode is already set here
     if (this.panel.thresholds[index].colorMode === 'custom') {
-      this.panel.thresholds[index].fillColor = tinycolor(config.theme.palette.blue85).setAlpha(0.2).toRgbString();
-      this.panel.thresholds[index].lineColor = tinycolor(config.theme.palette.blue77).setAlpha(0.6).toRgbString();
+      this.panel.thresholds[index].fillColor = tinycolor(config.theme2.v1.palette.blue85).setAlpha(0.2).toRgbString();
+      this.panel.thresholds[index].lineColor = tinycolor(config.theme2.v1.palette.blue77).setAlpha(0.6).toRgbString();
     }
     this.panelCtrl.render();
   }

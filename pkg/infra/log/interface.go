@@ -14,21 +14,21 @@ const (
 
 type Logger interface {
 	// New returns a new contextual Logger that has this logger's context plus the given context.
-	New(ctx ...interface{}) *ConcreteLogger
+	New(ctx ...any) *ConcreteLogger
 
-	Log(keyvals ...interface{}) error
+	Log(keyvals ...any) error
 
 	// Debug logs a message with debug level and key/value pairs, if any.
-	Debug(msg string, ctx ...interface{})
+	Debug(msg string, ctx ...any)
 
 	// Info logs a message with info level and key/value pairs, if any.
-	Info(msg string, ctx ...interface{})
+	Info(msg string, ctx ...any)
 
 	// Warn logs a message with warning level and key/value pairs, if any.
-	Warn(msg string, ctx ...interface{})
+	Warn(msg string, ctx ...any)
 
 	// Error logs a message with error level and key/value pairs, if any.
-	Error(msg string, ctx ...interface{})
+	Error(msg string, ctx ...any)
 
 	// FromContext returns a new contextual Logger that has this logger's context plus the given context.
 	FromContext(ctx context.Context) Logger

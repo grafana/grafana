@@ -1,0 +1,5 @@
+[client]
+host=mysql
+port=3306
+user=grafana
+password=password

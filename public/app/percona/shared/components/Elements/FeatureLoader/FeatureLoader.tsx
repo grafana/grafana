@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { useSelector } from 'react-redux';
 
 import { useStyles } from '@grafana/ui';
 import { getPerconaUser } from 'app/percona/shared/core/selectors';
+import { useSelector } from 'app/types';
 
 import { PermissionLoader } from '../PermissionLoader';
 

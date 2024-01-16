@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 
 import { useStyles } from '@grafana/ui';
 
@@ -8,7 +8,7 @@ import { PMM_ADVANCED_SETTINGS_URL } from './InfoBox.constants';
 import { Messages } from './InfoBox.messages';
 import { getStyles } from './InfoBox.styles';
 
-const UpdateInfo: FC = ({ children }) => {
+const UpdateInfo: FC<PropsWithChildren> = ({ children }) => {
   const styles = useStyles(getStyles);
 
   return (

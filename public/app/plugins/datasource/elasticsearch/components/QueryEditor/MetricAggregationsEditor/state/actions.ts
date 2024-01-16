@@ -1,6 +1,6 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { MetricAggregation, MetricAggregationWithMeta, MetricAggregationWithSettings } from '../aggregations';
+import { MetricAggregationWithMeta, MetricAggregation, MetricAggregationWithSettings } from '../../../../types';
 
 export const addMetric = createAction<MetricAggregation['id']>('@metrics/add');
 export const removeMetric = createAction<MetricAggregation['id']>('@metrics/remove');
@@ -9,16 +9,16 @@ export const changeMetricField = createAction<{ id: MetricAggregation['id']; fie
 export const changeMetricType = createAction<{ id: MetricAggregation['id']; type: MetricAggregation['type'] }>(
   '@metrics/change_type'
 );
-export const changeMetricAttribute = createAction<{ metric: MetricAggregation; attribute: string; newValue: any }>(
+export const changeMetricAttribute = createAction<{ metric: MetricAggregation; attribute: string; newValue: unknown }>(
   '@metrics/change_attr'
 );
 export const changeMetricSetting = createAction<{
   metric: MetricAggregationWithSettings;
   settingName: string;
-  newValue: any;
+  newValue: unknown;
 }>('@metrics/change_setting');
 export const changeMetricMeta = createAction<{
   metric: MetricAggregationWithMeta;
   meta: string;
-  newValue: any;
+  newValue: unknown;
 }>('@metrics/change_meta');

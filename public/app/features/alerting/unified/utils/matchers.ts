@@ -1,16 +1,46 @@
 import { uniqBy } from 'lodash';
 
-import { Labels } from '@grafana/data';
-import { Matcher, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-import { Alert } from 'app/types/unified-alerting';
+import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
-import { MatcherFieldValue } from '../types/silence-form';
+import { Labels } from '../../../../types/unified-alerting-dto';
 
-import { parseMatcher } from './alertmanager';
+const matcherOperators = [
+  MatcherOperator.regex,
+  MatcherOperator.notRegex,
+  MatcherOperator.notEqual,
+  MatcherOperator.equal,
+];
+
+export function parseMatcher(matcher: string): Matcher {
+  if (matcher.startsWith('{') && matcher.endsWith('}')) {
+    throw new Error(`PromQL matchers not supported yet, sorry! PromQL matcher found: ${matcher}`);
+  }
+  const operatorsFound = matcherOperators
+    .map((op): [MatcherOperator, number] => [op, matcher.indexOf(op)])
+    .filter(([_, idx]) => idx > -1)
+    .sort((a, b) => a[1] - b[1]);
+
+  if (!operatorsFound.length) {
+    throw new Error(`Invalid matcher: ${matcher}`);
+  }
+  const [operator, idx] = operatorsFound[0];
+  const name = matcher.slice(0, idx).trim();
+  const value = matcher.slice(idx + operator.length);
+  if (!name) {
+    throw new Error(`Invalid matcher: ${matcher}`);
+  }
+
+  return {
+    name,
+    value,
+    isRegex: operator === MatcherOperator.regex || operator === MatcherOperator.notRegex,
+    isEqual: operator === MatcherOperator.equal || operator === MatcherOperator.regex,
+  };
+}
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
-  const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x.trim()));
+  const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x));
 
   // Due to migration, old alert rules might have a duplicated alertname label
   // To handle that case want to filter out duplicates and make sure there are only unique labels
@@ -30,60 +60,52 @@ export const getMatcherQueryParams = (labels: Labels) => {
   return matcherUrlParams;
 };
 
-interface MatchedInstance {
-  id: string;
-  data: {
-    matchedInstance: Alert;
-  };
-}
+/**
+ * We need to deal with multiple (deprecated) properties such as "match" and "match_re"
+ * this function will normalize all of the different ways to define matchers in to a single one.
+ */
+export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
+  const matchers: ObjectMatcher[] = [];
 
-export const findAlertInstancesWithMatchers = (
-  instances: Alert[],
-  matchers: MatcherFieldValue[]
-): MatchedInstance[] => {
-  const anchorRegex = (regexpString: string): RegExp => {
-    // Silence matchers are always fully anchored in the Alertmanager: https://github.com/prometheus/alertmanager/pull/748
-    if (!regexpString.startsWith('^')) {
-      regexpString = '^' + regexpString;
-    }
-    if (!regexpString.endsWith('$')) {
-      regexpString = regexpString + '$';
-    }
-    return new RegExp(regexpString);
-  };
+  if (route.matchers) {
+    route.matchers.forEach((matcher) => {
+      const { name, value, isEqual, isRegex } = parseMatcher(matcher);
+      let operator = MatcherOperator.equal;
 
-  const matchesInstance = (instance: Alert, matcher: MatcherFieldValue) => {
-    return Object.entries(instance.labels).some(([key, value]) => {
-      if (!matcher.name || !matcher.value) {
-        return false;
+      if (isEqual && isRegex) {
+        operator = MatcherOperator.regex;
       }
-      if (matcher.name !== key) {
-        return false;
+      if (!isEqual && isRegex) {
+        operator = MatcherOperator.notRegex;
       }
-      switch (matcher.operator) {
-        case MatcherOperator.equal:
-          return matcher.value === value;
-        case MatcherOperator.notEqual:
-          return matcher.value !== value;
-        case MatcherOperator.regex:
-          const regex = anchorRegex(matcher.value);
-          return regex.test(value);
-        case MatcherOperator.notRegex:
-          const negregex = anchorRegex(matcher.value);
-          return !negregex.test(value);
-        default:
-          return false;
+      if (isEqual && !isRegex) {
+        operator = MatcherOperator.equal;
       }
+      if (!isEqual && !isRegex) {
+        operator = MatcherOperator.notEqual;
+      }
+
+      matchers.push([name, operator, value]);
     });
-  };
+  }
 
-  const filteredInstances = instances.filter((instance) => {
-    return matchers.every((matcher) => matchesInstance(instance, matcher));
-  });
-  const mappedInstances = filteredInstances.map((instance) => ({
-    id: `${instance.activeAt}-${instance.value}`,
-    data: { matchedInstance: instance },
-  }));
+  if (route.object_matchers) {
+    matchers.push(...route.object_matchers);
+  }
 
-  return mappedInstances;
+  if (route.match_re) {
+    Object.entries(route.match_re).forEach(([label, value]) => {
+      matchers.push([label, MatcherOperator.regex, value]);
+    });
+  }
+
+  if (route.match) {
+    Object.entries(route.match).forEach(([label, value]) => {
+      matchers.push([label, MatcherOperator.equal, value]);
+    });
+  }
+
+  return matchers;
 };
+
+export type Label = [string, string];

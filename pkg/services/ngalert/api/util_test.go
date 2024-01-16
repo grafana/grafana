@@ -10,8 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/auth"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -40,24 +42,25 @@ func TestToMacaronPath(t *testing.T) {
 }
 
 func TestAlertingProxy_createProxyContext(t *testing.T) {
-	ctx := &models.ReqContext{
+	ctx := &contextmodel.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser:          &user.SignedInUser{},
-		UserToken:             &models.UserToken{},
-		IsSignedIn:            rand.Int63()%2 == 1,
-		IsRenderCall:          rand.Int63()%2 == 1,
-		AllowAnonymous:        rand.Int63()%2 == 1,
-		SkipCache:             rand.Int63()%2 == 1,
-		Logger:                log.New("test"),
-		RequestNonce:          util.GenerateShortUID(),
-		IsPublicDashboardView: rand.Int63()%2 == 1,
+		SignedInUser:               &user.SignedInUser{},
+		UserToken:                  &auth.UserToken{},
+		IsSignedIn:                 rand.Int63()%2 == 1,
+		IsRenderCall:               rand.Int63()%2 == 1,
+		AllowAnonymous:             rand.Int63()%2 == 1,
+		SkipDSCache:                rand.Int63()%2 == 1,
+		SkipQueryCache:             rand.Int63()%2 == 1,
+		Logger:                     log.New("test"),
+		RequestNonce:               util.GenerateShortUID(),
+		PublicDashboardAccessToken: util.GenerateShortUID(),
 	}
 
 	t.Run("should create a copy of request context", func(t *testing.T) {
 		for _, mock := range []*accesscontrolmock.Mock{
-			accesscontrolmock.New(), accesscontrolmock.New().WithDisabled(),
+			accesscontrolmock.New(), accesscontrolmock.New(),
 		} {
 			proxy := AlertingProxy{
 				DataProxy: nil,
@@ -74,10 +77,11 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 			require.Equal(t, ctx.IsSignedIn, newCtx.IsSignedIn)
 			require.Equal(t, ctx.IsRenderCall, newCtx.IsRenderCall)
 			require.Equal(t, ctx.AllowAnonymous, newCtx.AllowAnonymous)
-			require.Equal(t, ctx.SkipCache, newCtx.SkipCache)
+			require.Equal(t, ctx.SkipDSCache, newCtx.SkipDSCache)
+			require.Equal(t, ctx.SkipQueryCache, newCtx.SkipQueryCache)
 			require.Equal(t, ctx.Logger, newCtx.Logger)
 			require.Equal(t, ctx.RequestNonce, newCtx.RequestNonce)
-			require.Equal(t, ctx.IsPublicDashboardView, newCtx.IsPublicDashboardView)
+			require.Equal(t, ctx.PublicDashboardAccessToken, newCtx.PublicDashboardAccessToken)
 		}
 	})
 	t.Run("should overwrite response writer", func(t *testing.T) {
@@ -136,42 +140,38 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 			}
 		})
 	})
-	t.Run("if access control is disabled", func(t *testing.T) {
-		t.Run("should not alter user", func(t *testing.T) {
-			proxy := AlertingProxy{
-				DataProxy: nil,
-				ac:        accesscontrolmock.New().WithDisabled(),
-			}
-
-			req := &http.Request{}
-			resp := &response.NormalResponse{}
-
-			for _, roleType := range []org.RoleType{org.RoleViewer, org.RoleEditor, org.RoleAdmin} {
-				roleCtx := *ctx
-				roleCtx.SignedInUser = &user.SignedInUser{
-					OrgRole: roleType,
-				}
-				newCtx := proxy.createProxyContext(&roleCtx, req, resp)
-				require.Equalf(t, roleCtx.SignedInUser, newCtx.SignedInUser, "user should not be altered if access control is disabled and role is %s", roleType)
-			}
-		})
-	})
 }
 
 func Test_containsProvisionedAlerts(t *testing.T) {
 	t.Run("should return true if at least one rule is provisioned", func(t *testing.T) {
 		_, rules := models2.GenerateUniqueAlertRules(rand.Intn(4)+2, models2.AlertRuleGen())
 		provenance := map[string]models2.Provenance{
-			rules[rand.Intn(len(rules)-1)].UID: []models2.Provenance{models2.ProvenanceAPI, models2.ProvenanceFile}[rand.Intn(2)],
+			rules[rand.Intn(len(rules))].UID: []models2.Provenance{models2.ProvenanceAPI, models2.ProvenanceFile}[rand.Intn(2)],
 		}
 		require.Truef(t, containsProvisionedAlerts(provenance, rules), "the group of rules is expected to be considered as provisioned but it isn't. Provenances: %v", provenance)
 	})
 	t.Run("should return false if map does not contain or has ProvenanceNone", func(t *testing.T) {
 		_, rules := models2.GenerateUniqueAlertRules(rand.Intn(5)+1, models2.AlertRuleGen())
 		provenance := make(map[string]models2.Provenance)
-		for i := 0; i < rand.Intn(len(rules)); i++ {
+		numProvenanceNone := rand.Intn(len(rules))
+		for i := 0; i < numProvenanceNone; i++ {
 			provenance[rules[i].UID] = models2.ProvenanceNone
 		}
 		require.Falsef(t, containsProvisionedAlerts(provenance, rules), "the group of rules is not expected to be provisioned but it is. Provenances: %v", provenance)
 	})
 }
+
+type recordingConditionValidator struct {
+	recorded []models2.Condition
+	hook     func(c models2.Condition) error
+}
+
+func (r *recordingConditionValidator) Validate(_ eval.EvaluationContext, condition models2.Condition) error {
+	r.recorded = append(r.recorded, condition)
+	if r.hook != nil {
+		return r.hook(condition)
+	}
+	return nil
+}
+
+var _ ConditionValidator = &recordingConditionValidator{}

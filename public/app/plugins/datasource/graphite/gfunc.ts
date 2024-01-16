@@ -1028,7 +1028,13 @@ export class FuncInstance {
       }
 
       // param types that should never be quoted
-      if (includes(['value_or_series', 'boolean', 'int', 'float', 'node', 'int_or_infinity'], paramType)) {
+      const neverQuotedParams = ['value_or_series', 'boolean', 'int', 'float', 'node', 'int_or_infinity'];
+
+      // functions that should not have param types quoted
+      // https://github.com/grafana/grafana/issues/54924
+      const neverQuotedFunctions = ['asPercent'];
+      // params or functions that should never be quoted
+      if (includes(neverQuotedParams, paramType) || includes(neverQuotedFunctions, this.def.name)) {
         return value;
       }
 
@@ -1055,7 +1061,7 @@ export class FuncInstance {
     return str + parameters.join(', ') + ')';
   }
 
-  _hasMultipleParamsInString(strValue: any, index: number) {
+  _hasMultipleParamsInString(strValue: string, index: number) {
     if (strValue.indexOf(',') === -1) {
       return false;
     }
@@ -1071,7 +1077,7 @@ export class FuncInstance {
     return false;
   }
 
-  updateParam(strValue: any, index: any) {
+  updateParam(strValue: string, index: number) {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this._hasMultipleParamsInString(strValue, index)) {
@@ -1103,7 +1109,7 @@ export class FuncInstance {
   }
 }
 
-function createFuncInstance(funcDef: any, options?: { withDefaultParams: any }, idx?: any): FuncInstance {
+function createFuncInstance(funcDef: FuncDef | string, options?: { withDefaultParams: any }, idx?: any): FuncInstance {
   if (isString(funcDef)) {
     funcDef = getFuncDef(funcDef, idx);
   }

@@ -4,12 +4,14 @@ import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem } from '@grafana/data';
+import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
-import { TextDimensionMode } from 'app/features/dimensions';
+import { frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/src/components/MatchersUI/utils';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
+import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
 import { ElementState } from '../runtime/element';
@@ -21,20 +23,40 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
 } as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 const MetricValueDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
-  const { data, isSelected } = props;
+  const { data, isSelected, config } = props;
   const styles = useStyles2(getStyles(data));
 
   const context = usePanelContext();
   const scene = context.instanceState?.scene;
+  let panelData: DataFrame[];
+  panelData = context.instanceState?.scene?.data.series;
 
   const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
+
+  const getDisplayValue = () => {
+    if (panelData && config.text?.field && fieldNotFound()) {
+      return 'Field not found';
+    }
+
+    if (panelData && config.text?.field && !data?.text) {
+      return 'No data';
+    }
+
+    return data?.text ? data.text : 'Double click to set field';
+  };
+
+  const fieldNotFound = () => {
+    const fieldNames = getFrameFieldsDisplayNames(panelData);
+    return !frameHasName(config.text?.field, fieldNames);
+  };
 
   if (isEditMode && isSelected) {
     return <MetricValueEdit {...props} />;
   }
+
   return (
     <div className={styles.container}>
-      <span className={styles.span}>{data?.text ? data.text : 'Double click to set field'}</span>
+      <span className={styles.span}>{getDisplayValue()}</span>
     </div>
   );
 };
@@ -46,7 +68,7 @@ const MetricValueEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   panelData = context.instanceState?.scene?.data.series;
 
   const onFieldChange = useCallback(
-    (field) => {
+    (field: string | undefined) => {
       let selectedElement: ElementState;
       selectedElement = context.instanceState?.selected[0];
       if (selectedElement) {
@@ -89,26 +111,26 @@ const MetricValueEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
 };
 
 const getStyles = (data: TextData | undefined) => (theme: GrafanaTheme2) => ({
-  container: css`
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    display: table;
-  `,
-  inlineEditorContainer: css`
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    padding: 10px;
-  `,
-  span: css`
-    display: table-cell;
-    vertical-align: ${data?.valign};
-    text-align: ${data?.align};
-    font-size: ${data?.size}px;
-    color: ${data?.color};
-  `,
+  container: css({
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+    display: 'table',
+  }),
+  inlineEditorContainer: css({
+    height: '100%',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(1),
+  }),
+  span: css({
+    display: 'table-cell',
+    verticalAlign: data?.valign,
+    textAlign: data?.align,
+    fontSize: `${data?.size}px`,
+    color: data?.color,
+  }),
 });
 
 export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
@@ -142,8 +164,10 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       },
     },
     placement: {
-      top: 100,
-      left: 100,
+      width: options?.placement?.width,
+      height: options?.placement?.height,
+      top: options?.placement?.top ?? 100,
+      left: options?.placement?.left ?? 100,
     },
   }),
 
@@ -158,6 +182,8 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
     if (cfg.color) {
       data.color = ctx.getColor(cfg.color).value();
     }
+
+    data.links = getDataLinks(ctx, cfg, data.text);
 
     return data;
   },

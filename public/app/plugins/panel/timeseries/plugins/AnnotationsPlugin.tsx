@@ -5,6 +5,7 @@ import { colorManipulator, DataFrame, DataFrameFieldIndex, DataFrameView, TimeZo
 import { EventsCanvas, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
 
 import { AnnotationMarker } from './annotations/AnnotationMarker';
+import { AnnotationsDataFrameViewDTO } from './types';
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
@@ -12,7 +13,7 @@ interface AnnotationsPluginProps {
   timeZone: TimeZone;
 }
 
-export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone, config }) => {
+export const AnnotationsPlugin = ({ annotations, timeZone, config }: AnnotationsPluginProps) => {
   const theme = useTheme2();
   const plotInstance = useRef<uPlot>();
 
@@ -27,6 +28,11 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     }
 
     annotationsRef.current = views;
+
+    return () => {
+      // clear on unmount
+      annotationsRef.current = [];
+    };
   }, [annotations]);
 
   useLayoutEffect(() => {

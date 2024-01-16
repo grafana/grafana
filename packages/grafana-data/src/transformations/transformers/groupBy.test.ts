@@ -1,7 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { DataTransformerConfig, Field, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
 
@@ -69,7 +68,7 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
       ];
@@ -84,7 +83,7 @@ describe('GroupBy transformer', () => {
       fields: [
         { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
         { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
-        { name: 'values', type: FieldType.string, values: [1, 2, 2, 3, 3, 3] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
       ],
     });
 
@@ -110,13 +109,13 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([1, 4, 9]),
+          values: [1, 4, 9],
           config: {},
         },
       ];
@@ -131,7 +130,7 @@ describe('GroupBy transformer', () => {
       fields: [
         { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
         { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
-        { name: 'values', type: FieldType.string, values: [1, 2, 2, 3, 3, 3] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
       ],
     });
 
@@ -161,25 +160,25 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
         {
           name: 'time (count)',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3]),
+          values: [1, 2, 3],
           config: {},
         },
         {
           name: 'time (last)',
           type: FieldType.time,
-          values: new ArrayVector([3000, 5000, 8000]),
+          values: [3000, 5000, 8000],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([1, 4, 9]),
+          values: [1, 4, 9],
           config: {},
         },
       ];
@@ -195,7 +194,7 @@ describe('GroupBy transformer', () => {
         fields: [
           { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
           { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
-          { name: 'values', type: FieldType.string, values: [1, 2, 2, 3, 3, 3] },
+          { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
         ],
       }),
       toDataFrame({
@@ -203,7 +202,7 @@ describe('GroupBy transformer', () => {
         fields: [
           { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
           { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
-          { name: 'values', type: FieldType.string, values: [0, 2, 5, 3, 3, 2] },
+          { name: 'values', type: FieldType.number, values: [0, 2, 5, 3, 3, 2] },
         ],
       }),
     ];
@@ -230,13 +229,13 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([1, 4, 9]),
+          values: [1, 4, 9],
           config: {},
         },
       ];
@@ -245,13 +244,13 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([0, 7, 8]),
+          values: [0, 7, 8],
           config: {},
         },
       ];
@@ -292,13 +291,75 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['500', '404', 'one', 'two', '200']),
+          values: ['500', '404', 'one', 'two', '200'],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([1, 4, 6, 3, 4]),
+          values: [1, 4, 6, 3, 4],
+          config: {},
+        },
+      ];
+
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
+
+  it('should group by and skip fields that do not have values for a group', async () => {
+    const testSeries1 = toDataFrame({
+      name: 'Series1',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1688470200000, 1688471100000, 1688470200000, 1688471100000] },
+        { name: 'Value', type: FieldType.number, values: [1, 2, 3, 4] },
+      ],
+    });
+
+    const testSeries2 = toDataFrame({
+      name: 'Series2',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [] },
+        { name: 'Value', type: FieldType.number, values: [] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          Series1: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+          Series2: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+          Time: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          Value: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries1, testSeries2])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          values: [1688470200000, 1688471100000],
+          config: {},
+        },
+        {
+          name: 'Value (sum)',
+          type: FieldType.number,
+          values: [4, 6],
           config: {},
         },
       ];

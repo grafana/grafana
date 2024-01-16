@@ -1,4 +1,4 @@
-import { NavModelItem, NavSection } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { config } from 'app/core/config';
 import { Settings } from 'app/percona/settings/Settings.types';
 import { CategorizedAdvisor } from 'app/percona/shared/services/advisors/Advisors.types';
@@ -7,18 +7,26 @@ import { FolderDTO } from 'app/types';
 
 import {
   NAV_FOLDER_MAP,
+  PMM_NAV_HAPROXY,
   NAV_ID_TO_SERVICE,
+  PMM_NAV_MONGO,
+  PMM_NAV_MYSQL,
+  PMM_NAV_POSTGRE,
+  PMM_NAV_PROXYSQL,
+  PMM_NAV_OS,
   PMM_ACCESS_ROLES_PAGE,
   PMM_ADD_INSTANCE_PAGE,
   PMM_ALERTING_PERCONA_ALERTS,
+  WEIGHTS,
+  PMM_ACCESS_ROLE_CREATE_PAGE,
+  PMM_ADD_INSTANCE_CREATE_PAGE,
 } from './PerconaNavigation.constants';
 
 const DIVIDER: NavModelItem = {
   id: 'divider',
   text: 'Divider',
-  divider: true,
-  showDividerInExpanded: true,
   hideFromTabs: true,
+  isDivider: true,
 };
 
 export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavModelItem | undefined => {
@@ -61,12 +69,12 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
   const orgLink: NavModelItem = {
     id: 'main-organization',
     text: 'Organization',
-    isSubheader: true,
+    isSection: true,
   };
   const pmmLink: NavModelItem = {
     id: 'settings-pmm',
     text: 'PMM',
-    isSubheader: true,
+    isSection: true,
   };
   const settingsLink: NavModelItem = {
     id: 'settings',
@@ -99,13 +107,14 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
     }
     configNode.url = `${config.appSubUrl}/inventory`;
     configNode.children = [
+      pmmLink,
       PMM_ADD_INSTANCE_PAGE,
+      PMM_ADD_INSTANCE_CREATE_PAGE,
       inventoryLink,
       settingsLink,
-      pmmLink,
       DIVIDER,
-      ...configNode.children,
       orgLink,
+      ...configNode.children,
     ];
     if (settings?.enableAccessControl) {
       addAccessRolesLink(configNode);
@@ -117,25 +126,33 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[], settings?: 
 
 export const addAccessRolesLink = (configNode: NavModelItem) => {
   if (configNode.children) {
-    const usersIdx = configNode.children.findIndex((item) => item.id === 'users');
-    configNode.children = [
-      ...configNode.children.slice(0, usersIdx + 1),
-      PMM_ACCESS_ROLES_PAGE,
-      ...configNode.children.slice(usersIdx + 1),
-    ];
+    const accessNode = configNode.children.find((item) => item.id === 'cfg/access');
+
+    if (accessNode && accessNode.children) {
+      const usersIdx = accessNode.children.findIndex((item) => item.id === 'global-users');
+      PMM_ACCESS_ROLES_PAGE.parentItem = accessNode;
+      accessNode.children = [
+        ...accessNode.children.slice(0, usersIdx + 1),
+        PMM_ACCESS_ROLES_PAGE,
+        // Add to have a create action for adding a role
+        PMM_ACCESS_ROLE_CREATE_PAGE,
+        ...accessNode.children.slice(usersIdx + 1),
+      ];
+    }
   }
 };
 
 export const addFolderLinks = (navTree: NavModelItem[], folders: FolderDTO[]) => {
   for (const rootNode of navTree) {
+    const id = rootNode.id + '-other-dashboards';
     const folder = folders.find((f) => rootNode.id && NAV_FOLDER_MAP[rootNode.id] === f.title);
+    const exists = rootNode.children?.some((i) => i.id === id);
 
-    if (folder) {
+    if (folder && !exists) {
       rootNode.children?.push({
-        id: rootNode.id + '-other-dashboards',
+        id,
         icon: 'search',
         text: 'Other dashboards',
-        showIconInNavbar: true,
         url: `/graph/dashboards/f/${folder.uid}/${rootNode.id}`,
       });
     }
@@ -160,9 +177,9 @@ export const buildAdvisorsNavItem = (categorizedAdvisors: CategorizedAdvisor) =>
     id: `advisors`,
     icon: 'percona-database-checks',
     text: 'Advisors',
+    sortWeight: WEIGHTS.alerting,
     subTitle: 'Run and analyze all checks',
     url: `${config.appSubUrl}/advisors`,
-    section: NavSection.Core,
     children: [],
   };
   const categories = Object.keys(categorizedAdvisors);
@@ -182,4 +199,17 @@ export const buildAdvisorsNavItem = (categorizedAdvisors: CategorizedAdvisor) =>
   });
 
   return modelItem;
+};
+
+export const addDashboardsLinks = (items: NavModelItem[]) => {
+  items.push(PMM_NAV_OS);
+  items.push(PMM_NAV_MYSQL);
+  items.push(PMM_NAV_MONGO);
+  items.push(PMM_NAV_POSTGRE);
+  items.push(PMM_NAV_PROXYSQL);
+  items.push(PMM_NAV_HAPROXY);
+};
+
+export const sortNavigation = (items: NavModelItem[]) => {
+  items.sort((a, b) => (a.sortWeight || 0) - (b.sortWeight || 0));
 };

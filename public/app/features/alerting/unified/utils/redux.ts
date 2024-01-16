@@ -6,6 +6,8 @@ import { appEvents } from 'app/core/core';
 import { PERCONA_CANCELLED_ERROR_NAME } from 'app/percona/shared/core';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
+import { logInfo, LogMessages } from '../Analytics';
+
 export interface AsyncRequestState<T> {
   result?: T;
   loading: boolean;
@@ -14,6 +16,7 @@ export interface AsyncRequestState<T> {
   requestId?: string;
 }
 
+// @PERCONA
 interface AsyncInitialRequestState<T> extends AsyncRequestState<T> {
   result: T;
 }
@@ -151,6 +154,7 @@ export function withAppEvents<T>(
     });
 }
 
+export const UNKNOW_ERROR = 'Unknown Error';
 export function messageFromError(e: Error | FetchError | SerializedError): string {
   if (isFetchError(e)) {
     if (e.data?.message) {
@@ -168,7 +172,23 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
       return e.statusText;
     }
   }
-  return (e as Error)?.message || String(e);
+  // message in e object, return message
+  const errorMessage = (e as Error)?.message;
+  if (errorMessage) {
+    return errorMessage;
+  }
+  // for some reason (upstream this code), sometimes we get an object without the message field neither in the e.data and nor in e.message
+  // in this case we want to avoid String(e) printing [object][object]
+  logInfo(LogMessages.unknownMessageFromError, { error: JSON.stringify(e) });
+  return UNKNOW_ERROR;
+}
+
+export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateSettled);
+}
+
+export function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading;
 }
 
 export function isAsyncRequestMapSliceFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
@@ -181,6 +201,14 @@ export function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): bo
 
 export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
   return Object.values(slice).some(isAsyncRequestStatePending);
+}
+
+export function isAsyncRequestMapSlicePartiallyDispatched<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some((state) => state.dispatched);
+}
+
+export function isAsyncRequestMapSlicePartiallyFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStateFulfilled);
 }
 
 export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -23,7 +24,7 @@ describe('MetricsResolution::', () => {
           },
         } as StoreState)}
       >
-        <MetricsResolution />
+        {wrapWithGrafanaContextMock(<MetricsResolution />)}
       </Provider>
     );
 
@@ -47,7 +48,7 @@ describe('MetricsResolution::', () => {
           },
         } as StoreState)}
       >
-        <MetricsResolution />
+        {wrapWithGrafanaContextMock(<MetricsResolution />)}
       </Provider>
     );
 
@@ -71,7 +72,7 @@ describe('MetricsResolution::', () => {
           },
         } as StoreState)}
       >
-        <MetricsResolution />
+        {wrapWithGrafanaContextMock(<MetricsResolution />)}
       </Provider>
     );
 
@@ -95,7 +96,7 @@ describe('MetricsResolution::', () => {
           },
         } as StoreState)}
       >
-        <MetricsResolution />
+        {wrapWithGrafanaContextMock(<MetricsResolution />)}
       </Provider>
     );
     const radio = screen.getAllByTestId('resolutions-radio-button')[2];
@@ -122,7 +123,7 @@ describe('MetricsResolution::', () => {
           },
         } as StoreState)}
       >
-        <MetricsResolution />
+        {wrapWithGrafanaContextMock(<MetricsResolution />)}
       </Provider>
     );
     const button = screen.getByTestId('metrics-resolution-button');

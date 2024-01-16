@@ -1,25 +1,24 @@
 import { css, cx } from '@emotion/css';
-import { StoryContext } from '@storybook/react';
+import { DecoratorFn } from '@storybook/react';
 import React from 'react';
 
-import { RenderFunction } from '../../types';
+interface Props {
+  width?: number;
+  height?: number;
+  showBoundaries: boolean;
+}
 
-const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries: boolean }> = ({
-  children,
-  width,
-  height,
-  showBoundaries,
-}) => {
+const StoryContainer = ({ width, height, showBoundaries, children }: React.PropsWithChildren<Props>) => {
   const checkColor = '#f0f0f0';
   const finalWidth = width ? `${width}px` : '100%';
   const finalHeight = height !== 0 ? `${height}px` : 'auto';
   const bgStyles =
     showBoundaries &&
-    css`
-      background-color: white;
-      background-size: 30px 30px;
-      background-position: 0 0, 15px 15px;
-      background-image: linear-gradient(
+    css({
+      backgroundColor: 'white',
+      backgroundSize: '30px 30px',
+      backgroundPosition: '0 0, 15px 15px',
+      backgroundImage: `linear-gradient(
           45deg,
           ${checkColor} 25%,
           transparent 25%,
@@ -27,15 +26,15 @@ const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries
           ${checkColor} 75%,
           ${checkColor}
         ),
-        linear-gradient(45deg, ${checkColor} 25%, transparent 25%, transparent 75%, ${checkColor} 75%, ${checkColor});
-    `;
+        linear-gradient(45deg, ${checkColor} 25%, transparent 25%, transparent 75%, ${checkColor} 75%, ${checkColor})`,
+    });
   return (
     <div
       className={cx(
-        css`
-          width: ${finalWidth};
-          height: ${finalHeight};
-        `,
+        css({
+          width: finalWidth,
+          height: finalHeight,
+        }),
         bgStyles
       )}
     >
@@ -44,7 +43,7 @@ const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries
   );
 };
 
-export const withStoryContainer = (story: RenderFunction, context: StoryContext) => {
+export const withStoryContainer: DecoratorFn = (story, context) => {
   return (
     <StoryContainer
       width={context.args.containerWidth}

@@ -20,7 +20,7 @@ export const useEditDBClusterPageDefaultValues = ({
   mode,
 }: EditDBClusterPageDefaultValuesProps): [
   AddDBClusterFormValues | UpdateDBClusterFormValues | undefined,
-  DBCluster | null
+  DBCluster | null,
 ] => {
   const history = useHistory();
   const { selectedKubernetesCluster: preSelectedKubernetesCluster, selectedDBCluster } = useSelector(getDBaaS);

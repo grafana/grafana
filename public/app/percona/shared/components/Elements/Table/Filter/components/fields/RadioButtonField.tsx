@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
@@ -18,7 +18,7 @@ export const RadioButtonField = ({ column }: { column: ExtendedColumn }) => {
         options={columnOptions}
         defaultValue={ALL_VALUE}
         name={`${column.accessor}`}
-        label={column.label ?? column.Header}
+        label={column.label ?? (column.Header as ReactNode)}
         fullWidth
         data-testid="radio-button"
       />

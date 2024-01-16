@@ -7,11 +7,11 @@ import { measureText } from '../../utils/measureText';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { getSegmentStyles } from './styles';
+import { SegmentProps } from './types';
+import { useExpandableLabel } from './useExpandableLabel';
 
-import { useExpandableLabel, SegmentProps } from '.';
-
-export interface SegmentInputProps<T>
-  extends Omit<SegmentProps<T>, 'allowCustomValue' | 'allowEmptyValue'>,
+export interface SegmentInputProps
+  extends Omit<SegmentProps, 'allowCustomValue' | 'allowEmptyValue'>,
     Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
   onChange: (text: string | number) => void;
@@ -19,7 +19,7 @@ export interface SegmentInputProps<T>
 
 const FONT_SIZE = 14;
 
-export function SegmentInput<T>({
+export function SegmentInput({
   value: initialValue,
   onChange,
   Component,
@@ -30,7 +30,7 @@ export function SegmentInput<T>({
   autofocus = false,
   onExpandedChange,
   ...rest
-}: React.PropsWithChildren<SegmentInputProps<T>>) {
+}: React.PropsWithChildren<SegmentInputProps>) {
   const ref = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState<number | string>(initialValue);
   const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
@@ -66,14 +66,16 @@ export function SegmentInput<T>({
     );
   }
 
-  const inputWidthStyle = css`
-    width: ${Math.max(inputWidth + 20, 32)}px;
-  `;
+  const inputWidthStyle = css({
+    width: `${Math.max(inputWidth + 20, 32)}px`,
+  });
 
   return (
     <input
       {...rest}
       ref={ref}
+      // this needs to autofocus, but it's ok as it's only rendered by choice
+      // eslint-disable-next-line jsx-a11y/no-autofocus
       autoFocus
       className={cx(`gf-form gf-form-input`, inputWidthStyle)}
       value={value}

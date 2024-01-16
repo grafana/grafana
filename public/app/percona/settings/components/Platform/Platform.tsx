@@ -4,10 +4,9 @@ import React, { FC, useEffect, useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { fetchServerInfoAction, fetchSettingsAction, updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaServer, getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { logger } from 'app/percona/shared/helpers/logger';
@@ -21,7 +20,6 @@ import { PlatformService } from './Platform.service';
 import { ConnectRenderProps } from './types';
 
 export const Platform: FC = () => {
-  const navModel = usePerconaNavModel('settings-percona-platform');
   const settingsStyles = useStyles2(getSettingsStyles);
   const { result } = useSelector(getPerconaSettings);
   const [connecting, setConnecting] = useState(false);
@@ -84,8 +82,8 @@ export const Platform: FC = () => {
   };
 
   return (
-    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <Page navId="settings-percona-platform">
+      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           {result?.isConnectedToPortal ? (
             <Connected />
@@ -93,8 +91,8 @@ export const Platform: FC = () => {
             <Connect initialValues={initialValues} onConnect={handleConnect} connecting={connecting} />
           )}
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

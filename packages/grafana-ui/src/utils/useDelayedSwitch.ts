@@ -22,13 +22,13 @@ export function useDelayedSwitch(value: boolean, options: DelayOptions = {}): bo
   const onStartTime = useRef<Date | undefined>();
 
   useEffect(() => {
-    let timeout: number | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     if (value) {
       // If toggling to "on" state we always setTimeout no matter how long we have been "off".
       timeout = setTimeout(() => {
         onStartTime.current = new Date();
         setDelayedValue(value);
-      }, delay) as any;
+      }, delay);
     } else {
       // If toggling to "off" state we check how much time we were already "on".
       const timeSpent = onStartTime.current ? Date.now() - onStartTime.current.valueOf() : 0;
@@ -40,7 +40,7 @@ export function useDelayedSwitch(value: boolean, options: DelayOptions = {}): bo
         // We already spent enough time "on" so change right away.
         turnOff();
       } else {
-        timeout = setTimeout(turnOff, duration - timeSpent) as any;
+        timeout = setTimeout(turnOff, duration - timeSpent);
       }
     }
     return () => {

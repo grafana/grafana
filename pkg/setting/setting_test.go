@@ -14,7 +14,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"gopkg.in/ini.v1"
 )
 
@@ -32,6 +31,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		require.Equal(t, "admin", cfg.AdminUser)
 		require.Equal(t, "http://localhost:3000/", cfg.RendererCallbackUrl)
+		require.Equal(t, "TLS1.2", cfg.MinTLSVersion)
 	})
 
 	t.Run("default.ini should have no semi-colon commented entries", func(t *testing.T) {
@@ -64,11 +64,10 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("Should be able to override via environment variables", func(t *testing.T) {
-		err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
-		require.NoError(t, err)
+		t.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Equal(t, "superduper", cfg.AdminUser)
@@ -77,22 +76,20 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("Should replace password when defined in environment", func(t *testing.T) {
-		err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
-		require.NoError(t, err)
+		t.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Contains(t, appliedEnvOverrides, "GF_SECURITY_ADMIN_PASSWORD=*********")
 	})
 
 	t.Run("Should replace password in URL when url environment is defined", func(t *testing.T) {
-		err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
-		require.NoError(t, err)
+		t.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Contains(t, appliedEnvOverrides, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
@@ -142,6 +139,20 @@ func TestLoadingSettings(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, "test2", cfg.Domain)
+	})
+
+	t.Run("Should be able to override TLS version via command line", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args: []string{
+				"cfg:default.server.min_tls_version=TLS1.3",
+			},
+			Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, "TLS1.3", cfg.MinTLSVersion)
 	})
 
 	t.Run("Defaults can be overridden in specified config file", func(t *testing.T) {
@@ -194,10 +205,9 @@ func TestLoadingSettings(t *testing.T) {
 
 	t.Run("Can use environment variables in config values", func(t *testing.T) {
 		if runtime.GOOS == windows {
-			err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
-			require.NoError(t, err)
+			t.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
 			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 			})
@@ -205,10 +215,9 @@ func TestLoadingSettings(t *testing.T) {
 
 			require.Equal(t, `c:\tmp\env_override`, cfg.DataPath)
 		} else {
-			err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
-			require.NoError(t, err)
+			t.Setenv("GF_DATA_PATH", "/tmp/env_override")
 			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 			})
@@ -265,6 +274,28 @@ func TestLoadingSettings(t *testing.T) {
 			value := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
 			require.Equal(t, "default_url_val", value)
 		})
+	})
+
+	t.Run("grafana.com API URL can be set separately from grafana.com URL", func(t *testing.T) {
+		t.Setenv("GF_GRAFANA_NET_URL", "https://grafana-dev.com")
+		t.Setenv("GF_GRAFANA_COM_API_URL", "http://grafana-dev.internal/api")
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		require.Nil(t, err)
+		require.Equal(t, "https://grafana-dev.com", cfg.GrafanaComURL)
+		require.Equal(t, "http://grafana-dev.internal/api", cfg.GrafanaComAPIURL)
+	})
+
+	t.Run("grafana.com API URL falls back to grafana.com URL + /api", func(t *testing.T) {
+		err := os.Unsetenv("GF_GRAFANA_NET_URL")
+		require.NoError(t, err)
+		err = os.Unsetenv("GF_GRAFANA_COM_API_URL")
+		require.NoError(t, err)
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+		require.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
+		require.Equal(t, "https://grafana.com/api", cfg.GrafanaComAPIURL)
 	})
 }
 
@@ -353,19 +384,33 @@ func TestAuthDurationSettings(t *testing.T) {
 }
 
 func TestGetCDNPath(t *testing.T) {
-	var err error
-	cfg := NewCfg()
-	cfg.BuildVersion = "v7.5.0-11124"
-	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
-	require.NoError(t, err)
+	t.Run("should return CDN url as expected", func(t *testing.T) {
+		var (
+			err    error
+			actual string
+		)
+		cfg := NewCfg()
+		cfg.BuildVersion = "v7.5.0-11124"
+		cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+		require.NoError(t, err)
 
-	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-11124/", cfg.GetContentDeliveryURL("grafana-oss"))
-	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-11124/", cfg.GetContentDeliveryURL("grafana"))
-}
+		actual, err = cfg.GetContentDeliveryURL("grafana-oss")
+		require.NoError(t, err)
+		require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-11124/", actual)
+		actual, err = cfg.GetContentDeliveryURL("grafana")
+		require.NoError(t, err)
+		require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-11124/", actual)
+	})
 
-func TestGetContentDeliveryURLWhenNoCDNRootURLIsSet(t *testing.T) {
-	cfg := NewCfg()
-	require.Equal(t, "", cfg.GetContentDeliveryURL("grafana-oss"))
+	t.Run("should error if BuildVersion  is not set", func(t *testing.T) {
+		var err error
+		cfg := NewCfg()
+		cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
+		require.NoError(t, err)
+
+		_, err = cfg.GetContentDeliveryURL("grafana")
+		require.Error(t, err)
+	})
 }
 
 func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
@@ -374,8 +419,12 @@ func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
 	cfg.BuildVersion = "v7.5.0-11124pre"
 	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com/sub")
 	require.NoError(t, err)
-	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana-oss"))
-	require.Equal(t, "http://cdn.grafana.com/sub/grafana/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
+	actual, err := cfg.GetContentDeliveryURL("grafana-oss")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana-oss/v7.5.0-11124pre/", actual)
+	actual, err = cfg.GetContentDeliveryURL("grafana")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/sub/grafana/v7.5.0-11124pre/", actual)
 }
 
 // Adding a case for this in case we switch to proper semver version strings
@@ -385,8 +434,12 @@ func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	cfg.BuildVersion = "v7.5.0-alpha.11124"
 	cfg.CDNRootURL, err = url.Parse("http://cdn.grafana.com")
 	require.NoError(t, err)
-	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana-oss"))
-	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-alpha.11124/", cfg.GetContentDeliveryURL("grafana"))
+	actual, err := cfg.GetContentDeliveryURL("grafana-oss")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/grafana-oss/v7.5.0-alpha.11124/", actual)
+	actual, err = cfg.GetContentDeliveryURL("grafana")
+	require.NoError(t, err)
+	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-alpha.11124/", actual)
 }
 
 func TestAlertingEnabled(t *testing.T) {
@@ -743,4 +796,113 @@ func TestAlertingEnabled(t *testing.T) {
 			tc.verifyCfg(t, *cfg, f)
 		})
 	}
+}
+
+func TestRedactedValue(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		key      string
+		value    string
+		expected string
+	}{
+		{
+			desc:     "non-sensitive key",
+			key:      "admin_user",
+			value:    "admin",
+			expected: "admin",
+		},
+		{
+			desc:     "sensitive key with non-empty value",
+			key:      "private_key_path",
+			value:    "/path/to/key",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "sensitive key with empty value",
+			key:      "private_key_path",
+			value:    "",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			require.Equal(t, tc.expected, RedactedValue(tc.key, tc.value))
+		})
+	}
+}
+
+func TestHandleAWSSettings(t *testing.T) {
+	t.Run("Should set default auth providers if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("allowed_auth_providers", "")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, []string{"default", "keys", "credentials"}, cfg.AWSAllowedAuthProviders)
+	})
+	t.Run("Should pass on auth providers defined in config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("allowed_auth_providers", "keys, credentials")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, []string{"keys", "credentials"}, cfg.AWSAllowedAuthProviders)
+	})
+	t.Run("Should set assume role to true if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set assume role to true if defined as true in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "true")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set assume role to false if defined as false in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "false")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, false, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set default page limit if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("list_metrics_page_limit", "")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+
+		assert.Equal(t, 500, cfg.AWSListMetricsPageLimit)
+	})
+	t.Run("Should pass on the limit if it is defined in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("list_metrics_page_limit", "400")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+
+		assert.Equal(t, 400, cfg.AWSListMetricsPageLimit)
+	})
 }

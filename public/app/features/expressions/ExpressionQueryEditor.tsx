@@ -7,12 +7,13 @@ import { ClassicConditions } from './components/ClassicConditions';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
-import { ExpressionQuery, ExpressionQueryType, gelTypes } from './types';
+import { Threshold } from './components/Threshold';
+import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
 type Props = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 
-const labelWidth = 14;
+const labelWidth = 15;
 
 type NonClassicExpressionType = Exclude<ExpressionQueryType, ExpressionQueryType.classic>;
 type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, string>>;
@@ -25,6 +26,7 @@ function useExpressionsCache() {
       case ExpressionQueryType.math:
       case ExpressionQueryType.reduce:
       case ExpressionQueryType.resample:
+      case ExpressionQueryType.threshold:
         return expressionCache.current[queryType];
       case ExpressionQueryType.classic:
         return undefined;
@@ -37,11 +39,13 @@ function useExpressionsCache() {
         expressionCache.current.math = value;
         break;
 
-      // We want to use the same value for Reduce and Resample
+      // We want to use the same value for Reduce, Resample and Threshold
       case ExpressionQueryType.reduce:
+      case ExpressionQueryType.resample:
       case ExpressionQueryType.resample:
         expressionCache.current.reduce = value;
         expressionCache.current.resample = value;
+        expressionCache.current.threshold = value;
         break;
     }
   }, []);
@@ -82,15 +86,18 @@ export function ExpressionQueryEditor(props: Props) {
 
       case ExpressionQueryType.classic:
         return <ClassicConditions onChange={onChange} query={query} refIds={refIds} />;
+
+      case ExpressionQueryType.threshold:
+        return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
     }
   };
 
-  const selected = gelTypes.find((o) => o.value === query.type);
+  const selected = expressionTypes.find((o) => o.value === query.type);
 
   return (
     <div>
       <InlineField label="Operation" labelWidth={labelWidth}>
-        <Select options={gelTypes} value={selected} onChange={onSelectExpressionType} width={25} />
+        <Select options={expressionTypes} value={selected} onChange={onSelectExpressionType} width={25} />
       </InlineField>
       {renderExpressionType()}
     </div>

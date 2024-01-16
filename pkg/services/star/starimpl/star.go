@@ -3,23 +3,15 @@ package starimpl
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) star.Service {
-	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
-		return &Service{
-			store: &sqlxStore{
-				sess: db.GetSqlxSession(),
-			},
-		}
-	}
+func ProvideService(db db.DB) star.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,

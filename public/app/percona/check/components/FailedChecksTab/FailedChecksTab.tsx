@@ -3,14 +3,13 @@ import { Cell, Column, Row } from 'react-table';
 
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
 import { CheckService } from 'app/percona/check/Check.service';
 import { FailedCheckSummary } from 'app/percona/check/types';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { ExtendedTableCellProps, ExtendedTableRowProps, Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { logger } from 'app/percona/shared/helpers/logger';
@@ -26,7 +25,6 @@ import { Failures } from './Failures/Failures';
 
 export const FailedChecksTab: FC = () => {
   const [fetchAlertsPending, setFetchAlertsPending] = useState(true);
-  const navModel = usePerconaNavModel('advisors-insights');
   const [data, setData] = useState<FailedCheckSummary[]>([]);
   const styles = useStyles2(getStyles);
   const [generateToken] = useCancelToken();
@@ -83,8 +81,8 @@ export const FailedChecksTab: FC = () => {
   const featureSelector = useCallback(getPerconaSettingFlag('sttEnabled'), []);
 
   return (
-    <OldPage navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
-      <OldPage.Contents dataTestId="db-check-tab-content">
+    <Page navId="advisors-insights" data-testid="db-check-panel">
+      <Page.Contents dataTestId="db-check-tab-content">
         <FeatureLoader
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}
@@ -103,8 +101,8 @@ export const FailedChecksTab: FC = () => {
             />
           </AlertsReloadContext.Provider>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

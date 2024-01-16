@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { isEqual, orderBy, uniqWith } from 'lodash';
+import { orderBy } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2 } from '@grafana/ui';
+import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2, Stack } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { getQueryParamValue } from 'app/core/utils/query';
 import { FolderState, useDispatch } from 'app/types';
@@ -15,7 +14,7 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
-import { labelsMatchMatchers, matchersToString, parseMatcher, parseMatchers } from './utils/alertmanager';
+import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
@@ -38,10 +37,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
   const dispatch = useDispatch();
 
   const onTagClick = (tagName: string) => {
-    const matchers = parseMatchers(labelFilter);
-    const tagMatcherField = parseMatcher(tagName);
-    const uniqueMatchers = uniqWith([...matchers, tagMatcherField], isEqual);
-    const matchersString = matchersToString(uniqueMatchers);
+    const matchersString = combineMatcherStrings(labelFilter, tagName);
     setLabelFilter(matchersString);
   };
 
@@ -90,7 +86,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
           />
         </Stack>
 
-        <Stack gap={1}>
+        <Stack direction="column" gap={1}>
           {pageItems.map((currentRule) => (
             <Card
               key={currentRule.name}

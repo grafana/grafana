@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -18,6 +19,7 @@ type AlertRuleService struct {
 	baseIntervalSeconds    int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
+	dashboardService       dashboards.DashboardService
 	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
@@ -25,6 +27,7 @@ type AlertRuleService struct {
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
+	dashboardService dashboards.DashboardService,
 	quotas QuotaChecker,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
@@ -35,10 +38,30 @@ func NewAlertRuleService(ruleStore RuleStore,
 		baseIntervalSeconds:    baseIntervalSeconds,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
+		dashboardService:       dashboardService,
 		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
 	}
+}
+
+func (service *AlertRuleService) GetAlertRules(ctx context.Context, orgID int64) ([]*models.AlertRule, map[string]models.Provenance, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID: orgID,
+	}
+	rules, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
+		return nil, nil, err
+	}
+	provenances := make(map[string]models.Provenance)
+	if len(rules) > 0 {
+		resourceType := rules[0].ResourceType()
+		provenances, err = service.provenanceStore.GetProvenances(ctx, orgID, resourceType)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return rules, provenances, nil
 }
 
 func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, models.Provenance, error) {
@@ -46,15 +69,47 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
-	err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
 	if err != nil {
 		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	provenance, err := service.provenanceStore.GetProvenance(ctx, query.Result, orgID)
+	provenance, err := service.provenanceStore.GetProvenance(ctx, rule, orgID)
 	if err != nil {
 		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	return *query.Result, provenance, nil
+	return *rule, provenance, nil
+}
+
+type AlertRuleWithFolderTitle struct {
+	AlertRule   models.AlertRule
+	FolderTitle string
+}
+
+// GetAlertRuleWithFolderTitle returns a single alert rule with its folder title.
+func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (AlertRuleWithFolderTitle, error) {
+	query := &models.GetAlertRuleByUIDQuery{
+		OrgID: orgID,
+		UID:   ruleUID,
+	}
+	rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	if err != nil {
+		return AlertRuleWithFolderTitle{}, err
+	}
+
+	dq := dashboards.GetDashboardQuery{
+		OrgID: orgID,
+		UID:   rule.NamespaceUID,
+	}
+
+	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
+	if err != nil {
+		return AlertRuleWithFolderTitle{}, err
+	}
+
+	return AlertRuleWithFolderTitle{
+		AlertRule:   *rule,
+		FolderTitle: dash.Title,
+	}, nil
 }
 
 // CreateAlertRule creates a new alert rule. This function will ignore any
@@ -63,6 +118,8 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance, userID int64) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
+	} else if err := util.ValidateUID(rule.UID); err != nil {
+		return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	// if the alert group does not exists we just use the default interval
@@ -84,9 +141,15 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		if err != nil {
 			return err
 		}
-		if id, ok := ids[rule.UID]; ok {
-			rule.ID = id
-		} else {
+		var fixed bool
+		for _, key := range ids {
+			if key.UID == rule.UID {
+				rule.ID = key.ID
+				fixed = true
+				break
+			}
+		}
+		if !fixed {
 			return errors.New("couldn't find newly created id")
 		}
 
@@ -102,25 +165,26 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	return rule, nil
 }
 
-func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (models.AlertRuleGroup, error) {
+func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, namespaceUID, group string) (models.AlertRuleGroup, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
-		NamespaceUIDs: []string{folder},
+		NamespaceUIDs: []string{namespaceUID},
 		RuleGroup:     group,
 	}
-	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
 		return models.AlertRuleGroup{}, err
 	}
-	if len(q.Result) == 0 {
+	if len(ruleList) == 0 {
 		return models.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
 	}
 	res := models.AlertRuleGroup{
-		Title:     q.Result[0].RuleGroup,
-		FolderUID: q.Result[0].NamespaceUID,
-		Interval:  q.Result[0].IntervalSeconds,
+		Title:     ruleList[0].RuleGroup,
+		FolderUID: ruleList[0].NamespaceUID,
+		Interval:  ruleList[0].IntervalSeconds,
 		Rules:     []models.AlertRule{},
 	}
-	for _, r := range q.Result {
+	for _, r := range ruleList {
 		if r != nil {
 			res.Rules = append(res.Rules, *r)
 		}
@@ -139,18 +203,18 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 			NamespaceUIDs: []string{namespaceUID},
 			RuleGroup:     ruleGroup,
 		}
-		err := service.ruleStore.ListAlertRules(ctx, query)
+		ruleList, err := service.ruleStore.ListAlertRules(ctx, query)
 		if err != nil {
 			return fmt.Errorf("failed to list alert rules: %w", err)
 		}
-		updateRules := make([]store.UpdateRule, 0, len(query.Result))
-		for _, rule := range query.Result {
+		updateRules := make([]models.UpdateRule, 0, len(ruleList))
+		for _, rule := range ruleList {
 			if rule.IntervalSeconds == intervalSeconds {
 				continue
 			}
 			newRule := *rule
 			newRule.IntervalSeconds = intervalSeconds
-			updateRules = append(updateRules, store.UpdateRule{
+			updateRules = append(updateRules, models.UpdateRule{
 				Existing: rule,
 				New:      newRule,
 			})
@@ -172,11 +236,12 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			NamespaceUIDs: []string{group.FolderUID},
 			RuleGroup:     group.Title,
 		}
-		if err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery); err != nil {
+		ruleList, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
+		if err != nil {
 			return fmt.Errorf("failed to list alert rules: %w", err)
 		}
-		group.Rules = make([]models.AlertRule, 0, len(listRulesQuery.Result))
-		for _, r := range listRulesQuery.Result {
+		group.Rules = make([]models.AlertRule, 0, len(ruleList))
+		for _, r := range ruleList {
 			if r != nil {
 				group.Rules = append(group.Rules, *r)
 			}
@@ -188,13 +253,13 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		NamespaceUID: group.FolderUID,
 		RuleGroup:    group.Title,
 	}
-	rules := make([]*models.AlertRule, len(group.Rules))
+	rules := make([]*models.AlertRuleWithOptionals, len(group.Rules))
 	group = *syncGroupRuleFields(&group, orgID)
 	for i := range group.Rules {
 		if err := group.Rules[i].SetDashboardAndPanelFromAnnotations(); err != nil {
 			return err
 		}
-		rules = append(rules, &group.Rules[i])
+		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
 	}
 	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {
@@ -209,52 +274,59 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
-		if err != nil {
-			return fmt.Errorf("failed to insert alert rules: %w", err)
-		}
-		for uid := range uids {
-			if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: uid}, orgID, provenance); err != nil {
+		// Delete first as this could prevent future unique constraint violations.
+		if len(delta.Delete) > 0 {
+			for _, del := range delta.Delete {
+				// check that provenance is not changed in an invalid way
+				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, del, orgID)
+				if err != nil {
+					return err
+				}
+				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+				}
+			}
+			if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
 				return err
 			}
 		}
 
-		updates := make([]store.UpdateRule, 0, len(delta.Update))
-		for _, update := range delta.Update {
-			// check that provenance is not changed in a invalid way
-			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
-			if err != nil {
-				return err
+		if len(delta.Update) > 0 {
+			updates := make([]models.UpdateRule, 0, len(delta.Update))
+			for _, update := range delta.Update {
+				// check that provenance is not changed in an invalid way
+				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
+				if err != nil {
+					return err
+				}
+				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+				}
+				updates = append(updates, models.UpdateRule{
+					Existing: update.Existing,
+					New:      *update.New,
+				})
 			}
-			if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+			if err = service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
+				return fmt.Errorf("failed to update alert rules: %w", err)
 			}
-			updates = append(updates, store.UpdateRule{
-				Existing: update.Existing,
-				New:      *update.New,
-			})
-		}
-		if err = service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
-			return fmt.Errorf("failed to update alert rules: %w", err)
-		}
-		for _, update := range delta.Update {
-			if err := service.provenanceStore.SetProvenance(ctx, update.New, orgID, provenance); err != nil {
-				return err
+			for _, update := range delta.Update {
+				if err := service.provenanceStore.SetProvenance(ctx, update.New, orgID, provenance); err != nil {
+					return err
+				}
 			}
 		}
 
-		for _, delete := range delta.Delete {
-			// check that provenance is not changed in a invalid way
-			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, delete, orgID)
+		if len(delta.New) > 0 {
+			uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to insert alert rules: %w", err)
 			}
-			if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+			for _, key := range uids {
+				if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: key.UID}, orgID, provenance); err != nil {
+					return err
+				}
 			}
-		}
-		if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
-			return err
 		}
 
 		if err = service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
@@ -265,16 +337,14 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	})
 }
 
-// CreateAlertRule creates a new alert rule. This function will ignore any
-// interval that is set in the rule struct and fetch the current group interval
-// from database.
+// UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	storedRule, storedProvenance, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return models.AlertRule{}, fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
@@ -284,7 +354,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
+		err := service.ruleStore.UpdateAlertRules(ctx, []models.UpdateRule{
 			{
 				Existing: &storedRule,
 				New:      rule,
@@ -306,7 +376,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
-	// check that provenance is not changed in a invalid way
+	// check that provenance is not changed in an invalid way
 	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule, rule.OrgID)
 	if err != nil {
 		return err
@@ -321,7 +391,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 
 // checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
 func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, orgID, userID int64) error {
-	limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
+	limitReached, err := service.quotas.CheckQuotaReached(ctx, models.QuotaTargetSrv, &quota.ScopeParameters{
 		OrgID:  orgID,
 		UserID: userID,
 	})
@@ -348,10 +418,99 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 	for _, uid := range uids {
 		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, orgID); err != nil {
 			// We failed to clean up the record, but this doesn't break things. Log it and move on.
-			service.log.Warn("failed to delete provenance record for rule: %w", err)
+			service.log.Warn("Failed to delete provenance record for rule: %w", err)
 		}
 	}
 	return nil
+}
+
+// GetAlertRuleGroupWithFolderTitle returns the alert rule group with folder title.
+func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, namespaceUID, group string) (models.AlertRuleGroupWithFolderTitle, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{namespaceUID},
+		RuleGroup:     group,
+	}
+	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
+		return models.AlertRuleGroupWithFolderTitle{}, err
+	}
+	if len(ruleList) == 0 {
+		return models.AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
+	}
+
+	dq := dashboards.GetDashboardQuery{
+		OrgID: orgID,
+		UID:   namespaceUID,
+	}
+	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
+	if err != nil {
+		return models.AlertRuleGroupWithFolderTitle{}, err
+	}
+
+	res := models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(ruleList[0].GetGroupKey(), ruleList, dash.Title)
+	return res, nil
+}
+
+// GetAlertGroupsWithFolderTitle returns all groups with folder title in the folders identified by folderUID that have at least one alert. If argument folderUIDs is nil or empty - returns groups in all folders.
+func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]models.AlertRuleGroupWithFolderTitle, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID: orgID,
+	}
+
+	if len(folderUIDs) > 0 {
+		q.NamespaceUIDs = folderUIDs
+	}
+
+	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
+		return nil, err
+	}
+
+	groups := make(map[models.AlertRuleGroupKey][]models.AlertRule)
+	namespaces := make(map[string][]*models.AlertRuleGroupKey)
+	for _, r := range ruleList {
+		groupKey := r.GetGroupKey()
+		group := groups[groupKey]
+		group = append(group, *r)
+		groups[groupKey] = group
+
+		namespaces[r.NamespaceUID] = append(namespaces[r.NamespaceUID], &groupKey)
+	}
+
+	if len(namespaces) == 0 {
+		return []models.AlertRuleGroupWithFolderTitle{}, nil
+	}
+
+	dq := dashboards.GetDashboardsQuery{
+		DashboardUIDs: nil,
+	}
+	for uid := range namespaces {
+		dq.DashboardUIDs = append(dq.DashboardUIDs, uid)
+	}
+
+	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.provisioning:read.
+	dashes, err := service.dashboardService.GetDashboards(ctx, &dq)
+	if err != nil {
+		return nil, err
+	}
+	folderUidToTitle := make(map[string]string)
+	for _, dash := range dashes {
+		folderUidToTitle[dash.UID] = dash.Title
+	}
+
+	result := make([]models.AlertRuleGroupWithFolderTitle, 0)
+	for groupKey, rules := range groups {
+		title, ok := folderUidToTitle[groupKey.NamespaceUID]
+		if !ok {
+			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
+		}
+		result = append(result, models.NewAlertRuleGroupWithFolderTitle(groupKey, rules, title))
+	}
+
+	// Return results in a stable manner.
+	models.SortAlertRuleGroupWithFolderTitle(result)
+	return result, nil
 }
 
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.

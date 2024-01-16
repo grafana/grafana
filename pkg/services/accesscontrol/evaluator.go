@@ -71,7 +71,7 @@ func match(scope, target string) bool {
 	//Prefix match
 	if last == '*' {
 		if strings.HasPrefix(target, prefix) {
-			logger.Debug("matched scope", "user scope", scope, "target scope", target)
+			logger.Debug("Matched scope", "user scope", scope, "target scope", target)
 			return true
 		}
 	}
@@ -124,7 +124,7 @@ func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
 }
 
 func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
-	var modified []Evaluator
+	modified := make([]Evaluator, 0, len(a.allOf))
 	for _, e := range a.allOf {
 		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
@@ -174,7 +174,7 @@ func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
 }
 
 func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
-	var modified []Evaluator
+	modified := make([]Evaluator, 0, len(a.anyOf))
 	for _, e := range a.anyOf {
 		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {

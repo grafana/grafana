@@ -13,10 +13,9 @@ type SQLite3 struct {
 	BaseDialect
 }
 
-func NewSQLite3Dialect(engine *xorm.Engine) Dialect {
+func NewSQLite3Dialect() Dialect {
 	d := SQLite3{}
 	d.BaseDialect.dialect = &d
-	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = SQLite
 	return &d
 }
@@ -38,6 +37,12 @@ func (db *SQLite3) BooleanStr(value bool) string {
 		return "1"
 	}
 	return "0"
+}
+
+func (db *SQLite3) BatchSize() int {
+	// SQLite has a maximum parameter count per statement of 100.
+	// So, we use a small batch size to support write operations.
+	return 10
 }
 
 func (db *SQLite3) DateTimeFunc(value string) string {
@@ -70,8 +75,8 @@ func (db *SQLite3) SQLType(c *Column) string {
 	}
 }
 
-func (db *SQLite3) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
-	args := []interface{}{tableName, indexName}
+func (db *SQLite3) IndexCheckSQL(tableName, indexName string) (string, []any) {
+	args := []any{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("sqlite_master") + " WHERE " + db.Quote("type") + "='index' AND " + db.Quote("tbl_name") + "=? AND " + db.Quote("name") + "=?"
 	return sql, args
 }
@@ -83,19 +88,19 @@ func (db *SQLite3) DropIndexSQL(tableName string, index *Index) string {
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }
 
-func (db *SQLite3) CleanDB() error {
+func (db *SQLite3) CleanDB(engine *xorm.Engine) error {
 	return nil
 }
 
 // TruncateDBTables deletes all data from all the tables and resets the sequences.
 // A special case is the dashboard_acl table where we keep the default permissions.
-func (db *SQLite3) TruncateDBTables() error {
-	tables, err := db.engine.DBMetas()
+func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
+	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
 	}
 
-	sess := db.engine.NewSession()
+	sess := engine.NewSession()
 	defer sess.Close()
 
 	for _, table := range tables {
@@ -142,7 +147,7 @@ func (db *SQLite3) ErrorMessage(err error) string {
 }
 
 func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
-	return db.isThisError(err, int(sqlite3.ErrConstraintUnique))
+	return db.isThisError(err, int(sqlite3.ErrConstraintUnique)) || db.isThisError(err, int(sqlite3.ErrConstraintPrimaryKey))
 }
 
 func (db *SQLite3) IsDeadlock(err error) bool {

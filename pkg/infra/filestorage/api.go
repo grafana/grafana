@@ -93,8 +93,10 @@ type FileMetadata struct {
 }
 
 type Paging struct {
+	// The number of items to return
+	Limit int
+	// Starting after the key
 	After string
-	First int
 }
 
 type UpsertFileCommand struct {

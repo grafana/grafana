@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/setting"
 	gomail "gopkg.in/mail.v2"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type SmtpClient struct {

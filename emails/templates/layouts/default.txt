@@ -1,3 +1,0 @@
-{{> body }}
-
-Sent by Grafana v[[.BuildVersion]] (c) 2022 Grafana Labs

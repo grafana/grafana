@@ -1,12 +1,13 @@
 import { lastValueFrom } from 'rxjs';
 
-import { urlUtil } from '@grafana/data';
+import { isObject, urlUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   AlertmanagerStatus,
+  ExternalAlertmanagerConfig,
   ExternalAlertmanagersResponse,
   Matcher,
   Receiver,
@@ -15,7 +16,6 @@ import {
   TestReceiversAlert,
   TestReceiversPayload,
   TestReceiversResult,
-  ExternalAlertmanagerConfig,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -34,6 +34,8 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
       template_files: result.data.template_files ?? {},
       template_file_provenances: result.data.template_file_provenances ?? {},
       alertmanager_config: result.data.alertmanager_config ?? {},
+      last_applied: result.data.last_applied,
+      id: result.data.id,
     };
   } catch (e) {
     // if no config has been uploaded to grafana, it returns error instead of latest config
@@ -204,16 +206,22 @@ function receiversResponseContainsErrors(result: TestReceiversResult) {
   );
 }
 
-function isTestReceiversResult(data: any): data is TestReceiversResult {
-  const receivers = data?.receivers;
-
-  if (Array.isArray(receivers)) {
-    return receivers.every(
-      (receiver: any) => typeof receiver.name === 'string' && Array.isArray(receiver.grafana_managed_receiver_configs)
-    );
+function isTestReceiversResult(data: unknown): data is TestReceiversResult {
+  if (isObject(data) && 'receivers' in data && Array.isArray(data.receivers)) {
+    return data.receivers.every(isSingleTestRecieverResult);
   }
 
   return false;
+}
+
+function isSingleTestRecieverResult(receiver: unknown): receiver is TestReceiversResult {
+  return (
+    isObject(receiver) &&
+    'name' in receiver &&
+    typeof receiver.name === 'string' &&
+    'grafana_managed_receiver_configs' in receiver &&
+    Array.isArray(receiver.grafana_managed_receiver_configs)
+  );
 }
 
 function getReceiverResultError(receiversResult: TestReceiversResult) {

@@ -1,10 +1,13 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "exemplar"
-//      },
-//      "executedQueryString": "Expr: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))\nStep: 15s"
+//      }
 //  }
 //  Name: exemplar
 //  Dimensions: 14 Fields by 62 Rows
@@ -28,15 +31,19 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "exemplar",
         "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "exemplar"
-          },
-          "executedQueryString": "Expr: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))\nStep: 15s"
+          }
         },
         "fields": [
           {

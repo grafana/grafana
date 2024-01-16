@@ -1,9 +1,12 @@
 import React from 'react';
 import uPlot, { Options, AlignedData } from 'uplot';
 
-import { TimeRange } from '@grafana/data';
-
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+
+/**
+ * @internal -- not a public API
+ */
+export const FIXED_UNIT = '__fixed';
 
 export type PlotConfig = Pick<
   Options,
@@ -23,7 +26,6 @@ export interface PlotProps {
   width: number;
   height: number;
   config: UPlotConfigBuilder;
-  timeRange: TimeRange;
   children?: React.ReactNode;
   // Reference to uPlot instance
   plotRef?: (u: uPlot) => void;

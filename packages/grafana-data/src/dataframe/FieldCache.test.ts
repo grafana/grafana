@@ -92,12 +92,30 @@ describe('FieldCache', () => {
     it('should get the first field with a duplicate name', () => {
       const field = fieldCache.getFieldByName('value');
       expect(field!.name).toEqual('value');
-      expect(field!.values.toArray()).toEqual([1, 2, 3]);
+      expect(field!.values).toEqual([1, 2, 3]);
     });
 
     it('should return index of the field', () => {
       const field = fieldCache.getFirstFieldOfType(FieldType.number);
       expect(field!.index).toEqual(2);
+    });
+  });
+
+  describe('getFirstFieldOfType', () => {
+    let fieldCache: FieldCache;
+    beforeEach(() => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+        ],
+      });
+      fieldCache = new FieldCache(frame);
+    });
+
+    it('should return undefined if type is not present', () => {
+      const field = fieldCache.getFirstFieldOfType(FieldType.string);
+      expect(field).toBeUndefined();
     });
   });
 });

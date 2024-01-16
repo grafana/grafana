@@ -1,23 +1,30 @@
 import React, { useEffect } from 'react';
 
-import { Button, HorizontalGroup } from '@grafana/ui';
-
+import { Wizard } from '../components/Wizard';
+import { Correlation } from '../types';
 import { useCorrelations } from '../useCorrelations';
 
-import { CorrelationDetailsFormPart } from './CorrelationDetailsFormPart';
+import { ConfigureCorrelationBasicInfoForm } from './ConfigureCorrelationBasicInfoForm';
+import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm';
+import { ConfigureCorrelationTargetForm } from './ConfigureCorrelationTargetForm';
+import { CorrelationFormNavigation } from './CorrelationFormNavigation';
+import { CorrelationsFormContextProvider } from './correlationsFormContext';
 import { EditFormDTO } from './types';
-import { useCorrelationForm } from './useCorrelationForm';
 
 interface Props {
   onUpdated: () => void;
-  defaultValues: EditFormDTO;
+  correlation: Correlation;
   readOnly?: boolean;
 }
 
-export const EditCorrelationForm = ({ onUpdated, defaultValues, readOnly = false }: Props) => {
+export const EditCorrelationForm = ({ onUpdated, correlation, readOnly = false }: Props) => {
   const {
     update: { execute, loading, error, value },
   } = useCorrelations();
+
+  const onSubmit = (data: EditFormDTO) => {
+    return execute({ ...data, sourceUID: correlation.sourceUID, uid: correlation.uid });
+  };
 
   useEffect(() => {
     if (!error && !loading && value) {
@@ -25,21 +32,14 @@ export const EditCorrelationForm = ({ onUpdated, defaultValues, readOnly = false
     }
   }, [error, loading, value, onUpdated]);
 
-  const { handleSubmit, register } = useCorrelationForm<EditFormDTO>({ onSubmit: execute, defaultValues });
-
   return (
-    <form onSubmit={readOnly ? (e) => e.preventDefault() : handleSubmit}>
-      <input type="hidden" {...register('uid')} />
-      <input type="hidden" {...register('sourceUID')} />
-      <CorrelationDetailsFormPart register={register} readOnly={readOnly} correlation={defaultValues} />
-
-      {!readOnly && (
-        <HorizontalGroup justify="flex-end">
-          <Button variant="primary" icon={loading ? 'fa fa-spinner' : 'save'} type="submit" disabled={loading}>
-            Save
-          </Button>
-        </HorizontalGroup>
-      )}
-    </form>
+    <CorrelationsFormContextProvider data={{ loading, readOnly, correlation }}>
+      <Wizard<EditFormDTO>
+        defaultValues={correlation}
+        pages={[ConfigureCorrelationBasicInfoForm, ConfigureCorrelationTargetForm, ConfigureCorrelationSourceForm]}
+        onSubmit={readOnly ? (e) => () => {} : onSubmit}
+        navigation={CorrelationFormNavigation}
+      />
+    </CorrelationsFormContextProvider>
   );
 };

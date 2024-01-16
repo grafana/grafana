@@ -1,11 +1,11 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 
 import { useLayout } from './layout';
 import { EdgeDatum, NodeDatum } from './types';
 
-let onmessage: jest.MockedFunction<any>;
-let postMessage: jest.MockedFunction<any>;
-let terminate: jest.MockedFunction<any>;
+let onmessage: jest.Mock;
+let postMessage: jest.Mock;
+let terminate: jest.Mock;
 
 jest.mock('./createLayoutWorker', () => {
   return {
@@ -74,6 +74,7 @@ function makeNode(index: number, incoming: number): NodeDatum {
     dataFrameRowIndex: 0,
     incoming,
     arcSections: [],
+    highlighted: false,
   };
 }
 
@@ -85,5 +86,9 @@ function makeEdge(source: number, target: number): EdgeDatum {
     mainStat: '',
     secondaryStat: '',
     dataFrameRowIndex: 0,
+    sourceNodeRadius: 40,
+    targetNodeRadius: 40,
+    highlighted: false,
+    thickness: 1,
   };
 }

@@ -78,12 +78,13 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
     return (categoryIndex[categoryName] = new OptionsPaneCategoryDescriptor({
       title: categoryName,
       id: categoryName,
+      sandboxId: plugin.meta.id,
     }));
   };
 
   const access: NestedValueAccess = {
-    getValue: (path: string) => lodashGet(currentOptions, path),
-    onChange: (path: string, value: any) => {
+    getValue: (path) => lodashGet(currentOptions, path),
+    onChange: (path, value) => {
       const newOptions = setOptionImmutably(currentOptions, path, value);
       onPanelOptionsChanged(newOptions);
     },
@@ -96,12 +97,14 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
    * Field options
    */
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    if (
-      fieldOption.isCustom &&
-      fieldOption.showIf &&
-      !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)
-    ) {
-      continue;
+    if (fieldOption.isCustom) {
+      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)) {
+        continue;
+      }
+    } else {
+      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series)) {
+        continue;
+      }
     }
 
     if (fieldOption.hideFromDefaults) {
@@ -152,10 +155,10 @@ export function fillOptionsPaneItems(
   supplier: PanelOptionsSupplier<any>,
   access: NestedValueAccess,
   getOptionsPaneCategory: categoryGetter,
-  context: StandardEditorContext<any, any>,
+  context: StandardEditorContext<any>,
   parentCategory?: OptionsPaneCategoryDescriptor
 ) {
-  const builder = new PanelOptionsEditorBuilder<any>();
+  const builder = new PanelOptionsEditorBuilder();
   supplier(builder, context);
 
   for (const pluginOption of builder.getItems()) {
@@ -196,7 +199,7 @@ export function fillOptionsPaneItems(
           return (
             <Editor
               value={access.getValue(pluginOption.path)}
-              onChange={(value: any) => {
+              onChange={(value) => {
                 access.onChange(pluginOption.path, value);
               }}
               item={pluginOption}

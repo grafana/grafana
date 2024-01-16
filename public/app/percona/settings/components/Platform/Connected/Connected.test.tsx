@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -76,14 +76,11 @@ describe('Connected:', () => {
     fireEvent.click(screen.getByTestId('disconnect-button'));
     await waitFor(() => screen.getByText(Messages.modalTitle));
 
-    const confirmButton = screen
-      .getAllByRole('button')
-      .find((button) => button.getAttribute('aria-label') === 'Confirm Modal Danger Button');
+    const confirmButton = getDisconnectButton();
 
     fireEvent.click(confirmButton!);
-    await Promise.resolve();
 
-    expect(disconnectSpy).toHaveBeenCalled();
+    await waitFor(() => expect(disconnectSpy).toHaveBeenCalled());
   });
 
   it('should render force-disconnect modal for non platform users', async () => {
@@ -101,7 +98,8 @@ describe('Connected:', () => {
     );
 
     fireEvent.click(screen.getByTestId('disconnect-button'));
-    expect(screen.getByTestId('force-disconnect-modal')).toBeInTheDocument();
+
+    await waitFor(() => expect(screen.getByTestId('force-disconnect-modal')).toBeInTheDocument());
   });
 
   it('should force disconnect for non percona platform users', async () => {
@@ -123,12 +121,12 @@ describe('Connected:', () => {
     fireEvent.click(screen.getByTestId('disconnect-button'));
     await waitFor(() => screen.getByTestId('force-disconnect-modal'));
 
-    const confirmButton = screen
-      .getAllByRole('button')
-      .find((button) => button.getAttribute('aria-label') === 'Confirm Modal Danger Button');
+    const confirmButton = getDisconnectButton();
 
     fireEvent.click(confirmButton!);
 
     await waitFor(() => expect(forceDisconnectSpy).toHaveBeenCalled());
   });
 });
+
+const getDisconnectButton = () => within(screen.getByRole('dialog')).getByText('Disconnect');

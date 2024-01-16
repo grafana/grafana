@@ -6,6 +6,7 @@ import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
     managedIdentityEnabled: false,
+    workloadIdentityEnabled: false,
     credentials: {
       authType: 'clientsecret',
       azureCloud: 'azuremonitor',
@@ -17,7 +18,6 @@ const setup = (propsFunc?: (props: Props) => Props) => {
     azureCloudOptions: [
       { value: 'azuremonitor', label: 'Azure' },
       { value: 'govazuremonitor', label: 'Azure US Government' },
-      { value: 'germanyazuremonitor', label: 'Azure Germany' },
       { value: 'chinaazuremonitor', label: 'Azure China' },
     ],
     onCredentialsChange: jest.fn(),

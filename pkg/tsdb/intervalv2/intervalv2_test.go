@@ -27,8 +27,8 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 		{"from 15m to now and 100 resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(15 * time.Minute)}, 100, "10s"},
 		{"from 30m to now and default resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, 0, "1s"},
 		{"from 30m to now and 3000 resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(30 * time.Minute)}, 3000, "500ms"},
-		{"from 1h to now and default resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(60 * time.Minute)}, 0, "2s"},
-		{"from 1h to now and 1000 resoluion", backend.TimeRange{From: timeNow, To: timeNow.Add(60 * time.Minute)}, 1000, "5s"},
+		{"from 1h to now and default resolution", backend.TimeRange{From: timeNow, To: timeNow.Add(time.Hour)}, 0, "2s"},
+		{"from 1h to now and 1000 resoluion", backend.TimeRange{From: timeNow, To: timeNow.Add(time.Hour)}, 1000, "5s"},
 	}
 
 	for _, tc := range testCases {

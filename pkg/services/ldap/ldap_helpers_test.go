@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-ldap/ldap/v3"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/ldap.v3"
 )
 
 func TestIsMemberOf(t *testing.T) {
@@ -83,6 +83,20 @@ func TestGetAttribute(t *testing.T) {
 		assert.Equal(t, value, result)
 	})
 
+	t.Run("letter case mismatch", func(t *testing.T) {
+		value := "roelgerrits"
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "sAMAccountName", Values: []string{value},
+				},
+			},
+		}
+
+		result := getAttribute("samaccountname", entry)
+		assert.Equal(t, value, result)
+	})
+
 	t.Run("no result", func(t *testing.T) {
 		value := []string{"roelgerrits"}
 		entry := &ldap.Entry{
@@ -120,6 +134,21 @@ func TestGetArrayAttribute(t *testing.T) {
 		}
 
 		result := getArrayAttribute("username", entry)
+
+		assert.EqualValues(t, value, result)
+	})
+
+	t.Run("letter case mismatch", func(t *testing.T) {
+		value := []string{"CN=Administrators,CN=Builtin,DC=grafana,DC=org"}
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "memberOf", Values: value,
+				},
+			},
+		}
+
+		result := getArrayAttribute("memberof", entry)
 
 		assert.EqualValues(t, value, result)
 	})

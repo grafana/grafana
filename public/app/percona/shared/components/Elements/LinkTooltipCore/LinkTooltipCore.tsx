@@ -32,7 +32,7 @@ export const LinkTooltipCore: FC<LabelTooltipProps> = ({
       data-testid={tooltipDataTestId}
       interactive={!!tooltipLink ? true : !!tooltipInteractive}
     >
-      <div>
+      <div className="Tooltip-Icon">
         <Icon name={tooltipIcon} />
       </div>
     </Tooltip>

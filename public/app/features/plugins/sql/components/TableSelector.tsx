@@ -4,31 +4,32 @@ import { useAsync } from 'react-use';
 import { SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { QueryWithDefaults } from '../defaults';
 import { DB, ResourceSelectorProps } from '../types';
 
-interface TableSelectorProps extends ResourceSelectorProps {
+export interface TableSelectorProps extends ResourceSelectorProps {
   db: DB;
-  value: string | null;
-  query: QueryWithDefaults;
+  table: string | undefined;
+  dataset: string | undefined;
   onChange: (v: SelectableValue) => void;
 }
 
-export const TableSelector: React.FC<TableSelectorProps> = ({ db, query, value, className, onChange }) => {
+export const TableSelector = ({ db, dataset, table, className, onChange }: TableSelectorProps) => {
   const state = useAsync(async () => {
-    if (!query.dataset) {
+    // No need to attempt to fetch tables for an unknown dataset.
+    if (!dataset) {
       return [];
     }
-    const tables = await db.tables(query.dataset);
+
+    const tables = await db.tables(dataset);
     return tables.map(toOption);
-  }, [query.dataset]);
+  }, [dataset]);
 
   return (
     <Select
       className={className}
       disabled={state.loading}
       aria-label="Table selector"
-      value={value}
+      value={table}
       options={state.value}
       onChange={onChange}
       isLoading={state.loading}

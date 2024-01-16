@@ -9,9 +9,9 @@ import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
 import { useStyles2, VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
+import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
-import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 
 import { StyleConfigState } from '../style/types';
 import { MapLayerState } from '../types';
@@ -36,14 +36,14 @@ export function MarkersLegend(props: MarkersLegendProps) {
     }
 
     const props = hoverEvent.getProperties();
-    const frame = props.frame as DataFrame; // eslint-disable-line
+    const frame: DataFrame = props.frame;
 
     if (!frame) {
       return undefined;
     }
 
-    const rowIndex = props.rowIndex as number; // eslint-disable-line
-    return colorField.values.get(rowIndex);
+    const rowIndex: number = props.rowIndex;
+    return colorField.values[rowIndex];
   }, [hoverEvent, colorField]);
 
   if (!styleConfig) {
@@ -99,8 +99,8 @@ export function MarkersLegend(props: MarkersLegendProps) {
           <ColorScale
             hoverValue={hoverValue}
             colorPalette={colors}
-            min={colorRange.min as number}
-            max={colorRange.max as number}
+            min={colorRange.min ?? 0}
+            max={colorRange.max ?? 100}
             display={display}
             useStopsPercentage={false}
           />
@@ -131,53 +131,54 @@ export function MarkersLegend(props: MarkersLegendProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoWrap: css`
-    display: flex;
-    flex-direction: column;
-    background: ${theme.colors.background.secondary};
-    border-radius: 1px;
-    padding: ${theme.spacing(1)};
-    border-bottom: 2px solid ${theme.colors.border.strong};
-    min-width: 150px;
-  `,
-  layerName: css`
-    font-size: ${theme.typography.body.fontSize};
-  `,
-  layerBody: css`
-    padding-left: 10px;
-  `,
-  legend: css`
-    line-height: 18px;
-    display: flex;
-    flex-direction: column;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding: 5px 10px 0;
+  infoWrap: css({
+    display: 'flex',
+    flexDirection: 'column',
+    background: theme.colors.background.secondary,
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '1px',
+    padding: theme.spacing(1),
+    borderBottom: `2px solid ${theme.colors.border.strong}`,
+    minWidth: '150px',
+  }),
+  layerName: css({
+    fontSize: theme.typography.body.fontSize,
+  }),
+  layerBody: css({
+    paddingLeft: '10px',
+  }),
+  legend: css({
+    lineHeight: '18px',
+    display: 'flex',
+    flexDirection: 'column',
+    fontSize: theme.typography.bodySmall.fontSize,
+    padding: '5px 10px 0',
 
-    i {
-      width: 15px;
-      height: 15px;
-      float: left;
-      margin-right: 8px;
-      opacity: 0.7;
-      border-radius: 50%;
-    }
-  `,
-  legendItem: css`
-    white-space: nowrap;
-  `,
-  fixedColorContainer: css`
-    min-width: 80px;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-top: 5px;
-  `,
-  legendSymbol: css`
-    height: 18px;
-    width: 18px;
-    margin: auto;
-  `,
-  colorScaleWrapper: css`
-    min-width: 200px;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-top: 10px;
-  `,
+    i: {
+      width: '15px',
+      height: '15px',
+      float: 'left',
+      marginRight: '8px',
+      opacity: 0.7,
+      borderRadius: theme.shape.radius.circle,
+    },
+  }),
+  legendItem: css({
+    whiteSpace: 'nowrap',
+  }),
+  fixedColorContainer: css({
+    minWidth: '80px',
+    fontSize: theme.typography.bodySmall.fontSize,
+    paddingTop: '5px',
+  }),
+  legendSymbol: css({
+    height: '18px',
+    width: '18px',
+    margin: 'auto',
+  }),
+  colorScaleWrapper: css({
+    minWidth: '200px',
+    fontSize: theme.typography.bodySmall.fontSize,
+    paddingTop: '10px',
+  }),
 });

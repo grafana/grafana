@@ -1,19 +1,18 @@
-import { ComponentMeta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
+import { IconButton } from '../IconButton/IconButton';
 import { VerticalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 
 import { Dropdown } from './Dropdown';
 import mdx from './Dropdown.mdx';
 
-const meta: ComponentMeta<typeof Dropdown> = {
+const meta: Meta<typeof Dropdown> = {
   title: 'Overlays/Dropdown',
   component: Dropdown,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -27,10 +26,10 @@ const meta: ComponentMeta<typeof Dropdown> = {
 export function Examples() {
   const menu = (
     <Menu>
-      <Menu.Item label="View settings" tabIndex={0} />
-      <Menu.Item label="Edit actions" tabIndex={1} />
-      <Menu.Item label="Share" tabIndex={2} />
-      <Menu.Item label="Delete" tabIndex={3} />
+      <Menu.Item label="View settings" />
+      <Menu.Item label="Edit actions" />
+      <Menu.Item label="Share" />
+      <Menu.Item label="Delete" />
     </Menu>
   );
 
@@ -41,9 +40,10 @@ export function Examples() {
           <Button variant="secondary">Button</Button>
         </Dropdown>
       </StoryExample>
+
       <StoryExample name="Icon button, placement=bottom-start">
         <Dropdown overlay={menu} placement="bottom-start">
-          <Button variant="secondary" icon="bars" />
+          <IconButton tooltip="Open menu" variant="secondary" name="bars" />
         </Dropdown>
       </StoryExample>
     </VerticalGroup>

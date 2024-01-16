@@ -3,9 +3,11 @@ package metrics
 import (
 	"runtime"
 
-	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ExporterName is used as namespace for exposing prometheus metrics
@@ -104,6 +106,9 @@ var (
 
 	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
 	MPublicDashboardRequestCount prometheus.Counter
+
+	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
+	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
 )
 
 // Timers
@@ -116,6 +121,9 @@ var (
 
 	// MRenderingSummary is a metric summary for image rendering request duration
 	MRenderingSummary *prometheus.SummaryVec
+
+	// MRenderingUserLookupSummary is a metric summary for image rendering user lookup duration
+	MRenderingUserLookupSummary *prometheus.SummaryVec
 
 	// MAccessPermissionsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessPermissionsSummary prometheus.Histogram
@@ -132,11 +140,14 @@ var (
 	// MStatTotalDashboards is a metric total amount of dashboards
 	MStatTotalDashboards prometheus.Gauge
 
-	// MStatTotalDashboards is a metric total amount of dashboards
+	// MStatTotalFolders is a metric total amount of folders
 	MStatTotalFolders prometheus.Gauge
 
 	// MStatTotalUsers is a metric total amount of users
 	MStatTotalUsers prometheus.Gauge
+
+	// MStatTotalTeams is a metric total amount of teams
+	MStatTotalTeams prometheus.Gauge
 
 	// MStatActiveUsers is a metric number of active users
 	MStatActiveUsers prometheus.Gauge
@@ -174,6 +185,9 @@ var (
 	// StatsTotalAlertRules is a metric of total number of alert rules stored in Grafana.
 	StatsTotalAlertRules prometheus.Gauge
 
+	// StatsTotalRuleGroups is a metric of total number of alert rule groups stored in Grafana.
+	StatsTotalRuleGroups prometheus.Gauge
+
 	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
 	StatsTotalDashboardVersions prometheus.Gauge
 
@@ -190,6 +204,9 @@ var (
 
 	// MStatTotalPublicDashboards is a metric total amount of public dashboards
 	MStatTotalPublicDashboards prometheus.Gauge
+
+	// MStatTotalCorrelations is a metric total amount of correlations
+	MStatTotalCorrelations prometheus.Gauge
 )
 
 func init() {
@@ -384,6 +401,16 @@ func init() {
 		[]string{"status", "type"},
 	)
 
+	MRenderingUserLookupSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "rendering_user_lookup_duration_milliseconds",
+			Help:       "summary of rendering user lookup duration",
+			Objectives: objectiveMap,
+			Namespace:  ExporterName,
+		},
+		[]string{"success", "from"},
+	)
+
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
 		Help:      "size of rendering queue",
@@ -416,6 +443,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MPublicDashboardDatasourceQuerySuccess = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "public_dashboard_datasource_query_success",
+		Help:      "counter for queries to public dashboard datasources labelled by datasource type and success status success/failed",
+		Namespace: ExporterName,
+	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
+
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
 		Help:      "total amount of dashboards",
@@ -431,6 +464,12 @@ func init() {
 	MStatTotalUsers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_total_users",
 		Help:      "total amount of users",
+		Namespace: ExporterName,
+	})
+
+	MStatTotalTeams = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_total_teams",
+		Help:      "total amount of teams",
 		Namespace: ExporterName,
 	})
 
@@ -472,7 +511,7 @@ func init() {
 
 	StatsTotalActiveViewers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_active_viewers",
-		Help:      "total amount of viewers",
+		Help:      "total amount of active viewers",
 		Namespace: ExporterName,
 	})
 
@@ -518,6 +557,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	StatsTotalRuleGroups = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_rule_groups",
+		Help:      "total amount of alert rule groups in the database",
+		Namespace: ExporterName,
+	})
+
 	MAccessPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "access_permissions_duration",
 		Help:    "Histogram for the runtime of permissions check function.",
@@ -559,10 +604,16 @@ func init() {
 		Help:      "total amount of public dashboards",
 		Namespace: ExporterName,
 	})
+
+	MStatTotalCorrelations = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_correlations",
+		Help:      "total amount of correlations",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
-func SetBuildInformation(version, revision, branch string, buildTimestamp int64) {
+func SetBuildInformation(reg prometheus.Registerer, version, revision, branch string, buildTimestamp int64) {
 	edition := "oss"
 	if setting.IsEnterprise {
 		edition = "enterprise"
@@ -580,7 +631,7 @@ func SetBuildInformation(version, revision, branch string, buildTimestamp int64)
 		Namespace: ExporterName,
 	}, []string{"version", "revision", "branch", "goversion", "edition"})
 
-	prometheus.MustRegister(grafanaBuildVersion, grafanaBuildTimestamp)
+	reg.MustRegister(grafanaBuildVersion, grafanaBuildTimestamp)
 
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
 	grafanaBuildTimestamp.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(float64(buildTimestamp))
@@ -588,7 +639,7 @@ func SetBuildInformation(version, revision, branch string, buildTimestamp int64)
 
 // SetEnvironmentInformation exposes environment values provided by the operators as an `_info` metric.
 // If there are no environment metrics labels configured, this metric will not be exposed.
-func SetEnvironmentInformation(labels map[string]string) error {
+func SetEnvironmentInformation(reg prometheus.Registerer, labels map[string]string) error {
 	if len(labels) == 0 {
 		return nil
 	}
@@ -600,7 +651,7 @@ func SetEnvironmentInformation(labels map[string]string) error {
 		ConstLabels: labels,
 	})
 
-	prometheus.MustRegister(grafanaEnvironmentInfo)
+	reg.MustRegister(grafanaEnvironmentInfo)
 
 	grafanaEnvironmentInfo.Set(1)
 	return nil
@@ -610,8 +661,8 @@ func SetPluginBuildInformation(pluginID, pluginType, version, signatureStatus st
 	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version, signatureStatus).Set(1)
 }
 
-func initMetricVars() {
-	prometheus.MustRegister(
+func initMetricVars(reg prometheus.Registerer) {
+	reg.MustRegister(
 		MInstanceStart,
 		MPageStatus,
 		MApiStatus,
@@ -643,6 +694,7 @@ func initMetricVars() {
 		LDAPUsersSyncExecutionTime,
 		MRenderingRequestTotal,
 		MRenderingSummary,
+		MRenderingUserLookupSummary,
 		MRenderingQueue,
 		MAccessPermissionsSummary,
 		MAccessEvaluationsSummary,
@@ -650,6 +702,7 @@ func initMetricVars() {
 		MStatTotalDashboards,
 		MStatTotalFolders,
 		MStatTotalUsers,
+		MStatTotalTeams,
 		MStatActiveUsers,
 		MStatTotalOrgs,
 		MStatTotalPlaylists,
@@ -663,11 +716,15 @@ func initMetricVars() {
 		grafanaPluginBuildInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
+		StatsTotalAlertRules,
+		StatsTotalRuleGroups,
 		MAccessEvaluationCount,
 		StatsTotalLibraryPanels,
 		StatsTotalLibraryVariables,
 		StatsTotalDataKeys,
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,
+		MPublicDashboardDatasourceQuerySuccess,
+		MStatTotalCorrelations,
 	)
 }

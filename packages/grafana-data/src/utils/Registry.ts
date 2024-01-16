@@ -41,7 +41,9 @@ export class Registry<T extends RegistryItem> {
   private byId = new Map<string, T>();
   private initialized = false;
 
-  constructor(private init?: () => T[]) {}
+  constructor(private init?: () => T[]) {
+    this.init = init;
+  }
 
   setInit = (init: () => T[]) => {
     if (this.initialized) {
@@ -85,10 +87,10 @@ export class Registry<T extends RegistryItem> {
       this.initialize();
     }
 
-    const select = {
+    const select: RegistrySelectInfo = {
       options: [],
       current: [],
-    } as RegistrySelectInfo;
+    };
 
     const currentOptions: Record<string, SelectableValue<string>> = {};
     if (current) {

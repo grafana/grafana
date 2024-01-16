@@ -3,7 +3,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
-import { OldPage } from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { MetricsResolutions } from 'app/percona/settings/Settings.types';
@@ -12,7 +12,6 @@ import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import validators from 'app/percona/shared/helpers/validators';
@@ -39,7 +38,6 @@ export const MetricsResolution: FC = () => {
   const [resolution, setResolution] = useState(getResolutionValue(metricsResolutions).value);
   const [fieldsResolutions, updateFieldsResolutions] = useState(removeUnits(metricsResolutions));
   const [customResolutions, updateCustomResolutions] = useState(fieldsResolutions);
-  const navModel = usePerconaNavModel('settings-metrics-resolution');
 
   useEffect(() => {
     setInitialValues({ ...removeUnits(metricsResolutions), resolutions: getResolutionValue(metricsResolutions).value });
@@ -101,8 +99,8 @@ export const MetricsResolution: FC = () => {
   };
 
   return (
-    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <Page navId="settings-metrics-resolution">
+      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={styles.resolutionsWrapper}>
             <Form
@@ -165,8 +163,8 @@ export const MetricsResolution: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </OldPage.Contents>
-    </OldPage>
+      </Page.Contents>
+    </Page>
   );
 };
 

@@ -4,6 +4,10 @@ aliases:
   - rbac-provisioning/
 description: Learn about RBAC Grafana provisioning and view an example YAML provisioning
   file that configures Grafana role assignments.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Provisioning RBAC with Grafana
 title: Provisioning RBAC with Grafana
 weight: 60
@@ -11,7 +15,9 @@ weight: 60
 
 # Provisioning RBAC with Grafana
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+{{% /admonition %}}
 
 You can create, change or remove [Custom roles]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}) and create or remove [basic role assignments]({{< relref "./assign-rbac-roles/#assign-a-fixed-role-to-a-basic-role-using-provisioning" >}}), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
 
@@ -25,13 +31,17 @@ Grafana performs provisioning during startup. After you make a change to the con
 
 1. Sign in to the Grafana server.
 
-2. Locate the Grafana provisioning folder.
+1. Locate the Grafana provisioning folder.
 
-3. Create a new YAML in the following folder: **provisioning/access-control**. For example, `provisioning/access-control/custom-roles.yml`
+1. Create a new YAML in the following folder: **provisioning/access-control**. For example, `provisioning/access-control/custom-roles.yml`
 
-4. Add RBAC provisioning details to the configuration file. See [manage RBAC roles]({{< relref "../manage-rbac-roles" >}}) and [assign RBAC roles]({{< relref "../assign-rbac-roles" >}}) for instructions, and see this [example role provisioning file]({{< relref "#example" >}}) for a complete example of a provisioning file.
+1. Add RBAC provisioning details to the configuration file.
 
-5. Reload the provisioning configuration file.
+   Refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles/" >}}) and [Assign RBAC roles]({{< relref "./assign-rbac-roles/" >}}) for instructions.
+
+   Refer to [example role provisioning file]({{< relref "#example-role-configuration-file-using-grafana-provisioning" >}}) for a complete example of a provisioning file.
+
+1. Reload the provisioning configuration file.
 
    For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
 
@@ -45,7 +55,7 @@ The following example shows a complete YAML configuration file that:
 - Assign roles to teams
 - Revoke assignments of roles to teams
 
-## Example
+### Example
 
 ```yaml
 ---

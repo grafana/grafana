@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 import React from 'react';
 
@@ -11,20 +11,20 @@ import {
   ThresholdsMode,
   FieldConfig,
   formattedValueToString,
+  Field,
 } from '@grafana/data';
-import { Table } from '@grafana/ui';
+import { Button, Table } from '@grafana/ui';
 
 import { useTheme2 } from '../../themes';
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Table.mdx';
-import { FooterItem } from './types';
+import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
 
-const meta: ComponentMeta<typeof Table> = {
+const meta: Meta<typeof Table> = {
   title: 'Visualizations/Table',
   component: Table,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['onColumnResize', 'onSortByChange', 'onCellFilterAdded', 'ariaLabel', 'data', 'initialSortBy'],
@@ -36,11 +36,11 @@ const meta: ComponentMeta<typeof Table> = {
   args: {
     width: 700,
     height: 500,
-    columnMinWidth: 150,
+    columnMinWidth: 130,
   },
 };
 
-function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame {
+function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>, rows = 1000): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
@@ -85,7 +85,7 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
     field.config = merge(field.config, config[field.name]);
   }
 
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < rows; i++) {
     data.appendRow([
       new Date().getTime(),
       Math.random() * 2,
@@ -98,8 +98,76 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
   return prepDataForStorybook([data], theme)[0];
 }
 
+function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldConfig>, rows: number): DataFrame {
+  const data = buildData(theme, {}, rows);
+  const allNestedFrames: DataFrame[][] = [];
+
+  for (let i = 0; i < rows; i++) {
+    const nestedFrames: DataFrame[] = [];
+
+    for (let i = 0; i < Math.random() * 3; i++) {
+      const nestedData = new MutableDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [] }, // The time field
+          {
+            name: 'Quantity',
+            type: FieldType.number,
+            values: [],
+            config: {
+              decimals: 0,
+              custom: {
+                align: 'center',
+              },
+            },
+          },
+          { name: 'Quality', type: FieldType.string, values: [] }, // The time field
+          {
+            name: 'Progress',
+            type: FieldType.number,
+            values: [],
+            config: {
+              unit: 'percent',
+              min: 0,
+              max: 100,
+            },
+          },
+        ],
+      });
+
+      for (const field of nestedData.fields) {
+        field.config = merge(field.config, config[field.name]);
+      }
+
+      for (let i = 0; i < Math.random() * 4; i++) {
+        nestedData.appendRow([
+          new Date().getTime(),
+          Math.random() * 2,
+          Math.random() > 0.7 ? 'Good' : 'Bad',
+          Math.random() * 100,
+        ]);
+      }
+
+      nestedFrames.push(nestedData);
+    }
+
+    allNestedFrames.push(prepDataForStorybook(nestedFrames, theme));
+  }
+
+  data.fields = [
+    ...data.fields,
+    {
+      name: 'nested',
+      type: FieldType.nestedFrames,
+      values: allNestedFrames,
+      config: {},
+    },
+  ];
+
+  return data;
+}
+
 function buildFooterData(data: DataFrame): FooterItem[] {
-  const values = data.fields[3].values.toArray();
+  const values = data.fields[3].values;
   const valueSum = values.reduce((prev, curr) => {
     return prev + curr;
   }, 0);
@@ -129,37 +197,40 @@ const defaultThresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
 };
 
-export const Basic: ComponentStory<typeof Table> = (args) => {
+export const Basic: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
 
   return (
-    <div className="panel-container" style={{ width: 'auto' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
-export const BarGaugeCell: ComponentStory<typeof Table> = (args) => {
+export const BarGaugeCell: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {
     Progress: {
       custom: {
         width: 200,
-        displayMode: 'gradient-gauge',
+        cellOptions: {
+          type: 'gauge',
+          mode: 'gradient',
+        },
       },
       thresholds: defaultThresholds,
     },
   });
 
   return (
-    <div className="panel-container" style={{ width: 'auto' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
-export const ColoredCells: ComponentStory<typeof Table> = (args) => {
+export const ColoredCells: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {
     Progress: {
@@ -172,27 +243,83 @@ export const ColoredCells: ComponentStory<typeof Table> = (args) => {
   });
 
   return (
-    <div className="panel-container" style={{ width: 'auto' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
-export const Footer: ComponentStory<typeof Table> = (args) => {
+export const Footer: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
   const footer = buildFooterData(data);
 
   return (
-    <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
+    <DashboardStoryCanvas>
       <Table {...args} data={data} footerValues={footer} />
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
-export const Pagination: ComponentStory<typeof Table> = (args) => <Basic {...args} />;
+export const Pagination: StoryFn<typeof Table> = (args) => <Basic {...args} />;
 Pagination.args = {
   enablePagination: true,
+};
+
+export const SubTables: StoryFn<typeof Table> = (args) => {
+  const theme = useTheme2();
+  const data = buildSubTablesData(theme, {}, 100);
+
+  return (
+    <DashboardStoryCanvas>
+      <Table {...args} data={data} />
+    </DashboardStoryCanvas>
+  );
+};
+
+export const CustomColumn: StoryFn<typeof Table> = (args) => {
+  const theme = useTheme2();
+  const data = buildData(theme, {});
+
+  const options: TableCustomCellOptions = {
+    type: TableCellDisplayMode.Custom,
+    cellComponent: (props) => {
+      return (
+        <Button
+          onClick={() =>
+            alert(`Canceling order from ${props.frame.fields.find((f) => f.name === 'Time')?.values[props.rowIndex]}`)
+          }
+        >
+          Cancel
+        </Button>
+      );
+    },
+  };
+
+  const customCellField: Field = {
+    name: 'Actions',
+    type: FieldType.other,
+    values: [],
+    config: {
+      decimals: 0,
+      custom: {
+        cellOptions: options,
+      },
+    },
+    display: () => ({ text: '', numeric: 0 }),
+  };
+
+  for (let i = 0; i < data.length; i++) {
+    customCellField.values.push(null);
+  }
+
+  data.fields = [customCellField, ...data.fields];
+
+  return (
+    <DashboardStoryCanvas>
+      <Table {...args} data={data} />
+    </DashboardStoryCanvas>
+  );
 };
 
 export default meta;

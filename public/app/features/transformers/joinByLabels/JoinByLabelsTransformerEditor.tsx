@@ -1,8 +1,15 @@
 import React, { useMemo } from 'react';
 
-import { PluginState, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import {
+  PluginState,
+  SelectableValue,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels } from '../utils';
 
 import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
@@ -156,9 +163,6 @@ export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLa
   name: joinByLabelsTransformer.name,
   description: joinByLabelsTransformer.description,
   state: PluginState.beta,
-  //   help: `
-  // ### Use cases
-
-  // This transforms labeled results into a table
-  // `,
+  categories: new Set([TransformerCategory.Combine]),
+  help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
 };

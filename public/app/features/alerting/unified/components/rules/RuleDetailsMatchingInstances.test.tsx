@@ -1,7 +1,11 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { times } from 'lodash';
 import React from 'react';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
+
+import { PluginExtensionTypes } from '@grafana/data';
+import { getPluginLinkExtensions } from '@grafana/runtime';
 
 import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from '../../../../../types/unified-alerting-dto';
@@ -9,6 +13,15 @@ import { mockCombinedRule, mockDataSource, mockPromAlert, mockPromAlertingRule }
 import { alertStateToReadable } from '../../utils/rules';
 
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(),
+}));
+
+const mocks = {
+  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
+};
 
 const ui = {
   stateFilter: byTestId('alert-instance-state-filter'),
@@ -25,14 +38,31 @@ const ui = {
     pending: byLabelText(/^Pending/),
   },
   instanceRow: byTestId('row'),
+  showAllInstances: byTestId('show-all'),
 };
 
 describe('RuleDetailsMatchingInstances', () => {
+  beforeEach(() => {
+    mocks.getPluginLinkExtensionsMock.mockReturnValue({
+      extensions: [
+        {
+          pluginId: 'grafana-ml-app',
+          id: '1',
+          type: PluginExtensionTypes.link,
+          title: 'Run investigation',
+          category: 'Sift',
+          description: 'Run a Sift investigation for this alert',
+          onClick: jest.fn(),
+        },
+      ],
+    });
+  });
+
   describe('Filtering', () => {
     it('For Grafana Managed rules instances filter should contain five states', () => {
       const rule = mockCombinedRule();
 
-      render(<RuleDetailsMatchingInstances rule={rule} />);
+      render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
 
       const stateFilter = ui.stateFilter.get();
       expect(stateFilter).toBeInTheDocument();
@@ -69,7 +99,7 @@ describe('RuleDetailsMatchingInstances', () => {
         [GrafanaAlertState.Error]: ui.grafanaStateButton.error,
       };
 
-      render(<RuleDetailsMatchingInstances rule={rule} />);
+      render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
 
       await userEvent.click(buttons[state].get());
 
@@ -82,7 +112,7 @@ describe('RuleDetailsMatchingInstances', () => {
         namespace: mockPromNamespace(),
       });
 
-      render(<RuleDetailsMatchingInstances rule={rule} />);
+      render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
 
       const stateFilter = ui.stateFilter.get();
       expect(stateFilter).toBeInTheDocument();
@@ -108,7 +138,7 @@ describe('RuleDetailsMatchingInstances', () => {
           }),
         });
 
-        render(<RuleDetailsMatchingInstances rule={rule} />);
+        render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
 
         await userEvent.click(ui.cloudStateButton[state].get());
 
@@ -116,13 +146,38 @@ describe('RuleDetailsMatchingInstances', () => {
         expect(ui.instanceRow.get()).toHaveTextContent(alertStateToReadable(state));
       }
     );
+
+    it('should correctly filter instances', async () => {
+      const event = userEvent.setup();
+
+      const rule = mockCombinedRule({
+        promRule: mockPromAlertingRule({
+          alerts: times(100, () => mockPromAlert({ state: GrafanaAlertState.Normal })),
+        }),
+        instanceTotals: {
+          inactive: 100,
+        },
+      });
+
+      render(<RuleDetailsMatchingInstances rule={rule} enableFiltering pagination={{ itemsPerPage: 10 }} />);
+
+      // should show all instances by default
+      expect(ui.showAllInstances.query()).not.toBeInTheDocument();
+
+      // filter by "error" state, should have no instances in that state
+      await event.click(ui.grafanaStateButton.error.get());
+
+      // click "show all" instances
+      await event.click(ui.showAllInstances.get());
+      expect(ui.showAllInstances.query()).not.toBeInTheDocument();
+    });
   });
 });
 
 function mockPromNamespace(): CombinedRuleNamespace {
   return {
     rulesSource: mockDataSource(),
-    groups: [{ name: 'Prom rules group', rules: [] }],
+    groups: [{ name: 'Prom rules group', rules: [], totals: {} }],
     name: 'Prometheus-test',
   };
 }

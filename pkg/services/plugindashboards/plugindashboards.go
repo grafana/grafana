@@ -3,19 +3,20 @@ package plugindashboards
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 // PluginDashboard plugin dashboard model..
 type PluginDashboard struct {
-	UID              string `json:"uid"`
-	PluginId         string `json:"pluginId"`
-	Title            string `json:"title"`
-	Imported         bool   `json:"imported"`
-	ImportedUri      string `json:"importedUri"`
-	ImportedUrl      string `json:"importedUrl"`
-	Slug             string `json:"slug"`
-	DashboardId      int64  `json:"dashboardId"`
+	UID         string `json:"uid"`
+	PluginId    string `json:"pluginId"`
+	Title       string `json:"title"`
+	Imported    bool   `json:"imported"`
+	ImportedUri string `json:"importedUri"`
+	ImportedUrl string `json:"importedUrl"`
+	Slug        string `json:"slug"`
+	DashboardId int64  `json:"dashboardId"`
+	// Deprecated: use FolderUID instead
 	FolderId         int64  `json:"folderId"`
 	ImportedRevision int64  `json:"importedRevision"`
 	Revision         int64  `json:"revision"`
@@ -43,7 +44,7 @@ type LoadPluginDashboardRequest struct {
 
 // LoadPluginDashboardResponse response object for loading a plugin dashboard.
 type LoadPluginDashboardResponse struct {
-	Dashboard *models.Dashboard
+	Dashboard *dashboards.Dashboard
 }
 
 // Service interface for listing plugin dashboards.

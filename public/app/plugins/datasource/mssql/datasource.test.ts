@@ -3,10 +3,12 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
   dataFrameToJSON,
+  getDefaultTimeRange,
   DataSourceInstanceSettings,
   dateTime,
+  FieldType,
   MetricFindValue,
-  MutableDataFrame,
+  createDataFrame,
   TimeRange,
 } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -32,6 +34,7 @@ const instanceSettings = {
 } as DataSourceInstanceSettings<MssqlOptions>;
 
 describe('MSSQLDatasource', () => {
+  const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   const ctx = {
@@ -53,7 +56,7 @@ describe('MSSQLDatasource', () => {
         tempvar: {
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
                   { name: 'text', values: ['some text', 'some text2', 'some text3'] },
@@ -68,7 +71,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data: MetricFindValue[]) => {
+      return ctx.ds.metricFindQuery(query, { range: defaultRange }).then((data: MetricFindValue[]) => {
         results = data;
       });
     });
@@ -80,6 +83,133 @@ describe('MSSQLDatasource', () => {
     });
   });
 
+  describe('When runSql returns an empty dataframe', () => {
+    const response = {
+      results: {
+        tempvar: {
+          refId: 'tempvar',
+          frames: [],
+        },
+      },
+    };
+
+    beforeEach(async () => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
+    });
+
+    it('should return an empty array when metricFindQuery is called', async () => {
+      const query = 'select * from atable';
+      const results = await ctx.ds.metricFindQuery(query, { range: defaultRange });
+      expect(results.length).toBe(0);
+    });
+
+    it('should return an empty array when fetchDatasets is called', async () => {
+      const results = await ctx.ds.fetchDatasets();
+      expect(results.length).toBe(0);
+    });
+
+    it('should return an empty array when fetchTables is called', async () => {
+      const results = await ctx.ds.fetchTables();
+      expect(results.length).toBe(0);
+    });
+
+    it('should return an empty array when fetchFields is called', async () => {
+      const query: SQLQuery = {
+        refId: 'refId',
+        table: 'schema.table',
+        dataset: 'dataset',
+      };
+      const results = await ctx.ds.fetchFields(query);
+      expect(results.length).toBe(0);
+    });
+  });
+
+  describe('When runSql returns a populated dataframe', () => {
+    it('should return a list of datasets when fetchDatasets is called', async () => {
+      const fetchDatasetsResponse = {
+        results: {
+          datasets: {
+            refId: 'datasets',
+            frames: [
+              dataFrameToJSON(
+                createDataFrame({
+                  fields: [{ name: 'name', type: FieldType.string, values: ['test1', 'test2', 'test3'] }],
+                })
+              ),
+            ],
+          },
+        },
+      };
+      fetchMock.mockImplementation(() => of(createFetchResponse(fetchDatasetsResponse)));
+
+      const results = await ctx.ds.fetchDatasets();
+      expect(results.length).toBe(3);
+      expect(results).toEqual(['test1', 'test2', 'test3']);
+    });
+
+    it('should return a list of tables when fetchTables is called', async () => {
+      const fetchTableResponse = {
+        results: {
+          tables: {
+            refId: 'tables',
+            frames: [
+              dataFrameToJSON(
+                createDataFrame({
+                  fields: [{ name: 'schemaAndName', type: FieldType.string, values: ['test1', 'test2', 'test3'] }],
+                })
+              ),
+            ],
+          },
+        },
+      };
+
+      fetchMock.mockImplementation(() => of(createFetchResponse(fetchTableResponse)));
+
+      const results = await ctx.ds.fetchTables();
+      expect(results.length).toBe(3);
+      expect(results).toEqual(['test1', 'test2', 'test3']);
+    });
+
+    it('should return a list of fields when fetchFields is called', async () => {
+      const fetchFieldsResponse = {
+        results: {
+          columns: {
+            refId: 'columns',
+            frames: [
+              dataFrameToJSON(
+                createDataFrame({
+                  fields: [
+                    { name: 'column', type: FieldType.string, values: ['test1', 'test2', 'test3'] },
+                    { name: 'type', type: FieldType.string, values: ['int', 'char', 'bool'] },
+                  ],
+                })
+              ),
+            ],
+          },
+        },
+      };
+
+      fetchMock.mockImplementation(() => of(createFetchResponse(fetchFieldsResponse)));
+
+      const sqlQuery: SQLQuery = {
+        refId: 'fields',
+        table: 'table',
+        dataset: 'dataset',
+      };
+      const results = await ctx.ds.fetchFields(sqlQuery);
+      expect(results.length).toBe(3);
+      expect(results[0].label).toBe('test1');
+      expect(results[0].value).toBe('test1');
+      expect(results[0].type).toBe('int');
+      expect(results[1].label).toBe('test2');
+      expect(results[1].value).toBe('test2');
+      expect(results[1].type).toBe('char');
+      expect(results[2].label).toBe('test3');
+      expect(results[2].value).toBe('test3');
+      expect(results[2].type).toBe('bool');
+    });
+  });
+
   describe('When performing metricFindQuery with key, value columns', () => {
     let results: MetricFindValue[];
     const query = 'select * from atable';
@@ -88,7 +218,7 @@ describe('MSSQLDatasource', () => {
         tempvar: {
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: '__value', values: ['value1', 'value2', 'value3'] },
                   { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
@@ -103,7 +233,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data) => {
+      return ctx.ds.metricFindQuery(query, { range: defaultRange }).then((data) => {
         results = data;
       });
     });
@@ -126,7 +256,7 @@ describe('MSSQLDatasource', () => {
           refId: 'tempvar',
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: 'id', values: [1, 2, 3] },
                   { name: 'values', values: ['test1', 'test2', 'test3'] },
@@ -144,7 +274,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data) => {
+      return ctx.ds.metricFindQuery(query, { range: defaultRange }).then((data) => {
         results = data;
       });
     });
@@ -169,7 +299,7 @@ describe('MSSQLDatasource', () => {
         tempvar: {
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
                   { name: '__value', values: ['same', 'same', 'diff'] },
@@ -183,7 +313,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
-      return ctx.ds.metricFindQuery(query).then((data) => {
+      return ctx.ds.metricFindQuery(query, { range: defaultRange }).then((data) => {
         results = data;
       });
     });
@@ -202,7 +332,7 @@ describe('MSSQLDatasource', () => {
         tempvar: {
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [{ name: 'test', values: ['aTitle'] }],
               })
             ),

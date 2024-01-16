@@ -5,6 +5,7 @@ import {
   DataSourceRef,
   DataSourceSelectItem,
   ScopedVars,
+  matchPluginId,
 } from '@grafana/data';
 import {
   DataSourceSrv as DataSourceService,
@@ -20,9 +21,9 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {
   dataSource as expressionDatasource,
-  ExpressionDatasourceUID,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { importDataSourcePlugin } from './plugin_loader';
 
@@ -65,26 +66,17 @@ export class DatasourceSrv implements DataSourceService {
     ref: string | null | undefined | DataSourceRef,
     scopedVars?: ScopedVars
   ): DataSourceInstanceSettings | undefined {
-    const isstring = typeof ref === 'string';
-    let nameOrUid = isstring ? (ref as string) : ((ref as any)?.uid as string | undefined);
-
-    if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
-      if (!isstring && ref) {
-        const type = (ref as any)?.type as string;
-        if (type === ExpressionDatasourceRef.type) {
-          return expressionDatasource.instanceSettings;
-        } else if (type) {
-          console.log('FIND Default instance for datasource type?', ref);
-        }
-      }
-      return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
-    }
+    let nameOrUid = getNameOrUid(ref);
 
     // Expressions has a new UID as __expr__ See: https://github.com/grafana/grafana/pull/62510/
     // But we still have dashboards/panels with old expression UID (-100)
     // To support both UIDs until we migrate them all to new one, this check is necessary
     if (isExpressionReference(nameOrUid)) {
-      return expressionDatasource.instanceSettings;
+      return expressionInstanceSettings;
+    }
+
+    if (nameOrUid === 'default' || nameOrUid == null) {
+      return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
     }
 
     // Complex logic to support template variable data source names
@@ -114,13 +106,17 @@ export class DatasourceSrv implements DataSourceService {
       };
     }
 
-    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
+    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    let nameOrUid = typeof ref === 'string' ? (ref as string) : ((ref as any)?.uid as string | undefined);
+    let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
       return this.get(this.defaultName);
+    }
+
+    if (isExpressionReference(ref)) {
+      return Promise.resolve(this.datasources[ExpressionDatasourceUID]);
     }
 
     // Check if nameOrUid matches a uid and then get the name
@@ -154,7 +150,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // find the metadata
-    const instanceSettings = this.settingsMapByUid[key] ?? this.settingsMapByName[key] ?? this.settingsMapById[key];
+    const instanceSettings = this.getInstanceSettings(key);
     if (!instanceSettings) {
       return Promise.reject({ message: `Datasource ${key} was not found` });
     }
@@ -227,7 +223,7 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.alerting && !x.meta.alerting) {
         return false;
       }
-      if (filters.pluginId && x.meta.id !== filters.pluginId) {
+      if (filters.pluginId && !matchPluginId(filters.pluginId, x.meta)) {
         return false;
       }
       if (filters.filter && !filters.filter(x)) {
@@ -259,12 +255,14 @@ export class DatasourceSrv implements DataSourceService {
           // Support for multi-value variables with only one selected datasource
           dsValue = dsValue[0];
         }
-        const dsSettings = !Array.isArray(dsValue) && this.settingsMapByName[dsValue];
+        const dsSettings =
+          !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;
           base.push({
             ...dsSettings,
+            isDefault: false,
             name: key,
             uid: key,
           });
@@ -349,7 +347,16 @@ export class DatasourceSrv implements DataSourceService {
   }
 }
 
-export function variableInterpolation(value: any[]) {
+export function getNameOrUid(ref?: string | DataSourceRef | null): string | undefined {
+  if (isExpressionReference(ref)) {
+    return ExpressionDatasourceRef.uid;
+  }
+
+  const isString = typeof ref === 'string';
+  return isString ? ref : ref?.uid;
+}
+
+export function variableInterpolation<T>(value: T | T[]) {
   if (Array.isArray(value)) {
     return value[0];
   }

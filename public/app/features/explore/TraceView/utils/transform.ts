@@ -1,23 +1,31 @@
 import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
-import { Trace, TraceProcess, TraceResponse, transformTraceData } from '@jaegertracing/jaeger-ui-components';
+
+import { Trace, TraceProcess, TraceResponse, transformTraceData } from '../components';
 
 export function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {
     return null;
   }
-  let data: TraceResponse =
+  let data: TraceResponse | null =
     frame.fields.length === 1
       ? // For backward compatibility when we sent whole json response in a single field/value
-        frame.fields[0].values.get(0)
+        frame.fields[0].values[0]
       : transformTraceDataFrame(frame);
+
+  if (!data) {
+    return null;
+  }
   return transformTraceData(data);
 }
 
-function transformTraceDataFrame(frame: DataFrame): TraceResponse {
+export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null {
   const view = new DataFrameView<TraceSpanRow>(frame);
   const processes: Record<string, TraceProcess> = {};
   for (let i = 0; i < view.length; i++) {
     const span = view.get(i);
+    if (!span.spanID) {
+      return null;
+    }
     if (!processes[span.spanID]) {
       processes[span.spanID] = {
         serviceName: span.serviceName,

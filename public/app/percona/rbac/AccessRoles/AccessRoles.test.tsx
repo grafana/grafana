@@ -3,6 +3,7 @@ import React, { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 
 import * as RolesReducer from 'app/percona/shared/core/reducers/roles/roles';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -37,7 +38,7 @@ const wrapWithProvider = (children: ReactElement) => (
       },
     } as StoreState)}
   >
-    {children}
+    {wrapWithGrafanaContextMock(children)}
   </Provider>
 );
 

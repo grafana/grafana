@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -58,6 +59,5 @@ describe('AddInstance page::', () => {
   });
 });
 
-const withStore = (el: React.ReactElement): React.ReactElement => (
-  <Provider store={configureStore({} as StoreState)}>{el}</Provider>
-);
+const withStore = (el: React.ReactElement): React.ReactElement =>
+  wrapWithGrafanaContextMock(<Provider store={configureStore({} as StoreState)}>{el}</Provider>);

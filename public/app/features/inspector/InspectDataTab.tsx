@@ -1,37 +1,30 @@
-import { css } from '@emotion/css';
-import { Trans, t } from '@lingui/macro';
-import { saveAs } from 'file-saver';
+import { cloneDeep } from 'lodash';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
-  CSVConfig,
+  CoreApp,
   DataFrame,
   DataTransformerID,
-  dateTimeFormat,
-  dateTimeFormatISO,
-  MutableDataFrame,
+  FieldConfigSource,
   SelectableValue,
-  toCSV,
-  transformDataFrame,
   TimeZone,
-  CoreApp,
+  transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
-import { PanelModel } from 'app/features/dashboard/state';
+import { t, Trans } from 'app/core/internationalization';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
-import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
-import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
-import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
+
+import { dataFrameToLogsModel } from '../logs/logsModel';
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
+import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt, downloadTraceAsJson } from './utils/download';
 
 interface Props {
   isLoading: boolean;
@@ -39,7 +32,11 @@ interface Props {
   timeZone: TimeZone;
   app?: CoreApp;
   data?: DataFrame[];
-  panel?: PanelModel;
+  /** The title of the panel or other context name */
+  dataName: string;
+  panelPluginId?: string;
+  fieldConfig?: FieldConfigSource;
+  hasTransformations?: boolean;
   onOptionsChange?: (options: GetDataOptions) => void;
 }
 
@@ -95,51 +92,34 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   }
 
-  exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
-    const { panel } = this.props;
+  exportCsv(dataFrames: DataFrame[], hasLogs: boolean) {
+    const { dataName } = this.props;
     const { transformId } = this.state;
+    const dataFrame = dataFrames[this.state.dataFrameIndex];
 
-    const dataFrameCsv = toCSV([dataFrame], csvConfig);
+    if (hasLogs) {
+      reportInteraction('grafana_logs_download_clicked', { app: this.props.app, format: 'csv' });
+    }
 
-    const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
-      type: 'text/csv;charset=utf-8',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
-    const fileName = `${displayTitle}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
-    saveAs(blob, fileName);
-  };
+    downloadDataFrameAsCsv(dataFrame, dataName, { useExcelHeader: this.state.downloadForExcel }, transformId);
+  }
 
-  exportLogsAsTxt = () => {
-    const { data, panel, app } = this.props;
+  onExportLogsAsTxt = () => {
+    const { data, dataName, app } = this.props;
+
     reportInteraction('grafana_logs_download_logs_clicked', {
       app,
       format: 'logs',
-    });
-    const logsModel = dataFrameToLogsModel(data || [], undefined);
-    let textToDownload = '';
-
-    logsModel.meta?.forEach((metaItem) => {
-      const string = `${metaItem.label}: ${JSON.stringify(metaItem.value)}\n`;
-      textToDownload = textToDownload + string;
-    });
-    textToDownload = textToDownload + '\n\n';
-
-    logsModel.rows.forEach((row) => {
-      const newRow = dateTimeFormatISO(row.timeEpochMs) + '\t' + row.entry + '\n';
-      textToDownload = textToDownload + newRow;
+      area: 'inspector',
     });
 
-    const blob = new Blob([textToDownload], {
-      type: 'text/plain;charset=utf-8',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-logs-${dateTimeFormat(new Date())}.txt`;
-    saveAs(blob, fileName);
+    const logsModel = dataFrameToLogsModel(data || []);
+    downloadLogsModelAsTxt(logsModel, dataName);
   };
 
-  exportTracesAsJson = () => {
-    const { data, panel } = this.props;
+  onExportTracesAsJson = () => {
+    const { data, dataName, app } = this.props;
+
     if (!data) {
       return;
     }
@@ -150,48 +130,31 @@ export class InspectDataTab extends PureComponent<Props, State> {
         continue;
       }
 
-      switch (df.meta?.custom?.traceFormat) {
-        case 'jaeger': {
-          let res = transformToJaeger(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
-          break;
-        }
-        case 'zipkin': {
-          let res = transformToZipkin(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
-          break;
-        }
-        case 'otlp':
-        default: {
-          let res = transformToOTLP(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
-          break;
-        }
-      }
+      const traceFormat = downloadTraceAsJson(df, dataName + '-traces');
+
+      reportInteraction('grafana_traces_download_traces_clicked', {
+        app,
+        grafana_version: config.buildInfo.version,
+        trace_format: traceFormat,
+        location: 'inspector',
+      });
     }
   };
 
-  saveTraceJson = (json: any, panel?: PanelModel) => {
-    const blob = new Blob([JSON.stringify(json)], {
-      type: 'application/json',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-traces-${dateTimeFormat(new Date())}.json`;
-    saveAs(blob, fileName);
-  };
+  onExportServiceGraph = () => {
+    const { data, dataName, app } = this.props;
 
-  exportServiceGraph = () => {
-    const { data, panel } = this.props;
+    reportInteraction('grafana_traces_download_service_graph_clicked', {
+      app,
+      grafana_version: config.buildInfo.version,
+      location: 'inspector',
+    });
+
     if (!data) {
       return;
     }
 
-    const blob = new Blob([JSON.stringify(data)], {
-      type: 'application/json',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-service-graph-${dateTimeFormat(new Date())}.json`;
-    saveAs(blob, fileName);
+    downloadAsJson(data, dataName);
   };
 
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
@@ -203,26 +166,28 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   };
 
-  toggleDownloadForExcel = () => {
+  onToggleDownloadForExcel = () => {
     this.setState((prevState) => ({
       downloadForExcel: !prevState.downloadForExcel,
     }));
   };
 
   getProcessedData(): DataFrame[] {
-    const { options, panel, timeZone } = this.props;
+    const { options, panelPluginId, fieldConfig, timeZone } = this.props;
     const data = this.state.transformedData;
 
-    if (!options.withFieldConfig || !panel) {
+    if (!options.withFieldConfig || !panelPluginId || !fieldConfig) {
       return applyRawFieldOverrides(data);
     }
 
-    // We need to apply field config even though it was already applied in the PanelQueryRunner.
-    // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
+    const fieldConfigCleaned = this.cleanTableConfigFromFieldConfig(panelPluginId, fieldConfig);
+
+    // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
+    // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
     return applyFieldOverrides({
       data,
       theme: config.theme2,
-      fieldConfig: panel.fieldConfig,
+      fieldConfig: fieldConfigCleaned,
       timeZone,
       replaceVariables: (value: string) => {
         return value;
@@ -230,9 +195,57 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   }
 
+  // Because we visualize this data in a table we have to remove any custom table display settings
+  cleanTableConfigFromFieldConfig(panelPluginId: string, fieldConfig: FieldConfigSource): FieldConfigSource {
+    if (panelPluginId !== 'table') {
+      return fieldConfig;
+    }
+
+    fieldConfig = cloneDeep(fieldConfig);
+    // clear all table specific options
+    fieldConfig.defaults.custom = {};
+
+    // clear all table override properties
+    for (const override of fieldConfig.overrides) {
+      for (const prop of override.properties) {
+        if (prop.id.startsWith('custom.')) {
+          const index = override.properties.indexOf(prop);
+          override.properties.slice(index, 1);
+        }
+      }
+    }
+
+    return fieldConfig;
+  }
+
+  renderActions(dataFrames: DataFrame[], hasLogs: boolean, hasTraces: boolean, hasServiceGraph: boolean) {
+    return (
+      <>
+        <Button variant="primary" onClick={() => this.exportCsv(dataFrames, hasLogs)} size="sm">
+          <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
+        </Button>
+        {hasLogs && (
+          <Button variant="primary" onClick={this.onExportLogsAsTxt} size="sm">
+            <Trans i18nKey="dashboard.inspect-data.download-logs">Download logs</Trans>
+          </Button>
+        )}
+        {hasTraces && (
+          <Button variant="primary" onClick={this.onExportTracesAsJson} size="sm">
+            <Trans i18nKey="dashboard.inspect-data.download-traces">Download traces</Trans>
+          </Button>
+        )}
+        {hasServiceGraph && (
+          <Button variant="primary" onClick={this.onExportServiceGraph} size="sm">
+            <Trans i18nKey="dashboard.inspect-data.download-service">Download service graph</Trans>
+          </Button>
+        )}
+      </>
+    );
+  }
+
   render() {
-    const { isLoading, options, data, panel, onOptionsChange, app } = this.props;
-    const { dataFrameIndex, transformId, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
+    const { isLoading, options, data, onOptionsChange, hasTransformations } = this.props;
+    const { dataFrameIndex, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
@@ -261,70 +274,17 @@ export class InspectDataTab extends PureComponent<Props, State> {
         <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
-            panel={panel}
+            hasTransformations={hasTransformations}
             options={options}
             dataFrames={dataFrames}
-            transformId={transformId}
             transformationOptions={transformationOptions}
             selectedDataFrame={selectedDataFrame}
             downloadForExcel={downloadForExcel}
             onOptionsChange={onOptionsChange}
             onDataFrameChange={this.onDataFrameChange}
-            toggleDownloadForExcel={this.toggleDownloadForExcel}
+            toggleDownloadForExcel={this.onToggleDownloadForExcel}
+            actions={this.renderActions(dataFrames, hasLogs, hasTraces, hasServiceGraph)}
           />
-          <Button
-            variant="primary"
-            onClick={() => {
-              if (hasLogs) {
-                reportInteraction('grafana_logs_download_clicked', {
-                  app,
-                  format: 'csv',
-                });
-              }
-              this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: this.state.downloadForExcel });
-            }}
-            className={css`
-              margin-bottom: 10px;
-            `}
-          >
-            <Trans id="dashboard.inspect-data.download-csv">Download CSV</Trans>
-          </Button>
-          {hasLogs && (
-            <Button
-              variant="primary"
-              onClick={this.exportLogsAsTxt}
-              className={css`
-                margin-bottom: 10px;
-                margin-left: 10px;
-              `}
-            >
-              <Trans id="dashboard.inspect-data.download-logs">Download logs</Trans>
-            </Button>
-          )}
-          {hasTraces && (
-            <Button
-              variant="primary"
-              onClick={this.exportTracesAsJson}
-              className={css`
-                margin-bottom: 10px;
-                margin-left: 10px;
-              `}
-            >
-              <Trans id="dashboard.inspect-data.download-traces">Download traces</Trans>
-            </Button>
-          )}
-          {hasServiceGraph && (
-            <Button
-              variant="primary"
-              onClick={this.exportServiceGraph}
-              className={css`
-                margin-bottom: 10px;
-                margin-left: 10px;
-              `}
-            >
-              <Trans id="dashboard.inspect-data.download-service">Download service graph</Trans>
-            </Button>
-          )}
         </div>
         <div className={styles.content}>
           <AutoSizer>
@@ -333,11 +293,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 return null;
               }
 
-              return (
-                <div style={{ width, height }}>
-                  <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />
-                </div>
-              );
+              return <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />;
             }}
           </AutoSizer>
         </div>
@@ -350,10 +306,7 @@ function buildTransformationOptions() {
   const transformations: Array<SelectableValue<DataTransformerID>> = [
     {
       value: DataTransformerID.joinByField,
-      label: t({
-        id: 'dashboard.inspect-data.transformation',
-        message: 'Series joined by time',
-      }),
+      label: t('dashboard.inspect-data.transformation', 'Series joined by time'),
       transformer: {
         id: DataTransformerID.joinByField,
         options: { byField: undefined }, // defaults to time field

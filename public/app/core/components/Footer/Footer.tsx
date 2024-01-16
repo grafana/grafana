@@ -3,6 +3,7 @@ import React from 'react';
 import { LinkTarget } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface FooterLink {
   target: LinkTarget;
@@ -13,6 +14,7 @@ export interface FooterLink {
 }
 
 export let getFooterLinks = (): FooterLink[] => {
+  // @PERCONA
   return [
     {
       id: 'pmm-logs',
@@ -22,23 +24,23 @@ export let getFooterLinks = (): FooterLink[] => {
       target: '_blank',
     },
     {
+      target: '_blank',
       id: 'pmm-docs',
-      text: 'Documentation',
+      text: t('nav.help/documentation', 'Documentation'),
       icon: 'document-info',
       url: 'https://per.co.na/pmm_documentation',
-      target: '_blank',
     },
     {
       target: '_blank',
       id: 'support',
-      text: 'Support',
+      text: t('nav.help/support', 'Support'),
       icon: 'question-circle',
       url: 'https://per.co.na/pmm_support',
     },
     {
       target: '_blank',
       id: 'community',
-      text: 'Community',
+      text: t('nav.help/community', 'Community'),
       icon: 'comments-alt',
       url: 'https://per.co.na/pmm_community',
     },
@@ -54,17 +56,19 @@ export function getVersionMeta(version: string) {
   };
 }
 
-export let getVersionLinks = (): FooterLink[] => {
+export function getVersionLinks(hideEdition?: boolean): FooterLink[] {
   const { buildInfo, licenseInfo } = config;
   const links: FooterLink[] = [];
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
 
-  links.push({
-    target: '_blank',
-    id: 'version',
-    text: `${buildInfo.edition}${stateInfo}`,
-    url: licenseInfo.licenseUrl,
-  });
+  if (!hideEdition) {
+    links.push({
+      target: '_blank',
+      id: 'license',
+      text: `${buildInfo.edition}${stateInfo}`,
+      url: licenseInfo.licenseUrl,
+    });
+  }
 
   if (buildInfo.hideVersion) {
     return links;
@@ -90,19 +94,16 @@ export let getVersionLinks = (): FooterLink[] => {
   }
 
   return links;
-};
+}
 
 export function setFooterLinksFn(fn: typeof getFooterLinks) {
   getFooterLinks = fn;
 }
 
-export function setVersionLinkFn(fn: typeof getFooterLinks) {
-  getVersionLinks = fn;
-}
-
 export interface Props {
   /** Link overrides to show specific links in the UI */
   customLinks?: FooterLink[] | null;
+  hideEdition?: boolean;
 }
 
 export const Footer = React.memo(({ customLinks }: Props) => {

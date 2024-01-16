@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { ReactElement, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -17,12 +18,9 @@ export interface LibraryPanelCardProps {
   showSecondaryActions?: boolean;
 }
 
-export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] }> = ({
-  libraryPanel,
-  onClick,
-  onDelete,
-  showSecondaryActions,
-}) => {
+type Props = LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] };
+
+export const LibraryPanelCard = ({ libraryPanel, onClick, onDelete, showSecondaryActions }: Props) => {
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {
@@ -55,6 +53,18 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
   );
 };
 
+const LibraryPanelCardSkeleton = ({ showSecondaryActions }: Pick<Props, 'showSecondaryActions'>) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <PanelTypeCard.Skeleton hasDelete={showSecondaryActions}>
+      <Skeleton containerClassName={styles.metaContainer} width={80} />
+    </PanelTypeCard.Skeleton>
+  );
+};
+
+LibraryPanelCard.Skeleton = LibraryPanelCardSkeleton;
+
 interface FolderLinkProps {
   libraryPanel: LibraryElementDTO;
 }
@@ -62,7 +72,7 @@ interface FolderLinkProps {
 function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
   const styles = useStyles2(getStyles);
 
-  if (!libraryPanel.meta.folderUid && !libraryPanel.meta.folderName) {
+  if (!libraryPanel.meta?.folderUid && !libraryPanel.meta?.folderName) {
     return null;
   }
 
@@ -87,17 +97,17 @@ function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    metaContainer: css`
-      display: flex;
-      align-items: center;
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      padding-top: ${theme.spacing(0.5)};
+    metaContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      paddingTop: theme.spacing(0.5),
 
-      svg {
-        margin-right: ${theme.spacing(0.5)};
-        margin-bottom: 3px;
-      }
-    `,
+      svg: {
+        marginRight: theme.spacing(0.5),
+        marginBottom: 3,
+      },
+    }),
   };
 }

@@ -1,16 +1,17 @@
+import { partition } from 'lodash';
 import memoizeOne from 'memoize-one';
 
-import { Field, FieldType, getParser, LinkModel, LogRowModel } from '@grafana/data';
+import { DataFrame, Field, FieldWithIndex, LinkModel, LogRowModel } from '@grafana/data';
+import { safeStringifyValue } from 'app/core/utils/explore';
+import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
-import { MAX_CHARACTERS } from './LogRowMessage';
+import { parseLogsFrame } from '../logsFrame';
 
-const memoizedGetParser = memoizeOne(getParser);
-
-type FieldDef = {
-  key: string;
-  value: string;
-  links?: Array<LinkModel<Field>>;
-  fieldIndex?: number;
+export type FieldDef = {
+  keys: string[];
+  values: string[];
+  links?: Array<LinkModel<Field>> | ExploreFieldLinkModel[];
+  fieldIndex: number;
 };
 
 /**
@@ -18,105 +19,132 @@ type FieldDef = {
  * found in the dataframe (they may contain links).
  */
 export const getAllFields = memoizeOne(
-  (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>) => {
-    const logMessageFields = parseMessage(row.entry);
+  (
+    row: LogRowModel,
+    getFieldLinks?: (
+      field: Field,
+      rowIndex: number,
+      dataFrame: DataFrame
+    ) => Array<LinkModel<Field>> | ExploreFieldLinkModel[]
+  ) => {
     const dataframeFields = getDataframeFields(row, getFieldLinks);
-    const fieldsMap = [...dataframeFields, ...logMessageFields].reduce((acc, field) => {
-      // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
-      // value is in the dataFrame it will be without the quotes. We treat them here as the same value.
-      // We need to handle this scenario:
-      // - we use derived-fields in Loki
-      // - we name the derived field the same as the parsed-field-name
-      // - the same field will appear twice
-      //   - in the fields coming from `logMessageFields`
-      //   - in the fields coming from `dataframeFields`
-      // - but, in the fields coming from `logMessageFields`, there might be doublequotes around the value
-      // - we want to "merge" data from both sources, so we remove quotes from the beginning and end
-      const value = field.value.replace(/(^")|("$)/g, '');
-      const fieldHash = `${field.key}=${value}`;
-      if (acc[fieldHash]) {
-        acc[fieldHash].links = [...(acc[fieldHash].links || []), ...(field.links || [])];
-      } else {
-        acc[fieldHash] = field;
-      }
-      return acc;
-    }, {} as { [key: string]: FieldDef });
 
-    const allFields = Object.values(fieldsMap);
-    allFields.sort(sortFieldsLinkFirst);
-
-    return allFields;
+    return Object.values(dataframeFields);
   }
 );
 
-const parseMessage = memoizeOne((rowEntry): FieldDef[] => {
-  if (rowEntry.length > MAX_CHARACTERS) {
-    return [];
-  }
-  const parser = memoizedGetParser(rowEntry);
-  if (!parser) {
-    return [];
-  }
-  // Use parser to highlight detected fields
-  const detectedFields = parser.getFields(rowEntry);
-  const fields = detectedFields.map((field) => {
-    const key = parser.getLabelFromField(field);
-    const value = parser.getValueFromField(field);
-    return { key, value };
+/**
+ * A log line may contain many links that would all need to go on their own logs detail row
+ * This iterates through and creates a FieldDef (row) per link.
+ */
+export const createLogLineLinks = memoizeOne((hiddenFieldsWithLinks: FieldDef[]): FieldDef[] => {
+  let fieldsWithLinksFromVariableMap: FieldDef[] = [];
+  hiddenFieldsWithLinks.forEach((linkField) => {
+    linkField.links?.forEach((link: ExploreFieldLinkModel) => {
+      if (link.variables) {
+        const variableKeys = link.variables.map((variable) => {
+          const varName = variable.variableName;
+          const fieldPath = variable.fieldPath ? `.${variable.fieldPath}` : '';
+          return `${varName}${fieldPath}`;
+        });
+        const variableValues = link.variables.map((variable) => (variable.found ? variable.value : ''));
+        fieldsWithLinksFromVariableMap.push({
+          keys: variableKeys,
+          values: variableValues,
+          links: [link],
+          fieldIndex: linkField.fieldIndex,
+        });
+      }
+    });
   });
-
-  return fields;
+  return fieldsWithLinksFromVariableMap;
 });
 
-// creates fields from the dataframe-fields, adding data-links, when field.config.links exists
-const getDataframeFields = memoizeOne(
-  (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>): FieldDef[] => {
-    return row.dataFrame.fields
-      .map((field, index) => ({ ...field, index }))
-      .filter((field, index) => !shouldRemoveField(field, index, row))
-      .map((field) => {
-        const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
-        return {
-          key: field.name,
-          value: field.values.get(row.rowIndex).toString(),
-          links: links,
-          fieldIndex: field.index,
-        };
-      });
+/**
+ * creates fields from the dataframe-fields, adding data-links, when field.config.links exists
+ */
+export const getDataframeFields = memoizeOne(
+  (
+    row: LogRowModel,
+    getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
+  ): FieldDef[] => {
+    const visibleFields = separateVisibleFields(row.dataFrame).visible;
+    const nonEmptyVisibleFields = visibleFields.filter((f) => f.values[row.rowIndex] != null);
+    return nonEmptyVisibleFields.map((field) => {
+      const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
+      const fieldVal = field.values[row.rowIndex];
+      const outputVal =
+        typeof fieldVal === 'string' || typeof fieldVal === 'number'
+          ? fieldVal.toString()
+          : safeStringifyValue(fieldVal);
+      return {
+        keys: [field.name],
+        values: [outputVal],
+        links: links,
+        fieldIndex: field.index,
+      };
+    });
   }
 );
 
-function sortFieldsLinkFirst(fieldA: FieldDef, fieldB: FieldDef) {
-  if (fieldA.links?.length && !fieldB.links?.length) {
-    return -1;
+type VisOptions = {
+  keepTimestamp?: boolean;
+  keepBody?: boolean;
+};
+
+// return the fields (their indices to be exact) that should be visible
+// based on the logs dataframe structure
+function getVisibleFieldIndices(frame: DataFrame, opts: VisOptions): Set<number> {
+  const logsFrame = parseLogsFrame(frame);
+  if (logsFrame === null) {
+    // should not really happen
+    return new Set();
   }
-  if (!fieldA.links?.length && fieldB.links?.length) {
-    return 1;
+
+  // we want to show every "extra" field
+  const visibleFieldIndices = new Set(logsFrame.extraFields.map((f) => f.index));
+
+  // we always show the severity field
+  if (logsFrame.severityField !== null) {
+    visibleFieldIndices.add(logsFrame.severityField.index);
   }
-  return fieldA.key > fieldB.key ? 1 : fieldA.key < fieldB.key ? -1 : 0;
+
+  if (opts.keepBody) {
+    visibleFieldIndices.add(logsFrame.bodyField.index);
+  }
+
+  if (opts.keepTimestamp) {
+    visibleFieldIndices.add(logsFrame.timeField.index);
+  }
+
+  return visibleFieldIndices;
 }
 
-function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
-  // Remove field if it is:
-  // "labels" field that is in Loki used to store all labels
-  if (field.name === 'labels' && field.type === FieldType.other) {
-    return true;
-  }
-  // "id" field which we use for react key
-  if (field.name === 'id') {
-    return true;
-  }
-  // entry field which we are showing as the log message
-  if (row.entryFieldIndex === index) {
-    return true;
-  }
-  // hidden field
-  if (field.config.custom?.hidden) {
-    return true;
-  }
-  // field that has empty value (we want to keep 0 or empty string)
-  if (field.values.get(row.rowIndex) == null) {
-    return true;
-  }
-  return false;
+// split the dataframe's fields into visible and hidden arrays.
+// note: does not do any row-level checks,
+// for example does not check if the field's values are nullish
+// or not at a givn row.
+export function separateVisibleFields(
+  frame: DataFrame,
+  opts?: VisOptions
+): { visible: FieldWithIndex[]; hidden: FieldWithIndex[] } {
+  const fieldsWithIndex: FieldWithIndex[] = frame.fields.map((field, index) => ({ ...field, index }));
+
+  const visibleFieldIndices = getVisibleFieldIndices(frame, opts ?? {});
+
+  const [visible, hidden] = partition(fieldsWithIndex, (f) => {
+    // hidden fields are always hidden
+    if (f.config.custom?.hidden) {
+      return false;
+    }
+
+    // fields with data-links are visible
+    if ((f.config.links ?? []).length > 0) {
+      return true;
+    }
+
+    return visibleFieldIndices.has(f.index);
+  });
+
+  return { visible, hidden };
 }

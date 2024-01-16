@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { InlineField } from '../..';
+import { InlineField } from '../../components/Forms/InlineField';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
 
 import { HttpSettingsProps } from './types';
 
-export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfig, onChange }) => {
+export const BasicAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsProps) => {
   const password = dataSourceConfig.secureJsonData ? dataSourceConfig.secureJsonData.basicAuthPassword : '';
 
   const onPasswordReset = () => {
@@ -35,7 +35,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
 
   return (
     <>
-      <InlineField>
+      <InlineField disabled={dataSourceConfig.readOnly}>
         <FormField
           label="User"
           labelWidth={10}
@@ -45,7 +45,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
           onChange={(event) => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
         />
       </InlineField>
-      <InlineField>
+      <InlineField disabled={dataSourceConfig.readOnly}>
         <SecretFormField
           isConfigured={!!(dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.basicAuthPassword)}
           value={password || ''}

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-interface ModalsContextState {
+export interface ModalsContextState {
   component: React.ComponentType<any> | null;
   props: any;
   showModal: <T>(component: React.ComponentType<T>, props: T) => void;
@@ -33,7 +33,7 @@ export class ModalsProvider extends Component<ModalsProviderProps, ModalsContext
     };
   }
 
-  showModal = (component: React.ComponentType<any>, props: any) => {
+  showModal = <T,>(component: React.ComponentType<T>, props: T) => {
     this.setState({
       component,
       props,

@@ -3,30 +3,36 @@ package libraryelements
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func isGeneralFolder(folderID int64) bool {
 	return folderID == 0
 }
 
+func isUIDGeneralFolder(folderUID string) bool {
+	return folderUID == accesscontrol.GeneralFolderUID
+}
+
 func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) error {
-	kind := models.LibraryElementKind(kindAsInt)
+	kind := model.LibraryElementKind(kindAsInt)
 	switch kind {
-	case models.PanelElement:
+	case model.PanelElement:
 		return nil
-	case models.VariableElement:
+	case model.VariableElement:
 		return nil
 	default:
-		return errLibraryElementUnSupportedElementKind
+		return model.ErrLibraryElementUnSupportedElementKind
 	}
 }
 
-func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user *user.SignedInUser, folderID int64) error {
+func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderID int64) error {
+	// TODO remove these special cases and handle General folder case in access control guardian
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleEditor) {
 		return nil
 	}
@@ -34,12 +40,11 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return dashboards.ErrFolderAccessDenied
 	}
-	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgID)
+
+	g, err := guardian.New(ctx, folderID, user.GetOrgID(), user)
 	if err != nil {
 		return err
 	}
-
-	g := guardian.New(ctx, folder.Id, user.OrgID, user)
 
 	canEdit, err := g.CanEdit()
 	if err != nil {
@@ -52,17 +57,15 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 	return nil
 }
 
-func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user *user.SignedInUser, folderID int64) error {
+func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user identity.Requester, folderID int64) error {
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return nil
 	}
 
-	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgID)
+	g, err := guardian.New(ctx, folderID, user.GetOrgID(), user)
 	if err != nil {
 		return err
 	}
-
-	g := guardian.New(ctx, folder.Id, user.OrgID, user)
 
 	canView, err := g.CanView()
 	if err != nil {

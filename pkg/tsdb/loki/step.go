@@ -3,6 +3,8 @@ package loki
 import (
 	"math"
 	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 // round the duration to the nearest millisecond larger-or-equal-to the duration
@@ -20,12 +22,19 @@ func durationMax(d1 time.Duration, d2 time.Duration) time.Duration {
 	}
 }
 
-func calculateStep(baseInterval time.Duration, timeRange time.Duration, resolution int64) time.Duration {
-	step := time.Duration(baseInterval.Nanoseconds() * resolution)
+func calculateStep(interval time.Duration, timeRange time.Duration, resolution int64, queryStep *string) (time.Duration, error) {
+	// If we don't have step from query we calculate it from interval, time range and resolution
+	if queryStep == nil || *queryStep == "" {
+		step := time.Duration(interval.Nanoseconds() * resolution)
+		safeStep := timeRange / 11000
+		chosenStep := durationMax(step, safeStep)
+		return ceilMs(chosenStep), nil
+	}
 
-	safeStep := timeRange / 11000
+	step, err := intervalv2.ParseIntervalStringToTimeDuration(*queryStep)
+	if err != nil {
+		return step, err
+	}
 
-	chosenStep := durationMax(step, safeStep)
-
-	return ceilMs(chosenStep)
+	return time.Duration(step.Nanoseconds() * resolution), nil
 }

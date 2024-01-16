@@ -1,13 +1,13 @@
 import { cx } from '@emotion/css';
 import React, { Component, ReactNode } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { withTheme2 } from '../../themes/ThemeContext';
 
 import { getSelectStyles } from './getSelectStyles';
 
-class UnthemedValueContainer extends Component<any & { theme: GrafanaTheme }> {
+class UnthemedValueContainer extends Component<any & { theme: GrafanaTheme2 }> {
   render() {
     const { children } = this.props;
     const { selectProps } = this.props;
@@ -30,8 +30,15 @@ class UnthemedValueContainer extends Component<any & { theme: GrafanaTheme }> {
 
   renderContainer(children?: ReactNode) {
     const { isMulti, theme } = this.props;
+    const noWrap = this.props.selectProps?.noMultiValueWrap && !this.props.selectProps?.menuIsOpen;
     const styles = getSelectStyles(theme);
-    const className = cx(styles.valueContainer, isMulti && styles.valueContainerMulti);
+
+    const className = cx(
+      styles.valueContainer,
+      isMulti && styles.valueContainerMulti,
+      noWrap && styles.valueContainerMultiNoWrap
+    );
+
     return <div className={className}>{children}</div>;
   }
 }

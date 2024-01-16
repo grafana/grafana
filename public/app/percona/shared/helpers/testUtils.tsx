@@ -1,30 +1,14 @@
-import { mount, ReactWrapper, shallow, ShallowWrapper } from 'enzyme';
-import { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 import { act } from 'react-dom/test-utils';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-export const getMount = async (node: ReactElement): Promise<ReactWrapper> => {
-  let wrapper: ReactWrapper = {} as ReactWrapper;
-
-  //@ts-ignore
-  await act(async () => {
-    wrapper = await mount(node);
-  });
-
-  return wrapper;
-};
-
-export const getShallow = async (node: ReactElement): Promise<ShallowWrapper> => {
-  let wrapper: ShallowWrapper = {} as ShallowWrapper;
-
-  //@ts-ignore
-  await act(async () => {
-    wrapper = await shallow(node);
-  });
-
-  return wrapper;
-};
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 export const asyncAct = (cb: () => any): Promise<any> => {
   //@ts-ignore
   return act(async () => cb());
 };
+
+export const wrapWithGrafanaContextMock = (children: ReactNode) => (
+  <GrafanaContext.Provider value={getGrafanaContextMock()}>{children}</GrafanaContext.Provider>
+);

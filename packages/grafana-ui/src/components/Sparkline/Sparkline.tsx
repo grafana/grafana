@@ -44,6 +44,7 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
+  pointSize: 2,
 };
 
 /** @internal */
@@ -134,7 +135,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
             return [sparkline.timeRange.from.valueOf(), sparkline.timeRange.to.valueOf()];
           }
           const vals = sparkline.x.values;
-          return [vals.get(0), vals.get(vals.length - 1)];
+          return [vals[0], vals[vals.length - 1]];
         }
         return [0, sparkline.y.values.length - 1];
       },
@@ -148,7 +149,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
-      const config = field.config as FieldConfig<GraphFieldConfig>;
+      const config: FieldConfig<GraphFieldConfig> = field.config;
       const customConfig: GraphFieldConfig = {
         ...defaultConfig,
         ...config.custom,
@@ -181,6 +182,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         pxAlign: false,
         scaleKey,
         theme,
+        colorMode,
+        thresholds: config.thresholds,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
@@ -188,7 +191,9 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         showPoints: pointsMode,
         pointSize: customConfig.pointSize,
         fillOpacity: customConfig.fillOpacity,
-        fillColor: customConfig.fillColor ?? seriesColor,
+        fillColor: customConfig.fillColor,
+        lineStyle: customConfig.lineStyle,
+        gradientMode: customConfig.gradientMode,
       });
     }
 
@@ -197,9 +202,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
   render() {
     const { data, configBuilder } = this.state;
-    const { width, height, sparkline } = this.props;
-    return (
-      <UPlotChart data={data} config={configBuilder} width={width} height={height} timeRange={sparkline.timeRange!} />
-    );
+    const { width, height } = this.props;
+    return <UPlotChart data={data} config={configBuilder} width={width} height={height} />;
   }
 }

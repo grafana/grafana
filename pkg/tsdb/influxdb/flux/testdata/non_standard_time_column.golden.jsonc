@@ -1,6 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {}
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
 //  Name: 
 //  Dimensions: 3 Fields by 1 Rows
 //  +-----------------------------------------+-----------------------------------------+------------------+
@@ -14,10 +19,16 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
-        "meta": {},
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
         "fields": [
           {
             "name": "_start_water",
@@ -65,6 +76,15 @@
           [
             156.304
           ]
+        ],
+        "nanos": [
+          [
+            584046
+          ],
+          [
+            584046
+          ],
+          null
         ]
       }
     }
