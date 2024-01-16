@@ -158,13 +158,9 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           );
         })}
       </TabsBar>
-      <TabContent>
+      <TabContent className={styles.tabContent}>
         <CustomScrollbar autoHeightMin="100%">
-          <Container>
-            <TabContent className={styles.tabContent}>
-              {currentTab && <currentTab.Component model={currentTab} />}
-            </TabContent>
-          </Container>
+          <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
         </CustomScrollbar>
       </TabContent>
     </div>
