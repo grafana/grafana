@@ -82,7 +82,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.viewPanelScene = new ViewPanelScene({ panelRef: panel.getRef() });
-    } else if (viewPanelScene) {
+    } else if (viewPanelScene && values.viewPanel === null) {
       update.viewPanelScene = undefined;
     }
 
@@ -95,20 +95,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       this._scene.onEnterEditMode();
       update.editPanel = buildPanelEditScene(panel);
-    } else if (editPanel) {
+    } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
     }
 
     if (Object.keys(update).length > 0) {
-      if (update.hasOwnProperty('inspectPanelKey')) {
-        if (update.viewPanelScene === undefined) {
-          delete update.viewPanelScene;
-        }
-        if (update.editPanel === undefined) {
-          delete update.editPanel;
-        }
-      }
-
       this._scene.setState(update);
     }
   }
