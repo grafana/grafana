@@ -195,10 +195,8 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    noQueriesText: css({
-      padding: theme.spacing(1.25),
-    }),
-  };
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  noQueriesText: css({
+    paddingLeft: theme.spacing(1.25),
+  }),
+});
