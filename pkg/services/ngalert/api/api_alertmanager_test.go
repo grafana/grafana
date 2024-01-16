@@ -12,6 +12,8 @@ import (
 	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	amConfig "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -310,6 +312,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
+
 		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
 			sut := createSut(t)
 			rc := createRequestCtxInOrg(1)
@@ -322,6 +325,41 @@ func TestAlertmanagerConfig(t *testing.T) {
 			require.Len(t, body.TemplateFileProvenances, 1)
 			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
 		})
+	})
+
+	t.Run("matchers are changed into object matchers", func(t *testing.T) {
+		sut := createSut(t)
+		rc := contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 3, // Org 3 was initialized with broken config.
+			},
+		}
+		request := createAmConfigRequest(t, validConfig)
+		r := request.AlertmanagerConfig.Route
+
+		m1, err := labels.NewMatcher(labels.MatchEqual, "foo", "bar")
+		require.NoError(t, err)
+		m2, err := labels.NewMatcher(labels.MatchEqual, "bar", "baz")
+		require.NoError(t, err)
+		r.Matchers = amConfig.Matchers{m1}
+		r.ObjectMatchers = apimodels.ObjectMatchers{m2}
+
+		response := sut.RoutePostAlertingConfig(&rc, request)
+		require.Equal(t, 202, response.Status())
+
+		response = sut.RouteGetAlertingConfig(&rc)
+		require.Equal(t, 200, response.Status())
+
+		var cfg apimodels.PostableUserConfig
+		require.NoError(t, json.Unmarshal(response.Body(), &cfg))
+
+		require.NotNil(t, cfg.AlertmanagerConfig.Route)
+		route := cfg.AlertmanagerConfig.Route
+		require.Len(t, route.Matchers, 0)
+		require.Equal(t, apimodels.ObjectMatchers{m2, m1}, route.ObjectMatchers)
 	})
 }
 
