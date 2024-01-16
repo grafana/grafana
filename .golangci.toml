@@ -61,6 +61,8 @@ files = [
   "**/pkg/tsdb/azuremonitor/**/*",
   "**/pkg/tsdb/parca/*",
   "**/pkg/tsdb/parca/**/*",
+  "**/pkg/tsdb/tempo/*",
+  "**/pkg/tsdb/tempo/**/*",
 ]
 
 [linters-settings.gocritic]
