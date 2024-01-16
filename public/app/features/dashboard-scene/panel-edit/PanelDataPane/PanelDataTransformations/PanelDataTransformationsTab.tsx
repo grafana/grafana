@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 
-import { DataTransformerConfig, GrafanaTheme2, IconName } from '@grafana/data';
+import { DataTransformerConfig, GrafanaTheme2, IconName, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectBase, SceneComponentProps, SceneDataTransformer } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Container, CustomScrollbar, useStyles2 } from '@grafana/ui';
@@ -29,12 +29,7 @@ export class PanelDataTransformationsTab
   }
 
   getItemsCount() {
-    const dataProvider = this._panelManager.state.panel.state.$data;
-    if (dataProvider instanceof SceneDataTransformer) {
-      return dataProvider.state.transformations.length;
-    } else {
-      return null;
-    }
+    return this.getDataTransformer().state.transformations.length;
   }
 
   constructor(panelManager: VizPanelManager) {
@@ -43,29 +38,31 @@ export class PanelDataTransformationsTab
     this._panelManager = panelManager;
   }
 
-  get panelManager() {
-    return this._panelManager;
+  public getDataTransformer(): SceneDataTransformer {
+    const provider = this._panelManager.state.panel.state.$data;
+    if (!provider || !(provider instanceof SceneDataTransformer)) {
+      throw new Error('Could not find SceneDataTransformer for panel');
+    }
+
+    return provider;
+  }
+
+  public changeTransformations(transformations: DataTransformerConfig[]) {
+    const dataProvider = this.getDataTransformer();
+    if (dataProvider instanceof SceneDataTransformer) {
+      dataProvider.setState({ transformations });
+      dataProvider.reprocessTransformations();
+    }
   }
 }
 
 interface TransformationEditorProps {
-  sceneDataTransformer: SceneDataTransformer;
-  onChange: (transformations: DataTransformerConfig[]) => void;
+  transformations: DataTransformerConfig[];
+  model: PanelDataTransformationsTab;
+  data: PanelData;
 }
 
-function TransformationsEditor(props: TransformationEditorProps) {
-  const { onChange } = props;
-  const dataState = props.sceneDataTransformer.useState();
-
-  const transformations: DataTransformerConfig[] = [];
-
-  for (const t of dataState.transformations) {
-    // We can't have any CustomTransformerOperators in the panel editor. This get's rid of them and fixes the type.
-    if ('id' in t) {
-      transformations.push(t);
-    }
-  }
-
+function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
   const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
 
   return (
@@ -78,18 +75,15 @@ function TransformationsEditor(props: TransformationEditorProps) {
                 onChange={(index, transformation) => {
                   const newTransformations = transformations.slice();
                   newTransformations[index] = transformation;
-                  onChange(newTransformations);
+                  model.changeTransformations(newTransformations);
                 }}
                 onRemove={(index) => {
                   const newTransformations = transformations.slice();
                   newTransformations.splice(index);
-                  onChange(newTransformations);
+                  model.changeTransformations(newTransformations);
                 }}
                 configs={transformationEditorRows}
-                data={{
-                  series: dataState.data?.series || [],
-                  annotations: dataState.data?.annotations || [],
-                }}
+                data={data}
               ></TransformationOperationRows>
               {provided.placeholder}
             </div>
@@ -102,28 +96,17 @@ function TransformationsEditor(props: TransformationEditorProps) {
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
   const styles = useStyles2(getStyles);
-  const panelManagerState = model.panelManager.useState();
-  const panelState = panelManagerState.panel.useState();
-
-  if (!(panelState.$data instanceof SceneDataTransformer)) {
-    return;
-  }
-
-  const dataState = panelState.$data.useState();
+  const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
+  const transformations: DataTransformerConfig[] = transformsWrongType as unknown as DataTransformerConfig[];
 
   return (
     <CustomScrollbar autoHeightMin="100%">
       <Container>
-        {dataState.transformations.length < 1 ? (
+        {transformations.length < 1 ? (
           <EmptyTransformationsMessage onShowPicker={() => {}}></EmptyTransformationsMessage>
         ) : (
           <>
-            <TransformationsEditor
-              onChange={(transformations) => {
-                model.panelManager.changeTransformations(transformations);
-              }}
-              sceneDataTransformer={panelState.$data}
-            ></TransformationsEditor>
+            <TransformationsEditor data={data!} transformations={transformations} model={model} />
             <ButtonGroup>
               <Button
                 icon="plus"
