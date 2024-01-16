@@ -156,17 +156,20 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 										"application/json": {
 											MediaTypeProps: spec3.MediaTypeProps{
 												Schema: &stateSchema,
+												Example: &v0alpha1.ResolvedToggleState{
+													Enabled: map[string]bool{
+														featuremgmt.FlagAutoMigrateOldPanels: true,
+														featuremgmt.FlagAngularDeprecationUI: false,
+													},
+												},
 												Examples: map[string]*spec3.Example{
 													"enable-auto-migrate": {
 														ExampleProps: spec3.ExampleProps{
 															Summary:     "enable auto-migrate panels",
 															Description: "example descr",
 															Value: &v0alpha1.ResolvedToggleState{
-																Toggles: []v0alpha1.ToggleStatus{
-																	{
-																		Name:    featuremgmt.FlagAutoMigrateOldPanels,
-																		Enabled: true,
-																	},
+																Enabled: map[string]bool{
+																	featuremgmt.FlagAutoMigrateOldPanels: true,
 																},
 															},
 														},
@@ -176,11 +179,8 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 															Summary:     "disable auto-migrate panels",
 															Description: "disable descr",
 															Value: &v0alpha1.ResolvedToggleState{
-																Toggles: []v0alpha1.ToggleStatus{
-																	{
-																		Name:    featuremgmt.FlagAutoMigrateOldPanels,
-																		Enabled: false,
-																	},
+																Enabled: map[string]bool{
+																	featuremgmt.FlagAutoMigrateOldPanels: false,
 																},
 															},
 														},

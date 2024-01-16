@@ -3,11 +3,11 @@ package featuretoggle
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
@@ -21,6 +21,13 @@ func getResolvedToggleState(ctx context.Context, features *featuremgmt.FeatureMa
 		},
 		Enabled: features.GetEnabled(ctx),
 	}
+
+	// Reference to the object that defined the values
+	startupRef := &common.ObjectReference{
+		Namespace: "system",
+		Name:      "startup",
+	}
+
 	startup := features.GetStartupFlags()
 	warnings := features.GetWarning()
 	for _, f := range features.GetFlags() {
@@ -34,11 +41,11 @@ func getResolvedToggleState(ctx context.Context, features *featuremgmt.FeatureMa
 			Description: f.Description, // simplify the UI changes
 			Enabled:     state.Enabled[name],
 			Writeable:   features.IsEditableFromAdminPage(name),
-			Source:      "startup",
+			Source:      startupRef,
 			Warning:     warnings[name],
 		}
 		if f.Expression == "true" && toggle.Enabled {
-			toggle.Source = "default"
+			toggle.Source = nil
 		}
 		_, inStartup := startup[name]
 		if toggle.Enabled || toggle.Writeable || toggle.Warning != "" || inStartup {
@@ -69,7 +76,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 		return
 	}
 
-	current := getResolvedToggleState(r.Context(), b.features)
+	ctx := r.Context()
 	request := v0alpha1.ResolvedToggleState{}
 	err := web.Bind(r, &request)
 	if err != nil {
@@ -77,27 +84,29 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 		return
 	}
 
-	changes, err := getChangedToggles(current, request)
-	if err != nil {
-		_, _ = w.Write([]byte("ERROR!!! " + err.Error()))
+	if len(request.Toggles) > 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("can only patch the enabled"))
 		return
 	}
 
-	for _, change := range changes {
-		fmt.Printf("TODO: %v\n", change)
-		_, _ = w.Write([]byte("TODO changes " + err.Error()))
+	changes := map[string]bool{}
+	for k, v := range request.Enabled {
+		current := b.features.IsEnabled(ctx, k)
+		if current != v {
+			if !b.features.IsEditableFromAdminPage(k) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte("can not edit toggle: " + k))
+				return
+			}
+			changes[k] = v
+		}
+	}
+
+	if len(changes) == 0 {
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 
-	_, _ = w.Write([]byte("nothing... "))
-}
-
-// Look for changes
-type changeToggle struct {
-	current v0alpha1.ToggleStatus
-	next    v0alpha1.ToggleStatus
-}
-
-func getChangedToggles(current v0alpha1.ResolvedToggleState, next v0alpha1.ResolvedToggleState) ([]changeToggle, error) {
-	return nil, nil
+	_, _ = w.Write([]byte("TODO... actually UPDATE: "))
 }

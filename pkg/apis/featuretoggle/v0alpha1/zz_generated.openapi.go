@@ -374,7 +374,6 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ResolvedToggleState(ref common.Refer
 					"writeable": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Can any flag be updated",
-							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -410,7 +409,6 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ResolvedToggleState(ref common.Refer
 						},
 					},
 				},
-				Required: []string{"writeable", "toggles"},
 			},
 		},
 		Dependencies: []string{
@@ -456,9 +454,8 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 					},
 					"source": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Where was the value configured eg: default | startup | tenant|org | user | browser",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "Where was the value configured eg: startup | tenant|org | user | browser missing means default",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.ObjectReference"),
 						},
 					},
 					"warning": {
@@ -472,6 +469,8 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 				Required: []string{"name", "enabled"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.ObjectReference"},
 	}
 }
 

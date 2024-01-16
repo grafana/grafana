@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
 // Feature represents a feature in development and information about that feature
@@ -77,13 +79,13 @@ type ResolvedToggleState struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Can any flag be updated
-	Writeable bool `json:"writeable"`
+	Writeable bool `json:"writeable,omitempty"`
 
 	// The currently enabled flags
 	Enabled map[string]bool `json:"enabled,omitempty"`
 
 	// Details on the current status
-	Toggles []ToggleStatus `json:"toggles"`
+	Toggles []ToggleStatus `json:"toggles,omitempty"`
 }
 
 type ToggleStatus struct {
@@ -100,8 +102,9 @@ type ToggleStatus struct {
 	Writeable bool `json:"writeable,omitempty"`
 
 	// Where was the value configured
-	// eg: default | startup | tenant|org | user | browser
-	Source string `json:"source,omitempty"`
+	// eg: startup | tenant|org | user | browser
+	// missing means default
+	Source *common.ObjectReference `json:"source,omitempty"`
 
 	// eg: unknown flag
 	Warning string `json:"warning,omitempty"`
