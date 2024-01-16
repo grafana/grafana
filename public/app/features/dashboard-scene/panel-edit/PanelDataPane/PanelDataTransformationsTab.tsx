@@ -54,44 +54,6 @@ export class PanelDataTransformationsTab
   }
 }
 
-interface TransformationEditorProps {
-  transformations: DataTransformerConfig[];
-  model: PanelDataTransformationsTab;
-  data: PanelData;
-}
-
-function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
-  const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
-
-  return (
-    <DragDropContext onDragEnd={() => {}}>
-      <Droppable droppableId="transformations-list" direction="vertical">
-        {(provided) => {
-          return (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              <TransformationOperationRows
-                onChange={(index, transformation) => {
-                  const newTransformations = transformations.slice();
-                  newTransformations[index] = transformation;
-                  model.changeTransformations(newTransformations);
-                }}
-                onRemove={(index) => {
-                  const newTransformations = transformations.slice();
-                  newTransformations.splice(index);
-                  model.changeTransformations(newTransformations);
-                }}
-                configs={transformationEditorRows}
-                data={data}
-              ></TransformationOperationRows>
-              {provided.placeholder}
-            </div>
-          );
-        }}
-      </Droppable>
-    </DragDropContext>
-  );
-}
-
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
   const styles = useStyles2(getStyles);
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
@@ -131,6 +93,44 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         onDismiss={() => {}}
       />
     </>
+  );
+}
+
+interface TransformationEditorProps {
+  transformations: DataTransformerConfig[];
+  model: PanelDataTransformationsTab;
+  data: PanelData;
+}
+
+function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
+  const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
+
+  return (
+    <DragDropContext onDragEnd={() => {}}>
+      <Droppable droppableId="transformations-list" direction="vertical">
+        {(provided) => {
+          return (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              <TransformationOperationRows
+                onChange={(index, transformation) => {
+                  const newTransformations = transformations.slice();
+                  newTransformations[index] = transformation;
+                  model.changeTransformations(newTransformations);
+                }}
+                onRemove={(index) => {
+                  const newTransformations = transformations.slice();
+                  newTransformations.splice(index);
+                  model.changeTransformations(newTransformations);
+                }}
+                configs={transformationEditorRows}
+                data={data}
+              ></TransformationOperationRows>
+              {provided.placeholder}
+            </div>
+          );
+        }}
+      </Droppable>
+    </DragDropContext>
   );
 }
 
