@@ -45,6 +45,7 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -71,6 +72,7 @@ describe('transformSaveModelToScene', () => {
           ...defaultTimePickerConfig,
           hidden: true,
         },
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
         templating: {
           list: [
             {
@@ -110,6 +112,8 @@ describe('transformSaveModelToScene', () => {
 
       expect(scene.state.title).toBe('test');
       expect(scene.state.uid).toBe('test-uid');
+      expect(scene.state.links).toHaveLength(1);
+      expect(scene.state.links![0].title).toBe('Link 1');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
       expect(scene.state?.$timeRange?.state.fiscalYearStartMonth).toEqual(2);
       expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');

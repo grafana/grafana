@@ -82,6 +82,10 @@ export class DashboardModelCompatibilityWrapper {
     return this._scene.state.tags;
   }
 
+  public get links() {
+    return this._scene.state.links;
+  }
+
   public get meta() {
     return this._scene.state.meta;
   }

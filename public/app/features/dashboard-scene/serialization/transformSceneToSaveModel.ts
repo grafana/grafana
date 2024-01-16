@@ -138,6 +138,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart,
     tags: state.tags,
+    links: state.links,
     graphTooltip,
   };
 
