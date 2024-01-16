@@ -1,9 +1,6 @@
 package featuremgmt
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -57,17 +54,6 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 			}
 		}
 		mgmt.startup[key] = val
-	}
-
-	// Load config settings
-	configfile := filepath.Join(cfg.HomePath, "conf", "features.yaml")
-	if _, err := os.Stat(configfile); err == nil {
-		mgmt.log.Info("[experimental] loading features from config file", "path", configfile)
-		mgmt.config = configfile
-		err = mgmt.readFile()
-		if err != nil {
-			return mgmt, err
-		}
 	}
 
 	// update the values
