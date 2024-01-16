@@ -1,4 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
+import { MarkerSeverity } from 'monaco-editor';
 
 import {
   Aggregate,
@@ -7,8 +8,10 @@ import {
   ComparisonOp,
   FieldExpression,
   FieldOp,
+  Identifier,
   IntrinsicField,
   Or,
+  Parent,
   parser,
   Pipe,
   Resource,
@@ -56,10 +59,7 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
     case Aggregate:
       return 'Invalid expression for aggregator operator.';
     case AttributeField:
-      if (errorNode.prevSibling?.type.id === Span || errorNode.prevSibling?.type.id === Resource) {
-        return 'Invalid expression for spanset.';
-      }
-      return ImproveQueryPerformanceMsg;
+      return 'Invalid expression for spanset.';
     case ScalarFilter:
       switch (errorNode.prevSibling?.type.id) {
         case ComparisonOp:
@@ -75,8 +75,6 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
       return 'Invalid query.';
   }
 };
-
-export const ImproveQueryPerformanceMsg = 'Add resource or span scope to attribute to improve query performance.';
 
 /**
  * Parse the given query and find the error nodes, if any, in the resulting tree.
@@ -115,44 +113,97 @@ export const getErrorNodes = (query: string): SyntaxNode[] => {
  * Use red markers (squiggles) to highlight syntax errors in queries.
  *
  */
-export const setErrorMarkers = (
+export const setMarkers = (
   monaco: typeof monacoTypes,
   model: monacoTypes.editor.ITextModel,
   errorNodes: SyntaxNode[]
 ) => {
+  let markers = getErrorMarkers(monaco, model, errorNodes);
+
+  // check if there are issues that should result in a warning marker
+  const text = model.getValue();
+  const tree = parser.parse(text);
+  const indexOfDot = text.indexOf('.');
+
+  if (indexOfDot > -1) {
+    // check each node and if it is an Identifier node, make sure it is using the correct scope
+    const cur = tree.cursorAt(0);
+    do {
+      const { node } = cur;
+      if (node.type.id === Identifier) {
+        // make sure prevSibling is proper scope
+        if (
+          node.prevSibling?.type.id !== Parent &&
+          node.prevSibling?.type.id !== Resource &&
+          node.prevSibling?.type.id !== Span
+        ) {
+          const from = node.prevSibling ? node.prevSibling.from : node.from - 1;
+          const to = node.prevSibling ? node.prevSibling.to : node.from - 1;
+          const warnings = getWarningMarkers(monaco, model, from, to);
+          markers = [...markers, warnings];
+        }
+      }
+    } while (cur.next());
+  }
+
   monaco.editor.setModelMarkers(
     model,
     'owner', // default value
-    errorNodes.map((errorNode) => {
-      let startLine = 0;
-      let endLine = 0;
-      let start = errorNode.from;
-      let end = errorNode.to;
-
-      while (start > 0) {
-        startLine++;
-        start -= model.getLineLength(startLine) + 1; // new lines don't count for getLineLength() but they still count as a character for the parser
-      }
-      while (end > 0) {
-        endLine++;
-        end -= model.getLineLength(endLine) + 1;
-      }
-
-      const message = computeErrorMessage(errorNode);
-      const severity =
-        message === ImproveQueryPerformanceMsg ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Error;
-
-      return {
-        message,
-        severity,
-
-        startLineNumber: startLine,
-        endLineNumber: endLine,
-
-        // `+ 2` because of the above computations
-        startColumn: start + model.getLineLength(startLine) + 2,
-        endColumn: end + model.getLineLength(endLine) + 2,
-      };
-    })
+    markers
   );
+};
+
+export const getErrorMarkers = (
+  monaco: typeof monacoTypes,
+  model: monacoTypes.editor.ITextModel,
+  errorNodes: SyntaxNode[]
+) => {
+  return errorNodes.map((errorNode) => {
+    const message = computeErrorMessage(errorNode);
+    return getMarker(monaco.MarkerSeverity.Error, message, model, errorNode.from, errorNode.to);
+  });
+};
+
+const getWarningMarkers = (
+  monaco: typeof monacoTypes,
+  model: monacoTypes.editor.ITextModel,
+  from: number,
+  to: number
+) => {
+  const message = 'Add resource or span scope to attribute to improve query performance.';
+  return getMarker(monaco.MarkerSeverity.Warning, message, model, from, to);
+};
+
+const getMarker = (
+  severity: MarkerSeverity,
+  message: string,
+  model: monacoTypes.editor.ITextModel,
+  from: number,
+  to: number
+) => {
+  let startLine = 0;
+  let endLine = 0;
+  let start = from;
+  let end = to;
+
+  while (start > 0) {
+    startLine++;
+    start -= model.getLineLength(startLine) + 1; // new lines don't count for getLineLength() but they still count as a character for the parser
+  }
+  while (end > 0) {
+    endLine++;
+    end -= model.getLineLength(endLine) + 1;
+  }
+
+  return {
+    message,
+    severity,
+
+    startLineNumber: startLine,
+    endLineNumber: endLine,
+
+    // `+ 2` because of the above computations
+    startColumn: start + model.getLineLength(startLine) + 2,
+    endColumn: end + model.getLineLength(endLine) + 2,
+  };
 };
