@@ -7,7 +7,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -59,7 +59,11 @@ export class TableContainer extends PureComponent<Props> {
       name = data.refId || `${i}`;
     }
 
-    return name ? t('explore.table.title-with-name', 'Table - {{name}}', { name }) : t('explore.table.title', 'Table');
+    return name ? (
+      <Trans i18nKey="explore.table.title-with-name">Table - {{ name }}</Trans>
+    ) : (
+      t('explore.table.title', 'Table')
+    );
   }
 
   render() {
