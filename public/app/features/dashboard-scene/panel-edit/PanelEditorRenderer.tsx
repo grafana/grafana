@@ -68,7 +68,6 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2),
       flexBasis: '100%',
       flexGrow: 1,
       minHeight: 0,

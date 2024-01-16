@@ -1836,6 +1836,8 @@ github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQp
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20231027171310-70c52bf65758 h1:ATUhvJSJwzdzhnmzUI92fxVFqyqmcnzJ47wtHTK3LW4=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20231027171310-70c52bf65758/go.mod h1:MmLemcsGjpbOwEeT3k7K+gnvIImXgkatCfVX6sOtx80=
+github.com/grafana/pyroscope-go/godeltaprof v0.1.6 h1:nEdZ8louGAplSvIJi1HVp7kWvFvdiiYg3COLlTwJiFo=
+github.com/grafana/pyroscope-go/godeltaprof v0.1.6/go.mod h1:Tk376Nbldo4Cha9RgiU7ik8WKFkNpfds98aUzS8omLE=
 github.com/grafana/pyroscope/api v0.3.0 h1:WcVKNZ8JlriJnD28wTkZray0wGo8dGkizSJXnbG7Gd8=
 github.com/grafana/pyroscope/api v0.3.0/go.mod h1:JggA80ToAAUACYGfwL49XoFk5aN5ecHp4pNIZhlk9Uc=
 github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd/go.mod h1:M5qHK+eWfAv8VR/265dIuEpL3fNfeC21tXXp9itM24A=
