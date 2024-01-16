@@ -155,6 +155,7 @@
     "@types/yargs": "17.0.33",
     "@typescript-eslint/eslint-plugin": "8.9.0",
     "@typescript-eslint/parser": "8.9.0",
+    "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "10.4.20",
     "babel-loader": "9.2.1",
     "blob-polyfill": "9.0.20240710",
@@ -220,6 +221,7 @@
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
+    "vite": "^5.0.11",
     "webpack": "5.95.0",
     "yaml": "^2.0.0",
     "yargs": "^17.5.1"
