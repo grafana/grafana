@@ -1,10 +1,11 @@
 import { BusEventBase, BusEventWithPayload } from '@grafana/data';
-import { ConstantVariable, SceneObject, SceneVariableSet } from '@grafana/scenes';
+import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
+export type ActionViewType = 'overview' | 'breakdown' | 'logs' | 'related';
 export interface ActionViewDefinition {
   displayName: string;
-  value: string;
+  value: ActionViewType;
   getScene: () => SceneObject;
 }
 
@@ -32,15 +33,13 @@ export const BOOKMARKED_TRAILS_KEY = 'grafana.trails.bookmarks';
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
 export function getVariablesWithMetricConstant(metric: string) {
-  return new SceneVariableSet({
-    variables: [
-      new ConstantVariable({
-        name: VAR_METRIC,
-        value: metric,
-        hide: VariableHide.hideVariable,
-      }),
-    ],
-  });
+  return [
+    new ConstantVariable({
+      name: VAR_METRIC,
+      value: metric,
+      hide: VariableHide.hideVariable,
+    }),
+  ];
 }
 
 export class MetricSelectedEvent extends BusEventWithPayload<string> {
