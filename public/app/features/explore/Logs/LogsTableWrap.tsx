@@ -35,22 +35,22 @@ interface Props extends Themeable2 {
   datasourceType?: string;
 }
 
-type activeFieldMeta = {
+type ActiveFieldMeta = {
   active: false;
   index: undefined; // if undefined the column is not selected
 };
 
-type inactiveFieldMeta = {
+type InactiveFieldMeta = {
   active: true;
   index: number; // if undefined the column is not selected
 };
 
-type genericMeta = {
+type GenericMeta = {
   percentOfLinesWithLabel: number;
   type?: 'BODY_FIELD' | 'TIME_FIELD';
 };
 
-export type fieldNameMeta = (inactiveFieldMeta | activeFieldMeta) & genericMeta;
+export type fieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
 
 type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;

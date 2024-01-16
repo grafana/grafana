@@ -28,8 +28,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'space-between',
       width: '100%',
     }),
-    // Making the checkbox sticky and label scrollable for labels that are wider then the container
-    // However, the checkbox component does not support this, so we need to do some css hackery for now until the API of that component is updated.
+    // Hide text that overflows, had to select elements within the Checkbox component, so this is a bit fragile
     checkboxLabel: css({
       '> span': {
         overflow: 'hidden',
@@ -48,33 +47,37 @@ export function LogsTableNavField(props: {
   labels: Record<string, fieldNameMeta>;
   draggable?: boolean;
   showCount?: boolean;
-}) {
+}): React.JSX.Element | undefined {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  return (
-    <>
-      <div className={styles.contentWrap}>
-        <Checkbox
-          className={styles.checkboxLabel}
-          label={props.label}
-          onChange={props.onChange}
-          checked={props.labels[props.label]?.active ?? false}
-        />
-        {props.showCount && (
-          <button className={styles.labelCount} onClick={props.onChange}>
-            {props.labels[props.label]?.percentOfLinesWithLabel}%
-          </button>
+
+  if (props.labels[props.label]) {
+    return (
+      <>
+        <div className={styles.contentWrap}>
+          <Checkbox
+            className={styles.checkboxLabel}
+            label={props.label}
+            onChange={props.onChange}
+            checked={props.labels[props.label]?.active ?? false}
+          />
+          {props.showCount && (
+            <button className={styles.labelCount} onClick={props.onChange}>
+              {props.labels[props.label]?.percentOfLinesWithLabel}%
+            </button>
+          )}
+        </div>
+        {props.draggable && (
+          <Icon
+            aria-label="Drag and drop icon"
+            title="Drag and drop to reorder"
+            name="draggabledots"
+            size="lg"
+            className={styles.dragIcon}
+          />
         )}
-      </div>
-      {props.draggable && (
-        <Icon
-          aria-label="Drag and drop icon"
-          title="Drag and drop to reorder"
-          name="draggabledots"
-          size="lg"
-          className={styles.dragIcon}
-        />
-      )}
-    </>
-  );
+      </>
+    );
+  }
+  return undefined;
 }

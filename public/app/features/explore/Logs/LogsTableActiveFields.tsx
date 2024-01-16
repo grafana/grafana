@@ -68,7 +68,6 @@ export const LogsTableActiveFields = (props: {
   };
 
   if (labelKeys.length) {
-    // If we have a reorderColumn function, we need to wrap the nav items in dnd components
     return (
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId={'order-fields'} direction="vertical">
