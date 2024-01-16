@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { CoreApp, LoadingState } from '@grafana/data';
@@ -13,6 +13,8 @@ import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { StoreState, ExploreItemState } from 'app/types';
 
+import { GetDataOptions } from '../query/state/PanelQueryRunner';
+
 import { runQueries } from './state/query';
 
 interface DispatchProps {
@@ -26,6 +28,10 @@ type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
   const { width, onClose, queryResponse, timeZone } = props;
+  const [dataOptions, setDataOptions] = useState<GetDataOptions>({
+    withTransforms: false,
+    withFieldConfig: true,
+  });
   const dataFrames = queryResponse?.series || [];
   let errors = queryResponse?.errors;
   if (!errors?.length && queryResponse?.error) {
@@ -59,9 +65,11 @@ export function ExploreQueryInspector(props: Props) {
         data={dataFrames}
         dataName={'Explore'}
         isLoading={queryResponse.state === LoadingState.Loading}
-        options={{ withTransforms: false, withFieldConfig: false }}
+        options={dataOptions}
         timeZone={timeZone}
         app={CoreApp.Explore}
+        formattedDataDescription="Matches the format in the panel"
+        onOptionsChange={setDataOptions}
       />
     ),
   };
