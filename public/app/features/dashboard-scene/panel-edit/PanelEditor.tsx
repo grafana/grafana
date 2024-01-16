@@ -1,6 +1,7 @@
 import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   SceneFlexItem,
   SceneFlexLayout,
@@ -13,6 +14,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { getDashboardUrl } from '../utils/urlBuilders';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,
@@ -91,7 +93,17 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _navigateBackToDashboard() {
     const dashboard = getDashboardSceneFor(this);
-    dashboard.setState({ editPanel: undefined });
+    locationService.push(
+      getDashboardUrl({
+        uid: dashboard.state.uid,
+        currentQueryParams: locationService.getLocation().search,
+        updateQuery: {
+          editPanel: null,
+          // Clean the PanelEditor data pane tab query param
+          tab: null,
+        },
+      })
+    );
   }
 }
 
