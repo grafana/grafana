@@ -59,6 +59,16 @@ export const LogsTableActiveFields = (props: {
   const theme = useTheme2();
   const styles = getLogsFieldsStyles(theme);
   const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
+
+  const renderTitle = (labelName: string) => {
+    const label = labels[labelName];
+    if (label) {
+      return `${labelName} appears in ${label?.percentOfLinesWithLabel}% of log lines`;
+    }
+
+    return undefined;
+  };
+
   if (labelKeys.length) {
     // If we have a reorderColumn function, we need to wrap the nav items in dnd components
     return (
@@ -74,7 +84,7 @@ export const LogsTableActiveFields = (props: {
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
-                      title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
+                      title={renderTitle(labelName)}
                     >
                       <LogsTableNavField
                         label={labelName}
