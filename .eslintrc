@@ -101,7 +101,9 @@
         "public/app/plugins/datasource/azuremonitor/*.{ts,tsx}",
         "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}",
         "public/app/plugins/datasource/parca/*.{ts,tsx}",
-        "public/app/plugins/datasource/parca/**/*.{ts,tsx}"
+        "public/app/plugins/datasource/parca/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/tempo/*.{ts,tsx}",
+        "public/app/plugins/datasource/tempo/**/*.{ts,tsx}"
       ],
       "settings": {
         "import/resolver": {
