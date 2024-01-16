@@ -735,21 +735,21 @@ func TestIntegrationDelete(t *testing.T) {
 	})
 }
 
-func TestGetDashboardByFolder(t *testing.T) {
+func TestFindByFolder(t *testing.T) {
 	t.Run("returns nil when dashboard is not a folder", func(t *testing.T) {
 		sqlStore, _ := db.InitTestDBwithCfg(t)
-		dashboard := &dashboards.Dashboard{IsFolder: false}
+		dashboard := &dashboards.Dashboard{OrgID: 1, UID: "dashboarduid", IsFolder: false}
 		store := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		pubdashes, err := store.FindByFolder(context.Background(), dashboard)
+		pubdashes, err := store.FindByFolder(context.Background(), dashboard.OrgID, dashboard.UID)
 
 		require.NoError(t, err)
 		assert.Nil(t, pubdashes)
 	})
 
-	t.Run("returns nil when dashboard is nil", func(t *testing.T) {
+	t.Run("returns nil when parameters are empty", func(t *testing.T) {
 		sqlStore, _ := db.InitTestDBwithCfg(t)
 		store := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		pubdashes, err := store.FindByFolder(context.Background(), nil)
+		pubdashes, err := store.FindByFolder(context.Background(), 0, "")
 
 		require.NoError(t, err)
 		assert.Nil(t, pubdashes)
@@ -773,7 +773,7 @@ func TestGetDashboardByFolder(t *testing.T) {
 		pubdash := insertPublicDashboard(t, pubdashStore, dashboard.UID, dashboard.OrgID, true, PublicShareType)
 		_ = insertPublicDashboard(t, pubdashStore, dashboard2.UID, dashboard2.OrgID, true, PublicShareType)
 
-		pubdashes, err := pubdashStore.FindByFolder(context.Background(), folder)
+		pubdashes, err := pubdashStore.FindByFolder(context.Background(), folder.OrgID, folder.UID)
 
 		require.NoError(t, err)
 		assert.Len(t, pubdashes, 1)
