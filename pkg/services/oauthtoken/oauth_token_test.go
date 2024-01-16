@@ -281,50 +281,6 @@ func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.Delet
 	return f.ExpectedError
 }
 
-// migrated tests from oauth_token_sync_test.go
-
-// {
-// 	desc:                  "should skip sync for when access token don't have expire time",
-// 	identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-// 	expectHasEntryCalled:  true,
-// 	expectedHasEntryToken: &login.UserAuth{},
-// },
-// {
-// 	desc:                  "should skip sync when access token has no expired yet",
-// 	identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-// 	expectHasEntryCalled:  true,
-// 	expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
-// },
-// {
-// 	desc:                  "should skip sync when access token has no expired yet",
-// 	identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-// 	expectHasEntryCalled:  true,
-// 	expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
-// },
-// {
-// 	desc:                        "should skip sync when use_refresh_token is disabled",
-// 	identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthenticatedBy: login.GitLabAuthModule},
-// 	expectHasEntryCalled:        true,
-// 	expectTryRefreshTokenCalled: false,
-// 	expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
-// 	oauthInfo:                   &social.OAuthInfo{UseRefreshToken: false},
-// },
-// {
-// 	desc:                        "should refresh access token when ID token has expired",
-// 	identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-// 	expectHasEntryCalled:        true,
-// 	expectTryRefreshTokenCalled: true,
-// 	expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute), OAuthIdToken: fakeIDToken(t, time.Now().Add(-10*time.Minute))},
-// 	// expectedTryRefreshErr:       errors.New("some err"), // TODO
-// },
-// {
-// 	desc:                        "should refresh access token when it has expired",
-// 	identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-// 	expectHasEntryCalled:        false,
-// 	expectTryRefreshTokenCalled: true,
-// 	expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
-// },
-
 func TestService_TryTokenRefresh(t *testing.T) {
 	type testCase struct {
 		desc      string
