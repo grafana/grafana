@@ -57,7 +57,7 @@
     "@types/uuid": "9.0.2",
     "copy-webpack-plugin": "11.0.0",
     "eslint-webpack-plugin": "4.0.1",
-    "glob": "10.3.3",
+    "glob": "10.3.10",
     "react-select-event": "5.5.1",
     "replace-in-file-webpack-plugin": "1.0.6",
     "ts-node": "10.9.1",
