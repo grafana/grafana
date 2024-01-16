@@ -10,17 +10,7 @@ import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from
 
 function createPanelManagerMock(sceneDataTransformer: SceneDataTransformer) {
   return {
-    panelManager: {
-      useState: () => {
-        return {
-          panel: {
-            useState: () => {
-              return { $data: sceneDataTransformer };
-            },
-          },
-        };
-      },
-    },
+    getDataTransformer: () => sceneDataTransformer,
   } as unknown as PanelDataTransformationsTab;
 }
 
