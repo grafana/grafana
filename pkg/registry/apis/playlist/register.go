@@ -16,6 +16,7 @@ import (
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
@@ -23,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
@@ -128,7 +129,7 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 	return playlist.GetOpenAPIDefinitions
 }
 
-func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *PlaylistAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
 }
 

@@ -14,11 +14,13 @@ import (
 	"k8s.io/apiserver/pkg/util/openapi"
 	"k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
+	grafanaopenapi "github.com/grafana/grafana/pkg/services/grafana-apiserver/openapi"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func SetupConfig(serverConfig *genericapiserver.RecommendedConfig, builders []APIGroupBuilder) error {
-	defsGetter := GetOpenAPIDefinitions(builders)
+func SetupConfig(serverConfig *genericapiserver.RecommendedConfig, builders []builder.APIGroupBuilder) error {
+	defsGetter := grafanaopenapi.GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
@@ -70,7 +72,7 @@ func SetupConfig(serverConfig *genericapiserver.RecommendedConfig, builders []AP
 
 func InstallAPIs(server *genericapiserver.GenericAPIServer,
 	optsGetter generic.RESTOptionsGetter,
-	builders []APIGroupBuilder,
+	builders []builder.APIGroupBuilder,
 ) error {
 	for _, b := range builders {
 		g, err := b.GetAPIGroupInfo(Scheme, Codecs, optsGetter)

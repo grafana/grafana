@@ -14,9 +14,10 @@ import (
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*ServiceAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*ServiceAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type ServiceAPIBuilder struct{}
@@ -83,6 +84,6 @@ func (b *ServiceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
-func (b *ServiceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *ServiceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,7 +29,7 @@ const (
 
 // APIServerOptions contains the state for the apiserver
 type APIServerOptions struct {
-	builders           []grafanaAPIServer.APIGroupBuilder
+	builders           []builder.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
 
@@ -44,7 +45,7 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 }
 
 func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
-	o.builders = []grafanaAPIServer.APIGroupBuilder{}
+	o.builders = []builder.APIGroupBuilder{}
 	for _, g := range args {
 		switch g {
 		// No dependencies for testing

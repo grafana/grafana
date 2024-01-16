@@ -28,6 +28,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/org"
 
@@ -91,7 +92,7 @@ type Service interface {
 }
 
 type APIRegistrar interface {
-	RegisterAPI(builder APIGroupBuilder)
+	RegisterAPI(builder builder.APIGroupBuilder)
 }
 
 type RestConfigProvider interface {
@@ -120,7 +121,7 @@ type service struct {
 	db       db.DB
 	rr       routing.RouteRegister
 	handler  http.Handler
-	builders []APIGroupBuilder
+	builders []builder.APIGroupBuilder
 
 	tracing *tracing.TracingService
 
@@ -141,7 +142,7 @@ func ProvideService(
 		features:   features,
 		rr:         rr,
 		stopCh:     make(chan struct{}),
-		builders:   []APIGroupBuilder{},
+		builders:   []builder.APIGroupBuilder{},
 		authorizer: authorizer.NewGrafanaAuthorizer(cfg, orgService),
 		tracing:    tracing,
 		db:         db, // For Unified storage
@@ -201,8 +202,8 @@ func (s *service) Run(ctx context.Context) error {
 	return s.running(ctx)
 }
 
-func (s *service) RegisterAPI(builder APIGroupBuilder) {
-	s.builders = append(s.builders, builder)
+func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
+	s.builders = append(s.builders, b)
 }
 
 func (s *service) start(ctx context.Context) error {

@@ -9,6 +9,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -16,7 +17,7 @@ type requestHandler struct {
 	router *mux.Router
 }
 
-func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder) (http.Handler, error) {
+func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []builder.APIGroupBuilder) (http.Handler, error) {
 	useful := false // only true if any routes exist anywhere
 	router := mux.NewRouter()
 
@@ -120,14 +121,14 @@ func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 // Modify the the OpenAPI spec to include the additional routes.
 // Currently this requires: https://github.com/kubernetes/kube-openapi/pull/420
 // In future k8s release, the hook will use Config3 rather than the same hook for both v2 and v3
-func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func getOpenAPIPostProcessor(builders []builder.APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 		if s.Paths == nil {
 			return s, nil
 		}
-		for _, builder := range builders {
-			routes := builder.GetAPIRoutes()
-			gv := builder.GetGroupVersion()
+		for _, b := range builders {
+			routes := b.GetAPIRoutes()
+			gv := b.GetGroupVersion()
 			prefix := "/apis/" + gv.String() + "/"
 			if s.Paths.Paths[prefix] != nil {
 				copy := spec3.OpenAPI{
@@ -145,7 +146,7 @@ func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 				}
 
 				if routes == nil {
-					routes = &APIRoutes{}
+					routes = &builder.APIRoutes{}
 				}
 
 				for _, route := range routes.Root {

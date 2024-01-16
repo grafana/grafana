@@ -24,11 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
@@ -211,6 +212,6 @@ func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinit
 }
 
 // Register additional routes with the server
-func (b *DataSourceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }

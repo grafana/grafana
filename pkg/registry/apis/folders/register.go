@@ -17,13 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*FolderAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = v0alpha1.FolderResourceInfo
 
@@ -138,7 +139,7 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *FolderAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
 }
 

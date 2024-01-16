@@ -1,4 +1,4 @@
-package grafanaapiserver
+package builder
 
 import (
 	"net/http"

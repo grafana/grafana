@@ -23,6 +23,7 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
@@ -31,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
@@ -195,6 +196,6 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *DashboardsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
 }

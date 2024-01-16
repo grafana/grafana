@@ -1,4 +1,4 @@
-package grafanaapiserver
+package openapi
 
 import (
 	"maps"
@@ -8,10 +8,11 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 )
 
 // This should eventually live in grafana-app-sdk
-func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
+func GetOpenAPIDefinitions(builders []builder.APIGroupBuilder) common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := getStandardOpenAPIDefinitions(ref)
 		maps.Copy(defs, v0alpha1.GetOpenAPIDefinitions(ref)) // common grafana apis

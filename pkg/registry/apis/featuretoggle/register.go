@@ -16,9 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
 
 var gv = v0alpha1.SchemeGroupVersion
 
@@ -102,13 +103,13 @@ func (b *FeatureFlagAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 // Register additional routes with the server
-func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	stateSchema := defs["github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1.ResolvedToggleState"].Schema
 
 	tags := []string{"Editor"}
-	return &grafanaapiserver.APIRoutes{
-		Root: []grafanaapiserver.APIRouteHandler{
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{
 			{
 				Path: "current",
 				Spec: &spec3.PathProps{
