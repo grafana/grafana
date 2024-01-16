@@ -194,7 +194,7 @@ type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
 	ReqRole      org.RoleType    `json:"reqRole"`
-	Action       string          `json:"reqAction"`
+	Action       string          `json:"action"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
