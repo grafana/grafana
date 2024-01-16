@@ -2941,7 +2941,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.4"
+    "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.195"
     "@types/prismjs": "npm:1.26.0"
     "@types/react": "npm:18.2.15"
@@ -3076,7 +3076,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.4"
+    "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.195"
     "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.0"
@@ -8746,16 +8746,6 @@ __metadata:
     jest-diff: "npm:^26.0.0"
     pretty-format: "npm:^26.0.0"
   checksum: 6de98f19b115540985bc2d32566a4c5e98215161ab6c8b06854cace140623cd71949230ad258b5b7de7323a00668bea14e3b250277e5a484da479ab238687793
-  languageName: node
-  linkType: hard
-
-"@types/jest@npm:29.5.4":
-  version: 29.5.4
-  resolution: "@types/jest@npm:29.5.4"
-  dependencies:
-    expect: "npm:^29.0.0"
-    pretty-format: "npm:^29.0.0"
-  checksum: c56081b958c06f4f3a30f7beabf4e94e70db96a4b41b8a73549fea7f9bf0a8c124ab3998ea4e6d040d1b8c95cfbe0b8d4a607da4bdea03c9e116f92c147df193
   languageName: node
   linkType: hard
 
