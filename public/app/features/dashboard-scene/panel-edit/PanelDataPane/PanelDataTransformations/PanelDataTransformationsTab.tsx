@@ -49,10 +49,8 @@ export class PanelDataTransformationsTab
 
   public changeTransformations(transformations: DataTransformerConfig[]) {
     const dataProvider = this.getDataTransformer();
-    if (dataProvider instanceof SceneDataTransformer) {
-      dataProvider.setState({ transformations });
-      dataProvider.reprocessTransformations();
-    }
+    dataProvider.setState({ transformations });
+    dataProvider.reprocessTransformations();
   }
 }
 
