@@ -14,7 +14,7 @@ weight: 150
 # Upgrade Alerting
 
 {{% admonition type="note" %}}
-Legacy alerting will be removed in Grafana v11.0.0, which is scheduled for release in April 2024. We recommend that you upgrade to Grafana Alerting as soon as possible.
+Legacy alerting will be removed in Grafana v11.0.0. We recommend that you upgrade to Grafana Alerting as soon as possible.
 For more information, refer to [Legacy alerting deprecation]({{< relref "./legacy-alerting-deprecation" >}}).
 {{% /admonition %}}
 
