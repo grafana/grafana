@@ -38,6 +38,7 @@ import {
   dynamicDashNavActions,
   registerDynamicDashNavAction,
 } from '../../../dashboard-scene/utils/registerDynamicDashNavAction';
+import { AlertRulesToolbarButton } from '../AlertRules/AlertRulesDrawer';
 
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
@@ -330,6 +331,10 @@ export const DashNav = React.memo<Props>((props) => {
           key="button-settings"
         />
       );
+    }
+
+    if (config.unifiedAlertingEnabled) {
+      buttons.push(<AlertRulesToolbarButton dashboardUid={dashboard.uid} />);
     }
 
     addCustomContent(dynamicDashNavActions.right, buttons);
