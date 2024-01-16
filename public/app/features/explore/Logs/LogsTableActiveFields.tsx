@@ -70,7 +70,7 @@ export const LogsTableActiveFields = (props: {
   if (labelKeys.length) {
     return (
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId={'order-fields'} direction="vertical">
+        <Droppable droppableId="order-fields" direction="vertical">
           {(provided) => (
             <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
               {labelKeys.sort(sortLabels(labels)).map((labelName, index) => (
