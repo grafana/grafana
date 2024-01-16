@@ -149,12 +149,8 @@ func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
 		Expiry:       time.Now().Add(-time.Hour),
 		TokenType:    "Bearer",
 	}
-	usr := &login.UserAuth{
-		AuthModule:        "oauth_generic_oauth",
-		OAuthAccessToken:  token.AccessToken,
-		OAuthRefreshToken: token.RefreshToken,
-		OAuthExpiry:       token.Expiry,
-		OAuthTokenType:    token.TokenType,
+	usr := &user.SignedInUser{
+		AuthenticatedBy: login.GenericOAuthModule,
 	}
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
@@ -185,15 +181,17 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 		TokenType:    "Bearer",
 	}
 
-	usr := &login.UserAuth{
+	usr := &user.SignedInUser{
+		AuthenticatedBy: login.GenericOAuthModule,
+	}
+
+	authInfoStore.ExpectedOAuth = &login.UserAuth{
 		AuthModule:        "oauth_generic_oauth",
 		OAuthAccessToken:  token.AccessToken,
 		OAuthRefreshToken: token.RefreshToken,
 		OAuthExpiry:       token.Expiry,
 		OAuthTokenType:    token.TokenType,
 	}
-
-	authInfoStore.ExpectedOAuth = usr
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.ReuseTokenSource(token, oauth2.StaticTokenSource(newToken)), nil)
 	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
@@ -219,8 +217,8 @@ func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
 	srv, _, socialConnector := setupOAuthTokenService(t)
 	ctx := context.Background()
 	token := &oauth2.Token{}
-	usr := &login.UserAuth{
-		AuthModule: "auth.saml",
+	usr := &user.SignedInUser{
+		AuthenticatedBy: login.SAMLAuthModule,
 	}
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
@@ -282,6 +280,51 @@ func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.Updat
 func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
 	return f.ExpectedError
 }
+
+// migrated tests from oauth_token_sync_test.go
+
+// {
+// 	desc:                  "should skip sync for when access token don't have expire time",
+// 	identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+// 	expectHasEntryCalled:  true,
+// 	expectedHasEntryToken: &login.UserAuth{},
+// },
+// {
+// 	desc:                  "should skip sync when access token has no expired yet",
+// 	identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+// 	expectHasEntryCalled:  true,
+// 	expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
+// },
+// {
+// 	desc:                  "should skip sync when access token has no expired yet",
+// 	identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+// 	expectHasEntryCalled:  true,
+// 	expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
+// },
+// {
+// 	desc:                        "should skip sync when use_refresh_token is disabled",
+// 	identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthenticatedBy: login.GitLabAuthModule},
+// 	expectHasEntryCalled:        true,
+// 	expectTryRefreshTokenCalled: false,
+// 	expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
+// 	oauthInfo:                   &social.OAuthInfo{UseRefreshToken: false},
+// },
+// {
+// 	desc:                        "should refresh access token when ID token has expired",
+// 	identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+// 	expectHasEntryCalled:        true,
+// 	expectTryRefreshTokenCalled: true,
+// 	expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute), OAuthIdToken: fakeIDToken(t, time.Now().Add(-10*time.Minute))},
+// 	// expectedTryRefreshErr:       errors.New("some err"), // TODO
+// },
+// {
+// 	desc:                        "should refresh access token when it has expired",
+// 	identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+// 	expectHasEntryCalled:        false,
+// 	expectTryRefreshTokenCalled: true,
+// 	expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
+// },
+
 func TestService_TryTokenRefresh(t *testing.T) {
 	type testCase struct {
 		desc      string
