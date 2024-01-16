@@ -320,8 +320,6 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		return false, nil
 	}
 
-	am.updateConfigMetrics(cfg)
-
 	err = am.Base.ApplyConfig(AlertingConfiguration{
 		rawAlertmanagerConfig:    rawConfig,
 		alertmanagerConfig:       cfg.AlertmanagerConfig,
@@ -332,6 +330,7 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		return false, err
 	}
 
+	am.updateConfigMetrics(cfg)
 	return true, nil
 }
 
