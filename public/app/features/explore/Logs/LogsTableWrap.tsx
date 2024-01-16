@@ -373,8 +373,7 @@ export function LogsTableWrap(props: Props) {
     }
 
     const length = Object.keys(columnsWithMeta).filter((c) => columnsWithMeta[c].active).length;
-
-    const isActive = !columnsWithMeta[columnName]?.active ? true : undefined;
+    const isActive = !columnsWithMeta[columnName].active ? true : undefined;
 
     let pendingLabelState: FieldNameMetaStore;
     if (isActive) {
