@@ -104,7 +104,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           <EmptyTransformationsMessage onShowPicker={() => {}}></EmptyTransformationsMessage>
         ) : (
           <>
-            <TransformationsEditor data={data!} transformations={transformations} model={model} />
+            {data && <TransformationsEditor data={data} transformations={transformations} model={model} />}
             <ButtonGroup>
               <Button
                 icon="plus"
