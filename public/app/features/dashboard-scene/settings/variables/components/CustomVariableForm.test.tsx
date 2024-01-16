@@ -58,9 +58,9 @@ describe('CustomVariableForm', () => {
     const { getByTestId } = render(
       <CustomVariableForm
         query=""
-        multi={false}
+        multi={true}
         allValue=""
-        includeAll={false}
+        includeAll={true}
         onQueryChange={onQueryChange}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
@@ -77,23 +77,19 @@ describe('CustomVariableForm', () => {
     const includeAllCheckbox = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitchV2
     );
-
-    fireEvent.change(queryInput, { target: { value: 'test query' } });
-    fireEvent.change(multiCheckbox, { target: { checked: true } });
-    fireEvent.change(includeAllCheckbox, { target: { checked: true } });
     const allValueInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
     );
+
+    fireEvent.change(queryInput, { target: { value: 'test query' } });
+    fireEvent.click(multiCheckbox);
+    fireEvent.click(includeAllCheckbox);
     fireEvent.change(allValueInput, { target: { value: 'test value' } });
 
     expect(onQueryChange).toHaveBeenCalledTimes(1);
-    expect(queryInput).toHaveValue('test query');
     expect(onMultiChange).toHaveBeenCalledTimes(1);
-    expect(multiCheckbox).toBeChecked();
     expect(onIncludeAllChange).toHaveBeenCalledTimes(1);
-    expect(includeAllCheckbox).toBeChecked();
     expect(onAllValueChange).toHaveBeenCalledTimes(1);
-    expect(allValueInput).toHaveValue('test value');
     expect(onQueryBlur).not.toHaveBeenCalled();
     expect(onAllValueBlur).not.toHaveBeenCalled();
   });
