@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -344,27 +346,74 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 	return height, nil
 }
 
-func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
-	if len(uids) == 0 {
+// GetFolders returns org folders by their UIDs.
+// If setFullpath is true it computes also the full path of a folder.
+// The full path is a string that contains the titles of all parent folders separated by a slash.
+// For example, if the folder structure is:
+//
+//	A
+//	└── B
+//	    └── C
+//
+// The full path of C is "A/B/C".
+// The full path of B is "A/B".
+// The full path of A is "A".
+// If a folder contains a slash in its title, it is escaped with a backslash.
+// For example, if the folder structure is:
+//
+//	A
+//	└── B/C
+//
+// The full path of C is "A/B\/C".
+func (ss *sqlStore) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	if len(q.UIDs) == 0 {
 		return []*folder.Folder{}, nil
 	}
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		b := strings.Builder{}
-		b.WriteString(`SELECT * FROM folder WHERE org_id=? AND uid IN (?` + strings.Repeat(", ?", len(uids)-1) + `)`)
-		args := []any{orgID}
-		for _, uid := range uids {
+		s := fmt.Sprintf(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
+		// compute full path column if requested
+		if q.WithFullpath {
+			s += fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect()))
+		}
+		s += ` FROM folder f0`
+		// join the same table multiple times to compute the full path of a folder
+		if q.WithFullpath {
+			s += getFullpathJoinsSQL()
+		}
+		s += ` WHERE f0.org_id=? AND f0.uid IN (?` + strings.Repeat(", ?", len(q.UIDs)-1) + `)`
+		args := []any{q.OrgID}
+		for _, uid := range q.UIDs {
 			args = append(args, uid)
 		}
-		return sess.SQL(b.String(), args...).Find(&folders)
+		return sess.SQL(s, args...).Find(&folders)
 	}); err != nil {
 		return nil, err
 	}
 
 	// Add URLs
 	for i, f := range folders {
+		f.Fullpath = strings.TrimLeft(f.Fullpath, "/")
 		folders[i] = f.WithURL()
 	}
 
 	return folders, nil
+}
+
+func getFullpathSQL(dialect migrator.Dialect) string {
+	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
+	concatCols = append(concatCols, "COALESCE(REPLACE(f0.title, '/', '\\/'), '')")
+	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.title, '/', '\\/'), '')", i), "'/'"}, concatCols...)
+	}
+	return dialect.Concat(concatCols...)
+}
+
+// getFullpathJoinsSQL returns a SQL fragment that joins the same table multiple times to get the full path of a folder.
+func getFullpathJoinsSQL() string {
+	joins := make([]string, 0, folder.MaxNestedFolderDepth)
+	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.uid = f%d.parent_uid`, i, i, i-1))
+	}
+	return strings.Join(joins, "\n")
 }

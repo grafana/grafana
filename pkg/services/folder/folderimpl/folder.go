@@ -77,6 +77,15 @@ func ProvideService(
 	return srv
 }
 
+func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	dashFolders, err := s.store.GetFolders(ctx, q)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	return dashFolders, nil
+}
+
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
@@ -305,7 +314,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 		return nonRootFolders, nil
 	}
 
-	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
+	dashFolders, err := s.store.GetFolders(ctx, folder.GetFoldersQuery{OrgID: orgID, UIDs: folderUids})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
 	}

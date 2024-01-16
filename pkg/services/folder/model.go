@@ -46,6 +46,7 @@ type Folder struct {
 	UpdatedBy int64
 	CreatedBy int64
 	HasACL    bool
+	Fullpath  string `xorm:"fullpath"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -147,6 +148,12 @@ type GetFolderQuery struct {
 	OrgID int64
 
 	SignedInUser identity.Requester `json:"-"`
+}
+
+type GetFoldersQuery struct {
+	OrgID        int64
+	UIDs         []string
+	WithFullpath bool
 }
 
 // GetParentsQuery captures the information required by the folder service to
