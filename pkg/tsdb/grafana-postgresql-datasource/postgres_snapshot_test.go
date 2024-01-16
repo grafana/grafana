@@ -121,6 +121,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "time_series", name: "simple"},
 		{format: "time_series", name: "7x_compat_metric_label"},
 		{format: "time_series", name: "convert_to_float64"},
+		{format: "time_series", name: "convert_to_float64_not"},
 		{format: "time_series", name: "fill_null"},
 		{format: "time_series", name: "fill_previous"},
 		{format: "time_series", name: "fill_value"},
