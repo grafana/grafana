@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
@@ -120,10 +121,9 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	assert.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
-	authInfoQuery := &login.GetAuthInfoQuery{}
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: 1}
 	resultUsr, err := srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
-
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	// User's token data had not been updated
 	assert.Equal(t, resultUsr.OAuthAccessToken, token.AccessToken)
