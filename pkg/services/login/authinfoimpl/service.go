@@ -17,7 +17,7 @@ import (
 type Service struct {
 	authInfoStore login.Store
 	logger        log.Logger
-	remoteCache   *remotecache.RemoteCache
+	remoteCache   remotecache.CacheStorage
 	secretService secrets.Service
 }
 
@@ -25,7 +25,7 @@ const remoteCachePrefix = "authinfo-"
 const remoteCacheTTL = 60 * time.Hour
 
 func ProvideService(authInfoStore login.Store,
-	remoteCache *remotecache.RemoteCache,
+	remoteCache remotecache.CacheStorage,
 	secretService secrets.Service) *Service {
 	s := &Service{
 		authInfoStore: authInfoStore,
@@ -57,9 +57,18 @@ func (s *Service) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery
 	err = s.setAuthInfoInCache(ctx, query, authInfo)
 	if err != nil {
 		s.logger.Error("failed to set auth info in cache", "error", err)
+	} else {
+		s.logger.Debug("auth info set in cache", "cacheKey", generateCacheKey(query))
 	}
 
 	return authInfo, nil
+}
+
+func (s *Service) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+	if len(query.UserIDs) == 0 {
+		return map[int64]string{}, nil
+	}
+	return s.authInfoStore.GetUserLabels(ctx, query)
 }
 
 func (s *Service) setAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery, info *login.UserAuth) error {
@@ -94,6 +103,8 @@ func (s *Service) getAuthInfoFromCache(ctx context.Context, query *login.GetAuth
 	if err := json.Unmarshal(itemJSON, info); err != nil {
 		return nil, err
 	}
+
+	s.logger.Debug("auth info retrieved from cache", "cacheKey", cacheKey)
 
 	return info, nil
 }
