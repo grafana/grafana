@@ -46,8 +46,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     indent: css({
+      marginLeft: '48px',
       width: '100%',
-      paddingLeft: '68px',
       '&:hover': {
         color: theme.colors.text.primary,
         textDecoration: 'underline',
@@ -61,7 +61,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const [sectionExpanded, toggleSectionExpanded] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
-  const [expanded, toggleExpanded] = useToggle(false);
   const [activeItemId, setActiveItemId] = useState<string | undefined>(outlineItems[0]?.id);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
@@ -114,22 +113,42 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   // TODO: fix indenting for buttons that are not in a section
   // figure out why ellipsis is not working
   useEffect(() => {
-    const activeItem = outlineItems.find((item) => {
-      const top = item?.ref?.getBoundingClientRect().top;
+    let activeItem = null;
 
-      if (!top) {
-        return false;
+    // Loop through each item
+    for (const item of outlineItems) {
+      let top = item?.ref?.getBoundingClientRect().top;
+
+      // Check item
+      if (top && top >= -10) {
+        activeItem = item;
+        break;
       }
 
-      return top >= 0;
-    });
+      // if (sectionExpanded) {
+      //   continue;
+      // }
+
+      // Check children
+      const activeChild = item.children?.find((child) => {
+        let childTop = child?.ref?.getBoundingClientRect().top;
+        return childTop && childTop >= -15;
+      });
+
+      if (activeChild && !sectionExpanded) {
+        activeItem = activeChild;
+        break;
+      }
+    }
 
     if (!activeItem) {
       return;
     }
 
     setActiveItemId(activeItem.id);
-  }, [outlineItems, verticalScroll]);
+  }, [outlineItems, verticalScroll, sectionExpanded]);
+
+  console.log('activeItemId', activeItemId);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
@@ -147,13 +166,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
           {outlineItems.map((item) => (
             <React.Fragment key={item.id}>
               <div className={styles.sectionWrapper}>
-                {item.children && item.children.length > 0 && contentOutlineExpanded && (
+                {/* {item.children && item.children.length > 0 && contentOutlineExpanded && (
                   <ContentOutlineItemButton
                     icon={sectionExpanded ? 'angle-down' : 'angle-right'}
                     className={styles.iconButton}
                     onClick={toggleSection}
                   />
-                )}
+                )} */}
                 <ContentOutlineItemButton
                   key={item.id}
                   title={contentOutlineExpanded ? item.title : undefined}
@@ -161,14 +180,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   icon={item.icon}
                   onClick={() => scrollIntoView(item.ref, item.panelId)}
                   tooltip={!contentOutlineExpanded ? item.title : undefined}
-                  topLeftIcon={
-                    item.children && item.children.length > 0 && !contentOutlineExpanded
-                      ? sectionExpanded
-                        ? 'angle-down'
-                        : 'angle-right'
-                      : undefined
-                  }
-                  onTopLeftIconClick={() => toggleSection()}
+                  collapsible={item.children && item.children.length > 0 ? true : undefined}
+                  collapsed={sectionExpanded}
+                  toggleCollapsed={toggleSection}
+                  isActive={activeItemId === item.id}
                 />
               </div>
               {item.children &&
@@ -181,23 +196,11 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                     className={contentOutlineExpanded ? styles.indent : styles.buttonStyles}
                     onClick={() => scrollIntoView(child.ref, child.panelId)}
                     tooltip={!contentOutlineExpanded ? child.title : undefined}
+                    isActive={activeItemId === child.id}
                   />
                 ))}
             </React.Fragment>
           ))}
-          {outlineItems.map((item) => {
-            return (
-              <ContentOutlineItemButton
-                key={item.id}
-                title={expanded ? item.title : undefined}
-                className={styles.buttonStyles}
-                icon={item.icon}
-                onClick={() => scrollIntoView(item.ref, item.title)}
-                tooltip={!expanded ? item.title : undefined}
-                isActive={activeItemId === item.id}
-              />
-            );
-          })}
         </div>
       </CustomScrollbar>
     </PanelContainer>

@@ -9,8 +9,9 @@ type CommonProps = {
   icon?: string;
   tooltip?: string;
   className?: string;
-  topLeftIcon?: string;
-  onTopLeftIconClick?: () => void;
+  collapsible?: boolean;
+  collapsed?: boolean;
+  toggleCollapsed?: () => void;
   isActive?: boolean;
 };
 
@@ -21,8 +22,9 @@ export function ContentOutlineItemButton({
   icon,
   tooltip,
   className,
-  topLeftIcon,
-  onTopLeftIconClick,
+  collapsible,
+  collapsed,
+  toggleCollapsed,
   isActive,
   ...rest
 }: ContentOutlineItemButtonProps) {
@@ -32,12 +34,18 @@ export function ContentOutlineItemButton({
 
   const body = (
     <div className={styles.buttonContainer}>
-      {topLeftIcon && (
-        <button className={styles.topLeftIcon} onClick={onTopLeftIconClick}>
-          {renderIcon(topLeftIcon, 'lg')}
+      {collapsible && (
+        <button className={styles.collapseButton} onClick={toggleCollapsed}>
+          {renderIcon(collapsed ? 'angle-down' : 'angle-right')}
         </button>
       )}
-      <button className={buttonStyles} aria-label={tooltip} {...rest}>
+      <button
+        className={cx(buttonStyles, {
+          [styles.active]: isActive,
+        })}
+        aria-label={tooltip}
+        {...rest}
+      >
         {renderIcon(icon)}
         {title && <span className={styles.textContainer}>{title}</span>}
       </button>
@@ -69,6 +77,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     buttonContainer: css({
       position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
     }),
     button: css({
       label: 'content-outline-item-button',
@@ -83,20 +94,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       maxWidth: '155px',
     }),
+    collapseButton: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: theme.spacing(3),
+      height: theme.spacing(4),
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.secondary,
+      background: 'transparent',
+      border: 'none',
+
+      '&:hover': {
+        color: theme.colors.text.primary,
+        background: theme.colors.secondary.shade,
+      },
+    }),
     textContainer: css({
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-    }),
-    topLeftIcon: css({
-      position: 'absolute',
-      top: '1px',
-      left: 0,
-      cursor: 'pointer',
-      background: 'transparent',
-      border: 'none',
-      padding: 0,
-      margin: 0,
     }),
     active: css({
       backgroundColor: theme.colors.background.secondary,
