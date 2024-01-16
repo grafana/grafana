@@ -27,7 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/openapi"
 	apiserver "k8s.io/kube-aggregator/pkg/controllers/status"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -275,7 +277,13 @@ func initApiExtensionsConfig(options *options.RecommendedOptions,
 
 	restOptionsGetter := filestorage.NewRESTOptionsGetter("/tmp/grafana.apiextensionsserver", etcdOptions.StorageConfig)
 	genericConfig.RESTOptionsGetter = restOptionsGetter
-	// := apiextensionsoptions.NewCRDRESTOptionsGetter(etcdOptions, genericConfig.ResourceTransformers, genericConfig.StorageObjectCountTracker)
+
+	crdEtcdOptions := etcdOptions
+	crdEtcdOptions.StorageConfig.Codec = unstructured.UnstructuredJSONScheme
+	crdEtcdOptions.StorageConfig.StorageObjectCountTracker = genericConfig.StorageObjectCountTracker
+	crdEtcdOptions.WatchCacheSizes = nil // this control is not provided for custom resources
+	// NOTE: ignoring genericConfig.ResourceTransformers in crdOptionsGetter creation for now
+	// crdOptionsGetter := apiextensionsoptions.NewCRDRESTOptionsGetter(etcdOptions, genericConfig.ResourceTransformers, )
 
 	// override MergedResourceConfig with apiextensions defaults and registry
 	mergedResourceConfig, err := resourceconfig.MergeAPIResourceConfigs(apiextensionsapiserver.DefaultAPIResourceConfigSource(), nil, apiextensionsapiserver.Scheme)
@@ -284,17 +292,7 @@ func initApiExtensionsConfig(options *options.RecommendedOptions,
 	}
 	genericConfig.MergedResourceConfig = mergedResourceConfig
 
-	getOpenAPIDefinitionsFunc := func() common.GetOpenAPIDefinitions {
-		return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-			return getMergedOpenAPIDefinitions(builders, ref)
-		}
-	}
-
-	namer := openapinamer.NewDefinitionNamer(aggregatorscheme.Scheme, apiextensionsapiserver.Scheme)
-	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(getOpenAPIDefinitionsFunc(), namer)
-	genericConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
-	genericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(getOpenAPIDefinitionsFunc(), namer)
-	genericConfig.OpenAPIConfig.Info.Title = "Kubernetes"
+	genericConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(apiextensionsopenapi.GetOpenAPIDefinitions), openapinamer.NewDefinitionNamer(apiextensionsapiserver.Scheme, apiextensionsapiserver.Scheme))
 
 	apiextensionsConfig := &apiextensionsapiserver.Config{
 		GenericConfig: &genericapiserver.RecommendedConfig{
@@ -302,7 +300,7 @@ func initApiExtensionsConfig(options *options.RecommendedOptions,
 			SharedInformerFactory: fakeInfomers,
 		},
 		ExtraConfig: apiextensionsapiserver.ExtraConfig{
-			CRDRESTOptionsGetter: restOptionsGetter,
+			CRDRESTOptionsGetter: filestorage.NewRESTOptionsGetter("/tmp/grafana.apiextensionsserver", crdEtcdOptions.StorageConfig),
 			MasterCount:          1,
 			// AuthResolverWrapper:  authResolverWrapper,
 			ServiceResolver: serviceResolver,
