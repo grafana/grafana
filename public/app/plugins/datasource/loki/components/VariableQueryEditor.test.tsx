@@ -34,7 +34,7 @@ describe('LokiVariableQueryEditor', () => {
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
-    await waitFor(() => select(screen.getByLabelText('Query type'), 'Label names', { container: document.body }));
+    await select(screen.getByLabelText('Query type'), 'Label names', { container: document.body });
 
     expect(onChange).toHaveBeenCalledWith({
       type: LokiVariableQueryType.LabelNames,
@@ -51,7 +51,7 @@ describe('LokiVariableQueryEditor', () => {
     expect(onChange).not.toHaveBeenCalled();
 
     await waitFor(() => select(screen.getByLabelText('Query type'), 'Label values', { container: document.body }));
-    await waitFor(() => select(screen.getByLabelText('Label'), 'luna', { container: document.body }));
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
     await userEvent.type(screen.getByLabelText('Stream selector'), 'stream');
 
     await waitFor(() => expect(screen.getByDisplayValue('stream')).toBeInTheDocument());
@@ -120,7 +120,7 @@ describe('LokiVariableQueryEditor', () => {
   test('Label options are not lost when selecting one', async () => {
     const { rerender } = render(<LokiVariableQueryEditor {...props} onChange={() => {}} />);
     await waitFor(() => select(screen.getByLabelText('Query type'), 'Label values', { container: document.body }));
-    await waitFor(() => select(screen.getByLabelText('Label'), 'luna', { container: document.body }));
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
 
     const updatedQuery = {
       refId: 'test',
@@ -129,8 +129,8 @@ describe('LokiVariableQueryEditor', () => {
     };
     rerender(<LokiVariableQueryEditor {...props} query={updatedQuery} onChange={() => {}} />);
 
-    await waitFor(() => select(screen.getByLabelText('Label'), 'moon', { container: document.body }));
-    await waitFor(() => select(screen.getByLabelText('Label'), 'luna', { container: document.body }));
+    await select(screen.getByLabelText('Label'), 'moon', { container: document.body });
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
     await screen.findByText('luna');
   });
 });

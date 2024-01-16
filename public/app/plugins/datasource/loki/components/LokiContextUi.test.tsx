@@ -137,7 +137,7 @@ describe('LokiContextUi', () => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
     const selects = await screen.findAllByRole('combobox');
-    await waitFor(() => select(selects[0], 'label1="value1"', { container: document.body }));
+    await select(selects[0], 'label1="value1"', { container: document.body });
   });
 
   it('finds label3 as a parsed label', async () => {
@@ -147,7 +147,7 @@ describe('LokiContextUi', () => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
     const selects = await screen.findAllByRole('combobox');
-    await waitFor(() => select(selects[1], 'label3="value3"', { container: document.body }));
+    await select(selects[1], 'label3="value3"', { container: document.body });
   });
 
   it('calls updateFilter when selecting a label', async () => {
@@ -158,7 +158,7 @@ describe('LokiContextUi', () => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
       expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
-    await waitFor(() => select(screen.getAllByRole('combobox')[1], 'label3="value3"', { container: document.body }));
+    await select(screen.getAllByRole('combobox')[1], 'label3="value3"', { container: document.body });
     act(() => {
       jest.runAllTimers();
     });
