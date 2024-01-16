@@ -288,6 +288,8 @@ require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana
 
 require github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces-and-profiling
 
+require github.com/grafana/pyroscope-go/godeltaprof v0.1.6 // @grafana/observability-traces-and-profiling
+
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
 require (

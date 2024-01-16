@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/grafana/pyroscope-go/godeltaprof/http/pprof"
+
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
