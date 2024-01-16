@@ -11,7 +11,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
 import { VizPanelManager } from '../VizPanelManager';
@@ -143,8 +143,8 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const currentTab = tabs.find((t) => t.tabId === tab);
 
   return (
-    <div>
-      <TabsBar hideBorder={true}>
+    <>
+      <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
             <Tab
@@ -158,8 +158,12 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           );
         })}
       </TabsBar>
-      <TabContent className={styles.tabContent}>{currentTab && <currentTab.Component model={currentTab} />}</TabContent>
-    </div>
+      <CustomScrollbar className={styles.scroll}>
+        <TabContent className={styles.tabContent}>
+          {currentTab && <currentTab.Component model={currentTab} />}
+        </TabContent>
+      </CustomScrollbar>
+    </>
   );
 }
 
@@ -171,6 +175,13 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: 'none',
       borderBottom: 'none',
       borderTopRightRadius: theme.shape.radius.default,
+      flexGrow: 1,
+    }),
+    tabsBar: css({
+      flexShrink: 0,
+    }),
+    scroll: css({
+      background: theme.colors.background.primary,
     }),
   };
 }
