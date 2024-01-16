@@ -1,11 +1,11 @@
 import { PanelBuilders } from '@grafana/scenes';
 
-import { AutoQueryDef } from '../types';
+import { CommonVizParams } from './types';
 
-export function simpleGraphBuilder(def: AutoQueryDef) {
-  return PanelBuilders.timeseries()
-    .setTitle(def.title)
-    .setUnit(def.unit)
+export function simpleGraphBuilder({ title, unit }: CommonVizParams) {
+  return PanelBuilders.timeseries() //
+    .setTitle(title)
+    .setUnit(unit)
     .setOption('legend', { showLegend: false })
     .setCustomFieldConfig('fillOpacity', 9);
 }

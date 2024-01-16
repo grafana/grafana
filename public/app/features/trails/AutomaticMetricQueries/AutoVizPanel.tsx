@@ -51,7 +51,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
 
   private getVizPanelFor(def: AutoQueryDef) {
     return def
-      .vizBuilder(def)
+      .vizBuilder()
       .setData(
         new SceneQueryRunner({
           datasource: trailDS,

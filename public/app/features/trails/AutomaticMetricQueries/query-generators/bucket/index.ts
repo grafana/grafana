@@ -1,86 +1,86 @@
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
+
 import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../../shared';
 import { heatmapGraphBuilder } from '../../graph-builders/heatmap';
 import { percentilesGraphBuilder } from '../../graph-builders/percentiles';
 import { simpleGraphBuilder } from '../../graph-builders/simple';
 import { AutoQueryDef } from '../../types';
+import { getUnit } from '../../units';
 
 function generator(metricParts: string[]) {
-  let unit = 'short';
-
   const title = `${VAR_METRIC_EXPR}`;
 
   const unitSuffix = metricParts.at(-2);
 
-  if (unitSuffix === 'seconds') {
-    // TODO Map to other units
-    unit = 's';
-  }
+  const unit = getUnit(unitSuffix);
+
+  const common = {
+    title,
+    unit,
+  };
 
   const p50: AutoQueryDef = {
-    title,
+    ...common,
     variant: 'p50',
-    unit,
-    queries: [
-      {
-        refId: 'A',
-        expr: `histogram_quantile(0.50, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
-      },
-    ],
-    vizBuilder: simpleGraphBuilder,
+    queries: [percentileQuery(50)],
+    vizBuilder: () => simpleGraphBuilder(p50),
   };
 
   const breakdown: AutoQueryDef = {
-    title,
+    ...common,
     variant: 'p50',
-    unit,
-    queries: [
-      {
-        refId: 'A',
-        expr: `histogram_quantile(0.50, sum by(le, ${VAR_GROUP_BY_EXP}) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
-      },
-    ],
-    vizBuilder: simpleGraphBuilder,
+    queries: [percentileQuery(50, [VAR_GROUP_BY_EXP])],
+    vizBuilder: () => simpleGraphBuilder(breakdown),
   };
 
   const percentiles: AutoQueryDef = {
-    title,
+    ...common,
     variant: 'percentiles',
-    unit,
-    queries: [
-      {
-        refId: 'A',
-        expr: `histogram_quantile(0.99, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
-        legendFormat: '99th Percentile',
-      },
-      {
-        refId: 'B',
-        expr: `histogram_quantile(0.90, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
-        legendFormat: '90th Percentile',
-      },
-      {
-        refId: 'C',
-        expr: `histogram_quantile(0.50, sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])))`,
-        legendFormat: '50th Percentile',
-      },
-    ],
-    vizBuilder: percentilesGraphBuilder,
+    queries: [99, 90, 50].map((p) => percentileQuery(p)).map(fixRefIds),
+    vizBuilder: () => percentilesGraphBuilder(percentiles),
   };
 
   const heatmap: AutoQueryDef = {
-    title,
+    ...common,
     variant: 'heatmap',
-    unit,
-    queries: [
-      {
-        refId: 'A',
-        expr: `sum by(le) (rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval]))`,
-        format: 'heatmap',
-      },
-    ],
-    vizBuilder: heatmapGraphBuilder,
+    queries: [heatMapQuery()],
+    vizBuilder: () => heatmapGraphBuilder(heatmap),
   };
 
   return { preview: p50, main: percentiles, variants: [percentiles, heatmap], breakdown: breakdown };
 }
 
+function fixRefIds(queryDef: PromQuery, index: number): PromQuery {
+  // By default refIds are `"A"`
+  // This method will reassign based on `A + index` -- A, B, C, etc
+  return {
+    ...queryDef,
+    refId: String.fromCharCode('A'.charCodeAt(0) + index),
+  };
+}
+
 export default { generator };
+
+const BASE_QUERY = `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])`;
+
+function baseQuery(groupings: string[] = []) {
+  const sumByList = ['le', ...groupings];
+  return `sum by(${sumByList.join(', ')}) (${BASE_QUERY})`;
+}
+
+function heatMapQuery(groupings: string[] = []) {
+  return {
+    refId: 'A',
+    expr: baseQuery(groupings),
+  };
+}
+
+function percentileQuery(percentile: number, groupings: string[] = []) {
+  const percent = percentile / 100;
+
+  return {
+    refId: 'A',
+    expr: `histogram_quantile(${percent}, ${baseQuery(groupings)})`,
+    legendFormat: `${percentile}th Percentile`,
+  };
+}

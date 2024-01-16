@@ -1,7 +1,10 @@
 import { PanelBuilders } from '@grafana/scenes';
 
-import { AutoQueryDef } from '../types';
+import { CommonVizParams } from './types';
 
-export function percentilesGraphBuilder(def: AutoQueryDef) {
-  return PanelBuilders.timeseries().setTitle(def.title).setUnit(def.unit).setCustomFieldConfig('fillOpacity', 9);
+export function percentilesGraphBuilder({ title, unit }: CommonVizParams) {
+  return PanelBuilders.timeseries() //
+    .setTitle(title)
+    .setUnit(unit)
+    .setCustomFieldConfig('fillOpacity', 9);
 }
