@@ -31,12 +31,14 @@ export function SelectionOptionsForm({
         name="Multi-value"
         description="Enables multiple values to be selected at the same time"
         onChange={onMultiChange}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitchV2}
       />
       <VariableCheckboxField
         value={includeAll}
         name="Include All option"
         description="Enables an option to include all variables"
         onChange={onIncludeAllChange}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitchV2}
       />
       {includeAll && (
         <VariableTextField
