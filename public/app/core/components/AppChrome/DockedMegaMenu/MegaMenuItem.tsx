@@ -60,12 +60,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
   }
 
   const createAriaLabel = () => {
-    if (link.emptyMessage) {
-      if (sectionExpanded) {
-        return `headline of expanded section ${link.emptyMessage}`;
-      } else if (showExpandButton) {
-        return `headline of collapsed section ${link.emptyMessage}`;
-      }
+    if (link.emptyMessage && sectionExpanded) {
+      return `headline of expanded section ${link.emptyMessage}`;
     } else {
       if (sectionExpanded) {
         return 'headline of expanded section';
