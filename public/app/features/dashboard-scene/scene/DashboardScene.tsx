@@ -25,6 +25,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardMeta } from 'app/types';
 
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardEditView } from '../settings/utils';
@@ -73,6 +74,9 @@ export interface DashboardSceneState extends SceneObjectState {
   viewPanelScene?: ViewPanelScene;
   /** Edit view */
   editview?: DashboardEditView;
+  /** Edit panel */
+  editPanel?: PanelEditor;
+
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
 }
@@ -188,14 +192,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene } = this.state;
+    const { meta, viewPanelScene, editPanel } = this.state;
 
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
         uid: this.state.uid,
         currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null, editview: null },
+        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null },
       }),
     };
 
@@ -216,6 +220,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     if (viewPanelScene) {
       pageNav = {
         text: 'View panel',
+        parentItem: pageNav,
+      };
+    }
+
+    if (editPanel) {
+      pageNav = {
+        text: 'Edit panel',
         parentItem: pageNav,
       };
     }

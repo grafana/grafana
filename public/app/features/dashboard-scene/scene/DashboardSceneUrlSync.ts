@@ -6,6 +6,7 @@ import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { findVizPanelByKey, isPanelClone } from '../utils/utils';
 
@@ -19,7 +20,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editview'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -28,11 +29,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       inspect: state.inspectPanelKey,
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
+      editPanel: state.editPanel?.getUrlKey() || undefined,
     };
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelScene, meta, isEditing } = this._scene.state;
+    const { inspectPanelKey, viewPanelScene, meta, isEditing, editPanel } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && meta.canEdit) {
@@ -84,7 +86,29 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.viewPanelScene = undefined;
     }
 
+    // Handle edit panel state
+    if (typeof values.editPanel === 'string') {
+      const panel = findVizPanelByKey(this._scene, values.editPanel);
+      if (!panel) {
+        return;
+      }
+
+      this._scene.onEnterEditMode();
+      update.editPanel = buildPanelEditScene(panel);
+    } else if (editPanel) {
+      update.editPanel = undefined;
+    }
+
     if (Object.keys(update).length > 0) {
+      if (update.hasOwnProperty('inspectPanelKey')) {
+        if (update.viewPanelScene === undefined) {
+          delete update.viewPanelScene;
+        }
+        if (update.editPanel === undefined) {
+          delete update.editPanel;
+        }
+      }
+
       this._scene.setState(update);
     }
   }

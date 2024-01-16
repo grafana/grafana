@@ -67,6 +67,10 @@ export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
 }
 
+export function getEditPanelUrl(panelId: number) {
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId });
+}
+
 export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect: vizPanel.state.key, inspectTab });
 }
