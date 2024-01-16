@@ -1414,9 +1414,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"EmailAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "EmailAlert"]]
         },
         {
           "receiver": "slack_recv1",
@@ -1424,9 +1422,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"SlackAlert1\""
-          ]
+          "object_matchers": [["alertname", "=", "SlackAlert1"]]
         },
         {
           "receiver": "slack_recv2",
@@ -1434,9 +1430,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"SlackAlert2\""
-          ]
+          "object_matchers": [["alertname", "=", "SlackAlert2"]]
         },
 		{
 		  "receiver": "slack_failed_recv",
@@ -1444,9 +1438,7 @@ const alertmanagerConfig = `
 		  "group_by": [
 			"alertname"
 		  ],
-		  "matchers": [
-			"alertname=\"SlackFailedAlert\""
-		  ]
+		  "object_matchers": [["alertname", "=", "SlackFailedAlert"]]
 		},
 		{
 		  "receiver": "slack_inactive_recv",
@@ -1454,9 +1446,7 @@ const alertmanagerConfig = `
 		  "group_by": [
 			"alertname"
 		  ],
-		  "matchers": [
-			"alertname=\"Inactive\""
-		  ]
+		  "object_matchers": [["alertname", "=", "Inactive"]]
 		},
         {
           "receiver": "pagerduty_recv",
@@ -1464,9 +1454,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"PagerdutyAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "PagerdutyAlert"]]
         },
         {
           "receiver": "dingding_recv",
@@ -1474,9 +1462,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"DingDingAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "DingDingAlert"]]
         },
         {
           "receiver": "discord_recv",
@@ -1484,9 +1470,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"DiscordAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "DiscordAlert"]]
         },
         {
           "receiver": "sensugo_recv",
@@ -1494,9 +1478,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"SensuGoAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "SensuGoAlert"]]
         },
         {
           "receiver": "pushover_recv",
@@ -1504,9 +1486,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"PushoverAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "PushoverAlert"]]
         },
         {
           "receiver": "googlechat_recv",
@@ -1514,9 +1494,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"GoogleChatAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "GoogleChatAlert"]]
         },
         {
           "receiver": "kafka_recv",
@@ -1524,9 +1502,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"KafkaAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "KafkaAlert"]]
         },
         {
           "receiver": "line_recv",
@@ -1534,9 +1510,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"LineAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "LineAlert"]]
         },
         {
           "receiver": "threema_recv",
@@ -1544,9 +1518,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"ThreemaAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "ThreemaAlert"]]
         },
         {
           "receiver": "opsgenie_recv",
@@ -1554,9 +1526,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"OpsGenieAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "OpsGenieAlert"]]
         },
         {
           "receiver": "alertmanager_recv",
@@ -1564,9 +1534,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"AlertmanagerAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "AlertmanagerAlert"]]
         },
         {
           "receiver": "victorops_recv",
@@ -1574,9 +1542,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"VictorOpsAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "VictorOpsAlert"]]
         },
         {
           "receiver": "teams_recv",
@@ -1584,9 +1550,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"TeamsAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "TeamsAlert"]]
         },
         {
           "receiver": "webhook_recv",
@@ -1594,9 +1558,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"WebhookAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "WebhookAlert"]]
         },
         {
           "receiver": "telegram_recv",
@@ -1604,9 +1566,7 @@ const alertmanagerConfig = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"TelegramAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "TelegramAlert"]]
 		}
       ]
     },
@@ -1932,9 +1892,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"EmailAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "EmailAlert"]]
         },
         {
           "receiver": "slack_recv1",
@@ -1942,9 +1900,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"SlackAlert1\""
-          ]
+          "object_matchers": [["alertname", "=", "SlackAlert1"]]
         },
         {
           "receiver": "slack_recv2",
@@ -1952,9 +1908,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"SlackAlert2\""
-          ]
+          "object_matchers": [["alertname", "=", "SlackAlert2"]]
         },
 		{
           "receiver": "slack_failed_recv",
@@ -1962,9 +1916,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"SlackFailedAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "SlackFailedAlert"]]
         },
    		{
           "receiver": "slack_inactive_recv",
@@ -1972,18 +1924,14 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"Inactive\""
-          ]
+          "object_matchers": [["alertname", "=", "Inactive"]]
         },     {
           "receiver": "pagerduty_recv",
           "group_wait": "0s",
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"PagerdutyAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "PagerdutyAlert"]]
         },
         {
           "receiver": "dingding_recv",
@@ -1991,9 +1939,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"DingDingAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "DingDingAlert"]]
         },
         {
           "receiver": "discord_recv",
@@ -2001,9 +1947,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"DiscordAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "DiscordAlert"]]
         },
         {
           "receiver": "sensugo_recv",
@@ -2011,9 +1955,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"SensuGoAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "SensuGoAlert"]]
         },
         {
           "receiver": "pushover_recv",
@@ -2021,9 +1963,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"PushoverAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "PushoverAlert"]]
         },
         {
           "receiver": "googlechat_recv",
@@ -2031,9 +1971,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"GoogleChatAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "GoogleChatAlert"]]
         },
         {
           "receiver": "kafka_recv",
@@ -2041,9 +1979,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"KafkaAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "KafkaAlert"]]
         },
         {
           "receiver": "line_recv",
@@ -2051,9 +1987,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"LineAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "LineAlert"]]
         },
         {
           "receiver": "threema_recv",
@@ -2061,9 +1995,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"ThreemaAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "ThreemaAlert"]]
         },
         {
           "receiver": "opsgenie_recv",
@@ -2071,9 +2003,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"OpsGenieAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "OpsGenieAlert"]]
         },
         {
           "receiver": "alertmanager_recv",
@@ -2081,9 +2011,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"AlertmanagerAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "AlertmanagerAlert"]]
         },
         {
           "receiver": "victorops_recv",
@@ -2091,9 +2019,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"VictorOpsAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "VictorOpsAlert"]]
         },
         {
           "receiver": "teams_recv",
@@ -2101,9 +2027,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"TeamsAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "TeamsAlert"]]
         },
         {
           "receiver": "webhook_recv",
@@ -2111,9 +2035,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"WebhookAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "WebhookAlert"]]
         },
         {
           "receiver": "telegram_recv",
@@ -2121,9 +2043,7 @@ var expAlertmanagerConfigFromAPI = `
           "group_by": [
             "alertname"
           ],
-          "matchers": [
-            "alertname=\"TelegramAlert\""
-          ]
+          "object_matchers": [["alertname", "=", "TelegramAlert"]]
 		}
       ]
     },
