@@ -81,18 +81,23 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
     .map((field) => {
       try {
         const testMatch = debugText.match(field.matcherRegex);
+        let href;
         const value = testMatch && testMatch[1];
-        const debugFiled: DebugField = {
-          name: field.name,
-          value: value || '<no match>',
-          href: getTemplateSrv().replace(field.url, {
+
+        if (value) {
+          href = getTemplateSrv().replace(field.url, {
             __value: {
               value: {
                 raw: value,
               },
               text: 'Raw value',
             },
-          }),
+          });
+        }
+        const debugFiled: DebugField = {
+          name: field.name,
+          value: value || '<no match>',
+          href,
         };
         return debugFiled;
       } catch (error) {
