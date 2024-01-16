@@ -120,18 +120,16 @@ export const setMarkers = (
 ) => {
   let markers = getErrorMarkers(monaco, model, errorNodes);
 
-  // check if there are issues that should result in a warning marker
+  // Check if there are issues that should result in a warning marker
   const text = model.getValue();
   const tree = parser.parse(text);
   const indexOfDot = text.indexOf('.');
-
   if (indexOfDot > -1) {
-    // check each node and if it is an Identifier node, make sure it is using the correct scope
     const cur = tree.cursorAt(0);
     do {
       const { node } = cur;
       if (node.type.id === Identifier) {
-        // make sure prevSibling is proper scope
+        // Make sure prevSibling is using the proper scope
         if (
           node.prevSibling?.type.id !== Parent &&
           node.prevSibling?.type.id !== Resource &&
