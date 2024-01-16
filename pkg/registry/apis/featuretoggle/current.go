@@ -108,5 +108,5 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 		return
 	}
 
-	_, _ = w.Write([]byte("TODO... actually UPDATE: "))
+	_, _ = w.Write([]byte("TODO... actually UPDATE/call webhook: "))
 }
