@@ -3,7 +3,6 @@ import React from 'react';
 
 import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
-  AdHocFiltersVariable,
   PanelBuilders,
   QueryVariable,
   SceneComponentProps,
@@ -18,19 +17,20 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneQueryRunner,
-  SceneVariableSet,
 } from '@grafana/scenes';
 import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
+import { AutoQueryDef } from '../AutomaticMetricQueries/types';
+import { MetricScene } from '../MetricScene';
+import { trailDS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
+import { getColorByIndex } from '../utils';
+
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
-import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
-import { AutoQueryDef } from './AutomaticMetricQueries/types';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
-import { MetricScene } from './MetricScene';
-import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from './shared';
-import { getColorByIndex } from './utils';
+import { getLabelOptions } from './utils';
 
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
@@ -39,13 +39,9 @@ export interface BreakdownSceneState extends SceneObjectState {
   loading?: boolean;
 }
 
-/**
- * Just a proof of concept example of a behavior
- */
 export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
   constructor(state: Partial<BreakdownSceneState>) {
     super({
-      $variables: state.$variables ?? getVariableSet(),
       labels: state.labels ?? [],
       ...state,
     });
@@ -84,7 +80,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
   }
 
   private updateBody(variable: QueryVariable) {
-    const options = this.getLabelOptions(variable);
+    const options = getLabelOptions(this, variable);
 
     const stateUpdate: Partial<BreakdownSceneState> = {
       loading: variable.state.loading,
@@ -101,31 +97,11 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     this.setState(stateUpdate);
   }
 
-  private getLabelOptions(variable: QueryVariable) {
-    const labelFilters = sceneGraph.lookupVariable(VAR_FILTERS, this);
-    const labelOptions: Array<SelectableValue<string>> = [];
-
-    if (!(labelFilters instanceof AdHocFiltersVariable)) {
-      return [];
-    }
-
-    const filters = labelFilters.state.set.state.filters;
-
-    for (const option of variable.getOptionsForSelect()) {
-      const filterExists = filters.find((f) => f.key === option.value);
-      if (!filterExists) {
-        labelOptions.push({ label: option.label, value: String(option.value) });
-      }
-    }
-
-    return labelOptions;
-  }
-
   public onChange = (value: string) => {
     const variable = this.getVariable();
 
     if (value === ALL_VARIABLE_VALUE) {
-      this.setState({ body: buildAllLayout(this.getLabelOptions(variable), this._query!) });
+      this.setState({ body: buildAllLayout(getLabelOptions(this, variable), this._query!) });
     } else if (variable.hasAllValue()) {
       this.setState({ body: buildNormalLayout(this._query!) });
     }
@@ -242,23 +218,6 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
 }
 
 const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
-
-function getVariableSet() {
-  return new SceneVariableSet({
-    variables: [
-      new QueryVariable({
-        name: VAR_GROUP_BY,
-        label: 'Group by',
-        datasource: trailDS,
-        includeAll: true,
-        defaultToAll: true,
-        query: { query: `label_names(${VAR_METRIC_EXPR})`, refId: 'A' },
-        value: '',
-        text: '',
-      }),
-    ],
-  });
-}
 
 function buildNormalLayout(queryDef: AutoQueryDef) {
   return new LayoutSwitcher({
