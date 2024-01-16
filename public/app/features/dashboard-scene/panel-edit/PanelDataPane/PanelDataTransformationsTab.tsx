@@ -5,7 +5,7 @@ import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 import { DataTransformerConfig, GrafanaTheme2, IconName, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectBase, SceneComponentProps, SceneDataTransformer } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Container, CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, ConfirmModal, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 
 import { VizPanelManager } from '../VizPanelManager';
@@ -98,39 +98,39 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const transformations: DataTransformerConfig[] = transformsWrongType as unknown as DataTransformerConfig[];
 
+  if (transformations.length < 1) {
+    return <EmptyTransformationsMessage onShowPicker={() => {}}></EmptyTransformationsMessage>;
+  }
+
+  if (!data) {
+    return;
+  }
+
   return (
-    <CustomScrollbar autoHeightMin="100%">
-      <Container>
-        {transformations.length < 1 ? (
-          <EmptyTransformationsMessage onShowPicker={() => {}}></EmptyTransformationsMessage>
-        ) : (
-          <>
-            {data && <TransformationsEditor data={data} transformations={transformations} model={model} />}
-            <ButtonGroup>
-              <Button
-                icon="plus"
-                variant="secondary"
-                onClick={() => {}}
-                data-testid={selectors.components.Transforms.addTransformationButton}
-              >
-                Add another transformation
-              </Button>
-              <Button className={styles.removeAll} icon="times" variant="secondary" onClick={() => {}}>
-                Delete all transformations
-              </Button>
-            </ButtonGroup>
-            <ConfirmModal
-              isOpen={false}
-              title="Delete all transformations?"
-              body="By deleting all transformations, you will go back to the main selection screen."
-              confirmText="Delete all"
-              onConfirm={() => {}}
-              onDismiss={() => {}}
-            />
-          </>
-        )}
-      </Container>
-    </CustomScrollbar>
+    <>
+      <TransformationsEditor data={data} transformations={transformations} model={model} />
+      <ButtonGroup>
+        <Button
+          icon="plus"
+          variant="secondary"
+          onClick={() => {}}
+          data-testid={selectors.components.Transforms.addTransformationButton}
+        >
+          Add another transformation
+        </Button>
+        <Button className={styles.removeAll} icon="times" variant="secondary" onClick={() => {}}>
+          Delete all transformations
+        </Button>
+      </ButtonGroup>
+      <ConfirmModal
+        isOpen={false}
+        title="Delete all transformations?"
+        body="By deleting all transformations, you will go back to the main selection screen."
+        confirmText="Delete all"
+        onConfirm={() => {}}
+        onDismiss={() => {}}
+      />
+    </>
   );
 }
 
