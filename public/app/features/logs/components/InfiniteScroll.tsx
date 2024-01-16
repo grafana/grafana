@@ -128,15 +128,15 @@ export const InfiniteScroll = ({
 };
 
 const styles = {
-  limitReached: css({
+  messageContainer: css({
     textAlign: 'center',
     padding: 0.25,
   }),
 };
 
-const outOfRangeMessage = <div className={styles.limitReached}>End of the selected time range.</div>;
+const outOfRangeMessage = <div className={styles.messageContainer} data-testid="end-of-range">End of the selected time range.</div>;
 const loadingMessage = (
-  <div className={styles.limitReached}>
+  <div className={styles.messageContainer}>
     <Spinner />
   </div>
 );
@@ -178,13 +178,15 @@ function getVisibleRange(rows: LogRowModel[]) {
 }
 
 function getPrevRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
-  return { from: currentRange.from.valueOf(), to: visibleRange.from };
+  // Until the oldest log line, but without including it
+  return { from: currentRange.from.valueOf(), to: visibleRange.from - 1 };
 }
 
 function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, timeZone: TimeZone) {
   // When requesting new logs, update the current range if using relative time ranges.
   currentRange = updateCurrentRange(currentRange, timeZone);
-  return { from: visibleRange.to, to: currentRange.to.valueOf() };
+  // From the most recent log line, but without including it
+  return { from: visibleRange.to + 1, to: currentRange.to.valueOf() };
 }
 
 export const SCROLLING_THRESHOLD = 1e3;
