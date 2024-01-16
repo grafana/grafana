@@ -193,10 +193,10 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	assert.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
-	authInfoQuery := &login.GetAuthInfoQuery{}
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: 1}
 	authInfo, err := srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	// newToken should be returned after the .Token() call, therefore the User had to be updated
 	assert.Equal(t, authInfo.OAuthAccessToken, newToken.AccessToken)
