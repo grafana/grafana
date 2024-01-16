@@ -2940,7 +2940,7 @@ __metadata:
     "@grafana/ui": "npm:10.4.0-pre"
     "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
-    "@testing-library/user-event": "npm:14.5.1"
+    "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.4"
     "@types/lodash": "npm:4.14.195"
     "@types/prismjs": "npm:1.26.0"
@@ -7928,15 +7928,6 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
   checksum: 1f2a4f78d107e741b35671e9c7dd992d5c9f49b48ee24112ccfe636179be72f3c62a65b1405901b59eb6cde996176ebc2c99099e04d9f14575641e46688747f0
-  languageName: node
-  linkType: hard
-
-"@testing-library/user-event@npm:14.5.1":
-  version: 14.5.1
-  resolution: "@testing-library/user-event@npm:14.5.1"
-  peerDependencies:
-    "@testing-library/dom": ">=7.21.4"
-  checksum: 696e1328c230b0a7063a41d82b5350c6be926696106809a4d79d446d190ff56bebb850fe564ff0952cb74ae81e59a6f10534a88ecbb3792083271a249e04e728
   languageName: node
   linkType: hard
 
