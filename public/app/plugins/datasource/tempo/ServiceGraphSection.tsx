@@ -5,10 +5,9 @@ import useAsync from 'react-use/lib/useAsync';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 
-import { AdHocFilter } from '../../../features/variables/adhoc/picker/AdHocFilter';
-import { AdHocVariableFilter } from '../../../features/variables/types';
-import { PrometheusDatasource } from '../prometheus/datasource';
-
+import { AdHocFilter } from './_importedDependencies/components/AdHocFilter/AdHocFilter';
+import { PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
+import { AdHocVariableFilter } from './_importedDependencies/types';
 import { TempoQuery } from './types';
 import { getDS } from './utils';
 

@@ -3,10 +3,8 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { InlineLabel } from '@grafana/ui';
 
-import { LokiQueryField } from '../loki/components/LokiQueryField';
-import { LokiDatasource } from '../loki/datasource';
-import { LokiQuery } from '../loki/types';
-
+import { LokiQueryField } from './_importedDependencies/datasources/loki/LokiQueryField';
+import { LokiDatasource, LokiQuery } from './_importedDependencies/datasources/loki/types';
 import { TempoQuery } from './types';
 import { getDS } from './utils';
 

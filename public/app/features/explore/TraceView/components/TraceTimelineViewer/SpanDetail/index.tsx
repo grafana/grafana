@@ -21,8 +21,8 @@ import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
-import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';

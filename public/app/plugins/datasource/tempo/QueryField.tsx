@@ -15,12 +15,11 @@ import {
   withTheme2,
 } from '@grafana/ui';
 
-import { LokiQuery } from '../loki/types';
-
 import { LokiSearch } from './LokiSearch';
 import NativeSearch from './NativeSearch/NativeSearch';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
+import { LokiQuery } from './_importedDependencies/datasources/loki/types';
 import { TempoQueryType } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { QueryEditor } from './traceql/QueryEditor';

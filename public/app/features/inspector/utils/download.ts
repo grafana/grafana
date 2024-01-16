@@ -9,9 +9,9 @@ import {
   MutableDataFrame,
   toCSV,
 } from '@grafana/data';
+import { transformToOTLP } from '@grafana-plugins/tempo/resultTransformer';
 
 import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
-import { transformToOTLP } from '../../../plugins/datasource/tempo/resultTransformer';
 import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/transforms';
 
 /**
