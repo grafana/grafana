@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 
-import { DataTransformerConfig, IconName } from '@grafana/data';
+import { DataTransformerConfig, GrafanaTheme2, IconName } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectBase, SceneComponentProps, SceneDataTransformer } from '@grafana/scenes';
-import { Container, CustomScrollbar } from '@grafana/ui';
+import { Button, ButtonGroup, ConfirmModal, Container, CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 
 import { VizPanelManager } from '../../VizPanelManager';
@@ -31,7 +33,7 @@ export class PanelDataTransformationsTab
     if (dataProvider instanceof SceneDataTransformer) {
       return dataProvider.state.transformations.length;
     } else {
-      return 0;
+      return null;
     }
   }
 
@@ -58,6 +60,7 @@ function TransformationsEditor(props: TransformationEditorProps) {
   const transformations: DataTransformerConfig[] = [];
 
   for (const t of dataState.transformations) {
+    // We can't have any CustomTransformerOperators in the panel editor. This get's rid of them and fixes the type.
     if ('id' in t) {
       transformations.push(t);
     }
@@ -98,6 +101,7 @@ function TransformationsEditor(props: TransformationEditorProps) {
 }
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
+  const styles = useStyles2(getStyles);
   const panelManagerState = model.panelManager.useState();
   const panelState = panelManagerState.panel.useState();
 
@@ -113,14 +117,45 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         {dataState.transformations.length < 1 ? (
           <EmptyTransformationsMessage onShowPicker={() => {}}></EmptyTransformationsMessage>
         ) : (
-          <TransformationsEditor
-            onChange={(transformations) => {
-              model.panelManager.changeTransformations(transformations);
-            }}
-            sceneDataTransformer={panelState.$data}
-          ></TransformationsEditor>
+          <>
+            <TransformationsEditor
+              onChange={(transformations) => {
+                model.panelManager.changeTransformations(transformations);
+              }}
+              sceneDataTransformer={panelState.$data}
+            ></TransformationsEditor>
+            <ButtonGroup>
+              <Button
+                icon="plus"
+                variant="secondary"
+                onClick={() => {}}
+                data-testid={selectors.components.Transforms.addTransformationButton}
+              >
+                Add another transformation
+              </Button>
+              <Button className={styles.removeAll} icon="times" variant="secondary" onClick={() => {}}>
+                Delete all transformations
+              </Button>
+            </ButtonGroup>
+            <ConfirmModal
+              isOpen={false}
+              title="Delete all transformations?"
+              body="By deleting all transformations, you will go back to the main selection screen."
+              confirmText="Delete all"
+              onConfirm={() => {}}
+              onDismiss={() => {}}
+            />
+          </>
         )}
       </Container>
     </CustomScrollbar>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    removeAll: css`
+      margin-left: ${theme.spacing(2)};
+    `,
+  };
 }
