@@ -2946,7 +2946,7 @@ __metadata:
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
-    "@types/testing-library__jest-dom": "npm:5.14.8"
+    "@types/testing-library__jest-dom": "npm:5.14.9"
     css-loader: "npm:6.8.1"
     fast-deep-equal: "npm:^3.1.3"
     jest: "npm:29.7.0"
@@ -9376,15 +9376,6 @@ __metadata:
   version: 6.13.1
   resolution: "@types/systemjs@npm:6.13.1"
   checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
-  languageName: node
-  linkType: hard
-
-"@types/testing-library__jest-dom@npm:5.14.8":
-  version: 5.14.8
-  resolution: "@types/testing-library__jest-dom@npm:5.14.8"
-  dependencies:
-    "@types/jest": "npm:*"
-  checksum: 26d768b3de5c71ecef683aa0e968ec2bb7f4626d78718132fa5a9c2064f9237836135e2551aa048c728407760d51d985a9d58a14528f2679a35d18d5ca200f08
   languageName: node
   linkType: hard
 
