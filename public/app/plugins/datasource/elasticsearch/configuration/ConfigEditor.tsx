@@ -12,8 +12,9 @@ import {
   convertLegacyAuthProps,
   DataSourceDescription,
 } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
+import { Alert, SecureSocksProxySettings } from '@grafana/ui';
+import { Divider } from 'app/core/components/Divider';
+import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
 
@@ -61,9 +62,9 @@ export const ConfigEditor = (props: Props) => {
         docsLink="https://grafana.com/docs/grafana/latest/datasources/elasticsearch"
         hasRequiredFields={false}
       />
-      <Divider spacing={4} />
+      <Divider />
       <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:9200" />
-      <Divider spacing={4} />
+      <Divider />
       <Auth
         {...authProps}
         onAuthMethodSelect={(method) => {
@@ -79,7 +80,7 @@ export const ConfigEditor = (props: Props) => {
           });
         }}
       />
-      <Divider spacing={4} />
+      <Divider />
       <ConfigSection
         title="Additional settings"
         description="Additional settings are optional settings that can be configured for more control over your data source."
@@ -87,16 +88,12 @@ export const ConfigEditor = (props: Props) => {
         isInitiallyOpen
       >
         <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
-        <div className={styles.dividerInvisible}>
-          <Divider spacing={3} />
-        </div>
+        <Divider hideLine />
         {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
         <ElasticDetails value={options} onChange={onOptionsChange} />
-        <div className={styles.dividerInvisible}>
-          <Divider spacing={3} />
-        </div>
+        <Divider hideLine />
         <LogsConfig
           value={options.jsonData}
           onChange={(newValue) =>
@@ -106,9 +103,7 @@ export const ConfigEditor = (props: Props) => {
             })
           }
         />
-        <div className={styles.dividerInvisible}>
-          <Divider spacing={3} />
-        </div>
+        <Divider hideLine />
         <DataLinks
           value={options.jsonData.dataLinks}
           onChange={(newValue) => {
@@ -125,11 +120,3 @@ export const ConfigEditor = (props: Props) => {
     </>
   );
 };
-
-const styles = {
-  dividerInvisible: css({
-    '> hr': {
-      border: 'none'
-    }
-  })
-}
