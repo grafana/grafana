@@ -5,7 +5,6 @@ import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data
 import {
   AdvancedHttpSettings,
   Auth,
-  ConfigDescriptionLink,
   ConfigSection,
   ConfigSubSection,
   ConnectionSettings,
@@ -15,9 +14,11 @@ import {
 import { config } from '@grafana/runtime';
 import { TraceToLogsSection, TraceToMetricsSection, TraceToProfilesSection } from '@grafana/traces';
 import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
-import { Divider } from 'app/core/components/Divider';
-import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
-import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
+
+import { ConfigDescriptionLink } from '../_importedDependencies/components/ConfigDescriptionLink';
+import { Divider } from '../_importedDependencies/components/Divider';
+import { NodeGraphSection } from '../_importedDependencies/components/NodeGraphSettings';
+import { SpanBarSection } from '../_importedDependencies/components/TraceView/SpanBarSettings';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';

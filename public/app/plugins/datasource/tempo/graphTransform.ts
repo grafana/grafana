@@ -307,7 +307,7 @@ function collectMetricData(
   }
 
   // The name of the value column is in this format
-  // TODO figure out if it can be changed
+  // Improvement: figure out if it can be changed
   const valueName = `Value #${metric}`;
 
   for (let i = 0; i < frame.length; i++) {

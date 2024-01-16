@@ -22,7 +22,7 @@ import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { TraceToProfilesOptions } from '@grafana/traces';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
-import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
+import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
