@@ -9,7 +9,7 @@ import (
 
 func TestFeatureManager(t *testing.T) {
 	t.Run("check testing stubs", func(t *testing.T) {
-		ft := WithFeatures("a", "b", "c")
+		ft := WithManager("a", "b", "c")
 		require.True(t, ft.IsEnabledGlobally("a"))
 		require.True(t, ft.IsEnabledGlobally("b"))
 		require.True(t, ft.IsEnabledGlobally("c"))
@@ -18,7 +18,7 @@ func TestFeatureManager(t *testing.T) {
 		require.Equal(t, map[string]bool{"a": true, "b": true, "c": true}, ft.GetEnabled(context.Background()))
 
 		// Explicit values
-		ft = WithFeatures("a", true, "b", false)
+		ft = WithManager("a", true, "b", false)
 		require.True(t, ft.IsEnabledGlobally("a"))
 		require.False(t, ft.IsEnabledGlobally("b"))
 		require.Equal(t, map[string]bool{"a": true}, ft.GetEnabled(context.Background()))
@@ -26,7 +26,8 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check license validation", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
+			flags:    map[string]*FeatureFlag{},
+			warnings: map[string]string{},
 		}
 		ft.registerFlags(FeatureFlag{
 			Name:            "a",

@@ -27,9 +27,12 @@ export interface DiffTarget {
 }
 
 export class HistorySrv {
-  getHistoryList(dashboard: DashboardModel, options: HistoryListOpts) {
-    const uid = dashboard && dashboard.uid ? dashboard.uid : void 0;
-    return uid ? getBackendSrv().get(`api/dashboards/uid/${uid}/versions`, options) : Promise.resolve([]);
+  getHistoryList(dashboardUID: string, options: HistoryListOpts) {
+    if (typeof dashboardUID !== 'string') {
+      return Promise.resolve([]);
+    }
+
+    return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions`, options);
   }
 
   getDashboardVersion(uid: string, version: number) {
