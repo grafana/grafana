@@ -20,9 +20,8 @@ import {
   SceneQueryRunner,
   sceneGraph,
   SceneDataProvider,
-  SceneDataTransformer,
 } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { updateQueries } from 'app/features/query/state/updateQueries';
@@ -216,14 +215,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public changeQueries<T extends DataQuery>(queries: T[]) {
     const runner = this.queryRunner;
     runner.setState({ queries });
-  }
-
-  public changeTransformations(transformations: DataTransformerConfig[]) {
-    const dataProvider = this.state.panel.state.$data;
-    if (dataProvider instanceof SceneDataTransformer) {
-      dataProvider.setState({ transformations });
-      dataProvider.reprocessTransformations();
-    }
   }
 
   public inspectPanel() {
