@@ -9,11 +9,10 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProfileTypesCascader } from 'app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/ProfileTypesCascader';
-import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
 import { ProfileTypeMessage } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
@@ -47,20 +46,19 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
     return await getDataSourceSrv().get(options.jsonData.tracesToProfiles?.datasourceUid);
   }, [options.jsonData.tracesToProfiles?.datasourceUid]);
 
-  useEffect(() => {
+  const { value: pTypes } = useAsync(async () => {
     if (
-      dataSource &&
-      dataSource instanceof PyroscopeDataSource &&
+      dataSource instanceof DataSourceWithBackend &&
       supportedDataSourceTypes.includes(dataSource.type) &&
       dataSource.uid === options.jsonData.tracesToProfiles?.datasourceUid
     ) {
-      dataSource.getAllProfileTypes().then((profileTypes) => {
-        setProfileTypes(profileTypes);
-      });
-    } else {
-      setProfileTypes([]);
+      return await dataSource?.getResource('profileTypes');
     }
-  }, [dataSource, onOptionsChange, options, supportedDataSourceTypes]);
+  }, [dataSource]);
+
+  useEffect(() => {
+    setProfileTypes(pTypes ?? []);
+  }, [pTypes]);
 
   return (
     <div className={css({ width: '100%' })}>

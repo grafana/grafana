@@ -96,6 +96,8 @@
     },
     {
       "files": [
+        "public/app/plugins/datasource/grafana-pyroscope-datasource/*.{ts,tsx}",
+        "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-testdata-datasource/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}",
         "public/app/plugins/datasource/azuremonitor/*.{ts,tsx}",

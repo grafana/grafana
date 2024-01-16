@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Grafana Pyroscope",
   "id": "grafana-pyroscope-datasource",
+  "executable": "gpx_grafana-pyroscope-datasource",
   "aliasIDs": ["phlare"],
   "category": "profiling",
 
@@ -29,6 +30,10 @@
         "name": "GitHub Project",
         "url": "https://github.com/grafana/pyroscope"
       }
-    ]
+    ],
+    "version": "%VERSION%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.3.0-0"
   }
 }
