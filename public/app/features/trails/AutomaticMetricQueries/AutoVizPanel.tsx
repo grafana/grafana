@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel, SceneQueryRunner } from '@grafana/scenes';
 import { Field, RadioButtonGroup, useStyles2, Stack } from '@grafana/ui';
 
+import { trailDS } from '../shared';
 import { getTrailSettings } from '../utils';
 
-import { AutoQueryDef, AutoQueryInfo } from './AutoQueryEngine';
+import { AutoQueryInfo, AutoQueryDef } from './types';
 
 export interface AutoVizPanelState extends SceneObjectState {
   panel?: VizPanel;
@@ -49,7 +50,17 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
   };
 
   private getVizPanelFor(def: AutoQueryDef) {
-    return def.vizBuilder(def).setHeaderActions(this.getQuerySelector(def)).build();
+    return def
+      .vizBuilder(def)
+      .setData(
+        new SceneQueryRunner({
+          datasource: trailDS,
+          maxDataPoints: 500,
+          queries: def.queries,
+        })
+      )
+      .setHeaderActions(this.getQuerySelector(def))
+      .build();
   }
 
   public static Component = ({ model }: SceneComponentProps<AutoVizPanel>) => {

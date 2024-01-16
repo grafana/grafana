@@ -7,14 +7,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type dummyPluginManager struct{}
 
-func (d *dummyPluginManager) Renderer(_ context.Context) *plugins.Plugin {
-	return nil
+func (d *dummyPluginManager) Renderer(_ context.Context) (Plugin, bool) {
+	return nil, false
 }
 
 var dummyRendererUrl = "http://dummyurl.com"

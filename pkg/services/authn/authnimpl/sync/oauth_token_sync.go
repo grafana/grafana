@@ -40,7 +40,7 @@ type OAuthTokenSync struct {
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	namespace, _ := identity.NamespacedID()
+	namespace, _ := identity.GetNamespacedID()
 	// only perform oauth token check if identity is a user
 	if namespace != authn.NamespaceUser {
 		return nil

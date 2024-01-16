@@ -146,25 +146,6 @@ func TestStore_Routes(t *testing.T) {
 	})
 }
 
-func TestStore_Renderer(t *testing.T) {
-	t.Run("Renderer returns a single (non-decommissioned) renderer plugin", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.TypeRenderer}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.TypePanel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.TypeApp}}
-
-		ps := New(&fakes.FakePluginRegistry{
-			Store: map[string]*plugins.Plugin{
-				p1.ID: p1,
-				p2.ID: p2,
-				p3.ID: p3,
-			},
-		}, &fakes.FakeLoader{})
-
-		r := ps.Renderer(context.Background())
-		require.Equal(t, p1, r)
-	})
-}
-
 func TestStore_SecretsManager(t *testing.T) {
 	t.Run("Renderer returns a single (non-decommissioned) secrets manager plugin", func(t *testing.T) {
 		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.TypeRenderer}}

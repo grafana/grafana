@@ -108,6 +108,7 @@ groups:
         # <string> the state the alert rule will have when the query execution
         #          failed - possible values: "Error", "Alerting", "OK"
         #          default = Alerting
+        execErrState: Alerting
         # <duration, required> for how long should the alert fire before alerting
         for: 60s
         # <map<string, string>> a map of strings to pass around any data
@@ -355,6 +356,8 @@ settings:
   retry: '30'
   # <string>
   expire: '120'
+  # <string> the number of seconds before a message expires and is deleted automatically. Examples: 10s, 5m30s, 8h.
+  ttl:
   # <string>
   sound: siren
   # <string>

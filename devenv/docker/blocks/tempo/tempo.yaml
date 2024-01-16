@@ -51,6 +51,8 @@ storage:
       path: /tmp/tempo/blocks
 
 overrides:
-  metrics_generator_processors: [local-blocks, service-graphs, span-metrics]
+  defaults:
+    metrics_generator:
+      processors: [local-blocks, service-graphs, span-metrics]
 
 stream_over_http_enabled: true

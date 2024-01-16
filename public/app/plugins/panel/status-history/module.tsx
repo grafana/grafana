@@ -83,4 +83,5 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
     commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder, !config.featureToggles.newVizTooltips);
   })
-  .setSuggestionsSupplier(new StatusHistorySuggestionsSupplier());
+  .setSuggestionsSupplier(new StatusHistorySuggestionsSupplier())
+  .setDataSupport({ annotations: true });

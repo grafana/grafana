@@ -519,6 +519,16 @@
         },
         "description": "(empty)"
       },
+      "devicesSearchResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchDeviceQueryResult"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "folderResponse": {
         "content": {
           "application/json": {
@@ -1126,6 +1136,19 @@
         },
         "description": "(empty)"
       },
+      "getResourcePermissionsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/resourcePermissionDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getRoleAssignmentsResponse": {
         "content": {
           "application/json": {
@@ -1424,6 +1447,22 @@
         },
         "description": "(empty)"
       },
+      "listTeamsRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/components/schemas/RoleDTO"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "listTokensResponse": {
         "content": {
           "application/json": {
@@ -1432,6 +1471,22 @@
                 "$ref": "#/components/schemas/TokenDTO"
               },
               "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "listUsersRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/components/schemas/RoleDTO"
+                },
+                "type": "array"
+              },
+              "type": "object"
             }
           }
         },
@@ -1695,6 +1750,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ActiveUserStats"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "resourcePermissionsDescription": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Description"
             }
           }
         },
@@ -1971,6 +2036,10 @@
       "ActiveUserStats": {
         "properties": {
           "active_admins_and_editors": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "active_anonymous_devices": {
             "format": "int64",
             "type": "integer"
           },
@@ -2510,6 +2579,20 @@
         },
         "type": "object"
       },
+      "AlertPair": {
+        "properties": {
+          "alertRule": {
+            "$ref": "#/components/schemas/AlertRuleUpgrade"
+          },
+          "error": {
+            "type": "string"
+          },
+          "legacyAlert": {
+            "$ref": "#/components/schemas/LegacyAlert"
+          }
+        },
+        "type": "object"
+      },
       "AlertQuery": {
         "properties": {
           "datasourceUid": {
@@ -2690,6 +2773,23 @@
           "interval": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AlertRuleUpgrade": {
+        "properties": {
+          "sendsTo": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -3191,6 +3291,23 @@
         },
         "type": "object"
       },
+      "Assignments": {
+        "properties": {
+          "builtInRoles": {
+            "type": "boolean"
+          },
+          "serviceAccounts": {
+            "type": "boolean"
+          },
+          "teams": {
+            "type": "boolean"
+          },
+          "users": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "AttributeTypeAndValue": {
         "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
         "properties": {
@@ -3591,6 +3708,20 @@
         "title": "Config is the top-level configuration for Alertmanager's config files.",
         "type": "object"
       },
+      "ContactPair": {
+        "properties": {
+          "contactPoint": {
+            "$ref": "#/components/schemas/ContactPointUpgrade"
+          },
+          "error": {
+            "type": "string"
+          },
+          "legacyChannel": {
+            "$ref": "#/components/schemas/LegacyChannel"
+          }
+        },
+        "type": "object"
+      },
       "ContactPointExport": {
         "properties": {
           "name": {
@@ -3608,6 +3739,20 @@
           }
         },
         "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
+        "type": "object"
+      },
+      "ContactPointUpgrade": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "routeMatchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "ContactPoints": {
@@ -4354,6 +4499,48 @@
         },
         "type": "object"
       },
+      "DashboardUpgrade": {
+        "properties": {
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardName": {
+            "type": "string"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "folderName": {
+            "type": "string"
+          },
+          "folderUid": {
+            "type": "string"
+          },
+          "migratedAlerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertPair"
+            },
+            "type": "array"
+          },
+          "newFolderName": {
+            "type": "string"
+          },
+          "newFolderUid": {
+            "type": "string"
+          },
+          "provisioned": {
+            "type": "boolean"
+          },
+          "warning": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "DashboardVersionMeta": {
         "description": "DashboardVersionMeta extends the DashboardVersionDTO with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersionDTO model.",
         "properties": {
@@ -4600,6 +4787,46 @@
         "additionalProperties": {
           "format": "int64",
           "type": "integer"
+        },
+        "type": "object"
+      },
+      "Description": {
+        "properties": {
+          "assignments": {
+            "$ref": "#/components/schemas/Assignments"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "DeviceSearchHitDTO": {
+        "properties": {
+          "clientIp": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
         },
         "type": "object"
       },
@@ -5341,6 +5568,14 @@
         "title": "Frames is a slice of Frame pointers.",
         "type": "array"
       },
+      "GenericPublicError": {
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/PublicError"
+          }
+        },
+        "type": "object"
+      },
       "GetAnnotationTagsResponse": {
         "properties": {
           "result": {
@@ -5624,10 +5859,6 @@
           },
           "is_paused": {
             "type": "boolean"
-          },
-          "namespace_id": {
-            "format": "int64",
-            "type": "integer"
           },
           "namespace_uid": {
             "type": "string"
@@ -6348,6 +6579,21 @@
           "Version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "LegacyChannel": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -7124,6 +7370,50 @@
           },
           "name": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMigrationState": {
+        "properties": {
+          "migratedChannels": {
+            "items": {
+              "$ref": "#/components/schemas/ContactPair"
+            },
+            "type": "array"
+          },
+          "migratedDashboards": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardUpgrade"
+            },
+            "type": "array"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMigrationSummary": {
+        "properties": {
+          "hasErrors": {
+            "type": "boolean"
+          },
+          "newAlerts": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "newChannels": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "newDashboards": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "removed": {
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -8255,6 +8545,9 @@
           "isEnabled": {
             "type": "boolean"
           },
+          "slug": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -9105,6 +9398,32 @@
         },
         "type": "object"
       },
+      "RolesSearchQuery": {
+        "properties": {
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "teamIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "userIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "Route": {
         "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
@@ -9405,6 +9724,24 @@
         },
         "type": "object"
       },
+      "SSOSettings": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SettingsSource"
+          }
+        },
+        "type": "object"
+      },
       "Sample": {
         "properties": {
           "H": {
@@ -9452,6 +9789,29 @@
             "type": "boolean"
           },
           "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SearchDeviceQueryResult": {
+        "properties": {
+          "devices": {
+            "items": {
+              "$ref": "#/components/schemas/DeviceSearchHitDTO"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "perPage": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalCount": {
             "format": "int64",
             "type": "integer"
           }
@@ -9728,6 +10088,25 @@
         },
         "type": "object"
       },
+      "SetResourcePermissionCommand": {
+        "properties": {
+          "builtInRole": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "SetRoleAssignmentsCommand": {
         "properties": {
           "service_accounts": {
@@ -9779,6 +10158,10 @@
           "type": "object"
         },
         "type": "object"
+      },
+      "SettingsSource": {
+        "format": "int64",
+        "type": "integer"
       },
       "ShareType": {
         "type": "string"
@@ -10548,6 +10931,10 @@
         "properties": {
           "account": {
             "type": "string"
+          },
+          "anonymousRatio": {
+            "format": "int64",
+            "type": "integer"
           },
           "company": {
             "type": "string"
@@ -11579,6 +11966,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11734,7 +12122,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -11790,6 +12177,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -11850,7 +12238,6 @@
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12060,7 +12447,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -12083,6 +12469,78 @@
           "integrations",
           "name"
         ],
+        "type": "object"
+      },
+      "resourcePermissionDTO": {
+        "properties": {
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "builtInRole": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isInherited": {
+            "type": "boolean"
+          },
+          "isManaged": {
+            "type": "boolean"
+          },
+          "isServiceAccount": {
+            "type": "boolean"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "teamAvatarUrl": {
+            "type": "string"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userAvatarUrl": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userLogin": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "setPermissionCommand": {
+        "properties": {
+          "permission": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "setPermissionsCommand": {
+        "properties": {
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/SetResourcePermissionCommand"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "silence": {
@@ -12517,6 +12975,42 @@
         ]
       }
     },
+    "/access-control/teams/roles/search": {
+      "post": {
+        "description": "Lists the roles that have been directly assigned to the given teams.\n\nYou need to have a permission with action `teams.roles:read` and scope `teams:id:*`.",
+        "operationId": "listTeamsRoles",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RolesSearchQuery"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listTeamsRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "List roles assigned to multiple teams.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
     "/access-control/teams/{teamId}/roles": {
       "get": {
         "description": "You need to have a permission with action `teams.roles:read` and scope `teams:id:\u003cteam ID\u003e`.",
@@ -12679,6 +13173,42 @@
           }
         },
         "summary": "Remove team role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/access-control/users/roles/search": {
+      "post": {
+        "description": "Lists the roles that have been directly assigned to the given users. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:*`.",
+        "operationId": "listUsersRoles",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RolesSearchQuery"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listUsersRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "List roles assigned to multiple users.",
         "tags": [
           "access_control",
           "enterprise"
@@ -12866,6 +13396,310 @@
         "tags": [
           "access_control",
           "enterprise"
+        ]
+      }
+    },
+    "/access-control/{resource}/description": {
+      "get": {
+        "operationId": "getResourceDescription",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/resourcePermissionsDescription"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a description of a resource's access control properties.",
+        "tags": [
+          "access_control"
+        ]
+      }
+    },
+    "/access-control/{resource}/{resourceID}": {
+      "get": {
+        "operationId": "getResourcePermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getResourcePermissionsResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get permissions for a resource.",
+        "tags": [
+          "access_control"
+        ]
+      },
+      "post": {
+        "description": "Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to one or many\nassignment types. Allowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.\nRefer to the `/access-control/{resource}/description` endpoint for allowed Permissions.",
+        "operationId": "setResourcePermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/setPermissionsCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Set resource permissions.",
+        "tags": [
+          "access_control"
+        ]
+      }
+    },
+    "/access-control/{resource}/{resourceID}/builtInRoles/{builtInRole}": {
+      "post": {
+        "description": "Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to a built-in role.\nAllowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.\nRefer to the `/access-control/{resource}/description` endpoint for allowed Permissions.",
+        "operationId": "setResourcePermissionsForBuiltInRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "builtInRole",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/setPermissionCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Set resource permissions for a built-in role.",
+        "tags": [
+          "access_control"
+        ]
+      }
+    },
+    "/access-control/{resource}/{resourceID}/teams/{teamID}": {
+      "post": {
+        "description": "Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to a team.\nAllowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.\nRefer to the `/access-control/{resource}/description` endpoint for allowed Permissions.",
+        "operationId": "setResourcePermissionsForTeam",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "teamID",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/setPermissionCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Set resource permissions for a team.",
+        "tags": [
+          "access_control"
+        ]
+      }
+    },
+    "/access-control/{resource}/{resourceID}/users/{userID}": {
+      "post": {
+        "description": "Assigns permissions for a resource by a given type (`:resource`) and `:resourceID` to a user or a service account.\nAllowed resources are `datasources`, `teams`, `dashboards`, `folders`, and `serviceaccounts`.\nRefer to the `/access-control/{resource}/description` endpoint for allowed Permissions.",
+        "operationId": "setResourcePermissionsForUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userID",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/setPermissionCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Set resource permissions for a user.",
+        "tags": [
+          "access_control"
         ]
       }
     },
@@ -15689,6 +16523,16 @@
         "responses": {
           "204": {
             "description": " The mute timing was deleted successfully."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Delete a mute timing.",
@@ -15760,7 +16604,7 @@
           "x-originalParamName": "Body"
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
@@ -22136,6 +22980,30 @@
         "tags": [
           "search"
         ]
+      },
+      "post": {
+        "operationId": "SearchDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/devicesSearchResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Lists all devices within the last 30 days",
+        "tags": [
+          "devices"
+        ]
       }
     },
     "/search/sorting": {
@@ -24165,7 +25033,7 @@
     },
     "/v1/sso-settings/{key}": {
       "delete": {
-        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "description": "Removes the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
         "operationId": "removeProviderSettings",
         "parameters": [
           {
@@ -24190,11 +25058,95 @@
           "403": {
             "$ref": "#/components/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
         },
         "summary": "Remove SSO Settings",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "get": {
+        "description": "You need to have a permission with action `settings:read` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "getProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          }
+        },
+        "summary": "Get an SSO Settings entry by Key",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "put": {
+        "description": "Inserts or updates the SSO Settings for a provider.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "updateProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SSOSettings"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update SSO Settings",
         "tags": [
           "sso_settings"
         ]

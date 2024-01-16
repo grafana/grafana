@@ -55,15 +55,6 @@ import {
 } from '@grafana/lezer-logql';
 
 import {
-  ErrorId,
-  getAllByType,
-  getLeftMostChild,
-  getString,
-  makeBinOp,
-  makeError,
-  replaceVariables,
-} from '../../prometheus/querybuilder/shared/parsingUtils';
-import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
   QueryBuilderOperationParamValue,
@@ -71,6 +62,15 @@ import {
 
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { checkParamsAreValid, getDefinitionById } from './operations';
+import {
+  ErrorId,
+  getAllByType,
+  getLeftMostChild,
+  getString,
+  makeBinOp,
+  makeError,
+  replaceVariables,
+} from './parsingUtils';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {
@@ -501,9 +501,14 @@ function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context
   const params = number !== null && number !== undefined ? [getString(expr, number)] : [];
   const range = logExpr?.getChild(Range);
   const rangeValue = range ? getString(expr, range) : null;
+  const grouping = node.getChild(Grouping);
 
   if (rangeValue) {
     params.unshift(rangeValue.substring(1, rangeValue.length - 1));
+  }
+
+  if (grouping) {
+    params.push(...getAllByType(expr, grouping, Identifier));
   }
 
   const op = {

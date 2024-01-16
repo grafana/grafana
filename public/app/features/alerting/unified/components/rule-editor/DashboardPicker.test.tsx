@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { noop } from 'lodash';
 import React from 'react';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
@@ -29,7 +29,22 @@ mockDashboardApi(server).dashboard(
   mockDashboardDto({
     uid: 'dash-2',
     title: 'Dashboard 2',
-    panels: [{ type: 'graph' }, { type: 'timeseries' }],
+    panels: [
+      {
+        type: 'graph',
+      },
+      {
+        type: 'timeseries',
+      },
+      // this one is a library panel
+      {
+        type: undefined,
+        libraryPanel: {
+          name: 'my library panel',
+          uid: 'abc123',
+        },
+      },
+    ],
   })
 );
 
@@ -38,26 +53,22 @@ const ui = {
 };
 
 describe('DashboardPicker', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
   it('Renders panels without ids', async () => {
     render(<DashboardPicker isOpen={true} onChange={noop} onDismiss={noop} dashboardUid="dash-2" panelId={2} />, {
       wrapper: TestProvider,
     });
-    act(() => {
-      jest.advanceTimersByTime(500);
+
+    await waitFor(() => {
+      expect(ui.dashboardButton(/Dashboard 1/).get()).toBeInTheDocument();
+      expect(ui.dashboardButton(/Dashboard 2/).get()).toBeInTheDocument();
+      expect(ui.dashboardButton(/Dashboard 3/).get()).toBeInTheDocument();
+
+      const panels = ui.dashboardButton(/<No title>/).getAll();
+      expect(panels).toHaveLength(3);
+
+      panels.forEach((panel) => {
+        expect(panel).not.toBeDisabled();
+      });
     });
-
-    expect(await ui.dashboardButton(/Dashboard 1/).find()).toBeInTheDocument();
-    expect(await ui.dashboardButton(/Dashboard 2/).find()).toBeInTheDocument();
-    expect(await ui.dashboardButton(/Dashboard 3/).find()).toBeInTheDocument();
-
-    expect(await ui.dashboardButton(/<No title>/).findAll()).toHaveLength(2);
   });
 });

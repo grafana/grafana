@@ -23,9 +23,6 @@ var _ ssosettings.Reloadable = (*SocialOkta)(nil)
 
 type SocialOkta struct {
 	*SocialBase
-	apiUrl          string
-	allowedGroups   []string
-	skipOrgRoleSync bool
 }
 
 type OktaUserInfoJson struct {
@@ -47,18 +44,13 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	config := createOAuthConfig(info, cfg, social.OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase:    newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-		apiUrl:        info.ApiUrl,
-		allowedGroups: info.AllowedGroups,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
-		skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
+		SocialBase: newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, features),
 	}
 
-	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if info.UseRefreshToken {
 		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 
@@ -70,10 +62,18 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssose
 }
 
 func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
-	return nil
-}
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
 
-func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	err = validateInfo(info)
+	if err != nil {
+		return err
+	}
+
+	// add specific validation rules for Okta
+
 	return nil
 }
 
@@ -86,6 +86,8 @@ func (claims *OktaClaims) extractEmail() string {
 }
 
 func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	info := s.GetOAuthInfo()
+
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, fmt.Errorf("no id_token found")
@@ -119,18 +121,18 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 
 	var role roletype.RoleType
 	var isGrafanaAdmin *bool
-	if !s.skipOrgRoleSync {
+	if !info.SkipOrgRoleSync {
 		var grafanaAdmin bool
 		role, grafanaAdmin, err = s.extractRoleAndAdmin(data.rawJSON, groups)
 		if err != nil {
 			return nil, err
 		}
 
-		if s.allowAssignGrafanaAdmin {
+		if info.AllowAssignGrafanaAdmin {
 			isGrafanaAdmin = &grafanaAdmin
 		}
 	}
-	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
@@ -145,14 +147,12 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	}, nil
 }
 
-func (s *SocialOkta) GetOAuthInfo() *social.OAuthInfo {
-	return s.info
-}
-
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
-	rawUserInfoResponse, err := s.httpGet(ctx, client, s.apiUrl)
+	info := s.GetOAuthInfo()
+
+	rawUserInfoResponse, err := s.httpGet(ctx, client, info.ApiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info response", "url", s.apiUrl, "error", err)
+		s.log.Debug("Error getting user info response", "url", info.ApiUrl, "error", err)
 		return fmt.Errorf("error getting user info response: %w", err)
 	}
 	data.rawJSON = rawUserInfoResponse.Body
@@ -178,11 +178,13 @@ func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
 
 // TODO: remove this in a separate PR and use the isGroupMember from the social.go
 func (s *SocialOkta) IsGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
+	info := s.GetOAuthInfo()
+
+	if len(info.AllowedGroups) == 0 {
 		return true
 	}
 
-	for _, allowedGroup := range s.allowedGroups {
+	for _, allowedGroup := range info.AllowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
 				return true

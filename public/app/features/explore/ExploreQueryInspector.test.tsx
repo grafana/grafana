@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
@@ -10,6 +11,7 @@ type ExploreQueryInspectorProps = ComponentProps<typeof ExploreQueryInspector>;
 
 jest.mock('../inspector/styles', () => ({
   getPanelInspectorStyles: () => ({}),
+  getPanelInspectorStyles2: () => ({}),
 }));
 
 jest.mock('app/core/services/backend_srv', () => ({
@@ -32,6 +34,15 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: () => null,
 }));
+
+jest.mock('react-virtualized-auto-sizer', () => {
+  return {
+    __esModule: true,
+    default(props: ComponentProps<typeof AutoSizer>) {
+      return <div>{props.children({ height: 1000, width: 1000 })}</div>;
+    },
+  };
+});
 
 const setup = (propOverrides = {}) => {
   const props: ExploreQueryInspectorProps = {
@@ -81,6 +92,54 @@ describe('ExploreQueryInspector', () => {
     fireEvent.click(screen.getByLabelText(/tab query/i));
     fireEvent.click(screen.getByText(/expand all/i));
     expect(screen.getByText(/very unique test value/i)).toBeInTheDocument();
+  });
+  it('should display formatted data', () => {
+    setup({
+      queryResponse: {
+        state: LoadingState.Done,
+        series: [
+          {
+            refId: 'A',
+            fields: [
+              {
+                name: 'time',
+                type: 'time',
+                typeInfo: {
+                  frame: 'time.Time',
+                  nullable: true,
+                },
+                config: {
+                  interval: 30000,
+                },
+                values: [1704285124682, 1704285154682],
+                entities: {},
+              },
+              {
+                name: 'A-series',
+                type: 'number',
+                typeInfo: {
+                  frame: 'float64',
+                  nullable: true,
+                },
+                labels: {},
+                config: {},
+                values: [71.202732378676928, 72.348839082431916],
+                entities: {},
+              },
+            ],
+            length: 2,
+          },
+        ],
+      },
+    });
+
+    fireEvent.click(screen.getByLabelText(/tab data/i));
+    // assert series values are formatted to 3 digits (xx.x or x.xx)
+    expect(screen.getByText(/71.2/i)).toBeInTheDocument();
+    expect(screen.getByText(/72.3/i)).toBeInTheDocument();
+    // assert timestamps are formatted
+    expect(screen.getByText(/2024-01-03 12:32:04.682/i)).toBeInTheDocument();
+    expect(screen.getByText(/2024-01-03 12:32:34.682/i)).toBeInTheDocument();
   });
 });
 

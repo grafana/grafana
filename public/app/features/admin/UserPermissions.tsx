@@ -38,55 +38,53 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
   const styles = useStyles2(getTooltipStyles);
 
   return (
-    <>
+    <div>
       <h3 className="page-heading">Permissions</h3>
-      <div className={styles.container}>
-        <table className="filter-table form-inline">
-          <tbody>
-            <tr>
-              <td className="width-16">Grafana Admin</td>
-              {isEditing ? (
-                <td colSpan={2}>
-                  <RadioButtonGroup
-                    options={adminOptions}
-                    value={currentAdminOption}
-                    onChange={setCurrentAdminOption}
-                    autoFocus
-                  />
-                </td>
-              ) : (
-                <td colSpan={2}>
-                  {isGrafanaAdmin ? (
-                    <>
-                      <Icon name="shield" /> Yes
-                    </>
-                  ) : (
-                    <>No</>
-                  )}
-                </td>
-              )}
-              <td>
-                {canChangePermissions && (
-                  <ConfirmButton
-                    onClick={onChangeClick}
-                    onConfirm={handleGrafanaAdminChange}
-                    onCancel={onCancelClick}
-                    confirmText="Change"
-                  >
-                    Change
-                  </ConfirmButton>
-                )}
-                {isExternalUser && (
-                  <div className={styles.lockMessageClass}>
-                    <ExternalUserTooltip lockMessage={lockMessage} />
-                  </div>
+      <table className="filter-table form-inline">
+        <tbody>
+          <tr>
+            <td className="width-16">Grafana Admin</td>
+            {isEditing ? (
+              <td colSpan={2}>
+                <RadioButtonGroup
+                  options={adminOptions}
+                  value={currentAdminOption}
+                  onChange={setCurrentAdminOption}
+                  autoFocus
+                />
+              </td>
+            ) : (
+              <td colSpan={2}>
+                {isGrafanaAdmin ? (
+                  <>
+                    <Icon name="shield" /> Yes
+                  </>
+                ) : (
+                  <>No</>
                 )}
               </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </>
+            )}
+            <td>
+              {canChangePermissions && (
+                <ConfirmButton
+                  onClick={onChangeClick}
+                  onConfirm={handleGrafanaAdminChange}
+                  onCancel={onCancelClick}
+                  confirmText="Change"
+                >
+                  Change
+                </ConfirmButton>
+              )}
+              {isExternalUser && (
+                <div className={styles.lockMessageClass}>
+                  <ExternalUserTooltip lockMessage={lockMessage} />
+                </div>
+              )}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -97,7 +95,4 @@ const getTooltipStyles = (theme: GrafanaTheme2) => ({
     font-style: italic;
     margin-right: ${theme.spacing(0.6)};
   `,
-  container: css({
-    marginBottom: theme.spacing(5),
-  }),
 });

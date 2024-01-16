@@ -1,5 +1,5 @@
 ---
-description: Guide for upgrading to Grafana v9.3
+description: Upgrade to Grafana v9.3
 keywords:
   - grafana
   - configuration

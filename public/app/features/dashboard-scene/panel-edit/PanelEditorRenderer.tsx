@@ -13,7 +13,7 @@ import { useSelector } from 'app/types/store';
 import { PanelEditor } from './PanelEditor';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
-  const { body, controls, drawer } = model.useState();
+  const { body, controls, overlay } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -34,7 +34,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           <body.Component model={body} />
         </div>
       </div>
-      {drawer && <drawer.Component model={drawer} />}
+      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }
@@ -68,7 +68,6 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2),
       flexBasis: '100%',
       flexGrow: 1,
       minHeight: 0,

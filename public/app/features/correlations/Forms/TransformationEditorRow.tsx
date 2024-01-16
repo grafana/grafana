@@ -5,7 +5,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { getSupportedTransTypeDetails, getTransformOptions } from './types';
+import { FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
 type Props = {
   index: number;
   value: Record<string, string>;
@@ -23,7 +23,7 @@ const getStyles = () => ({
 
 const TransformationEditorRow = (props: Props) => {
   const { index, value: defaultValue, readOnly, remove } = props;
-  const { control, formState, register, setValue, watch, getValues } = useFormContext();
+  const { control, formState, register, setValue, watch, getValues } = useFormContext<FormDTO>();
 
   const [keptVals, setKeptVals] = useState<{ expression?: string; mapValue?: string }>({});
 
@@ -63,34 +63,37 @@ const TransformationEditorRow = (props: Props) => {
           </Stack>
         }
         invalid={!!formState.errors?.config?.transformations?.[index]?.type}
-        error={formState.errors?.config?.transformations?.[index]?.type?.message}
+        error={formState.errors?.config?.transformations?.[index]?.message}
         validationMessageHorizontalOverflow={true}
       >
         <Select
           value={typeValue}
           onChange={(value) => {
             if (!readOnly) {
-              const currentValues = getValues().config.transformations[index];
-              setKeptVals({
-                expression: currentValues.expression,
-                mapValue: currentValues.mapValue,
-              });
-
-              const newValueDetails = getSupportedTransTypeDetails(value.value);
-
-              if (newValueDetails.expressionDetails.show) {
-                setValue(`config.transformations.${index}.expression`, keptVals?.expression || '');
-              } else {
-                setValue(`config.transformations.${index}.expression`, '');
+              const currentValues = getValues()?.config?.transformations?.[index];
+              if (currentValues) {
+                setKeptVals({
+                  expression: currentValues.expression,
+                  mapValue: currentValues.mapValue,
+                });
               }
+              if (value.value) {
+                const newValueDetails = getSupportedTransTypeDetails(value.value);
 
-              if (newValueDetails.mapValueDetails.show) {
-                setValue(`config.transformations.${index}.mapValue`, keptVals?.mapValue || '');
-              } else {
-                setValue(`config.transformations.${index}.mapValue`, '');
+                if (newValueDetails.expressionDetails.show) {
+                  setValue(`config.transformations.${index}.expression`, keptVals?.expression || '');
+                } else {
+                  setValue(`config.transformations.${index}.expression`, '');
+                }
+
+                if (newValueDetails.mapValueDetails.show) {
+                  setValue(`config.transformations.${index}.mapValue`, keptVals?.mapValue || '');
+                } else {
+                  setValue(`config.transformations.${index}.mapValue`, '');
+                }
+
+                setValue(`config.transformations.${index}.type`, value.value);
               }
-
-              setValue(`config.transformations.${index}.type`, value.value);
             }
           }}
           options={transformOptions}
