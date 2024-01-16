@@ -126,18 +126,17 @@ func (s *Service) setUserClaims(ctx context.Context, identifier string, claims *
 	}
 
 	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: id})
-	// we ignore errors when a user don't have external user auth
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		s.logger.FromContext(ctx).Error("Failed to fetch auth info", "userId", id, "error", err)
-	}
-
-	claims.Extra = map[string]any{}
-
 	if err != nil {
+		// we ignore errors when a user don't have external user auth
+		if !errors.Is(err, user.ErrUserNotFound) {
+			s.logger.FromContext(ctx).Error("Failed to fetch auth info", "userId", id, "error", err)
+		}
+
 		return nil
 	}
 
-	claims.Extra["authenticatedBy"] = info.AuthModule
+	claims.AuthenticatedBy = info.AuthModule
+
 	return nil
 }
 
