@@ -25,11 +25,11 @@ func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService 
 }
 
 type OAuthTokenSync struct {
-	log            log.Logger
-	service        oauthtoken.OAuthTokenService
-	sessionService auth.UserTokenService
-	socialService  social.Service
-	sf             *singleflight.Group
+	log               log.Logger
+	service           oauthtoken.OAuthTokenService
+	sessionService    auth.UserTokenService
+	socialService     social.Service
+	singleflightGroup *singleflight.Group
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
@@ -44,7 +44,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
-	_, err, _ := s.sf.Do(identity.ID, func() (interface{}, error) {
+	_, err, _ := s.singleflightGroup.Do(identity.ID, func() (interface{}, error) {
 		s.log.Debug("Singleflight request for OAuth token sync", "key", identity.ID)
 
 		// FIXME: Consider using context.WithoutCancel instead of context.Background after Go 1.21 update
