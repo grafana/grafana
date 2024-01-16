@@ -244,6 +244,7 @@
     "@floating-ui/react": "0.26.6",
     "@glideapps/glide-data-grid": "^5.2.1",
     "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*",
+    "@grafana-plugins/grafana-pyroscope-datasource": "workspace:*",
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*",
     "@grafana-plugins/parca": "workspace:*",
     "@grafana-plugins/tempo": "workspace:*",

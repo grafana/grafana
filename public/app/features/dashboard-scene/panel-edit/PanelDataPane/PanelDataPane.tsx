@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -9,7 +11,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
 import { VizPanelManager } from '../VizPanelManager';
@@ -132,6 +134,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
+  const styles = useStyles2(getStyles);
 
   if (!tabs) {
     return;
@@ -155,7 +158,19 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           );
         })}
       </TabsBar>
-      <TabContent>{currentTab && <currentTab.Component model={currentTab} />}</TabContent>
+      <TabContent className={styles.tabContent}>{currentTab && <currentTab.Component model={currentTab} />}</TabContent>
     </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    tabContent: css({
+      padding: theme.spacing(2),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderLeft: 'none',
+      borderBottom: 'none',
+      borderTopRightRadius: theme.shape.radius.default,
+    }),
+  };
 }
