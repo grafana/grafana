@@ -63,9 +63,6 @@ ETag: db87f729761898ee
     "enabled": true,
     "scopes": "user:email,read:org"
   },
-  "created": "2022-09-19T11:44:42+02:00",
-  "updated": "2022-09-19T11:44:42+02:00",
-  "isDeleted": false,
   "source":    "system",
 }
 ```
