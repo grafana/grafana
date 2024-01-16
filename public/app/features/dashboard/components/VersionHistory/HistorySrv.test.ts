@@ -1,4 +1,3 @@
-import { DashboardModel } from '../../state/DashboardModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { HistorySrv } from './HistorySrv';
@@ -39,19 +38,19 @@ describe('historySrv', () => {
       getMock.mockImplementation(() => Promise.resolve(versionsResponse));
       historySrv = new HistorySrv();
 
-      return historySrv.getHistoryList(dash, historyListOpts).then((versions) => {
+      return historySrv.getHistoryList(dash.uid, historyListOpts).then((versions) => {
         expect(versions).toEqual(versionsResponse);
       });
     });
 
     it('should return an empty array when not given an id', () => {
-      return historySrv.getHistoryList(emptyDash, historyListOpts).then((versions) => {
+      return historySrv.getHistoryList(emptyDash.uid, historyListOpts).then((versions) => {
         expect(versions).toEqual([]);
       });
     });
 
-    it('should return an empty array when not given a dashboard', () => {
-      return historySrv.getHistoryList(null as unknown as DashboardModel, historyListOpts).then((versions) => {
+    it('should return an empty array when not given a dashboard id', () => {
+      return historySrv.getHistoryList(null as unknown as string, historyListOpts).then((versions) => {
         expect(versions).toEqual([]);
       });
     });

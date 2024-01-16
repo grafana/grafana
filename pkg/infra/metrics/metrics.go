@@ -128,6 +128,9 @@ var (
 	// MAccessPermissionsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessPermissionsSummary prometheus.Histogram
 
+	// MSearchPermissionsSummary is a metric summary for searching permissions request duration
+	MAccessSearchPermissionsSummary prometheus.Histogram
+
 	// MAccessEvaluationsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessEvaluationsSummary prometheus.Histogram
 )
@@ -581,6 +584,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MAccessSearchPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "access_search_permissions_duration",
+		Help:    "Histogram for the runtime of permissions search function",
+		Buckets: prometheus.ExponentialBuckets(0.001, 4, 5),
+	})
+
 	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_library_panels",
 		Help:      "total amount of library panels in the database",
@@ -698,6 +707,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MRenderingQueue,
 		MAccessPermissionsSummary,
 		MAccessEvaluationsSummary,
+		MAccessSearchPermissionsSummary,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,
