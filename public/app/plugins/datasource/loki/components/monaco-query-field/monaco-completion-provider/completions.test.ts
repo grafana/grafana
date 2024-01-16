@@ -1,5 +1,5 @@
 import { dateTime } from '@grafana/data';
-import { Monaco, monacoTypes } from '@grafana/ui/src';
+import { Monaco, monacoTypes } from '@grafana/ui';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
 import { createLokiDatasource } from '../../../__mocks__/datasource';

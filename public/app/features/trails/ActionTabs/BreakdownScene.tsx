@@ -177,7 +177,6 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       new SceneCSSGridItem({
         body: PanelBuilders.timeseries()
           .setTitle(option.label!)
-          .setUnit(queryDef.unit)
           .setData(
             new SceneQueryRunner({
               maxDataPoints: 300,
@@ -252,7 +251,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
         getLayoutChild: (data, frame, frameIndex) => {
           return new SceneCSSGridItem({
             body: queryDef
-              .vizBuilder(queryDef)
+              .vizBuilder()
               .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
@@ -270,7 +269,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
         getLayoutChild: (data, frame, frameIndex) => {
           return new SceneCSSGridItem({
             body: queryDef
-              .vizBuilder(queryDef)
+              .vizBuilder()
               .setTitle(getLabelValue(frame))
               .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
               .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
