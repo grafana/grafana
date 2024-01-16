@@ -119,6 +119,11 @@ type AlertmanagerAggregatedMetrics struct {
 	match          *prometheus.Desc
 	objectMatchers *prometheus.Desc
 
+	matchersParseTotal        *prometheus.Desc
+	matchersDisagreeTotal     *prometheus.Desc
+	matchersIncompatibleTotal *prometheus.Desc
+	matchersInvalidTotal      *prometheus.Desc
+
 	configHash *prometheus.Desc
 }
 
@@ -261,6 +266,23 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 			"The total number of object_matchers",
 			nil, nil),
 
+		matchersParseTotal: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_matchers_parse", Namespace, Subsystem),
+			"Total number of matcher inputs parsed, including invalid inputs.",
+			[]string{"origin"}, nil),
+		matchersDisagreeTotal: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_matchers_disagree", Namespace, Subsystem),
+			"Total number of matcher inputs which produce different parsings (disagreement).",
+			[]string{"origin"}, nil),
+		matchersIncompatibleTotal: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_matchers_incompatible", Namespace, Subsystem),
+			"Total number of matcher inputs that are incompatible with the UTF-8 parser.",
+			[]string{"origin"}, nil),
+		matchersInvalidTotal: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_matchers_invalid", Namespace, Subsystem),
+			"Total number of matcher inputs that could not be parsed.",
+			[]string{"origin"}, nil),
+
 		configHash: prometheus.NewDesc(
 			fmt.Sprintf("%s_%s_alertmanager_config_hash", Namespace, Subsystem),
 			"The hash of the Alertmanager configuration.",
@@ -311,6 +333,11 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 	out <- a.objectMatchers
 
 	out <- a.configHash
+
+	out <- a.matchersParseTotal
+	out <- a.matchersDisagreeTotal
+	out <- a.matchersIncompatibleTotal
+	out <- a.matchersInvalidTotal
 }
 
 func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
@@ -354,6 +381,11 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfGauges(out, a.matchRE, "alertmanager_config_match_re")
 	data.SendSumOfGauges(out, a.match, "alertmanager_config_match")
 	data.SendSumOfGauges(out, a.objectMatchers, "alertmanager_config_object_matchers")
+
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.matchersParseTotal, "alertmanager_matchers_parse", "origin")
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.matchersParseTotal, "alertmanager_matchers_disagree", "origin")
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.matchersParseTotal, "alertmanager_matchers_incompatible", "origin")
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.matchersParseTotal, "alertmanager_matchers_invalid", "origin")
 
 	data.SendMaxOfGaugesPerTenant(out, a.configHash, "alertmanager_config_hash")
 }
