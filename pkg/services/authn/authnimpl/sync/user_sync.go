@@ -121,9 +121,14 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return nil
 	}
 
+	orgID := r.OrgID
+	if orgID == 0 {
+		orgID = identity.OrgID
+	}
+
 	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
 		UserID: userID,
-		OrgID:  r.OrgID,
+		OrgID:  orgID,
 	})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
@@ -282,11 +287,11 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	}
 
 	usr, errCreateUser := s.userService.Create(ctx, &user.CreateUserCommand{
-		Login:        id.Login,
-		Email:        id.Email,
-		Name:         id.Name,
-		IsAdmin:      isAdmin,
-		SkipOrgSetup: len(id.OrgRoles) > 0,
+		Login:   id.Login,
+		Email:   id.Email,
+		Name:    id.Name,
+		IsAdmin: isAdmin,
+		OrgID:   id.OrgID,
 	})
 	if errCreateUser != nil {
 		return nil, errCreateUser
@@ -399,9 +404,7 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.Name = usr.Name
 	identity.Login = usr.Login
 	identity.Email = usr.Email
-	if identity.OrgID == 0 {
-		identity.OrgID = usr.OrgID
-	}
+	identity.OrgID = usr.OrgID
 	identity.OrgName = usr.OrgName
 	identity.OrgRoles = map[int64]org.RoleType{identity.OrgID: usr.OrgRole}
 	identity.HelpFlags1 = usr.HelpFlags1

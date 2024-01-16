@@ -70,7 +70,12 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 		return nil, err
 	}
 
-	return c.identityFromLDAPInfo(r.OrgID, info), nil
+	orgId := r.OrgID
+	if orgId == 0 && c.cfg.AutoAssignOrg {
+		orgId = int64(c.cfg.AutoAssignOrgId)
+	}
+
+	return c.identityFromLDAPInfo(orgId, info), nil
 }
 
 // disableUser will disable users if they logged in via LDAP previously

@@ -231,10 +231,6 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		return nil, err
 	}
 
-	if identity.OrgID == 0 && s.cfg.AutoAssignOrg {
-		identity.OrgID = int64(s.cfg.AutoAssignOrgId)
-	}
-
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
 		s.errorLogFunc(ctx, err)("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
 		return nil, err
