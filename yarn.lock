@@ -8962,7 +8962,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^16.0.0, @types/node@npm:^16.18.39":
+"@types/node@npm:^16.0.0":
   version: 16.18.50
   resolution: "@types/node@npm:16.18.50"
   checksum: 86269db1724621f1a9af9ed37cbb6bc91bfe7a525e99d6aac168fc63371b634d49da15f94db26f593ada226d01fd64aa32a4dd0ee3732c36043056293c586416
@@ -13315,13 +13315,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:13.1.0":
-  version: 13.1.0
-  resolution: "cypress@npm:13.1.0"
+"cypress@npm:13.6.3":
+  version: 13.6.3
+  resolution: "cypress@npm:13.6.3"
   dependencies:
     "@cypress/request": "npm:^3.0.0"
     "@cypress/xvfb": "npm:^1.2.4"
-    "@types/node": "npm:^16.18.39"
     "@types/sinonjs__fake-timers": "npm:8.1.1"
     "@types/sizzle": "npm:^2.3.2"
     arch: "npm:^2.2.0"
@@ -13364,7 +13363,7 @@ __metadata:
     yauzl: "npm:^2.10.0"
   bin:
     cypress: bin/cypress
-  checksum: 8e96041503497ca1c1bbcfbd7fa679683ca338fa1b76557fe8f3e4926fc61efd15ccdd0d269146515b6743a1845886aaf1d6cfb72e143a5c57bff6853a18cb92
+  checksum: 9ec41974d3e6cb4a293ff1df88f742287650416d4061b5d44484aa98e78da254f190efb2bdfa79090db84eadc7a94c164de28e65ee1a106f8b213967022da2de
   languageName: node
   linkType: hard
 
@@ -17244,7 +17243,7 @@ __metadata:
     core-js: "npm:3.33.0"
     css-loader: "npm:6.8.1"
     css-minimizer-webpack-plugin: "npm:5.0.1"
-    cypress: "npm:13.1.0"
+    cypress: "npm:13.6.3"
     cypress-file-upload: "npm:5.0.8"
     d3: "npm:7.8.5"
     d3-force: "npm:3.0.0"
