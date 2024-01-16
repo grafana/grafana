@@ -55,3 +55,4 @@ export {
   createDataSourcePluginEventProperties,
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
+export { getReturnToPrevious, setReturnToPrevious } from './utils/sessionStorage';

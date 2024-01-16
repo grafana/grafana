@@ -1,28 +1,27 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
+import { locationService, setReturnToPrevious } from '@grafana/runtime';
 import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { Trans, t } from 'app/core/internationalization';
 
 export interface ReturnToPreviousProps {
-  href: UrlQueryValue;
-  title: UrlQueryValue;
+  href: string;
+  title: string;
 }
 
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
+  const { chrome } = useGrafana();
   const styles = useStyles2(getStyles);
-  const [, setParams] = useQueryParams();
-
   const handleOnClick = () => {
-    href && locationService.push(href.toString());
+    setReturnToPrevious({ title: '', href: '' });
+    locationService.push(href);
   };
   const closeButton = () => {
-    setParams({ __returnToTitle: null, __returnToUrl: null });
-    const currentLocation = locationService.getLocation();
-    locationService.push(currentLocation);
+    setReturnToPrevious({ title: '', href: '' });
+    chrome.update({ returnToPrevious: { title: '', href: '' } });
   };
 
   return (

@@ -1,33 +1,33 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { ReturnToPrevious } from './ReturnToPrevious';
 
 export const ReturnToPreviousWrapper = () => {
-  const [params] = useQueryParams();
-  const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
   const theme = useTheme2();
+  const styles = getStyles(theme);
 
-  const shouldShowReturnToPrevious = (params: UrlQueryMap) =>
-    params?.__returnToTitle && params?.__returnToUrl && location.pathname !== params.__returnToUrl;
+  const shouldShowReturnToPrevious =
+    state.returnToPrevious.href !== '' &&
+    state.returnToPrevious.title !== '' &&
+    location.pathname !== state.returnToPrevious.href;
 
   // Don't show the button whether if there is no params or the URL param matches the current URL
-  const [showReturnToPrevious, setShowReturnToPrevious] = React.useState(shouldShowReturnToPrevious(params));
-
-  // Only show the button on large screens
-  const isLargeScreen = window.innerWidth >= theme.breakpoints.values.md;
+  const [showReturnToPrevious, setShowReturnToPrevious] = React.useState(shouldShowReturnToPrevious);
 
   React.useEffect(() => {
-    setShowReturnToPrevious(shouldShowReturnToPrevious(params));
-  }, [params]);
+    setShowReturnToPrevious(shouldShowReturnToPrevious);
+  }, [shouldShowReturnToPrevious]);
 
-  return showReturnToPrevious && isLargeScreen ? (
+  return showReturnToPrevious ? (
     <div className={styles.wrapper}>
-      <ReturnToPrevious href={params.__returnToUrl} title={params.__returnToTitle} />
+      <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
     </div>
   ) : null;
 };

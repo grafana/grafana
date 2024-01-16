@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction, getReturnToPrevious } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -11,6 +11,7 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
+import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
@@ -21,6 +22,10 @@ export interface AppChromeState {
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
+  returnToPrevious: {
+    href: ReturnToPreviousProps['href'];
+    title: ReturnToPreviousProps['title'];
+  };
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -47,6 +52,10 @@ export class AppChromeService {
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
+    returnToPrevious: {
+      href: getReturnToPrevious().href || '',
+      title: getReturnToPrevious().title || '',
+    },
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -57,9 +66,15 @@ export class AppChromeService {
   }
 
   public update(update: Partial<AppChromeState>) {
+    const returnToPrevious = getReturnToPrevious();
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
+      returnToPrevious: {
+        ...current.returnToPrevious,
+        href: returnToPrevious.href,
+        title: returnToPrevious.title,
+      },
     };
 
     // when route change update props from route and clear fields
@@ -105,6 +120,10 @@ export class AppChromeService {
   public useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.state, this.state.getValue());
+  }
+
+  public setReturnToPrevious(returnToPrevious: AppChromeState['returnToPrevious']) {
+    this.update({ returnToPrevious });
   }
 
   public setMegaMenuOpen = (newOpenState: boolean) => {
