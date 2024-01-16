@@ -38,7 +38,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
           exact={true}
           path="/explore/metrics"
           render={() => (
-            <Page navId="data-trails" layout={PageLayoutType.Custom}>
+            <Page navId="explore/metrics" layout={PageLayoutType.Custom}>
               <div className={styles.customPage}>
                 <home.Component model={home} />
               </div>
@@ -49,7 +49,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
           exact={true}
           path="/explore/metrics/trail"
           render={() => (
-            <Page navId="data-trails" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
+            <Page navId="explore/metrics" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
               <div className={styles.customPage}>
                 <DataTrailView trail={trail} />
               </div>
