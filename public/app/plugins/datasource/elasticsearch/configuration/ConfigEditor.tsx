@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
