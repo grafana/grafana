@@ -34,6 +34,10 @@ describe('TextBoxVariableEditor', () => {
     const newValue = 'new textbox value';
     await userEvent.clear(input);
     await userEvent.type(input, newValue);
+
+    expect(input).toHaveValue(newValue);
+
+    await userEvent.tab();
     expect(textBoxVar.state.value).toBe(newValue);
   });
 });
