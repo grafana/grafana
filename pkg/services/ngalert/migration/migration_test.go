@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -664,6 +666,144 @@ func TestDashAlertMigration(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("when migrated rules contain duplicate titles", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		x := sqlStore.GetEngine()
+		service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
+		alerts := []*models.Alert{
+			createAlert(t, 1, 1, 1, "alert1", []string{}),
+			createAlert(t, 1, 1, 2, "alert1", []string{}),
+			createAlert(t, 1, 2, 3, "alert1", []string{}),
+			createAlert(t, 1, 3, 4, "alert1", []string{}),
+			createAlert(t, 1, 3, 5, "alert1", []string{}),
+			createAlert(t, 1, 3, 6, "alert1", []string{}),
+		}
+		expected := map[int64]map[int64]string{
+			int64(1): {
+				1: "alert1",
+				2: "alert1 #2",
+				3: "alert1 #3",
+				4: "alert1",
+				5: "alert1 #2",
+				6: "alert1 #3",
+			},
+		}
+		dashes := []*dashboards.Dashboard{
+			createDashboard(t, 1, 1, "dash1-1", 5, nil),
+			createDashboard(t, 2, 1, "dash2-1", 5, nil),
+			createDashboard(t, 3, 1, "dash3-1", 6, nil),
+		}
+		folders := []*dashboards.Dashboard{
+			createFolder(t, 5, 1, "folder5-1"),
+			createFolder(t, 6, 1, "folder6-1"),
+		}
+		setupLegacyAlertsTables(t, x, nil, alerts, folders, dashes)
+		err := service.Run(context.Background())
+		require.NoError(t, err)
+
+		for orgId := range expected {
+			rules := getAlertRules(t, x, orgId)
+			expectedRulesMap := expected[orgId]
+			require.Len(t, rules, len(expectedRulesMap))
+			for _, r := range rules {
+				delete(r.Labels, "rule_uid") // Not checking this here.
+				exp := expectedRulesMap[*r.PanelID]
+				require.Equal(t, exp, r.Title)
+			}
+		}
+	})
+
+	t.Run("when migrated rules contain titles that are too long", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		x := sqlStore.GetEngine()
+		service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
+		alerts := []*models.Alert{
+			createAlert(t, 1, 1, 1, strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1), []string{}),
+			createAlert(t, 1, 1, 2, strings.Repeat("a", store.AlertDefinitionMaxTitleLength+2), []string{}),
+		}
+		expected := map[int64]map[int64]string{
+			int64(1): {
+				1: strings.Repeat("a", store.AlertDefinitionMaxTitleLength),
+				2: strings.Repeat("a", store.AlertDefinitionMaxTitleLength-3) + " #2",
+			},
+		}
+		dashes := []*dashboards.Dashboard{
+			createDashboard(t, 1, 1, "dash1-1", 5, nil),
+		}
+		folders := []*dashboards.Dashboard{
+			createFolder(t, 5, 1, "folder5-1"),
+		}
+		setupLegacyAlertsTables(t, x, nil, alerts, folders, dashes)
+		err := service.Run(context.Background())
+		require.NoError(t, err)
+
+		for orgId := range expected {
+			rules := getAlertRules(t, x, orgId)
+			expectedRulesMap := expected[orgId]
+			require.Len(t, rules, len(expectedRulesMap))
+			for _, r := range rules {
+				delete(r.Labels, "rule_uid") // Not checking this here.
+				exp := expectedRulesMap[*r.PanelID]
+				require.Equal(t, exp, r.Title)
+			}
+		}
+	})
+}
+
+const newQueryModel = `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"interval":"%s","intervalMs":%d,"maxDataPoints":1500,"refId":"%s"}`
+
+func createAlertQueryWithModel(refId string, ds string, from string, to string, model string) ngModels.AlertQuery {
+	rel, _ := getRelativeDuration(from, to)
+	return ngModels.AlertQuery{
+		RefID:             refId,
+		RelativeTimeRange: ngModels.RelativeTimeRange{From: rel.From, To: rel.To},
+		DatasourceUID:     ds,
+		Model:             []byte(model),
+	}
+}
+
+func createAlertQuery(refId string, ds string, from string, to string) ngModels.AlertQuery {
+	dur, _ := calculateInterval(legacydata.NewDataTimeRange(from, to), simplejson.New(), nil)
+	return createAlertQueryWithModel(refId, ds, from, to, fmt.Sprintf(newQueryModel, "", dur.Milliseconds(), refId))
+}
+
+func createClassicConditionQuery(refId string, conditions []classicCondition) ngModels.AlertQuery {
+	exprModel := struct {
+		Type       string             `json:"type"`
+		RefID      string             `json:"refId"`
+		Conditions []classicCondition `json:"conditions"`
+	}{
+		"classic_conditions",
+		refId,
+		conditions,
+	}
+	exprModelJSON, _ := json.Marshal(&exprModel)
+
+	q := ngModels.AlertQuery{
+		RefID:         refId,
+		DatasourceUID: expressionDatasourceUID,
+		Model:         exprModelJSON,
+	}
+	// IntervalMS and MaxDataPoints are created PreSave by AlertQuery. They don't appear to be necessary for expressions,
+	// but run PreSave here to match the expected model.
+	_ = q.PreSave()
+	return q
+}
+
+func cond(refId string, reducer string, evalType string, thresh float64) classicCondition {
+	return classicCondition{
+		Evaluator: evaluator{Params: []float64{thresh}, Type: evalType},
+		Operator: struct {
+			Type string `json:"type"`
+		}{Type: "and"},
+		Query: struct {
+			Params []string `json:"params"`
+		}{Params: []string{refId}},
+		Reducer: struct {
+			Type string `json:"type"`
+		}{Type: reducer},
+	}
 }
 
 // TestDashAlertQueryMigration tests the execution of the migration specifically for alert rule queries.
@@ -671,60 +811,6 @@ func TestDashAlertQueryMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
 	service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
-
-	newQueryModel := `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"interval":"%s","intervalMs":%d,"maxDataPoints":1500,"refId":"%s"}`
-	createAlertQueryWithModel := func(refId string, ds string, from string, to string, model string) ngModels.AlertQuery {
-		rel, _ := getRelativeDuration(from, to)
-		return ngModels.AlertQuery{
-			RefID:             refId,
-			RelativeTimeRange: ngModels.RelativeTimeRange{From: rel.From, To: rel.To},
-			DatasourceUID:     ds,
-			Model:             []byte(model),
-		}
-	}
-
-	createAlertQuery := func(refId string, ds string, from string, to string) ngModels.AlertQuery {
-		dur, _ := calculateInterval(legacydata.NewDataTimeRange(from, to), simplejson.New(), nil)
-		return createAlertQueryWithModel(refId, ds, from, to, fmt.Sprintf(newQueryModel, "", dur.Milliseconds(), refId))
-	}
-
-	createClassicConditionQuery := func(refId string, conditions []classicCondition) ngModels.AlertQuery {
-		exprModel := struct {
-			Type       string             `json:"type"`
-			RefID      string             `json:"refId"`
-			Conditions []classicCondition `json:"conditions"`
-		}{
-			"classic_conditions",
-			refId,
-			conditions,
-		}
-		exprModelJSON, _ := json.Marshal(&exprModel)
-
-		q := ngModels.AlertQuery{
-			RefID:         refId,
-			DatasourceUID: expressionDatasourceUID,
-			Model:         exprModelJSON,
-		}
-		// IntervalMS and MaxDataPoints are created PreSave by AlertQuery. They don't appear to be necessary for expressions,
-		// but run PreSave here to match the expected model.
-		_ = q.PreSave()
-		return q
-	}
-
-	cond := func(refId string, reducer string, evalType string, thresh float64) classicCondition {
-		return classicCondition{
-			Evaluator: evaluator{Params: []float64{thresh}, Type: evalType},
-			Operator: struct {
-				Type string `json:"type"`
-			}{Type: "and"},
-			Query: struct {
-				Params []string `json:"params"`
-			}{Params: []string{refId}},
-			Reducer: struct {
-				Type string `json:"type"`
-			}{Type: reducer},
-		}
-	}
 
 	genAlert := func(mutators ...ngModels.AlertRuleMutator) *ngModels.AlertRule {
 		rule := &ngModels.AlertRule{
@@ -744,7 +830,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			ExecErrState:    ngModels.AlertingErrState,
 			For:             60 * time.Second,
 			Annotations: map[string]string{
-				"message": "message",
+				ngModels.MigratedMessageAnnotation: "message",
 			},
 			Labels:   map[string]string{ngModels.MigratedUseLegacyChannelsLabel: "true"},
 			IsPaused: false,
@@ -756,8 +842,8 @@ func TestDashAlertQueryMigration(t *testing.T) {
 
 		rule.RuleGroup = fmt.Sprintf("%s - 1m", *rule.DashboardUID)
 
-		rule.Annotations["__dashboardUid__"] = *rule.DashboardUID
-		rule.Annotations["__panelId__"] = strconv.FormatInt(*rule.PanelID, 10)
+		rule.Annotations[ngModels.DashboardUIDAnnotation] = *rule.DashboardUID
+		rule.Annotations[ngModels.PanelIDAnnotation] = strconv.FormatInt(*rule.PanelID, 10)
 		return rule
 	}
 
@@ -1024,10 +1110,9 @@ func TestDashAlertQueryMigration(t *testing.T) {
 					}),
 			},
 			expectedFolder: &dashboards.Dashboard{
-				OrgID:    2,
-				Title:    "General Alerting",
-				FolderID: 0, // nolint:staticcheck
-				Slug:     "general-alerting",
+				OrgID: 2,
+				Title: "General Alerting",
+				Slug:  "general-alerting",
 			},
 			expected: map[int64][]*ngModels.AlertRule{
 				int64(2): {
@@ -1141,8 +1226,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						folder := getDashboard(t, x, orgId, r.NamespaceUID)
 						require.Equal(t, tt.expectedFolder.Title, folder.Title)
 						require.Equal(t, tt.expectedFolder.OrgID, folder.OrgID)
-						// nolint:staticcheck
-						require.Equal(t, tt.expectedFolder.FolderID, folder.FolderID)
+						require.Equal(t, tt.expectedFolder.FolderUID, folder.FolderUID)
 					}
 				}
 

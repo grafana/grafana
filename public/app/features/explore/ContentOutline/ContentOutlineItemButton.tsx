@@ -11,6 +11,7 @@ type CommonProps = {
   className?: string;
   topLeftIcon?: string;
   onTopLeftIconClick?: () => void;
+  isActive?: boolean;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -22,6 +23,7 @@ export function ContentOutlineItemButton({
   className,
   topLeftIcon,
   onTopLeftIconClick,
+  isActive,
   ...rest
 }: ContentOutlineItemButtonProps) {
   const styles = useStyles2(getStyles);
@@ -95,6 +97,24 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       padding: 0,
       margin: 0,
+    }),
+    active: css({
+      backgroundColor: theme.colors.background.secondary,
+      borderTopRightRadius: theme.shape.radius.default,
+      borderBottomRightRadius: theme.shape.radius.default,
+      position: 'relative',
+
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandVertical,
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        transform: 'translateX(-50%)',
+        width: theme.spacing(0.5),
+        left: '2px',
+      },
     }),
   };
 };

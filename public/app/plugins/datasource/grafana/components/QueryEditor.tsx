@@ -29,6 +29,7 @@ import {
   DropzoneFile,
   Themeable2,
   withTheme2,
+  Stack,
 } from '@grafana/ui';
 import { hasAlphaPanels } from 'app/core/config';
 import * as DFImport from 'app/features/dataframe-import';
@@ -277,23 +278,22 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className="gf-form">
-          <InlineField label="Channel" grow={true} labelWidth={labelWidth}>
-            <Select
-              options={channels}
-              value={currentChannel || ''}
-              onChange={this.onChannelChange}
-              allowCustomValue={true}
-              backspaceRemovesValue={true}
-              placeholder="Select measurements channel"
-              isClearable={true}
-              noOptionsMessage="Enter channel name"
-              formatCreateLabel={(input: string) => `Connect to: ${input}`}
-            />
-          </InlineField>
-        </div>
+        <InlineField label="Channel" grow={true} labelWidth={labelWidth}>
+          <Select
+            options={channels}
+            value={currentChannel || ''}
+            onChange={this.onChannelChange}
+            allowCustomValue={true}
+            backspaceRemovesValue={true}
+            placeholder="Select measurements channel"
+            isClearable={true}
+            noOptionsMessage="Enter channel name"
+            formatCreateLabel={(input: string) => `Connect to: ${input}`}
+          />
+        </InlineField>
+
         {channel && (
-          <div className="gf-form">
+          <Stack direction="row" gap={0}>
             <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
               <Select
                 options={fields}
@@ -319,7 +319,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
                 spellCheck={false}
               />
             </InlineField>
-          </div>
+          </Stack>
         )}
 
         <Alert title="Grafana Live - Measurements" severity="info">

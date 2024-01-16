@@ -22,6 +22,7 @@ import {
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
+  SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
   VizPanel,
@@ -44,7 +45,6 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { getQueryRunnerFor } from '../utils/utils';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -138,7 +138,7 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(3);
+      expect(scene.state.$behaviors).toHaveLength(4);
       expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
       expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
@@ -382,7 +382,9 @@ describe('transformSaveModelToScene', () => {
       };
 
       const { vizPanel } = buildGridItemForTest(panel);
-      expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+      expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
+      expect(vizPanel.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
+      expect((vizPanel.state.$data?.state.$data as SceneQueryRunner).state.queries).toEqual(panel.targets);
     });
 
     it('should not set SceneQueryRunner for plugins with skipDataQuery', () => {

@@ -16,7 +16,8 @@ import { css } from '@emotion/css';
 import classNames from 'classnames';
 import React from 'react';
 
-import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
@@ -89,6 +90,8 @@ export type SpanDetailRowProps = {
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
+  traceDuration: number;
+  traceName: string;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -130,6 +133,8 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       timeZone,
       tagsToggle,
       traceStartTime,
+      traceDuration,
+      traceName,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -180,6 +185,8 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               timeZone={timeZone}
               tagsToggle={tagsToggle}
               traceStartTime={traceStartTime}
+              traceDuration={traceDuration}
+              traceName={traceName}
               createSpanLink={createSpanLink}
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
