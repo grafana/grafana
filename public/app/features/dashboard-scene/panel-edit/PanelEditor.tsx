@@ -25,7 +25,6 @@ import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelEditorUrlSync } from './PanelEditorUrlSync';
 import { PanelOptionsPane } from './PanelOptionsPane';
-import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
@@ -153,9 +152,9 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
           body: new PanelDataPane(vizPanelMgr),
         }),
       }),
-      secondary: new SceneFlexLayout({
-        direction: 'column',
-        children: [new PanelOptionsPane(vizPanelMgr), new PanelVizTypePicker(vizPanelMgr)],
+      secondary: new SceneFlexItem({
+        body: new PanelOptionsPane(vizPanelMgr),
+        width: '100%',
       }),
     }),
   });
