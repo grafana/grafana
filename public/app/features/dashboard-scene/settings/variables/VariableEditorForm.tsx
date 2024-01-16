@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { HorizontalGroup, Button, Icon } from '@grafana/ui';
+import { HorizontalGroup, Button, LoadingPlaceholder } from '@grafana/ui';
 import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -109,10 +109,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton}
               onClick={onRunQuery}
             >
-              Run query
-              {runQueryState.loading && (
-                <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />
-              )}
+              {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
             </Button>
             <Button
               variant="destructive"
