@@ -13,13 +13,14 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
+// FeatureResourceInfo represents each feature that may have a toggle
 var FeatureResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"features", "feature", "Feature",
 	func() runtime.Object { return &Feature{} },
 	func() runtime.Object { return &FeatureList{} },
 )
 
-// This represents the actual configuration
+// TogglesResourceInfo represents the actual configuration
 var TogglesResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"featuretoggles", "featuretoggles", "FeatureToggles",
 	func() runtime.Object { return &FeatureToggles{} },
