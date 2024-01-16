@@ -120,7 +120,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     };
 
     if (!actionView) {
-      metricScene.setActionView(actionViewsDefinitions[0].value);
+      metricScene.setActionView('overview');
     }
 
     return (
