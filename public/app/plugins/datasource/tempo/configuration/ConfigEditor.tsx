@@ -6,16 +6,15 @@ import {
   AdvancedHttpSettings,
   Auth,
   ConfigSection,
+  ConfigDescriptionLink,
   ConfigSubSection,
   ConnectionSettings,
   convertLegacyAuthProps,
   DataSourceDescription,
 } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
+import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
 
-import { ConfigDescriptionLink } from '../_importedDependencies/components/ConfigDescriptionLink';
-import { Divider } from '../_importedDependencies/components/Divider';
 import { NodeGraphSection } from '../_importedDependencies/components/NodeGraphSettings';
 import { SpanBarSection } from '../_importedDependencies/components/TraceView/SpanBarSettings';
 import {
@@ -42,10 +41,10 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         hasRequiredFields={false}
       />
 
-      <Divider />
+      <Divider spacing={4} />
       <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:3200" />
 
-      <Divider />
+      <Divider spacing={4} />
       <Auth
         {...convertLegacyAuthProps({
           config: options,
@@ -53,100 +52,94 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         })}
       />
 
-      <Divider />
+      <Divider spacing={4} />
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
 
-      <Divider />
+      <Divider spacing={4} />
       {config.featureToggles.traceToMetrics ? (
         <>
           <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
-          <Divider />
+          <Divider spacing={4} />
         </>
       ) : null}
 
       {config.featureToggles.traceToProfiles && (
         <>
           <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
-          <Divider />
+          <Divider spacing={4} />
         </>
       )}
-
       <ConfigSection
         title="Additional settings"
         description="Additional settings are optional settings that can be configured for more control over your data source."
         isCollapsible={true}
         isInitiallyOpen={false}
       >
-        <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+        <Stack gap={5} direction="column">
+          <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
 
-        {config.secureSocksDSProxyEnabled && (
-          <>
-            <Divider hideLine />
-            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-          </>
-        )}
+          {config.secureSocksDSProxyEnabled && (
+            <>
+              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+            </>
+          )}
 
-        <Divider hideLine />
-        <ConfigSubSection
-          title="Service graph"
-          description={
-            <ConfigDescriptionLink
-              description="Select a Prometheus data source that contains the service graph data."
-              suffix="tempo/configure-tempo-data-source/#service-graph"
-              feature="the service graph"
-            />
-          }
-        >
-          <ServiceGraphSettings options={options} onOptionsChange={onOptionsChange} />
-        </ConfigSubSection>
+          <ConfigSubSection
+            title="Service graph"
+            description={
+              <ConfigDescriptionLink
+                description="Select a Prometheus data source that contains the service graph data."
+                suffix="tempo/configure-tempo-data-source/#service-graph"
+                feature="the service graph"
+              />
+            }
+          >
+            <ServiceGraphSettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
 
-        <Divider hideLine />
-        <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
+          <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
 
-        <Divider hideLine />
-        <ConfigSubSection
-          title="Tempo search"
-          description={
-            <ConfigDescriptionLink
-              description="Modify how traces are searched."
-              suffix="tempo/configure-tempo-data-source/#tempo-search"
-              feature="Tempo search"
-            />
-          }
-        >
-          <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
-        </ConfigSubSection>
+          <ConfigSubSection
+            title="Tempo search"
+            description={
+              <ConfigDescriptionLink
+                description="Modify how traces are searched."
+                suffix="tempo/configure-tempo-data-source/#tempo-search"
+                feature="Tempo search"
+              />
+            }
+          >
+            <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
 
-        <Divider hideLine />
-        <ConfigSubSection
-          title="Loki search"
-          description={
-            <ConfigDescriptionLink
-              description="Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source."
-              suffix="tempo/configure-tempo-data-source/#loki-search"
-              feature="Loki search"
-            />
-          }
-        >
-          <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
-        </ConfigSubSection>
+          <ConfigSubSection
+            title="Loki search"
+            description={
+              <ConfigDescriptionLink
+                description="Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source."
+                suffix="tempo/configure-tempo-data-source/#loki-search"
+                feature="Loki search"
+              />
+            }
+          >
+            <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
 
-        <Divider hideLine />
-        <ConfigSubSection
-          title="TraceID query"
-          description={
-            <ConfigDescriptionLink
-              description="Modify how TraceID queries are run."
-              suffix="tempo/configure-tempo-data-source/#traceid-query"
-              feature="the TraceID query"
-            />
-          }
-        >
-          <QuerySettings options={options} onOptionsChange={onOptionsChange} />
-        </ConfigSubSection>
+          <ConfigSubSection
+            title="TraceID query"
+            description={
+              <ConfigDescriptionLink
+                description="Modify how TraceID queries are run."
+                suffix="tempo/configure-tempo-data-source/#traceid-query"
+                feature="the TraceID query"
+              />
+            }
+          >
+            <QuerySettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
 
-        <Divider hideLine />
-        <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+          <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+        </Stack>
       </ConfigSection>
     </div>
   );
