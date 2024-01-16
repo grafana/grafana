@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
@@ -45,45 +44,17 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 
 	tests := []testCase{
 		{
-			desc:     "should skip sync when identity is not a user",
-			identity: &authn.Identity{ID: "service-account:1"},
+			desc:                        "should skip sync when identity is not a user",
+			identity:                    &authn.Identity{ID: "service-account:1"},
+			expectTryRefreshTokenCalled: false,
 		},
 		{
-			desc:     "should skip sync when identity is a user but is not authenticated with session token",
-			identity: &authn.Identity{ID: "user:1"},
+			desc:                        "should skip sync when identity is a user but is not authenticated with session token",
+			identity:                    &authn.Identity{ID: "user:1"},
+			expectTryRefreshTokenCalled: false,
 		},
 		{
-			desc:                 "should skip sync when user has session but is not authenticated with oauth",
-			identity:             &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-			expectHasEntryCalled: true,
-		},
-		{
-			desc:                  "should skip sync for when access token don't have expire time",
-			identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-			expectHasEntryCalled:  true,
-			expectedHasEntryToken: &login.UserAuth{},
-		},
-		{
-			desc:                  "should skip sync when access token has no expired yet",
-			identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-			expectHasEntryCalled:  true,
-			expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
-		},
-		{
-			desc:                  "should skip sync when access token has no expired yet",
-			identity:              &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-			expectHasEntryCalled:  true,
-			expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
-		},
-		{
-			desc:                        "should refresh access token when it has expired",
-			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-			expectHasEntryCalled:        true,
-			expectTryRefreshTokenCalled: true,
-			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
-		},
-		{
-			desc:                              "should invalidate access token and session token if access token can't be refreshed",
+			desc:                              "should invalidate access token and session token if token refresh fails",
 			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
 			expectHasEntryCalled:              true,
 			expectedTryRefreshErr:             errors.New("some err"),
@@ -92,21 +63,27 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectRevokeTokenCalled:           true,
 			expectedHasEntryToken:             &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
 			expectedErr:                       authn.ErrExpiredAccessToken,
-		}, {
-			desc:                        "should skip sync when use_refresh_token is disabled",
-			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthenticatedBy: login.GitLabAuthModule},
-			expectHasEntryCalled:        true,
-			expectTryRefreshTokenCalled: false,
-			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
-			oauthInfo:                   &social.OAuthInfo{UseRefreshToken: false},
 		},
 		{
-			desc:                        "should refresh access token when ID token has expired",
-			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
-			expectHasEntryCalled:        true,
-			expectTryRefreshTokenCalled: true,
-			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute), OAuthIdToken: fakeIDToken(t, time.Now().Add(-10*time.Minute))},
+			desc:                              "should refresh the token successfully",
+			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+			expectHasEntryCalled:              false,
+			expectTryRefreshTokenCalled:       true,
+			expectInvalidateOauthTokensCalled: false,
+			expectRevokeTokenCalled:           false,
 		},
+		{
+			desc:                              "should not invalidate the token if the token has already been refreshed by another request (singleflight)",
+			identity:                          &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+			expectHasEntryCalled:              true,
+			expectTryRefreshTokenCalled:       true,
+			expectInvalidateOauthTokensCalled: false,
+			expectRevokeTokenCalled:           false,
+			expectedHasEntryToken:             &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
+			expectedTryRefreshErr:             errors.New("some err"),
+		},
+
+		// TODO: address coverage of oauthtoken sync
 	}
 
 	for _, tt := range tests {
@@ -127,7 +104,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 					invalidateTokensCalled = true
 					return nil
 				},
-				TryTokenRefreshFunc: func(ctx context.Context, usr *login.UserAuth) error {
+				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester) error {
 					tryRefreshCalled = true
 					return tt.expectedTryRefreshErr
 				},
@@ -151,12 +128,11 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			}
 
 			sync := &OAuthTokenSync{
-				log:            log.NewNopLogger(),
-				cache:          localcache.New(0, 0),
-				service:        service,
-				sessionService: sessionService,
-				socialService:  socialService,
-				sf:             new(singleflight.Group),
+				log:               log.NewNopLogger(),
+				service:           service,
+				sessionService:    sessionService,
+				socialService:     socialService,
+				singleflightGroup: new(singleflight.Group),
 			}
 
 			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
