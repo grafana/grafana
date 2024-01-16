@@ -1,6 +1,5 @@
 import { of } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import {
   AbstractLabelOperator,
@@ -18,6 +17,7 @@ import {
   toDataFrame,
   TimeRange,
   ToggleFilterAction,
+  DataQueryRequest,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -160,10 +160,10 @@ describe('LokiDatasource', () => {
       // and applyTemplateVariables is a convenient place to do that.
       const spy = jest.spyOn(ds, 'applyTemplateVariables');
 
-      const options = getQueryOptions<LokiQuery>({
+      const options = {
         targets: [{ expr: '{a="b"}', refId: 'B', maxLines: queryMaxLines }],
         app: app ?? CoreApp.Dashboard,
-      });
+      } as DataQueryRequest<LokiQuery>;
 
       const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
       setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
@@ -1239,36 +1239,40 @@ describe('LokiDatasource', () => {
     });
 
     it('creates provider for logs query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options = {
         targets: [{ expr: '{label="value"}', refId: 'A', queryType: LokiQueryType.Range }],
-      });
+        range: { from: dateTime(), to: dateTime() },
+        scopedVars: {},
+      } as DataQueryRequest<LokiQuery>;
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
     it('does not create provider for metrics query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options = {
         targets: [{ expr: 'rate({label="value"}[1m])', refId: 'A' }],
-      });
+      } as DataQueryRequest<LokiQuery>;
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
 
     it('creates provider if at least one query is a logs query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options = {
+        range: { from: dateTime(), to: dateTime() },
+        scopedVars: {},
         targets: [
           { expr: 'rate({label="value"}[1m])', queryType: LokiQueryType.Range, refId: 'A' },
           { expr: '{label="value"}', queryType: LokiQueryType.Range, refId: 'B' },
         ],
-      });
+      } as DataQueryRequest<LokiQuery>;
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
     it('does not create provider if there is only an instant logs query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options = {
         targets: [{ expr: '{label="value"', refId: 'A', queryType: LokiQueryType.Instant }],
-      });
+      } as DataQueryRequest<LokiQuery>;
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
@@ -1281,28 +1285,28 @@ describe('LokiDatasource', () => {
     });
 
     it('creates provider for metrics query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options = {
         targets: [{ expr: 'rate({label="value"}[5m])', refId: 'A' }],
-      });
+      } as DataQueryRequest<LokiQuery>;
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
 
     it('does not create provider for log query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options = {
         targets: [{ expr: '{label="value"}', refId: 'A' }],
-      });
+      } as DataQueryRequest<LokiQuery>;
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
     });
 
     it('creates provider if at least one query is a metric query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options = {
         targets: [
           { expr: 'rate({label="value"}[1m])', refId: 'A' },
           { expr: '{label="value"}', refId: 'B' },
         ],
-      });
+      } as DataQueryRequest<LokiQuery>;
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
@@ -1551,10 +1555,10 @@ describe('LokiDatasource', () => {
       ],
     ])('supports query splitting when the requirements are met', async (targets: LokiQuery[]) => {
       const ds = createLokiDatasource(templateSrvStub);
-      const query = getQueryOptions<LokiQuery>({
+      const query = {
         targets,
         app: CoreApp.Dashboard,
-      });
+      } as DataQueryRequest<LokiQuery>;
 
       await expect(ds.query(query)).toEmitValuesWith(() => {
         expect(runSplitQuery).toHaveBeenCalled();
