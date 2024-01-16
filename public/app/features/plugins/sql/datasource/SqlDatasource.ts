@@ -9,7 +9,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  DataSourceRef,
   MetricFindValue,
   ScopedVars,
   CoreApp,
@@ -117,10 +116,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return !query.hide;
   }
 
-  applyTemplateVariables(
-    target: SQLQuery,
-    scopedVars: ScopedVars
-  ): Record<string, string | DataSourceRef | SQLQuery['format']> {
+  applyTemplateVariables(target: SQLQuery, scopedVars: ScopedVars) {
     return {
       refId: target.refId,
       datasource: this.getRef(),

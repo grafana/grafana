@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"golang.org/x/sync/errgroup"
@@ -121,6 +122,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 			Error: fmt.Errorf("metric request error: %q", err),
 		}
 		resultChan <- &responseWrapper{
+			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueries),
 			DataResponse: &dataResponse,
 		}
 	}
@@ -131,4 +133,18 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 	}
 
 	return resp, nil
+}
+
+func getQueryRefIdFromErrorString(err string, queries []*models.CloudWatchQuery) string {
+	// error can be in format "Error in expression 'test': Invalid syntax"
+	// so we can find the query id or ref id between the quotations
+	erroredRefId := ""
+
+	for _, query := range queries {
+		if regexp.MustCompile(`'`+query.RefId+`':`).MatchString(err) || regexp.MustCompile(`'`+query.Id+`':`).MatchString(err) {
+			erroredRefId = query.RefId
+		}
+	}
+	// if errorRefId is empty, it means the error concerns all queries (error metric limit exceeded, for example)
+	return erroredRefId
 }
