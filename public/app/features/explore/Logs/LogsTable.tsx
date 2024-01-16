@@ -23,7 +23,7 @@ import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { fieldNameMeta } from './LogsTableWrap';
+import { FieldNameMeta } from './LogsTableWrap';
 
 interface Props {
   dataFrame: DataFrame;
@@ -32,7 +32,7 @@ interface Props {
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
-  columnsWithMeta: Record<string, fieldNameMeta>;
+  columnsWithMeta: Record<string, FieldNameMeta>;
   height: number;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
@@ -218,7 +218,7 @@ function extractFields(dataFrame: DataFrame) {
     });
 }
 
-function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>) {
+function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
   // Create object of label filters to include columns selected by the user
   let labelFilters: Record<string, number> = {};
   Object.keys(columnsWithMeta)

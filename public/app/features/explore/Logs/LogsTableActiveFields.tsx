@@ -7,7 +7,7 @@ import { useTheme2 } from '@grafana/ui/src';
 
 import { LogsTableEmptyFields } from './LogsTableEmptyFields';
 import { LogsTableNavField } from './LogsTableNavField';
-import { fieldNameMeta } from './LogsTableWrap';
+import { FieldNameMeta } from './LogsTableWrap';
 
 export function getLogsFieldsStyles(theme: GrafanaTheme2) {
   return {
@@ -24,7 +24,7 @@ export function getLogsFieldsStyles(theme: GrafanaTheme2) {
   };
 }
 
-function sortLabels(labels: Record<string, fieldNameMeta>) {
+function sortLabels(labels: Record<string, FieldNameMeta>) {
   return (a: string, b: string) => {
     const la = labels[a];
     const lb = labels[b];
@@ -40,7 +40,7 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
 }
 
 export const LogsTableActiveFields = (props: {
-  labels: Record<string, fieldNameMeta>;
+  labels: Record<string, FieldNameMeta>;
   valueFilter: (value: string) => boolean;
   toggleColumn: (columnName: string) => void;
   reorderColumn: (sourceIndex: number, destinationIndex: number) => void;

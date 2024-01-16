@@ -50,19 +50,19 @@ type GenericMeta = {
   type?: 'BODY_FIELD' | 'TIME_FIELD';
 };
 
-export type fieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
+export type FieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
 
-type fieldName = string;
-type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
+type FieldName = string;
+type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
 
 export function LogsTableWrap(props: Props) {
   const { logsFrames, updatePanelState, panelState } = props;
   const propsColumns = panelState?.columns;
   // Save the normalized cardinality of each label
-  const [columnsWithMeta, setColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
+  const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
 
   // Filtered copy of columnsWithMeta that only includes matching results
-  const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
+  const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
   const [searchValue, setSearchValue] = useState<string>('');
 
   const height = getLogsTableHeight();
@@ -74,7 +74,7 @@ export function LogsTableWrap(props: Props) {
   );
 
   const getColumnsFromProps = useCallback(
-    (fieldNames: fieldNameMetaStore) => {
+    (fieldNames: FieldNameMetaStore) => {
       const previouslySelected = props.panelState?.columns;
       if (previouslySelected) {
         Object.values(previouslySelected).forEach((key, index) => {
@@ -166,10 +166,10 @@ export function LogsTableWrap(props: Props) {
     }
 
     // Use a map to dedupe labels and count their occurrences in the logs
-    const labelCardinality = new Map<fieldName, fieldNameMeta>();
+    const labelCardinality = new Map<FieldName, FieldNameMeta>();
 
     // What the label state will look like
-    let pendingLabelState: fieldNameMetaStore = {};
+    let pendingLabelState: FieldNameMetaStore = {};
 
     // If we have labels and log lines
     if (labels?.length && numberOfLogLines) {
@@ -331,7 +331,7 @@ export function LogsTableWrap(props: Props) {
     updateExploreState(pendingLabelState);
   };
 
-  function updateExploreState(pendingLabelState: fieldNameMetaStore) {
+  function updateExploreState(pendingLabelState: FieldNameMetaStore) {
     // Get all active columns and sort by index
     const newColumnsArray = Object.keys(pendingLabelState)
       // Only include active filters
@@ -366,7 +366,7 @@ export function LogsTableWrap(props: Props) {
   }
 
   // Toggle a column on or off when the user interacts with an element in the multi-select sidebar
-  const toggleColumn = (columnName: fieldName) => {
+  const toggleColumn = (columnName: FieldName) => {
     if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
       console.warn('failed to get column', columnsWithMeta);
       return;
@@ -376,7 +376,7 @@ export function LogsTableWrap(props: Props) {
 
     const isActive = !columnsWithMeta[columnName]?.active ? true : undefined;
 
-    let pendingLabelState: fieldNameMetaStore;
+    let pendingLabelState: FieldNameMetaStore;
     if (isActive) {
       pendingLabelState = {
         ...columnsWithMeta,
@@ -406,7 +406,7 @@ export function LogsTableWrap(props: Props) {
     // If user is currently filtering, update filtered state
     if (filteredColumnsWithMeta) {
       const active = !filteredColumnsWithMeta[columnName]?.active;
-      let pendingFilteredLabelState: fieldNameMetaStore;
+      let pendingFilteredLabelState: FieldNameMetaStore;
       if (active) {
         pendingFilteredLabelState = {
           ...filteredColumnsWithMeta,
@@ -436,7 +436,7 @@ export function LogsTableWrap(props: Props) {
   // uFuzzy search dispatcher, adds any matches to the local state
   const dispatcher = (data: string[][]) => {
     const matches = data[0];
-    let newColumnsWithMeta: fieldNameMetaStore = {};
+    let newColumnsWithMeta: FieldNameMetaStore = {};
     let numberOfResults = 0;
     matches.forEach((match) => {
       if (match in columnsWithMeta) {

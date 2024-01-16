@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, useTheme2 } from '@grafana/ui';
 
-import { fieldNameMeta } from './LogsTableWrap';
+import { FieldNameMeta } from './LogsTableWrap';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -44,7 +44,7 @@ function getStyles(theme: GrafanaTheme2) {
 export function LogsTableNavField(props: {
   label: string;
   onChange: () => void;
-  labels: Record<string, fieldNameMeta>;
+  labels: Record<string, FieldNameMeta>;
   draggable?: boolean;
   showCount?: boolean;
 }): React.JSX.Element | undefined {

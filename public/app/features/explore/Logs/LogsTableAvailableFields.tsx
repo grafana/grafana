@@ -5,11 +5,11 @@ import { useTheme2 } from '@grafana/ui/src';
 import { getLogsFieldsStyles } from './LogsTableActiveFields';
 import { LogsTableEmptyFields } from './LogsTableEmptyFields';
 import { LogsTableNavField } from './LogsTableNavField';
-import { fieldNameMeta } from './LogsTableWrap';
+import { FieldNameMeta } from './LogsTableWrap';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
-function sortLabels(labels: Record<string, fieldNameMeta>) {
+function sortLabels(labels: Record<string, FieldNameMeta>) {
   return (a: string, b: string) => {
     const la = labels[a];
     const lb = labels[b];
@@ -29,7 +29,7 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
 }
 
 export const LogsTableAvailableFields = (props: {
-  labels: Record<string, fieldNameMeta>;
+  labels: Record<string, FieldNameMeta>;
   valueFilter: (value: string) => boolean;
   toggleColumn: (columnName: string) => void;
 }): JSX.Element => {
