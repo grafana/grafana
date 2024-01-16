@@ -25,24 +25,23 @@ func TestGetFeatureToggles(t *testing.T) {
 	readPermissions := []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementRead}}
 
 	t.Run("should not be able to get feature toggles without permissions", func(t *testing.T) {
-		result := runGetScenario(t, []*featuremgmt.FeatureFlag{}, setting.FeatureMgmtSettings{}, []accesscontrol.Permission{}, http.StatusForbidden)
+		result := runGetScenario(t, []*featuremgmt.FeatureFlag{}, []string{}, setting.FeatureMgmtSettings{}, []accesscontrol.Permission{}, http.StatusForbidden)
 		assert.Len(t, result, 0)
 	})
 
 	t.Run("should be able to get feature toggles with correct permissions", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
-				Name:    "toggle1",
-				Enabled: true,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle1",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			}, {
-				Name:    "toggle2",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle2",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			},
 		}
+		disabled := []string{"toggle2"}
 
-		result := runGetScenario(t, features, setting.FeatureMgmtSettings{}, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, disabled, setting.FeatureMgmtSettings{}, readPermissions, http.StatusOK)
 		assert.Len(t, result, 2)
 		t1, _ := findResult(t, result, "toggle1")
 		assert.True(t, t1.Enabled)
@@ -53,20 +52,18 @@ func TestGetFeatureToggles(t *testing.T) {
 	t.Run("toggles hidden by config are not present in the response", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
-				Name:    "toggle1",
-				Enabled: true,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle1",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			}, {
-				Name:    "toggle2",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle2",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			},
 		}
 		settings := setting.FeatureMgmtSettings{
 			HiddenToggles: map[string]struct{}{"toggle1": {}},
 		}
 
-		result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, []string{}, settings, readPermissions, http.StatusOK)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "toggle2", result[0].Name)
 	})
@@ -74,15 +71,14 @@ func TestGetFeatureToggles(t *testing.T) {
 	t.Run("toggles that are read-only by config have the readOnly field set", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
-				Name:    "toggle1",
-				Enabled: true,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle1",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			}, {
-				Name:    "toggle2",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle2",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			},
 		}
+		disabled := []string{"toggle2"}
 		settings := setting.FeatureMgmtSettings{
 			HiddenToggles:   map[string]struct{}{"toggle1": {}},
 			ReadOnlyToggles: map[string]struct{}{"toggle2": {}},
@@ -90,7 +86,7 @@ func TestGetFeatureToggles(t *testing.T) {
 			UpdateWebhook:   "bogus",
 		}
 
-		result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, disabled, settings, readPermissions, http.StatusOK)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "toggle2", result[0].Name)
 		assert.True(t, result[0].ReadOnly)
@@ -127,7 +123,7 @@ func TestGetFeatureToggles(t *testing.T) {
 		}
 
 		t.Run("unknown, experimental, and private preview toggles are hidden by default", func(t *testing.T) {
-			result := runGetScenario(t, features, setting.FeatureMgmtSettings{}, readPermissions, http.StatusOK)
+			result := runGetScenario(t, features, []string{}, setting.FeatureMgmtSettings{}, readPermissions, http.StatusOK)
 			assert.Len(t, result, 4)
 
 			_, ok := findResult(t, result, "toggle1")
@@ -143,7 +139,7 @@ func TestGetFeatureToggles(t *testing.T) {
 				AllowEditing:  true,
 				UpdateWebhook: "bogus",
 			}
-			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
+			result := runGetScenario(t, features, []string{}, settings, readPermissions, http.StatusOK)
 			assert.Len(t, result, 4)
 
 			t4, ok := findResult(t, result, "toggle4")
@@ -162,7 +158,7 @@ func TestGetFeatureToggles(t *testing.T) {
 				AllowEditing:  false,
 				UpdateWebhook: "",
 			}
-			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
+			result := runGetScenario(t, features, []string{}, settings, readPermissions, http.StatusOK)
 			assert.Len(t, result, 4)
 
 			t4, ok := findResult(t, result, "toggle4")
@@ -182,12 +178,12 @@ func TestSetFeatureToggles(t *testing.T) {
 	writePermissions := []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementWrite}}
 
 	t.Run("fails without adequate permissions", func(t *testing.T) {
-		res := runSetScenario(t, nil, nil, setting.FeatureMgmtSettings{}, []accesscontrol.Permission{}, http.StatusForbidden)
+		res := runSetScenario(t, nil, []string{}, nil, setting.FeatureMgmtSettings{}, []accesscontrol.Permission{}, http.StatusForbidden)
 		defer func() { require.NoError(t, res.Body.Close()) }()
 	})
 
 	t.Run("fails when toggle editing is not enabled", func(t *testing.T) {
-		res := runSetScenario(t, nil, nil, setting.FeatureMgmtSettings{}, writePermissions, http.StatusForbidden)
+		res := runSetScenario(t, nil, []string{}, nil, setting.FeatureMgmtSettings{}, writePermissions, http.StatusForbidden)
 		defer func() { require.NoError(t, res.Body.Close()) }()
 		p := readBody(t, res.Body)
 		assert.Equal(t, "feature toggles are read-only", p["message"])
@@ -197,7 +193,7 @@ func TestSetFeatureToggles(t *testing.T) {
 		s := setting.FeatureMgmtSettings{
 			AllowEditing: true,
 		}
-		res := runSetScenario(t, nil, nil, s, writePermissions, http.StatusInternalServerError)
+		res := runSetScenario(t, nil, []string{}, nil, s, writePermissions, http.StatusInternalServerError)
 		defer func() { require.NoError(t, res.Body.Close()) }()
 		p := readBody(t, res.Body)
 		assert.Equal(t, "feature toggles service is misconfigured", p["message"])
@@ -206,16 +202,14 @@ func TestSetFeatureToggles(t *testing.T) {
 	t.Run("fails with non-existent toggle", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
-				Name:    "toggle1",
-				Enabled: true,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle1",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			}, {
-				Name:    "toggle2",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle2",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			},
 		}
-
+		disabled := []string{"toggle2"}
 		updates := []featuremgmt.FeatureToggleDTO{
 			{
 				Name:    "toggle3",
@@ -227,7 +221,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			AllowEditing:  true,
 			UpdateWebhook: "random",
 		}
-		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+		res := runSetScenario(t, features, disabled, updates, s, writePermissions, http.StatusBadRequest)
 		defer func() { require.NoError(t, res.Body.Close()) }()
 		p := readBody(t, res.Body)
 		assert.Equal(t, "invalid toggle passed in", p["message"])
@@ -236,19 +230,17 @@ func TestSetFeatureToggles(t *testing.T) {
 	t.Run("fails with read-only toggles", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
-				Name:    featuremgmt.FlagFeatureToggleAdminPage,
-				Enabled: true,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  featuremgmt.FlagFeatureToggleAdminPage,
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			}, {
-				Name:    "toggle2",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStagePublicPreview,
+				Name:  "toggle2",
+				Stage: featuremgmt.FeatureStagePublicPreview,
 			}, {
-				Name:    "toggle3",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle3",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			},
 		}
+		disabled := []string{"toggle2", "toggle3"}
 
 		s := setting.FeatureMgmtSettings{
 			AllowEditing:  true,
@@ -265,7 +257,7 @@ func TestSetFeatureToggles(t *testing.T) {
 					Enabled: true,
 				},
 			}
-			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			res := runSetScenario(t, features, disabled, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
 			assert.Equal(t, "invalid toggle passed in", p["message"])
@@ -278,7 +270,7 @@ func TestSetFeatureToggles(t *testing.T) {
 					Enabled: true,
 				},
 			}
-			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			res := runSetScenario(t, features, disabled, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
 			assert.Equal(t, "invalid toggle passed in", p["message"])
@@ -291,7 +283,7 @@ func TestSetFeatureToggles(t *testing.T) {
 					Enabled: true,
 				},
 			}
-			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			res := runSetScenario(t, features, disabled, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
 			assert.Equal(t, "invalid toggle passed in", p["message"])
@@ -301,29 +293,25 @@ func TestSetFeatureToggles(t *testing.T) {
 	t.Run("when all conditions met", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
-				Name:    featuremgmt.FlagFeatureToggleAdminPage,
-				Enabled: true,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  featuremgmt.FlagFeatureToggleAdminPage,
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			}, {
-				Name:    "toggle2",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStagePublicPreview,
+				Name:  "toggle2",
+				Stage: featuremgmt.FeatureStagePublicPreview,
 			}, {
-				Name:    "toggle3",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:  "toggle3",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
 			}, {
 				Name:           "toggle4",
-				Enabled:        false,
 				Stage:          featuremgmt.FeatureStageGeneralAvailability,
 				AllowSelfServe: true,
 			}, {
 				Name:           "toggle5",
-				Enabled:        false,
 				Stage:          featuremgmt.FeatureStageDeprecated,
 				AllowSelfServe: true,
 			},
 		}
+		disabled := []string{"toggle2", "toggle3", "toggle4", "toggle5"}
 
 		s := setting.FeatureMgmtSettings{
 			AllowEditing:       true,
@@ -349,7 +337,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			}))
 			defer webhookServer.Close()
 			s.UpdateWebhook = webhookServer.URL
-			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			res := runSetScenario(t, features, disabled, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		})
@@ -367,7 +355,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			}))
 			defer webhookServer.Close()
 			s.UpdateWebhook = webhookServer.URL
-			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusOK)
+			res := runSetScenario(t, features, disabled, updates, s, writePermissions, http.StatusOK)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 		})
@@ -398,6 +386,7 @@ func readBody(t *testing.T, rc io.ReadCloser) map[string]any {
 func runGetScenario(
 	t *testing.T,
 	features []*featuremgmt.FeatureFlag,
+	disabled []string, // the flags that are disabled
 	settings setting.FeatureMgmtSettings,
 	permissions []accesscontrol.Permission,
 	expectedCode int,
@@ -406,11 +395,10 @@ func runGetScenario(
 	cfg := setting.NewCfg()
 	cfg.FeatureManagement = settings
 
-	fm := featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
-		Name:    featuremgmt.FlagFeatureToggleAdminPage,
-		Enabled: true,
-		Stage:   featuremgmt.FeatureStageGeneralAvailability,
-	}}, features...))
+	fm := featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
+		Name:  featuremgmt.FlagFeatureToggleAdminPage,
+		Stage: featuremgmt.FeatureStageGeneralAvailability,
+	}}, features...), disabled...)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
@@ -464,6 +452,7 @@ func runGetScenario(
 func runSetScenario(
 	t *testing.T,
 	serverFeatures []*featuremgmt.FeatureFlag,
+	disabled []string, // the flags that are disabled
 	updateFeatures []featuremgmt.FeatureToggleDTO,
 	settings setting.FeatureMgmtSettings,
 	permissions []accesscontrol.Permission,
@@ -473,11 +462,10 @@ func runSetScenario(
 	cfg := setting.NewCfg()
 	cfg.FeatureManagement = settings
 
-	features := featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
-		Name:    featuremgmt.FlagFeatureToggleAdminPage,
-		Enabled: true,
-		Stage:   featuremgmt.FeatureStageGeneralAvailability,
-	}}, serverFeatures...))
+	features := featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
+		Name:  featuremgmt.FlagFeatureToggleAdminPage,
+		Stage: featuremgmt.FeatureStageGeneralAvailability,
+	}}, serverFeatures...), disabled...)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg

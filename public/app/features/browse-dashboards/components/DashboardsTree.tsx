@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import { TableInstance, useTable } from 'react-table';
-import { FixedSizeList as List } from 'react-window';
+import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
@@ -35,6 +35,7 @@ interface DashboardsTreeProps {
 
 const HEADER_HEIGHT = 36;
 const ROW_HEIGHT = 36;
+const DIVIDER_HEIGHT = 0; // Yes - make it appear as a border on the row rather than a row itself
 
 export function DashboardsTree({
   items,
@@ -51,6 +52,7 @@ export function DashboardsTree({
   const treeID = useId();
 
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
+  const listRef = useRef<List | null>(null);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -59,6 +61,10 @@ export function DashboardsTree({
     // Clear that cache, and check if we need to trigger another load
     if (infiniteLoaderRef.current) {
       infiniteLoaderRef.current.resetloadMoreItemsCache(true);
+    }
+
+    if (listRef.current) {
+      listRef.current.resetAfterIndex(0);
     }
   }, [items]);
 
@@ -123,6 +129,18 @@ export function DashboardsTree({
     [requestLoadMore, items]
   );
 
+  const getRowHeight = useCallback(
+    (rowIndex: number) => {
+      const row = items[rowIndex];
+      if (row.item.kind === 'ui' && row.item.uiKind === 'divider') {
+        return DIVIDER_HEIGHT;
+      }
+
+      return ROW_HEIGHT;
+    },
+    [items]
+  );
+
   return (
     <div {...getTableProps()} role="table">
       {headerGroups.map((headerGroup) => {
@@ -154,12 +172,16 @@ export function DashboardsTree({
         >
           {({ onItemsRendered, ref }) => (
             <List
-              ref={ref}
+              ref={(elem) => {
+                ref(elem);
+                listRef.current = elem;
+              }}
               height={height - HEADER_HEIGHT}
               width={width}
               itemCount={items.length}
               itemData={virtualData}
-              itemSize={ROW_HEIGHT}
+              estimatedItemSize={ROW_HEIGHT}
+              itemSize={getRowHeight}
               onItemsRendered={onItemsRendered}
             >
               {VirtualListRow}
@@ -191,13 +213,23 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const row = rows[index];
   prepareRow(row);
 
+  const dashboardItem = row.original.item;
+
+  if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'divider') {
+    return (
+      <div {...row.getRowProps({ style })}>
+        <hr className={styles.divider} />
+      </div>
+    );
+  }
+
   return (
     <div
       {...row.getRowProps({ style })}
       className={cx(styles.row, styles.bodyRow)}
-      aria-labelledby={makeRowID(treeID, row.original.item)}
+      aria-labelledby={makeRowID(treeID, dashboardItem)}
       data-testid={selectors.pages.BrowseDashboards.table.row(
-        'title' in row.original.item ? row.original.item.title : row.original.item.uid
+        'title' in dashboardItem ? dashboardItem.title : dashboardItem.uid
       )}
     >
       {row.cells.map((cell) => {
@@ -219,6 +251,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     row: css({
       gap: theme.spacing(1),
+    }),
+
+    divider: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      width: '100%',
+      margin: 0,
     }),
 
     headerRow: css({
