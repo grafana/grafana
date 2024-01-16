@@ -1,16 +1,10 @@
 import { css } from '@emotion/css';
-import Tooltip from 'rc-tooltip';
+import Tooltip, { TooltipRef } from 'rc-tooltip';
 import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-
-// this is now typed in rc-tooltip, but they don't export it :(
-// let's mirror the interface here. if there's any discrepancy, we'll get a type error
-interface RCTooltipRef {
-  forceAlign: () => {};
-}
 
 const HandleTooltip = (props: {
   value: number;
@@ -21,7 +15,7 @@ const HandleTooltip = (props: {
 }) => {
   const { value, children, visible, placement, tipFormatter, ...restProps } = props;
 
-  const tooltipRef = useRef<RCTooltipRef>(null);
+  const tooltipRef = useRef<TooltipRef>(null);
   const rafRef = useRef<number | null>(null);
   const styles = useStyles2(tooltipStyles);
 
