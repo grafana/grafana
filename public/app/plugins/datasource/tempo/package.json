@@ -7,7 +7,7 @@
     "@emotion/css": "11.11.2",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "1.7.4",
+    "@grafana/experimental": "1.7.5",
     "@grafana/lezer-logql": "0.2.1",
     "@grafana/lezer-traceql": "0.0.12",
     "@grafana/monaco-logql": "^0.0.7",
