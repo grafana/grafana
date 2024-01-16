@@ -101,9 +101,7 @@
         "public/app/plugins/datasource/azuremonitor/*.{ts,tsx}",
         "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}",
         "public/app/plugins/datasource/parca/*.{ts,tsx}",
-        "public/app/plugins/datasource/parca/**/*.{ts,tsx}",
-        "public/app/plugins/datasource/elasticsearch/*.{ts,tsx}",
-        "public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}"
+        "public/app/plugins/datasource/parca/**/*.{ts,tsx}"
       ],
       "settings": {
         "import/resolver": {
