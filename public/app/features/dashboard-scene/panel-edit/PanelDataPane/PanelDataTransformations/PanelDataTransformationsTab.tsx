@@ -152,10 +152,8 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    removeAll: css`
-      margin-left: ${theme.spacing(2)};
-    `,
-  };
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  removeAll: css({
+    marginLeft: theme.spacing(2),
+  }),
+});
