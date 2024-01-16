@@ -89,7 +89,15 @@ export const Components = {
         step: 'prometheus-step', // id for autosize component
         type: 'data-testid prometheus type', //wrapper for radio button group
         exemplars: 'prometheus-exemplars', // id for editor switch component
-        builder: {},
+        builder: {
+          // see QueryBuilder below for commented selectors
+          // labelSelect: 'data-testid Select label',
+          // valueSelect: 'data-testid Select value',
+          // matchOperatorSelect: 'data-testid Select match operator',
+          metricSelect: 'data-testid metric select',
+          metricsExplorer: 'data-testid metrics explorer',
+          queryAdvisor: 'data-testid query advisor',
+        },
         code: {
           metricsBrowser: {
             openButton: 'data-testid open metrics browser',
