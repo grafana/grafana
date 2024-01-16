@@ -55,6 +55,13 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
     transformations.push({
       id: 'organize',
       options: {
+        indexByName: Object.values(options.panelState.logs.columns).reduce(
+          (acc: Record<string, number>, value: string, idx) => ({
+            ...acc,
+            [value]: idx,
+          }),
+          {}
+        ),
         includeByName: Object.values(options.panelState.logs.columns).reduce(
           (acc: Record<string, boolean>, value: string) => ({
             ...acc,
