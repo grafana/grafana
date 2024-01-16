@@ -8,10 +8,10 @@ import { SceneObjectBase, SceneComponentProps, SceneDataTransformer } from '@gra
 import { Button, ButtonGroup, ConfirmModal, Container, CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 
-import { VizPanelManager } from '../../VizPanelManager';
-import { PanelDataPaneTabState, PanelDataPaneTab } from '../types';
+import { VizPanelManager } from '../VizPanelManager';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
+import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
 
 interface PanelDataTransformationsTabState extends PanelDataPaneTabState {}
 

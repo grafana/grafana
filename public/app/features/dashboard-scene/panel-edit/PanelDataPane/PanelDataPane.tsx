@@ -16,7 +16,7 @@ import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
-import { PanelDataTransformationsTab } from './PanelDataTransformations/PanelDataTransformationsTab';
+import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { PanelDataPaneTab } from './types';
 
 export interface PanelDataPaneState extends SceneObjectState {

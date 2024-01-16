@@ -23,7 +23,7 @@ import {
   ButtonGroup,
 } from '@grafana/ui';
 import config from 'app/core/config';
-import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataTransformations/EmptyTransformationsMessage';
+import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
