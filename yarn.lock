@@ -2943,7 +2943,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.202"
-    "@types/prismjs": "npm:1.26.0"
+    "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
     "@types/testing-library__jest-dom": "npm:5.14.8"
@@ -3079,7 +3079,7 @@ __metadata:
     "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.8.10"
-    "@types/prismjs": "npm:1.26.0"
+    "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
     "@types/semver": "npm:7.5.0"
@@ -9012,13 +9012,6 @@ __metadata:
   version: 1.0.1
   resolution: "@types/pretty-hrtime@npm:1.0.1"
   checksum: a6cdee417eea6f7af914e4fcd13e05822864ce10b5d7646525632e86d69b79123eec55a5d3fff0155ba46b61902775e1644bcb80e1e4dffdac28e7febb089083
-  languageName: node
-  linkType: hard
-
-"@types/prismjs@npm:1.26.0":
-  version: 1.26.0
-  resolution: "@types/prismjs@npm:1.26.0"
-  checksum: 61b46e490acd46abba6c7c8c491247ba0c94f65f36f2eb1b8a80b0afc7961c7f9f2b386bd51daf114d61758e59957fe196a285f5e34bd88e46b4794b3e2a597d
   languageName: node
   linkType: hard
 
