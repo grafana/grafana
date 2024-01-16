@@ -178,15 +178,13 @@ function getVisibleRange(rows: LogRowModel[]) {
 }
 
 function getPrevRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
-  // Until the oldest log line, but without including it
-  return { from: currentRange.from.valueOf(), to: visibleRange.from - 1 };
+  return { from: currentRange.from.valueOf(), to: visibleRange.from };
 }
 
 function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, timeZone: TimeZone) {
   // When requesting new logs, update the current range if using relative time ranges.
   currentRange = updateCurrentRange(currentRange, timeZone);
-  // From the most recent log line, but without including it
-  return { from: visibleRange.to + 1, to: currentRange.to.valueOf() };
+  return { from: visibleRange.to, to: currentRange.to.valueOf() };
 }
 
 export const SCROLLING_THRESHOLD = 1e3;

@@ -152,7 +152,7 @@ describe('InfiniteScroll', () => {
         expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
       });
 
-      test('Requests newer logs from the most recent timestamp without including it', async () => {
+      test('Requests newer logs from the most recent timestamp', async () => {
         const startPosition = order === LogsSortOrder.Descending ? 10 : 90; // Scroll top
         const endPosition = order === LogsSortOrder.Descending ? 0 : 100; // Scroll bottom
 
@@ -167,12 +167,12 @@ describe('InfiniteScroll', () => {
         });
 
         expect(loadMoreMock).toHaveBeenCalledWith({
-          from: rows[rows.length - 1].timeEpochMs + 1,
+          from: rows[rows.length - 1].timeEpochMs,
           to: absoluteRange.to,
         });
       });
 
-      test('Requests older logs from the oldest timestamp without including it', async () => {
+      test('Requests older logs from the oldest timestamp', async () => {
         const startPosition = order === LogsSortOrder.Ascending ? 10 : 90; // Scroll top
         const endPosition = order === LogsSortOrder.Ascending ? 0 : 100; // Scroll bottom
 
@@ -188,7 +188,7 @@ describe('InfiniteScroll', () => {
 
         expect(loadMoreMock).toHaveBeenCalledWith({
           from: absoluteRange.from,
-          to: rows[0].timeEpochMs - 1,
+          to: rows[0].timeEpochMs,
         });
       });
 
