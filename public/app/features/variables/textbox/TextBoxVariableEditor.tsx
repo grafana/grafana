@@ -1,9 +1,7 @@
 import React, { FormEvent, ReactElement, useCallback } from 'react';
 
-import { selectors } from '@grafana/e2e-selectors';
+import { TextBoxVariableForm } from 'app/features/dashboard-scene/settings/variables/components/TextBoxVariableForm';
 
-import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
-import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
 import { VariableEditorProps } from '../editor/types';
 import { TextBoxVariableModel } from '../types';
 
@@ -22,18 +20,5 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
   const onChange = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, false), [updateVariable]);
   const onBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, true), [updateVariable]);
 
-  return (
-    <>
-      <VariableLegend>Text options</VariableLegend>
-      <VariableTextField
-        value={query}
-        name="Default value"
-        placeholder="default value, if any"
-        onChange={onChange}
-        onBlur={onBlur}
-        width={30}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2}
-      />
-    </>
-  );
+  return <TextBoxVariableForm value={query} onChange={onChange} onBlur={onBlur} />;
 }

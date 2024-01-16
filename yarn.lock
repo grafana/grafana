@@ -2825,33 +2825,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.0.0, @floating-ui/react-dom@npm:^2.0.5":
-  version: 2.0.5
-  resolution: "@floating-ui/react-dom@npm:2.0.5"
+"@floating-ui/react-dom@npm:^2.0.0, @floating-ui/react-dom@npm:^2.0.6":
+  version: 2.0.6
+  resolution: "@floating-ui/react-dom@npm:2.0.6"
   dependencies:
     "@floating-ui/dom": "npm:^1.5.4"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: b4fc008c725149b9565949184d844c914a8fa2687636c3c1166a1d52ca58537b3ba9b0a0e2945cf424662c846e60b173df0d325af7e700a31550e5e0b346070a
+  checksum: 4a3f828370c1b14af0e4d24df18de7b2cfd6695c189532d5949daaa43cba13ce7f231c71783b47e8c54baefcc2542650d82a4a6cebcf3d9091673f2a53d3a2cb
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.26.5":
-  version: 0.26.5
-  resolution: "@floating-ui/react@npm:0.26.5"
+"@floating-ui/react@npm:0.26.6":
+  version: 0.26.6
+  resolution: "@floating-ui/react@npm:0.26.6"
   dependencies:
-    "@floating-ui/react-dom": "npm:^2.0.5"
-    "@floating-ui/utils": "npm:^0.2.0"
+    "@floating-ui/react-dom": "npm:^2.0.6"
+    "@floating-ui/utils": "npm:^0.2.1"
     tabbable: "npm:^6.0.1"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 4ccb51233671b79953bf2ff1debc15815f4411914c19e22f04598d633b03e0589d2b9783cf34a3e930d3d124372a9f8d70a80912bac243bb2d54ac34cb624c39
+  checksum: 15085b58e527f9acf617c434f9d3591ee69f039b0ebfb92374a2efdfb67fe5d21c36e4ce70eba13b41cdcfd355618e5bb1465706045f3774e1ce4884bb0c37e1
   languageName: node
   linkType: hard
 
-"@floating-ui/utils@npm:^0.2.0":
+"@floating-ui/utils@npm:^0.2.0, @floating-ui/utils@npm:^0.2.1":
   version: 0.2.1
   resolution: "@floating-ui/utils@npm:0.2.1"
   checksum: 33c9ab346e7b05c5a1e6a95bc902aafcfc2c9d513a147e2491468843bd5607531b06d0b9aa56aa491cbf22a6c2495c18ccfc4c0344baec54a689a7bb8e4898d6
@@ -2970,6 +2970,45 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/grafana-pyroscope-datasource@workspace:*, @grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "npm:10.4.0-pre"
+    "@grafana/plugin-configs": "npm:10.4.0-pre"
+    "@grafana/runtime": "npm:10.4.0-pre"
+    "@grafana/schema": "npm:10.4.0-pre"
+    "@grafana/ui": "npm:10.4.0-pre"
+    "@testing-library/jest-dom": "npm:6.1.4"
+    "@testing-library/react": "npm:14.0.0"
+    "@testing-library/user-event": "npm:14.5.1"
+    "@types/jest": "npm:29.5.4"
+    "@types/lodash": "npm:4.14.195"
+    "@types/prismjs": "npm:1.26.0"
+    "@types/react": "npm:18.2.15"
+    "@types/react-dom": "npm:18.2.7"
+    "@types/testing-library__jest-dom": "npm:5.14.8"
+    css-loader: "npm:6.8.1"
+    fast-deep-equal: "npm:^3.1.3"
+    jest: "npm:29.7.0"
+    lodash: "npm:4.17.21"
+    monaco-editor: "npm:0.34.0"
+    prismjs: "npm:1.29.0"
+    react: "npm:18.2.0"
+    react-dom: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    style-loader: "npm:3.3.3"
+    ts-node: "npm:10.9.1"
+    tslib: "npm:2.6.0"
+    typescript: "npm:5.2.2"
+    webpack: "npm:5.89.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/grafana-testdata-datasource@workspace:*, @grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
@@ -3060,7 +3099,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:1.7.4"
+    "@grafana/experimental": "npm:1.7.5"
     "@grafana/lezer-logql": "npm:0.2.1"
     "@grafana/lezer-traceql": "npm:0.0.12"
     "@grafana/monaco-logql": "npm:^0.0.7"
@@ -3329,26 +3368,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.7.4":
-  version: 1.7.4
-  resolution: "@grafana/experimental@npm:1.7.4"
-  dependencies:
-    "@types/uuid": "npm:^8.3.3"
-    semver: "npm:^7.5.4"
-    uuid: "npm:^8.3.2"
-  peerDependencies:
-    "@emotion/css": 11.1.3
-    "@grafana/data": ^10.0.0
-    "@grafana/runtime": ^10.0.0
-    "@grafana/ui": ^10.0.0
-    react: 17.0.2
-    react-dom: 17.0.2
-    react-select: ^5.2.1
-    rxjs: 7.8.0
-  checksum: e62e6382396d282281e31011c936fe9164650ea8caea7a09c4ef8615a66bb0ab0f74c4946354276457a2f5d1276016fc4225a08b8afb043c81e11b010f52b26d
-  languageName: node
-  linkType: hard
-
 "@grafana/experimental@npm:1.7.5":
   version: 1.7.5
   resolution: "@grafana/experimental@npm:1.7.5"
@@ -3604,7 +3623,7 @@ __metadata:
     "@babel/core": "npm:7.23.7"
     "@emotion/css": "npm:11.11.2"
     "@emotion/react": "npm:11.11.3"
-    "@floating-ui/react": "npm:0.26.5"
+    "@floating-ui/react": "npm:0.26.6"
     "@grafana/data": "npm:10.4.0-pre"
     "@grafana/e2e-selectors": "npm:10.4.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.5"
@@ -7963,6 +7982,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@testing-library/user-event@npm:14.5.1":
+  version: 14.5.1
+  resolution: "@testing-library/user-event@npm:14.5.1"
+  peerDependencies:
+    "@testing-library/dom": ">=7.21.4"
+  checksum: 696e1328c230b0a7063a41d82b5350c6be926696106809a4d79d446d190ff56bebb850fe564ff0952cb74ae81e59a6f10534a88ecbb3792083271a249e04e728
+  languageName: node
+  linkType: hard
+
 "@testing-library/user-event@npm:14.5.2":
   version: 14.5.2
   resolution: "@testing-library/user-event@npm:14.5.2"
@@ -9432,6 +9460,15 @@ __metadata:
   version: 6.13.1
   resolution: "@types/systemjs@npm:6.13.1"
   checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
+  languageName: node
+  linkType: hard
+
+"@types/testing-library__jest-dom@npm:5.14.8":
+  version: 5.14.8
+  resolution: "@types/testing-library__jest-dom@npm:5.14.8"
+  dependencies:
+    "@types/jest": "npm:*"
+  checksum: 26d768b3de5c71ecef683aa0e968ec2bb7f4626d78718132fa5a9c2064f9237836135e2551aa048c728407760d51d985a9d58a14528f2679a35d18d5ca200f08
   languageName: node
   linkType: hard
 
@@ -17160,9 +17197,10 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@emotion/react": "npm:11.11.3"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.26.5"
+    "@floating-ui/react": "npm:0.26.6"
     "@glideapps/glide-data-grid": "npm:^5.2.1"
     "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*"
+    "@grafana-plugins/grafana-pyroscope-datasource": "workspace:*"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
     "@grafana-plugins/parca": "workspace:*"
     "@grafana-plugins/tempo": "workspace:*"

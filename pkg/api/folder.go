@@ -42,35 +42,39 @@ const REDACTED = "redacted"
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
-	var folders []*folder.Folder
-	var err error
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
-		folders, err = hs.folderService.GetChildren(c.Req.Context(), &folder.GetChildrenQuery{
+		q := &folder.GetChildrenQuery{
 			OrgID:        c.SignedInUser.GetOrgID(),
 			Limit:        c.QueryInt64("limit"),
 			Page:         c.QueryInt64("page"),
 			UID:          c.Query("parentUid"),
 			SignedInUser: c.SignedInUser,
-		})
-	} else {
-		folders, err = hs.searchFolders(c)
+		}
+
+		folders, err := hs.folderService.GetChildren(c.Req.Context(), q)
+		if err != nil {
+			return apierrors.ToFolderErrorResponse(err)
+		}
+
+		hits := make([]dtos.FolderSearchHit, 0)
+		for _, f := range folders {
+			hits = append(hits, dtos.FolderSearchHit{
+				ID:        f.ID, // nolint:staticcheck
+				UID:       f.UID,
+				Title:     f.Title,
+				ParentUID: f.ParentUID,
+			})
+		}
+
+		return response.JSON(http.StatusOK, hits)
 	}
 
+	hits, err := hs.searchFolders(c)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	result := make([]dtos.FolderSearchHit, 0)
-	for _, f := range folders {
-		result = append(result, dtos.FolderSearchHit{
-			ID:        f.ID, // nolint:staticcheck
-			UID:       f.UID,
-			Title:     f.Title,
-			ParentUID: f.ParentUID,
-		})
-	}
-
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, hits)
 }
 
 // swagger:route GET /folders/{folder_uid} folders getFolderByUID
@@ -441,7 +445,7 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 	return metadata, nil
 }
 
-func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folder, error) {
+func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]dtos.FolderSearchHit, error) {
 	searchQuery := search.Query{
 		SignedInUser: c.SignedInUser,
 		DashboardIds: make([]int64, 0),
@@ -458,17 +462,16 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folde
 		return nil, err
 	}
 
-	folders := make([]*folder.Folder, 0)
-
+	folderHits := make([]dtos.FolderSearchHit, 0)
 	for _, hit := range hits {
-		folders = append(folders, &folder.Folder{
+		folderHits = append(folderHits, dtos.FolderSearchHit{
 			ID:    hit.ID, // nolint:staticcheck
 			UID:   hit.UID,
 			Title: hit.Title,
 		})
 	}
 
-	return folders, nil
+	return folderHits, nil
 }
 
 // swagger:parameters getFolders
