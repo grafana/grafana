@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
@@ -212,6 +213,26 @@ func TestNotificationPolicyService(t *testing.T) {
 		newCfg, err := deserializeAlertmanagerConfig([]byte(interceptedSave.AlertmanagerConfiguration))
 		require.NoError(t, err)
 		require.Len(t, newCfg.AlertmanagerConfig.Receivers, 2)
+	})
+
+	t.Run("matchers are changed into object matchers", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+
+		m1, err := labels.NewMatcher(labels.MatchEqual, "foo", "bar")
+		require.NoError(t, err)
+		m2, err := labels.NewMatcher(labels.MatchEqual, "bar", "baz")
+		require.NoError(t, err)
+		newRoute := createTestRoutingTree()
+		newRoute.Matchers = config.Matchers{m1}
+		newRoute.ObjectMatchers = definitions.ObjectMatchers{m2}
+		require.NoError(t, sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone))
+
+		tree, err := sut.GetPolicyTree(context.Background(), 1)
+		require.NoError(t, err)
+
+		// assert that matchers are changed into object matchers.
+		require.Len(t, tree.Matchers, 0)
+		require.Equal(t, tree.ObjectMatchers, definitions.ObjectMatchers{m2, m1})
 	})
 }
 

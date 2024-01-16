@@ -272,6 +272,11 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 	}
+	// Change all matchers into object matchers. The purpose of this is to get all Grafana
+	// configurations using object matchers so we can turn on UTF-8 strict mode as there will
+	// be no users using matchers.
+	body.AsObjectMatchers()
+
 	err = srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})

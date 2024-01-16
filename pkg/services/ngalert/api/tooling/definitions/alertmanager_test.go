@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1085,4 +1086,63 @@ func Test_RawMessageMarshaling(t *testing.T) {
 		require.NoError(t, yaml.Unmarshal(data, &n))
 		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
 	})
+}
+
+// This test asserts that AsObjectMatchers copies and de-duplicates all
+// matchers from matchers into object matchers, while also preserving
+// any existing object matchers. It further asserts that this is repeated
+// for all child routes.
+func TestAsObjectMatchers(t *testing.T) {
+	m1, err := labels.NewMatcher(labels.MatchEqual, "foo", "bar")
+	require.NoError(t, err)
+	m2, err := labels.NewMatcher(labels.MatchEqual, "bar", "baz")
+	require.NoError(t, err)
+	m3, err := labels.NewMatcher(labels.MatchEqual, "baz", "qux")
+	require.NoError(t, err)
+	m4, err := labels.NewMatcher(labels.MatchEqual, "qux", "🙂")
+	require.NoError(t, err)
+
+	cfg := PostableUserConfig{
+		AlertmanagerConfig: PostableApiAlertingConfig{
+			Config: Config{
+				Route: &Route{
+					Matchers:       config.Matchers{m1, m2},
+					ObjectMatchers: ObjectMatchers{m2, m3, m4},
+					Routes: []*Route{{
+						Matchers:       config.Matchers{m1},
+						ObjectMatchers: ObjectMatchers{m2},
+					}, {
+						Matchers:       config.Matchers{m3},
+						ObjectMatchers: ObjectMatchers{m4},
+						Routes: []*Route{{
+							Matchers:       config.Matchers{m1, m2, m3, m4},
+							ObjectMatchers: nil,
+						}, {
+							Matchers:       nil,
+							ObjectMatchers: ObjectMatchers{m1, m2, m3, m4},
+						}},
+					}},
+				},
+			},
+		},
+	}
+	cfg.AsObjectMatchers()
+
+	r := cfg.AlertmanagerConfig.Route
+	// Check that the top route has its matchers merged into object matchers.
+	require.Len(t, r.Matchers, 0)
+	require.Equal(t, ObjectMatchers{m2, m3, m4, m1}, r.ObjectMatchers)
+
+	// Check its first level child routes.
+	require.Len(t, r.Routes[0].Matchers, 0)
+	require.Equal(t, ObjectMatchers{m2, m1}, r.Routes[0].ObjectMatchers)
+	require.Len(t, r.Routes[1].Matchers, 0)
+	require.Equal(t, ObjectMatchers{m4, m3}, r.Routes[1].ObjectMatchers)
+
+	// Check the second level child routes.
+	r = r.Routes[1]
+	require.Len(t, r.Routes[0].Matchers, 0)
+	require.Equal(t, ObjectMatchers{m1, m2, m3, m4}, r.Routes[0].ObjectMatchers)
+	require.Len(t, r.Routes[1].Matchers, 0)
+	require.Equal(t, ObjectMatchers{m1, m2, m3, m4}, r.Routes[1].ObjectMatchers)
 }

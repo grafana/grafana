@@ -646,6 +646,15 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+// AsObjectMatchers copies all occurrences of matchers into object matchers,
+// removes any duplicates, and then removes the original matchers from the
+// route. It then repeats the operation for all child routes.
+func (c *PostableUserConfig) AsObjectMatchers() {
+	if r := c.AlertmanagerConfig.Route; r != nil {
+		r.AsObjectMatchers()
+	}
+}
+
 type Provenance string
 
 // swagger:model
@@ -828,6 +837,29 @@ func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return r.validateChild()
+}
+
+// AsObjectMatchers copies all occurrences of matchers into object matchers,
+// removes any duplicates, and then removes the original matchers from the
+// route. It then repeats the operation for all child routes.
+func (r *Route) AsObjectMatchers() {
+	tmp := append(r.ObjectMatchers, ObjectMatchers(r.Matchers)...)
+	// Remove duplicates from tmp.
+	seen := make(map[string]struct{})
+	objectMatchers := make(ObjectMatchers, 0, len(tmp))
+	for _, o := range tmp {
+		if _, ok := seen[o.String()]; !ok {
+			objectMatchers = append(objectMatchers, o)
+		}
+		seen[o.String()] = struct{}{}
+	}
+	r.ObjectMatchers = objectMatchers
+	// Remove the original matchers.
+	r.Matchers = r.Matchers[:0]
+	// Repeat the operation for all child routes.
+	for _, rt := range r.Routes {
+		rt.AsObjectMatchers()
+	}
 }
 
 // AsAMRoute returns an Alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.

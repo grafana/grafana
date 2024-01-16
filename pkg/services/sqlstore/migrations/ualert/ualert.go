@@ -1,13 +1,16 @@
 package ualert
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -225,4 +228,49 @@ func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migra
 
 func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
 	return codeMigration
+}
+
+func AddMigrateToObjectMatchersMigration(mg *migrator.Migrator) {
+	migrationID := "migrate configurations from matchers to object matchers"
+	mg.AddMigration(migrationID, &migrateToObjectMatchers{})
+}
+
+type migrateToObjectMatchers struct {
+	migrator.MigrationBase
+}
+
+func (m *migrateToObjectMatchers) SQL(_ migrator.Dialect) string {
+	return "migrate configurations from matchers to object matchers"
+}
+
+func (m *migrateToObjectMatchers) Exec(sess *xorm.Session, _ *migrator.Migrator) error {
+	// Get configurations for all orgs from the database.
+	var rows []ngmodels.AlertConfiguration
+	if err := sess.Table(&ngmodels.AlertConfiguration{}).Find(&rows); err != nil {
+		return err
+	}
+	for _, row := range rows {
+		// Read the serialized configuration for each org.
+		cfg := definitions.PostableUserConfig{}
+		if err := json.Unmarshal([]byte(row.AlertmanagerConfiguration), &cfg); err != nil {
+			return fmt.Errorf("failed to unmarshal configuration for org %d: %w", row.OrgID, err)
+		}
+		// Save a copy of the original configuration.
+		historicCfg := ngmodels.HistoricConfigFromAlertConfig(row)
+		historicCfg.LastApplied = time.Now().Unix()
+		if _, err := sess.Table("alert_configuration_history").Insert(historicCfg); err != nil {
+			return fmt.Errorf("failed to insert historical configuration for org %d: %w", row.OrgID, err)
+		}
+		// Migrate matchers to object matchers.
+		cfg.AsObjectMatchers()
+		b, err := json.Marshal(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to marshal configuration for org %d: %w", row.OrgID, err)
+		}
+		row.AlertmanagerConfiguration = string(b)
+		if _, err = sess.Table(&ngmodels.AlertConfiguration{}).Update(row); err != nil {
+			return fmt.Errorf("failed to update configuration for org %d: %w", row.OrgID, err)
+		}
+	}
+	return nil
 }

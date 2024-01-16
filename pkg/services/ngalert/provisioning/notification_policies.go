@@ -84,6 +84,8 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
+	tree.AsObjectMatchers()
+
 	revision.cfg.AlertmanagerConfig.Config.Route = &tree
 
 	return nps.xact.InTransaction(ctx, func(ctx context.Context) error {
