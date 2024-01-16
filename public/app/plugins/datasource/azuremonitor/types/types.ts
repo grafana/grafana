@@ -25,23 +25,23 @@ export interface DatasourceValidationResult {
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
+  /** @deprecated Legacy Azure credentials */
   cloudName: string;
+  /** @deprecated Legacy Azure credentials */
   azureAuthType?: AzureAuthType;
-
-  // monitor
+  /** @deprecated Legacy Azure credentials */
   tenantId?: string;
+  /** @deprecated Legacy Azure credentials */
   clientId?: string;
+  /** @deprecated Legacy Azure credentials */
   subscriptionId?: string;
-
-  // logs
-  /** @deprecated Azure Logs credentials */
+  /** @deprecated Legacy Azure Logs Analytics setting */
   logAnalyticsDefaultWorkspace?: string;
 
   enableSecureSocksProxy?: boolean;
 }
 
 export interface AzureDataSourceSecureJsonData {
-  clientSecret?: string;
   appInsightsApiKey?: string;
 }
 

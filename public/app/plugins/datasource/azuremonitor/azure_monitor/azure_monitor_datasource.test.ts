@@ -36,7 +36,14 @@ describe('AzureMonitorDatasource', () => {
     ctx.instanceSettings = {
       name: 'test',
       url: 'http://azuremonitor.com',
-      jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
+      jsonData: {
+        azureCredentials: {
+          authType: 'clientsecret',
+          tenantId: '37e8bef3-b319-44af-9e76-b7f2ea83e286',
+          clientId: '7169448f-5678-49f3-a9d3-c25d061e5147'
+        },
+        subscriptionId: 'mock-subscription-id'
+      },
     } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
@@ -640,7 +647,6 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
       });
 
