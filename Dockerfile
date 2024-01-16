@@ -22,7 +22,7 @@ COPY public public
 
 RUN yarn install --immutable
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
 COPY scripts scripts
 COPY emails emails
