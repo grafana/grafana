@@ -124,6 +124,23 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 	return result, nil
 }
 
+func (s *SSOSettingsService) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error) {
+	storeSettings, err := s.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, storeSetting := range storeSettings {
+		for k, v := range storeSetting.Settings {
+			if isSecret(k) && v != "" {
+				storeSetting.Settings[k] = "*********"
+			}
+		}
+	}
+
+	return storeSettings, nil
+}
+
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
 	if !isProviderConfigurable(settings.Provider) {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", settings.Provider)

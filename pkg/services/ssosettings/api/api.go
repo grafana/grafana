@@ -76,6 +76,18 @@ func (api *Api) RegisterAPIEndpoints() {
 	})
 }
 
+// swagger:route GET /v1/sso-settings sso_settings listAllProvidersSettings
+//
+// # List all SSO Settings entries
+//
+// You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
 func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
 	providers, err := api.getAuthorizedList(c.Req.Context(), c.SignedInUser)
 	if err != nil {
@@ -86,7 +98,7 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 }
 
 func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettings, error) {
-	allProviders, err := api.SSOSettingsService.List(ctx)
+	allProviders, err := api.SSOSettingsService.ListWithRedactedSecrets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +117,8 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 		}
 
 		authorizedProviders = append(authorizedProviders, provider)
+
+		// Colin TODO: generate ETag for each provider
 	}
 
 	return authorizedProviders, nil

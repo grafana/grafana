@@ -367,6 +367,79 @@ func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
 	}
 }
 
+func TestSSOSettingsAPI_List(t *testing.T) {
+	type TestCase struct {
+		desc                string
+		action              string
+		scope               string
+		expectedResult      []*models.SSOSettings
+		expectedError       error
+		expectedServiceCall bool
+		expectedStatusCode  int
+	}
+
+	tests := []TestCase{
+		{
+			desc:   "successfully lists SSO settings",
+			action: "settings:read",
+			scope:  "settings:auth.azuread:*",
+			expectedResult: []*models.SSOSettings{
+				{
+					ID:        "1",
+					Provider:  "azuread",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.DB,
+				},
+				{
+					ID:        "2",
+					Provider:  "github",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.DB,
+				},
+			},
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusOK,
+		},
+		// Colin TODO: add additional tests
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service := ssosettingstests.NewMockService(t)
+			if tt.expectedServiceCall {
+				service.On("ListWithRedactedSecrets", mock.AnythingOfType("*context.valueCtx")).Return(tt.expectedResult, tt.expectedError).Once()
+			}
+			server := setupTests(t, service)
+
+			path := "/api/v1/sso-settings"
+			req := server.NewRequest(http.MethodGet, path, nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+				OrgRole:     org.RoleEditor,
+				OrgID:       1,
+				Permissions: getPermissionsForActionAndScope(tt.action, tt.scope),
+			})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
+
+			if tt.expectedError == nil {
+				var data []models.SSOSettings
+				require.NoError(t, json.NewDecoder(res.Body).Decode(&data))
+			}
+
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
 func getPermissionsForActionAndScope(action, scope string) map[int64]map[string][]string {
 	return map[int64]map[string][]string{
 		1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{{
