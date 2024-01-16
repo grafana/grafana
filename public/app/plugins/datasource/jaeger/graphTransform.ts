@@ -56,10 +56,6 @@ function convertTraceToGraph(data: TraceResponse): { nodes: Node[]; edges: Edge[
 
     const ranges: Array<[number, number]> = spanMap[span.spanID].children.map((c) => {
       const span = spanMap[c].span;
-      if (!span) {
-        console.error('Undefined span');
-      }
-      // @ts-ignore
       return [span.startTime, span.startTime + span.duration];
     });
     const childrenDuration = getNonOverlappingDuration(ranges);
