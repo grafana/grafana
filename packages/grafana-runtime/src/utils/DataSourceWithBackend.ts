@@ -268,7 +268,7 @@ class DataSourceWithBackend<
    * Apply template variables for explore
    */
   interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[] {
-    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters) as TQuery);
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
   /**
@@ -290,7 +290,7 @@ class DataSourceWithBackend<
    *
    * @virtual
    */
-  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): Record<string, any> {
+  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     return query;
   }
 
@@ -323,7 +323,7 @@ class DataSourceWithBackend<
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource<T = any>(
+  async postResource<T = unknown>(
     path: string,
     data?: BackendSrvRequest['data'],
     options?: Partial<BackendSrvRequest>

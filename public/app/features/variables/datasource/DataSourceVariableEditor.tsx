@@ -5,10 +5,10 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { StoreState } from '../../../types';
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableSelectField } from '../../dashboard-scene/settings/variables/components/VariableSelectField';
+import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableLegend } from '../editor/VariableLegend';
-import { VariableSelectField } from '../editor/VariableSelectField';
-import { VariableTextField } from '../editor/VariableTextField';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getDatasourceVariableEditorState } from '../editor/selectors';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';

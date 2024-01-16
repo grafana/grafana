@@ -29,7 +29,7 @@ export interface BrowseDashboardsState {
 
 export interface UIDashboardViewItem {
   kind: 'ui';
-  uiKind: 'empty-folder' | 'pagination-placeholder';
+  uiKind: 'empty-folder' | 'pagination-placeholder' | 'divider';
   uid: string;
 }
 
