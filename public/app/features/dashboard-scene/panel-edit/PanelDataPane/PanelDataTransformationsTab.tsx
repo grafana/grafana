@@ -95,6 +95,7 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
   const styles = useStyles2(getStyles);
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const transformations: DataTransformerConfig[] = transformsWrongType as unknown as DataTransformerConfig[];
 
   return (
