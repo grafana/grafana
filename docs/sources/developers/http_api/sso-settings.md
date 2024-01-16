@@ -62,6 +62,7 @@ ETag: db87f729761898ee
     "clientSecret": "*********",
     "enabled": true,
     "scopes": "user:email,read:org"
+    // rest of the settings
   },
   "source":    "system",
 }
