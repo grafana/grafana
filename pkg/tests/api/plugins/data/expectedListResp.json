@@ -160,7 +160,7 @@
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.4.0",
+      "grafanaDependency": "\u003e=10.3.0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -688,7 +688,7 @@
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.4.0-0",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
