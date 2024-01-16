@@ -3058,7 +3058,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.5"
-    "@grafana/lezer-logql": "npm:0.2.1"
+    "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/lezer-traceql": "npm:0.0.12"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/plugin-configs": "npm:10.4.0-pre"
@@ -3423,15 +3423,6 @@ __metadata:
     react: 17.0.2
     react-dom: 17.0.2
   checksum: 98cb06a971f151e9504ab2b6640edb41fced12ecc6e033df5069937f82ab10a682f63314f713f79a8870975fb42c3cd74f23a605b58d961e632aa6cd35adf44b
-  languageName: node
-  linkType: hard
-
-"@grafana/lezer-logql@npm:0.2.1":
-  version: 0.2.1
-  resolution: "@grafana/lezer-logql@npm:0.2.1"
-  peerDependencies:
-    "@lezer/lr": ^1.0.0
-  checksum: e3669e8e1b41eb87547756fb592681aec9d728397b7bb0ccd4cdb875632fabd3469321b6565da814f5700dece28918a1770313da2364a5bc6e3745ef96d10461
   languageName: node
   linkType: hard
 
