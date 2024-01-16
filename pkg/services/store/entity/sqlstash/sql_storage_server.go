@@ -3,10 +3,12 @@ package sqlstash
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strings"
 	"time"
 
@@ -879,6 +881,82 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	return rsp, err
 }
 
+type ContinueToken struct {
+	Sort        []string `json:"s"`
+	StartOffset int64    `json:"o"`
+}
+
+func (c *ContinueToken) String() string {
+	b, _ := json.Marshal(c)
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+func GetContinueToken(r *entity.EntityListRequest) (*ContinueToken, error) {
+	if r.NextPageToken == "" {
+		return nil, nil
+	}
+
+	continueVal, err := base64.StdEncoding.DecodeString(r.NextPageToken)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding continue token")
+	}
+
+	t := &ContinueToken{}
+	err = json.Unmarshal(continueVal, t)
+	if err != nil {
+		return nil, err
+	}
+
+	if !slices.Equal(t.Sort, r.Sort) {
+		return nil, fmt.Errorf("sort order changed")
+	}
+
+	return t, nil
+}
+
+var sortByFields = []string{
+	"guid",
+	"key",
+	"namespace", "group", "group_version", "resource", "name", "folder",
+	"resource_version", "size", "etag",
+	"created_at", "created_by",
+	"updated_at", "updated_by",
+	"origin", "origin_key", "origin_ts",
+	"title", "slug", "description",
+}
+
+type SortBy struct {
+	Field     string
+	Direction Direction
+}
+
+func ParseSortBy(sort string) (*SortBy, error) {
+	sortBy := &SortBy{
+		Field:     "guid",
+		Direction: Ascending,
+	}
+
+	parts := strings.Split(sort, " ")
+	if len(parts) == 1 {
+		sortBy.Field = parts[0]
+	} else if len(parts) == 2 {
+		sortBy.Field = parts[0]
+		if parts[1] == "desc" {
+			sortBy.Direction = Descending
+		} else if parts[1] != "asc" {
+			return nil, fmt.Errorf("invalid sort direction: %s", parts[1])
+		}
+	} else {
+		return nil, fmt.Errorf("invalid sort specifier: %s", sort)
+	}
+
+	if !slices.Contains(sortByFields, sortBy.Field) {
+		return nil, fmt.Errorf("invalid sort field: %s", sortBy.Field)
+	}
+
+	return sortBy, nil
+}
+
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
 	if err := s.Init(); err != nil {
 		return nil, err
@@ -890,10 +968,6 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	}
 	if user == nil {
 		return nil, fmt.Errorf("missing user in context")
-	}
-
-	if r.NextPageToken != "" || len(r.Sort) > 0 {
-		return nil, fmt.Errorf("not yet supported")
 	}
 
 	rr := &entity.ReadEntityRequest{
@@ -909,6 +983,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		from:     "entity", // the table
 		args:     []any{},
 		limit:    r.Limit,
+		offset:   0,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 
@@ -951,8 +1026,13 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		entityQuery.addWhere("folder", r.Folder)
 	}
 
-	if r.NextPageToken != "" {
-		entityQuery.addWhere("guid>?", r.NextPageToken)
+	// if we have a page token, use that to specify the first record
+	continueToken, err := GetContinueToken(r)
+	if err != nil {
+		return nil, err
+	}
+	if continueToken != nil {
+		entityQuery.offset = continueToken.StartOffset
 	}
 
 	if len(r.Labels) > 0 {
@@ -971,6 +1051,14 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 		entityQuery.addWhereInSubquery("guid", query, args)
 	}
+	for _, sort := range r.Sort {
+		sortBy, err := ParseSortBy(sort)
+		if err != nil {
+			return nil, err
+		}
+		entityQuery.addOrderBy(sortBy.Field, sortBy.Direction)
+	}
+	entityQuery.addOrderBy("guid", Ascending)
 
 	query, args := entityQuery.toQuery()
 
@@ -990,8 +1078,11 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 		// found more than requested
 		if int64(len(rsp.Results)) >= entityQuery.limit {
-			// TODO? this only works if we sort by guid
-			rsp.NextPageToken = result.Guid
+			continueToken := &ContinueToken{
+				Sort:        r.Sort,
+				StartOffset: entityQuery.offset + entityQuery.limit,
+			}
+			rsp.NextPageToken = continueToken.String()
 			break
 		}
 

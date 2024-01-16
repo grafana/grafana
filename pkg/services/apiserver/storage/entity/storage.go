@@ -249,6 +249,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if fieldRequirements.Folder != nil {
 		req.Folder = *fieldRequirements.Folder
 	}
+	if len(fieldRequirements.SortBy) > 0 {
+		req.Sort = fieldRequirements.SortBy
+	}
 	// Update the field selector to remove the unneeded selectors
 	opts.Predicate.Field = fieldSelector
 

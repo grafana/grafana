@@ -11,10 +11,13 @@ import (
 )
 
 const folderAnnoKey = "grafana.app/folder"
+const sortByKey = "grafana.app/sortBy"
 
 type FieldRequirements struct {
 	// Equals folder
 	Folder *string
+	// SortBy is a list of fields to sort by
+	SortBy []string
 }
 
 func ReadFieldRequirements(selector fields.Selector) (FieldRequirements, fields.Selector, error) {
@@ -28,10 +31,15 @@ func ReadFieldRequirements(selector fields.Selector) (FieldRequirements, fields.
 		switch r.Field {
 		case folderAnnoKey:
 			if (r.Operator != selection.Equals) && (r.Operator != selection.DoubleEquals) {
-				return requirements, selector, apierrors.NewBadRequest("only equality is supported in the selectors")
+				return requirements, selector, apierrors.NewBadRequest(folderAnnoKey + " field selector only supports equality")
 			}
 			folder := r.Value
 			requirements.Folder = &folder
+		case sortByKey:
+			if r.Operator != selection.Equals {
+				return requirements, selector, apierrors.NewBadRequest(sortByKey + " field selector only supports equality")
+			}
+			requirements.SortBy = strings.Split(r.Value, ";")
 		}
 	}
 
@@ -39,6 +47,8 @@ func ReadFieldRequirements(selector fields.Selector) (FieldRequirements, fields.
 	selector, err := selector.Transform(func(field, value string) (string, string, error) {
 		switch field {
 		case folderAnnoKey:
+			return "", "", nil
+		case sortByKey:
 			return "", "", nil
 		}
 		return field, value, nil
