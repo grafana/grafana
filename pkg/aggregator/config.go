@@ -38,8 +38,8 @@ func (c *Config) Complete() {
 		return
 	}
 
-	c.AggregatorComplete = c.Aggregator.Complete()
 	c.ApiExtensionsComplete = c.ApiExtensions.Complete()
+	c.AggregatorComplete = c.Aggregator.Complete()
 }
 
 func (ec *ExtraConfig) AddFlags(fs *pflag.FlagSet) {

@@ -21,16 +21,17 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/openapi"
+	apiserver "k8s.io/kube-aggregator/pkg/controllers/status"
+
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apiserver/pkg/server/options"
-	"k8s.io/apiserver/pkg/util/openapi"
-	apiserver "k8s.io/kube-aggregator/pkg/controllers/status"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
@@ -42,6 +43,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -161,6 +163,8 @@ func initSharedConfig(options *options.RecommendedOptions, codecs serializer.Cod
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(codecs)
+
+	serverConfig.AggregatedDiscoveryGroupManager = aggregated.NewResourceManager("apis")
 
 	if options.CoreAPI == nil {
 		if err := modifiedApplyTo(options, serverConfig); err != nil {
