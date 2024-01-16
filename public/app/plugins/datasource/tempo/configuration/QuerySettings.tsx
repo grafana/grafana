@@ -5,7 +5,6 @@ import { DataSourcePluginOptionsEditorProps, GrafanaTheme2, updateDatasourcePlug
 import { IntervalInput, invalidTimeShiftError } from '@grafana/traces';
 import { InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
 
-import { IntervalInput, invalidTimeShiftError } from '../_importedDependencies/grafana-traces/src';
 import { TempoJsonData } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
