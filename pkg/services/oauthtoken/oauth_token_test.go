@@ -106,20 +106,25 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 		Expiry:       time.Now(),
 		TokenType:    "Bearer",
 	}
-	usr := &login.UserAuth{
+	oauth_user := &login.UserAuth{
 		AuthModule:        "oauth_generic_oauth",
 		OAuthAccessToken:  token.AccessToken,
 		OAuthRefreshToken: token.RefreshToken,
 		OAuthExpiry:       token.Expiry,
 		OAuthTokenType:    token.TokenType,
 	}
+	oauth_user_identity := &authn.Identity{
+		ID:              "user:1234",
+		AuthenticatedBy: "oauth_generic_oauth",
+	}
+	oauth_user_identity.SessionToken = nil
 
-	authInfoStore.ExpectedOAuth = usr
+	authInfoStore.ExpectedOAuth = oauth_user
 
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
 	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
 
-	err := srv.TryTokenRefresh(ctx, usr)
+	err := srv.TryTokenRefresh(ctx, oauth_user_identity)
 	require.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
@@ -235,6 +240,9 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	socialConnector := &socialtest.MockSocialConnector{}
 	socialService := &socialtest.FakeSocialService{
 		ExpectedConnector: socialConnector,
+		ExpectedAuthInfoProvider: &social.OAuthInfo{
+			UseRefreshToken: true,
+		},
 	}
 
 	authInfoStore := &FakeAuthInfoStore{}
