@@ -424,6 +424,98 @@ func TestPluginProxyRoutes(t *testing.T) {
 	}
 }
 
+func TestPluginProxyRoutesRBAC(t *testing.T) {
+	routes := []*plugins.Route{
+		{
+			Path:   "projects",
+			Method: "GET",
+			URL:    "http://localhost/api/projects",
+			Action: "plugin-id.projects:read",
+		},
+	}
+
+	tcs := []struct {
+		proxyPath       string
+		usrPerms        map[string][]string
+		expectedURLPath string
+		expectedStatus  int
+	}{
+		{
+			proxyPath:       "/projects",
+			usrPerms:        map[string][]string{"plugin-id.projects:read": {}},
+			expectedURLPath: "/api/projects",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/projects",
+			usrPerms:        map[string][]string{},
+			expectedURLPath: "/api/projects",
+			expectedStatus:  http.StatusForbidden,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Should enforce RBAC when proxying path %s %s", tc.proxyPath, http.StatusText(tc.expectedStatus)), func(t *testing.T) {
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			requestHandled := false
+			requestURL := ""
+			backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requestURL = r.URL.RequestURI()
+				w.WriteHeader(200)
+				_, _ = w.Write([]byte("I am the backend"))
+				requestHandled = true
+			}))
+			t.Cleanup(backendServer.Close)
+
+			backendURL, err := url.Parse(backendServer.URL)
+			require.NoError(t, err)
+
+			testRoutes := make([]*plugins.Route, len(routes))
+			for i, r := range routes {
+				u, err := url.Parse(r.URL)
+				require.NoError(t, err)
+				u.Scheme = backendURL.Scheme
+				u.Host = backendURL.Host
+				testRoute := *r
+				testRoute.URL = u.String()
+				testRoutes[i] = &testRoute
+			}
+
+			responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
+
+			ctx := &contextmodel.ReqContext{
+				Logger:       logger.New("pluginproxy-test"),
+				SignedInUser: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: tc.usrPerms}},
+				Context: &web.Context{
+					Req:  httptest.NewRequest("GET", tc.proxyPath, nil),
+					Resp: responseWriter,
+				},
+			}
+			ps := &pluginsettings.DTO{
+				SecureJSONData: map[string][]byte{},
+			}
+			cfg := &setting.Cfg{}
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(cfg), featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
+			require.NoError(t, err)
+			proxy.HandleRequest()
+
+			for {
+				if requestHandled || ctx.Resp.Written() {
+					break
+				}
+			}
+
+			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
+
+			if tc.expectedStatus == http.StatusForbidden {
+				return
+			}
+
+			require.Equal(t, tc.expectedURLPath, requestURL)
+		})
+	}
+}
+
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
 func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsService secrets.Service, ctx *contextmodel.ReqContext, cfg *setting.Cfg, route *plugins.Route) *http.Request {
 	// insert dummy route if none is specified

@@ -70,11 +70,9 @@ func (proxy *PluginProxy) HandleRequest() {
 			continue
 		}
 
-		if route.ReqRole.IsValid() {
-			if !proxy.hasAccessToRoute(route) {
-				proxy.ctx.JsonApiErr(http.StatusForbidden, "plugin proxy route access denied", nil)
-				return
-			}
+		if !proxy.hasAccessToRoute(route) {
+			proxy.ctx.JsonApiErr(http.StatusForbidden, "plugin proxy route access denied", nil)
+			return
 		}
 
 		if path, exists := params["*"]; exists {
@@ -133,7 +131,10 @@ func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 		}
 		return hasAccess
 	}
-	return proxy.ctx.HasUserRole(route.ReqRole)
+	if route.ReqRole.IsValid() {
+		return proxy.ctx.HasUserRole(route.ReqRole)
+	}
+	return true
 }
 
 func (proxy PluginProxy) director(req *http.Request) {
