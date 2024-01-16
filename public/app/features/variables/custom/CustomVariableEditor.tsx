@@ -56,7 +56,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
         onAllValueChange={(event) =>
           this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
         }
-        onBlur={this.onBlur}
+        onQueryBlur={this.onBlur}
       />
     );
   }

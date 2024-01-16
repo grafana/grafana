@@ -1,10 +1,12 @@
 import React from 'react';
+import { useAsyncFn } from 'react-use';
+import { lastValueFrom } from 'rxjs';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { HorizontalGroup, Button } from '@grafana/ui';
+import { HorizontalGroup, Button, Icon } from '@grafana/ui';
 import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -29,6 +31,9 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
   const [name, setName] = React.useState(initialName ?? '');
   const [label, setLabel] = React.useState(initialLabel ?? '');
   const [description, setDescription] = React.useState(initialDescription ?? '');
+  const [runQueryState, onRunQuery] = useAsyncFn(async () => {
+    await lastValueFrom(variable.validateAndUpdate!());
+  }, [variable]);
 
   const onVariableTypeChange = (option: SelectableValue<EditableVariableType>) => {
     if (option.value) {
@@ -84,21 +89,12 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
 
         {EditorToRender && <EditorToRender variable={variable} />}
 
-        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.state.options} />}
+        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
 
         <div style={{ marginTop: '16px' }}>
           <HorizontalGroup spacing="md" height="inherit">
             {/* <Button variant="destructive" fill="outline" onClick={onModalOpen}>
               Delete
-            </Button> */}
-            {/* <Button
-              type="submit"
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
-              disabled={loading}
-              variant="secondary"
-            >
-              Run query
-              {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
             </Button> */}
             <Button
               variant="secondary"
@@ -106,6 +102,17 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
               onClick={onGoBack}
             >
               Back to list
+            </Button>
+            <Button
+              disabled={runQueryState.loading}
+              variant="secondary"
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton}
+              onClick={onRunQuery}
+            >
+              Run query
+              {runQueryState.loading && (
+                <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />
+              )}
             </Button>
             <Button
               variant="destructive"

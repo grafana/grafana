@@ -1,10 +1,11 @@
 import React, { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 
 import { VariableLegend } from '../components/VariableLegend';
 import { VariableTextAreaField } from '../components/VariableTextAreaField';
+
+import { SelectionOptionsForm } from './SelectionOptionsForm';
 
 interface CustomVariableFormProps {
   query: string;
@@ -12,10 +13,11 @@ interface CustomVariableFormProps {
   allValue?: string | null;
   includeAll: boolean;
   onQueryChange: (event: FormEvent<HTMLTextAreaElement>) => void;
-  onBlur: (event: FormEvent<HTMLTextAreaElement>) => void;
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
+  onQueryBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
+  onAllValueBlur?: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function CustomVariableForm({
@@ -27,7 +29,8 @@ export function CustomVariableForm({
   onMultiChange,
   onIncludeAllChange,
   onAllValueChange,
-  onBlur,
+  onQueryBlur,
+  onAllValueBlur,
 }: CustomVariableFormProps) {
   return (
     <>
@@ -38,7 +41,7 @@ export function CustomVariableForm({
         value={query}
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
         onChange={onQueryChange}
-        onBlur={onBlur}
+        onBlur={onQueryBlur}
         required
         width={52}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
@@ -51,6 +54,7 @@ export function CustomVariableForm({
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
+        onAllValueBlur={onAllValueBlur}
       />
     </>
   );

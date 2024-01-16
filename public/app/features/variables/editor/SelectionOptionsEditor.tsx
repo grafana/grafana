@@ -2,8 +2,6 @@ import React, { ChangeEvent, FormEvent, useCallback } from 'react';
 
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 
-import { VariableCheckboxField } from '../../dashboard-scene/settings/variables/components/VariableCheckboxField';
-import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
 import { KeyedVariableIdentifier } from '../state/types';
 import { VariableWithMultiSupport } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';

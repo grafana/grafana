@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { CustomVariable } from '@grafana/scenes';
 
@@ -6,17 +6,18 @@ import { CustomVariableForm } from '../components/CustomVariableForm';
 
 interface CustomVariableEditorProps {
   variable: CustomVariable;
-  onChange: (variable: CustomVariable) => void;
 }
 
 export function CustomVariableEditor({ variable }: CustomVariableEditorProps) {
-  const { query, isMulti, allValue, includeAll } = variable.useState();
+  const { query: initialQuery, isMulti, allValue: initialAllValue, includeAll } = variable.useState();
+  const [query, setQuery] = useState(initialQuery);
+  const [allValue, setAllValue] = useState(initialAllValue);
 
   const onQueryChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
-    variable.setState({ query: event.currentTarget.value });
+    setQuery(event.currentTarget.value);
   };
-  const onBlur = (event: React.FormEvent<HTMLTextAreaElement>) => {
-    variable.setState({ query: event.currentTarget.value });
+  const onAllValueChange = (event: React.FormEvent<HTMLInputElement>) => {
+    setAllValue(event.currentTarget.value);
   };
   const onMultiChange = (event: React.FormEvent<HTMLInputElement>) => {
     variable.setState({ isMulti: event.currentTarget.checked });
@@ -24,7 +25,11 @@ export function CustomVariableEditor({ variable }: CustomVariableEditorProps) {
   const onIncludeAllChange = (event: React.FormEvent<HTMLInputElement>) => {
     variable.setState({ includeAll: event.currentTarget.checked });
   };
-  const onAllValueChange = (event: React.FormEvent<HTMLInputElement>) => {
+  const onQueryBlur = (event: React.FormEvent<HTMLTextAreaElement>) => {
+    variable.setState({ query: event.currentTarget.value });
+    variable.validateAndUpdate();
+  };
+  const onAllValueBlur = (event: React.FormEvent<HTMLInputElement>) => {
     variable.setState({ allValue: event.currentTarget.value });
   };
 
@@ -35,10 +40,11 @@ export function CustomVariableEditor({ variable }: CustomVariableEditorProps) {
       allValue={allValue}
       includeAll={!!includeAll}
       onQueryChange={onQueryChange}
-      onBlur={onBlur}
       onMultiChange={onMultiChange}
       onIncludeAllChange={onIncludeAllChange}
       onAllValueChange={onAllValueChange}
+      onQueryBlur={onQueryBlur}
+      onAllValueBlur={onAllValueBlur}
     />
   );
 }
