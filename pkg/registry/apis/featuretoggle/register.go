@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ grafanaapiserver.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
@@ -26,13 +24,10 @@ var gv = v0alpha1.SchemeGroupVersion
 
 // This is used just so wire has something unique to return
 type FeatureFlagAPIBuilder struct {
-	features   *featuremgmt.FeatureManager
-	namespacer request.NamespaceMapper
-	cfg        *setting.Cfg
+	features *featuremgmt.FeatureManager
 }
 
-func RegisterAPIService(cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+func RegisterAPIService(features *featuremgmt.FeatureManager,
 	apiregistration grafanaapiserver.APIRegistrar,
 ) *FeatureFlagAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -40,9 +35,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	}
 
 	builder := &FeatureFlagAPIBuilder{
-		features:   features,
-		namespacer: request.GetNamespaceMapper(cfg),
-		cfg:        cfg,
+		features: features,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder

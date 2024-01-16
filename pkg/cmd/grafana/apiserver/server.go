@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
+	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
@@ -47,6 +48,8 @@ func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
 		// No dependencies for testing
 		case "example.grafana.app":
 			o.builders = append(o.builders, example.NewTestingAPIBuilder())
+		case "featuretoggle.grafana.app":
+			o.builders = append(o.builders, &featuretoggle.FeatureFlagAPIBuilder{})
 		case "testdata.datasource.grafana.app":
 			ds, err := datasource.NewStandaloneDatasource(g)
 			if err != nil {
