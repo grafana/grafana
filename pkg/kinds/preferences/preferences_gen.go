@@ -10,6 +10,8 @@
 package preferences
 
 import (
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/kinds"
 )
 
@@ -19,9 +21,11 @@ type K8sResource = kinds.GrafanaResource[Spec, Status]
 // NewResource creates a new instance of the resource with a given name (UID)
 func NewK8sResource(name string, s *Spec) K8sResource {
 	return K8sResource{
-		Kind:       "Preferences",
-		APIVersion: "v0-0-alpha",
-		Metadata: kinds.GrafanaResourceMetadata{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Preferences",
+			APIVersion: "v0-0-alpha",
+		},
+		ObjectMeta: v1.ObjectMeta{
 			Name:        name,
 			Annotations: make(map[string]string),
 			Labels:      make(map[string]string),
