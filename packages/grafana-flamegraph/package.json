@@ -51,7 +51,7 @@
     "lodash": "4.17.21",
     "react": "18.2.0",
     "react-use": "17.4.3",
-    "react-virtualized-auto-sizer": "1.0.20",
+    "react-virtualized-auto-sizer": "1.0.21",
     "tinycolor2": "1.6.0",
     "tslib": "2.6.0"
   },
