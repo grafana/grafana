@@ -113,7 +113,7 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
     fontWeight: 400,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
-    marginRight: theme.spacing(1),
+    marginRight: theme.spacing(2),
   }),
   value: css({
     fontWeight: 500,
