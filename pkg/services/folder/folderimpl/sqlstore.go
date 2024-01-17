@@ -371,7 +371,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([
 	}
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		s := fmt.Sprintf(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
+		s := `SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`
 		// compute full path column if requested
 		if q.WithFullpath {
 			s += fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect()))
