@@ -151,11 +151,6 @@ export enum ShiftTimeEventDirection {
   Right = 1,
 }
 
-export enum PasteTimeContext {
-  Explore = 'explore',
-  Dashboard = 'dashboard',
-}
-
 interface ShiftTimeEventPayload {
   direction: ShiftTimeEventDirection;
   updateUrl?: boolean;
@@ -170,7 +165,6 @@ export class CopyTimeEvent extends BusEventBase {
 }
 
 interface PasteTimeEventPayload {
-  context: PasteTimeContext;
   updateUrl?: boolean;
 }
 
