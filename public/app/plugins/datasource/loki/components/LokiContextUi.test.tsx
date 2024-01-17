@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { select } from 'react-select-event';
 
 import { LogRowModel, dateTime } from '@grafana/data';
 
@@ -136,8 +136,8 @@ describe('LokiContextUi', () => {
     await waitFor(() => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
-    const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[0], 'label1="value1"');
+    const selects = await screen.findAllByRole('combobox');
+    await select(selects[0], 'label1="value1"', { container: document.body });
   });
 
   it('finds label3 as a parsed label', async () => {
@@ -146,8 +146,8 @@ describe('LokiContextUi', () => {
     await waitFor(() => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
-    const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[1], 'label3="value3"');
+    const selects = await screen.findAllByRole('combobox');
+    await select(selects[1], 'label3="value3"', { container: document.body });
   });
 
   it('calls updateFilter when selecting a label', async () => {
@@ -158,7 +158,7 @@ describe('LokiContextUi', () => {
       expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
       expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
-    await selectOptionInTest(screen.getAllByRole('combobox')[1], 'label3="value3"');
+    await select(screen.getAllByRole('combobox')[1], 'label3="value3"', { container: document.body });
     act(() => {
       jest.runAllTimers();
     });

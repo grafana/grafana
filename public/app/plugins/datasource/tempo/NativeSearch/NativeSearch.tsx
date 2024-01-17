@@ -4,10 +4,10 @@ import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@grafana/data';
 import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import { InlineFieldRow, InlineField, Input, Alert, useStyles2, fuzzyMatch, Select } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { dispatch } from 'app/store/store';
 
+import { notifyApp } from '../_importedDependencies/actions/appNotification';
+import { createErrorNotification } from '../_importedDependencies/core/appNotification';
+import { dispatch } from '../_importedDependencies/store';
 import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { TempoQuery } from '../types';
@@ -262,11 +262,11 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
 export default NativeSearch;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    max-width: 500px;
-  `,
-  alert: css`
-    max-width: 75ch;
-    margin-top: ${theme.spacing(2)};
-  `,
+  container: css({
+    maxWidth: '500px',
+  }),
+  alert: css({
+    maxWidth: '75ch',
+    marginTop: theme.spacing(2),
+  }),
 });
