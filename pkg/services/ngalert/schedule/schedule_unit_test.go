@@ -899,16 +899,17 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Log:              log.New("ngalert.scheduler"),
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:       m.GetStateMetrics(),
-		ExternalURL:   nil,
-		InstanceStore: is,
-		Images:        &state.NoopImageService{},
-		Clock:         mockedClock,
-		Historian:     &state.FakeHistorian{},
-		Tracer:        testTracer,
-		Log:           log.New("ngalert.state.manager"),
+		Metrics:                 m.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           is,
+		Images:                  &state.NoopImageService{},
+		Clock:                   mockedClock,
+		Historian:               &state.FakeHistorian{},
+		Tracer:                  testTracer,
+		Log:                     log.New("ngalert.state.manager"),
+		MaxStateSaveConcurrency: 1,
 	}
-	syncStatePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.perist"), is, false, 1)
+	syncStatePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.perist"), managerCfg)
 	st := state.NewManager(managerCfg, syncStatePersister)
 
 	return NewScheduler(schedCfg, st)

@@ -22,12 +22,12 @@ type SyncStatePersister struct {
 	maxStateSaveConcurrency int
 }
 
-func NewSyncStatePerisiter(log log.Logger, store InstanceStore, doNotSaveNormalState bool, maxStateSaveConcurrency int) StatePersister {
+func NewSyncStatePerisiter(log log.Logger, cfg ManagerCfg) StatePersister {
 	return &SyncStatePersister{
 		log:                     log,
-		store:                   store,
-		doNotSaveNormalState:    doNotSaveNormalState,
-		maxStateSaveConcurrency: maxStateSaveConcurrency,
+		store:                   cfg.InstanceStore,
+		doNotSaveNormalState:    cfg.DoNotSaveNormalState,
+		maxStateSaveConcurrency: cfg.MaxStateSaveConcurrency,
 	}
 }
 

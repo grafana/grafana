@@ -63,7 +63,8 @@ type ManagerCfg struct {
 	Historian     Historian
 	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
 	DoNotSaveNormalState bool
-
+	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
+	MaxStateSaveConcurrency int
 	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool

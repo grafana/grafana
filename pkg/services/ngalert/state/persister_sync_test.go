@@ -61,7 +61,10 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		trace := tracing.NewNoopTracerProvider().Tracer("test")
 		_, span := trace.Start(context.Background(), "")
 		st := &FakeInstanceStore{}
-		syncStatePersister := NewSyncStatePerisiter(&logtest.Fake{}, st, false, 1)
+		syncStatePersister := NewSyncStatePerisiter(&logtest.Fake{}, ManagerCfg{
+			InstanceStore:           st,
+			MaxStateSaveConcurrency: 1,
+		})
 		syncStatePersister.Sync(context.Background(), span, transitions, nil)
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps {
@@ -79,7 +82,10 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		trace := tracing.NewNoopTracerProvider().Tracer("test")
 		_, span := trace.Start(context.Background(), "")
 		st := &FakeInstanceStore{}
-		syncStatePersister := NewSyncStatePerisiter(&logtest.Fake{}, st, false, 1)
+		syncStatePersister := NewSyncStatePerisiter(&logtest.Fake{}, ManagerCfg{
+			InstanceStore:           st,
+			MaxStateSaveConcurrency: 1,
+		})
 		syncStatePersister.Sync(context.Background(), span, transitions, nil)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}

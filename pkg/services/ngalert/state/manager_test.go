@@ -1355,16 +1355,17 @@ func TestProcessEvalResults(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
 		cfg := state.ManagerCfg{
-			Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-			ExternalURL:   nil,
-			InstanceStore: instanceStore,
-			Images:        &state.NotAvailableImageService{},
-			Clock:         clk,
-			Historian:     &state.FakeHistorian{},
-			Tracer:        tracing.InitializeTracerForTest(),
-			Log:           log.New("ngalert.state.manager"),
+			Metrics:                 metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+			ExternalURL:             nil,
+			InstanceStore:           instanceStore,
+			Images:                  &state.NotAvailableImageService{},
+			Clock:                   clk,
+			Historian:               &state.FakeHistorian{},
+			Tracer:                  tracing.InitializeTracerForTest(),
+			Log:                     log.New("ngalert.state.manager"),
+			MaxStateSaveConcurrency: 1,
 		}
-		statePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.persist"), instanceStore, false, 1)
+		statePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.persist"), cfg)
 		st := state.NewManager(cfg, statePersister)
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))

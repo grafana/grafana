@@ -246,21 +246,19 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		clk := clock.NewMock()
 
 		testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics()
-		fakeStore := &FakeInstanceStore{}
 		cfg := ManagerCfg{
 			Metrics:       testMetrics,
 			Tracer:        tracing.InitializeTracerForTest(),
 			Log:           log.New("ngalert.state.manager"),
 			ExternalURL:   nil,
-			InstanceStore: fakeStore,
+			InstanceStore: &FakeInstanceStore{},
 			Images:        &NotAvailableImageService{},
 			Clock:         clk,
 			Historian:     &FakeHistorian{},
 
 			ApplyNoDataAndErrorToAllStates: applyNoDataErrorToAllStates,
 		}
-		statePersister := NewSyncStatePerisiter(log.New("ngalert.state.manager.persist"), fakeStore, false, 1)
-		st := NewManager(cfg, statePersister)
+		st := NewManager(cfg, NewNoopPersister())
 
 		tss := make([]time.Time, 0, len(resultsAtTime))
 		for ts, results := range resultsAtTime {
