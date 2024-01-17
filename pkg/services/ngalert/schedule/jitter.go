@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/prometheus/model/labels"
 )
 
+// JitterStrategy represents a modifier to alert rule timing that affects how evaluations are distributed.
 type JitterStrategy int
 
 const (
@@ -15,6 +17,18 @@ const (
 	JitterByGroup
 	JitterByRule
 )
+
+// JitterStrategyFromToggles returns the JitterStrategy indicated by the current Grafana feature toggles.
+func JitterStrategyFromToggles(toggles featuremgmt.FeatureToggles) JitterStrategy {
+	strategy := JitterNever
+	if toggles.IsEnabledGlobally(featuremgmt.FlagJitterAlertRules) {
+		strategy = JitterByGroup
+	}
+	if toggles.IsEnabledGlobally(featuremgmt.FlagJitterAlertRulesWithinGroups) {
+		strategy = JitterByRule
+	}
+	return strategy
+}
 
 // jitterOffsetInTicks gives the jitter offset for a rule, in terms of a number of ticks relative to its interval and a base interval.
 // The resulting number of ticks is non-negative.
