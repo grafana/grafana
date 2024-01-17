@@ -1,28 +1,33 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  PanelProps,
-  Field,
-  Labels,
-  GrafanaTheme2,
-  LogsSortOrder,
-  LogRowModel,
+  CoreApp,
   DataHoverClearEvent,
   DataHoverEvent,
-  CoreApp,
   DataQueryResponse,
-  LogRowContextOptions,
+  Field,
+  GrafanaTheme2,
   hasLogsContextSupport,
+  Labels,
+  LogRowContextOptions,
+  LogRowModel,
+  LogsSortOrder,
+  PanelProps,
+  toUtc,
+  urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
+import { CustomScrollbar, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
+import { getDashboardUid } from '../../../../../e2e/utils/support/url';
+import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
+import { getDashboardUrl } from '../../../features/dashboard-scene/utils/urlBuilders';
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
-import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from '../../../features/logs/logsModel';
+import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
 import { Options } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -52,6 +57,7 @@ export const LogsPanel = ({
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
+  const timeRange = data.timeRange;
 
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
 
@@ -84,6 +90,53 @@ export const LogsPanel = ({
     setContextRow(row);
     setCloseCallback(onClose);
   }, []);
+
+  const onPermalinkClick = useCallback(
+    async (row: LogRowModel) => {
+      // this is an extra check, to be sure that we are not
+      // creating permalinks for logs without an id-field.
+      // normally it should never happen, because we do not
+      // display the permalink button in such cases.
+      if (row.rowId === undefined || !row.dataFrame.refId) {
+        return;
+      }
+
+      // get panel state, add log-row-id
+      const panelState = {
+        logs: { id: row.uid },
+      };
+
+      // Create absolute timerange
+      const range = {
+        from: toUtc(timeRange.from).valueOf(),
+        to: toUtc(timeRange.to).valueOf(),
+      };
+      const location = window.location;
+
+      // append changed urlState to baseUrl
+      const baseUrl = /.*(?=\/d)/.exec(`${location.href}`)![0];
+      const exploreUrl = urlUtil.renderUrl(`${baseUrl}/d`, {
+        panelState: JSON.stringify(panelState),
+        from: range?.from,
+        to: range?.to,
+      });
+
+      const urlSearchParams = new URL(exploreUrl).searchParams;
+
+      const uid = getDashboardUid(location.href);
+      const url = getDashboardUrl({
+        uid: uid,
+        currentQueryParams: urlSearchParams.toString(),
+        updateQuery: { viewPanel: null, inspect: null, editview: null },
+        // subPath: `/logs/${row.rowId}`,
+      });
+
+      await createAndCopyShortLink(url);
+
+      return Promise.resolve();
+    },
+    [timeRange]
+  );
 
   const showContextToggle = useCallback(
     (row: LogRowModel): boolean => {
@@ -178,6 +231,7 @@ export const LogsPanel = ({
         <div className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
+            onPermalinkClick={onPermalinkClick}
             logRows={logRows}
             showContextToggle={showContextToggle}
             deduplicatedRows={deduplicatedRows}
