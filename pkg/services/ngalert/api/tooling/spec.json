@@ -1316,6 +1316,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1349,6 +1350,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1385,6 +1387,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1420,6 +1423,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1478,6 +1482,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1513,6 +1518,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1612,6 +1618,7 @@
           },
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1658,6 +1665,7 @@
           },
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1707,6 +1715,7 @@
           },
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1754,6 +1763,7 @@
           },
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true
@@ -1802,6 +1812,7 @@
           },
           {
             "type": "string",
+            "description": "The UID of the rule folder",
             "name": "Namespace",
             "in": "path",
             "required": true

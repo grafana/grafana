@@ -461,23 +461,14 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				UID:   hit.UID,
-				Title: hit.Title,
+				UID:       hit.UID,
+				Title:     hit.Title,
+				ParentUID: hit.FolderUID,
 			}
 		}
 		page += 1
 	}
 	return namespaceMap, nil
-}
-
-// GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace, SignedInUser: user})
-	if err != nil {
-		return nil, err
-	}
-
-	return folder, nil
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
@@ -516,8 +507,9 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var folders []struct {
-		Uid   string
-		Title string
+		Uid       string
+		Title     string
+		ParentUid string
 	}
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -566,7 +558,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
-			foldersSql := sess.Table("folder").Alias("d").Select("d.uid, d.title").
+			foldersSql := sess.Table("folder").Alias("d").Select("d.uid, d.title, d.parent_uid").
 				Where(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid AND d.org_id = a.org_id)`)
 			if len(disabledOrgs) > 0 {
 				foldersSql.NotIn("org_id", disabledOrgs)
@@ -577,7 +569,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			}
 			query.ResultFoldersTitles = make(map[string]string, len(folders))
 			for _, folder := range folders {
-				query.ResultFoldersTitles[folder.Uid] = folder.Title
+				query.ResultFoldersTitles[folder.Uid] = ngmodels.GetNamespaceKey(folder.ParentUid, folder.Title)
 			}
 		}
 		return nil
