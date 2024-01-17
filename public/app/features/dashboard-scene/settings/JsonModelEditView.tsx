@@ -57,8 +57,6 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const newDashboardScene = transformSaveModelToScene(rsp);
     const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
     dashboard.setState(newState);
-    // TODO: mark as not dirty
-    // pass overlay in props
   };
 
   static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {
