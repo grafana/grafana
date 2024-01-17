@@ -5,7 +5,7 @@ import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -30,13 +30,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       const sceneRoot = vizPanel.getRoot();
       if (sceneRoot instanceof DashboardScene) {
         const panelId = getPanelIdForVizPanel(vizPanel);
-        locationService.push(
-          getDashboardUrl({
-            uid: sceneRoot.state.uid,
-            subPath: `/panel-edit/${panelId}`,
-            currentQueryParams: location.search,
-          })
-        );
+        if (!scene.state.editPanel) {
+          locationService.push(getEditPanelUrl(panelId));
+        }
       }
     }),
   });

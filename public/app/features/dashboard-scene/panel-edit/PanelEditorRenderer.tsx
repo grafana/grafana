@@ -1,26 +1,24 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
-import { Page } from 'app/core/components/Page/Page';
-import { useSelector } from 'app/types/store';
+
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
-  const { body, controls, overlay } = model.useState();
+  const dashboard = getDashboardSceneFor(model);
+  const { body } = model.useState();
+  const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
-  const location = useLocation();
-  const navIndex = useSelector((state) => state.navIndex);
-  const pageNav = model.getPageNav(location, navIndex);
 
   return (
-    <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <>
       <AppChromeUpdate actions={getToolbarActions(model)} />
       <div className={styles.canvasContent}>
         {controls && (
@@ -34,8 +32,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           <body.Component model={body} />
         </div>
       </div>
-      {overlay && <overlay.Component model={overlay} />}
-    </Page>
+    </>
   );
 }
 

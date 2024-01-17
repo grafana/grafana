@@ -67,8 +67,14 @@ export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
 }
 
+export function getEditPanelUrl(panelId: number) {
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId });
+}
+
 export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect: vizPanel.state.key, inspectTab });
+  const inspect = vizPanel.state.key?.replace('-view', '');
+
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect, inspectTab });
 }
 
 export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {

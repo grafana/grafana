@@ -39,12 +39,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d/:uid/panel-edit/:panelId',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
-      ),
-    },
-    {
       path: '/d/:uid/:slug?',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,

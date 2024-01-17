@@ -8,7 +8,6 @@ import {
   TestDataSourceResponse,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
-import { PanelEditor } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import {
   findVizPanelByKey,
   getQueryRunnerFor,
@@ -84,13 +83,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
-    let sceneToSearch = scene.getRoot();
-
-    if (sceneToSearch instanceof PanelEditor) {
-      sceneToSearch = sceneToSearch.state.dashboardRef.resolve();
-    }
-
-    return findVizPanelByKey(sceneToSearch, getVizPanelKeyForPanelId(panelId));
+    return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
