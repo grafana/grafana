@@ -726,6 +726,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     const queries = logQueries.map((query: DataQuery) => ({
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
+      refId: `infinite-scroll-${query.refId}`
     }));
 
     if (!hasNonEmptyQuery(queries) || !datasourceInstance) {

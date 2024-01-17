@@ -46,7 +46,7 @@ import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
-import { filterDuplicates, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
+import { findMatchingRow, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -216,8 +216,27 @@ export function dataFrameToLogsModel(
   absoluteRange?: AbsoluteTimeRange,
   queries?: DataQuery[]
 ): LogsModel {
+  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
+  let infiniteScrollingResults = false;
+  queries = queries?.map(query => {
+    if (query.refId.includes('infinite-scroll')) {
+      infiniteScrollingResults = true;
+      return {
+        ...query,
+        refId: query.refId.replace('infinite-scroll-', ''),
+      }
+    }
+    return query;
+  });
+  if (infiniteScrollingResults) {
+    dataFrame = dataFrame.map(frame => ({
+      ...frame,
+      refId: frame.refId?.replace('infinite-scroll-', '')
+    }));
+  }
+
   const { logSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, queries);
+  const logsModel = logSeriesToLogsModel(logSeries, queries, infiniteScrollingResults);
 
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
@@ -351,11 +370,12 @@ function parseTime(
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[] = []): LogsModel | undefined {
+export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[] = [], filterDuplicateRows = false): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
   const allLabels: Labels[][] = [];
+  
 
   // Find the fields we care about and collect all labels
   let allSeries: LogInfo[] = [];
@@ -453,13 +473,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         row.rowId = idField.values[j];
       }
 
+      if (filterDuplicateRows && findMatchingRow(row, rows)) {
+        console.log(`skipping`, row)
+        continue;
+      }
+
       rows.push(row);
     }
-  }
-
-  // Until nanosecond precision for requests is supported, we need to filter possible duplicates
-  if (config.featureToggles.logsInfiniteScrolling) {
-    rows = filterDuplicates(rows);
   }
 
   // Meta data to display in status

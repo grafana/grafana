@@ -298,13 +298,15 @@ export function targetIsElement(target: EventTarget | null): target is Element {
   return target instanceof Element;
 }
 
-export function filterDuplicates(rows: LogRowModel[]) {
-  return rows.filter((currentRow, i) => {
-    return rows.findIndex(
-      (row, j) =>
-        i < j &&
-        currentRow.dataFrame.refId === row.dataFrame.refId &&
-        row.entry === currentRow.entry && row.timeEpochNs === currentRow.timeEpochNs
-    ) < 0
-  });
+export function findMatchingRow(target: LogRowModel, rows: LogRowModel[]) {
+  return rows.find(
+    (row) => {
+      if (target.dataFrame.refId !== row.dataFrame.refId) {
+        return false;
+      } 
+      const sameId = (target.rowId && row.rowId && target.rowId === row.rowId);
+      const sameSignature = row.entry === target.entry && row.timeEpochNs === target.timeEpochNs;
+      return sameId || sameSignature;
+     }
+  );
 }
