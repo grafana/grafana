@@ -1365,7 +1365,7 @@ func TestProcessEvalResults(t *testing.T) {
 			Log:                     log.New("ngalert.state.manager"),
 			MaxStateSaveConcurrency: 1,
 		}
-		statePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.persist"), cfg)
+		statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
 		st := state.NewManager(cfg, statePersister)
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))

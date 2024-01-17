@@ -61,7 +61,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		trace := tracing.NewNoopTracerProvider().Tracer("test")
 		_, span := trace.Start(context.Background(), "")
 		st := &FakeInstanceStore{}
-		syncStatePersister := NewSyncStatePerisiter(&logtest.Fake{}, ManagerCfg{
+		syncStatePersister := NewSyncStatePersisiter(&logtest.Fake{}, ManagerCfg{
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
@@ -82,7 +82,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		trace := tracing.NewNoopTracerProvider().Tracer("test")
 		_, span := trace.Start(context.Background(), "")
 		st := &FakeInstanceStore{}
-		syncStatePersister := NewSyncStatePerisiter(&logtest.Fake{}, ManagerCfg{
+		syncStatePersister := NewSyncStatePersisiter(&logtest.Fake{}, ManagerCfg{
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})

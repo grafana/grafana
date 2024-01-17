@@ -909,7 +909,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Log:                     log.New("ngalert.state.manager"),
 		MaxStateSaveConcurrency: 1,
 	}
-	syncStatePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.perist"), managerCfg)
+	syncStatePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.perist"), managerCfg)
 	st := state.NewManager(managerCfg, syncStatePersister)
 
 	return NewScheduler(schedCfg, st)

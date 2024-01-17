@@ -295,7 +295,7 @@ func (ng *AlertNG) init() error {
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
-	statePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.persist"), cfg)
+	statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
 	stateManager := state.NewManager(cfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
