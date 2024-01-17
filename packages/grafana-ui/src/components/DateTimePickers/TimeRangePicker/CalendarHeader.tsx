@@ -1,44 +1,30 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes';
-import { Trans } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { Trans, t } from '../../../utils/i18n';
+import { IconButton } from '../../IconButton/IconButton';
+import { Stack } from '../../Layout/Stack/Stack';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 import { TimePickerTitle } from './TimePickerTitle';
 
 export function Header({ onClose }: TimePickerCalendarProps) {
-  const styles = useStyles2(getHeaderStyles);
-
   return (
-    <div className={styles.container}>
+    <Stack justifyContent="space-between">
       <TimePickerTitle>
         <Trans i18nKey="time-picker.calendar.select-time">Select a time range</Trans>
       </TimePickerTitle>
-      <Button
-        aria-label={selectors.components.TimePicker.calendar.closeButton}
-        icon="times"
+
+      <IconButton
+        data-testid={selectors.components.TimePicker.calendar.closeButton}
+        tooltip={t(`time-picker.calendar.close`, 'Close calendar')}
+        name="times"
         variant="secondary"
         onClick={onClose}
       />
-    </div>
+    </Stack>
   );
 }
 
 Header.displayName = 'Header';
-
-const getHeaderStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css({
-      backgroundColor: theme.colors.background.primary,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '7px',
-    }),
-  };
-};

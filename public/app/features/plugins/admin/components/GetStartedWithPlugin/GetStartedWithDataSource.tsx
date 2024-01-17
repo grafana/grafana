@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
+import configCore from 'app/core/config';
 import { useDataSourcesRoutes, addDataSource } from 'app/features/datasources/state';
 import { useDispatch } from 'app/types';
 
@@ -28,8 +30,20 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     return null;
   }
 
+  const disabledButton =
+    configCore.featureToggles.managedPluginsInstall &&
+    config.pluginAdminExternalManageEnabled &&
+    !plugin.isFullyInstalled;
+
   return (
-    <Button variant="primary" onClick={onAddDataSource}>
+    <Button
+      variant="primary"
+      onClick={onAddDataSource}
+      disabled={disabledButton}
+      title={
+        disabledButton ? "The plugin isn't usable yet, it may take some time to complete the installation." : undefined
+      }
+    >
       Add new data source
     </Button>
   );

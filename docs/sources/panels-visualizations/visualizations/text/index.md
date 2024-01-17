@@ -14,6 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's text visualization
 title: Text
 weight: 100
 ---

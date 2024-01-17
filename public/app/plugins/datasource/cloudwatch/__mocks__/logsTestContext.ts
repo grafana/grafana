@@ -2,8 +2,8 @@ import { Observable, of } from 'rxjs';
 
 import {
   DataFrame,
+  createDataFrame,
   dataFrameToJSON,
-  MutableDataFrame,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourceRef,
@@ -14,7 +14,7 @@ import {
   DataQueryResponse,
   TestDataSourceResponse,
 } from '@grafana/data';
-import { GetDataSourceListFilters, setDataSourceSrv } from '@grafana/runtime';
+import { GetDataSourceListFilters, setDataSourceSrv, toDataQueryResponse } from '@grafana/runtime';
 
 import { CloudWatchLogsQueryStatus } from '../types';
 
@@ -22,15 +22,15 @@ import { meta, setupMockedDataSource } from './CloudWatchDataSource';
 
 export function setupForLogs() {
   function envelope(frame: DataFrame) {
-    return { data: { results: { a: { refId: 'a', frames: [dataFrameToJSON(frame)] } } } };
+    return toDataQueryResponse({ data: { results: { a: { refId: 'a', frames: [dataFrameToJSON(frame)] } } } });
   }
 
-  const { datasource, fetchMock, timeSrv } = setupMockedDataSource();
+  const { datasource, queryMock } = setupMockedDataSource();
 
-  const startQueryFrame = new MutableDataFrame({ fields: [{ name: 'queryId', values: ['queryid'] }] });
-  fetchMock.mockReturnValueOnce(of(envelope(startQueryFrame)));
+  const startQueryFrame: DataFrame = createDataFrame({ fields: [{ name: 'queryId', values: ['queryid'] }] });
+  queryMock.mockReturnValueOnce(of(envelope(startQueryFrame)));
 
-  const logsFrame = new MutableDataFrame({
+  const logsFrame: DataFrame = createDataFrame({
     fields: [
       {
         name: '@message',
@@ -48,7 +48,7 @@ export function setupForLogs() {
     meta: { custom: { Status: CloudWatchLogsQueryStatus.Complete } },
   });
 
-  fetchMock.mockReturnValueOnce(of(envelope(logsFrame)));
+  queryMock.mockReturnValueOnce(of(envelope(logsFrame)));
 
   setDataSourceSrv({
     async get() {
@@ -89,5 +89,5 @@ export function setupForLogs() {
     },
   });
 
-  return { datasource, fetchMock, timeSrv };
+  return { datasource, queryMock };
 }

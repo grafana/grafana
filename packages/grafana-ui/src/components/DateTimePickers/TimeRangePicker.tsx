@@ -5,7 +5,6 @@ import { useOverlay } from '@react-aria/overlays';
 import React, { memo, createRef, useState, useEffect } from 'react';
 
 import {
-  isDateTime,
   rangeUtil,
   GrafanaTheme2,
   dateTimeFormat,
@@ -16,7 +15,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { getModalStyles } from '../Modal/getModalStyles';
@@ -106,11 +105,14 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   );
   const { dialogProps } = useDialog({}, overlayRef);
 
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { modalBackdrop } = getModalStyles(theme);
-  const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
+  const { modalBackdrop } = useStyles2(getModalStyles);
+  const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
+
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
+
+  const isFromAfterTo = value?.to?.isBefore(value.from);
+  const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
 
   const currentTimeRange = formattedRange(value, timeZone);
 
@@ -139,7 +141,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           })}
           aria-controls="TimePickerContent"
           onClick={onToolbarButtonSwitch}
-          icon="clock-nine"
+          icon={timePickerIcon}
           isOpen={isOpen}
           variant={variant}
         >
@@ -149,7 +151,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       {isOpen && (
         <div data-testid={selectors.components.TimePicker.overlayContent}>
           <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
-          <FocusScope contain autoFocus>
+          <FocusScope contain autoFocus restoreFocus>
             <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
               <TimePickerContent
                 timeZone={timeZone}

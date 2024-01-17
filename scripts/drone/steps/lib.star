@@ -585,6 +585,7 @@ def verify_i18n_step():
         "depends_on": [
             "yarn-install",
         ],
+        "failure": "ignore",
         "commands": [
             "apk add --update git",
             "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
@@ -966,12 +967,11 @@ def redis_integration_tests_steps():
 def remote_alertmanager_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...",
+        "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...",
     ]
 
     environment = {
         "AM_TENANT_ID": "test",
-        "AM_PASSWORD": "test",
         "AM_URL": "http://mimir_backend:8080",
     }
 

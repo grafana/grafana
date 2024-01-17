@@ -130,11 +130,7 @@ export const QueryWrapper = ({
           onChangeQueryOptions={onChangeQueryOptions}
           index={index}
         />
-        <ExpressionStatusIndicator
-          error={error}
-          onSetCondition={() => onSetCondition(query.refId)}
-          isCondition={isAlertCondition}
-        />
+        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={isAlertCondition} />
       </Stack>
     );
   }
@@ -213,7 +209,7 @@ export function MaxDataPointsOption({
       <Input
         type="number"
         width={10}
-        placeholder={DEFAULT_MAX_DATA_POINTS.toLocaleString()}
+        placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
         onBlur={onMaxDataPointsBlur}
         defaultValue={value}
@@ -243,12 +239,12 @@ export function MinIntervalOption({
 
   return (
     <InlineField
-      label="Min interval"
+      label="Interval"
       labelWidth={24}
       tooltip={
         <>
-          A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if your
-          data is written every minute.
+          Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
+          your data is written every minute.
         </>
       }
     >

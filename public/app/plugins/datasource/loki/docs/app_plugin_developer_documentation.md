@@ -29,10 +29,12 @@ We strongly advise using these recommended methods instead of direct API calls b
  * This asynchronous function is designed to retrieve all available label keys from the data source.
  * It returns a promise that resolves to an array of strings containing the label keys.
  *
+ * @param options - (Optional) An object containing additional options - currently only time range.
+ * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
  * @returns A promise containing an array of label keys.
  * @throws An error if the fetch operation fails.
  */
-async function fetchLabels(): Promise<string[]>;
+async function fetchLabels(options?: { timeRange?: TimeRange }): Promise<string[]>;
 
 /**
  * Example usage:
@@ -58,12 +60,16 @@ The `datasource.languageProvider.fetchLabelValues()` method is designed for fetc
  * It returns a promise that resolves to an array of strings containing the label values.
  *
  * @param labelName - The name of the label for which you want to retrieve values.
- * @param options - (Optional) An object containing additional options - currently only stream selector.
+ * @param options - (Optional) An object containing additional options.
  * @param options.streamSelector - (Optional) The stream selector to filter label values. If not provided, all label values are fetched.
+ * @param options.timeRange - (Optional) The time range for which you want to retrieve label values. If not provided, the default time range is used.
  * @returns A promise containing an array of label values.
  * @throws An error if the fetch operation fails.
  */
-async function fetchLabelValues(labelName: string, options?: { streamSelector?: string }): Promise<string[]>;
+async function fetchLabelValues(
+  labelName: string,
+  options?: { streamSelector?: string; timeRange?: TimeRange }
+): Promise<string[]>;
 
 /**
  * Example usage without stream selector:
@@ -103,10 +109,15 @@ try {
  * It returns a promise that resolves to a record mapping label names to their corresponding values.
  *
  * @param streamSelector - The stream selector for which you want to retrieve labels.
+ * @param options - (Optional) An object containing additional options - currently only time range.
+ * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
  * @returns A promise containing a record of label names and their values.
  * @throws An error if the fetch operation fails.
  */
-async function fetchSeriesLabels(streamSelector: string): Promise<Record<string, string[]>>;
+async function fetchSeriesLabels(
+  streamSelector: string,
+  options?: { timeRange?: TimeRange }
+): Promise<Record<string, string[]>>;
 
 /**
  * Example usage:
@@ -138,15 +149,16 @@ try {
  * - `unwrapLabelKeys`: An array of label keys that can be used for unwrapping log data.
  *
  * @param streamSelector - The selector for the log stream you want to analyze.
- * @param {Object} [options] - Optional parameters.
- * @param {number} [options.maxLines] - The number of log lines requested when determining parsers and label keys.
+ * @param options - (Optional) An object containing additional options.
+ * @param options.maxLines - (Optional) The number of log lines requested when determining parsers and label keys.
+ * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
  * Smaller maxLines is recommended for improved query performance. The default count is 10.
  * @returns A promise containing an object with parser and label key information.
  * @throws An error if the fetch operation fails.
  */
 async function getParserAndLabelKeys(
   streamSelector: string,
-  options?: { maxLines?: number }
+  options?: { maxLines?: number; timeRange?: TimeRange }
 ): Promise<{
   extractedLabelKeys: string[];
   hasJSON: boolean;

@@ -13,6 +13,7 @@ import (
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
@@ -113,7 +114,7 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 			DashboardIds: dashboardIDs,
 			Type:         string(model.DashHitDB),
 			FolderIds:    folderIDs, // nolint:staticcheck
-			Permission:   dashboards.PERMISSION_VIEW,
+			Permission:   dashboardaccess.PERMISSION_VIEW,
 		}
 
 		hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
@@ -238,14 +239,15 @@ func (hs *HTTPServer) GetAlert(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &res)
 }
 
-func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) GetLegacyAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
 	return func(_ *contextmodel.ReqContext) response.Response {
-		if ngalertEnabled {
-			return response.JSON(http.StatusOK, channels_config.GetAvailableNotifiers())
-		}
-		// TODO(codesome): This wont be required in 8.0 since ngalert
-		// will be enabled by default with no disabling. This is to be removed later.
 		return response.JSON(http.StatusOK, alerting.GetNotifiers())
+	}
+}
+
+func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
+	return func(_ *contextmodel.ReqContext) response.Response {
+		return response.JSON(http.StatusOK, channels_config.GetAvailableNotifiers())
 	}
 }
 

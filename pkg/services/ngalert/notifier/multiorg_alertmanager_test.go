@@ -114,27 +114,27 @@ grafana_alerting_discovered_configurations 4
 		err := os.Mkdir(orphanDir, 0750)
 		require.NoError(t, err)
 
-		silencesPath := filepath.Join(orphanDir, silencesFilename)
+		silencesPath := filepath.Join(orphanDir, SilencesFilename)
 		err = os.WriteFile(silencesPath, []byte("file_1"), 0644)
 		require.NoError(t, err)
 
-		notificationPath := filepath.Join(orphanDir, notificationLogFilename)
+		notificationPath := filepath.Join(orphanDir, NotificationLogFilename)
 		err = os.WriteFile(notificationPath, []byte("file_2"), 0644)
 		require.NoError(t, err)
 
 		// We make sure that both files are on disk.
 		info, err := os.Stat(silencesPath)
 		require.NoError(t, err)
-		require.Equal(t, info.Name(), silencesFilename)
+		require.Equal(t, info.Name(), SilencesFilename)
 		info, err = os.Stat(notificationPath)
 		require.NoError(t, err)
-		require.Equal(t, info.Name(), notificationLogFilename)
+		require.Equal(t, info.Name(), NotificationLogFilename)
 
 		// We also populate the kvstore with orphaned records.
-		err = kvStore.Set(ctx, orgID, KVNamespace, silencesFilename, "file_1")
+		err = kvStore.Set(ctx, orgID, KVNamespace, SilencesFilename, "file_1")
 		require.NoError(t, err)
 
-		err = kvStore.Set(ctx, orgID, KVNamespace, notificationLogFilename, "file_1")
+		err = kvStore.Set(ctx, orgID, KVNamespace, NotificationLogFilename, "file_1")
 		require.NoError(t, err)
 
 		// Now re run the sync job once.
@@ -145,10 +145,10 @@ grafana_alerting_discovered_configurations 4
 		require.True(t, errors.Is(err, fs.ErrNotExist))
 
 		// The organization kvstore records should be gone by now.
-		_, exists, _ := kvStore.Get(ctx, orgID, KVNamespace, silencesFilename)
+		_, exists, _ := kvStore.Get(ctx, orgID, KVNamespace, SilencesFilename)
 		require.False(t, exists)
 
-		_, exists, _ = kvStore.Get(ctx, orgID, KVNamespace, notificationLogFilename)
+		_, exists, _ = kvStore.Get(ctx, orgID, KVNamespace, NotificationLogFilename)
 		require.False(t, exists)
 	}
 }

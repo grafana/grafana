@@ -27,6 +27,7 @@ labels:
     - oss
 menuTitle: Manage dashboards
 title: Manage dashboards
+description: Learn about dashboard folders, generative AI features for dashboards, and troubleshooting
 weight: 8
 ---
 
@@ -131,16 +132,13 @@ A template variable of the type `Constant` is automatically hidden in the dashbo
    - Paste a [Grafana.com](https://grafana.com) dashboard URL
    - Paste dashboard JSON text directly into the text area
 
-<!--{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
--->
-
 The import process enables you to change the name of the dashboard, pick the data source you want the dashboard to use, and specify any metric prefixes (if the dashboard uses any).
 
 ### Discover dashboards on grafana.com
 
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" alt="Preconfigured dashboards on grafana.com">}}
 
 ## Set up generative AI features for dashboards
 
@@ -185,11 +183,11 @@ In the picture below we've enabled:
 - Points and 3-point radius to highlight where data points are actually present.
 - **Connect null values\* is set to **Always\*\*.
 
-{{< figure src="/static/img/docs/troubleshooting/grafana_null_connected.png" max-width="1200px" >}}
+{{< figure src="/static/img/docs/troubleshooting/grafana_null_connected.png" max-width="1200px" alt="Graph with null values connected" >}}
 
 In this graph, we set graph to show bars instead of lines and set the **No value** under **Standard options** to **0**. There is a very big difference in the visuals.
 
-{{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" >}}
+{{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" alt="Graph with null values not connected" >}}
 
 ### More examples
 

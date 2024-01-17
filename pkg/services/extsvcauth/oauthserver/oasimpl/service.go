@@ -458,7 +458,12 @@ func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *extsvcauth
 
 // handlePluginStateChanged reset the client authorized grant_types according to the plugin state
 func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
-	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+	s.logger.Debug("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+
+	if event.OrgId != extsvcauth.TmpOrgID {
+		s.logger.Debug("External Service not tied to this organization", "OrgId", event.OrgId)
+		return nil
+	}
 
 	// Retrieve client associated to the plugin
 	client, err := s.sqlstore.GetExternalServiceByName(ctx, event.PluginId)

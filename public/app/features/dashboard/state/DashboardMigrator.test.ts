@@ -71,8 +71,8 @@ describe('DashboardModel', () => {
         panels: [
           {
             type: 'graph',
-            legend: { show: true },
             // @ts-expect-error
+            legend: { show: true },
             aliasYAxis: { test: 2 },
             y_formats: ['kbyte', 'ms'],
             grid: {
@@ -1906,13 +1906,13 @@ describe('DashboardModel', () => {
               },
             ],
           },
-          // @ts-expect-error
           {
             type: 'row',
             id: 5,
             panels: [
               {
                 id: 6,
+                // @ts-expect-error
                 datasource: 'prom',
               },
             ],

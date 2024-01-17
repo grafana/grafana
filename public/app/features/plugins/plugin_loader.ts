@@ -68,7 +68,7 @@ export async function importPluginModule({
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
-  if (isFrontendSandboxSupported({ isAngular, pluginId })) {
+  if (await isFrontendSandboxSupported({ isAngular, pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 

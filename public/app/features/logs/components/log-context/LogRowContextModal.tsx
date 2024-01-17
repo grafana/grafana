@@ -129,7 +129,11 @@ interface LogRowContextModalProps {
   onClose: () => void;
   getRowContext: (row: LogRowModel, options: LogRowContextOptions) => Promise<DataQueryResponse>;
 
-  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   logsSortOrder: LogsSortOrder;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -359,7 +363,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       // this way this array of rows will never be empty
       const allRows = [...above.rows, row, ...below.rows];
 
-      const newRows = await loadMore(place, allRows);
+      const newRows = (await loadMore(place, allRows)).map((r) =>
+        // apply the original row's searchWords to all the rows for highlighting
+        !r.searchWords || !r.searchWords?.length ? { ...r, searchWords: row.searchWords } : r
+      );
       const [older, newer] = partition(newRows, (newRow) => newRow.timeEpochNs > row.timeEpochNs);
       const newAbove = logsSortOrder === LogsSortOrder.Ascending ? newer : older;
       const newBelow = logsSortOrder === LogsSortOrder.Ascending ? older : newer;

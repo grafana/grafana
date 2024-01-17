@@ -7,9 +7,8 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
   const crumbs: Breadcrumb[] = [];
   let foundHome = false;
   let lastPath: string | undefined = undefined;
-  let lastText: string | undefined = undefined;
 
-  function addCrumbs(node: NavModelItem) {
+  function addCrumbs(node: NavModelItem, shouldDedupe = false) {
     if (foundHome) {
       return;
     }
@@ -32,16 +31,14 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
       return;
     }
 
-    // This enabled app plugins to control breadcrumbs of their root pages
     const isSamePathAsLastBreadcrumb = urlToMatch.length > 0 && lastPath === urlToMatch;
-    const isSameTextAsLastBreadcrumb = node.text === lastText;
 
     // Remember this path for the next breadcrumb
     lastPath = urlToMatch;
-    lastText = node.text;
 
-    const shouldMergeBreadcrumb = isSamePathAsLastBreadcrumb && isSameTextAsLastBreadcrumb;
-    if (!node.hideFromBreadcrumbs && !shouldMergeBreadcrumb) {
+    const shouldAddCrumb = !node.hideFromBreadcrumbs && !(shouldDedupe && isSamePathAsLastBreadcrumb);
+
+    if (shouldAddCrumb) {
       crumbs.unshift({ text: node.text, href: node.url ?? '' });
     }
 
@@ -54,7 +51,8 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
     addCrumbs(pageNav);
   }
 
-  addCrumbs(sectionNav);
+  // shouldDedupe = true enables app plugins to control breadcrumbs of their root pages
+  addCrumbs(sectionNav, true);
 
   return crumbs;
 }

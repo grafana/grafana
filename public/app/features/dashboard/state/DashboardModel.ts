@@ -516,12 +516,22 @@ export class DashboardModel implements TimeModel {
     }
   }
 
-  getPanelById(id: number): PanelModel | null {
+  getPanelById(id: number, includeCollapsed = false): PanelModel | null {
     if (this.panelInEdit && this.panelInEdit.id === id) {
       return this.panelInEdit;
     }
 
-    return this.panels.find((p) => p.id === id) ?? null;
+    if (includeCollapsed) {
+      for (const panel of this.panelIterator()) {
+        if (panel.id === id) {
+          return panel;
+        }
+      }
+
+      return null;
+    } else {
+      return this.panels.find((p) => p.id === id) ?? null;
+    }
   }
 
   canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
@@ -864,6 +874,7 @@ export class DashboardModel implements TimeModel {
 
   removePanel(panel: PanelModel) {
     this.panels = this.panels.filter((item) => item !== panel);
+    panel.destroy();
     this.events.publish(new DashboardPanelsChangedEvent());
   }
 
@@ -1181,6 +1192,10 @@ export class DashboardModel implements TimeModel {
     } else {
       canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
     }
+
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return canEdit;
+    }
     return this.canEditDashboard() && canEdit;
   }
 
@@ -1193,18 +1208,26 @@ export class DashboardModel implements TimeModel {
     } else {
       canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
     }
+
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return canDelete;
+    }
     return canDelete && this.canEditDashboard();
   }
 
   canAddAnnotations() {
     // When the builtin annotations are disabled, we should not add any in the UI
     const found = this.annotations.list.find((item) => item.builtIn === 1);
-    if (found?.enable === false || !this.canEditDashboard()) {
+    if (found?.enable === false) {
       return false;
     }
 
     // If RBAC is enabled there are additional conditions to check.
-    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    }
+
+    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd) && this.canEditDashboard();
   }
 
   canEditDashboard() {

@@ -47,6 +47,10 @@ export type TListViewProps = {
    */
   initialDraw?: number;
   /**
+   * Trigger a redraw of the list view.
+   */
+  redraw: {};
+  /**
    * The parent provides fallback height measurements when there is not a
    * rendered element to measure.
    */

@@ -9,8 +9,11 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -433,7 +436,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 		SignedInUser: user,
 		Type:         searchstore.TypeAlertFolder,
 		Limit:        -1,
-		Permission:   dashboards.PERMISSION_VIEW,
+		Permission:   dashboardaccess.PERMISSION_VIEW,
 		Sort:         model.SortOption{},
 		Filters: []any{
 			searchstore.FolderWithAlertsFilter{},
@@ -458,24 +461,14 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				ID:    hit.ID,
-				UID:   hit.UID,
-				Title: hit.Title,
+				UID:       hit.UID,
+				Title:     hit.Title,
+				ParentUID: hit.FolderUID,
 			}
 		}
 		page += 1
 	}
 	return namespaceMap, nil
-}
-
-// GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace, SignedInUser: user})
-	if err != nil {
-		return nil, err
-	}
-
-	return folder, nil
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
@@ -514,8 +507,9 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var folders []struct {
-		Uid   string
-		Title string
+		Uid       string
+		Title     string
+		ParentUid string
 	}
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -551,14 +545,10 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
 			}
-			// This was added to mitigate the high load that could be created by loki range queries.
-			// In previous versions of Grafana, Loki datasources would default to range queries
-			// instead of instant queries, sometimes creating unnecessary load. This is only
-			// done for Grafana Cloud.
-			if optimizations, migratable := canBeInstant(rule); migratable {
-				if err := migrateToInstant(rule, optimizations); err != nil {
+			if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingQueryOptimization) {
+				if optimizations, err := OptimizeAlertQueries(rule.Data); err != nil {
 					st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
-				} else {
+				} else if len(optimizations) > 0 {
 					st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(optimizations))
 				}
 			}
@@ -568,9 +558,8 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
-			foldersSql := sess.Table("dashboard").Alias("d").Select("d.uid, d.title").
-				Where("is_folder = ?", st.SQLStore.GetDialect().BooleanStr(true)).
-				And(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid)`)
+			foldersSql := sess.Table("folder").Alias("d").Select("d.uid, d.title, d.parent_uid").
+				Where(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid AND d.org_id = a.org_id)`)
 			if len(disabledOrgs) > 0 {
 				foldersSql.NotIn("org_id", disabledOrgs)
 			}
@@ -580,7 +569,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			}
 			query.ResultFoldersTitles = make(map[string]string, len(folders))
 			for _, folder := range folders {
-				query.ResultFoldersTitles[folder.Uid] = folder.Title
+				query.ResultFoldersTitles[folder.Uid] = ngmodels.GetNamespaceKey(folder.ParentUid, folder.Title)
 			}
 		}
 		return nil
@@ -589,6 +578,17 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(folderUID))
+	canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
+	if err != nil {
+		st.Logger.Error("Failed to evaluate access control", "error", err)
+		return err
+	}
+	if !canSave {
+		st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
+		return dashboards.ErrFolderAccessDenied
+	}
+
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folderUID},
@@ -633,48 +633,21 @@ var GenerateNewAlertRuleUID = func(sess *db.Session, orgID int64, ruleTitle stri
 	return "", ngmodels.ErrAlertRuleFailedGenerateUniqueUID
 }
 
-// validateAlertRule validates the alert rule interval and organisation.
+// validateAlertRule validates the alert rule including db-level restrictions on field lengths.
 func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
-	if len(alertRule.Data) == 0 {
-		return fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if alertRule.Title == "" {
-		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.Cfg.BaseInterval.Seconds())); err != nil {
+	if err := alertRule.ValidateAlertRule(st.Cfg); err != nil {
 		return err
 	}
 
-	// enfore max name length in SQLite
+	// enforce max name length.
 	if len(alertRule.Title) > AlertRuleMaxTitleLength {
 		return fmt.Errorf("%w: name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxTitleLength)
 	}
 
-	// enfore max rule group name length in SQLite
+	// enforce max rule group name length.
 	if len(alertRule.RuleGroup) > AlertRuleMaxRuleGroupNameLength {
 		return fmt.Errorf("%w: rule group name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxRuleGroupNameLength)
 	}
 
-	if alertRule.OrgID == 0 {
-		return fmt.Errorf("%w: no organisation is found", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if alertRule.DashboardUID == nil && alertRule.PanelID != nil {
-		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if _, err := ngmodels.ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
-	}
-
-	if _, err := ngmodels.NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
-		return err
-	}
-
-	if alertRule.For < 0 {
-		return fmt.Errorf("%w: field `for` cannot be negative", ngmodels.ErrAlertRuleFailedValidation)
-	}
 	return nil
 }

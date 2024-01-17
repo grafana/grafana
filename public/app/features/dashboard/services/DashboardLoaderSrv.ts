@@ -59,6 +59,8 @@ export class DashboardLoaderSrv {
             e.data.statusCode === 403 && e.data.messageId === 'publicdashboards.notEnabled';
           const isPublicDashboardNotFound =
             e.data.statusCode === 404 && e.data.messageId === 'publicdashboards.notFound';
+          const isDashboardNotFound =
+            e.data.statusCode === 404 && e.data.messageId === 'publicdashboards.dashboardNotFound';
 
           const dashboardModel = this._dashboardLoadFailed(
             isPublicDashboardPaused ? 'Public Dashboard paused' : 'Public Dashboard Not found',
@@ -69,7 +71,7 @@ export class DashboardLoaderSrv {
             meta: {
               ...dashboardModel.meta,
               publicDashboardEnabled: isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused,
-              dashboardNotFound: isPublicDashboardNotFound,
+              dashboardNotFound: isPublicDashboardNotFound || isDashboardNotFound,
             },
           };
         });

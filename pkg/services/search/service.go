@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -40,7 +41,7 @@ type Query struct {
 	// Deprecated: use FolderUID instead
 	FolderIds  []int64
 	FolderUIDs []string
-	Permission dashboards.PermissionType
+	Permission dashboardaccess.PermissionType
 	Sort       string
 }
 

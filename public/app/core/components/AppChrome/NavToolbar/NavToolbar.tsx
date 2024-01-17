@@ -49,9 +49,9 @@ export function NavToolbar({
           id={TOGGLE_BUTTON_ID}
           name="bars"
           tooltip={
-            state.megaMenu === 'closed'
-              ? t('navigation.toolbar.open-menu', 'Open menu')
-              : t('navigation.toolbar.close-menu', 'Close menu')
+            state.megaMenuOpen
+              ? t('navigation.toolbar.close-menu', 'Close menu')
+              : t('navigation.toolbar.open-menu', 'Open menu')
           }
           tooltipPlacement="bottom"
           size="xl"
@@ -97,6 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       padding: theme.spacing(0, 1, 0, 2),
       alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     menuButton: css({
       display: 'flex',

@@ -189,6 +189,16 @@ describe('DashboardModel', () => {
       expect(dashboard.panels[1].repeat).toBe(undefined);
       expect(dashboard.panels[1].scopedVars).toBe(undefined);
     });
+
+    it('remove panel should call destroy', () => {
+      dashboard.addPanel({ type: 'test', title: 'test' });
+      const panel = dashboard.panels[0];
+      panel.destroy = jest.fn();
+
+      dashboard.removePanel(panel);
+
+      expect(panel.destroy).toHaveBeenCalled();
+    });
   });
 
   describe('Given editable false dashboard', () => {
@@ -900,8 +910,11 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         panels: [
+          // @ts-expect-error
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, legend: { show: true } },
+          // @ts-expect-error
           { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, legend: { show: false } },
+          // @ts-expect-error
           { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, legend: { show: false } },
         ],
       });

@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/using-go-templating-language/
-description: Use Go's templating language in notifications
+description: Use Go's templating language to create your own notification templates
 keywords:
   - grafana
   - alerting

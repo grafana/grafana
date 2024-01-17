@@ -53,7 +53,7 @@ aliases:
   - whats-new-in-v6-5/
   - whats-new-in-v6-6/
   - whats-new-in-v6-7/
-description: Learn about new and changed features in Grafana.
+description: Learn about new and updated features in Grafana.
 labels:
   products:
     - cloud

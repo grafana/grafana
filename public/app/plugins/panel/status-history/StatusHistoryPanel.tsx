@@ -1,16 +1,19 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Portal,
   TooltipDisplayMode,
+  TooltipPlugin2,
   UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
   VizTooltipContainer,
   ZoomPlugin,
 } from '@grafana/ui';
-import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { addTooltipSupport, HoverEvent } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
@@ -19,10 +22,13 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
+import { StatusHistoryTooltip2 } from './StatusHistoryTooltip2';
 import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
@@ -52,7 +58,11 @@ export const StatusHistoryPanel = ({
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
-  const { sync } = usePanelContext();
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
+  const { sync, canAddAnnotations } = usePanelContext();
+
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -185,6 +195,9 @@ export const StatusHistoryPanel = ({
     );
   }
 
+  const showNewVizTooltips =
+    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+
   return (
     <TimelineChart
       theme={theme}
@@ -198,10 +211,10 @@ export const StatusHistoryPanel = ({
       {...options}
       mode={TimelineMode.Samples}
     >
-      {(config, alignedFrame) => {
-        if (oldConfig.current !== config) {
+      {(builder, alignedFrame) => {
+        if (oldConfig.current !== builder && !showNewVizTooltips) {
           oldConfig.current = addTooltipSupport({
-            config,
+            config: builder,
             onUPlotClick,
             setFocusedSeriesIdx,
             setFocusedPointIdx,
@@ -215,9 +228,67 @@ export const StatusHistoryPanel = ({
 
         return (
           <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            {renderTooltip(alignedFrame)}
-            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
+            {showNewVizTooltips ? (
+              <>
+                {options.tooltip.mode !== TooltipDisplayMode.None && (
+                  <TooltipPlugin2
+                    config={builder}
+                    hoverMode={TooltipHoverMode.xyOne}
+                    queryZoom={onChangeTimeRange}
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
+                      if (timeRange2 != null) {
+                        setNewAnnotationRange(timeRange2);
+                        dismiss();
+                        return;
+                      }
+
+                      const annotate = () => {
+                        let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                        setNewAnnotationRange({ from: xVal, to: xVal });
+                        dismiss();
+                      };
+
+                      return (
+                        <StatusHistoryTooltip2
+                          data={frames ?? []}
+                          dataIdxs={dataIdxs}
+                          alignedData={alignedFrame}
+                          seriesIdx={seriesIdx}
+                          timeZone={timeZone}
+                          mode={options.tooltip.mode}
+                          sortOrder={options.tooltip.sort}
+                          isPinned={isPinned}
+                          annotate={enableAnnotationCreation ? annotate : undefined}
+                        />
+                      );
+                    }}
+                  />
+                )}
+                <AnnotationsPlugin2
+                  annotations={data.annotations ?? []}
+                  config={builder}
+                  timeZone={timeZone}
+                  newRange={newAnnotationRange}
+                  setNewRange={setNewAnnotationRange}
+                  canvasRegionRendering={false}
+                />
+              </>
+            ) : (
+              <>
+                <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />
+                {renderTooltip(alignedFrame)}
+                <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+                {data.annotations && (
+                  <AnnotationsPlugin
+                    annotations={data.annotations}
+                    config={builder}
+                    timeZone={timeZone}
+                    disableCanvasRendering={true}
+                  />
+                )}
+              </>
+            )}
           </>
         );
       }}

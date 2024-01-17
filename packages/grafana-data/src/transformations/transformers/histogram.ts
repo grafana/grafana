@@ -38,7 +38,7 @@ export const histogramBucketSizes = [
 ];
 /* eslint-enable */
 
-const histFilter = [null];
+const histFilter: number[] = [];
 const histSort = (a: number, b: number) => a - b;
 
 export interface HistogramTransformerInputs {
@@ -496,7 +496,7 @@ export function incrRoundDn(num: number, incr: number) {
 function histogram(
   vals: number[],
   getBucket: (v: number) => number,
-  filterOut?: any[] | null,
+  filterOut?: number[],
   sort?: ((a: number, b: number) => number) | null
 ): AlignedData {
   let hist = new Map();

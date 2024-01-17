@@ -1019,6 +1019,7 @@ func setupAccessControlGuardianTest(
 	folderSvc := foldertest.NewFakeService()
 
 	folderStore := foldertest.NewFakeFolderStore(t)
+	// nolint:staticcheck
 	folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(&folder.Folder{ID: folderID, UID: folderUID, OrgID: orgID}, nil)
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, folderSvc))

@@ -3,17 +3,15 @@ import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
 import { DashboardDTO, DashboardMeta, DashboardRoutes } from 'app/types';
 
-import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { getVizPanelKeyForPanelId, findVizPanelByKey } from '../utils/utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
@@ -68,6 +66,19 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         // Fill in meta fields
         const dashboard = this.initDashboardMeta(rsp);
 
+        if (dashboard.meta.url) {
+          const dashboardUrl = locationUtil.stripBaseFromUrl(dashboard.meta.url);
+          const currentPath = locationService.getLocation().pathname;
+          if (dashboardUrl !== currentPath) {
+            // Spread current location to persist search params used for navigation
+            locationService.replace({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            });
+            console.log('not correct url correcting', dashboardUrl, currentPath);
+          }
+        }
+
         // Populate nav model in global store according to the folder
         await this.initNavModel(dashboard);
 
@@ -92,25 +103,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       dashboard.startUrlSync();
 
       this.setState({ dashboard: dashboard, isLoading: false });
-    } catch (err) {
-      this.setState({ isLoading: false, loadError: String(err) });
-    }
-  }
-
-  public async loadPanelEdit(uid: string, panelId: string) {
-    try {
-      const dashboard = await this.loadScene(uid);
-      const panel = findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(parseInt(panelId, 10)));
-
-      if (!panel) {
-        this.setState({ isLoading: false, loadError: 'Panel not found' });
-        return;
-      }
-
-      const panelEditor = buildPanelEditScene(dashboard, panel);
-      panelEditor.startUrlSync();
-
-      this.setState({ isLoading: false, panelEditor });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
@@ -161,7 +153,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     // only the folder API has information about ancestors
     // get parent folder (if it exists) and put it in the store
     // this will be used to populate the full breadcrumb trail
-    if (newBrowseDashboardsEnabled() && dashboard.meta.folderUid) {
+    if (dashboard.meta.folderUid) {
       try {
         const folder = await backendSrv.getFolderByUid(dashboard.meta.folderUid);
         store.dispatch(updateNavIndex(buildNavModel(folder)));

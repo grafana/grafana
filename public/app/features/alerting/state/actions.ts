@@ -26,7 +26,7 @@ export function createNotificationChannel(data: any): ThunkResult<Promise<void>>
     try {
       await getBackendSrv().post(`/api/alert-notifications`, data);
       dispatch(notifyApp(createSuccessNotification('Notification created')));
-      locationService.push('/alerting/notifications');
+      locationService.push('/alerting-legacy/notifications');
     } catch (error) {
       if (isFetchError(error)) {
         dispatch(notifyApp(createErrorNotification(error.data.error)));
@@ -57,7 +57,7 @@ export function testNotificationChannel(data: any): ThunkResult<void> {
 
 export function loadNotificationTypes(): ThunkResult<void> {
   return async (dispatch) => {
-    const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers`);
+    const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers-legacy`);
 
     const notificationTypes = alertNotifiers.sort((o1, o2) => {
       if (o1.name > o2.name) {

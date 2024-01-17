@@ -5,12 +5,11 @@ import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { ViewJsonModal } from './ViewJsonModal';
-import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
-import { shareDashboardType } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -40,6 +39,8 @@ export class ShareExport extends PureComponent<Props, State> {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
 
+    DashboardInteractions.exportSaveJsonClicked({ externally: shareExternally });
+
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson) => {
         this.openSaveAsDialog(dashboardJson);
@@ -52,6 +53,7 @@ export class ShareExport extends PureComponent<Props, State> {
   onViewJson = () => {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
+    DashboardInteractions.exportViewJsonClicked({ externally: shareExternally });
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson) => {
@@ -69,7 +71,6 @@ export class ShareExport extends PureComponent<Props, State> {
     });
     const time = new Date().getTime();
     saveAs(blob, `${dash.title}-${time}.json`);
-    trackDashboardSharingActionPerType('save_export', shareDashboardType.export);
   };
 
   openJsonModal = (clone: object) => {

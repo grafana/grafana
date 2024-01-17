@@ -9,8 +9,8 @@ import { TimePickerWithHistory } from './TimePickerWithHistory';
 describe('TimePickerWithHistory', () => {
   // In some of the tests we close and re-open the picker. When we do that we must re-find these inputs
   // as new elements will have been mounted
-  const getFromField = () => screen.getByLabelText('Time Range from field');
-  const getToField = () => screen.getByLabelText('Time Range to field');
+  const getFromField = () => screen.getByLabelText('From');
+  const getToField = () => screen.getByLabelText('To');
   const getApplyButton = () => screen.getByRole('button', { name: 'Apply time range' });
 
   const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';

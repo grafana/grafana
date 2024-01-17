@@ -1,6 +1,5 @@
 import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
-import { variableRegex } from 'app/features/variables/utils';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
@@ -12,6 +11,7 @@ import {
 } from './datasource';
 import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, obfuscate, parseToNodeNamesArray } from './queryUtils';
+import { variableRegex } from './querybuilder/parsingUtils';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 
 type LokiOnDashboardLoadedTrackingEvent = {
@@ -63,8 +63,8 @@ export const onDashboardLoadedHandler = ({
   try {
     // We only want to track visible Loki queries
     const lokiQueries = queries[pluginJson.id]
-      .filter((query) => !query.hide)
-      .map((query) => getNormalizedLokiQuery(query));
+      ?.filter((query) => !query.hide)
+      ?.map((query) => getNormalizedLokiQuery(query));
 
     if (!lokiQueries?.length) {
       return;

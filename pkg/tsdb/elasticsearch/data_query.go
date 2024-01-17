@@ -389,6 +389,11 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, 
 	b.Sort(es.SortOrderDesc, defaultTimeField, "boolean")
 	b.Sort(es.SortOrderDesc, "_doc", "")
 	b.AddDocValueField(defaultTimeField)
+	if isRawDataQuery(q) {
+		// For raw_data queries we need to add timeField as field with standardized time format to not receive
+		// invalid formats that elasticsearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
+		b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
+	}
 	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("size").MustString(), defaultSize))
 }
 

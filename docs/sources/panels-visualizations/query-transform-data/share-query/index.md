@@ -8,6 +8,7 @@ labels:
     - oss
 menuTitle: Share query results
 title: Share query results with another panel
+description: Reduce the number of queries to your data source by sharing query results
 weight: 60
 ---
 

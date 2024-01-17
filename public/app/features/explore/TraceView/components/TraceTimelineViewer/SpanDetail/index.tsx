@@ -17,11 +17,14 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import React from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, IconName, LinkModel, TimeZone } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
-import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
+import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
+import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
+import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
@@ -37,6 +40,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
+import SpanFlameGraph from './SpanFlameGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -106,6 +110,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+export type TraceFlameGraphs = {
+  [spanID: string]: DataFrame;
+};
+
 export type SpanDetailProps = {
   detailState: DetailState;
   linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
@@ -113,9 +121,12 @@ export type SpanDetailProps = {
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
   span: TraceSpan;
+  traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
+  traceDuration: number;
+  traceName: string;
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
   referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
@@ -124,6 +135,9 @@ export type SpanDetailProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
+  traceFlameGraphs: TraceFlameGraphs;
+  setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  setRedrawListView: (redraw: {}) => void;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -136,6 +150,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     span,
     tagsToggle,
     traceStartTime,
+    traceDuration,
+    traceName,
     warningsToggle,
     stackTracesToggle,
     referencesToggle,
@@ -143,6 +159,10 @@ export default function SpanDetail(props: SpanDetailProps) {
     createSpanLink,
     createFocusSpanLink,
     datasourceType,
+    traceFlameGraphs,
+    setTraceFlameGraphs,
+    traceToProfilesOptions,
+    setRedrawListView,
   } = props;
   const {
     isTagsOpen,
@@ -194,6 +214,8 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
+  const styles = useStyles2(getStyles);
+
   if (span.kind) {
     overviewItems.push({
       key: KIND,
@@ -236,8 +258,6 @@ export default function SpanDetail(props: SpanDetailProps) {
       value: span.traceState,
     });
   }
-
-  const styles = useStyles2(getStyles);
 
   const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
     return (
@@ -377,6 +397,19 @@ export default function SpanDetail(props: SpanDetailProps) {
             createFocusSpanLink={createFocusSpanLink}
           />
         )}
+        {config.featureToggles.tracesEmbeddedFlameGraph &&
+          span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
+            <SpanFlameGraph
+              span={span}
+              timeZone={timeZone}
+              traceFlameGraphs={traceFlameGraphs}
+              setTraceFlameGraphs={setTraceFlameGraphs}
+              traceToProfilesOptions={traceToProfilesOptions}
+              setRedrawListView={setRedrawListView}
+              traceDuration={traceDuration}
+              traceName={traceName}
+            />
+          )}
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
           {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}

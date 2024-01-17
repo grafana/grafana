@@ -46,6 +46,8 @@ type Collector struct {
 	Default bool `json:"default"`
 	// Fn is the function that collects the support item.
 	Fn CollectorFunc `json:"-"`
+	// EnabledFn is a function that determines if the collector is enabled. If nil, the collector is always enabled.
+	EnabledFn func() bool `json:"-"`
 }
 
 type Service interface {

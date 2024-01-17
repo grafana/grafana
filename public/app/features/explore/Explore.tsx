@@ -3,10 +3,11 @@ import { get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
 
 import {
   AbsoluteTimeRange,
+  DataFrame,
   EventBus,
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
@@ -219,15 +220,29 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string, refId?: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } }, refId);
+  onClickFilterLabel = (key: string, value: string, frame?: DataFrame) => {
+    this.onModifyQueries(
+      {
+        type: 'ADD_FILTER',
+        options: { key, value },
+        frame,
+      },
+      frame?.refId
+    );
   };
 
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string, refId?: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } }, refId);
+  onClickFilterOutLabel = (key: string, value: string, frame?: DataFrame) => {
+    this.onModifyQueries(
+      {
+        type: 'ADD_FILTER_OUT',
+        options: { key, value },
+        frame,
+      },
+      frame?.refId
+    );
   };
 
   /**
@@ -269,6 +284,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return ds.toggleQueryFilter(query, {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},
+          frame: modification.frame,
         });
       }
       if (ds.modifyQuery) {
@@ -280,7 +296,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.props.modifyQueries(this.props.exploreId, action, modifier);
   };
 
-  onResize = (size: { height: number; width: number }) => {
+  onResize = (size: HorizontalSize) => {
     this.props.changeSize(this.props.exploreId, size);
   };
 
@@ -516,7 +532,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             dataFrames={dataFrames}
             splitOpenFn={this.onSplitOpen('traceView')}
             scrollElement={this.scrollElement}
-            queryResponse={queryResponse}
           />
         </ContentOutlineItem>
       )

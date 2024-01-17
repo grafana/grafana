@@ -14,7 +14,6 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
@@ -425,29 +424,16 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  const { folderTitle, folderUid } = dashboard.meta;
+  const { folderUid } = dashboard.meta;
   if (folderUid && pageNav) {
-    if (newBrowseDashboardsEnabled()) {
-      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
-      // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
-      // don't show the "page not found" breadcrumb
-      if (folderNavModel.id !== 'not-found') {
-        pageNav = {
-          ...pageNav,
-          parentItem: folderNavModel,
-        };
-      }
-    } else {
-      // Check if folder changed
-      if (folderTitle && pageNav.parentItem?.text !== folderTitle) {
-        pageNav = {
-          ...pageNav,
-          parentItem: {
-            text: folderTitle,
-            url: `/dashboards/f/${dashboard.meta.folderUid}`,
-          },
-        };
-      }
+    const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+    // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+    // don't show the "page not found" breadcrumb
+    if (folderNavModel.id !== 'not-found') {
+      pageNav = {
+        ...pageNav,
+        parentItem: folderNavModel,
+      };
     }
   }
 

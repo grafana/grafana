@@ -19,29 +19,27 @@ import {
   rangeUtil,
   ScopedVars,
   TestDataSourceResponse,
+  urlUtil,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
   config,
   DataSourceWithBackend,
   getBackendSrv,
+  getDataSourceSrv,
   getTemplateSrv,
   reportInteraction,
   TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
-import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { serializeParams } from 'app/core/utils/fetch';
-import { SpanBarOptions } from 'app/features/explore/TraceView/components';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-
-import { LokiOptions } from '../loki/types';
-import { PrometheusDatasource } from '../prometheus/datasource';
-import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
+import { NodeGraphOptions } from './_importedDependencies/components/NodeGraphSettings';
+import { SpanBarOptions } from './_importedDependencies/components/TraceView/SpanBarSettings';
+import { LokiOptions } from './_importedDependencies/datasources/loki/types';
+import { PromQuery, PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
+import { TraceToLogsOptions } from './_importedDependencies/grafana-traces/src';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   defaultTableFilter,
@@ -128,6 +126,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
@@ -168,7 +167,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return this.labelValuesQuery(query.label);
       }
       default: {
-        throw Error('Invalid query type', query.type);
+        throw Error('Invalid query type: ' + query.type);
       }
     }
   }
@@ -267,7 +266,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           targets.search[0].linkedQuery?.expr && targets.search[0].linkedQuery?.expr !== '' ? true : false,
       });
 
-      const dsSrv = getDatasourceSrv();
+      const dsSrv = getDataSourceSrv();
       subQueries.push(
         from(dsSrv.get(logsDatasourceUid)).pipe(
           mergeMap((linkedDatasource: DataSourceApi) => {
@@ -533,6 +532,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
+      serviceMapQuery: this.templateSrv.replace(query.serviceMapQuery ?? '', scopedVars),
     };
   }
 
@@ -691,7 +691,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     data?: unknown,
     options?: Partial<BackendSrvRequest>
   ): Observable<Record<string, any>> {
-    const params = data ? serializeParams(data) : '';
+    const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
 
@@ -792,7 +792,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 }
 
 function queryPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
-  return from(getDatasourceSrv().get(datasourceUid)).pipe(
+  return from(getDataSourceSrv().get(datasourceUid)).pipe(
     mergeMap((ds) => {
       return (ds as PrometheusDatasource).query(request);
     })
@@ -988,7 +988,7 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
         instant: instant,
       },
       datasourceUid,
-      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
+      datasourceName: getDataSourceSrv().getInstanceSettings(datasourceUid)?.name ?? '',
     },
   };
 }
@@ -1075,7 +1075,7 @@ export function makeTempoLink(title: string, serviceName: string, spanName: stri
     internal: {
       query,
       datasourceUid,
-      datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
+      datasourceName: getDataSourceSrv().getInstanceSettings(datasourceUid)?.name ?? '',
     },
   };
 }

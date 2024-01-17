@@ -126,4 +126,13 @@ describe('addStringFilterToQuery', () => {
     expect(addStringFilterToQuery('label:"value"', '"filter"')).toBe('label:"value" AND "\\"filter\\""');
     expect(addStringFilterToQuery('label:"value"', '"filter"', false)).toBe('label:"value" NOT "\\"filter\\""');
   });
+
+  it('should escape filter values with backslashes', () => {
+    expect(addStringFilterToQuery('label:"value"', '"filter with \\"')).toBe(
+      'label:"value" AND "\\"filter with \\\\\\""'
+    );
+    expect(addStringFilterToQuery('label:"value"', '"filter with \\"', false)).toBe(
+      'label:"value" NOT "\\"filter with \\\\\\""'
+    );
+  });
 });

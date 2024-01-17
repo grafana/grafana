@@ -3,13 +3,13 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GraphSeriesValue } from '@grafana/data';
+import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 
 import { CustomScrollbar } from '../../components/CustomScrollbar/CustomScrollbar';
 import { VizLegend } from '../../components/VizLegend/VizLegend';
 import { VizLegendItem } from '../../components/VizLegend/types';
-import { stylesFactory } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 import { Graph, GraphProps } from './Graph';
 
@@ -24,21 +24,6 @@ export interface GraphWithLegendProps extends GraphProps {
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
 }
-
-const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendProps) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: placement === 'bottom' ? 'column' : 'row',
-  }),
-  graphContainer: css({
-    minHeight: '65%',
-    flexGrow: 1,
-  }),
-  legendContainer: css({
-    padding: '10px 0',
-    maxHeight: placement === 'bottom' ? '35%' : 'none',
-  }),
-}));
 
 const shouldHideLegendItem = (data: GraphSeriesValue[][], hideEmpty = false, hideZero = false) => {
   const isZeroOnlySeries = data.reduce((acc, current) => acc + (current[1] || 0), 0) === 0;
@@ -72,7 +57,7 @@ export const GraphWithLegend = (props: GraphWithLegendProps) => {
     children,
     ariaLabel,
   } = props;
-  const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
+  const { graphContainer, wrapper, legendContainer } = useStyles2(getGraphWithLegendStyles, props.placement);
 
   const legendItems = series.reduce<VizLegendItem[]>((acc, s) => {
     return shouldHideLegendItem(s.data, hideEmpty, hideZero)
@@ -130,3 +115,18 @@ export const GraphWithLegend = (props: GraphWithLegendProps) => {
     </div>
   );
 };
+
+const getGraphWithLegendStyles = (_theme: GrafanaTheme2, placement: LegendPlacement) => ({
+  wrapper: css({
+    display: 'flex',
+    flexDirection: placement === 'bottom' ? 'column' : 'row',
+  }),
+  graphContainer: css({
+    minHeight: '65%',
+    flexGrow: 1,
+  }),
+  legendContainer: css({
+    padding: '10px 0',
+    maxHeight: placement === 'bottom' ? '35%' : 'none',
+  }),
+});

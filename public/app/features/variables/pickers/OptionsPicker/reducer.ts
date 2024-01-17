@@ -1,5 +1,6 @@
+import uFuzzy from '@leeoniya/ufuzzy';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { cloneDeep, isString, trimStart } from 'lodash';
+import { cloneDeep, isString } from 'lodash';
 
 import { containsSearchFilter } from '@grafana/data';
 
@@ -33,6 +34,14 @@ export const initialOptionPickerState: OptionsPickerState = {
 };
 
 export const OPTIONS_LIMIT = 1000;
+
+const ufuzzy = new uFuzzy({
+  intraMode: 1,
+  intraIns: 1,
+  intraSub: 1,
+  intraTrn: 1,
+  intraDel: 1,
+});
 
 const optionsToRecord = (options: VariableOption[]): Record<string, VariableOption> => {
   if (!Array.isArray(options)) {
@@ -237,14 +246,32 @@ const optionsPickerSlice = createSlice({
       return state;
     },
     updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
-      const searchQuery = trimStart((state.queryValue ?? '').toLowerCase());
+      const needle = state.queryValue.trim();
 
-      state.options = action.payload.filter((option) => {
-        const optionsText = option.text ?? '';
-        const text = Array.isArray(optionsText) ? optionsText.toString() : optionsText;
-        return text.toLowerCase().indexOf(searchQuery) !== -1;
-      });
+      let opts: VariableOption[] = [];
 
+      if (needle === '') {
+        opts = action.payload;
+      } else {
+        // with current API, not seeing a way to cache this on state using action.payload's uniqueness
+        // since it's recreated and includes selected state on each item :(
+        const haystack = action.payload.map(({ text }) => (Array.isArray(text) ? text.toString() : text));
+
+        const [idxs, info, order] = ufuzzy.search(haystack, needle, 5);
+
+        if (idxs?.length) {
+          if (info && order) {
+            opts = order.map((idx) => action.payload[info.idx[idx]]);
+          } else {
+            opts = idxs!.map((idx) => action.payload[idx]);
+          }
+
+          // always sort $__all to the top, even if exact match exists?
+          opts.sort((a, b) => (a.value === '$__all' ? -1 : 0) - (b.value === '$__all' ? -1 : 0));
+        }
+      }
+
+      state.options = opts;
       state.highlightIndex = 0;
 
       return applyStateChanges(state, updateDefaultSelection, updateOptions);

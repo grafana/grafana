@@ -188,12 +188,25 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
-	var dataSource *datasources.DataSource
-
-	if err := validateFields(cmd.Name, cmd.URL); err != nil {
-		return dataSource, err
+	dataSources, err := s.SQLStore.GetDataSources(ctx, &datasources.GetDataSourcesQuery{OrgID: cmd.OrgID})
+	if err != nil {
+		return nil, err
 	}
 
+	// Set the first created data source as default
+	if len(dataSources) == 0 {
+		cmd.IsDefault = true
+	}
+
+	if cmd.Name == "" {
+		cmd.Name = getAvailableName(cmd.Type, dataSources)
+	}
+
+	if err := validateFields(cmd.Name, cmd.URL); err != nil {
+		return nil, err
+	}
+
+	var dataSource *datasources.DataSource
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
@@ -236,13 +249,35 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	})
 }
 
+// getAvailableName finds the first available name for a datasource of the given type.
+func getAvailableName(dsType string, dataSources []*datasources.DataSource) string {
+	dsNames := make(map[string]bool)
+	for _, ds := range dataSources {
+		dsNames[strings.ToLower(ds.Name)] = true
+	}
+
+	name := dsType
+	currentDigit := 0
+
+	for dsNames[strings.ToLower(name)] {
+		currentDigit++
+		name = fmt.Sprintf("%s-%d", dsType, currentDigit)
+	}
+
+	return name
+}
+
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return s.db.InTransaction(ctx, func(ctx context.Context) error {
 		cmd.UpdateSecretFn = func() error {
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
 
-		return s.SQLStore.DeleteDataSource(ctx, cmd)
+		if err := s.SQLStore.DeleteDataSource(ctx, cmd); err != nil {
+			return err
+		}
+
+		return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
 	})
 }
 
@@ -497,11 +532,12 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:   s.cfg.SecureSocksDSProxy.ClientCert,
-				ClientKey:    s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCA:       s.cfg.SecureSocksDSProxy.RootCA,
-				ProxyAddress: s.cfg.SecureSocksDSProxy.ProxyAddress,
-				ServerName:   s.cfg.SecureSocksDSProxy.ServerName,
+				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCert,
+				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKey,
+				RootCA:        s.cfg.SecureSocksDSProxy.RootCA,
+				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
+				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
+				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,
 			},
 		}
 

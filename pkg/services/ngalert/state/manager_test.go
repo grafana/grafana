@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 	"strings"
@@ -58,6 +59,7 @@ func TestWarmStateCache(t *testing.T) {
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			ResultFingerprint:  data.Fingerprint(math.MaxUint64),
 		}, {
 			AlertRuleUID: rule.UID,
 			OrgID:        rule.OrgID,
@@ -70,6 +72,7 @@ func TestWarmStateCache(t *testing.T) {
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			ResultFingerprint:  data.Fingerprint(math.MaxUint64 - 1),
 		},
 		{
 			AlertRuleUID: rule.UID,
@@ -83,6 +86,7 @@ func TestWarmStateCache(t *testing.T) {
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			ResultFingerprint:  data.Fingerprint(0),
 		},
 		{
 			AlertRuleUID: rule.UID,
@@ -96,6 +100,7 @@ func TestWarmStateCache(t *testing.T) {
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			ResultFingerprint:  data.Fingerprint(1),
 		},
 		{
 			AlertRuleUID: rule.UID,
@@ -109,6 +114,7 @@ func TestWarmStateCache(t *testing.T) {
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			ResultFingerprint:  data.Fingerprint(2),
 		},
 	}
 
@@ -127,6 +133,7 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
+		ResultFingerprint: data.Fingerprint(math.MaxUint64).String(),
 	})
 
 	labels = models.InstanceLabels{"test2": "testValue2"}
@@ -142,6 +149,7 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
+		ResultFingerprint: data.Fingerprint(math.MaxUint64 - 1).String(),
 	})
 
 	labels = models.InstanceLabels{"test3": "testValue3"}
@@ -157,6 +165,7 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
+		ResultFingerprint: data.Fingerprint(0).String(),
 	})
 
 	labels = models.InstanceLabels{"test4": "testValue4"}
@@ -172,6 +181,7 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
+		ResultFingerprint: data.Fingerprint(1).String(),
 	})
 
 	labels = models.InstanceLabels{"test5": "testValue5"}
@@ -187,23 +197,23 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
+		ResultFingerprint: data.Fingerprint(2).String(),
 	})
 	for _, instance := range instances {
 		_ = dbstore.SaveAlertInstance(ctx, instance)
 	}
 
 	cfg := state.ManagerCfg{
-		Metrics:                 metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-		ExternalURL:             nil,
-		InstanceStore:           dbstore,
-		Images:                  &state.NoopImageService{},
-		Clock:                   clock.NewMock(),
-		Historian:               &state.FakeHistorian{},
-		MaxStateSaveConcurrency: 1,
-		Tracer:                  tracing.InitializeTracerForTest(),
-		Log:                     log.New("ngalert.state.manager"),
+		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: dbstore,
+		Images:        &state.NoopImageService{},
+		Clock:         clock.NewMock(),
+		Historian:     &state.FakeHistorian{},
+		Tracer:        tracing.InitializeTracerForTest(),
+		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg)
+	st := state.NewManager(cfg, state.NewNoopPersister())
 	st.Warm(ctx, dbstore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -227,21 +237,20 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, historianMetrics)
 	hist := historian.NewAnnotationBackend(store, nil, historianMetrics)
 	cfg := state.ManagerCfg{
-		Metrics:                 metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-		ExternalURL:             nil,
-		InstanceStore:           dbstore,
-		Images:                  &state.NoopImageService{},
-		Clock:                   clock.New(),
-		Historian:               hist,
-		MaxStateSaveConcurrency: 1,
-		Tracer:                  tracing.InitializeTracerForTest(),
-		Log:                     log.New("ngalert.state.manager"),
+		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: dbstore,
+		Images:        &state.NoopImageService{},
+		Clock:         clock.New(),
+		Historian:     hist,
+		Tracer:        tracing.InitializeTracerForTest(),
+		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg)
+	st := state.NewManager(cfg, state.NewNoopPersister())
 
 	const mainOrgID int64 = 1
 
@@ -384,8 +393,9 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Normal,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 					},
@@ -407,8 +417,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Normal,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 					},
@@ -417,8 +428,9 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: labels["system + rule + labels2"],
-					State:  eval.Alerting,
+					Labels:            labels["system + rule + labels2"],
+					ResultFingerprint: labels2.Fingerprint(),
+					State:             eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Alerting),
 					},
@@ -441,8 +453,9 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Normal,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(tn(6), eval.Normal),
@@ -467,8 +480,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Alerting,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.Alerting),
@@ -499,8 +513,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Alerting,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(t3, eval.Alerting),
 						newEvaluation(tn(4), eval.Alerting),
@@ -534,8 +549,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3, // Normal -> Pending, Pending -> NoData, NoData -> Pending
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Pending,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Pending,
 					Results: []state.Evaluation{
 						newEvaluation(tn(4), eval.Alerting),
 						newEvaluation(tn(5), eval.Alerting),
@@ -566,8 +582,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.NoData,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t3, eval.Alerting),
 						newEvaluation(tn(4), eval.NoData),
@@ -592,7 +609,8 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
 
 					State: eval.Pending,
 					Results: []state.Evaluation{
@@ -619,8 +637,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Pending,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Pending,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Alerting),
 						newEvaluation(t2, eval.Alerting),
@@ -645,9 +664,10 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Pending,
-					StateReason: eval.NoData.String(),
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Pending,
+					StateReason:       eval.NoData.String(),
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.NoData),
@@ -681,9 +701,10 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Alerting,
-					StateReason: eval.NoData.String(),
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
+					StateReason:       eval.NoData.String(),
 					Results: []state.Evaluation{
 						newEvaluation(t3, eval.NoData),
 						newEvaluation(tn(4), eval.NoData),
@@ -709,8 +730,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.NoData,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.NoData),
@@ -735,8 +757,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Normal,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 					},
@@ -745,8 +768,9 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: labels["system + rule"],
-					State:  eval.NoData,
+					Labels:            labels["system + rule"],
+					ResultFingerprint: data.Labels{}.Fingerprint(),
+					State:             eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t2, eval.NoData),
 					},
@@ -771,8 +795,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Normal,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 					},
@@ -781,8 +806,9 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: labels["system + rule + labels2"],
-					State:  eval.Normal,
+					Labels:            labels["system + rule + labels2"],
+					ResultFingerprint: labels2.Fingerprint(),
+					State:             eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 					},
@@ -791,8 +817,9 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: labels["system + rule"],
-					State:  eval.NoData,
+					Labels:            labels["system + rule"],
+					ResultFingerprint: data.Labels{}.Fingerprint(),
+					State:             eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t2, eval.NoData),
 					},
@@ -819,8 +846,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Normal,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t3, eval.Normal),
@@ -830,8 +858,9 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t3,
 				},
 				{
-					Labels: labels["system + rule + no-data"],
-					State:  eval.NoData,
+					Labels:            labels["system + rule + no-data"],
+					ResultFingerprint: noDataLabels.Fingerprint(),
+					State:             eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t2, eval.NoData),
 					},
@@ -852,12 +881,13 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
 				},
 			},
-			expectedAnnotations: 1,
+			expectedAnnotations: 0,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Normal,
-					StateReason: eval.NoData.String(),
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
+					StateReason:       eval.NoData.String(),
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.NoData),
@@ -882,10 +912,11 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Pending,
-					StateReason: eval.Error.String(),
-					Error:       errors.New("with_state_error"),
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Pending,
+					StateReason:       eval.Error.String(),
+					Error:             errors.New("with_state_error"),
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.Error),
@@ -919,10 +950,11 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Alerting,
-					StateReason: eval.Error.String(),
-					Error:       errors.New("with_state_error"),
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
+					StateReason:       eval.Error.String(),
+					Error:             errors.New("with_state_error"),
 					Results: []state.Evaluation{
 						newEvaluation(t3, eval.Error),
 						newEvaluation(tn(4), eval.Error),
@@ -960,8 +992,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"datasource_uid": "datasource_uid_1",
 						"ref_id":         "A",
 					}),
-					State: eval.Error,
-					Error: expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error")),
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Error,
+					Error:             expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error")),
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.Error),
@@ -988,9 +1021,10 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Normal,
-					StateReason: eval.Error.String(),
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
+					StateReason:       eval.Error.String(),
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.Error),
@@ -1015,9 +1049,10 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Normal,
-					StateReason: eval.Error.String(),
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Normal,
+					StateReason:       eval.Error.String(),
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Alerting),
 						newEvaluation(t2, eval.Error),
@@ -1054,9 +1089,10 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Error,
-					Error:  fmt.Errorf("with_state_error"),
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Error,
+					Error:             fmt.Errorf("with_state_error"),
 					Results: []state.Evaluation{
 						newEvaluation(tn(5), eval.Error),
 						newEvaluation(tn(6), eval.Error),
@@ -1087,8 +1123,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.Pending,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Pending,
 					Results: []state.Evaluation{
 						newEvaluation(tn(4), eval.Alerting),
 						newEvaluation(tn(5), eval.Error),
@@ -1120,8 +1157,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.NoData,
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(tn(4), eval.Alerting),
 						newEvaluation(tn(5), eval.Error),
@@ -1166,6 +1204,11 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"summary": "grafana is down in us-central-1 cluster -> prod namespace"},
+					ResultFingerprint: data.Labels{
+						"cluster":   "us-central-1",
+						"namespace": "prod",
+						"pod":       "grafana",
+					}.Fingerprint(),
 				},
 			},
 		},
@@ -1186,8 +1229,9 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule"],
-					State:  eval.Alerting,
+					Labels:            labels["system + rule"],
+					ResultFingerprint: data.Labels{}.Fingerprint(),
+					State:             eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Alerting),
 						newEvaluation(t2, eval.Error),
@@ -1206,22 +1250,21 @@ func TestProcessEvalResults(t *testing.T) {
 			fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 			reg := prometheus.NewPedanticRegistry()
 			stateMetrics := metrics.NewStateMetrics(reg)
-			m := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
 			hist := historian.NewAnnotationBackend(store, nil, m)
 			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
-				Metrics:                 stateMetrics,
-				ExternalURL:             nil,
-				InstanceStore:           &state.FakeInstanceStore{},
-				Images:                  &state.NotAvailableImageService{},
-				Clock:                   clk,
-				Historian:               hist,
-				MaxStateSaveConcurrency: 1,
-				Tracer:                  tracing.InitializeTracerForTest(),
-				Log:                     log.New("ngalert.state.manager"),
+				Metrics:       stateMetrics,
+				ExternalURL:   nil,
+				InstanceStore: &state.FakeInstanceStore{},
+				Images:        &state.NotAvailableImageService{},
+				Clock:         clk,
+				Historian:     hist,
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg)
+			st := state.NewManager(cfg, state.NewNoopPersister())
 
 			evals := make([]time.Time, 0, len(tc.evalResults))
 			for evalTime := range tc.evalResults {
@@ -1318,11 +1361,12 @@ func TestProcessEvalResults(t *testing.T) {
 			Images:                  &state.NotAvailableImageService{},
 			Clock:                   clk,
 			Historian:               &state.FakeHistorian{},
-			MaxStateSaveConcurrency: 1,
 			Tracer:                  tracing.InitializeTracerForTest(),
 			Log:                     log.New("ngalert.state.manager"),
+			MaxStateSaveConcurrency: 1,
 		}
-		st := state.NewManager(cfg)
+		statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
+		st := state.NewManager(cfg, statePersister)
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -1454,6 +1498,7 @@ func TestStaleResultsHandler(t *testing.T) {
 					LastEvaluationTime: evaluationTime,
 					EvaluationDuration: 0,
 					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					ResultFingerprint:  data.Labels{"test1": "testValue1"}.Fingerprint(),
 				},
 			},
 			startingStateCount: 2,
@@ -1464,17 +1509,16 @@ func TestStaleResultsHandler(t *testing.T) {
 	for _, tc := range testCases {
 		ctx := context.Background()
 		cfg := state.ManagerCfg{
-			Metrics:                 metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-			ExternalURL:             nil,
-			InstanceStore:           dbstore,
-			Images:                  &state.NoopImageService{},
-			Clock:                   clock.New(),
-			Historian:               &state.FakeHistorian{},
-			MaxStateSaveConcurrency: 1,
-			Tracer:                  tracing.InitializeTracerForTest(),
-			Log:                     log.New("ngalert.state.manager"),
+			Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+			ExternalURL:   nil,
+			InstanceStore: dbstore,
+			Images:        &state.NoopImageService{},
+			Clock:         clock.New(),
+			Historian:     &state.FakeHistorian{},
+			Tracer:        tracing.InitializeTracerForTest(),
+			Log:           log.New("ngalert.state.manager"),
 		}
-		st := state.NewManager(cfg)
+		st := state.NewManager(cfg, state.NewNoopPersister())
 		st.Warm(ctx, dbstore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
@@ -1547,17 +1591,16 @@ func TestStaleResults(t *testing.T) {
 	store := &state.FakeInstanceStore{}
 
 	cfg := state.ManagerCfg{
-		Metrics:                 metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-		ExternalURL:             nil,
-		InstanceStore:           store,
-		Images:                  &state.NoopImageService{},
-		Clock:                   clk,
-		Historian:               &state.FakeHistorian{},
-		MaxStateSaveConcurrency: 1,
-		Tracer:                  tracing.InitializeTracerForTest(),
-		Log:                     log.New("ngalert.state.manager"),
+		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: store,
+		Images:        &state.NoopImageService{},
+		Clock:         clk,
+		Historian:     &state.FakeHistorian{},
+		Tracer:        tracing.InitializeTracerForTest(),
+		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg)
+	st := state.NewManager(cfg, state.NewNoopPersister())
 
 	rule := models.AlertRuleGen(models.WithFor(0))()
 
@@ -1721,17 +1764,16 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			clk := clock.NewMock()
 			clk.Set(time.Now())
 			cfg := state.ManagerCfg{
-				Metrics:                 metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-				ExternalURL:             nil,
-				InstanceStore:           dbstore,
-				Images:                  &state.NoopImageService{},
-				Clock:                   clk,
-				Historian:               &state.FakeHistorian{},
-				MaxStateSaveConcurrency: 1,
-				Tracer:                  tracing.InitializeTracerForTest(),
-				Log:                     log.New("ngalert.state.manager"),
+				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+				ExternalURL:   nil,
+				InstanceStore: dbstore,
+				Images:        &state.NoopImageService{},
+				Clock:         clk,
+				Historian:     &state.FakeHistorian{},
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg)
+			st := state.NewManager(cfg, state.NewNoopPersister())
 			st.Warm(ctx, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := dbstore.ListAlertInstances(ctx, q)
@@ -1863,17 +1905,16 @@ func TestResetStateByRuleUID(t *testing.T) {
 			clk := clock.NewMock()
 			clk.Set(time.Now())
 			cfg := state.ManagerCfg{
-				Metrics:                 metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-				ExternalURL:             nil,
-				InstanceStore:           dbstore,
-				Images:                  &state.NoopImageService{},
-				Clock:                   clk,
-				Historian:               fakeHistorian,
-				MaxStateSaveConcurrency: 1,
-				Tracer:                  tracing.InitializeTracerForTest(),
-				Log:                     log.New("ngalert.state.manager"),
+				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+				ExternalURL:   nil,
+				InstanceStore: dbstore,
+				Images:        &state.NoopImageService{},
+				Clock:         clk,
+				Historian:     fakeHistorian,
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg)
+			st := state.NewManager(cfg, state.NewNoopPersister())
 			st.Warm(ctx, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := dbstore.ListAlertInstances(ctx, q)

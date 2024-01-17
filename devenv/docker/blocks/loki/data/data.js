@@ -47,12 +47,12 @@ async function sleep(duration) {
   });
 }
 
-async function lokiSendLogLine(timestampNs, line, tags, nonIndexed = {}) {
+async function lokiSendLogLine(timestampNs, line, tags, structuredMetadata = {}) {
   const data = {
     streams: [
       {
         stream: tags,
-        values: [[timestampNs, line, nonIndexed]],
+        values: [[timestampNs, line, structuredMetadata]],
       },
     ],
   };
@@ -66,6 +66,18 @@ async function lokiSendLogLine(timestampNs, line, tags, nonIndexed = {}) {
 function getSineValue(counter, loopLength) {
   // we try to make a sine-wave, where one full "loop" takes loopLength steps
   return Math.sin((Math.PI * 2 * counter) / loopLength);
+}
+
+function fakeTraceId() {
+  let traceId = '';
+  const chars = 'abcdef0123456789';
+  const idLength = 12;
+  let i = 0;
+  while (i < idLength) {
+    traceId += chars.charAt(Math.floor(Math.random() * chars.length));
+    i += 1;
+  }
+  return traceId;
 }
 
 function getRandomLogItem(counter) {
@@ -176,8 +188,8 @@ async function sendOldLogs() {
     const timestampNs = `${timestampMs}${getRandomNanosecPart()}`;
     globalCounter += 1;
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'old', place:'moon', ...sharedLabels});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'old', place:'luna', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'old', place:'moon', ...sharedLabels}, {structuredMetadataKey: 'value', traceId: fakeTraceId()});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'old', place:'luna', ...sharedLabels}, {structuredMetadataKey: 'value', traceId: fakeTraceId()});
   };
 }
 
@@ -187,8 +199,8 @@ async function sendNewLogs() {
     const nowMs = new Date().getTime();
     const timestampNs = `${nowMs}${getRandomNanosecPart()}`;
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels}, {nonIndexed: 'value'});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'new', place:'luna', ...sharedLabels}, {nonIndexed: 'value'});
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels}, {structuredMetadataKey: 'value', traceId: fakeTraceId()});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'new', place:'luna', ...sharedLabels}, {structuredMetadataKey: 'value', traceId: fakeTraceId()});
     const sleepDuration  = 200 + Math.random() * 800; // between 0.2 and 1 seconds
     await sleep(sleepDuration);
   }

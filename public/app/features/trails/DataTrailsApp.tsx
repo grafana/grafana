@@ -10,6 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
@@ -35,9 +36,9 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
       <Switch>
         <Route
           exact={true}
-          path="/data-trails"
+          path="/explore/metrics"
           render={() => (
-            <Page navId="data-trails" layout={PageLayoutType.Custom}>
+            <Page navId="explore/metrics" layout={PageLayoutType.Custom}>
               <div className={styles.customPage}>
                 <home.Component model={home} />
               </div>
@@ -46,9 +47,9 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
         />
         <Route
           exact={true}
-          path="/data-trails/trail"
+          path="/explore/metrics/trail"
           render={() => (
-            <Page navId="data-trails" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
+            <Page navId="explore/metrics" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
               <div className={styles.customPage}>
                 <DataTrailView trail={trail} />
               </div>
@@ -66,6 +67,7 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
   useEffect(() => {
     if (!isInitialized) {
       getUrlSyncManager().initSync(trail);
+      getTrailStore().setRecentTrail(trail);
       setIsInitialized(true);
     }
   }, [trail, isInitialized]);
@@ -83,10 +85,7 @@ export function getDataTrailsApp() {
   if (!dataTrailsApp) {
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),
-      home: new DataTrailsHome({
-        recent: [],
-        bookmarks: [],
-      }),
+      home: new DataTrailsHome({}),
     });
   }
 

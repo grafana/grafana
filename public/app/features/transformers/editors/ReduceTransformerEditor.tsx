@@ -58,7 +58,7 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
 
   return (
     <>
-      <InlineField label="Mode" aria-label={selectors.components.Transforms.Reduce.modeLabel} grow labelWidth={16}>
+      <InlineField label="Mode" data-testid={selectors.components.Transforms.Reduce.modeLabel} grow labelWidth={16}>
         <Select
           options={modes}
           value={modes.find((v) => v.value === options.mode) || modes[0]}
@@ -67,7 +67,7 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
       </InlineField>
       <InlineField
         label="Calculations"
-        aria-label={selectors.components.Transforms.Reduce.calculationsLabel}
+        data-testid={selectors.components.Transforms.Reduce.calculationsLabel}
         grow
         labelWidth={16}
       >
