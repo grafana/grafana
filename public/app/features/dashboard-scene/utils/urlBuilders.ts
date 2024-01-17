@@ -72,7 +72,9 @@ export function getEditPanelUrl(panelId: number) {
 }
 
 export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect: vizPanel.state.key, inspectTab });
+  const inspect = vizPanel.state.key?.replace('-view', '');
+
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect, inspectTab });
 }
 
 export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {
