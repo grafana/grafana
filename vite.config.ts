@@ -24,8 +24,8 @@ export default defineConfig({
   },
   plugins: [react(), angularHtmlImport()],
   optimizeDeps: {
-    // fix for $ is not a function
-    exclude: ['jquery'],
+    // fixes for dependencies that don't support esm
+    include: ['jquery'],
   },
   resolve: {
     alias: [
