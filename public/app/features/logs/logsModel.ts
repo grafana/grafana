@@ -46,7 +46,7 @@ import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
-import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
+import { filterDuplicates, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -387,7 +387,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
   const flatAllLabels = allLabels.flat();
   const commonLabels = flatAllLabels.length > 0 ? findCommonLabels(flatAllLabels) : {};
 
-  const rows: LogRowModel[] = [];
+  let rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
@@ -455,6 +455,11 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       rows.push(row);
     }
+  }
+
+  // Until nanosecond precision for requests is supported, we need to filter possible duplicates
+  if (config.featureToggles.logsInfiniteScrolling) {
+    rows = filterDuplicates(rows);
   }
 
   // Meta data to display in status
