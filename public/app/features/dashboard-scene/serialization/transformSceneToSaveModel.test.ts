@@ -31,6 +31,7 @@ import { reduceTransformRegistryItem } from 'app/features/transformers/editors/R
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -185,6 +186,7 @@ describe('transformSceneToSaveModel', () => {
           time_options: ['5m', '15m', '30m'],
           hidden: true,
         },
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
       };
       const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
@@ -817,15 +819,14 @@ describe('transformSceneToSaveModel', () => {
         expect(result.panels?.[0].gridPos).toEqual({ w: 24, x: 0, y: 0, h: 20 });
       });
 
-      // TODO: Uncomment when we support links
-      // it('should remove links', async () => {
-      //   const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
-      //   activateFullSceneTree(scene);
-      //   const snapshot = transformSceneToSaveModel(scene, true);
-      //   expect(snapshot.links?.length).toBe(1);
-      //   const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
-      //   expect(result.links?.length).toBe(0);
-      // });
+      it('should remove links', async () => {
+        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+        activateFullSceneTree(scene);
+        const snapshot = transformSceneToSaveModel(scene, true);
+        expect(snapshot.links?.length).toBe(1);
+        const result = trimDashboardForSnapshot('Snap title', getTimeRange({ from: 'now-6h', to: 'now' }), snapshot);
+        expect(result.links?.length).toBe(0);
+      });
     });
   });
 });
