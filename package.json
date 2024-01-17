@@ -57,7 +57,7 @@
     "ci:test-frontend": "yarn run test:ci",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
     "betterer": "betterer --tsconfig ./scripts/cli/tsconfig.json",
-    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
+    "betterer:stats": "node ./scripts/cli/reportBettererStats.mjs",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
     "betterer:ci": "betterer ci --tsconfig ./scripts/cli/tsconfig.json",
     "plugin:build": "nx run-many -t build --projects='tag:scope:plugin'",
