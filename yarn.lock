@@ -12922,7 +12922,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"croact@npm:^1.0.4":
+"croact@npm:1.0.4, croact@npm:^1.0.4":
   version: 1.0.4
   resolution: "croact@npm:1.0.4"
   dependencies:
