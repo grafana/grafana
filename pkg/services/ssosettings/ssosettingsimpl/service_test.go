@@ -387,7 +387,9 @@ func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
 			setup: func(env testEnv) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
 				env.fallbackStrategy.ExpectedIsMatch = true
-				env.fallbackStrategy.ExpectedConfig = map[string]any{"enabled": false, "secret": "secret",
+				env.fallbackStrategy.ExpectedConfig = map[string]any{
+					"enabled":       false,
+					"secret":        "secret",
 					"client_secret": "client_secret",
 					"client_id":     "client_id"}
 			},

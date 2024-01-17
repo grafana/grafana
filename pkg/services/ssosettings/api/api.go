@@ -44,9 +44,9 @@ func ProvideApi(
 }
 
 // generateFNVETag computes a FNV hash-based ETag for the SSOSettings struct
-func generateFNVETag(SSOSettings *models.SSOSettings) (string, error) {
+func generateFNVETag(input any) (string, error) {
 	hasher := fnv.New64()
-	data, err := json.Marshal(SSOSettings)
+	data, err := json.Marshal(input)
 	if err != nil {
 		return "", err
 	}
@@ -87,14 +87,18 @@ func (api *Api) RegisterAPIEndpoints() {
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
-// 404: notFoundError
 func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
 	providers, err := api.getAuthorizedList(c.Req.Context(), c.SignedInUser)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get providers", err)
+		return response.Error(http.StatusInternalServerError, "Failed to list all providers settings", err)
 	}
 
-	return response.JSON(http.StatusOK, providers)
+	etag, err := generateFNVETag(providers)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to list all providers settings", err)
+	}
+
+	return response.JSON(http.StatusOK, providers).SetHeader("ETag", etag)
 }
 
 func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettings, error) {
@@ -118,7 +122,6 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 
 		authorizedProviders = append(authorizedProviders, provider)
 
-		// Colin TODO: generate ETag for each provider
 	}
 
 	return authorizedProviders, nil

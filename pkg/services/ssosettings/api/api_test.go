@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -407,7 +408,80 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 			expectedServiceCall: true,
 			expectedStatusCode:  http.StatusOK,
 		},
-		// Colin TODO: add additional tests
+		{
+			desc:                "fails when action doesn't match",
+			action:              "settings:write",
+			scope:               "settings:auth.azuread:*",
+			expectedResult:      nil,
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:   "successfully lists SSO settings when scope doesn't match", // TODO: why is this successful?
+			action: "settings:read",
+			scope:  "settings:auth.azuread:write",
+			expectedResult: []*models.SSOSettings{
+				{
+					ID:        "1",
+					Provider:  "azuread",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.DB,
+				},
+				{
+					ID:        "2",
+					Provider:  "github",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.DB,
+				},
+			},
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusOK,
+		},
+		{
+			desc:   "successfully lists SSO settings when scope contains another provider", // TODO: check that only github settings are returned
+			action: "settings:read",
+			scope:  "settings:auth.github:*",
+			expectedResult: []*models.SSOSettings{
+				{
+					ID:        "1",
+					Provider:  "azuread",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.DB,
+				},
+				{
+					ID:        "2",
+					Provider:  "github",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.DB,
+				},
+			},
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusOK,
+		},
+		{
+			desc:                "fails with internal server error when service returns an error",
+			action:              "settings:read",
+			scope:               "settings:auth.azuread:*",
+			expectedResult:      nil,
+			expectedError:       errors.New("something went wrong"),
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusInternalServerError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -431,8 +505,30 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
 
 			if tt.expectedError == nil {
-				var data []models.SSOSettings
-				require.NoError(t, json.NewDecoder(res.Body).Decode(&data))
+				bodyBytes, err := io.ReadAll(res.Body)
+				if err != nil {
+					t.Fatalf("Failed to read response body: %v", err)
+				}
+				res.Body.Close()
+
+				bodyString := string(bodyBytes)
+				t.Logf("Response Body: %s", bodyString)
+
+				var data []*models.SSOSettings
+				err = json.Unmarshal(bodyBytes, &data)
+				if err != nil {
+					var accessErrorResponse struct {
+						AccessErrorID string `json:"accessErrorId"`
+						Message       string `json:"message"`
+						Title         string `json:"title"`
+					}
+					err = json.Unmarshal(bodyBytes, &accessErrorResponse)
+					if err != nil {
+						t.Fatalf("Failed to unmarshal response body into accessErrorResponse: %v", err)
+					}
+
+					require.Equal(t, "You'll need additional permissions to perform this action. Permissions needed: settings:read", accessErrorResponse.Message)
+				}
 			}
 
 			require.NoError(t, res.Body.Close())
