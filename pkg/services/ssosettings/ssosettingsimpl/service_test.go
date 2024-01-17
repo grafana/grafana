@@ -314,26 +314,38 @@ func TestSSOSettingsService_List(t *testing.T) {
 				env.store.ExpectedSSOSettings = []*models.SSOSettings{
 					{
 						Provider: "github",
-						Settings: map[string]any{"enabled": true},
-						Source:   models.DB,
+						Settings: map[string]any{
+							"enabled":       true,
+							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+						},
+						Source: models.DB,
 					},
 					{
 						Provider: "okta",
-						Settings: map[string]any{"enabled": false},
-						Source:   models.DB,
+						Settings: map[string]any{
+							"enabled":      false,
+							"other_secret": base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+						},
+						Source: models.DB,
 					},
 				}
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+
 				env.fallbackStrategy.ExpectedIsMatch = true
 				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
 					"github": {
 						"enabled":       false,
 						"client_id":     "client_id",
-						"client_secret": "client_secret",
+						"client_secret": "secret1",
+						"token_url":     "token_url",
 					},
 					"okta": {
 						"enabled":       false,
 						"client_id":     "client_id",
-						"client_secret": "client_secret",
+						"client_secret": "coming-from-system",
+						"other_secret":  "secret2",
+						"token_url":     "token_url",
 					},
 					"gitlab": {
 						"enabled": false,
@@ -358,7 +370,8 @@ func TestSSOSettingsService_List(t *testing.T) {
 					Settings: map[string]any{
 						"enabled":       true,
 						"client_id":     "client_id",
-						"client_secret": "client_secret",
+						"client_secret": "decrypted-client-secret", // client_secret is coming from the database, must be decrypted first
+						"token_url":     "token_url",
 					},
 					Source: models.DB,
 				},
@@ -367,7 +380,9 @@ func TestSSOSettingsService_List(t *testing.T) {
 					Settings: map[string]any{
 						"enabled":       false,
 						"client_id":     "client_id",
-						"client_secret": "client_secret",
+						"client_secret": "coming-from-system", // client_secret is coming from the system, must not be decrypted
+						"other_secret":  "decrypted-other-secret",
+						"token_url":     "token_url",
 					},
 					Source: models.DB,
 				},
