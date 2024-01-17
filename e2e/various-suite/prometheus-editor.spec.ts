@@ -45,12 +45,12 @@ function navigateToEditor(editorType: editorType, name: string): void {
 describe('Prometheus query editor', () => {
   it('should have a kickstart component', () => {
     navigateToEditor('Code', 'prometheus');
-    e2e.components.QueryBuilder.queryPatterns().scrollIntoView().should('exist').click();
+    e2e.components.QueryBuilder.queryPatterns().scrollIntoView().should('exist');
   });
 
   it('should have an explain component', () => {
     navigateToEditor('Code', 'prometheus');
-    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.explain}`).scrollIntoView().should('exist');
+    e2e.components.DataSource.Prometheus.queryEditor.explain().scrollIntoView().should('exist');
   });
 
   it('should have an editor toggle component', () => {
@@ -80,6 +80,8 @@ describe('Prometheus query editor', () => {
 
       getResources();
 
+      e2e.components.DataSource.Prometheus.queryEditor.code.queryField().should('exist');
+
       e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser
         .openButton()
         .contains('Metrics browser')
@@ -92,6 +94,29 @@ describe('Prometheus query editor', () => {
       e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useAsRateQuery().should('exist');
       e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.validateSelector().should('exist');
       e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.clear().should('exist');
+    });
+
+    it('selects a metric in the metrics browser and uses the query', () => {
+      navigateToEditor('Code', 'prometheusCode');
+
+      getResources();
+
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser
+        .openButton()
+        .contains('Metrics browser')
+        .click();
+
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric().should('exist').type('met');
+
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser
+        .metricList()
+        .should('exist')
+        .contains('metric1')
+        .click();
+
+      e2e.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useQuery().should('exist').click();
+
+      e2e.components.DataSource.Prometheus.queryEditor.code.queryField().should('exist').contains('metric1');
     });
   });
 
