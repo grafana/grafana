@@ -43,26 +43,22 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
         options: sortOptions,
       },
     })
-    .addSliderInput({
+    .addNumberInput({
       path: 'tooltip.maxWidth',
       name: 'Max width',
       category,
-      description: 'Maximum tooltip width',
       settings: {
-        min: 0,
-        max: 1024,
-        step: 1,
-      },
+        integer: true,
+        placeholder: '300',
+      }
     })
-    .addSliderInput({
+    .addNumberInput({
       path: 'tooltip.maxHeight',
       name: 'Max height',
       category,
-      description: 'Maximum tooltip height',
       settings: {
-        min: 0,
-        max: 1024,
-        step: 1,
-      },
+        integer: true,
+        placeholder: '600',
+      }
     });
 }

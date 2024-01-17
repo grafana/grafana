@@ -11,8 +11,8 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-export const DEFAULT_TOOLTIP_WIDTH = 280;
-export const DEFAULT_TOOLTIP_HEIGHT = 280;
+export const DEFAULT_TOOLTIP_WIDTH = 300;
+export const DEFAULT_TOOLTIP_HEIGHT = 600;
 
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {
@@ -113,8 +113,8 @@ export const TooltipPlugin2 = ({
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  maxWidth = maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
-  maxHeight = maxHeight ?? DEFAULT_TOOLTIP_HEIGHT;
+  maxWidth ??= DEFAULT_TOOLTIP_WIDTH;
+  maxHeight ??= DEFAULT_TOOLTIP_HEIGHT;
   const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
   const renderRef = useRef(render);
@@ -497,7 +497,6 @@ const getStyles = (theme: GrafanaTheme2, maxWidth: number, maxHeight: number) =>
     userSelect: 'text',
     maxWidth: `${maxWidth}px`,
     maxHeight: `${maxHeight}px`,
-    height: 'auto',
     overflowY: 'auto',
   }),
   pinned: css({
