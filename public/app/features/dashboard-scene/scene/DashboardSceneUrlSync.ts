@@ -95,7 +95,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      this._scene.onEnterEditMode();
+      // If we are not in editing (for example after full page reload)
+      if (!isEditing) {
+        this._scene.onEnterEditMode();
+      }
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;

@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -173,8 +173,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.stopTrackingChanges();
     // Stop url sync before updating url
     this.stopUrlSync();
-    // Now we can update url
-    locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
+
+    // Now we can update urls
+    // We are updating url and removing editview and editPanel.
+    // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
+    // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
+    locationService.replace(
+      locationUtil.getUrlForPartial(this._initialUrlState!, {
+        editPanel: null,
+        editview: null,
+        inspect: null,
+        inspectTab: null,
+      })
+    );
+
+    // locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
     // Update state and disable editing
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
