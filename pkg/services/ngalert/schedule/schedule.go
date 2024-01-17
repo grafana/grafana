@@ -81,6 +81,7 @@ type schedule struct {
 
 	appURL               *url.URL
 	disableGrafanaFolder bool
+	jitterEvaluations    JitterStrategy
 
 	metrics *metrics.Scheduler
 
@@ -104,6 +105,7 @@ type SchedulerCfg struct {
 	MinRuleInterval      time.Duration
 	DisableGrafanaFolder bool
 	AppURL               *url.URL
+	JitterEvaluations    JitterStrategy
 	EvaluatorFactory     eval.EvaluatorFactory
 	RuleStore            RulesStore
 	Metrics              *metrics.Scheduler
@@ -131,6 +133,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		metrics:               cfg.Metrics,
 		appURL:                cfg.AppURL,
 		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
+		jitterEvaluations:     cfg.JitterEvaluations,
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
@@ -293,7 +296,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
-		offset := jitterOffsetInTicks(item, sch.baseInterval)
+		offset := jitterOffsetInTicks(item, sch.baseInterval, sch.jitterEvaluations)
 		isReadyToRun := item.IntervalSeconds != 0 && (tickNum%itemFrequency)-offset == 0
 
 		var folderTitle string

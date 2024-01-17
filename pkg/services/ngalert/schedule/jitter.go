@@ -8,11 +8,23 @@ import (
 	"github.com/prometheus/prometheus/model/labels"
 )
 
+type JitterStrategy int
+
+const (
+	JitterNever JitterStrategy = iota
+	JitterByGroup
+	JitterByRule
+)
+
 // jitterOffsetInTicks gives the jitter offset for a rule, in terms of a number of ticks relative to its interval and a base interval.
 // The resulting number of ticks is non-negative.
-func jitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration) int64 {
+func jitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, strategy JitterStrategy) int64 {
+	if strategy == JitterNever {
+		return 0
+	}
+
 	itemFrequency := r.IntervalSeconds / int64(baseInterval.Seconds())
-	offset := jitterHash(r) % uint64(itemFrequency)
+	offset := jitterHash(r, strategy) % uint64(itemFrequency)
 	// Offset is always nonnegative and less than int64.max, because above we mod by itemFrequency which fits in the positive half of int64.
 	// offset <= itemFrequency <= int64.max
 	// So, this will not overflow and produce a negative offset.
@@ -26,13 +38,17 @@ func jitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration) int6
 	return res
 }
 
-func jitterHash(r *ngmodels.AlertRule) uint64 {
+func jitterHash(r *ngmodels.AlertRule, strategy JitterStrategy) uint64 {
 	l := labels.New(
 		labels.Label{Name: "name", Value: r.RuleGroup},
 		labels.Label{Name: "file", Value: r.NamespaceUID},
 		labels.Label{Name: "orgId", Value: fmt.Sprint(r.OrgID)},
 	)
-	// Labels hash is not guaranteed to be the same across different runs of prom.
-	// Perhaps we should use a stable hash, for grafana HA mode?
+
+	if strategy == JitterByRule {
+		l = labels.New(append(l, labels.Label{
+			Name: "uid", Value: r.UID,
+		})...)
+	}
 	return l.Hash()
 }
