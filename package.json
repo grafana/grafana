@@ -391,7 +391,7 @@
     "reselect": "4.1.8",
     "rxjs": "7.8.1",
     "sass": "link:./public/sass",
-    "selecto": "1.26.0",
+    "selecto": "1.26.3",
     "semver": "7.5.4",
     "slate": "0.47.9",
     "slate-plain-serializer": "0.7.13",
