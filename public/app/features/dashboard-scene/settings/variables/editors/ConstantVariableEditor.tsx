@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { ConstantVariable } from '@grafana/scenes';
 
@@ -11,15 +11,10 @@ interface ConstantVariableEditorProps {
 
 export function ConstantVariableEditor({ variable }: ConstantVariableEditorProps) {
   const { value } = variable.useState();
-  const [constantValue, setConstantValue] = useState<string>(String(value));
 
   const onConstantValueChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setConstantValue(event.currentTarget.value);
+    variable.setState({ value: event.currentTarget.value });
   };
 
-  const onBlur = () => {
-    variable.setState({ value: constantValue });
-  };
-
-  return <ConstantVariableForm constantValue={constantValue} onChange={onConstantValueChange} onBlur={onBlur} />;
+  return <ConstantVariableForm constantValue={String(value)} onChange={onConstantValueChange} />;
 }

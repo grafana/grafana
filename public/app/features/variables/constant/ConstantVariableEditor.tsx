@@ -12,20 +12,11 @@ export class ConstantVariableEditor extends PureComponent<Props> {
     this.props.onPropChange({
       propName: 'query',
       propValue: event.currentTarget.value,
-    });
-  };
-
-  onBlur = (event: FormEvent<HTMLInputElement>) => {
-    this.props.onPropChange({
-      propName: 'query',
-      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
 
   render() {
-    return (
-      <ConstantVariableForm constantValue={this.props.variable.query} onChange={this.onChange} onBlur={this.onBlur} />
-    );
+    return <ConstantVariableForm constantValue={this.props.variable.query} onChange={this.onChange} />;
   }
 }
