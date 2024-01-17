@@ -78,7 +78,6 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
-  useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
@@ -171,4 +170,8 @@ export interface FeatureToggles {
   alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
   alertingPreviewUpgrade?: boolean;
+  enablePluginsTracingByDefault?: boolean;
+  cloudRBACRoles?: boolean;
+  alertingQueryOptimization?: boolean;
+  newFolderPicker?: boolean;
 }

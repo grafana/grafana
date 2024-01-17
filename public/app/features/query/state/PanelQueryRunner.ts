@@ -139,9 +139,14 @@ export class PanelQueryRunner {
 
             if (withFieldConfig && data.series?.length) {
               if (lastConfigRev === this.dataConfigSource.configRev) {
-                const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
-                  | StreamingDataFrame
-                  | undefined;
+                let streamingDataFrame: StreamingDataFrame | undefined;
+
+                for (const frame of data.series) {
+                  if (isStreamingDataFrame(frame)) {
+                    streamingDataFrame = frame;
+                    break;
+                  }
+                }
 
                 if (
                   streamingDataFrame &&

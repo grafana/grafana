@@ -496,203 +496,6 @@ type dataQueryModel struct {
 	queryContext      context.Context
 }
 
-func convertInt64ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(int64))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt64ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt64ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(uint64))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt64ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertInt32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(int32))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(uint32))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertInt16ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(int16))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt16ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int16)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt16ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(uint16))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt16ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint16)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertInt8ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(int8))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt8ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int8)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt8ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(uint8))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt8ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint8)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUnknownToZero(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(0)
-		newField.Append(&value)
-	}
-}
-
-func convertNullableFloat32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*float32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := float64(*iv)
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertFloat32ToFloat64(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := float64(origin.At(i).(float32))
-		newField.Append(&value)
-	}
-}
-
 func convertInt64ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
@@ -886,8 +689,6 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 }
 
 // convertSQLValueColumnToFloat converts timeseries value column to float.
-//
-//nolint:gocyclo
 func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
 	if Index < 0 || Index >= len(frame.Fields) {
 		return frame, fmt.Errorf("metricIndex %d is out of range", Index)
@@ -899,52 +700,18 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 		return frame, nil
 	}
 
-	newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
+	newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, origin.Len())
 	newField.Name = origin.Name
 	newField.Labels = origin.Labels
 
-	switch valueType {
-	case data.FieldTypeInt64:
-		convertInt64ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableInt64:
-		convertNullableInt64ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeUint64:
-		convertUInt64ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableUint64:
-		convertNullableUInt64ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeInt32:
-		convertInt32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableInt32:
-		convertNullableInt32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeUint32:
-		convertUInt32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableUint32:
-		convertNullableUInt32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeInt16:
-		convertInt16ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableInt16:
-		convertNullableInt16ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeUint16:
-		convertUInt16ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableUint16:
-		convertNullableUInt16ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeInt8:
-		convertInt8ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableInt8:
-		convertNullableInt8ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeUint8:
-		convertUInt8ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableUint8:
-		convertNullableUInt8ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeFloat32:
-		convertFloat32ToFloat64(frame.Fields[Index], newField)
-	case data.FieldTypeNullableFloat32:
-		convertNullableFloat32ToFloat64(frame.Fields[Index], newField)
-	default:
-		convertUnknownToZero(frame.Fields[Index], newField)
-		frame.Fields[Index] = newField
-		return frame, fmt.Errorf("metricIndex %d type %s can't be converted to float", Index, valueType)
+	for i := 0; i < origin.Len(); i++ {
+		v, err := origin.NullableFloatAt(i)
+		if err != nil {
+			return frame, err
+		}
+		newField.Set(i, v)
 	}
+
 	frame.Fields[Index] = newField
 
 	return frame, nil

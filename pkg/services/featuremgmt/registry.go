@@ -513,16 +513,6 @@ var (
 			Created:           time.Date(2023, time.June, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "useCachingService",
-			Description:     "When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaOperatorExperienceSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-			AllowSelfServe:  false,
-			Created:         time.Date(2023, time.April, 12, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:           "enableElasticsearchBackendQuerying",
 			Description:    "Enable the processing of queries and responses in the Elasticsearch data source through backend",
 			Stage:          FeatureStageGeneralAvailability,
@@ -753,7 +743,7 @@ var (
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
-			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
+			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
@@ -826,11 +816,11 @@ var (
 		{
 			Name:            "alertingNoDataErrorExecution",
 			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
-			Stage:           FeatureStagePrivatePreview,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
-			Enabled:         true,
+			Expression:      "true", // enabled by default
 			Created:         time.Date(2023, time.August, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1296,6 +1286,40 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "enablePluginsTracingByDefault",
+			Description:     "Enable plugin tracing for all external plugins",
+			FrontendOnly:    false,
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 9, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "cloudRBACRoles",
+			Description:     "Enabled grafana cloud specific RBAC roles",
+			Stage:           FeatureStageExperimental,
+			Owner:           identityAccessTeam,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Created:         time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:           "alertingQueryOptimization",
+			Description:    "Optimizes eligible queries in order to reduce load on datasources",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaAlertingSquad,
+			AllowSelfServe: false,
+			Created:        time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "newFolderPicker",
+			Description:  "Enables the nested folder picker without having nested folders enabled",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Created:      time.Date(2024, time.January, 12, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
