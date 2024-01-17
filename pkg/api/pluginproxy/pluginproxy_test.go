@@ -433,10 +433,10 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			ReqRole: org.RoleAdmin, // Protected by role
 		},
 		{
-			Path:   "projects",
-			Method: "GET",
-			URL:    "http://localhost/api/projects",
-			Action: "plugin-id.projects:read", // Protected by RBAC action
+			Path:      "projects",
+			Method:    "GET",
+			URL:       "http://localhost/api/projects",
+			ReqAction: "plugin-id.projects:read", // Protected by RBAC action
 		},
 	}
 
