@@ -630,4 +630,8 @@ const (
 	// FlagNewFolderPicker
 	// Enables the nested folder picker without having nested folders enabled
 	FlagNewFolderPicker = "newFolderPicker"
+
+	// FlagJitterAlertRules
+	// Distributes alert rule evaluations more evenly over time
+	FlagJitterAlertRules = "jitterAlertRules"
 )

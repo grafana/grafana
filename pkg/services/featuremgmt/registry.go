@@ -1321,5 +1321,17 @@ var (
 			FrontendOnly: true,
 			Created:      time.Date(2024, time.January, 12, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:              "jitterAlertRules",
+			Description:       "Distributes alert rule evaluations more evenly over time",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+			RequiresRestart:   true,
+			Created:           time.Date(2024, time.January, 17, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )
