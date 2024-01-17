@@ -35,10 +35,13 @@ equivalent to the idea with the same name under `core/v1/Service`.
 our `externalname` (`service.grafana.app`) implementation. We register separate `PostStartHooks` 
 using `AddPostStartHookOrDie` on the GenericAPIServer to start the corresponding custom controller as well as 
 requisite informer factories for our own `externalname` Kind.
+4. For now, we bundle apiextensions-apiserver under our aggregator component. This is slightly different from K8s
+where kube-apiserver is called the top-level component and controlplane, aggregator and apiextensions-apiserver
+live under that instead.
 
 ### Gotchas (Pay Attention)
 
-1. `grafana-aggregator` uses file storage under `/tmp`. System restarts won't preserve any configuration.
-   1. Ensure any `externalname` and `APIService` configuration is in place post system restarts when developing locally.
+1. `grafana-aggregator` uses file storage under `data/grafana-aggregator` (`apiregistration.k8s.io`,
+`service.grafana.app`) and `data/grafana-apiextensions` (`apiextensions.k8s.io`).
 2. Since `grafana-aggregator` outputs configuration (TLS and kubeconfig) that is used in the invocation of aggregated
   servers, ensure you start the aggregated service after launching the aggregator during local development.
