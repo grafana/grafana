@@ -63,21 +63,21 @@ describe('PromQueryEditorByApp', () => {
   it('should render editor selector for unkown apps', () => {
     setup(CoreApp.Unknown);
 
-    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(screen.getByTestId('data-testid QueryEditorModeToggle')).toBeInTheDocument();
     expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
   it('should render editor selector for explore', () => {
     setup(CoreApp.Explore);
 
-    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(screen.getByTestId('data-testid QueryEditorModeToggle')).toBeInTheDocument();
     expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
   it('should render editor selector for dashboard', () => {
     setup(CoreApp.Dashboard);
 
-    expect(screen.getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(screen.getByTestId('data-testid QueryEditorModeToggle')).toBeInTheDocument();
     expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 });
