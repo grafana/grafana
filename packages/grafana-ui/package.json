@@ -184,7 +184,7 @@
     "storybook": "7.4.5",
     "storybook-addon-turbo-build": "2.0.1",
     "storybook-dark-mode": "3.0.1",
-    "style-loader": "3.3.3",
+    "style-loader": "3.3.4",
     "typescript": "5.2.2",
     "webpack": "5.89.0"
   },
