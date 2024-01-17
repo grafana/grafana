@@ -2433,10 +2433,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/settings/variables/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/dashboard-scene/settings/version-history/useDashboardRestore.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/features/dashboard-scene/utils/DashboardModelCompatibilityWrapper.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2760,45 +2756,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/features/dashboard/components/VersionHistory/DiffGroup.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/DiffTitle.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/DiffValues.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/DiffViewer.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/VersionHistoryComparison.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/VersionHistoryHeader.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/VersionHistoryTable.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/features/dashboard/components/VersionHistory/useDashboardRestore.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/utils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/containers/DashboardPage.tsx:5381": [
@@ -7011,9 +6970,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/features/dashboard/components/SubMenu/SubMenuItems.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/VersionHistoryTable.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/features/datasources/components/BasicSettings.tsx:5381": [
