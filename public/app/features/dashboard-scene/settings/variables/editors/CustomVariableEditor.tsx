@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { FormEvent } from 'react';
 
 import { CustomVariable } from '@grafana/scenes';
 
@@ -10,42 +10,32 @@ interface CustomVariableEditorProps {
 }
 
 export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEditorProps) {
-  const { query: initialQuery, isMulti, allValue: initialAllValue, includeAll } = variable.useState();
-  const [query, setQuery] = useState(initialQuery);
-  const [allValue, setAllValue] = useState(initialAllValue);
+  const { query, isMulti, allValue, includeAll } = variable.useState();
 
-  const onQueryChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
-    setQuery(event.currentTarget.value);
-  };
-  const onAllValueChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setAllValue(event.currentTarget.value);
-  };
-  const onMultiChange = (event: React.FormEvent<HTMLInputElement>) => {
+  const onMultiChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ isMulti: event.currentTarget.checked });
   };
-  const onIncludeAllChange = (event: React.FormEvent<HTMLInputElement>) => {
+  const onIncludeAllChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ includeAll: event.currentTarget.checked });
   };
-  const onQueryBlur = () => {
-    variable.setState({ query });
+  const onQueryChange = (event: FormEvent<HTMLTextAreaElement>) => {
+    variable.setState({ query: event.currentTarget.value });
     onRunQuery();
   };
-  const onAllValueBlur = () => {
-    variable.setState({ allValue });
+  const onAllValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allValue: event.currentTarget.value });
   };
 
   return (
     <CustomVariableForm
-      query={query}
+      query={query ?? ''}
       multi={!!isMulti}
-      allValue={allValue}
+      allValue={allValue ?? ''}
       includeAll={!!includeAll}
-      onQueryChange={onQueryChange}
       onMultiChange={onMultiChange}
       onIncludeAllChange={onIncludeAllChange}
+      onQueryChange={onQueryChange}
       onAllValueChange={onAllValueChange}
-      onQueryBlur={onQueryBlur}
-      onAllValueBlur={onAllValueBlur}
     />
   );
 }

@@ -29,8 +29,6 @@ export function CustomVariableForm({
   onMultiChange,
   onIncludeAllChange,
   onAllValueChange,
-  onQueryBlur,
-  onAllValueBlur,
 }: CustomVariableFormProps) {
   return (
     <>
@@ -38,10 +36,9 @@ export function CustomVariableForm({
 
       <VariableTextAreaField
         name="Values separated by comma"
-        value={query}
+        defaultValue={query}
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
-        onChange={onQueryChange}
-        onBlur={onQueryBlur}
+        onBlur={onQueryChange}
         required
         width={52}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
@@ -54,7 +51,6 @@ export function CustomVariableForm({
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
-        onAllValueBlur={onAllValueBlur}
       />
     </>
   );

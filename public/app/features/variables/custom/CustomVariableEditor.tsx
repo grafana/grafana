@@ -20,18 +20,11 @@ interface DispatchProps {
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class CustomVariableEditorUnconnected extends PureComponent<Props> {
-  onChange = (event: FormEvent<HTMLTextAreaElement>) => {
-    this.props.onPropChange({
-      propName: 'query',
-      propValue: event.currentTarget.value,
-    });
-  };
-
   onSelectionOptionsChange = async ({ propName, propValue }: OnPropChangeArguments<VariableWithMultiSupport>) => {
     this.props.onPropChange({ propName, propValue, updateOptions: true });
   };
 
-  onBlur = (event: FormEvent<HTMLTextAreaElement>) => {
+  onQueryChange = (event: FormEvent<HTMLTextAreaElement>) => {
     this.props.onPropChange({
       propName: 'query',
       propValue: event.currentTarget.value,
@@ -46,7 +39,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
         multi={this.props.variable.multi}
         allValue={this.props.variable.allValue}
         includeAll={this.props.variable.includeAll}
-        onQueryChange={this.onChange}
+        onQueryChange={this.onQueryChange}
         onMultiChange={(event) =>
           this.onSelectionOptionsChange({ propName: 'multi', propValue: event.currentTarget.checked })
         }
@@ -56,7 +49,6 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
         onAllValueChange={(event) =>
           this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
         }
-        onQueryBlur={this.onBlur}
       />
     );
   }

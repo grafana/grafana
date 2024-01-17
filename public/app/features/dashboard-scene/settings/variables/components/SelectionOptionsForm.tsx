@@ -12,7 +12,6 @@ interface SelectionOptionsFormProps {
   onMultiChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
-  onAllValueBlur?: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function SelectionOptionsForm({
@@ -22,7 +21,6 @@ export function SelectionOptionsForm({
   onMultiChange,
   onIncludeAllChange,
   onAllValueChange,
-  onAllValueBlur,
 }: SelectionOptionsFormProps) {
   return (
     <VerticalGroup spacing="md" height="inherit">
@@ -42,9 +40,8 @@ export function SelectionOptionsForm({
       />
       {includeAll && (
         <VariableTextField
-          value={allValue ?? ''}
-          onChange={onAllValueChange}
-          onBlur={onAllValueBlur}
+          defaultValue={allValue ?? ''}
+          onBlur={onAllValueChange}
           name="Custom all value"
           placeholder="blank = auto"
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2}

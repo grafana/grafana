@@ -10,8 +10,6 @@ describe('CustomVariableForm', () => {
   const onMultiChange = jest.fn();
   const onIncludeAllChange = jest.fn();
   const onAllValueChange = jest.fn();
-  const onQueryBlur = jest.fn();
-  const onAllValueBlur = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -28,8 +26,6 @@ describe('CustomVariableForm', () => {
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
-        onQueryBlur={onQueryBlur}
-        onAllValueBlur={onAllValueBlur}
       />
     );
 
@@ -65,8 +61,6 @@ describe('CustomVariableForm', () => {
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
-        onQueryBlur={onQueryBlur}
-        onAllValueBlur={onAllValueBlur}
       />
     );
 
@@ -81,17 +75,15 @@ describe('CustomVariableForm', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
     );
 
-    fireEvent.change(queryInput, { target: { value: 'test query' } });
     fireEvent.click(multiCheckbox);
     fireEvent.click(includeAllCheckbox);
-    fireEvent.change(allValueInput, { target: { value: 'test value' } });
+    fireEvent.change(queryInput, { currentTarget: { value: 'test query' } });
+    fireEvent.change(allValueInput, { currentTarget: { value: 'test value' } });
 
-    expect(onQueryChange).toHaveBeenCalledTimes(1);
     expect(onMultiChange).toHaveBeenCalledTimes(1);
     expect(onIncludeAllChange).toHaveBeenCalledTimes(1);
-    expect(onAllValueChange).toHaveBeenCalledTimes(1);
-    expect(onQueryBlur).not.toHaveBeenCalled();
-    expect(onAllValueBlur).not.toHaveBeenCalled();
+    expect(onQueryChange).not.toHaveBeenCalledTimes(1);
+    expect(onAllValueChange).not.toHaveBeenCalledTimes(1);
   });
 
   it('should call the correct event handlers on input blur', () => {
@@ -105,8 +97,6 @@ describe('CustomVariableForm', () => {
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
-        onQueryBlur={onQueryBlur}
-        onAllValueBlur={onAllValueBlur}
       />
     );
 
@@ -118,11 +108,9 @@ describe('CustomVariableForm', () => {
     fireEvent.blur(queryInput);
     fireEvent.blur(allValueInput);
 
-    expect(onQueryBlur).toHaveBeenCalledTimes(1);
-    expect(onAllValueBlur).toHaveBeenCalledTimes(1);
-    expect(onQueryChange).not.toHaveBeenCalled();
+    expect(onQueryChange).toHaveBeenCalled();
+    expect(onAllValueChange).toHaveBeenCalled();
     expect(onMultiChange).not.toHaveBeenCalled();
     expect(onIncludeAllChange).not.toHaveBeenCalled();
-    expect(onAllValueChange).not.toHaveBeenCalled();
   });
 });

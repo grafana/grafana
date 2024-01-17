@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FormEvent } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
@@ -26,11 +26,8 @@ interface VariableEditorFormProps {
 }
 
 export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscardChanges }: VariableEditorFormProps) {
-  const { name: initialName, type, label: initialLabel, description: initialDescription, hide } = variable.useState();
+  const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
-  const [name, setName] = React.useState(initialName ?? '');
-  const [label, setLabel] = React.useState(initialLabel ?? '');
-  const [description, setDescription] = React.useState(initialDescription ?? '');
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
   }, [variable]);
@@ -41,13 +38,10 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
     }
   };
 
-  const onNameChange = (e: React.FormEvent<HTMLInputElement>) => setName(e.currentTarget.value);
-  const onLabelChange = (e: React.FormEvent<HTMLInputElement>) => setLabel(e.currentTarget.value);
-  const onDescriptionChange = (e: React.FormEvent<HTMLTextAreaElement>) => setDescription(e.currentTarget.value);
-
-  const onNameBlur = () => variable.setState({ name });
-  const onLabelBlur = () => variable.setState({ label });
-  const onDescriptionBlur = () => variable.setState({ description });
+  const onNameBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ name: e.currentTarget.value });
+  const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
+  const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
+    variable.setState({ description: e.currentTarget.value });
   const onHideChange = (hide: VariableHide) => variable.setState({ hide });
 
   return (
@@ -57,12 +51,11 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
 
         <VariableLegend>General</VariableLegend>
         <VariableTextField
-          value={name}
-          onBlur={onNameBlur}
-          onChange={onNameChange}
           name="Name"
-          placeholder="Variable name"
           description="The name of the template variable. (Max. 50 characters)"
+          placeholder="Variable name"
+          defaultValue={name ?? ''}
+          onBlur={onNameBlur}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
           maxLength={VariableNameConstraints.MaxSize}
           required
@@ -70,16 +63,14 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
         <VariableTextField
           name="Label"
           description="Optional display name"
-          value={label}
-          onChange={onLabelChange}
           placeholder="Label name"
+          defaultValue={label ?? ''}
           onBlur={onLabelBlur}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
         />
         <VariableTextAreaField
           name="Description"
-          value={description}
-          onChange={onDescriptionChange}
+          defaultValue={description ?? ''}
           placeholder="Descriptive text"
           onBlur={onDescriptionBlur}
           width={52}

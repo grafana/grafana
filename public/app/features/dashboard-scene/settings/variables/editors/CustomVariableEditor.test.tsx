@@ -73,7 +73,7 @@ describe('CustomVariableEditor', () => {
     expect(allValueInput).toBeInTheDocument();
   });
 
-  it('should call update query and re-run query when input loses focus', () => {
+  it('should call update query and re-run query when input loses focus', async () => {
     const variable = new CustomVariable({
       name: 'customVar',
       query: 'test, test2',
@@ -87,8 +87,8 @@ describe('CustomVariableEditor', () => {
     fireEvent.change(queryInput, { target: { value: 'test3, test4' } });
     fireEvent.blur(queryInput);
 
-    expect(variable.state.query).toBe('test3, test4');
     expect(onRunQuery).toHaveBeenCalled();
+    expect(variable.state.query).toBe('test3, test4');
   });
 
   it('should update the variable state when all-custom-value input loses focus', () => {
@@ -106,10 +106,10 @@ describe('CustomVariableEditor', () => {
     const allValueInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
     ) as HTMLInputElement;
-    fireEvent.change(allValueInput, { target: { value: 'new custom all' } });
 
+    fireEvent.change(allValueInput, { target: { value: 'new custom all' } });
     fireEvent.blur(allValueInput);
 
-    expect(variable.state.allValue).toBe(allValueInput.value);
+    expect(variable.state.allValue).toBe('new custom all');
   });
 });
