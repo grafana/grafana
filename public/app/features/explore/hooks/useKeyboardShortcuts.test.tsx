@@ -6,7 +6,6 @@ import { getAppEvents } from '@grafana/runtime';
 import {
   AbsoluteTimeEvent,
   CopyTimeEvent,
-  PasteTimeContext,
   PasteTimeEvent,
   ShiftTimeEvent,
   ShiftTimeEventDirection,
@@ -147,7 +146,7 @@ describe('useKeyboardShortcuts', () => {
     const toValue = 'now';
 
     mockClipboard.readText.mockResolvedValue(JSON.stringify({ from: fromValue, to: toValue }));
-    getAppEvents().publish(new PasteTimeEvent({ updateUrl: false, context: PasteTimeContext.Explore }));
+    getAppEvents().publish(new PasteTimeEvent({ updateUrl: false }));
 
     await waitFor(() => {
       const raw = store.getState().explore.panes.left!.range.raw;
