@@ -31,7 +31,7 @@ func JitterStrategyFromToggles(toggles featuremgmt.FeatureToggles) JitterStrateg
 }
 
 // jitterOffsetInTicks gives the jitter offset for a rule, in terms of a number of ticks relative to its interval and a base interval.
-// The resulting number of ticks is non-negative.
+// The resulting number of ticks is non-negative. We assume the rule is well-formed and has an IntervalSeconds greater to or equal than baseInterval.
 func jitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, strategy JitterStrategy) int64 {
 	if strategy == JitterNever {
 		return 0
