@@ -42,10 +42,10 @@ func jitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, stra
 	// Offset is always nonnegative and less than int64.max, because above we mod by itemFrequency which fits in the positive half of int64.
 	// offset <= itemFrequency <= int64.max
 	// So, this will not overflow and produce a negative offset.
-	//
+	res := int64(offset)
+
 	// Regardless, take an absolute value anyway for an extra layer of safety in case the above logic ever changes.
 	// Our contract requires that the result is nonnegative and less than int64.max.
-	res := int64(offset)
 	if res < 0 {
 		return -res
 	}
