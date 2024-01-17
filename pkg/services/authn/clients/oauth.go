@@ -112,7 +112,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		if err != nil {
 			return nil, errOAuthMissingPKCE.Errorf("no pkce cookie found: %w", err)
 		}
-		opts = append(opts, oauth2.SetAuthURLParam(codeVerifierParamName, pkceCookie.Value))
+		opts = append(opts, oauth2.VerifierOption(pkceCookie.Value))
 	}
 
 	clientCtx := context.WithValue(ctx, oauth2.HTTPClient, c.httpClient)
@@ -184,16 +184,13 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 
 	var plainPKCE string
 	if c.oauthCfg.UsePKCE {
-		pkce, hashedPKCE, err := genPKCECode()
+		verifier, err := genPKCECodeVerifier()
 		if err != nil {
 			return nil, errOAuthGenPKCE.Errorf("failed to generate pkce: %w", err)
 		}
 
-		plainPKCE = pkce
-		opts = append(opts,
-			oauth2.SetAuthURLParam(codeChallengeParamName, hashedPKCE),
-			oauth2.SetAuthURLParam(codeChallengeMethodParamName, codeChallengeMethod),
-		)
+		plainPKCE = verifier
+		opts = append(opts, oauth2.S256ChallengeOption(plainPKCE))
 	}
 
 	state, hashedSate, err := genOAuthState(c.cfg.SecretKey, c.oauthCfg.ClientSecret)
@@ -233,8 +230,8 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester, info *login
 	return &authn.Redirect{URL: redirctURL}, true
 }
 
-// genPKCECode returns a random URL-friendly string and it's base64 URL encoded SHA256 digest.
-func genPKCECode() (string, string, error) {
+// genPKCECodeVerifier returns code verifier that 128 characters random URL-friendly string.
+func genPKCECodeVerifier() (string, error) {
 	// IETF RFC 7636 specifies that the code verifier should be 43-128
 	// characters from a set of unreserved URI characters which is
 	// almost the same as the set of characters in base64url.
@@ -249,14 +246,12 @@ func genPKCECode() (string, string, error) {
 	raw := make([]byte, 96)
 	_, err := rand.Read(raw)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	ascii := make([]byte, 128)
 	base64.RawURLEncoding.Encode(ascii, raw)
 
-	shasum := sha256.Sum256(ascii)
-	pkce := base64.RawURLEncoding.EncodeToString(shasum[:])
-	return string(ascii), pkce, nil
+	return string(ascii), nil
 }
 
 func genOAuthState(secret, seed string) (string, string, error) {

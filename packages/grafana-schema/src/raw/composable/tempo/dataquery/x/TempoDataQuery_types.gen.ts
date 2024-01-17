@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.4.0-pre";
+export const pluginVersion = "%VERSION%";
 
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
