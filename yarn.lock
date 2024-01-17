@@ -10279,6 +10279,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/html-minifier-terser@npm:^7":
+  version: 7.0.2
+  resolution: "@types/html-minifier-terser@npm:7.0.2"
+  checksum: 10/312d9285b034538fc8c851d99b5cc47f83e802f0dccc1be4adf10d4ee881d92d14f97ca1862313a827b844a7f71db6ab80198d7741f1747a9bcf7de77181ce40
+  languageName: node
+  linkType: hard
+
 "@types/ini@npm:^4":
   version: 4.1.1
   resolution: "@types/ini@npm:4.1.1"
@@ -13413,7 +13420,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clean-css@npm:^5.1.5":
+"clean-css@npm:^5.1.5, clean-css@npm:~5.3.2":
   version: 5.3.3
   resolution: "clean-css@npm:5.3.3"
   dependencies:
@@ -13740,6 +13747,13 @@ __metadata:
   version: 7.2.0
   resolution: "commander@npm:7.2.0"
   checksum: 10/9973af10727ad4b44f26703bf3e9fdc323528660a7590efe3aa9ad5042b4584c0deed84ba443f61c9d6f02dade54a5a5d3c95e306a1e1630f8374ae6db16c06d
+  languageName: node
+  linkType: hard
+
+"commander@npm:^10.0.0":
+  version: 10.0.1
+  resolution: "commander@npm:10.0.1"
+  checksum: 10/8799faa84a30da985802e661cc9856adfaee324d4b138413013ef7f087e8d7924b144c30a1f1405475f0909f467665cd9e1ce13270a2f41b141dab0b7a58f3fb
   languageName: node
   linkType: hard
 
@@ -18257,6 +18271,7 @@ __metadata:
     "@types/google.analytics": "npm:^0.0.46"
     "@types/gtag.js": "npm:^0.0.20"
     "@types/history": "npm:4.7.11"
+    "@types/html-minifier-terser": "npm:^7"
     "@types/ini": "npm:^4"
     "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:3.5.32"
@@ -18355,6 +18370,7 @@ __metadata:
     fishery: "npm:^2.2.2"
     glob: "npm:11.0.1"
     history: "npm:4.10.1"
+    html-minifier-terser: "npm:^7.2.0"
     http-server: "npm:14.1.1"
     i18next: "npm:^24.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
@@ -18823,6 +18839,23 @@ __metadata:
   bin:
     html-minifier-terser: cli.js
   checksum: 10/8362cab367136a727ba1e135e4d261e89a78018028f4bbd890bcf8f90f998fe543787b651ab9d9c904e0caebc427e2b51da96f3f60a4c374455ecd8f98789a8b
+  languageName: node
+  linkType: hard
+
+"html-minifier-terser@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "html-minifier-terser@npm:7.2.0"
+  dependencies:
+    camel-case: "npm:^4.1.2"
+    clean-css: "npm:~5.3.2"
+    commander: "npm:^10.0.0"
+    entities: "npm:^4.4.0"
+    param-case: "npm:^3.0.4"
+    relateurl: "npm:^0.2.7"
+    terser: "npm:^5.15.1"
+  bin:
+    html-minifier-terser: cli.js
+  checksum: 10/7320095dbf08c361b45e855bd840d1d21fe86326afee775503594163532ebaaed9bb1c9dc98232b03c169dc24b56f30c294d559bca0cade59f9c950a1992db82
   languageName: node
   linkType: hard
 
@@ -29466,7 +29499,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"terser@npm:^5.17.4, terser@npm:^5.26.0, terser@npm:^5.7.2":
+"terser@npm:^5.15.1, terser@npm:^5.17.4, terser@npm:^5.26.0, terser@npm:^5.7.2":
   version: 5.29.2
   resolution: "terser@npm:5.29.2"
   dependencies:

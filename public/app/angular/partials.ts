@@ -1,10 +1,5 @@
-// TODO: Vite has no require.context support yet. Attempt at a workaround below.
-// let templates = (require as any).context('../', true, /\.html$/);
-// templates.keys().forEach((key: string) => {
-//   templates(key);
-// });
-
-// See vite.config.ts angularHtmlImport function for the code that _should_ assist with these templates.
+// TODO: Vite has no require.context support so we're importing them individually here.
+// See the vite.config.ts angularHtmlImport plugin for the code that compiles these templates.
 
 import 'app/angular/panel/partials/query_editor_row.html';
 import 'app/angular/partials/http_settings_next.html';
