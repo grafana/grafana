@@ -5730,21 +5730,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/plugins/datasource/tempo/NativeSearch/NativeSearch.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
     "public/app/plugins/datasource/tempo/NativeSearch/TagsField/TagsField.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/tempo/SearchTraceQLEditor/DurationInput.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/tempo/SearchTraceQLEditor/GroupByField.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/tempo/SearchTraceQLEditor/SearchField.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/plugins/datasource/tempo/SearchTraceQLEditor/TagsInput.tsx:5381": [
@@ -5762,10 +5752,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/tempo/_importedDependencies/components/AdHocFilter/AdHocFilterRenderer.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/tempo/_importedDependencies/components/Divider.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/tempo/_importedDependencies/components/NodeGraphSettings.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
