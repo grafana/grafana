@@ -121,20 +121,20 @@ describe('TimeRangeForm', () => {
   });
 
   it('should copy time range to clipboard', async () => {
-    const { getByRole } = setup();
+    const { getByTestId } = setup();
 
-    await userEvent.click(getByRole('button', { name: 'Copy time range to clipboard' }));
+    await userEvent.click(getByTestId('data-testid TimePicker copy button'));
     expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith(
       JSON.stringify({ from: defaultTimeRange.raw.from, to: defaultTimeRange.raw.to })
     );
   });
 
   it('should paste time range from clipboard', async () => {
-    const { getByRole, getByLabelText } = setup();
+    const { getByTestId, getByLabelText } = setup();
 
     mockClipboard.readText.mockResolvedValue(JSON.stringify(customRawTimeRange));
 
-    await userEvent.click(getByRole('button', { name: 'Paste time range' }));
+    await userEvent.click(getByTestId('data-testid TimePicker paste button'));
 
     expect(getByLabelText('From')).toHaveValue(customRawTimeRange.from);
     expect(getByLabelText('To')).toHaveValue(customRawTimeRange.to);
