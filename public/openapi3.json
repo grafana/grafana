@@ -11966,7 +11966,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11990,6 +11989,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12122,6 +12122,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12177,7 +12178,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12232,13 +12232,13 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12448,6 +12448,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -15654,1300 +15655,6 @@
         "summary": "Update Annotation.",
         "tags": [
           "annotations"
-        ]
-      }
-    },
-    "/api/v1/provisioning/alert-rules": {
-      "get": {
-        "operationId": "RouteGetAlertRules",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProvisionedAlertRules"
-                }
-              }
-            },
-            "description": "ProvisionedAlertRules"
-          }
-        },
-        "summary": "Get all the alert rules.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "post": {
-        "operationId": "RoutePostAlertRule",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProvisionedAlertRule"
-              }
-            }
-          },
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProvisionedAlertRule"
-                }
-              }
-            },
-            "description": "ProvisionedAlertRule"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Create a new alert rule.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/alert-rules/export": {
-      "get": {
-        "operationId": "RouteGetAlertRulesExport",
-        "parameters": [
-          {
-            "description": "Whether to initiate a download of the file or not.",
-            "in": "query",
-            "name": "download",
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
-            "in": "query",
-            "name": "format",
-            "schema": {
-              "default": "yaml",
-              "type": "string"
-            }
-          },
-          {
-            "description": "UIDs of folders from which to export rules",
-            "in": "query",
-            "name": "folderUid",
-            "schema": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          {
-            "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
-            "in": "query",
-            "name": "group",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
-            "in": "query",
-            "name": "ruleUid",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              }
-            },
-            "description": "AlertingFileExport"
-          },
-          "404": {
-            "description": " Not found."
-          }
-        },
-        "summary": "Export all alert rules in provisioning file format.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/alert-rules/{UID}": {
-      "delete": {
-        "operationId": "RouteDeleteAlertRule",
-        "parameters": [
-          {
-            "description": "Alert rule UID",
-            "in": "path",
-            "name": "UID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The alert rule was deleted successfully."
-          }
-        },
-        "summary": "Delete a specific alert rule by UID.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "get": {
-        "operationId": "RouteGetAlertRule",
-        "parameters": [
-          {
-            "description": "Alert rule UID",
-            "in": "path",
-            "name": "UID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProvisionedAlertRule"
-                }
-              }
-            },
-            "description": "ProvisionedAlertRule"
-          },
-          "404": {
-            "description": " Not found."
-          }
-        },
-        "summary": "Get a specific alert rule by UID.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "put": {
-        "operationId": "RoutePutAlertRule",
-        "parameters": [
-          {
-            "description": "Alert rule UID",
-            "in": "path",
-            "name": "UID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProvisionedAlertRule"
-              }
-            }
-          },
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProvisionedAlertRule"
-                }
-              }
-            },
-            "description": "ProvisionedAlertRule"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Update an existing alert rule.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/alert-rules/{UID}/export": {
-      "get": {
-        "operationId": "RouteGetAlertRuleExport",
-        "parameters": [
-          {
-            "description": "Whether to initiate a download of the file or not.",
-            "in": "query",
-            "name": "download",
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
-            "in": "query",
-            "name": "format",
-            "schema": {
-              "default": "yaml",
-              "type": "string"
-            }
-          },
-          {
-            "description": "Alert rule UID",
-            "in": "path",
-            "name": "UID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              },
-              "text/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              }
-            },
-            "description": "AlertingFileExport"
-          },
-          "404": {
-            "description": " Not found."
-          }
-        },
-        "summary": "Export an alert rule in provisioning file format.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/contact-points": {
-      "get": {
-        "operationId": "RouteGetContactpoints",
-        "parameters": [
-          {
-            "description": "Filter by name",
-            "in": "query",
-            "name": "name",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContactPoints"
-                }
-              }
-            },
-            "description": "ContactPoints"
-          }
-        },
-        "summary": "Get all the contact points.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "post": {
-        "operationId": "RoutePostContactpoints",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EmbeddedContactPoint"
-              }
-            }
-          },
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmbeddedContactPoint"
-                }
-              }
-            },
-            "description": "EmbeddedContactPoint"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Create a contact point.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/contact-points/export": {
-      "get": {
-        "operationId": "RouteGetContactpointsExport",
-        "parameters": [
-          {
-            "description": "Whether to initiate a download of the file or not.",
-            "in": "query",
-            "name": "download",
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
-            "in": "query",
-            "name": "format",
-            "schema": {
-              "default": "yaml",
-              "type": "string"
-            }
-          },
-          {
-            "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
-            "in": "query",
-            "name": "decrypt",
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "description": "Filter by name",
-            "in": "query",
-            "name": "name",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              }
-            },
-            "description": "AlertingFileExport"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PermissionDenied"
-                }
-              }
-            },
-            "description": "PermissionDenied"
-          }
-        },
-        "summary": "Export all contact points in provisioning file format.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/contact-points/{UID}": {
-      "delete": {
-        "operationId": "RouteDeleteContactpoints",
-        "parameters": [
-          {
-            "description": "UID is the contact point unique identifier",
-            "in": "path",
-            "name": "UID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": " The contact point was deleted successfully."
-          }
-        },
-        "summary": "Delete a contact point.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "put": {
-        "operationId": "RoutePutContactpoint",
-        "parameters": [
-          {
-            "description": "UID is the contact point unique identifier",
-            "in": "path",
-            "name": "UID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EmbeddedContactPoint"
-              }
-            }
-          },
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Ack"
-                }
-              }
-            },
-            "description": "Ack"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Update an existing contact point.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
-      "get": {
-        "operationId": "RouteGetAlertRuleGroup",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "FolderUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "Group",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertRuleGroup"
-                }
-              }
-            },
-            "description": "AlertRuleGroup"
-          },
-          "404": {
-            "description": " Not found."
-          }
-        },
-        "summary": "Get a rule group.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "put": {
-        "operationId": "RoutePutAlertRuleGroup",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "FolderUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "Group",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AlertRuleGroup"
-              }
-            }
-          },
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertRuleGroup"
-                }
-              }
-            },
-            "description": "AlertRuleGroup"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Update the interval of a rule group.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
-      "get": {
-        "operationId": "RouteGetAlertRuleGroupExport",
-        "parameters": [
-          {
-            "description": "Whether to initiate a download of the file or not.",
-            "in": "query",
-            "name": "download",
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
-            "in": "query",
-            "name": "format",
-            "schema": {
-              "default": "yaml",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "FolderUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "Group",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              },
-              "text/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              }
-            },
-            "description": "AlertingFileExport"
-          },
-          "404": {
-            "description": " Not found."
-          }
-        },
-        "summary": "Export an alert rule group in provisioning file format.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/mute-timings": {
-      "get": {
-        "operationId": "RouteGetMuteTimings",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MuteTimings"
-                }
-              }
-            },
-            "description": "MuteTimings"
-          }
-        },
-        "summary": "Get all the mute timings.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "post": {
-        "operationId": "RoutePostMuteTiming",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MuteTimeInterval"
-              }
-            }
-          },
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
-                }
-              }
-            },
-            "description": "MuteTimeInterval"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Create a new mute timing.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/mute-timings/export": {
-      "get": {
-        "operationId": "RouteExportMuteTimings",
-        "parameters": [
-          {
-            "description": "Whether to initiate a download of the file or not.",
-            "in": "query",
-            "name": "download",
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
-            "in": "query",
-            "name": "format",
-            "schema": {
-              "default": "yaml",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              }
-            },
-            "description": "AlertingFileExport"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PermissionDenied"
-                }
-              }
-            },
-            "description": "PermissionDenied"
-          }
-        },
-        "summary": "Export all mute timings in provisioning format.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/mute-timings/{name}": {
-      "delete": {
-        "operationId": "RouteDeleteMuteTiming",
-        "parameters": [
-          {
-            "description": "Mute timing name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The mute timing was deleted successfully."
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
-                }
-              }
-            },
-            "description": "GenericPublicError"
-          }
-        },
-        "summary": "Delete a mute timing.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "get": {
-        "operationId": "RouteGetMuteTiming",
-        "parameters": [
-          {
-            "description": "Mute timing name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
-                }
-              }
-            },
-            "description": "MuteTimeInterval"
-          },
-          "404": {
-            "description": " Not found."
-          }
-        },
-        "summary": "Get a mute timing.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "put": {
-        "operationId": "RoutePutMuteTiming",
-        "parameters": [
-          {
-            "description": "Mute timing name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MuteTimeInterval"
-              }
-            }
-          },
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MuteTimeInterval"
-                }
-              }
-            },
-            "description": "MuteTimeInterval"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Replace an existing mute timing.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/mute-timings/{name}/export": {
-      "get": {
-        "operationId": "RouteExportMuteTiming",
-        "parameters": [
-          {
-            "description": "Whether to initiate a download of the file or not.",
-            "in": "query",
-            "name": "download",
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          {
-            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
-            "in": "query",
-            "name": "format",
-            "schema": {
-              "default": "yaml",
-              "type": "string"
-            }
-          },
-          {
-            "description": "Mute timing name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              }
-            },
-            "description": "AlertingFileExport"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PermissionDenied"
-                }
-              }
-            },
-            "description": "PermissionDenied"
-          }
-        },
-        "summary": "Export a mute timing in provisioning format.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/policies": {
-      "delete": {
-        "operationId": "RouteResetPolicyTree",
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Ack"
-                }
-              }
-            },
-            "description": "Ack"
-          }
-        },
-        "summary": "Clears the notification policy tree.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "get": {
-        "operationId": "RouteGetPolicyTree",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Route"
-                }
-              }
-            },
-            "description": "Route"
-          }
-        },
-        "summary": "Get the notification policy tree.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "put": {
-        "operationId": "RoutePutPolicyTree",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Route"
-              }
-            }
-          },
-          "description": "The new notification routing tree to use",
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Ack"
-                }
-              }
-            },
-            "description": "Ack"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Sets the notification policy tree.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/policies/export": {
-      "get": {
-        "operationId": "RouteGetPolicyTreeExport",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertingFileExport"
-                }
-              }
-            },
-            "description": "AlertingFileExport"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFound"
-                }
-              }
-            },
-            "description": "NotFound"
-          }
-        },
-        "summary": "Export the notification policy tree in provisioning file format.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/templates": {
-      "get": {
-        "operationId": "RouteGetTemplates",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationTemplates"
-                }
-              }
-            },
-            "description": "NotificationTemplates"
-          },
-          "404": {
-            "description": " Not found."
-          }
-        },
-        "summary": "Get all notification templates.",
-        "tags": [
-          "provisioning"
-        ]
-      }
-    },
-    "/api/v1/provisioning/templates/{name}": {
-      "delete": {
-        "operationId": "RouteDeleteTemplate",
-        "parameters": [
-          {
-            "description": "Template Name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": " The template was deleted successfully."
-          }
-        },
-        "summary": "Delete a template.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "get": {
-        "operationId": "RouteGetTemplate",
-        "parameters": [
-          {
-            "description": "Template Name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationTemplate"
-                }
-              }
-            },
-            "description": "NotificationTemplate"
-          },
-          "404": {
-            "description": " Not found."
-          }
-        },
-        "summary": "Get a notification template.",
-        "tags": [
-          "provisioning"
-        ]
-      },
-      "put": {
-        "operationId": "RoutePutTemplate",
-        "parameters": [
-          {
-            "description": "Template Name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Disable-Provenance",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NotificationTemplateContent"
-              }
-            }
-          },
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationTemplate"
-                }
-              }
-            },
-            "description": "NotificationTemplate"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            },
-            "description": "ValidationError"
-          }
-        },
-        "summary": "Updates an existing notification template.",
-        "tags": [
-          "provisioning"
         ]
       }
     },
@@ -25029,6 +23736,1300 @@
         "summary": "Get teams for user.",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/v1/provisioning/alert-rules": {
+      "get": {
+        "operationId": "RouteGetAlertRules",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionedAlertRules"
+                }
+              }
+            },
+            "description": "ProvisionedAlertRules"
+          }
+        },
+        "summary": "Get all the alert rules.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "post": {
+        "operationId": "RoutePostAlertRule",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvisionedAlertRule"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionedAlertRule"
+                }
+              }
+            },
+            "description": "ProvisionedAlertRule"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Create a new alert rule.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/alert-rules/export": {
+      "get": {
+        "operationId": "RouteGetAlertRulesExport",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "UIDs of folders from which to export rules",
+            "in": "query",
+            "name": "folderUid",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+            "in": "query",
+            "name": "group",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+            "in": "query",
+            "name": "ruleUid",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Export all alert rules in provisioning file format.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/alert-rules/{UID}": {
+      "delete": {
+        "operationId": "RouteDeleteAlertRule",
+        "parameters": [
+          {
+            "description": "Alert rule UID",
+            "in": "path",
+            "name": "UID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The alert rule was deleted successfully."
+          }
+        },
+        "summary": "Delete a specific alert rule by UID.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "get": {
+        "operationId": "RouteGetAlertRule",
+        "parameters": [
+          {
+            "description": "Alert rule UID",
+            "in": "path",
+            "name": "UID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionedAlertRule"
+                }
+              }
+            },
+            "description": "ProvisionedAlertRule"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Get a specific alert rule by UID.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "put": {
+        "operationId": "RoutePutAlertRule",
+        "parameters": [
+          {
+            "description": "Alert rule UID",
+            "in": "path",
+            "name": "UID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvisionedAlertRule"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionedAlertRule"
+                }
+              }
+            },
+            "description": "ProvisionedAlertRule"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Update an existing alert rule.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/alert-rules/{UID}/export": {
+      "get": {
+        "operationId": "RouteGetAlertRuleExport",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Alert rule UID",
+            "in": "path",
+            "name": "UID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Export an alert rule in provisioning file format.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/contact-points": {
+      "get": {
+        "operationId": "RouteGetContactpoints",
+        "parameters": [
+          {
+            "description": "Filter by name",
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactPoints"
+                }
+              }
+            },
+            "description": "ContactPoints"
+          }
+        },
+        "summary": "Get all the contact points.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "post": {
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbeddedContactPoint"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddedContactPoint"
+                }
+              }
+            },
+            "description": "EmbeddedContactPoint"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Create a contact point.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/contact-points/export": {
+      "get": {
+        "operationId": "RouteGetContactpointsExport",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
+            "in": "query",
+            "name": "decrypt",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Filter by name",
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export all contact points in provisioning file format.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/contact-points/{UID}": {
+      "delete": {
+        "operationId": "RouteDeleteContactpoints",
+        "parameters": [
+          {
+            "description": "UID is the contact point unique identifier",
+            "in": "path",
+            "name": "UID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": " The contact point was deleted successfully."
+          }
+        },
+        "summary": "Delete a contact point.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "put": {
+        "operationId": "RoutePutContactpoint",
+        "parameters": [
+          {
+            "description": "UID is the contact point unique identifier",
+            "in": "path",
+            "name": "UID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbeddedContactPoint"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ack"
+                }
+              }
+            },
+            "description": "Ack"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Update an existing contact point.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+      "get": {
+        "operationId": "RouteGetAlertRuleGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "FolderUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertRuleGroup"
+                }
+              }
+            },
+            "description": "AlertRuleGroup"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Get a rule group.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "put": {
+        "operationId": "RoutePutAlertRuleGroup",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "FolderUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertRuleGroup"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertRuleGroup"
+                }
+              }
+            },
+            "description": "AlertRuleGroup"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Update the interval of a rule group.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+      "get": {
+        "operationId": "RouteGetAlertRuleGroupExport",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "FolderUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Export an alert rule group in provisioning file format.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/mute-timings": {
+      "get": {
+        "operationId": "RouteGetMuteTimings",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MuteTimings"
+                }
+              }
+            },
+            "description": "MuteTimings"
+          }
+        },
+        "summary": "Get all the mute timings.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "post": {
+        "operationId": "RoutePostMuteTiming",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MuteTimeInterval"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MuteTimeInterval"
+                }
+              }
+            },
+            "description": "MuteTimeInterval"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Create a new mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/mute-timings/export": {
+      "get": {
+        "operationId": "RouteExportMuteTimings",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export all mute timings in provisioning format.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/mute-timings/{name}": {
+      "delete": {
+        "operationId": "RouteDeleteMuteTiming",
+        "parameters": [
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The mute timing was deleted successfully."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
+          }
+        },
+        "summary": "Delete a mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "get": {
+        "operationId": "RouteGetMuteTiming",
+        "parameters": [
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MuteTimeInterval"
+                }
+              }
+            },
+            "description": "MuteTimeInterval"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Get a mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "put": {
+        "operationId": "RoutePutMuteTiming",
+        "parameters": [
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MuteTimeInterval"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MuteTimeInterval"
+                }
+              }
+            },
+            "description": "MuteTimeInterval"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Replace an existing mute timing.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/mute-timings/{name}/export": {
+      "get": {
+        "operationId": "RouteExportMuteTiming",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Mute timing name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export a mute timing in provisioning format.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/policies": {
+      "delete": {
+        "operationId": "RouteResetPolicyTree",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ack"
+                }
+              }
+            },
+            "description": "Ack"
+          }
+        },
+        "summary": "Clears the notification policy tree.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "get": {
+        "operationId": "RouteGetPolicyTree",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Route"
+                }
+              }
+            },
+            "description": "Route"
+          }
+        },
+        "summary": "Get the notification policy tree.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "put": {
+        "operationId": "RoutePutPolicyTree",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Route"
+              }
+            }
+          },
+          "description": "The new notification routing tree to use",
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ack"
+                }
+              }
+            },
+            "description": "Ack"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Sets the notification policy tree.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/policies/export": {
+      "get": {
+        "operationId": "RouteGetPolicyTreeExport",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Export the notification policy tree in provisioning file format.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/templates": {
+      "get": {
+        "operationId": "RouteGetTemplates",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplates"
+                }
+              }
+            },
+            "description": "NotificationTemplates"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Get all notification templates.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/v1/provisioning/templates/{name}": {
+      "delete": {
+        "operationId": "RouteDeleteTemplate",
+        "parameters": [
+          {
+            "description": "Template Name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The template was deleted successfully."
+          }
+        },
+        "summary": "Delete a template.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "get": {
+        "operationId": "RouteGetTemplate",
+        "parameters": [
+          {
+            "description": "Template Name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplate"
+                }
+              }
+            },
+            "description": "NotificationTemplate"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        },
+        "summary": "Get a notification template.",
+        "tags": [
+          "provisioning"
+        ]
+      },
+      "put": {
+        "operationId": "RoutePutTemplate",
+        "parameters": [
+          {
+            "description": "Template Name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationTemplateContent"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplate"
+                }
+              }
+            },
+            "description": "NotificationTemplate"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            },
+            "description": "ValidationError"
+          }
+        },
+        "summary": "Updates an existing notification template.",
+        "tags": [
+          "provisioning"
         ]
       }
     },

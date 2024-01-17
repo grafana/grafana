@@ -24,5 +24,5 @@ We have some endpoints that we document publically as being stable, and others t
 To stabilize an endpoint, add the `stable` tag to its route comment:
 
 ```
-// swagger:route GET /api/provisioning/contact-points provisioning stable RouteGetContactpoints
+// swagger:route GET /provisioning/contact-points provisioning stable RouteGetContactpoints
 ```

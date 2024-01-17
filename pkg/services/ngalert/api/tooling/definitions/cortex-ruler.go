@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
+// swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
 //
@@ -20,7 +20,7 @@ import (
 //       403: ForbiddenError
 //
 
-// swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
+// swagger:route Get /ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
 //
 // List rules in provisioning format
 //
@@ -33,7 +33,7 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
 //
@@ -45,7 +45,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
+// swagger:route POST /ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -58,7 +58,7 @@ import (
 //       403: ForbiddenError
 //
 
-// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
+// swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
 // Converts submitted rule group to provisioning format
 //
@@ -71,7 +71,7 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
-// swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
+// swagger:route POST /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -84,7 +84,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
+// swagger:route Get /ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
 //
 // Get rule groups by namespace
 //
@@ -95,7 +95,7 @@ import (
 //       403: ForbiddenError
 //       202: NamespaceConfigResponse
 
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
 //
 // Get rule groups by namespace
 //
@@ -107,7 +107,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
+// swagger:route Delete /ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
 //
 // Delete namespace
 //
@@ -115,7 +115,7 @@ import (
 //       202: Ack
 //       403: ForbiddenError
 
-// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
+// swagger:route Delete /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
 //
 // Delete namespace
 //
@@ -124,7 +124,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
+// swagger:route Get /ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
 //
 // Get rule group
 //
@@ -135,7 +135,7 @@ import (
 //       202: RuleGroupConfigResponse
 //       403: ForbiddenError
 
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
 // Get rule group
 //
@@ -147,7 +147,7 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
+// swagger:route Delete /ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
 //
 // Delete rule group
 //
@@ -155,7 +155,7 @@ import (
 //       202: Ack
 //       403: ForbiddenError
 
-// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
+// swagger:route Delete /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
 //
 // Delete rule group
 //
