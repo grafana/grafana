@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 )
@@ -20,41 +20,35 @@ type FieldRequirements struct {
 	SortBy []string
 }
 
-func ReadFieldRequirements(selector fields.Selector) (FieldRequirements, fields.Selector, error) {
+func ReadFieldRequirements(selector labels.Selector) (FieldRequirements, labels.Selector, error) {
 	requirements := FieldRequirements{}
+	newSelector := labels.NewSelector()
 
 	if selector == nil {
-		return requirements, selector, nil
+		return requirements, newSelector, nil
 	}
 
-	for _, r := range selector.Requirements() {
-		switch r.Field {
+	labelSelectors, _ := selector.Requirements()
+
+	for _, r := range labelSelectors {
+		switch r.Key() {
 		case folderAnnoKey:
-			if (r.Operator != selection.Equals) && (r.Operator != selection.DoubleEquals) {
-				return requirements, selector, apierrors.NewBadRequest(folderAnnoKey + " field selector only supports equality")
+			if (r.Operator() != selection.Equals) && (r.Operator() != selection.DoubleEquals) {
+				return requirements, newSelector, apierrors.NewBadRequest(folderAnnoKey + " label selector only supports equality")
 			}
-			folder := r.Value
+			folder := r.Values().List()[0]
 			requirements.Folder = &folder
 		case sortByKey:
-			if r.Operator != selection.Equals {
-				return requirements, selector, apierrors.NewBadRequest(sortByKey + " field selector only supports equality")
+			if r.Operator() != selection.In {
+				return requirements, newSelector, apierrors.NewBadRequest(sortByKey + " label selector only supports in")
 			}
-			requirements.SortBy = strings.Split(r.Value, ";")
+			requirements.SortBy = r.Values().List()
+		default:
+			newSelector = newSelector.Add(r)
 		}
 	}
 
-	// use Transform function to remove grafana.app/folder field selector
-	selector, err := selector.Transform(func(field, value string) (string, string, error) {
-		switch field {
-		case folderAnnoKey:
-			return "", "", nil
-		case sortByKey:
-			return "", "", nil
-		}
-		return field, value, nil
-	})
-
-	return requirements, selector, err
+	return requirements, newSelector, nil
 }
 
 func RegisterFieldSelectorSupport(scheme *runtime.Scheme) error {

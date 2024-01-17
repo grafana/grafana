@@ -241,8 +241,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		}
 	}
 
-	// translate grafana.app/folder field selector to the folder condition
-	fieldRequirements, fieldSelector, err := ReadFieldRequirements(opts.Predicate.Field)
+	// translate grafana.app/* label selectors into field requirements
+	fieldRequirements, newSelector, err := ReadFieldRequirements(opts.Predicate.Label)
 	if err != nil {
 		return err
 	}
@@ -252,8 +252,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if len(fieldRequirements.SortBy) > 0 {
 		req.Sort = fieldRequirements.SortBy
 	}
-	// Update the field selector to remove the unneeded selectors
-	opts.Predicate.Field = fieldSelector
+	// Update the selector to remove the unneeded requirements
+	opts.Predicate.Label = newSelector
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {

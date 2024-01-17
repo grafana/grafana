@@ -936,22 +936,15 @@ func ParseSortBy(sort string) (*SortBy, error) {
 		Direction: Ascending,
 	}
 
-	parts := strings.Split(sort, " ")
-	if len(parts) == 1 {
-		sortBy.Field = parts[0]
-	} else if len(parts) == 2 {
-		sortBy.Field = parts[0]
-		if parts[1] == "desc" {
-			sortBy.Direction = Descending
-		} else if parts[1] != "asc" {
-			return nil, fmt.Errorf("invalid sort direction: %s", parts[1])
-		}
+	if strings.HasSuffix(sort, "_desc") {
+		sortBy.Field = sort[:len(sort)-5]
+		sortBy.Direction = Descending
 	} else {
-		return nil, fmt.Errorf("invalid sort specifier: %s", sort)
+		sortBy.Field = sort
 	}
 
 	if !slices.Contains(sortByFields, sortBy.Field) {
-		return nil, fmt.Errorf("invalid sort field: %s", sortBy.Field)
+		return nil, fmt.Errorf("invalid sort field '%s', valid fields: %v", sortBy.Field, sortByFields)
 	}
 
 	return sortBy, nil
