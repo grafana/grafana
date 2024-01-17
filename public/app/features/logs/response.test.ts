@@ -1,7 +1,7 @@
-import { DataQueryResponse, QueryResultMetaStat } from '@grafana/data';
+import { DataQueryResponse, LoadingState, PanelData, QueryResultMetaStat, getDefaultTimeRange } from '@grafana/data';
 import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
 
-import { cloneQueryResponse, combineResponses } from './response';
+import { cloneQueryResponse, combinePanelData, combineResponses } from './response';
 
 describe('cloneQueryResponse', () => {
   const { logFrameA } = getMockFrames();
@@ -406,6 +406,86 @@ describe('combineResponses', () => {
       const responseA = makeResponse();
       const responseB = makeResponse();
       expect(combineResponses(responseA, responseB).data[0].meta.stats).toHaveLength(0);
+    });
+  });
+});
+
+describe('combinePanelData', () => {
+  it('combines series within PanelData instances', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    const panelDataA: PanelData = {
+      state: LoadingState.Done,
+      series: [logFrameA],
+      timeRange: getDefaultTimeRange(),
+    };
+    const panelDataB: PanelData = {
+      state: LoadingState.Done,
+      series: [logFrameB],
+      timeRange: getDefaultTimeRange(),
+    };
+    expect(combinePanelData(panelDataA, panelDataB)).toEqual({
+      state: panelDataA.state,
+      series: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: [1, 2, 3, 4],
+            },
+            {
+              config: {},
+              name: 'Line',
+              type: 'string',
+              values: ['line3', 'line4', 'line1', 'line2'],
+            },
+            {
+              config: {},
+              name: 'labels',
+              type: 'other',
+              values: [
+                {
+                  otherLabel: 'other value',
+                },
+                {
+                  label: 'value',
+                },
+                {
+                  otherLabel: 'other value',
+                },
+              ],
+            },
+            {
+              config: {},
+              name: 'tsNs',
+              type: 'string',
+              values: ['1000000', '2000000', '3000000', '4000000'],
+            },
+            {
+              config: {},
+              name: 'id',
+              type: 'string',
+              values: ['id3', 'id4', 'id1', 'id2'],
+            },
+          ],
+          length: 4,
+          meta: {
+            custom: {
+              frameType: 'LabeledTimeValues',
+            },
+            stats: [
+              {
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+      timeRange: panelDataA.timeRange,
     });
   });
 });

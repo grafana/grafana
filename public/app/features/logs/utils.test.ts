@@ -9,12 +9,15 @@ import {
   MutableDataFrame,
   DataFrame,
 } from '@grafana/data';
+import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
 
+import { logSeriesToLogsModel } from './logsModel';
 import {
   calculateLogsLabelStats,
   calculateStats,
   checkLogsError,
   escapeUnescapedString,
+  findMatchingRow,
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
@@ -477,5 +480,46 @@ describe('escapeUnescapedString', () => {
   });
   it('escapes unescaped strings', () => {
     expect(escapeUnescapedString(`\\r\\n|\\n|\\t|\\r`)).toBe(`\n|\n|\t|\n`);
+  });
+});
+
+describe('findMatchingRow', () => {
+  function setup(frames: DataFrame[]) {
+    return logSeriesToLogsModel(frames);
+  }
+
+  it('ignores rows from different queries', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    logFrameA.refId = 'A';
+    logFrameB.refId = 'B';
+    const logsModel = setup([logFrameA, logFrameB]);
+    const rows = logsModel?.rows || [];
+
+    for (const row of rows) {
+      const targetRow = { ...row, dataFrame: { ...logFrameA, refId: 'Z' } };
+      expect(findMatchingRow(targetRow, rows)).toBe(undefined);
+    }
+  });
+
+  it('matches rows by rowId', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    const logsModel = setup([logFrameA, logFrameB]);
+    const rows = logsModel?.rows || [];
+
+    for (const row of rows) {
+      const targetRow = { ...row, entry: `${Math.random()}`, timeEpochNs: `${Math.ceil(Math.random() * 1000000)}` };
+      expect(findMatchingRow(targetRow, rows)).toBeDefined();
+    }
+  });
+
+  it('matches rows by entry and nanosecond time', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    const logsModel = setup([logFrameA, logFrameB]);
+    const rows = logsModel?.rows || [];
+
+    for (const row of rows) {
+      const targetRow = { ...row, rowId: undefined };
+      expect(findMatchingRow(targetRow, rows)).toBeDefined();
+    }
   });
 });
