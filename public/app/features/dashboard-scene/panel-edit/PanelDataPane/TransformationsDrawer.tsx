@@ -26,39 +26,30 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     showIllustrations: true,
   });
 
-  const onSearchChange = useCallback(
-    (e: FormEvent<HTMLInputElement>) => setDrawerState({ ...drawerState, ...{ search: e.currentTarget.value } }),
-    [drawerState]
-  );
+  const onSearchChange = (e: FormEvent<HTMLInputElement>) =>
+    setDrawerState({ ...drawerState, ...{ search: e.currentTarget.value } });
 
-  const onShowIllustrationsChange = useCallback(
-    (showIllustrations: boolean): void => setDrawerState({ ...drawerState, ...{ showIllustrations } }),
-    [drawerState]
-  );
-  const onSelectedFilterChange = useCallback(
-    (selectedFilter: FilterCategory): void => setDrawerState({ ...drawerState, ...{ selectedFilter } }),
-    [drawerState]
-  );
+  const onShowIllustrationsChange = (showIllustrations: boolean): void =>
+    setDrawerState({ ...drawerState, ...{ showIllustrations } });
+
+  const onSelectedFilterChange = (selectedFilter: FilterCategory): void =>
+    setDrawerState({ ...drawerState, ...{ selectedFilter } });
 
   const allTransformations = useMemo(
     () => standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
     []
   );
 
-  const transformations = useMemo(
-    () =>
-      allTransformations.filter((t) => {
-        if (
-          drawerState.selectedFilter &&
-          drawerState.selectedFilter !== 'viewAll' &&
-          !t.categories?.has(drawerState.selectedFilter)
-        ) {
-          return false;
-        }
-        return t.name.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase());
-      }),
-    [drawerState, allTransformations]
-  );
+  const transformations = allTransformations.filter((t) => {
+    if (
+      drawerState.selectedFilter &&
+      drawerState.selectedFilter !== 'viewAll' &&
+      !t.categories?.has(drawerState.selectedFilter)
+    ) {
+      return false;
+    }
+    return t.name.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase());
+  });
 
   const searchBoxSuffix = (
     <>
