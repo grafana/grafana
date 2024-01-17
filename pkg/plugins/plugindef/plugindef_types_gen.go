@@ -463,7 +463,7 @@ type Route struct {
 	// route URL field when proxying the call.
 	Path *string `json:"path,omitempty"`
 
-	// RBAC action the user must have to access the route
+	// RBAC action the user must have to access the route. i.e. plugin-id.projects:read
 	ReqAction   *string `json:"reqAction,omitempty"`
 	ReqRole     *string `json:"reqRole,omitempty"`
 	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
