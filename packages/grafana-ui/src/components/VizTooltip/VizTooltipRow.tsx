@@ -1,9 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
+import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip';
 
 import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
@@ -14,6 +16,11 @@ interface Props extends LabelValue {
   isActive?: boolean; // for series list
   marginRight?: string;
   isPinned: boolean;
+}
+
+enum LabelValueTypes {
+  label = 'label',
+  value = 'value',
 }
 
 export const VizTooltipRow = ({
@@ -31,6 +38,25 @@ export const VizTooltipRow = ({
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
   const [showValueTooltip, setShowValueTooltip] = useState(false);
+  const [copiedText, setCopiedText] = useState<Record<string, string> | null>(null);
+
+  const labelRef = useRef<null | HTMLDivElement>(null);
+  const valueRef = useRef<null | HTMLDivElement>(null);
+
+  const copyToClipboard = async (text: string, type: LabelValueTypes) => {
+    if (!navigator?.clipboard) {
+      return false;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedText({ [`${type}`]: text });
+      return true;
+    } catch (error) {
+      setCopiedText(null);
+      return false;
+    }
+  };
 
   const onMouseEnterLabel = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.currentTarget.offsetWidth < event.currentTarget.scrollWidth) {
@@ -58,15 +84,27 @@ export const VizTooltipRow = ({
           {!isPinned ? (
             <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>
           ) : (
-            <Tooltip content={label} interactive={false} show={showLabelTooltip}>
-              <div
-                className={cx(styles.label, isActive && styles.activeSeries)}
-                onMouseEnter={onMouseEnterLabel}
-                onMouseLeave={onMouseLeaveLabel}
-              >
-                {label}
-              </div>
-            </Tooltip>
+            <>
+              <Tooltip content={label} interactive={false} show={showLabelTooltip}>
+                <>
+                  {copiedText?.label && (
+                    <InlineToast placement="top" referenceElement={labelRef.current}>
+                      <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
+                    </InlineToast>
+                  )}
+                  {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+                  <div
+                    className={cx(styles.label, isActive && styles.activeSeries)}
+                    onMouseEnter={onMouseEnterLabel}
+                    onMouseLeave={onMouseLeaveLabel}
+                    onClick={() => copyToClipboard(label, LabelValueTypes.label)}
+                    ref={labelRef}
+                  >
+                    {label}
+                  </div>
+                </>
+              </Tooltip>
+            </>
           )}
         </div>
       )}
@@ -79,13 +117,23 @@ export const VizTooltipRow = ({
           <div className={cx(styles.value, isActive)}>{value}</div>
         ) : (
           <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
-            <div
-              className={cx(styles.value, isActive)}
-              onMouseEnter={onMouseEnterValue}
-              onMouseLeave={onMouseLeaveValue}
-            >
-              {value}
-            </div>
+            <>
+              {copiedText?.value && (
+                <InlineToast placement="top" referenceElement={valueRef.current}>
+                  <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
+                </InlineToast>
+              )}
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+              <div
+                className={cx(styles.value, isActive)}
+                onMouseEnter={onMouseEnterValue}
+                onMouseLeave={onMouseLeaveValue}
+                onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
+                ref={valueRef}
+              >
+                {value}
+              </div>
+            </>
           </Tooltip>
         )}
 
