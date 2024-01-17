@@ -75,7 +75,6 @@ type AggregatorServerOptions struct {
 	serviceResolver ServiceResolver
 
 	sharedInformerFactory informersv0alpha1.SharedInformerFactory
-	apiExtensionInformers apiextensionsinformers.SharedInformerFactory
 
 	StdOut io.Writer
 	StdErr io.Writer

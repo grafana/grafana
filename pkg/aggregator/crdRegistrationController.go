@@ -60,7 +60,7 @@ func NewCRDRegistrationController(crdinformer crdinformers.CustomResourceDefinit
 	}
 	c.syncHandler = c.handleVersionUpdate
 
-	crdinformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, _ = crdinformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			cast := obj.(*apiextensionsv1.CustomResourceDefinition)
 			c.enqueueCRD(cast)
