@@ -22,9 +22,7 @@ import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
-import { getDashboardUid } from '../../../../../e2e/utils/support/url';
 import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
-import { getDashboardUrl } from '../../../features/dashboard-scene/utils/urlBuilders';
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
@@ -125,26 +123,14 @@ export const LogsPanel = ({
         to: toUtc(timeRange.to).valueOf(),
       };
       const location = window.location;
+      const currentURL = new URL(location.href);
 
-      // append changed urlState to baseUrl
-      const baseUrl = /.*(?=\/d)/.exec(`${location.href}`)![0];
-      const exploreUrl = urlUtil.renderUrl(`${baseUrl}/d`, {
-        panelState: JSON.stringify(panelState),
-        from: range?.from,
-        to: range?.to,
-      });
+      // Add panel state and absolute timerange from the current query, but leave everything else the same
+      currentURL.searchParams.set('panelState', JSON.stringify(panelState));
+      currentURL.searchParams.set('from', range?.from.toString(10));
+      currentURL.searchParams.set('to', range?.to.toString(10));
 
-      const urlSearchParams = new URL(exploreUrl).searchParams;
-
-      const uid = getDashboardUid(location.href);
-      const url = getDashboardUrl({
-        uid: uid,
-        currentQueryParams: urlSearchParams.toString(),
-        updateQuery: { viewPanel: null, inspect: null, editview: null },
-        // subPath: `/logs/${row.rowId}`,
-      });
-
-      await createAndCopyShortLink(url);
+      await createAndCopyShortLink(currentURL.toString());
 
       return Promise.resolve();
     },
@@ -217,6 +203,36 @@ export const LogsPanel = ({
     [data]
   );
 
+  /**
+   * Scrolls the given row into view.
+   * Returns false if the reference to the logsContainerRef is not set.
+   */
+  const scrollIntoView = useCallback((row: HTMLElement): boolean => {
+    if (logsContainerRef.current && logsContainerRef.current.parentElement) {
+      const rowRect = row.getBoundingClientRect();
+      const containerRect = logsContainerRef.current.getBoundingClientRect();
+      const parentRect = logsContainerRef.current.parentElement.getBoundingClientRect();
+
+      console.log('row', rowRect, row);
+      console.log('container', containerRect, logsContainerRef.current);
+      console.log('parent', parentRect, logsContainerRef.current.parentElement);
+      console.log('--- --- ---');
+
+      // Both of these have the same bug, rows that are pinned near the end of the list do not scroll far enough
+      const scrollingTo = rowRect.top - containerRect.top;
+      // const scrollingTo = logsContainerRef.current.parentElement.scrollTop + rowRect.top - window.innerHeight / 2;
+      console.log('scrollingTo', scrollingTo);
+
+      logsContainerRef.current.parentElement.scroll({
+        behavior: 'smooth',
+        top: scrollingTo,
+        // logsContainerRef.current.parentElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+      });
+      return true;
+    }
+    return false;
+  }, []);
+
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
@@ -244,15 +260,8 @@ export const LogsPanel = ({
         <div className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
-            scrollIntoView={(element: HTMLElement) => {
-              if (logsContainerRef.current) {
-                logsContainerRef.current.scroll({
-                  behavior: 'smooth',
-                  top:
-                    logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-                });
-              }
-            }}
+            containerRendered={logsContainerRef.current !== null}
+            scrollIntoView={scrollIntoView}
             permalinkedRowId={logsPanelState?.logs?.id ?? undefined}
             onPermalinkClick={onPermalinkClick}
             logRows={logRows}
