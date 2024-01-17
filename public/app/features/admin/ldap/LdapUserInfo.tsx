@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { Box, Text } from '@grafana/ui';
 import { LdapUser } from 'app/types';
 
 import { LdapUserGroups } from './LdapUserGroups';
@@ -24,17 +25,9 @@ export const LdapUserInfo = ({ ldapUser, showAttributeMapping }: Props) => {
       {ldapUser.teams && ldapUser.teams.length > 0 ? (
         <LdapUserTeams teams={ldapUser.teams} showAttributeMapping={showAttributeMapping} />
       ) : (
-        <div className="gf-form-group">
-          <div className="gf-form">
-            <table className="filter-table form-inline">
-              <tbody>
-                <tr>
-                  <td>No teams found via LDAP</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Box>
+          <Text>No teams found via LDAP</Text>
+        </Box>
       )}
     </>
   );
