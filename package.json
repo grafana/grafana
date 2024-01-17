@@ -387,7 +387,7 @@
     "react-zoom-pan-pinch": "^3.3.0",
     "redux": "4.2.1",
     "redux-thunk": "2.4.2",
-    "regenerator-runtime": "0.14.0",
+    "regenerator-runtime": "0.14.1",
     "reselect": "4.1.8",
     "rxjs": "7.8.1",
     "sass": "link:./public/sass",
