@@ -512,7 +512,7 @@ describe('findMatchingRow', () => {
     }
   });
 
-  it('matches rows by rowId', () => {
+  it('matches rows by entry and nanosecond time', () => {
     const { logFrameA, logFrameB } = getMockFrames();
     const logsModel = setup([logFrameA, logFrameB]);
     const rows = logsModel?.rows || [];
