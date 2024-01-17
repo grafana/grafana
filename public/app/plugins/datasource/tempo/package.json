@@ -54,7 +54,7 @@
     "@types/uuid": "9.0.2",
     "glob": "10.3.10",
     "react-select-event": "5.5.1",
-    "ts-node": "10.9.1",
+    "ts-node": "10.9.2",
     "typescript": "5.2.2"
   },
   "peerDependencies": {

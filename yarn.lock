@@ -2919,7 +2919,7 @@ __metadata:
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.4.3"
     rxjs: "npm:7.8.1"
-    ts-node: "npm:10.9.1"
+    ts-node: "npm:10.9.2"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
     webpack: "npm:5.89.0"
@@ -2958,7 +2958,7 @@ __metadata:
     react-use: "npm:17.4.3"
     rxjs: "npm:7.8.1"
     style-loader: "npm:3.3.4"
-    ts-node: "npm:10.9.1"
+    ts-node: "npm:10.9.2"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
     webpack: "npm:5.89.0"
@@ -2991,7 +2991,7 @@ __metadata:
     react: "npm:18.2.0"
     react-use: "npm:17.4.3"
     rxjs: "npm:7.8.1"
-    ts-node: "npm:10.9.1"
+    ts-node: "npm:10.9.2"
     tslib: "npm:2.6.0"
     webpack: "npm:5.89.0"
   peerDependencies:
@@ -3041,7 +3041,7 @@ __metadata:
     react: "npm:18.2.0"
     react-use: "npm:17.4.3"
     rxjs: "npm:7.8.1"
-    ts-node: "npm:10.9.1"
+    ts-node: "npm:10.9.2"
     tslib: "npm:2.6.0"
     webpack: "npm:5.89.0"
   peerDependencies:
@@ -3099,7 +3099,7 @@ __metadata:
     semver: "npm:7.5.4"
     stream-browserify: "npm:3.0.0"
     string_decoder: "npm:1.2.0"
-    ts-node: "npm:10.9.1"
+    ts-node: "npm:10.9.2"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
     uuid: "npm:9.0.0"
@@ -3398,7 +3398,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:^5.0.0"
     tinycolor2: "npm:1.6.0"
     ts-jest: "npm:29.1.1"
-    ts-node: "npm:10.9.1"
+    ts-node: "npm:10.9.2"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
   peerDependencies:
@@ -17365,7 +17365,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tracelib: "npm:1.0.1"
     ts-jest: "npm:29.1.1"
-    ts-node: "npm:10.9.1"
+    ts-node: "npm:10.9.2"
     tslib: "npm:2.6.0"
     tween-functions: "npm:^1.2.0"
     typescript: "npm:5.2.2"
@@ -28659,7 +28659,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:10.9.1, ts-node@npm:^10.2.1":
+"ts-node@npm:10.9.1":
   version: 10.9.1
   resolution: "ts-node@npm:10.9.1"
   dependencies:
@@ -28694,6 +28694,44 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: bee56d4dc96ccbafc99dfab7b73fbabc62abab2562af53cdea91c874a301b9d11e42bc33c0a032a6ed6d813dbdc9295ec73dde7b73ea4ebde02b0e22006f7e04
+  languageName: node
+  linkType: hard
+
+"ts-node@npm:10.9.2, ts-node@npm:^10.2.1":
+  version: 10.9.2
+  resolution: "ts-node@npm:10.9.2"
+  dependencies:
+    "@cspotcode/source-map-support": "npm:^0.8.0"
+    "@tsconfig/node10": "npm:^1.0.7"
+    "@tsconfig/node12": "npm:^1.0.7"
+    "@tsconfig/node14": "npm:^1.0.0"
+    "@tsconfig/node16": "npm:^1.0.2"
+    acorn: "npm:^8.4.1"
+    acorn-walk: "npm:^8.1.1"
+    arg: "npm:^4.1.0"
+    create-require: "npm:^1.1.0"
+    diff: "npm:^4.0.1"
+    make-error: "npm:^1.1.1"
+    v8-compile-cache-lib: "npm:^3.0.1"
+    yn: "npm:3.1.1"
+  peerDependencies:
+    "@swc/core": ">=1.2.50"
+    "@swc/wasm": ">=1.2.50"
+    "@types/node": "*"
+    typescript: ">=2.7"
+  peerDependenciesMeta:
+    "@swc/core":
+      optional: true
+    "@swc/wasm":
+      optional: true
+  bin:
+    ts-node: dist/bin.js
+    ts-node-cwd: dist/bin-cwd.js
+    ts-node-esm: dist/bin-esm.js
+    ts-node-script: dist/bin-script.js
+    ts-node-transpile-only: dist/bin-transpile.js
+    ts-script: dist/bin-script-deprecated.js
+  checksum: a91a15b3c9f76ac462f006fa88b6bfa528130dcfb849dd7ef7f9d640832ab681e235b8a2bc58ecde42f72851cc1d5d4e22c901b0c11aa51001ea1d395074b794
   languageName: node
   linkType: hard
 
