@@ -28,6 +28,11 @@ const (
 
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
+
+	FixedCloudRolePrefix = "fixed:cloud:"
+	FixedCloudViewerRole = "fixed:cloud:viewer"
+	FixedCloudEditorRole = "fixed:cloud:editor"
+	FixedCloudAdminRole  = "fixed:cloud:admin"
 )
 
 // Roles definition

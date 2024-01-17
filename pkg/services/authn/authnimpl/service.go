@@ -160,10 +160,16 @@ func ProvideService(
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
-	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 130)
 	s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
-	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
+
+	rbacSync := sync.ProvideRBACSync(accessControlService)
+	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
+		s.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
+	}
+
+	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 
 	return s
 }
