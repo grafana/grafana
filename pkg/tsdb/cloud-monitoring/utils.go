@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -125,19 +125,19 @@ func doRequestWithPagination(ctx context.Context, r *http.Request, dsInfo dataso
 }
 
 func traceReq(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, r *http.Request, target string) trace.Span {
-	ctx, span := tracer.Start(ctx, "cloudMonitoring query", trace.WithAttributes(
+	ctx, span := tracing.DefaultTracer().Start(ctx, "cloudMonitoring query", trace.WithAttributes(
 		attribute.String("target", target),
 		attribute.String("from", req.Queries[0].TimeRange.From.String()),
 		attribute.String("until", req.Queries[0].TimeRange.To.String()),
 		attribute.Int64("datasource_id", dsInfo.id),
 		attribute.Int64("org_id", req.PluginContext.OrgID),
 	))
-	tracer.Inject(ctx, r.Header, span)
+	defer span.End()
 	return span
 }
 
 func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer, projectName string, params url.Values, body map[string]any) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, projectName string, params url.Values, body map[string]any) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, projectName)
 	if err != nil {
@@ -154,7 +154,7 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, tracer, req, dsInfo, r, params.Encode())
+	span := traceReq(ctx, req, dsInfo, r, params.Encode())
 	defer span.End()
 
 	d, err := doRequestWithPagination(ctx, r, dsInfo, params, body)

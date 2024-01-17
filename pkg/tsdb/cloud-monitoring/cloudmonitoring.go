@@ -59,10 +59,10 @@ const (
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	s := &Service{
-		httpClientProvider: httpClientProvider,
-		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		httpClientProvider: *httpClientProvider,
+		im:                 datasource.NewInstanceManager(newInstanceSettings(*httpClientProvider)),
 
 		gceDefaultProjectGetter: utils.GCEDefaultProject,
 	}

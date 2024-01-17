@@ -36,7 +36,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, 
 	requestBody := map[string]any{
 		"query": timeSeriesQuery.parameters.Query,
 	}
-	return runTimeSeriesRequest(ctx, req, s, dsInfo, nil, timeSeriesQuery.parameters.ProjectName, nil, requestBody)
+	return runTimeSeriesRequest(ctx, req, s, dsInfo, timeSeriesQuery.parameters.ProjectName, nil, requestBody)
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
