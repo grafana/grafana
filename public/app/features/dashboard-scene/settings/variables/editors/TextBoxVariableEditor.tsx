@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { FormEvent } from 'react';
 
 import { TextBoxVariable } from '@grafana/scenes';
 
@@ -11,15 +11,10 @@ interface TextBoxVariableEditorProps {
 
 export function TextBoxVariableEditor({ variable }: TextBoxVariableEditorProps) {
   const { value } = variable.useState();
-  const [textValue, setTextValue] = useState(value);
 
-  const onTextValueChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setTextValue(event.currentTarget.value);
+  const onTextValueChange = (e: FormEvent<HTMLInputElement>) => {
+    variable.setState({ value: e.currentTarget.value });
   };
 
-  const onBlur = () => {
-    variable.setState({ value: textValue });
-  };
-
-  return <TextBoxVariableForm value={textValue} onChange={onTextValueChange} onBlur={onBlur} />;
+  return <TextBoxVariableForm defaultValue={value} onBlur={onTextValueChange} />;
 }

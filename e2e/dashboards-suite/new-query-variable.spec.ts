@@ -69,7 +69,7 @@ describe('Variables - Query - Add variable', () => {
     });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().should('not.exist');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().should('not.exist');
   });
 
   it('adding a single value query variable', () => {
@@ -152,7 +152,7 @@ describe('Variables - Query - Add variable', () => {
       cy.get('input[type="checkbox"]').click({ force: true }).should('be.checked');
     });
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().within((input) => {
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().within((input) => {
       expect(input.attr('placeholder')).equals('blank = auto');
       expect(input.val()).equals('');
     });

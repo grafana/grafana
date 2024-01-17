@@ -5,17 +5,19 @@ import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
 
 interface TextBoxVariableFormProps {
-  value: string;
-  onChange: (event: FormEvent<HTMLInputElement>) => void;
-  onBlur: (event: FormEvent<HTMLInputElement>) => void;
+  value?: string;
+  defaultValue?: string;
+  onChange?: (event: FormEvent<HTMLInputElement>) => void;
+  onBlur?: (event: FormEvent<HTMLInputElement>) => void;
 }
 
-export function TextBoxVariableForm({ onChange, onBlur, value }: TextBoxVariableFormProps) {
+export function TextBoxVariableForm({ defaultValue, value, onChange, onBlur }: TextBoxVariableFormProps) {
   return (
     <>
       <VariableLegend>Text options</VariableLegend>
       <VariableTextField
         value={value}
+        defaultValue={defaultValue}
         name="Default value"
         placeholder="default value, if any"
         onChange={onChange}
