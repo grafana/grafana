@@ -4,7 +4,7 @@
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    // "skipLibCheck": true,
+    "skipLibCheck": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -49,6 +49,5 @@
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types"
   ],
-  "exclude": ["public/app/**/webpack.config.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": ["public/app/**/webpack.config.ts"]
 }

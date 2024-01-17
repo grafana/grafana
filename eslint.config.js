@@ -16,6 +16,9 @@ const grafanaPlugin = require('@grafana/eslint-plugin');
 const bettererConfig = require('./.betterer.eslint.config');
 const getEnvConfig = require('./scripts/webpack/env-util');
 
+/**
+ * @type {Record<string, unknown>}
+ */
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
 

@@ -55,7 +55,7 @@
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
-    "betterer": "betterer --tsconfig ./scripts/cli/tsconfig.json",
+    "betterer": "betterer --config ./.betterer.cjs --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:json": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/bettererResultsToJson.ts",
     "betterer:merge": "betterer merge --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
