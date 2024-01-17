@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
 
+import { logSeriesToLogsModel } from './logsModel';
 import {
   calculateLogsLabelStats,
   calculateStats,
@@ -24,7 +25,6 @@ import {
   mergeLogsVolumeDataFrames,
   sortLogsResult,
 } from './utils';
-import { logSeriesToLogsModel } from './logsModel';
 
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
