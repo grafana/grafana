@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 
 import { DataTransformerConfig, GrafanaTheme2, IconName, PanelData } from '@grafana/data';
@@ -11,6 +11,7 @@ import { TransformationOperationRows } from 'app/features/dashboard/components/T
 import { VizPanelManager } from '../VizPanelManager';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
+import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
 
 interface PanelDataTransformationsTabState extends PanelDataPaneTabState {}
@@ -60,12 +61,35 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const transformations: DataTransformerConfig[] = transformsWrongType as unknown as DataTransformerConfig[];
 
-  if (transformations.length < 1) {
-    return <EmptyTransformationsMessage onShowPicker={() => {}}></EmptyTransformationsMessage>;
-  }
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   if (!data) {
     return;
+  }
+
+  const transformationsDrawer = (
+    <TransformationsDrawer
+      onClose={() => setDrawerOpen(false)}
+      onTransformationAdd={(selected) => {
+        if (selected.value === undefined) {
+          return;
+        }
+        model.changeTransformations([...transformations, { id: selected.value, options: {} }]);
+        setDrawerOpen(false);
+      }}
+      isOpen={drawerOpen}
+      series={data.series}
+    ></TransformationsDrawer>
+  );
+
+  if (transformations.length < 1) {
+    return (
+      <>
+        <EmptyTransformationsMessage onShowPicker={() => setDrawerOpen(true)}></EmptyTransformationsMessage>
+        {transformationsDrawer}
+      </>
+    );
   }
 
   return (
@@ -75,23 +99,27 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         <Button
           icon="plus"
           variant="secondary"
-          onClick={() => {}}
+          onClick={() => setDrawerOpen(true)}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
           Add another transformation
         </Button>
-        <Button className={styles.removeAll} icon="times" variant="secondary" onClick={() => {}}>
+        <Button className={styles.removeAll} icon="times" variant="secondary" onClick={() => setConfirmModalOpen(true)}>
           Delete all transformations
         </Button>
       </ButtonGroup>
       <ConfirmModal
-        isOpen={false}
+        isOpen={confirmModalOpen}
         title="Delete all transformations?"
         body="By deleting all transformations, you will go back to the main selection screen."
         confirmText="Delete all"
-        onConfirm={() => {}}
-        onDismiss={() => {}}
+        onConfirm={() => {
+          model.changeTransformations([]);
+          setConfirmModalOpen(false);
+        }}
+        onDismiss={() => setConfirmModalOpen(false)}
       />
+      {transformationsDrawer}
     </>
   );
 }
