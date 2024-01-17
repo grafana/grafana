@@ -68,11 +68,11 @@ function baseQuery(groupings: string[] = []) {
   return `sum by(${sumByList.join(', ')}) (${BASE_QUERY})`;
 }
 
-function heatMapQuery(groupings: string[] = []) {
+function heatMapQuery(groupings: string[] = []): PromQuery {
   return {
     refId: 'A',
     expr: baseQuery(groupings),
-    legendFormat: '{{le}}',
+    format: 'heatmap',
   };
 }
 
