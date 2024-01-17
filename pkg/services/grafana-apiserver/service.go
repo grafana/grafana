@@ -175,6 +175,10 @@ func ProvideService(
 			s.handler.ServeHTTP(resp, req)
 		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/fake-route", middleware.ReqSignedIn, func(c *contextmodel.ReqContext) {
+			c.Resp.WriteHeader(http.StatusOK)
+			c.Resp.Write([]byte("{\"status\": \"OK\"}"))
+		})
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
 

@@ -2,15 +2,12 @@ package example
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
 type dummySubresourceREST struct{}
@@ -33,22 +30,8 @@ func (r *dummySubresourceREST) NewConnectOptions() (runtime.Object, bool, string
 }
 
 func (r *dummySubresourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// This response object format is negotiated by k8s
-	dummy := &example.DummySubresource{
-		Info: fmt.Sprintf("%s/%s", info.Value, user.Login),
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		responder.Object(http.StatusOK, dummy)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("{\"status\": \"OK\"}"))
 	}), nil
 }
