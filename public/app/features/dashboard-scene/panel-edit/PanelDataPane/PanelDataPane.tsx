@@ -11,7 +11,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Container, CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
 import { VizPanelManager } from '../VizPanelManager';
@@ -160,7 +160,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       </TabsBar>
       <CustomScrollbar className={styles.scroll}>
         <TabContent className={styles.tabContent}>
-          {currentTab && <currentTab.Component model={currentTab} />}
+          <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
         </TabContent>
       </CustomScrollbar>
     </>

@@ -204,19 +204,32 @@ type readyToRunItem struct {
 }
 
 func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
-	orgs := make(map[int64]int64, len(alertRules))
-	orgsPaused := make(map[int64]int64, len(alertRules))
+	rulesPerOrg := make(map[int64]int64)                // orgID -> count
+	orgsPaused := make(map[int64]int64)                 // orgID -> count
+	groupsPerOrg := make(map[int64]map[string]struct{}) // orgID -> set of groups
 	for _, rule := range alertRules {
-		orgs[rule.OrgID]++
+		rulesPerOrg[rule.OrgID]++
+
 		if rule.IsPaused {
 			orgsPaused[rule.OrgID]++
 		}
+
+		orgGroups, ok := groupsPerOrg[rule.OrgID]
+		if !ok {
+			orgGroups = make(map[string]struct{})
+			groupsPerOrg[rule.OrgID] = orgGroups
+		}
+		orgGroups[rule.RuleGroup] = struct{}{}
 	}
 
-	for orgID, numRules := range orgs {
+	for orgID, numRules := range rulesPerOrg {
 		numRulesPaused := orgsPaused[orgID]
 		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
 		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
+	}
+
+	for orgID, groups := range groupsPerOrg {
+		sch.metrics.Groups.WithLabelValues(fmt.Sprint(orgID)).Set(float64(len(groups)))
 	}
 
 	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be

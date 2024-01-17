@@ -33,11 +33,11 @@ Request security is available in Grafana Enterprise v7.4 and later versions.
 
 Configure a firewall to restrict Grafana from making network requests to sensitive internal web services.
 
-There are many firewall tools available, refer to the documentation for your specific security tool. For example, Linux users can use [iptables](https://en.wikipedia.org/wiki/Iptables).
+There are many firewall tools available. Refer to the documentation for your specific security tool. For example, Linux users can use [iptables](https://en.wikipedia.org/wiki/Iptables).
 
 ## Proxy server
 
-Require all network requests being made by Grafana to go through a proxy server.
+You can require all network requests made by Grafana to go through a proxy server.
 
 Self-hosted reverse proxy options include but are not limited to:
 
@@ -47,9 +47,9 @@ Self-hosted reverse proxy options include but are not limited to:
 
 ## Limit Viewer query permissions
 
-Users with the Viewer role can enter _any possible query_ in _any_ of the data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
+Users with the `Viewer role` can enter _any possible query_ in _any_ of the data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
 
-**For example:** In a Grafana instance with one data source, one dashboard, and one panel that has one query defined, you might assume that a Viewer can only see the result of the query defined in that panel. Actually, the Viewer has access to send any query to the data source. With a command-line tool like curl (there are lots of tools for this), the Viewer can make their own query to the data source and potentially access sensitive data.
+For example, in a Grafana instance with one data source, one dashboard, and one panel that has one query defined, you might assume that a Viewer can only see the result of the query defined in that panel. Actually, the Viewer has access to send any query to the data source. With a command-line tool like curl (there are many tools for this), the Viewer can make their own query to the data source and potentially access sensitive data.
 
 To address this vulnerability, you can restrict data source query access in the following ways:
 
@@ -58,8 +58,10 @@ To address this vulnerability, you can restrict data source query access in the 
 
 ## Implications of enabling anonymous access to dashboards
 
-When you enable anonymous access to a dashboard, it is publicly available. This section lists the security implications of enabling Anonymous access.
+When you enable anonymous access in Grafana, any visitor or user can use Grafana as a Viewer without signing in. This section lists the security implications of enabling Anonymous access.
 
-- Anyone with the URL can access the dashboard.
-- Anyone can make view calls to the API and list all folders, dashboards, and data sources.
+- Anyone with the URL of a dashboard accessible by the Viewer role can access that dashboard.
+- New dashboards are publicly available unless the dashboard creator hides them from **all Viewers**.
+- Anyone can edit or delete dashboards that have granted Edit or Admin abilities to Viewers.
+- Anyone can make `view` calls to the API and list all folders, dashboards, and data sources.
 - Anyone can make arbitrary queries to any data source that the Grafana instance is configured with.

@@ -104,7 +104,8 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		now,
 		rule,
 		results,
-		state.GetRuleExtraLabels(rule, body.NamespaceTitle, includeFolder),
+		// TODO remove when switched to full path https://github.com/grafana/grafana/issues/80324
+		state.GetRuleExtraLabels(rule, ngmodels.GetNamespaceKey("", body.NamespaceTitle), includeFolder),
 	)
 
 	alerts := make([]*amv2.PostableAlert, 0, len(transitions))
