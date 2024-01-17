@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { Tooltip } from '../Tooltip';
 
-import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
+import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { ColorPlacement, LabelValue } from './types';
 
 interface Props extends LabelValue {
@@ -73,8 +73,13 @@ export const VizTooltipRow = ({
 
       <div className={styles.valueWrapper}>
         {color && colorPlacement === ColorPlacement.leading && (
-          <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
+          <VizTooltipColorIndicator
+            color={color}
+            colorIndicator={colorIndicator}
+            position={ColorIndicatorPosition.Leading}
+          />
         )}
+
         {!isPinned ? (
           <div className={cx(styles.value, isActive)}>{value}</div>
         ) : (
@@ -90,10 +95,11 @@ export const VizTooltipRow = ({
         )}
 
         {color && colorPlacement === ColorPlacement.trailing && (
-          <>
-            &nbsp;
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
-          </>
+          <VizTooltipColorIndicator
+            color={color}
+            colorIndicator={colorIndicator}
+            position={ColorIndicatorPosition.Trailing}
+          />
         )}
       </div>
     </div>
