@@ -53,12 +53,14 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   }
 
   onForwardClick = () => {
+    reportInteraction('grafana_getting_started_button_to_advanced_tutorials');
     this.setState((prevState) => ({
       currentStep: prevState.currentStep + 1,
     }));
   };
 
   onPreviousClick = () => {
+    reportInteraction('grafana_getting_started_button_to_basic_tutorials');
     this.setState((prevState) => ({
       currentStep: prevState.currentStep - 1,
     }));
