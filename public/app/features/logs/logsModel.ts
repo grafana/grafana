@@ -375,7 +375,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
     return undefined;
   }
   const allLabels: Labels[][] = [];
-  
 
   // Find the fields we care about and collect all labels
   let allSeries: LogInfo[] = [];
