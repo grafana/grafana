@@ -38,6 +38,7 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { infiniteScrollRefId } from 'app/features/logs/logsModel';
 import { combinePanelData } from 'app/features/logs/response';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -727,7 +728,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     const queries = logQueries.map((query: DataQuery) => ({
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
-      refId: `infinite-scroll-${query.refId}`
+      refId: `${infiniteScrollRefId}${query.refId}`
     }));
 
     if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
