@@ -94,7 +94,7 @@ export const DefaultCell = (props: TableCellProps) => {
   );
 };
 
-function getCellStyle(
+export function getCellStyle(
   tableStyles: TableStyles,
   cellOptions: TableCellOptions,
   displayValue: DisplayValue,
@@ -138,7 +138,11 @@ function getCellStyle(
   }
 }
 
-function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, targetClassName: string | undefined) {
+export function getLinkStyle(
+  tableStyles: TableStyles,
+  cellOptions: TableCellOptions,
+  targetClassName: string | undefined
+) {
   if (cellOptions.type === TableCellDisplayMode.Auto) {
     return cx(tableStyles.cellLink, targetClassName);
   }
