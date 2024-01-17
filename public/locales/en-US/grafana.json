@@ -1397,13 +1397,9 @@
       "filter-placeholder": "Search quick ranges"
     },
     "copy-paste": {
-      "copy-success": {
-        "message": "Time range copied to clipboard"
-      },
-      "default-error": {
-        "message": "is not a valid time range",
-        "title": "Invalid time range"
-      },
+      "copy-success-message": "Time range copied to clipboard",
+      "default-error-message": "{{error}} is not a valid time range",
+      "default-error-title": "Invalid time range",
       "tooltip-copy": "Copy time range to clipboard",
       "tooltip-paste": "Paste time range"
     },

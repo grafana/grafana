@@ -1397,13 +1397,9 @@
       "filter-placeholder": "Ŝęäřčĥ qūįčĸ řäŉģęş"
     },
     "copy-paste": {
-      "copy-success": {
-        "message": "Ŧįmę řäŉģę čőpįęđ ŧő čľįpþőäřđ"
-      },
-      "default-error": {
-        "message": "įş ŉőŧ ä väľįđ ŧįmę řäŉģę",
-        "title": "Ĩŉväľįđ ŧįmę řäŉģę"
-      },
+      "copy-success-message": "Ŧįmę řäŉģę čőpįęđ ŧő čľįpþőäřđ",
+      "default-error-message": "{{error}} įş ŉőŧ ä väľįđ ŧįmę řäŉģę",
+      "default-error-title": "Ĩŉväľįđ ŧįmę řäŉģę",
       "tooltip-copy": "Cőpy ŧįmę řäŉģę ŧő čľįpþőäřđ",
       "tooltip-paste": "Päşŧę ŧįmę řäŉģę"
     },

@@ -38,8 +38,8 @@ export const TimePickerWithHistory = (props: Props) => {
             }}
             onError={(error?: string) =>
               appEvents.emit(AppEvents.alertError, [
-                t('time-picker.copy-paste.default-error.title', 'Invalid time range'),
-                `"${error}" ${t('time-picker.copy-paste.default-error.message', 'is not a valid time range')}`,
+                t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+                t('time-picker.copy-paste.default-error-message', `{{error}} is not a valid time range`, { error }),
               ])
             }
           />

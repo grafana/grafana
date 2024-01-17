@@ -1391,13 +1391,9 @@
       "filter-placeholder": "搜索快速范围"
     },
     "copy-paste": {
-      "copy-success": {
-        "message": ""
-      },
-      "default-error": {
-        "message": "",
-        "title": ""
-      },
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
       "tooltip-copy": "",
       "tooltip-paste": ""
     },

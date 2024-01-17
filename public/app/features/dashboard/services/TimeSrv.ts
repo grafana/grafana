@@ -382,7 +382,7 @@ export class TimeSrv {
     const { raw } = this.timeRange();
     navigator.clipboard.writeText(JSON.stringify({ from: raw.from, to: raw.to }));
     appEvents.emit(AppEvents.alertSuccess, [
-      t('time-picker.copy-paste.copy-success.message', 'Time range copied to clipboard'),
+      t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
     ]);
   }
 
@@ -391,8 +391,8 @@ export class TimeSrv {
 
     if (isError === true) {
       appEvents.emit(AppEvents.alertError, [
-        t('time-picker.copy-paste.default-error.title', 'Invalid time range'),
-        `"${range}" ${t('time-picker.copy-paste.default-error.message', 'is not a valid time range')}`,
+        t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+        t('time-picker.copy-paste.default-error-message', '{{error}} is not a valid time range', { error: range }),
       ]);
       return;
     }

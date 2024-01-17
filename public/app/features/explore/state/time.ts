@@ -181,7 +181,7 @@ export function copyTimeRangeToClipboard(): ThunkResult<void> {
     navigator.clipboard.writeText(JSON.stringify(range));
 
     appEvents.emit(AppEvents.alertSuccess, [
-      t('time-picker.copy-paste.copy-success.message', 'Time range copied to clipboard'),
+      t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
     ]);
   };
 }
@@ -192,8 +192,8 @@ export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
 
     if (isError === true) {
       appEvents.emit(AppEvents.alertError, [
-        t('time-picker.copy-paste.default-error.title', 'Invalid time range'),
-        `"${range}" ${t('time-picker.copy-paste.default-error.message', 'is not a valid time range')}`,
+        t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+        t('time-picker.copy-paste.default-error-message', `{{error}} is not a valid time range`, { error: range }),
       ]);
       return;
     }

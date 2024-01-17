@@ -1397,13 +1397,9 @@
       "filter-placeholder": "Schnellbereiche suchen"
     },
     "copy-paste": {
-      "copy-success": {
-        "message": ""
-      },
-      "default-error": {
-        "message": "",
-        "title": ""
-      },
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
       "tooltip-copy": "",
       "tooltip-paste": ""
     },
