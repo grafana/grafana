@@ -178,91 +178,92 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	assert.Equal(t, int64(0), stats["stats.anonymous.device.ui.count"].(int64))
 }
 
-func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
-	t.Skip("Flaky test, @eleijonmarck will fix")
-	testCases := []struct {
-		name           string
-		insertDevices  []*anonstore.Device
-		searchQuery    anonstore.SearchDeviceQuery
-		expectedCount  int
-		expectedDevice *anonstore.Device
-	}{
-		{
-			name: "two devices and limit set to 1",
-			insertDevices: []*anonstore.Device{
-				{
-					DeviceID:  "32mdo31deeqwes",
-					ClientIP:  "",
-					UserAgent: "test",
-					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-					UpdatedAt: time.Now().UTC(),
-				},
-				{
-					DeviceID:  "32mdo31deeqwes2",
-					ClientIP:  "",
-					UserAgent: "test2",
-					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-					UpdatedAt: time.Now().UTC(),
-				},
-			},
-			searchQuery: anonstore.SearchDeviceQuery{
-				Query: "",
-				Page:  1,
-				Limit: 1,
-			},
-			expectedCount: 1,
-		},
-		{
-			name: "two devices and search for client ip 192.1",
-			insertDevices: []*anonstore.Device{
-				{
-					DeviceID:  "32mdo31deeqwes",
-					ClientIP:  "192.168.0.2:10",
-					UserAgent: "",
-					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-					UpdatedAt: time.Now().UTC(),
-				},
-				{
-					DeviceID:  "32mdo31deeqwes2",
-					ClientIP:  "192.268.1.3:200",
-					UserAgent: "",
-					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-					UpdatedAt: time.Now().UTC(),
-				},
-			},
-			searchQuery: anonstore.SearchDeviceQuery{
-				Query: "192.1",
-				Page:  1,
-				Limit: 50,
-			},
-			expectedCount: 1,
-			expectedDevice: &anonstore.Device{
-				DeviceID:  "32mdo31deeqwes",
-				ClientIP:  "192.168.0.2:10",
-				UserAgent: "",
-				CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-				UpdatedAt: time.Now().UTC(),
-			},
-		},
-	}
-	store := db.InitTestDB(t)
-	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
+// func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
+// 	t.Skip("Flaky test, @eleijonmarck will fix")
+// 	testCases := []struct {
+// 		name           string
+// 		insertDevices  []*anonstore.Device
+// 		searchQuery    anonstore.SearchDeviceQuery
+// 		expectedCount  int
+// 		expectedDevice *anonstore.Device
+// 	}{
+// 		{
+// 			name: "two devices and limit set to 1",
+// 			insertDevices: []*anonstore.Device{
+// 				{
+// 					DeviceID:  "32mdo31deeqwes",
+// 					ClientIP:  "",
+// 					UserAgent: "test",
+// 					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
+// 					UpdatedAt: time.Now().UTC(),
+// 				},
+// 				{
+// 					DeviceID:  "32mdo31deeqwes2",
+// 					ClientIP:  "",
+// 					UserAgent: "test2",
+// 					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
+// 					UpdatedAt: time.Now().UTC(),
+// 				},
+// 			},
+// 			searchQuery: anonstore.SearchDeviceQuery{
+// 				Query: "",
+// 				Page:  1,
+// 				Limit: 1,
+// 			},
+// 			expectedCount: 1,
+// 		},
+// 		{
+// 			name: "two devices and search for client ip 192.1",
+// 			insertDevices: []*anonstore.Device{
+// 				{
+// 					DeviceID:  "32mdo31deeqwes",
+// 					ClientIP:  "192.168.0.2:10",
+// 					UserAgent: "",
+// 					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
+// 					UpdatedAt: time.Now().UTC(),
+// 				},
+// 				{
+// 					DeviceID:  "32mdo31deeqwes2",
+// 					ClientIP:  "192.268.1.3:200",
+// 					UserAgent: "",
+// 					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
+// 					UpdatedAt: time.Now().UTC(),
+// 				},
+// 			},
+// 			searchQuery: anonstore.SearchDeviceQuery{
+// 				Query: "192.1",
+// 				Page:  1,
+// 				Limit: 50,
+// 			},
+// 			expectedCount: 1,
+// 			expectedDevice: &anonstore.Device{
+// 				DeviceID:  "32mdo31deeqwes",
+// 				ClientIP:  "192.168.0.2:10",
+// 				UserAgent: "",
+// 				CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
+// 				UpdatedAt: time.Now().UTC(),
+// 			},
+// 		},
+// 	}
+// 	store := db.InitTestDB(t)
+// 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
+// 		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			for _, device := range tc.insertDevices {
-				err := anonService.anonStore.CreateOrUpdateDevice(context.Background(), device)
-				require.NoError(t, err)
-			}
+// 	for _, tc := range testCases {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			for _, device := range tc.insertDevices {
+// 				err := anonService.anonStore.CreateOrUpdateDevice(context.Background(), device)
+// 				require.NoError(t, err)
+// 			}
 
-			devices, err := anonService.anonStore.SearchDevices(context.Background(), &tc.searchQuery)
-			require.NoError(t, err)
-			require.Len(t, devices.Devices, tc.expectedCount)
-			if tc.expectedDevice != nil {
-				device := devices.Devices[0]
-				require.Equal(t, tc.expectedDevice.UserAgent, device.UserAgent)
-			}
-		})
-	}
-}
+// 			devices, err := anonService.anonStore.SearchDevices(context.Background(), &tc.searchQuery)
+// 			require.NoError(t, err)
+// 			require.Len(t, devices.Devices, tc.expectedCount)
+// 			if tc.expectedDevice != nil {
+// 				device := devices.Devices[0]
+// 				require.Equal(t, tc.expectedDevice.UserAgent, device.UserAgent)
+// 			}
+// 		})
+// 	}
+// }
+//
