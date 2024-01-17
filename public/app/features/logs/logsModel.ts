@@ -474,7 +474,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       }
 
       if (filterDuplicateRows && findMatchingRow(row, rows)) {
-        console.log(`skipping`, row)
         continue;
       }
 
