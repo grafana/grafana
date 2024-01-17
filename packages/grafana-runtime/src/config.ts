@@ -166,6 +166,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
   tokenExpirationDayLimit: undefined;
   disableFrontendSandboxForPlugins: string[] = [];
+  sharedWithMeFolderUID: string | undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;

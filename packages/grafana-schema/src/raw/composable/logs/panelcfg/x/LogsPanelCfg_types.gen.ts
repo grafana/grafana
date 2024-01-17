@@ -19,6 +19,7 @@ export interface Options {
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
   showLabels: boolean;
+  showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;
