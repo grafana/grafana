@@ -220,20 +220,20 @@ export function dataFrameToLogsModel(
 ): LogsModel {
   // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
   let infiniteScrollingResults = false;
-  queries = queries?.map(query => {
-    if (query.refId.includes('infinite-scroll')) {
+  queries = queries?.map((query) => {
+    if (query.refId.includes(infiniteScrollRefId)) {
       infiniteScrollingResults = true;
       return {
         ...query,
         refId: query.refId.replace(infiniteScrollRefId, ''),
-      }
+      };
     }
     return query;
   });
   if (infiniteScrollingResults) {
-    dataFrame = dataFrame.map(frame => ({
+    dataFrame = dataFrame.map((frame) => ({
       ...frame,
-      refId: frame.refId?.replace(infiniteScrollRefId, '')
+      refId: frame.refId?.replace(infiniteScrollRefId, ''),
     }));
   }
 
@@ -372,7 +372,11 @@ function parseTime(
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[] = [], filterDuplicateRows = false): LogsModel | undefined {
+export function logSeriesToLogsModel(
+  logSeries: DataFrame[],
+  queries: DataQuery[] = [],
+  filterDuplicateRows = false
+): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
