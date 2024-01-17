@@ -10,7 +10,7 @@ import {
 } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 
-import { getMetricSceneFor } from './utils';
+import { getMetricSceneFor } from '../utils';
 
 export interface AddToFiltersGraphActionState extends SceneObjectState {
   frame: DataFrame;
