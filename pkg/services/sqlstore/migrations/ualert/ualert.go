@@ -290,7 +290,7 @@ func (m *migrateToObjectMatchers) Exec(sess *xorm.Session, mg *migrator.Migrator
 			return fmt.Errorf("failed to marshal configuration for org %d: %w", row.OrgID, err)
 		}
 		row.AlertmanagerConfiguration = string(b)
-		if _, err = sess.Table(&ngmodels.AlertConfiguration{}).Update(row); err != nil {
+		if _, err = sess.Table(&ngmodels.AlertConfiguration{}).ID(row.ID).Update(row); err != nil {
 			return fmt.Errorf("failed to update configuration for org %d: %w", row.OrgID, err)
 		}
 		mg.Logger.Debug("Saved updated configuration", "org", row.OrgID)
