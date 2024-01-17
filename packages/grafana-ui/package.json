@@ -110,7 +110,7 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.6.2",
     "uplot": "1.6.28",
-    "uuid": "9.0.0"
+    "uuid": "9.0.1"
   },
   "devDependencies": {
     "@babel/core": "7.23.7",
@@ -161,7 +161,7 @@
     "@types/slate-react": "0.22.9",
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/tinycolor2": "1.4.6",
-    "@types/uuid": "9.0.2",
+    "@types/uuid": "9.0.7",
     "common-tags": "1.8.2",
     "core-js": "3.33.0",
     "css-loader": "6.8.1",

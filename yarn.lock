@@ -3080,7 +3080,7 @@ __metadata:
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
     "@types/semver": "npm:7.5.6"
-    "@types/uuid": "npm:9.0.2"
+    "@types/uuid": "npm:9.0.7"
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
     glob: "npm:10.3.10"
@@ -3102,7 +3102,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
     typescript: "npm:5.2.2"
-    uuid: "npm:9.0.0"
+    uuid: "npm:9.0.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3627,7 +3627,7 @@ __metadata:
     "@types/slate-react": "npm:0.22.9"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
-    "@types/uuid": "npm:9.0.2"
+    "@types/uuid": "npm:9.0.7"
     ansicolor: "npm:1.1.100"
     calculate-size: "npm:1.1.1"
     classnames: "npm:2.3.2"
@@ -3698,7 +3698,7 @@ __metadata:
     tslib: "npm:2.6.2"
     typescript: "npm:5.2.2"
     uplot: "npm:1.6.28"
-    uuid: "npm:9.0.0"
+    uuid: "npm:9.0.1"
     webpack: "npm:5.89.0"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -9413,6 +9413,13 @@ __metadata:
   version: 9.0.2
   resolution: "@types/uuid@npm:9.0.2"
   checksum: 1754bcf3444e1e3aeadd6e774fc328eb53bc956665e2e8fb6ec127aa8e1f43d9a224c3d22a9a6233dca8dd81a12dc7fed4d84b8876dd5ec82d40f574f7ff8b68
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:9.0.7":
+  version: 9.0.7
+  resolution: "@types/uuid@npm:9.0.7"
+  checksum: c7321194aeba9ea173efd1e721403bdf4e7ae6945f8f8cdbc87c791f4b505ccf3dbc4a8883d90b394ef13b7c2dc778045792b05dbb23b3c746f8ea347804d448
   languageName: node
   linkType: hard
 
@@ -17169,7 +17176,7 @@ __metadata:
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/trusted-types": "npm:2.0.7"
-    "@types/uuid": "npm:9.0.2"
+    "@types/uuid": "npm:9.0.7"
     "@types/webpack-assets-manifest": "npm:^5"
     "@types/webpack-env": "npm:1.18.4"
     "@types/yargs": "npm:17.0.32"
@@ -17370,7 +17377,7 @@ __metadata:
     tween-functions: "npm:^1.2.0"
     typescript: "npm:5.2.2"
     uplot: "npm:1.6.28"
-    uuid: "npm:9.0.0"
+    uuid: "npm:9.0.1"
     vendor: "link:./public/vendor"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.89.0"
@@ -29444,12 +29451,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:9.0.0, uuid@npm:^9.0.0":
+"uuid@npm:9.0.0":
   version: 9.0.0
   resolution: "uuid@npm:9.0.0"
   bin:
     uuid: dist/bin/uuid
   checksum: 23857699a616d1b48224bc2b8440eae6e57d25463c3a0200e514ba8279dfa3bde7e92ea056122237839cfa32045e57d8f8f4a30e581d720fd72935572853ae2e
+  languageName: node
+  linkType: hard
+
+"uuid@npm:9.0.1, uuid@npm:^9.0.0":
+  version: 9.0.1
+  resolution: "uuid@npm:9.0.1"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 9d0b6adb72b736e36f2b1b53da0d559125ba3e39d913b6072f6f033e0c87835b414f0836b45bcfaf2bdf698f92297fea1c3cc19b0b258bc182c9c43cc0fab9f2
   languageName: node
   linkType: hard
 
