@@ -29,14 +29,14 @@ export function SelectionOptionsForm({
         name="Multi-value"
         description="Enables multiple values to be selected at the same time"
         onChange={onMultiChange}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitchV2}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
       />
       <VariableCheckboxField
         value={includeAll}
         name="Include All option"
         description="Enables an option to include all variables"
         onChange={onIncludeAllChange}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitchV2}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}
       />
       {includeAll && (
         <VariableTextField
@@ -44,7 +44,7 @@ export function SelectionOptionsForm({
           onBlur={onAllValueChange}
           name="Custom all value"
           placeholder="blank = auto"
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
         />
       )}
     </VerticalGroup>

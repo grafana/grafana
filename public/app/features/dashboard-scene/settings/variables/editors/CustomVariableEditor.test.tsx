@@ -24,13 +24,13 @@ describe('CustomVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput
     ) as HTMLInputElement;
     const allValueInput = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     ) as HTMLInputElement;
     const multiCheckbox = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitchV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch
     ) as HTMLInputElement;
     const includeAllCheckbox = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitchV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
     ) as HTMLInputElement;
 
     expect(queryInput.value).toBe('test, test2');
@@ -50,22 +50,22 @@ describe('CustomVariableEditor', () => {
     const { getByTestId } = render(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
     const multiCheckbox = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitchV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch
     );
     const includeAllCheckbox = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitchV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
     );
 
     // It include-all-custom input appears after include-all checkbox is checked only
     expect(() =>
-      getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2)
+      getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput)
     ).toThrow('Unable to find an element');
 
     fireEvent.click(multiCheckbox);
 
     fireEvent.click(includeAllCheckbox);
     const allValueInput = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
 
     expect(variable.state.isMulti).toBe(true);
@@ -104,7 +104,7 @@ describe('CustomVariableEditor', () => {
     const { getByTestId } = render(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
     const allValueInput = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     ) as HTMLInputElement;
 
     fireEvent.change(allValueInput, { target: { value: 'new custom all' } });

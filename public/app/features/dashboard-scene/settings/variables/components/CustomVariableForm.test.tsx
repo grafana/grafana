@@ -31,13 +31,13 @@ describe('CustomVariableForm', () => {
 
     const queryInput = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput);
     const multiCheckbox = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitchV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch
     );
     const includeAllCheckbox = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitchV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
     );
     const allValueInput = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
 
     expect(queryInput).toBeInTheDocument();
@@ -66,13 +66,13 @@ describe('CustomVariableForm', () => {
 
     const queryInput = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput);
     const multiCheckbox = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitchV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch
     );
     const includeAllCheckbox = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitchV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
     );
     const allValueInput = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
 
     fireEvent.click(multiCheckbox);
@@ -102,7 +102,7 @@ describe('CustomVariableForm', () => {
 
     const queryInput = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput);
     const allValueInput = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
 
     fireEvent.blur(queryInput);
