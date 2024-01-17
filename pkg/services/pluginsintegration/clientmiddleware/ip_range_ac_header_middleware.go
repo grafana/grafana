@@ -2,26 +2,31 @@ package clientmiddleware
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const IPHeaderName = "X-Real-IP"
-const InternalRequestHeaderName = "X-Grafana-Internal-Request"
+const IPRangeHeaderName = "X-Grafana-IP-Range-AC"
 
 // NewIPRangeACHeaderMiddleware creates a new plugins.ClientMiddleware that will
 // populate the X-Real-IP header for external requests
 // and set X-Grafana-Internal-Request header for plugin requests originating from Grafana.
-func NewIPRangeACHeaderMiddleware() plugins.ClientMiddleware {
+func NewIPRangeACHeaderMiddleware(cfg *setting.Cfg) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &IPRangeACHeaderMiddleware{
 			next: next,
 			log:  log.New("ip_header_middleware"),
+			cfg:  cfg,
 		}
 	})
 }
@@ -30,6 +35,7 @@ type IPRangeACHeaderMiddleware struct {
 	next   plugins.Client
 	keySvc signingkeys.Service
 	log    log.Logger
+	cfg    *setting.Cfg
 }
 
 func (m *IPRangeACHeaderMiddleware) applyRemoteAddressHeader(ctx context.Context, pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) {
@@ -37,16 +43,30 @@ func (m *IPRangeACHeaderMiddleware) applyRemoteAddressHeader(ctx context.Context
 	if h == nil || pCtx.DataSourceInstanceSettings == nil {
 		return
 	}
-	reqCtx := contexthandler.FromContext(ctx)
 
-	// TODO sign the headers or add some other security measure to prevent spoofing
-	if reqCtx != nil && reqCtx.Req != nil {
-		remoteAddress := web.RemoteAddr(reqCtx.Req)
-		h.SetHTTPHeader(IPHeaderName, remoteAddress)
+	// Check if the request is for a datasource that is allowed to have the header
+	url := pCtx.DataSourceInstanceSettings.URL
+	if !slices.Contains(m.cfg.IPRangeACAllowedURLs, url) {
 		return
 	}
 
-	h.SetHTTPHeader(InternalRequestHeaderName, "true")
+	reqCtx := contexthandler.FromContext(ctx)
+
+	hmac := hmac.New(sha256.New, []byte(m.cfg.IPRangeACSecretKey))
+	toSign := ""
+	if reqCtx != nil && reqCtx.Req != nil {
+		toSign = web.RemoteAddr(reqCtx.Req)
+	} else {
+		toSign = "internal"
+	}
+
+	_, err := hmac.Write([]byte(toSign))
+	if err != nil {
+		m.log.Error("Failed to sign IP range access control header", "error", err)
+		return
+	}
+	signedIPRangeInfo := hex.EncodeToString(hmac.Sum(nil))
+	h.SetHTTPHeader(IPRangeHeaderName, signedIPRangeInfo)
 }
 
 func (m *IPRangeACHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

@@ -401,6 +401,11 @@ type Cfg struct {
 	// Data sources
 	DataSourceLimit int
 
+	// IP range access control
+	IPRangeACEnabled     bool
+	IPRangeACAllowedURLs []string
+	IPRangeACSecretKey   string
+
 	// SQL Data sources
 	SqlDatasourceMaxOpenConnsDefault    int
 	SqlDatasourceMaxIdleConnsDefault    int
@@ -1930,6 +1935,19 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+}
+
+func (cfg *Cfg) readDataSourceSecuritySettings() {
+	datasources := cfg.Raw.Section("datasources.ip_range_security")
+	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
+	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
+	allowedURLString := datasources.Key("allow_list").MustString("")
+	for _, url := range strings.Split(allowedURLString, ",") {
+		url = strings.TrimSpace(url)
+		if url != "" {
+			cfg.IPRangeACAllowedURLs = append(cfg.IPRangeACAllowedURLs, url)
+		}
+	}
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {

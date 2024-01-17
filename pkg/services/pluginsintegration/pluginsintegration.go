@@ -187,8 +187,8 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagIpRangeAccessControlForDataSources) {
-		middlewares = append(middlewares, clientmiddleware.NewIPRangeACHeaderMiddleware())
+	if features.IsEnabledGlobally(featuremgmt.FlagIpRangeAccessControlForDataSources) && cfg.IPRangeACEnabled {
+		middlewares = append(middlewares, clientmiddleware.NewIPRangeACHeaderMiddleware(cfg))
 	}
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
