@@ -125,7 +125,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
                 <RepeatRowSelect
                   id="repeat-by-variable-select"
                   repeat={panel.repeat}
-                  onChange={(value?: string | null) => {
+                  onChange={(value?: string) => {
                     onPanelConfigChange('repeat', value);
                   }}
                 />
