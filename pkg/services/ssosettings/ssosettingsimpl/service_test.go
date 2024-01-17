@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -520,10 +521,34 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		reloadable.On("Validate", mock.Anything, settings).Return(nil)
-		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
+		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			return settings.Provider == provider &&
+				settings.ID == "someid" &&
+				maps.Equal(settings.Settings, map[string]any{
+					"client_id":     "client-id",
+					"client_secret": "client-secret",
+					"enabled":       true,
+				})
+		})).Return(nil).Once()
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
+		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
 
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			settings.ID = "someid"
+			env.store.ActualSSOSettings = *settings
+			return nil
+		}
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				ID:       "someid",
+				Provider: provider,
+				Settings: map[string]any{
+					"client_secret": base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-client-secret")),
+				},
+			}, nil
+		}
 		err := env.service.Upsert(context.Background(), settings)
 		require.NoError(t, err)
 
@@ -695,7 +720,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			return &models.SSOSettings{}, nil
 		}
 
-		env.store.UpsertFn = func(ctx context.Context, settings models.SSOSettings) error {
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
 			return errors.New("failed to upsert settings")
 		}
 
@@ -840,6 +865,22 @@ func TestSSOSettingsService_decryptSecrets(t *testing.T) {
 			want: map[string]any{
 				"enabled":       true,
 				"client_secret": "decrypted-client-secret",
+				"other_secret":  "decrypted-other-secret",
+			},
+		},
+		{
+			name: "should not decrypt when a secret is empty",
+			setup: func(env testEnv) {
+				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+			},
+			settings: map[string]any{
+				"enabled":       true,
+				"client_secret": "",
+				"other_secret":  base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+			},
+			want: map[string]any{
+				"enabled":       true,
+				"client_secret": "",
 				"other_secret":  "decrypted-other-secret",
 			},
 		},

@@ -60,6 +60,6 @@ type FallbackStrategy interface {
 type Store interface {
 	Get(ctx context.Context, provider string) (*models.SSOSettings, error)
 	List(ctx context.Context) ([]*models.SSOSettings, error)
-	Upsert(ctx context.Context, settings models.SSOSettings) error
+	Upsert(ctx context.Context, settings *models.SSOSettings) error
 	Delete(ctx context.Context, provider string) error
 }
