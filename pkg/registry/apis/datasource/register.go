@@ -14,10 +14,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
+	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/utils/strings/slices"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -35,14 +35,13 @@ var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
-	connectionResourceInfo apis.ResourceInfo
+	connectionResourceInfo common.ResourceInfo
 
-	plugin        pluginstore.Plugin
+	plugin        plugins.JSONData
 	client        plugins.Client
 	dsService     datasources.DataSourceService
 	dsCache       datasources.CacheService
 	accessControl accesscontrol.AccessControl
-	namespacer    request.NamespaceMapper
 }
 
 func RegisterAPIService(
@@ -67,13 +66,12 @@ func RegisterAPIService(
 		"grafana-testdata-datasource",
 	}
 
-	namespacer := request.GetNamespaceMapper(cfg)
 	for _, ds := range all {
 		if !slices.Contains(ids, ds.ID) {
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds, pluginClient, dsService, dsCache, accessControl, namespacer)
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData, pluginClient, dsService, dsCache, accessControl)
 		if err != nil {
 			return nil, err
 		}
@@ -83,12 +81,11 @@ func RegisterAPIService(
 }
 
 func NewDataSourceAPIBuilder(
-	plugin pluginstore.Plugin,
+	plugin plugins.JSONData,
 	client plugins.Client,
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,
-	accessControl accesscontrol.AccessControl,
-	namespacer request.NamespaceMapper) (*DataSourceAPIBuilder, error) {
+	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
 	group, err := getDatasourceGroupNameFromPluginID(plugin.ID)
 	if err != nil {
 		return nil, err
@@ -100,7 +97,6 @@ func NewDataSourceAPIBuilder(
 		dsService:              dsService,
 		dsCache:                dsCache,
 		accessControl:          accessControl,
-		namespacer:             namespacer,
 	}, nil
 }
 
@@ -191,7 +187,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	return &apiGroupInfo, nil
 }
 
-func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return v0alpha1.GetOpenAPIDefinitions
 }
 

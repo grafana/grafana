@@ -125,7 +125,11 @@ export class GeneralSettingsEditView
   };
 
   public onNowDelayChange = (value: string) => {
-    // TODO: Figure out how to store nowDelay in Dashboard Scene
+    const timeRange = this.getTimeRange();
+
+    timeRange?.setState({
+      UNSAFE_nowDelay: value,
+    });
   };
 
   public onHideTimePickerChange = (value: boolean) => {
@@ -146,7 +150,7 @@ export class GeneralSettingsEditView
     const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
     const { title, description, tags, meta, editable, overlay } = model.getDashboard().useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
-    const { timeZone, weekStart } = model.getTimeRange().useState();
+    const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker()?.useState() || {};
     const { hideTimeControls } = model.getDashboardControls()?.useState() || {};
 
@@ -230,8 +234,7 @@ export class GeneralSettingsEditView
             onLiveNowChange={model.onLiveNowChange}
             refreshIntervals={intervals}
             timePickerHidden={hideTimeControls}
-            // TODO: Implement this in dashboard scene
-            // nowDelay={timepicker.nowDelay || ''}
+            nowDelay={nowDelay || ''}
             // TODO: Implement this in dashboard scene
             // liveNow={liveNow}
             liveNow={false}
