@@ -78,7 +78,6 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
-  useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
