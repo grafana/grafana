@@ -59,7 +59,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
 
   if (isPublicDashboardsEnabled()) {
     tabs.push({
-      label: 'Public dashboard',
+      label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
       value: shareDashboardType.publicDashboard,
       component: SharePublicDashboard,
     });

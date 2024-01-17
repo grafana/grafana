@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { combineResponses } from 'app/features/logs/response';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
@@ -309,6 +310,11 @@ export function decorateData(
     mergeMap(decorateWithRawPrometheusResult),
     mergeMap(decorateWithTableResult)
   );
+}
+
+export function mergeDataSeries(currentData: PanelData, newData: PanelData): PanelData {
+  currentData.series = combineResponses({ data: currentData.series }, { data: newData.series }).data;
+  return currentData;
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   getUrlSyncManager,
   SceneFlexItem,
   SceneFlexLayout,
+  SceneGridItem,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
@@ -24,7 +25,6 @@ import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelEditorUrlSync } from './PanelEditorUrlSync';
 import { PanelOptionsPane } from './PanelOptionsPane';
-import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
@@ -98,15 +98,15 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = this.state.dashboardRef.resolve();
     const sourcePanel = this.state.sourcePanelRef.resolve();
 
-    const panelMngr = this.state.panelRef.resolve();
-
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    const newState = sceneUtils.cloneSceneObjectState(panelMngr.state.panel.state);
+    const panelMngr = this.state.panelRef.resolve();
 
-    sourcePanel.setState(newState);
+    if (sourcePanel.parent instanceof SceneGridItem) {
+      sourcePanel.parent.setState({ body: panelMngr.state.panel.clone() });
+    }
 
     // preserve time range and variables state
     dashboard.setState({
@@ -121,7 +121,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       getDashboardUrl({
         uid: this.state.dashboardRef.resolve().state.uid,
         currentQueryParams: locationService.getLocation().search,
-        useExperimentalURL: true,
       })
     );
   }
@@ -130,7 +129,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
 
-  const vizPanelMgr = new VizPanelManager(panelClone, dashboard.getRef());
+  const vizPanelMgr = new VizPanelManager(panelClone);
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
@@ -146,15 +145,16 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
         direction: 'column',
         primary: new SceneFlexLayout({
           direction: 'column',
+          minHeight: 200,
           children: [vizPanelMgr],
         }),
         secondary: new SceneFlexItem({
           body: new PanelDataPane(vizPanelMgr),
         }),
       }),
-      secondary: new SceneFlexLayout({
-        direction: 'column',
-        children: [new PanelOptionsPane(vizPanelMgr), new PanelVizTypePicker(vizPanelMgr)],
+      secondary: new SceneFlexItem({
+        body: new PanelOptionsPane(vizPanelMgr),
+        width: '100%',
       }),
     }),
   });

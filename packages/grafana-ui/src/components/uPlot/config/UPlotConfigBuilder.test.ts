@@ -379,8 +379,6 @@ describe('UPlotConfigBuilder', () => {
       max: 100,
     });
 
-    expect(builder.getConfig().scales!['scale-y']!.auto).toEqual(false);
-
     builder.addScale({
       isTime: false,
       scaleKey: 'scale-y2',
@@ -391,6 +389,7 @@ describe('UPlotConfigBuilder', () => {
       softMin: -50,
     });
 
+    expect(builder.getConfig().scales!['scale-y']!.auto).toEqual(false);
     expect(builder.getConfig().scales!['scale-y2']!.auto).toEqual(true);
   });
 

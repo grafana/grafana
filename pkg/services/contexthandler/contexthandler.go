@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -15,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremgmt.FeatureManager, authnService authn.Service,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles, authnService authn.Service,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:          cfg,
@@ -39,7 +39,7 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremg
 type ContextHandler struct {
 	Cfg          *setting.Cfg
 	tracer       tracing.Tracer
-	features     *featuremgmt.FeatureManager
+	features     featuremgmt.FeatureToggles
 	authnService authn.Service
 }
 
@@ -138,38 +138,26 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		))
 
 		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
-			namespace, id := getNamespaceAndID(reqContext.SignedInUser)
-			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(namespace, id))
+			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
 		}
 
 		next.ServeHTTP(w, r)
 	})
 }
 
-// TODO(kalleep): Refactor to user identity.Requester interface and methods after we have backported this
-func getNamespaceAndID(user *user.SignedInUser) (string, string) {
-	var namespace, id string
-	if user.UserID > 0 && user.IsServiceAccount {
-		id = strconv.Itoa(int(user.UserID))
-		namespace = "service-account"
-	} else if user.UserID > 0 {
-		id = strconv.Itoa(int(user.UserID))
-		namespace = "user"
-	} else if user.ApiKeyID > 0 {
-		id = strconv.Itoa(int(user.ApiKeyID))
-		namespace = "api-key"
-	}
-
-	return namespace, id
-}
-
-func (h *ContextHandler) addIDHeaderEndOfRequestFunc(namespace, id string) web.BeforeFunc {
+func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		if w.Written() {
 			return
 		}
 
-		if namespace == "" || id == "" {
+		namespace, id := ident.GetNamespacedID()
+		if !identity.IsNamespace(
+			namespace,
+			identity.NamespaceUser,
+			identity.NamespaceServiceAccount,
+			identity.NamespaceAPIKey,
+		) || id == "0" {
 			return
 		}
 

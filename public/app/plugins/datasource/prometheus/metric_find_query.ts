@@ -139,6 +139,7 @@ export default class PrometheusMetricFindQuery {
     const url = '/api/v1/query';
     const params = {
       query,
+      time: getPrometheusTime(this.range.to, true).toString(),
     };
     return this.datasource.metadataRequest(url, params).then((result: any) => {
       switch (result.data.data.resultType) {

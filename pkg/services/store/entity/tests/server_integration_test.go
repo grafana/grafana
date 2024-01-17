@@ -29,13 +29,13 @@ type rawEntityMatcher struct {
 	createdBy    string
 	updatedBy    string
 	body         []byte
-	version      *string
+	version      int64
 }
 
 type objectVersionMatcher struct {
 	updatedRange []time.Time
 	updatedBy    string
-	version      *string
+	version      int64
 	etag         *string
 	comment      *string
 }
@@ -79,8 +79,8 @@ func requireEntityMatch(t *testing.T, obj *entity.Entity, m rawEntityMatcher) {
 		}
 	}
 
-	if m.version != nil && *m.version != obj.Version {
-		mismatches += fmt.Sprintf("expected version: %s, actual version: %s\n", *m.version, obj.Version)
+	if m.version != 0 && m.version != obj.ResourceVersion {
+		mismatches += fmt.Sprintf("expected version: %d, actual version: %d\n", m.version, obj.ResourceVersion)
 	}
 
 	require.True(t, len(mismatches) == 0, mismatches)
@@ -102,8 +102,8 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
-	if m.version != nil && *m.version != obj.Version {
-		mismatches += fmt.Sprintf("expected version: %s, actual version: %s\n", *m.version, obj.Version)
+	if m.version != 0 && m.version != obj.ResourceVersion {
+		mismatches += fmt.Sprintf("expected version: %d, actual version: %d\n", m.version, obj.ResourceVersion)
 	}
 
 	require.True(t, len(mismatches) == 0, mismatches)
@@ -123,7 +123,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	ctx := metadata.AppendToOutgoingContext(testCtx.ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
 	fakeUser := store.GetUserIDString(testCtx.user)
-	firstVersion := "1"
+	firstVersion := int64(0)
 	group := "test.grafana.app"
 	resource := "jsonobjs"
 	resource2 := "playlists"
@@ -161,15 +161,15 @@ func TestIntegrationEntityServer(t *testing.T) {
 		versionMatcher := objectVersionMatcher{
 			updatedRange: []time.Time{before, time.Now()},
 			updatedBy:    fakeUser,
-			version:      &firstVersion,
+			version:      firstVersion,
 			comment:      &createReq.Entity.Message,
 		}
 		requireVersionMatch(t, createResp.Entity, versionMatcher)
 
 		readResp, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			Key:      testKey,
-			Version:  "",
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0,
+			WithBody:        true,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, readResp)
@@ -186,21 +186,21 @@ func TestIntegrationEntityServer(t *testing.T) {
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body,
-			version:      &firstVersion,
+			version:      firstVersion,
 		}
 		requireEntityMatch(t, readResp, objectMatcher)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
 			Key:             testKey,
-			PreviousVersion: readResp.Version,
+			PreviousVersion: readResp.ResourceVersion,
 		})
 		require.NoError(t, err)
 		require.Equal(t, deleteResp.Status, entity.DeleteEntityResponse_DELETED)
 
 		readRespAfterDelete, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			Key:      testKey,
-			Version:  "",
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0,
+			WithBody:        true,
 		})
 		require.NoError(t, err)
 		require.Empty(t, readRespAfterDelete.Key)
@@ -235,14 +235,14 @@ func TestIntegrationEntityServer(t *testing.T) {
 		}
 		updateResp, err := testCtx.client.Update(ctx, updateReq)
 		require.NoError(t, err)
-		require.NotEqual(t, createResp.Entity.Version, updateResp.Entity.Version)
+		require.NotEqual(t, createResp.Entity.ResourceVersion, updateResp.Entity.ResourceVersion)
 
 		// Duplicate write (no change)
 		writeDupRsp, err := testCtx.client.Update(ctx, updateReq)
 		require.NoError(t, err)
 		require.Nil(t, writeDupRsp.Error)
 		require.Equal(t, entity.UpdateEntityResponse_UNCHANGED, writeDupRsp.Status)
-		require.Equal(t, updateResp.Entity.Version, writeDupRsp.Entity.Version)
+		require.Equal(t, updateResp.Entity.ResourceVersion, writeDupRsp.Entity.ResourceVersion)
 		require.Equal(t, updateResp.Entity.ETag, writeDupRsp.Entity.ETag)
 
 		body3 := []byte("{\"name\":\"John3\"}")
@@ -255,7 +255,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		}
 		writeResp3, err := testCtx.client.Update(ctx, writeReq3)
 		require.NoError(t, err)
-		require.NotEqual(t, writeResp3.Entity.Version, updateResp.Entity.Version)
+		require.NotEqual(t, writeResp3.Entity.ResourceVersion, updateResp.Entity.ResourceVersion)
 
 		latestMatcher := rawEntityMatcher{
 			key:          testKey,
@@ -264,20 +264,20 @@ func TestIntegrationEntityServer(t *testing.T) {
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body3,
-			version:      &writeResp3.Entity.Version,
+			version:      writeResp3.Entity.ResourceVersion,
 		}
 		readRespLatest, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			Key:      testKey,
-			Version:  "", // latest
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0, // latest
+			WithBody:        true,
 		})
 		require.NoError(t, err)
 		requireEntityMatch(t, readRespLatest, latestMatcher)
 
 		readRespFirstVer, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			Key:      testKey,
-			Version:  createResp.Entity.Version,
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: createResp.Entity.ResourceVersion,
+			WithBody:        true,
 		})
 
 		require.NoError(t, err)
@@ -289,7 +289,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body,
-			version:      &firstVersion,
+			version:      0,
 		})
 
 		history, err := testCtx.client.History(ctx, &entity.EntityHistoryRequest{
@@ -304,7 +304,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 		deleteResp, err := testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
 			Key:             testKey,
-			PreviousVersion: writeResp3.Entity.Version,
+			PreviousVersion: writeResp3.Entity.ResourceVersion,
 		})
 		require.NoError(t, err)
 		require.Equal(t, deleteResp.Status, entity.DeleteEntityResponse_DELETED)
@@ -352,19 +352,19 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NotNil(t, resp)
 		names := make([]string, 0, len(resp.Results))
 		kinds := make([]string, 0, len(resp.Results))
-		version := make([]string, 0, len(resp.Results))
+		version := make([]int64, 0, len(resp.Results))
 		for _, res := range resp.Results {
 			names = append(names, res.Name)
 			kinds = append(kinds, res.Resource)
-			version = append(version, res.Version)
+			version = append(version, res.ResourceVersion)
 		}
 		require.Equal(t, []string{"my-test-entity", "name2", "name3", "name4"}, names)
 		require.Equal(t, []string{"jsonobj", "jsonobj", "playlist", "playlist"}, kinds)
-		require.Equal(t, []string{
-			w1.Entity.Version,
-			w2.Entity.Version,
-			w3.Entity.Version,
-			w4.Entity.Version,
+		require.Equal(t, []int64{
+			w1.Entity.ResourceVersion,
+			w2.Entity.ResourceVersion,
+			w3.Entity.ResourceVersion,
+			w4.Entity.ResourceVersion,
 		}, version)
 
 		// Again with only one kind
@@ -374,17 +374,17 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 		names = make([]string, 0, len(respKind1.Results))
 		kinds = make([]string, 0, len(respKind1.Results))
-		version = make([]string, 0, len(respKind1.Results))
+		version = make([]int64, 0, len(respKind1.Results))
 		for _, res := range respKind1.Results {
 			names = append(names, res.Name)
 			kinds = append(kinds, res.Resource)
-			version = append(version, res.Version)
+			version = append(version, res.ResourceVersion)
 		}
 		require.Equal(t, []string{"my-test-entity", "name2"}, names)
 		require.Equal(t, []string{"jsonobj", "jsonobj"}, kinds)
-		require.Equal(t, []string{
-			w1.Entity.Version,
-			w2.Entity.Version,
+		require.Equal(t, []int64{
+			w1.Entity.ResourceVersion,
+			w2.Entity.ResourceVersion,
 		}, version)
 	})
 

@@ -1,5 +1,5 @@
 ---
-description: Describes how authorized users can manage feature toggles
+description: Learn how authorized users can manage feature toggles
 keywords:
   - feature
   - toggle
@@ -13,7 +13,7 @@ weight: 900
 
 # Feature toggles
 
-Grafana incorporates feature toggles, enabling the introduction of new functionality safeguarded by control flags. This allows Grafana administrators the flexibility to determine the appropriate timing for enabling or disabling specific features.
+Grafana incorporates feature toggles which let you introduce new functionality safeguarded by control flags. This allows Grafana administrators the flexibility to determine the appropriate timing for enabling or disabling specific features.
 For detailed information about particular features and how they operate, refer to [Configure Feature Toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 ## Manage feature toggles
@@ -46,10 +46,10 @@ Altering the state of a toggle may require restarting your Grafana instance, whi
 To edit a feature toggle, follow these steps:
 
 1. Sign in to Grafana as a server administrator or authorized user.
-1. Click **Administration** in the left-side menu, **General**, and then **Feature toggles**.
+1. In the primary menu, go to **Administration > General > Feature toggles**.
 1. Navigate to the list of feature toggles and select your feature state overrides.
 1. Click **Save changes** and wait for your Grafana instance to restart with the updated feature toggles.
 
 {{% admonition type="note" %}}
-Editing feature toggles with the feature toggle management page is available now in all tiers of [Grafana Cloud](/docs/grafana-cloud/)!
+Editing feature toggles with the feature toggle management page is available now in all tiers of [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}

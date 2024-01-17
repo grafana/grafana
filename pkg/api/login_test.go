@@ -53,9 +53,9 @@ func fakeSetIndexViewData(t *testing.T) {
 			Settings: &dtos.FrontendSettingsDTO{},
 			NavTree:  &navtree.NavTreeRoot{},
 			Assets: &dtos.EntryPointAssets{
-				JSFiles:  []dtos.EntryPointAsset{},
-				CSSDark:  "dark.css",
-				CSSLight: "light.css",
+				JSFiles: []dtos.EntryPointAsset{},
+				Dark:    "dark.css",
+				Light:   "light.css",
 			},
 		}
 		return data, nil
