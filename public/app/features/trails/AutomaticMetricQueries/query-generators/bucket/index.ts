@@ -72,6 +72,7 @@ function heatMapQuery(groupings: string[] = []) {
   return {
     refId: 'A',
     expr: baseQuery(groupings),
+    legendFormat: '{{le}}',
   };
 }
 
