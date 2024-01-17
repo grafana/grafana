@@ -138,7 +138,9 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             Run queries
           </Button>
         )}
-        <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
+        <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.editorToggle}>
+          <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
+        </div>
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>

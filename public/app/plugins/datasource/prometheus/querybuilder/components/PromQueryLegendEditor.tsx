@@ -65,7 +65,7 @@ export const PromQueryLegendEditor = React.memo<Props>(({ legendFormat, onChange
     <EditorField
       label="Legend"
       tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
-      id={selectors.components.DataSource.Prometheus.queryEditor.legend}
+      data-testid={selectors.components.DataSource.Prometheus.queryEditor.legend}
     >
       <>
         {mode === LegendFormatMode.Custom && (

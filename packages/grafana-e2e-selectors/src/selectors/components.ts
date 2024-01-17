@@ -82,9 +82,9 @@ export const Components = {
       queryEditor: {
         // kickstart: '', see QueryBuilder queryPatterns below
         explain: 'data-testid prometheus explain switch wrapper',
-        editorToggle: 'data-testid QueryEditorModeToggle', // need to change this in *shared* folder
-        options: 'data-testid prometheus-options', // id wrapper for options group collapse component in *shared* folder
-        legend: 'legend-wrapper', // wrapper for multiple compomnents
+        editorToggle: 'data-testid QueryEditorModeToggle', // wrapper for toggle
+        options: 'data-testid prometheus options', // wrapper for options group
+        legend: 'data-testid prometheus legend wrapper', // wrapper for multiple compomnents
         format: 'data-testid prometheus format',
         step: 'prometheus-step', // id for autosize component
         type: 'data-testid prometheus type', //wrapper for radio button group

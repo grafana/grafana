@@ -20,7 +20,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
   const styles = useStyles2(getStyles);
 
   return (
-    <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options} className={styles.wrapper}>
+    <div className={styles.wrapper}>
       <Collapse
         className={styles.collapse}
         collapsible

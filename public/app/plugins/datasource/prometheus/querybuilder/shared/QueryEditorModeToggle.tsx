@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { RadioButtonGroup } from '@grafana/ui';
 
 import { QueryEditorMode } from './types';
@@ -17,7 +16,7 @@ const editorModes = [
 
 export function QueryEditorModeToggle({ mode, onChange }: Props) {
   return (
-    <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.editorToggle}>
+    <div data-testid={'QueryEditorModeToggle'}>
       <RadioButtonGroup options={editorModes} size="sm" value={mode} onChange={onChange} />
     </div>
   );
