@@ -1,13 +1,10 @@
 package datasource
 
 import (
+	"context"
 	"fmt"
-	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
@@ -19,33 +16,30 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 	if group != "testdata.datasource.grafana.app" {
 		return nil, fmt.Errorf("only testadata is currently supported")
 	}
-
-	orgId := int64(1)
 	pluginId := "grafana-testdata-datasource"
-	now := time.Now()
-	dss := []*datasources.DataSource{
-		{
-			OrgID:   orgId, // default -- used in the list command
-			Type:    pluginId,
-			UID:     "builtin", // fake for now
-			Created: now,
-			Updated: now,
-			Name:    "Testdata (builtin)",
-		},
-		{
-			OrgID:   orgId, // default -- used in the list command
-			Type:    pluginId,
-			UID:     "PD8C576611E62080A", // match the gdev version
-			Created: now,
-			Updated: now,
-			Name:    "gdev-testdata",
-		},
+
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		// TODO: Add support for args?
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	accessControl, pluginstoreService, dsService, cacheServiceImpl, err := apiBuilderServices(cfg, pluginId)
+	if err != nil {
+		return nil, err
+	}
+
+	testdataPlugin, found := pluginstoreService.Plugin(context.Background(), pluginId)
+	if !found {
+		return nil, fmt.Errorf("plugin %s not found", pluginId)
+	}
+
 	return NewDataSourceAPIBuilder(
-		plugins.JSONData{ID: pluginId}, testdatasource.ProvideService(),
-		&fakeDatasources.FakeDataSourceService{DataSources: dss},
-		&fakeDatasources.FakeCacheService{DataSources: dss},
-		// Always allow... but currently not called in standalone!
-		&actest.FakeAccessControl{ExpectedEvaluate: true},
+		testdataPlugin.JSONData,
+		testdatasource.ProvideService(),
+		dsService,
+		cacheServiceImpl,
+		accessControl,
 	)
 }
