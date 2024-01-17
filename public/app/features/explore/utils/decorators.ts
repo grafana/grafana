@@ -313,8 +313,8 @@ export function decorateData(
 }
 
 export function mergeDataSeries(currentData: PanelData, newData: PanelData): PanelData {
-  currentData.series = combineResponses({ data: currentData.series }, { data: newData.series }).data;
-  return currentData;
+  const series = combineResponses({ data: currentData.series }, { data: newData.series }).data;
+  return { ...currentData, series };
 }
 
 /**
