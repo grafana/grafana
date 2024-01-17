@@ -8,7 +8,6 @@ load(
     "nodejs_version",
 )
 
-# "go" image can be switched back to golang:{}-alpine once this is resolved https://github.com/mattn/go-sqlite3/pull/1177#issuecomment-1849176090
 images = {
     "git": "alpine/git:2.40.1",
     "go": "golang:{}-alpine".format(golang_version),
