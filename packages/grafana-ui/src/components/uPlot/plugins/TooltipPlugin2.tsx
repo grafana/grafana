@@ -43,10 +43,8 @@ interface TooltipPlugin2Props {
     timeRange: TimeRange2 | null
   ) => React.ReactNode;
 
-  tooltipOptions?: {
-    maxTooltipWidth?: number;
-    maxTooltipHeight?: number;
-  };
+  maxWidth?: number;
+  maxHeight?: number;
 }
 
 interface TooltipContainerState {
@@ -103,7 +101,8 @@ export const TooltipPlugin2 = ({
   render,
   clientZoom = false,
   queryZoom,
-  tooltipOptions,
+  maxWidth,
+  maxHeight,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
@@ -114,8 +113,8 @@ export const TooltipPlugin2 = ({
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  const maxWidth = tooltipOptions?.maxTooltipWidth || DEFAULT_TOOLTIP_WIDTH;
-  const maxHeight = tooltipOptions?.maxTooltipHeight || DEFAULT_TOOLTIP_HEIGHT;
+  maxWidth = maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
+  maxHeight = maxHeight ?? DEFAULT_TOOLTIP_HEIGHT;
   const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
   const renderRef = useRef(render);
@@ -496,7 +495,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth: number, maxHeight: number) =>
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
-    width: `${maxWidth}px`,
+    maxWidth: `${maxWidth}px`,
     maxHeight: `${maxHeight}px`,
     height: 'auto',
     overflowY: 'auto',

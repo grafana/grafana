@@ -236,7 +236,8 @@ export const StateTimelinePanel = ({
                         />
                       );
                     }}
-                    tooltipOptions={options.tooltip}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 )}
                 {/* Renders annotations */}

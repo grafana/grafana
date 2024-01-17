@@ -79,9 +79,9 @@ composableKinds: PanelCfg: lineage: {
 			// Controls tooltip options
 			HeatmapTooltip: {
 				// Controls how the tooltip is shown
-				mode:              ui.TooltipDisplayMode
-				maxTooltipHeight?: number
-				maxTooltipWidth?:  number
+				mode:       ui.TooltipDisplayMode
+				maxHeight?: number
+				maxWidth?:  number
 				// Controls if the tooltip shows a histogram of the y-axis values
 				yHistogram?: bool
 				// Controls if the tooltip shows a color scale in header

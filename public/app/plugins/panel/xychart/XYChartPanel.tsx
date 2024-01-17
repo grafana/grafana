@@ -240,7 +240,8 @@ export const XYChartPanel = (props: Props) => {
                     />
                   );
                 }}
-                tooltipOptions={props.options.tooltip}
+                maxWidth={props.options.tooltip.maxWidth}
+                maxHeight={props.options.tooltip.maxHeight}
               />
             )}
           </UPlotChart>

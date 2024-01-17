@@ -666,8 +666,8 @@ export enum BarGaugeSizing {
  * TODO docs
  */
 export interface VizTooltipOptions {
-  maxTooltipHeight?: number;
-  maxTooltipWidth?: number;
+  maxHeight?: number;
+  maxWidth?: number;
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }

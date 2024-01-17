@@ -1,6 +1,5 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
-import { DEFAULT_TOOLTIP_HEIGHT, DEFAULT_TOOLTIP_WIDTH } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 
 export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -45,11 +44,10 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       },
     })
     .addSliderInput({
-      path: 'tooltip.maxTooltipWidth',
+      path: 'tooltip.maxWidth',
       name: 'Max width',
       category,
       description: 'Maximum tooltip width',
-      defaultValue: DEFAULT_TOOLTIP_WIDTH,
       settings: {
         min: 0,
         max: 1024,
@@ -57,11 +55,10 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       },
     })
     .addSliderInput({
-      path: 'tooltip.maxTooltipHeight',
+      path: 'tooltip.maxHeight',
       name: 'Max height',
       category,
       description: 'Maximum tooltip height',
-      defaultValue: DEFAULT_TOOLTIP_HEIGHT,
       settings: {
         min: 0,
         max: 1024,
