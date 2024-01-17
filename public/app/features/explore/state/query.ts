@@ -728,7 +728,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     const queries = logQueries.map((query: DataQuery) => ({
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
-      refId: `${infiniteScrollRefId}${query.refId}`
+      refId: `${infiniteScrollRefId}${query.refId}`,
     }));
 
     if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
@@ -768,7 +768,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
           correlations,
           showCorrelationEditorLinks,
           defaultCorrelationEditorDatasource
-        )
+        );
       })
     );
 
