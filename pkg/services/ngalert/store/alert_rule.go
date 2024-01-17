@@ -557,6 +557,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
+			query.ResultFoldersTitles = make(map[string]string)
 			for org := range foldersPerOrg {
 				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 					OrgID:        org,
@@ -567,7 +568,6 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 					return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
 				}
 
-				query.ResultFoldersTitles = make(map[string]string)
 				for _, folder := range folders {
 					query.ResultFoldersTitles[folder.UID] = folder.Fullpath
 				}
