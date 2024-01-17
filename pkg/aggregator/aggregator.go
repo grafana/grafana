@@ -17,6 +17,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -108,13 +109,13 @@ func NewAggregatorServerOptions(out, errOut io.Writer,
 		service.NewServiceAPIBuilder(),
 	}
 
-	extensionsConfig, err := initApiExtensionsConfig(options, sharedConfig, fakeInformers, builders, serviceResolver)
+	extensionsConfig, err := initApiExtensionsConfig(options, sharedConfig, fakeInformers, serviceResolver, extraConfig.DataPath)
 	if err != nil {
 		klog.Errorf("Error creating extensions config: %s", err)
 		return nil, err
 	}
 
-	aggregatorConfig, err := initAggregatorConfig(options, sharedConfig, extraConfig, fakeInformers, builders, serviceResolver)
+	aggregatorConfig, err := initAggregatorConfig(options, sharedConfig, extraConfig, fakeInformers, builders, serviceResolver, extraConfig.DataPath)
 	if err != nil {
 		klog.Errorf("Error creating aggregator config: %s", err)
 		return nil, err
@@ -164,6 +165,9 @@ func initSharedConfig(options *options.RecommendedOptions, codecs serializer.Cod
 
 	serverConfig := genericapiserver.NewRecommendedConfig(codecs)
 
+	// NOTE: AggregatedDiscoveryGroupManager in kube-apiserver is set up by controlplane APIServerConfig creation
+	// Here, we adopt that one line in addition to what recommendedOptions gives us
+	// Without it, CRDs work on API routes (and are registered in openapi) but not discoverable by kubectl
 	serverConfig.AggregatedDiscoveryGroupManager = aggregated.NewResourceManager("apis")
 
 	if options.CoreAPI == nil {
@@ -224,13 +228,8 @@ func getMergedOpenAPIDefinitions(builders []grafanaAPIServer.APIGroupBuilder, re
 	// Add OpenAPI specs for each group+version
 	prerequisiteAPIs := grafanaAPIServer.GetOpenAPIDefinitions(builders)(ref)
 	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
-	apiextensionsAPIs := apiextensionsopenapi.GetOpenAPIDefinitions(ref)
 
 	for k, v := range prerequisiteAPIs {
-		aggregatorAPIs[k] = v
-	}
-
-	for k, v := range apiextensionsAPIs {
 		aggregatorAPIs[k] = v
 	}
 
@@ -256,8 +255,8 @@ func initServiceResolver(factory informersv0alpha1.SharedInformerFactory) (apise
 func initApiExtensionsConfig(options *options.RecommendedOptions,
 	sharedConfig *genericapiserver.RecommendedConfig,
 	fakeInfomers informers.SharedInformerFactory,
-	builders []grafanaAPIServer.APIGroupBuilder,
 	serviceResolver apiserver.ServiceResolver,
+	dataPath string,
 ) (*apiextensionsapiserver.Config, error) {
 	// make a shallow copy to let us twiddle a few things
 	// most of the config actually remains the same.  We only need to mess with a couple items related to the particulars of the api extensions
@@ -279,15 +278,16 @@ func initApiExtensionsConfig(options *options.RecommendedOptions,
 		return nil, err
 	}
 
-	restOptionsGetter := filestorage.NewRESTOptionsGetter("/tmp/grafana.apiextensionsserver", etcdOptions.StorageConfig)
+	restOptionsGetter := filestorage.NewRESTOptionsGetter(path.Join(dataPath, "grafana-apiextensionsserver"), etcdOptions.StorageConfig)
 	genericConfig.RESTOptionsGetter = restOptionsGetter
 
+	// NOTE: ignoring genericConfig.ResourceTransformers in crdOptionsGetter creation for now
+	// crdOptionsGetter := apiextensionsoptions.NewCRDRESTOptionsGetter(etcdOptions, genericConfig.ResourceTransformers, )
+	// The following is equivalent code to apiextensionsoptions.NewCRDRESTOptionsGetter with lesser dependencies
 	crdEtcdOptions := etcdOptions
 	crdEtcdOptions.StorageConfig.Codec = unstructured.UnstructuredJSONScheme
 	crdEtcdOptions.StorageConfig.StorageObjectCountTracker = genericConfig.StorageObjectCountTracker
 	crdEtcdOptions.WatchCacheSizes = nil // this control is not provided for custom resources
-	// NOTE: ignoring genericConfig.ResourceTransformers in crdOptionsGetter creation for now
-	// crdOptionsGetter := apiextensionsoptions.NewCRDRESTOptionsGetter(etcdOptions, genericConfig.ResourceTransformers, )
 
 	// override MergedResourceConfig with apiextensions defaults and registry
 	mergedResourceConfig, err := resourceconfig.MergeAPIResourceConfigs(apiextensionsapiserver.DefaultAPIResourceConfigSource(), nil, apiextensionsapiserver.Scheme)
@@ -304,8 +304,10 @@ func initApiExtensionsConfig(options *options.RecommendedOptions,
 			SharedInformerFactory: fakeInfomers,
 		},
 		ExtraConfig: apiextensionsapiserver.ExtraConfig{
-			CRDRESTOptionsGetter: filestorage.NewRESTOptionsGetter("/tmp/grafana.apiextensionsserver", crdEtcdOptions.StorageConfig),
-			MasterCount:          1,
+			CRDRESTOptionsGetter: filestorage.NewRESTOptionsGetter(path.Join(dataPath, "grafana-apiextensionsserver"), crdEtcdOptions.StorageConfig),
+			// TODO: remove the hardcod when HA story is more developed
+			MasterCount: 1,
+			// TODO: leaving AuthResolverWrapper unset doesn't impact basic operation of CRDs
 			// AuthResolverWrapper:  authResolverWrapper,
 			ServiceResolver: serviceResolver,
 		},
@@ -323,6 +325,7 @@ func initAggregatorConfig(options *options.RecommendedOptions,
 	fakeInformers informers.SharedInformerFactory,
 	builders []grafanaAPIServer.APIGroupBuilder,
 	serviceResolver apiserver.ServiceResolver,
+	dataPath string,
 ) (*aggregatorapiserver.Config, error) {
 	// make a shallow copy to let us twiddle a few things
 	// most of the config actually remains the same.  We only need to mess with a couple items related to the particulars of the aggregator
@@ -373,7 +376,7 @@ func initAggregatorConfig(options *options.RecommendedOptions,
 	if err := etcdOptions.ApplyTo(&genericConfig); err != nil {
 		return nil, err
 	}
-	genericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter("/tmp/grafana.aggregator", etcdOptions.StorageConfig)
+	genericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(path.Join(dataPath, "grafana-aggregator"), etcdOptions.StorageConfig)
 
 	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("apiservice-status-available-controller")
 	genericConfig.DisabledPostStartHooks = genericConfig.DisabledPostStartHooks.Insert("start-kube-aggregator-informers")

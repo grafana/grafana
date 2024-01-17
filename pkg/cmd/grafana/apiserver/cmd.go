@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	aggregatorDataPath              = "data/grafana-aggregator"
+	aggregatorDataPath              = "data"
 	defaultAggregatorEtcdPathPrefix = "/registry/grafana.aggregator"
 )
 
@@ -78,7 +78,14 @@ func RunCLI() int {
 func newCommandStartAggregator() *cobra.Command {
 	devAcknowledgementNotice := "The aggregator command is in heavy development. The entire setup is subject to change without notice"
 
-	extraConfig := &aggregator.ExtraConfig{}
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic("could not determine current directory")
+	}
+
+	extraConfig := &aggregator.ExtraConfig{
+		DataPath: path.Join(cwd, aggregatorDataPath),
+	}
 
 	// Register standard k8s flags with the command line
 	recommendedOptions := options.NewRecommendedOptions(
@@ -138,7 +145,7 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 
 	if err := clientcmd.WriteToFile(
 		utils.FormatKubeConfig(aggregator.GenericAPIServer.LoopbackClientConfig),
-		path.Join(aggregatorDataPath, "aggregator.kubeconfig"),
+		path.Join(aggregatorDataPath, "grafana-aggregator", "aggregator.kubeconfig"),
 	); err != nil {
 		klog.Errorf("Error persisting aggregator.kubeconfig: %s", err)
 		return err

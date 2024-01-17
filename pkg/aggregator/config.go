@@ -11,6 +11,8 @@ import (
 type ExtraConfig struct {
 	ProxyClientCertFile string
 	ProxyClientKeyFile  string
+
+	DataPath string
 }
 
 type Config struct {
