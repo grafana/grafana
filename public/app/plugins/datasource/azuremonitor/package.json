@@ -20,7 +20,7 @@
     "react": "18.2.0",
     "react-use": "17.4.3",
     "rxjs": "7.8.1",
-    "tslib": "2.6.0"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/e2e-selectors": "10.4.0-pre",

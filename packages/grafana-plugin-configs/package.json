@@ -4,7 +4,7 @@
   "private": true,
   "version": "10.4.0-pre",
   "dependencies": {
-    "tslib": "2.6.0"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",

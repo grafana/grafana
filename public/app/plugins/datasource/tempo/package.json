@@ -36,7 +36,7 @@
     "semver": "7.5.4",
     "stream-browserify": "3.0.0",
     "string_decoder": "1.2.0",
-    "tslib": "2.6.0",
+    "tslib": "2.6.2",
     "uuid": "9.0.0"
   },
   "devDependencies": {

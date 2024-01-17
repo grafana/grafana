@@ -50,6 +50,6 @@
     "typescript": "5.2.2"
   },
   "dependencies": {
-    "tslib": "2.6.0"
+    "tslib": "2.6.2"
   }
 }
