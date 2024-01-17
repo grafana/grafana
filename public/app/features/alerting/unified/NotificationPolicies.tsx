@@ -276,6 +276,12 @@ type RouteFilters = {
 
 export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: RouteFilters): RouteWithID[] => {
   const { contactPointFilter, labelMatchersFilter = [] } = filters;
+  const hasFilter = contactPointFilter || labelMatchersFilter.length > 0;
+
+  // if filters are empty we short-circuit this function
+  if (!hasFilter) {
+    return [];
+  }
 
   let matchedRoutes: RouteWithID[][] = [];
 

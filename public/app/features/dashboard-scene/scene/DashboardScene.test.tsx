@@ -61,6 +61,7 @@ describe('DashboardScene', () => {
         ${'description'} | ${'new description'}
         ${'tags'}        | ${['tag3', 'tag4']}
         ${'editable'}    | ${false}
+        ${'links'}       | ${[]}
       `(
         'A change to $prop should set isDirty true',
         ({ prop, value }: { prop: keyof DashboardSceneState; value: any }) => {

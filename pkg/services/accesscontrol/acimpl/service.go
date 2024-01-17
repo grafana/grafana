@@ -425,3 +425,7 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 
 	return s.store.DeleteExternalServiceRole(ctx, slug)
 }
+
+func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
+	return nil
+}
