@@ -9,7 +9,7 @@ export const usePluginConfig = (plugin?: CatalogPlugin) => {
       return null;
     }
 
-    if (plugin.isFullyInstalled && !plugin.isDisabled) {
+    if (plugin.isInstalled && !plugin.isDisabled) {
       return loadPlugin(plugin.id);
     }
     return null;
