@@ -58,14 +58,14 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 	return NewDataSourceAPIBuilder(
 		pluginJSON,
 		NewQuerierProvider(testsDataQuerierFactory),
-		&PluginContextProvider{},
+		&TestDataPluginContextProvider{},
 		acimpl.ProvideAccessControl(cfg),
 	)
 }
 
-type PluginContextProvider struct{}
+type TestDataPluginContextProvider struct{}
 
-func (p *PluginContextProvider) Get(_ context.Context, _, _ string) (backend.PluginContext, error) {
+func (p *TestDataPluginContextProvider) PluginContextForDataSource(_ context.Context, _, _ string) (backend.PluginContext, error) {
 	return backend.PluginContext{}, nil
 }
 

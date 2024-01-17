@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -35,7 +34,7 @@ type DataSourceAPIBuilder struct {
 
 	pluginJSON    plugins.JSONData
 	querier       Querier
-	pluginContext plugincontext.DataSourcePluginContextProvider
+	pluginContext PluginContextProvider
 	accessControl accesscontrol.AccessControl
 }
 
@@ -43,7 +42,7 @@ func RegisterAPIService(
 	querierProvider QuerierProvider,
 	features featuremgmt.FeatureToggles,
 	apiRegistrar grafanaapiserver.APIRegistrar,
-	pluginContext plugincontext.DataSourcePluginContextProvider,
+	pluginContext PluginContextProvider,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 ) (*DataSourceAPIBuilder, error) {
@@ -76,7 +75,7 @@ func RegisterAPIService(
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
 	querierProvider QuerierProvider,
-	pluginContext plugincontext.DataSourcePluginContextProvider,
+	pluginContext PluginContextProvider,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
 	ri, err := resourceFromPluginID(plugin.ID)
 	if err != nil {

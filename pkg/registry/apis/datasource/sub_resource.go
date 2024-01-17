@@ -46,7 +46,7 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.pluginContext.Get(ctx, r.builder.pluginJSON.ID, name)
+	pluginCtx, err := r.builder.pluginContext.PluginContextForDataSource(ctx, r.builder.pluginJSON.ID, name)
 	if err != nil {
 		return nil, err
 	}

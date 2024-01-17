@@ -106,8 +106,8 @@ var wireExtsBasicSet = wire.NewSet(
 
 	wire.Bind(new(datasource.QuerierProvider), new(*datasource.DefaultQuerierProvider)),
 	datasource.ProvideDefaultQuerierProvider,
-	wire.Bind(new(plugincontext.DataSourcePluginContextProvider), new(*plugincontext.DataSourceProvider)),
-	plugincontext.ProvideDataSourceProvider,
+	plugincontext.ProvideService,
+	wire.Bind(new(datasource.PluginContextProvider), new(*plugincontext.Provider)),
 )
 
 var wireExtsSet = wire.NewSet(
