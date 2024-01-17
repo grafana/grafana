@@ -136,11 +136,6 @@ export abstract class BigValueLayout {
 
     if (valueContainerStyles.flexDirection === 'row') {
       containerStyles.alignItems = 'baseline';
-
-      // Center the percent change vertically relative to the value
-      // This approach seems to work the best for all edge cases
-      // Note: the fixed min font size causes this to be off for a few edge cases
-      containerStyles.lineHeight = LINE_HEIGHT * VALUE_TO_PERCENT_CHANGE_RATIO;
     }
 
     switch (this.props.colorMode) {

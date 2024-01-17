@@ -88,11 +88,15 @@ export class BigValue extends PureComponent<Props> {
   render() {
     const { onClick, className, hasLinks, theme } = this.props;
     const layout = buildLayout(this.props);
+
+    // styles
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
     const valueStyles = layout.getValueStyles();
     const titleStyles = layout.getTitleStyles();
+
     const textValues = layout.textValues;
+    const title = textValues.title;
     const percentChange = this.props.value.percentChange;
     const showPercentChange = percentChange != null && !Number.isNaN(percentChange);
 
@@ -103,11 +107,13 @@ export class BigValue extends PureComponent<Props> {
       return (
         <div className={className} style={panelStyles} title={tooltip}>
           <div style={valueAndTitleContainerStyles}>
-            {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
-            <FormattedValueDisplay value={textValues} style={valueStyles} />
-            {showPercentChange && (
-              <PercentChange percentChange={percentChange} styles={layout.getPercentChangeStyles(percentChange)} />
-            )}
+            {title && <div style={titleStyles}>{title}</div>}
+            <div>
+              <FormattedValueDisplay value={textValues} style={valueStyles} />
+              {showPercentChange && (
+                <PercentChange percentChange={percentChange} styles={layout.getPercentChangeStyles(percentChange)} />
+              )}
+            </div>
           </div>
           {layout.renderChart()}
         </div>
@@ -123,7 +129,7 @@ export class BigValue extends PureComponent<Props> {
         title={tooltip}
       >
         <div style={valueAndTitleContainerStyles}>
-          {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
+          {title && <div style={titleStyles}>{title}</div>}
           <FormattedValueDisplay value={textValues} style={valueStyles} />
         </div>
         {layout.renderChart()}
