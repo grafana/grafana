@@ -367,18 +367,21 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			s.log.Error("error marshalling labels", "msg", err.Error())
 			return err
 		}
+		current.Labels = r.Entity.Labels
 
 		fields, err := json.Marshal(r.Entity.Fields)
 		if err != nil {
 			s.log.Error("error marshalling fields", "msg", err.Error())
 			return err
 		}
+		current.Fields = r.Entity.Fields
 
 		errors, err := json.Marshal(r.Entity.Errors)
 		if err != nil {
 			s.log.Error("error marshalling errors", "msg", err.Error())
 			return err
 		}
+		current.Errors = r.Entity.Errors
 
 		if current.Origin == nil {
 			current.Origin = &entity.EntityOriginInfo{}
@@ -461,7 +464,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 		rsp.Entity = current
 
-		return nil // s.writeSearchInfo(ctx, tx, current)
+		return s.setLabels(ctx, tx, current.Guid, current.Labels)
 	})
 	if err != nil {
 		s.log.Error("error creating entity", "msg", err.Error())
@@ -521,10 +524,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		rsp.Entity.Guid = current.Guid
 
-		// Clear the labels+refs
-		if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", rsp.Entity.Guid); err != nil {
-			return err
-		}
+		// Clear the refs
 		if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE guid=?", rsp.Entity.Guid); err != nil {
 			return err
 		}
@@ -570,18 +570,21 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			s.log.Error("error marshalling labels", "msg", err.Error())
 			return err
 		}
+		current.Labels = r.Entity.Labels
 
 		fields, err := json.Marshal(r.Entity.Fields)
 		if err != nil {
 			s.log.Error("error marshalling fields", "msg", err.Error())
 			return err
 		}
+		current.Fields = r.Entity.Fields
 
 		errors, err := json.Marshal(r.Entity.Errors)
 		if err != nil {
 			s.log.Error("error marshalling errors", "msg", err.Error())
 			return err
 		}
+		current.Errors = r.Entity.Errors
 
 		if current.Origin == nil {
 			current.Origin = &entity.EntityOriginInfo{}
@@ -686,7 +689,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		rsp.Entity = current
 
-		return nil // s.writeSearchInfo(ctx, tx, current)
+		return s.setLabels(ctx, tx, current.Guid, current.Labels)
 	})
 	if err != nil {
 		s.log.Error("error updating entity", "msg", err.Error())
@@ -696,23 +699,22 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	return rsp, err
 }
 
-/*
-func (s *sqlEntityServer) writeSearchInfo(
-	ctx context.Context,
-	tx *session.SessionTx,
-	current *entity.Entity,
-) error {
-	// parent_key := current.getParentKey()
+func (s *sqlEntityServer) setLabels(ctx context.Context, tx *session.SessionTx, guid string, labels map[string]string) error {
+	s.log.Debug("setLabels", "guid", guid, "labels", labels)
 
-	// Add the labels rows
-	for k, v := range current.Labels {
+	// Clear the old labels
+	if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", guid); err != nil {
+		return err
+	}
+
+	// Add the new labels
+	for k, v := range labels {
 		query, args, err := s.dialect.InsertQuery(
 			"entity_labels",
 			map[string]any{
-				"key":   current.Key,
+				"guid":  guid,
 				"label": k,
 				"value": v,
-				// "parent_key": parent_key,
 			},
 		)
 		if err != nil {
@@ -727,7 +729,6 @@ func (s *sqlEntityServer) writeSearchInfo(
 
 	return nil
 }
-*/
 
 func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
 	if err := s.Init(); err != nil {
