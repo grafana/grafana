@@ -205,7 +205,7 @@
     "stylelint": "15.11.0",
     "stylelint-config-prettier": "9.0.5",
     "stylelint-config-sass-guidelines": "10.0.0",
-    "terser-webpack-plugin": "5.3.9",
+    "terser-webpack-plugin": "5.3.10",
     "testing-library-selector": "0.3.1",
     "tracelib": "1.0.1",
     "ts-jest": "29.1.1",
