@@ -17,6 +17,7 @@ import { AlertLabels } from '../../AlertLabels';
 import { AlertStateDot } from '../../AlertStateDot';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { decodeGrafanaNamespace } from '../../expressions/util';
 import { RedirectToCloneRule } from '../../rules/CloneRule';
 import { Details } from '../tabs/Details';
 import { History } from '../tabs/History';
@@ -258,6 +259,9 @@ function usePageNav(rule: CombinedRule) {
   const isAlertType = isAlertingRule(promRule);
   const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
 
+  const namespaceName = decodeGrafanaNamespace(rule.namespace);
+  const groupName = rule.group.name;
+
   const pageNav: NavModelItem = {
     ...defaultPageNav,
     text: rule.name,
@@ -294,14 +298,14 @@ function usePageNav(rule: CombinedRule) {
       },
     ],
     parentItem: {
-      text: rule.group.name,
+      text: groupName,
       url: createListFilterLink([
-        ['namespace', rule.namespace.name],
-        ['group', rule.group.name],
+        ['namespace', namespaceName],
+        ['group', groupName],
       ]),
       parentItem: {
-        text: rule.namespace.name,
-        url: createListFilterLink([['namespace', rule.namespace.name]]),
+        text: namespaceName,
+        url: createListFilterLink([['namespace', namespaceName]]),
       },
     },
   };

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { CoreApp, createTheme, DataSourceApi, EventBusSrv, LoadingState, PluginExtensionTypes } from '@grafana/data';
@@ -124,7 +124,13 @@ jest.mock('@grafana/runtime', () => ({
 
 // for the AutoSizer component to have a width
 jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
+  return ({ children }: AutoSizerProps) =>
+    children({
+      height: 1,
+      scaledHeight: 1,
+      scaledWidth: 1,
+      width: 1,
+    });
 });
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);

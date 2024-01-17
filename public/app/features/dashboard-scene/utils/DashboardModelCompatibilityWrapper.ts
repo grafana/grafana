@@ -10,18 +10,15 @@ import {
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
-  SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
-import { findVizPanelByKey, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
+import { findVizPanelByKey, getPanelIdForVizPanel, getQueryRunnerFor, getVizPanelKeyForPanelId } from './utils';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent
@@ -83,6 +80,10 @@ export class DashboardModelCompatibilityWrapper {
 
   public get tags() {
     return this._scene.state.tags;
+  }
+
+  public get links() {
+    return this._scene.state.links;
   }
 
   public get meta() {
@@ -248,60 +249,17 @@ class PanelCompatibilityWrapper {
   }
 
   public get targets() {
-    if (this._vizPanel.state.$data instanceof SceneQueryRunner) {
-      return this._vizPanel.state.$data.state.queries;
+    const queryRunner = getQueryRunnerFor(this._vizPanel);
+    if (!queryRunner) {
+      return [];
     }
 
-    if (this._vizPanel.state.$data instanceof ShareQueryDataProvider) {
-      return [
-        {
-          datasource: {
-            uid: SHARED_DASHBOARD_QUERY,
-            type: 'datasource',
-          },
-          ...this._vizPanel.state.$data.state.query,
-        },
-      ];
-    }
-
-    if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
-      if (this._vizPanel.state.$data.state.$data instanceof ShareQueryDataProvider) {
-        return [
-          {
-            datasource: {
-              uid: SHARED_DASHBOARD_QUERY,
-              type: 'datasource',
-            },
-            ...(this._vizPanel.state.$data.state.$data as ShareQueryDataProvider).state.query,
-          },
-        ];
-      }
-      if (this._vizPanel.state.$data.state.$data instanceof SceneQueryRunner) {
-        return (this._vizPanel.state.$data.state.$data as SceneQueryRunner).state.queries;
-      }
-    }
-
-    return [];
+    return queryRunner.state.queries;
   }
 
-  public get datasource(): DataSourceRef | null {
-    if (this._vizPanel.state.$data instanceof SceneQueryRunner) {
-      return this._vizPanel.state.$data.state.datasource ?? null;
-    }
-
-    if (this._vizPanel.state.$data instanceof ShareQueryDataProvider) {
-      return { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' };
-    }
-
-    if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
-      if (this._vizPanel.state.$data.state.$data instanceof ShareQueryDataProvider) {
-        return { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' };
-      }
-
-      return (this._vizPanel.state.$data.state.$data as SceneQueryRunner).state.datasource ?? null;
-    }
-
-    return null;
+  public get datasource(): DataSourceRef | null | undefined {
+    const queryRunner = getQueryRunnerFor(this._vizPanel);
+    return queryRunner?.state.datasource;
   }
 
   public refresh() {
