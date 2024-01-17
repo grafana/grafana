@@ -3,10 +3,8 @@
   "license": "AGPL-3.0-only",
   "name": "@grafana/traces",
   "private": true,
+  "version": "10.4.0-pre",
   "description": "Library to manage traces in Grafana.",
-  "keywords": [
-    "typescript"
-  ],
   "sideEffects": false,
   "repository": {
     "type": "git",
