@@ -157,7 +157,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
             label={'Duration'}
             tooltip="The trace or span duration, i.e. end - start time of the trace/span. Accepted units are ns, ms, s, m, h"
           >
-            <HorizontalGroup spacing={'sm'}>
+            <HorizontalGroup spacing={'none'}>
               <Select
                 options={[
                   { label: 'span', value: 'span' },
