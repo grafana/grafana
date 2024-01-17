@@ -5,9 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
-import { createErrorNotification } from '../../../../core/copy/appNotification';
-import { notifyApp } from '../../../../core/reducers/appNotification';
-import { dispatch } from '../../../../store/store';
+import { notifyApp } from '../_importedDependencies/actions/appNotification';
+import { createErrorNotification } from '../_importedDependencies/core/appNotification';
+import { dispatch } from '../_importedDependencies/store';
 import { TempoDatasource } from '../datasource';
 
 import { CompletionProvider, CompletionType } from './autocomplete';

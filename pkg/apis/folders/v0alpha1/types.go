@@ -2,22 +2,6 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/grafana/grafana/pkg/apis"
-)
-
-const (
-	GROUP      = "folders.grafana.app"
-	VERSION    = "v0alpha1"
-	RESOURCE   = "folders"
-	APIVERSION = GROUP + "/" + VERSION
-)
-
-var FolderResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	RESOURCE, "folder", "Folder",
-	func() runtime.Object { return &Folder{} },
-	func() runtime.Object { return &FolderList{} },
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

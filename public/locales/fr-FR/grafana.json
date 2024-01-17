@@ -316,6 +316,7 @@
       "save": "Enregistrer le tableau de bord",
       "settings": "Paramètres du tableau de bord",
       "share": "Partager le tableau de bord ou le panneau",
+      "share-button": "",
       "unmark-favorite": "Supprimer des favoris"
     },
     "validation": {
@@ -416,9 +417,6 @@
     "datasource-add-button": {
       "label": "Ajouter une nouvelle source de données"
     }
-  },
-  "drawer": {
-    "close": ""
   },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
@@ -559,6 +557,9 @@
     "loading": "Chargement des dossiers..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Fermer"
     },
@@ -715,6 +716,10 @@
     "alerting-silences": {
       "subtitle": "Arrêter les notifications résultant d'une ou plusieurs règles d'alerte",
       "title": "Silences"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "Applications de gestion des incidents et des alertes",
@@ -1073,6 +1078,120 @@
       "passwords-must-match": "Les mots de passe doivent être identiques"
     }
   },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "usage-ack-desc": "",
+      "usage-ack-desc-tooltip": ""
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "",
+      "copy-button": "",
+      "dashboard-url-field-label": "",
+      "email-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "",
+      "public-share-type-option-label": "",
+      "revoke-public-URL-button": "",
+      "revoke-public-URL-button-title": "",
+      "settings-title": ""
+    },
+    "create-page": {
+      "generate-public-url-button": "",
+      "unsupported-features-desc": "",
+      "welcome-title": ""
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "",
+      "revoke-orphaned-body-text": "",
+      "revoke-title": ""
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": "",
+      "invite-field-desc": "",
+      "invite-field-label": "",
+      "resend-button": "",
+      "resend-button-title": "",
+      "revoke-button": "",
+      "revoke-button-title": ""
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "save-dashboard-changes-alert-title": "",
+      "unsupport-data-source-alert-readmore-link": "",
+      "unsupported-data-source-alert-desc": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert-desc": "",
+      "unsupported-template-variable-alert-title": ""
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "",
+      "expand-settings-tooltip": ""
+    },
+    "settings-configuration": {
+      "default-time-range-label": "",
+      "default-time-range-label-desc": "",
+      "show-annotations-label": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-label": "",
+      "time-range-picker-label-desc": ""
+    },
+    "settings-summary": {
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "dashboard-title": {
+      "orphaned-title": "",
+      "orphaned-tooltip": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "",
+      "open-dashboard-list-text": "",
+      "public-dashboard-link": "",
+      "public-dashboard-setting": ""
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "",
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "revoke-access-title": "",
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
+    },
+    "modal": {
+      "dashboard-modal-title": ""
+    },
+    "table-header": {
+      "activated-label": "",
+      "activated-tooltip": "",
+      "email-label": "",
+      "last-active-label": "",
+      "origin-label": "",
+      "role-label": ""
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Réduire la ligne de requête",
@@ -1202,6 +1321,7 @@
       "link": "Lien",
       "panel-embed": "Intégrer",
       "public-dashboard": "Tableau de bord public",
+      "public-dashboard-title": "",
       "snapshot": "Instantané"
     },
     "theme-picker": {
@@ -1349,6 +1469,11 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": ""
+    }
   },
   "variable": {
     "adhoc": {
