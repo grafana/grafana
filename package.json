@@ -197,7 +197,7 @@
     "react-simple-compat": "1.2.3",
     "react-test-renderer": "18.2.0",
     "redux-mock-store": "1.5.4",
-    "rimraf": "5.0.1",
+    "rimraf": "5.0.5",
     "rudder-sdk-js": "2.43.0",
     "sass": "1.69.4",
     "sass-loader": "13.3.2",

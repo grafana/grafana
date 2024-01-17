@@ -43,7 +43,7 @@
     "@rollup/plugin-node-resolve": "15.2.3",
     "@types/node": "20.8.10",
     "esbuild": "0.18.12",
-    "rimraf": "5.0.1",
+    "rimraf": "5.0.5",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
