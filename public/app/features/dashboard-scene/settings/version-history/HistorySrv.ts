@@ -19,12 +19,6 @@ export interface RevisionsModel {
   message: string;
 }
 
-export interface DiffTarget {
-  dashboardUID: string;
-  version: number;
-  unsavedDashboard?: DashboardModel; // when doing diffs against unsaved dashboard version
-}
-
 export class HistorySrv {
   getHistoryList(dashboardUID: string, options: HistoryListOpts) {
     if (typeof dashboardUID !== 'string') {

@@ -106,8 +106,12 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			params = append(params, options.Action)
 		}
 		if options.Scope != "" {
-			q += ` AND scope = ?`
-			params = append(params, options.Scope)
+			// Search for scope and wildcard that include the scope
+			scopes := append(options.Wildcards(), options.Scope)
+			q += ` AND scope IN ( ? ` + strings.Repeat(", ?", len(scopes)-1) + ")"
+			for i := range scopes {
+				params = append(params, scopes[i])
+			}
 		}
 
 		if options.UserID != 0 {
