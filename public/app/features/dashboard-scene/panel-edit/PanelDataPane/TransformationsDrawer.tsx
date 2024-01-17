@@ -1,6 +1,7 @@
 import React, { FormEvent, useCallback, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
+import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import { FilterCategory } from 'app/features/dashboard/components/TransformationsEditor/TransformationsEditor';
 
@@ -59,6 +60,19 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     [drawerState, allTransformations]
   );
 
+  const searchBoxSuffix = (
+    <>
+      {transformations.length} / {allTransformations.length} &nbsp;&nbsp;
+      <IconButton
+        name="times"
+        onClick={() => {
+          setDrawerState({ ...drawerState, ...{ search: '' } });
+        }}
+        tooltip="Clear search"
+      />
+    </>
+  );
+
   if (!isOpen) {
     return;
   }
@@ -70,7 +84,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
       xforms={transformations}
       search={drawerState.search}
       noTransforms={false}
-      suffix={<></>}
+      suffix={drawerState.search !== '' ? searchBoxSuffix : <></>}
       selectedFilter={drawerState.selectedFilter}
       onSearchChange={onSearchChange}
       onSearchKeyDown={() => {}}

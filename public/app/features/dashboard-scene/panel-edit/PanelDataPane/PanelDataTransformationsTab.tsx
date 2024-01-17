@@ -4,7 +4,7 @@ import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 
 import { DataTransformerConfig, GrafanaTheme2, IconName, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneObjectBase, SceneComponentProps, SceneDataTransformer } from '@grafana/scenes';
+import { SceneObjectBase, SceneComponentProps, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 
@@ -44,8 +44,11 @@ export class PanelDataTransformationsTab
     if (!provider || !(provider instanceof SceneDataTransformer)) {
       throw new Error('Could not find SceneDataTransformer for panel');
     }
-
     return provider;
+  }
+
+  public getQueryRunner(): SceneQueryRunner {
+    return this._panelManager.queryRunner;
   }
 
   public changeTransformations(transformations: DataTransformerConfig[]) {
@@ -57,6 +60,7 @@ export class PanelDataTransformationsTab
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
   const styles = useStyles2(getStyles);
+  const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const transformations: DataTransformerConfig[] = transformsWrongType as unknown as DataTransformerConfig[];
@@ -64,7 +68,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
-  if (!data) {
+  if (!data || !sourceData.data) {
     return;
   }
 
@@ -94,7 +98,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   return (
     <>
-      <TransformationsEditor data={data} transformations={transformations} model={model} />
+      <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
       <ButtonGroup>
         <Button
           icon="plus"
