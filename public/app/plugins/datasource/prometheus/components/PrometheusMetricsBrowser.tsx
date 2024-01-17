@@ -497,7 +497,11 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                   data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
                 />
               </div>
-              <div role="list" className={styles.valueListWrapper}>
+              <div
+                role="list"
+                className={styles.valueListWrapper}
+                data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.metricList}
+              >
                 <FixedSizeList
                   height={Math.min(450, metricCount * LIST_ITEM_SIZE)}
                   itemCount={metricCount}

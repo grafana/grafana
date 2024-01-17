@@ -100,9 +100,11 @@ export const Components = {
           queryAdvisor: 'data-testid query advisor',
         },
         code: {
+          queryField: 'data-testid prometheus query field',
           metricsBrowser: {
             openButton: 'data-testid open metrics browser',
             selectMetric: 'data-testid select a metric',
+            metricList: 'data-testid metric list',
             labelNamesFilter: 'data-testid label names filter',
             labelValuesFilter: 'data-testid label values filter',
             useQuery: 'data-testid use query',
