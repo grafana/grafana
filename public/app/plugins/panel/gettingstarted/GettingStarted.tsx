@@ -126,83 +126,83 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 const getStyles = stylesFactory(() => {
   const theme = config.theme2;
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background-size: cover;
-      padding: ${theme.spacing(4)} ${theme.spacing(2)} 0;
-    `,
-    content: css`
-      label: content;
-      display: flex;
-      justify-content: center;
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      backgroundSize: 'cover',
+      padding: `${theme.spacing(4)} ${theme.spacing(2)} 0`,
+    }),
+    content: css({
+      label: 'content',
+      display: 'flex',
+      justifyContent: 'center',
 
-      ${theme.breakpoints.down('xxl')} {
-        margin-left: ${theme.spacing(3)};
-        justify-content: flex-start;
-      }
-    `,
-    header: css`
-      label: header;
-      margin-bottom: ${theme.spacing(3)};
-      display: flex;
-      flex-direction: column;
+      [theme.breakpoints.down('xxl')]: {
+        marginLeft: theme.spacing(3),
+        justifyContent: 'flex-start',
+      },
+    }),
+    header: css({
+      label: 'header',
+      marginBottom: theme.spacing(3),
+      display: 'flex',
+      flexDirection: 'column',
 
-      ${theme.breakpoints.down('lg')} {
-        flex-direction: row;
-      }
-    `,
-    headerLogo: css`
-      height: 58px;
-      padding-right: ${theme.spacing(2)};
-      display: none;
+      [theme.breakpoints.down('lg')]: {
+        flexDirection: 'row',
+      },
+    }),
+    headerLogo: css({
+      height: '58px',
+      paddingRight: theme.spacing(2),
+      display: 'none',
 
-      ${theme.breakpoints.up('md')} {
-        display: block;
-      }
-    `,
-    heading: css`
-      label: heading;
-      margin-right: ${theme.spacing(3)};
-      margin-bottom: ${theme.spacing(3)};
-      flex-grow: 1;
-      display: flex;
+      [theme.breakpoints.up('md')]: {
+        display: 'block',
+      },
+    }),
+    heading: css({
+      label: 'heading',
+      marginRight: theme.spacing(3),
+      marginBottom: theme.spacing(3),
+      flexGrow: 1,
+      display: 'flex',
 
-      ${theme.breakpoints.up('md')} {
-        margin-bottom: 0;
-      }
-    `,
-    backForwardButtons: css`
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-    `,
-    previous: css`
-      left: 10 px;
-      ${theme.breakpoints.down('md')} {
-        left: 0;
-      }
-    `,
-    forward: css`
-      right: 10px;
-      ${theme.breakpoints.down('md')} {
-        right: 0;
-      }
-    `,
-    dismiss: css`
-      align-self: flex-end;
-      text-decoration: underline;
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    loading: css`
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-    `,
-    loadingText: css`
-      margin-right: ${theme.spacing(1)};
-    `,
+      [theme.breakpoints.up('md')]: {
+        marginBottom: 0,
+      },
+    }),
+    backForwardButtons: css({
+      position: 'absolute',
+      top: '50%',
+      transform: 'translateY(-50%)',
+    }),
+    previous: css({
+      left: '10px',
+      [theme.breakpoints.down('md')]: {
+        left: 0,
+      },
+    }),
+    forward: css({
+      right: '10px',
+      [theme.breakpoints.down('md')]: {
+        right: 0,
+      },
+    }),
+    dismiss: css({
+      alignSelf: 'flex-end',
+      textDecoration: 'underline',
+      marginBottom: theme.spacing(1),
+    }),
+    loading: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
+    }),
+    loadingText: css({
+      marginRight: theme.spacing(1),
+    }),
   };
 });
