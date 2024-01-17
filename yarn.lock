@@ -3570,7 +3570,7 @@ __metadata:
     "@types/jest": "npm:^29.5.4"
     "@types/react": "npm:18.2.15"
     "@types/systemjs": "npm:6.13.1"
-    "@types/testing-library__jest-dom": "npm:5.14.8"
+    "@types/testing-library__jest-dom": "npm:5.14.9"
     jest: "npm:^29.6.4"
     react: "npm:18.2.0"
     react-use: "npm:17.4.0"
