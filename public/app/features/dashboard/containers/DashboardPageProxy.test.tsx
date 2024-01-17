@@ -2,6 +2,7 @@ import { render, screen, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { Props } from 'react-virtualized-auto-sizer';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { config, locationService } from '@grafana/runtime';
@@ -46,6 +47,16 @@ jest.mock('@grafana/runtime', () => ({
     get: jest.fn().mockResolvedValue({}),
   }),
 }));
+
+jest.mock('react-virtualized-auto-sizer', () => {
+  return ({ children }: Props) =>
+    children({
+      height: 1,
+      scaledHeight: 1,
+      scaledWidth: 1,
+      width: 1,
+    });
+});
 
 function setup(props: Partial<DashboardPageProxyProps>) {
   const context = getGrafanaContextMock();

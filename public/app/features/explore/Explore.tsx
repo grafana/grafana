@@ -3,7 +3,7 @@ import { get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
 
 import {
   AbsoluteTimeRange,
@@ -296,7 +296,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.props.modifyQueries(this.props.exploreId, action, modifier);
   };
 
-  onResize = (size: { height: number; width: number }) => {
+  onResize = (size: HorizontalSize) => {
     this.props.changeSize(this.props.exploreId, size);
   };
 

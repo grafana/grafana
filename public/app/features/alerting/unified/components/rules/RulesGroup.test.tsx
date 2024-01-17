@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { Props } from 'react-virtualized-auto-sizer';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
@@ -22,7 +22,13 @@ jest.mock('../../hooks/useHasRuler');
 jest.spyOn(analytics, 'logInfo');
 
 jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: AutoSizerProps) => children({ height: 600, width: 1 });
+  return ({ children }: Props) =>
+    children({
+      height: 600,
+      scaledHeight: 600,
+      scaledWidth: 1,
+      width: 1,
+    });
 });
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
