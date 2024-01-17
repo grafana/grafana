@@ -1,5 +1,6 @@
 import 'vite/modulepreload-polyfill';
 import './core/trustedTypePolicies';
+import './jquery';
 
 // TODO: Vite should have __wepack_public_path support. Not looked into it yet.
 // declare let __webpack_public_path__: string;
