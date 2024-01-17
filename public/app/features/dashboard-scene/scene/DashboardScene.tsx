@@ -211,6 +211,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       text: this.state.title,
       url: getDashboardUrl({
         uid: this.state.uid,
+        slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null },
       }),
