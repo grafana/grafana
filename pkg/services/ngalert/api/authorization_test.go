@@ -47,6 +47,7 @@ func TestAuthorize(t *testing.T) {
 
 	t.Run("should not panic on known routes", func(t *testing.T) {
 		for path, methods := range paths {
+			path := swaggerSpec.Spec().BasePath + path
 			for _, method := range methods {
 				require.NotPanics(t, func() {
 					api.authorize(method, path)
