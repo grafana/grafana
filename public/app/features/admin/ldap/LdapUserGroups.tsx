@@ -14,7 +14,7 @@ export const LdapUserGroups = ({ groups, showAttributeMapping }: Props) => {
     {
       id: 'groupDN',
       header: 'LDAP Group',
-      visible: () => showAttributeMapping || false,
+      visible: () => !!showAttributeMapping,
     },
     {
       id: 'orgName',

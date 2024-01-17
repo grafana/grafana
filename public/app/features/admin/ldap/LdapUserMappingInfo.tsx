@@ -1,8 +1,6 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { InteractiveTable, useStyles2 } from '@grafana/ui';
+import { InteractiveTable } from '@grafana/ui';
 import { LdapUserInfo } from 'app/types';
 
 interface Props {
@@ -11,22 +9,21 @@ interface Props {
 }
 
 export const LdapUserMappingInfo = ({ info, showAttributeMapping }: Props) => {
-  const styles = useStyles2(getStyles);
   const columns = [
     {
       id: 'userInfo',
       header: 'User Information',
+      disableGrow: true,
     },
     {
       id: 'ldapValue',
     },
-  ];
-  if (showAttributeMapping) {
-    columns.push({
+    {
       id: 'cfgAttrValue',
       header: 'LDAP attribute',
-    });
-  }
+      visible: () => !!showAttributeMapping,
+    },
+  ];
 
   const rows = [
     {
@@ -51,13 +48,5 @@ export const LdapUserMappingInfo = ({ info, showAttributeMapping }: Props) => {
     },
   ];
 
-  return <InteractiveTable className={styles} columns={columns} data={rows} getRowId={(row) => row.userInfo} />;
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return css({
-    '& tr > td:first-child': {
-      width: theme.spacing(6),
-    },
-  });
+  return <InteractiveTable columns={columns} data={rows} getRowId={(row) => row.userInfo} />;
 };
