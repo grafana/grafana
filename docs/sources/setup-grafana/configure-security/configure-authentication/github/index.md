@@ -130,6 +130,15 @@ All other users are granted the `Viewer` role.
 role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
 ```
 
+#### Map one role to all users
+
+In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
+
+```ini
+role_attribute_path = "'Viewer'"
+skip_org_role_sync = false
+```
+
 ## Configure team synchronization
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).

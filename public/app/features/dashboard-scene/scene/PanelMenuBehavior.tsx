@@ -6,15 +6,7 @@ import {
   getTimeZone,
 } from '@grafana/data';
 import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
-import {
-  LocalValueVariable,
-  SceneDataTransformer,
-  SceneGridRow,
-  SceneQueryRunner,
-  VizPanel,
-  VizPanelMenu,
-  sceneGraph,
-} from '@grafana/scenes';
+import { LocalValueVariable, SceneGridRow, VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -25,13 +17,12 @@ import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegratio
 
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
-import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -43,7 +34,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const panel = menu.parent as VizPanel;
     const plugin = panel.getPlugin();
 
-    const location = locationService.getLocation();
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];
     const inspectSubMenu: PanelMenuItem[] = [];
@@ -66,13 +56,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.edit', `Edit`),
           iconClassName: 'eye',
           shortcut: 'e',
-          onClick: () => () => DashboardInteractions.panelMenuItemClicked('edit'),
-          href: getDashboardUrl({
-            uid: dashboard.state.uid,
-            subPath: `/panel-edit/${panelId}`,
-            currentQueryParams: location.search,
-            useExperimentalURL: true,
-          }),
+          onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
+          href: getEditPanelUrl(panelId),
         });
       }
 
@@ -234,21 +219,9 @@ export function getPanelLinksBehavior(panel: PanelModel) {
 
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
   const timeRange = sceneGraph.getTimeRange(panel);
-  let queryRunner = panel.state.$data;
-  let targets: DataQuery[] = [];
+  let queryRunner = getQueryRunnerFor(panel);
+  const targets: DataQuery[] = queryRunner?.state.queries as DataQuery[];
   const id = getPanelIdForVizPanel(panel);
-
-  if (queryRunner instanceof SceneDataTransformer) {
-    queryRunner = queryRunner.state.$data;
-  }
-
-  if (queryRunner instanceof SceneQueryRunner) {
-    targets = queryRunner.state.queries;
-  }
-
-  if (queryRunner instanceof ShareQueryDataProvider) {
-    targets = [queryRunner.state.query];
-  }
 
   let scopedVars = {};
 

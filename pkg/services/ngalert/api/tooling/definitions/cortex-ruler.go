@@ -166,6 +166,7 @@ import (
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
 type NamespaceConfig struct {
+	// The UID of the rule folder
 	// in:path
 	Namespace string
 	// in:body
@@ -174,12 +175,14 @@ type NamespaceConfig struct {
 
 // swagger:parameters RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetNamespaceGrafanaRulesConfig RouteDeleteNamespaceGrafanaRulesConfig
 type PathNamespaceConfig struct {
+	// The UID of the rule folder
 	// in: path
 	Namespace string
 }
 
 // swagger:parameters RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig RouteGetGrafanaRuleGroupConfig RouteDeleteGrafanaRuleGroupConfig
 type PathRouleGroupConfig struct {
+	// The UID of the rule folder
 	// in: path
 	Namespace string
 	// in: path
@@ -426,7 +429,6 @@ type GettableGrafanaRule struct {
 	Version         int64               `json:"version" yaml:"version"`
 	UID             string              `json:"uid" yaml:"uid"`
 	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
-	NamespaceID     int64               `json:"namespace_id" yaml:"namespace_id"`
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`

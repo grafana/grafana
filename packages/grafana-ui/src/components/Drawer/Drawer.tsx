@@ -9,8 +9,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
-import { Button } from '../Button';
+import { t } from '../../utils/i18n';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
 export interface Props {
@@ -116,12 +117,12 @@ export function Drawer({
           {typeof title === 'string' && (
             <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
               <div className={styles.actions}>
-                <Button
-                  icon="times"
+                <IconButton
+                  name="times"
                   variant="secondary"
-                  fill="text"
                   onClick={onClose}
-                  aria-label={selectors.components.Drawer.General.close}
+                  data-testid={selectors.components.Drawer.General.close}
+                  tooltip={t(`grafana-ui.drawer.close`, 'Close')}
                 />
               </div>
               <div className={styles.titleWrapper}>

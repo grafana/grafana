@@ -10,6 +10,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataTopic,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
@@ -39,6 +40,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
@@ -531,7 +533,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
 // Used to add additional information to Line limit meta info
 function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requestedRangeMs?: number): LogsMetaItem[] {
-  let logsModelMeta = [...logsModel.meta!];
+  if (!logsModel.meta) {
+    return [];
+  }
+  let logsModelMeta = [...logsModel.meta];
 
   const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
   const limit = limitIndex >= 0 && logsModelMeta[limitIndex]?.value;
@@ -546,7 +551,8 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
         visibleRangeMs
       )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
     } else {
-      metaLimitValue = `${limit} (${logsModel.rows.length} returned)`;
+      const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
+      metaLimitValue = `${limit} (${logsModel.rows.length} ${description})`;
     }
 
     logsModelMeta[limitIndex] = {
@@ -658,6 +664,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
         } else {
           const framesByRefId = groupBy(dataQueryResponse.data, 'refId');
           logsVolumeData = dataQueryResponse.data.map((dataFrame) => {
+            // Separate possible annotations from data frames
+            if (dataFrame.meta?.dataTopic === DataTopic.Annotations) {
+              return dataFrame;
+            }
             let sourceRefId = dataFrame.refId || '';
             if (sourceRefId.startsWith('log-volume-')) {
               sourceRefId = sourceRefId.substr('log-volume-'.length);

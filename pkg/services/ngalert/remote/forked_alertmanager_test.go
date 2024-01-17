@@ -323,11 +323,41 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	})
 
 	t.Run("StopAndWait", func(tt *testing.T) {
-		// StopAndWait should be called on both Alertmanagers.
-		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().StopAndWait().Once()
-		remote.EXPECT().StopAndWait().Once()
-		forked.StopAndWait()
+		{
+			// StopAndWait should be called in both Alertmanagers.
+			// Methods to sync the Alertmanagers should be called on the remote Alertmanager.
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+			internal.EXPECT().StopAndWait().Once()
+			remote.EXPECT().StopAndWait().Once()
+			remote.EXPECT().CompareAndSendConfiguration(mock.Anything, mock.Anything).Return(nil).Once()
+			remote.EXPECT().CompareAndSendState(mock.Anything).Return(nil).Once()
+			forked.StopAndWait()
+		}
+
+		{
+			// An error in the remote Alertmanager should't be a problem.
+			// These errors are caught and logged.
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+			internal.EXPECT().StopAndWait().Once()
+			remote.EXPECT().StopAndWait().Once()
+			remote.EXPECT().CompareAndSendConfiguration(mock.Anything, mock.Anything).Return(expErr).Once()
+			remote.EXPECT().CompareAndSendState(mock.Anything).Return(expErr).Once()
+			forked.StopAndWait()
+		}
+
+		{
+			// An error when retrieving the configuration should cause
+			// CompareAndSendConfiguration not to be called.
+			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+			secondaryForked, ok := forked.(*RemoteSecondaryForkedAlertmanager)
+			require.True(t, ok)
+			secondaryForked.store = &errConfigStore{}
+
+			internal.EXPECT().StopAndWait().Once()
+			remote.EXPECT().StopAndWait().Once()
+			remote.EXPECT().CompareAndSendState(mock.Anything).Return(expErr).Once()
+			forked.StopAndWait()
+		}
 	})
 
 	t.Run("Ready", func(tt *testing.T) {
@@ -583,13 +613,25 @@ func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval t
 	remote := remote_alertmanager_mock.NewRemoteAlertmanagerMock(t)
 
 	if mode == modeRemoteSecondary {
+		configs := map[int64]*models.AlertConfiguration{
+			1: {},
+		}
 		cfg := RemoteSecondaryConfig{
 			Logger:       log.NewNopLogger(),
 			SyncInterval: syncInterval,
+			OrgID:        1,
+			Store:        notifier.NewFakeConfigStore(t, configs),
 		}
 		forked, err := NewRemoteSecondaryForkedAlertmanager(cfg, internal, remote)
 		require.NoError(t, err)
 		return internal, remote, forked
 	}
 	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
+}
+
+// errConfigStore returns an error when a method is called.
+type errConfigStore struct{}
+
+func (s *errConfigStore) GetLatestAlertmanagerConfiguration(context.Context, int64) (*models.AlertConfiguration, error) {
+	return nil, errors.New("test error")
 }

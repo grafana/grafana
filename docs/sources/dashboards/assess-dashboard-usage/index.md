@@ -60,11 +60,7 @@ Dashboard insights show the following information:
 
 {{< figure src="/static/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" alt="Stats tab" >}}{{< figure src="/static/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" alt="Users and activity tab" >}}
 
-{{% admonition type="note" %}}
-
-If you've enabled the `publicDashboards` feature toggle, you'll also see a Public dashboards tab in your analytics.
-
-{{% /admonition %}}
+If public dashboards are [enabled][], you'll also see a **Public dashboards** tab in your analytics.
 
 ### Data source insights
 
@@ -146,4 +142,7 @@ You can click the previous links to download the respective dashboard JSON, then
 
 [Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
 [Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
+
+[enabled]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#public_dashboards"
+[enabled]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#public_dashboards"
 {{% /docs/reference %}}
