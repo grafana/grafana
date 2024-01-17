@@ -364,6 +364,9 @@ schemas: [{
 			reqSignedIn?: bool
 			reqRole?:     string
 
+			// RBAC action the user must have to access the route. i.e. plugin-id.projects:read
+			reqAction?: string
+
 			// For data source plugins. Route headers adds HTTP headers to the
 			// proxied request.
 			headers?: [...#Header]

@@ -194,6 +194,7 @@ type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
 	ReqRole      org.RoleType    `json:"reqRole"`
+	ReqAction    string          `json:"reqAction"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
@@ -201,6 +202,10 @@ type Route struct {
 	TokenAuth    *JWTTokenAuth   `json:"tokenAuth"`
 	JwtTokenAuth *JWTTokenAuth   `json:"jwtTokenAuth"`
 	Body         json.RawMessage `json:"body"`
+}
+
+func (r *Route) RequiresRBACAction() bool {
+	return r.ReqAction != ""
 }
 
 // Header describes an HTTP header that is forwarded with
