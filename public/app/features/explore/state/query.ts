@@ -751,10 +751,13 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
     newQuerySource = combineLatest([runRequest(datasourceInstance, transaction.request), correlations$]).pipe(
-      mergeMap(([data, correlations]) =>
-        decorateData(
-          // Query splitting, otherwise duplicates results
-          data.state === LoadingState.Done ? mergeDataSeries(queryResponse, data) : data,
+      mergeMap(([data, correlations]) => {
+        // For query splitting, otherwise duplicates results
+        if (data.state !== LoadingState.Done) {
+          return of(queryResponse);
+        }
+        return decorateData(
+          mergeDataSeries(queryResponse, data),
           queryResponse,
           absoluteRange,
           undefined,
@@ -763,7 +766,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
           showCorrelationEditorLinks,
           defaultCorrelationEditorDatasource
         )
-      )
+      })
     );
 
     newQuerySource.subscribe({
