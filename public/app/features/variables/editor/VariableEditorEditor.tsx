@@ -205,7 +205,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
               </Button>
               <Button
                 type="submit"
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
                 disabled={loading}
                 variant="secondary"
               >

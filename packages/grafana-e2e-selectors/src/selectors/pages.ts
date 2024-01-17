@@ -144,11 +144,7 @@ export const Pages = {
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
             selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
             previewOfValuesOption: 'data-testid Variable editor Preview of Values option',
-            /**
-             * @deprecated use runQueryButton instead
-             */
-            submitButton: 'Variable editor Submit button',
-            runQueryButton: 'data-testid Variable editor Run Query button',
+            submitButton: 'data-testid Variable editor Run Query button',
             applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {

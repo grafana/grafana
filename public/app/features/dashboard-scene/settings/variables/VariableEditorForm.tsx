@@ -106,7 +106,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
             <Button
               disabled={runQueryState.loading}
               variant="secondary"
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
               onClick={onRunQuery}
             >
               {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}

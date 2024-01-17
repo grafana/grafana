@@ -288,7 +288,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
       }
     });
 
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.runQueryButton().click();
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
   e2e.pages.Dashboard.Settings.Variables.Edit.General.applyButton().click();
 
   return fullConfig;
