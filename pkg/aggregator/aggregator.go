@@ -250,7 +250,6 @@ func initServiceResolver(factory informersv0alpha1.SharedInformerFactory) (apise
 	return NewExternalNameResolver(factory.Service().V0alpha1().ExternalNames().Lister()), nil
 }
 
-// authResolverWrapper webhook.AuthenticationInfoResolverWrapper
 func initApiExtensionsConfig(options *options.RecommendedOptions,
 	sharedConfig *genericapiserver.RecommendedConfig,
 	fakeInfomers informers.SharedInformerFactory,
