@@ -28,11 +28,7 @@ func ProvideService(cfg *config.Cfg, registry registry.Service, licensing plugin
 		return nil, err
 	}
 
-	return &Manager{
-		cfg:    cfg,
-		loader: l,
-		log:    log.New("plugins.renderer"),
-	}, nil
+	return NewManager(cfg, l), nil
 }
 
 type Manager struct {
@@ -41,6 +37,14 @@ type Manager struct {
 	log    log.Logger
 
 	renderer *Plugin
+}
+
+func NewManager(cfg *config.Cfg, loader loader.Service) *Manager {
+	return &Manager{
+		cfg:    cfg,
+		loader: loader,
+		log:    log.New("renderer.manager"),
+	}
 }
 
 type Plugin struct {
