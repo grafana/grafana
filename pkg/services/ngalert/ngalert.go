@@ -290,12 +290,13 @@ func (ng *AlertNG) init() error {
 		Clock:                          clk,
 		Historian:                      history,
 		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
-		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
+		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
-	stateManager := state.NewManager(cfg)
+	statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
+	stateManager := state.NewManager(cfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
