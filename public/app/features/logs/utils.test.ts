@@ -494,9 +494,9 @@ describe('findMatchingRow', () => {
     logFrameB.refId = 'B';
     const logsModel = setup([logFrameA, logFrameB]);
     const rows = logsModel?.rows || [];
-    
+
     for (const row of rows) {
-      const targetRow = { ...row, dataFrame: { ...logFrameA, refId: 'Z' }};
+      const targetRow = { ...row, dataFrame: { ...logFrameA, refId: 'Z' } };
       expect(findMatchingRow(targetRow, rows)).toBe(undefined);
     }
   });
@@ -505,7 +505,7 @@ describe('findMatchingRow', () => {
     const { logFrameA, logFrameB } = getMockFrames();
     const logsModel = setup([logFrameA, logFrameB]);
     const rows = logsModel?.rows || [];
-    
+
     for (const row of rows) {
       const targetRow = { ...row, entry: `${Math.random()}`, timeEpochNs: `${Math.ceil(Math.random() * 1000000)}` };
       expect(findMatchingRow(targetRow, rows)).toBeDefined();
@@ -516,7 +516,7 @@ describe('findMatchingRow', () => {
     const { logFrameA, logFrameB } = getMockFrames();
     const logsModel = setup([logFrameA, logFrameB]);
     const rows = logsModel?.rows || [];
-    
+
     for (const row of rows) {
       const targetRow = { ...row, rowId: undefined };
       expect(findMatchingRow(targetRow, rows)).toBeDefined();
