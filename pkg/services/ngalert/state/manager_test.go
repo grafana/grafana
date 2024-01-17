@@ -213,7 +213,7 @@ func TestWarmStateCache(t *testing.T) {
 		Tracer:        tracing.InitializeTracerForTest(),
 		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg)
+	st := state.NewManager(cfg, state.NewNoopPersister())
 	st.Warm(ctx, dbstore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -241,17 +241,16 @@ func TestDashboardAnnotations(t *testing.T) {
 	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, historianMetrics)
 	hist := historian.NewAnnotationBackend(store, nil, historianMetrics)
 	cfg := state.ManagerCfg{
-		Metrics:        metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-		ExternalURL:    nil,
-		InstanceStore:  dbstore,
-		Images:         &state.NoopImageService{},
-		Clock:          clock.New(),
-		Historian:      hist,
-		StatePersister: state.NewNoopPersister(),
-		Tracer:         tracing.InitializeTracerForTest(),
-		Log:            log.New("ngalert.state.manager"),
+		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: dbstore,
+		Images:        &state.NoopImageService{},
+		Clock:         clock.New(),
+		Historian:     hist,
+		Tracer:        tracing.InitializeTracerForTest(),
+		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg)
+	st := state.NewManager(cfg, state.NewNoopPersister())
 
 	const mainOrgID int64 = 1
 
@@ -1256,17 +1255,16 @@ func TestProcessEvalResults(t *testing.T) {
 			hist := historian.NewAnnotationBackend(store, nil, m)
 			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
-				Metrics:        stateMetrics,
-				ExternalURL:    nil,
-				InstanceStore:  &state.FakeInstanceStore{},
-				Images:         &state.NotAvailableImageService{},
-				Clock:          clk,
-				Historian:      hist,
-				StatePersister: state.NewNoopPersister(),
-				Tracer:         tracing.InitializeTracerForTest(),
-				Log:            log.New("ngalert.state.manager"),
+				Metrics:       stateMetrics,
+				ExternalURL:   nil,
+				InstanceStore: &state.FakeInstanceStore{},
+				Images:        &state.NotAvailableImageService{},
+				Clock:         clk,
+				Historian:     hist,
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg)
+			st := state.NewManager(cfg, state.NewNoopPersister())
 
 			evals := make([]time.Time, 0, len(tc.evalResults))
 			for evalTime := range tc.evalResults {
@@ -1355,20 +1353,19 @@ func TestProcessEvalResults(t *testing.T) {
 
 	t.Run("should save state to database", func(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
-		statePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.persist"), instanceStore, false, 1)
 		clk := clock.New()
 		cfg := state.ManagerCfg{
-			Metrics:        metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-			ExternalURL:    nil,
-			InstanceStore:  instanceStore,
-			Images:         &state.NotAvailableImageService{},
-			Clock:          clk,
-			Historian:      &state.FakeHistorian{},
-			StatePersister: statePersister,
-			Tracer:         tracing.InitializeTracerForTest(),
-			Log:            log.New("ngalert.state.manager"),
+			Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+			ExternalURL:   nil,
+			InstanceStore: instanceStore,
+			Images:        &state.NotAvailableImageService{},
+			Clock:         clk,
+			Historian:     &state.FakeHistorian{},
+			Tracer:        tracing.InitializeTracerForTest(),
+			Log:           log.New("ngalert.state.manager"),
 		}
-		st := state.NewManager(cfg)
+		statePersister := state.NewSyncStatePerisiter(log.New("ngalert.state.manager.persist"), instanceStore, false, 1)
+		st := state.NewManager(cfg, statePersister)
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -1511,17 +1508,16 @@ func TestStaleResultsHandler(t *testing.T) {
 	for _, tc := range testCases {
 		ctx := context.Background()
 		cfg := state.ManagerCfg{
-			Metrics:        metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-			ExternalURL:    nil,
-			InstanceStore:  dbstore,
-			Images:         &state.NoopImageService{},
-			Clock:          clock.New(),
-			Historian:      &state.FakeHistorian{},
-			StatePersister: state.NewNoopPersister(),
-			Tracer:         tracing.InitializeTracerForTest(),
-			Log:            log.New("ngalert.state.manager"),
+			Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+			ExternalURL:   nil,
+			InstanceStore: dbstore,
+			Images:        &state.NoopImageService{},
+			Clock:         clock.New(),
+			Historian:     &state.FakeHistorian{},
+			Tracer:        tracing.InitializeTracerForTest(),
+			Log:           log.New("ngalert.state.manager"),
 		}
-		st := state.NewManager(cfg)
+		st := state.NewManager(cfg, state.NewNoopPersister())
 		st.Warm(ctx, dbstore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
@@ -1594,17 +1590,16 @@ func TestStaleResults(t *testing.T) {
 	store := &state.FakeInstanceStore{}
 
 	cfg := state.ManagerCfg{
-		Metrics:        metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-		ExternalURL:    nil,
-		InstanceStore:  store,
-		Images:         &state.NoopImageService{},
-		Clock:          clk,
-		Historian:      &state.FakeHistorian{},
-		StatePersister: state.NewNoopPersister(),
-		Tracer:         tracing.InitializeTracerForTest(),
-		Log:            log.New("ngalert.state.manager"),
+		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: store,
+		Images:        &state.NoopImageService{},
+		Clock:         clk,
+		Historian:     &state.FakeHistorian{},
+		Tracer:        tracing.InitializeTracerForTest(),
+		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg)
+	st := state.NewManager(cfg, state.NewNoopPersister())
 
 	rule := models.AlertRuleGen(models.WithFor(0))()
 
@@ -1777,7 +1772,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				Tracer:        tracing.InitializeTracerForTest(),
 				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg)
+			st := state.NewManager(cfg, state.NewNoopPersister())
 			st.Warm(ctx, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := dbstore.ListAlertInstances(ctx, q)
@@ -1918,7 +1913,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				Tracer:        tracing.InitializeTracerForTest(),
 				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg)
+			st := state.NewManager(cfg, state.NewNoopPersister())
 			st.Warm(ctx, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := dbstore.ListAlertInstances(ctx, q)

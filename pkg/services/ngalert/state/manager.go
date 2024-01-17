@@ -68,13 +68,11 @@ type ManagerCfg struct {
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool
 
-	StatePersister StatePersister
-
 	Tracer tracing.Tracer
 	Log    log.Logger
 }
 
-func NewManager(cfg ManagerCfg) *Manager {
+func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	// Metrics for the cache use a collector, so they need access to the register directly.
 	c := newCache()
 	if cfg.Metrics != nil {
@@ -93,7 +91,7 @@ func NewManager(cfg ManagerCfg) *Manager {
 		externalURL:                    cfg.ExternalURL,
 		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
-		persister:                      cfg.StatePersister,
+		persister:                      statePersister,
 		tracer:                         cfg.Tracer,
 	}
 

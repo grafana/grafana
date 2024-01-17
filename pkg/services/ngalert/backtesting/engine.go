@@ -49,17 +49,16 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
 			cfg := state.ManagerCfg{
-				Metrics:        nil,
-				ExternalURL:    appUrl,
-				InstanceStore:  nil,
-				Images:         &NoopImageService{},
-				Clock:          clock.New(),
-				Historian:      nil,
-				Tracer:         tracer,
-				Log:            log.New("ngalert.state.manager"),
-				StatePersister: state.NewNoopPersister(),
+				Metrics:       nil,
+				ExternalURL:   appUrl,
+				InstanceStore: nil,
+				Images:        &NoopImageService{},
+				Clock:         clock.New(),
+				Historian:     nil,
+				Tracer:        tracer,
+				Log:           log.New("ngalert.state.manager"),
 			}
-			return state.NewManager(cfg)
+			return state.NewManager(cfg, state.NewNoopPersister())
 		},
 	}
 }
