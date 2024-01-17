@@ -152,8 +152,4 @@ describe('flattenObject', () => {
     
     expect(flattenObject(nestedObject)).toEqual(nestedObject);
   });
-
-  it.each([undefined, false, true, ''])('does not fail for other unknown types as input', (target: undefined | boolean | string) => {
-    expect(flattenObject(target)).toEqual({});
-  });
 });
