@@ -335,7 +335,20 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "fiscalYearStartMonth": 1,
   "graphTooltip": 0,
   "id": 1351,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Link 1",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": "",
+    },
+  ],
   "panels": [
     {
       "datasource": {

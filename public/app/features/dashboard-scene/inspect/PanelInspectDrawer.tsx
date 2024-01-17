@@ -15,6 +15,9 @@ import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
 import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 
+import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardSceneFor } from '../utils/utils';
+
 import { InspectDataTab } from './InspectDataTab';
 import { InspectJsonTab } from './InspectJsonTab';
 import { InspectMetaDataTab } from './InspectMetaDataTab';
@@ -24,7 +27,7 @@ import { SceneInspectTab } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: SceneInspectTab[];
-  panelRef: SceneObjectRef<VizPanel>;
+  panelRef?: SceneObjectRef<VizPanel>;
   pluginNotLoaded?: boolean;
   canEdit?: boolean;
 }
@@ -47,8 +50,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
    */
   async buildTabs(retry: number) {
     const panelRef = this.state.panelRef;
-    const panel = panelRef.resolve();
-    const plugin = panel.getPlugin();
+    const plugin = panelRef?.resolve()?.getPlugin();
     const tabs: SceneInspectTab[] = [];
 
     if (!plugin) {
@@ -59,31 +61,46 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
       }
     }
 
-    if (supportsDataQuery(plugin)) {
-      const data = sceneGraph.getData(panel);
+    if (panelRef) {
+      if (supportsDataQuery(plugin)) {
+        const data = sceneGraph.getData(panelRef.resolve());
 
-      tabs.push(new InspectDataTab({ panelRef }));
-      tabs.push(new InspectStatsTab({ panelRef }));
-      tabs.push(new InspectQueryTab({ panelRef }));
+        tabs.push(new InspectDataTab({ panelRef }));
+        tabs.push(new InspectStatsTab({ panelRef }));
+        tabs.push(new InspectQueryTab({ panelRef }));
 
-      const dsWithInspector = await getDataSourceWithInspector(data.state.data);
-      if (dsWithInspector) {
-        tabs.push(new InspectMetaDataTab({ panelRef, dataSource: dsWithInspector }));
+        const dsWithInspector = await getDataSourceWithInspector(data.state.data);
+        if (dsWithInspector) {
+          tabs.push(new InspectMetaDataTab({ panelRef, dataSource: dsWithInspector }));
+        }
       }
-    }
 
-    tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
+      tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
+    }
 
     this.setState({ tabs });
   }
 
   getDrawerTitle() {
-    const panel = this.state.panelRef.resolve();
-    return sceneGraph.interpolate(panel, `Inspect: ${panel.state.title}`);
+    const panel = this.state.panelRef?.resolve();
+    if (panel) {
+      return sceneGraph.interpolate(panel, `Inspect: ${panel.state.title}`);
+    }
+    return `Inspect panel`;
   }
 
   onClose = () => {
-    locationService.partial({ inspect: null, inspectTab: null });
+    const dashboard = getDashboardSceneFor(this);
+    locationService.push(
+      getDashboardUrl({
+        uid: dashboard.state.uid,
+        currentQueryParams: locationService.getLocation().search,
+        updateQuery: {
+          inspect: null,
+          inspectTab: null,
+        },
+      })
+    );
   };
 }
 
