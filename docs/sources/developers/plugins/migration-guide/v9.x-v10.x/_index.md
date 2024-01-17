@@ -45,7 +45,7 @@ Starting from Grafana 10 plugins can start updating to use the v6 version of `re
 
 ### Update using `@grafana/create-plugin`
 
-Please follow the steps below to start using react router v6 in your plugin.
+Follow the steps below to start using React router v6 in your plugin.
 
 #### 1. Update the build related configuration:
 
