@@ -145,6 +145,8 @@ export const TrendPanel = ({
                         />
                       );
                     }}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 ) : (
                   <TooltipPlugin

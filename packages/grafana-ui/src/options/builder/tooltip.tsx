@@ -42,5 +42,23 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         options: sortOptions,
       },
+    })
+    .addNumberInput({
+      path: 'tooltip.maxWidth',
+      name: 'Max width',
+      category,
+      settings: {
+        integer: true,
+        placeholder: '300',
+      },
+    })
+    .addNumberInput({
+      path: 'tooltip.maxHeight',
+      name: 'Max height',
+      category,
+      settings: {
+        integer: true,
+        placeholder: '600',
+      },
     });
 }

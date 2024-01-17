@@ -173,9 +173,11 @@ TODO docs
 
 TODO docs
 
-| Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| Property    | Type   | Required | Default | Description                                                   |
+|-------------|--------|----------|---------|---------------------------------------------------------------|
+| `mode`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| `maxHeight` | number | No       |         |                                                               |
+| `maxWidth`  | number | No       |         |                                                               |
 
 

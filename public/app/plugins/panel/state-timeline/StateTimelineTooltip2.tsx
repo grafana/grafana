@@ -19,7 +19,6 @@ import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTool
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
-import { DEFAULT_TOOLTIP_WIDTH } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getDataLinks } from '../status-history/utils';
@@ -193,6 +192,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
-    width: DEFAULT_TOOLTIP_WIDTH,
   }),
 });

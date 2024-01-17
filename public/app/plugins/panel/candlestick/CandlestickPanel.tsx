@@ -295,6 +295,8 @@ export const CandlestickPanel = ({
                     />
                   );
                 }}
+                maxWidth={options.tooltip.maxWidth}
+                maxHeight={options.tooltip.maxHeight}
               />
             ) : (
               <>
