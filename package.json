@@ -401,7 +401,7 @@
     "test": "link:./public/test",
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.6.0",
-    "tslib": "2.6.0",
+    "tslib": "2.6.2",
     "tween-functions": "^1.2.0",
     "uplot": "1.6.28",
     "uuid": "9.0.0",
