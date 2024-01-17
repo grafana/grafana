@@ -41,7 +41,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 			return
 		}
 
-		healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+		healthResponse, err := r.builder.querier.Health(ctx, &backend.CheckHealthRequest{
 			PluginContext: *pluginCtx,
 		})
 		if err != nil {

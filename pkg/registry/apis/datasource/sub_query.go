@@ -83,7 +83,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		queryResponse, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
+		queryResponse, err := r.builder.querier.Query(ctx, &backend.QueryDataRequest{
 			PluginContext: *pluginCtx,
 			Queries:       queries,
 			//  Headers: // from context
