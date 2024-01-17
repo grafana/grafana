@@ -38,6 +38,7 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { combinePanelData } from 'app/features/logs/response';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
@@ -55,7 +56,7 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { visualisationTypeKey } from '../Logs/utils/logs';
-import { decorateData, mergeDataSeries } from '../utils/decorators';
+import { decorateData } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -758,7 +759,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
           return of(queryResponse);
         }
         return decorateData(
-          mergeDataSeries(queryResponse, data),
+          combinePanelData(queryResponse, data),
           queryResponse,
           absoluteRange,
           undefined,
