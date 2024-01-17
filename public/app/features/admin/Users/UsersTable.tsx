@@ -82,7 +82,8 @@ export const UsersTable = ({
                   </Stack>
                 );
               },
-              sortType: (a: UseTableRowProps<UserDTO>, b: UseTableRowProps<UserDTO>) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
+              sortType: (a: UseTableRowProps<UserDTO>, b: UseTableRowProps<UserDTO>) =>
+                (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
             },
           ]
         : []),
