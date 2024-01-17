@@ -57,7 +57,7 @@ $ npx @grafana/create-plugin update
 
 ```typescript
 
-Using Routes instead of Switch in react-router v6
+Using Routes instead of Switch in `react-router` v6
 You are using react-router-dom version 6, which replaced Switch with the Routes component
 
 import { Routes } from "react-router-dom";
