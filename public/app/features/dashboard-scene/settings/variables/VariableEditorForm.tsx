@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { FormEvent } from 'react';
+import { useAsyncFn } from 'react-use';
+import { lastValueFrom } from 'rxjs';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { HorizontalGroup, Button } from '@grafana/ui';
+import { HorizontalGroup, Button, LoadingPlaceholder } from '@grafana/ui';
 import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -24,11 +26,11 @@ interface VariableEditorFormProps {
 }
 
 export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscardChanges }: VariableEditorFormProps) {
-  const { name: initialName, type, label: initialLabel, description: initialDescription, hide } = variable.useState();
+  const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
-  const [name, setName] = React.useState(initialName ?? '');
-  const [label, setLabel] = React.useState(initialLabel ?? '');
-  const [description, setDescription] = React.useState(initialDescription ?? '');
+  const [runQueryState, onRunQuery] = useAsyncFn(async () => {
+    await lastValueFrom(variable.validateAndUpdate!());
+  }, [variable]);
 
   const onVariableTypeChange = (option: SelectableValue<EditableVariableType>) => {
     if (option.value) {
@@ -36,13 +38,10 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
     }
   };
 
-  const onNameChange = (e: React.FormEvent<HTMLInputElement>) => setName(e.currentTarget.value);
-  const onLabelChange = (e: React.FormEvent<HTMLInputElement>) => setLabel(e.currentTarget.value);
-  const onDescriptionChange = (e: React.FormEvent<HTMLTextAreaElement>) => setDescription(e.currentTarget.value);
-
-  const onNameBlur = () => variable.setState({ name });
-  const onLabelBlur = () => variable.setState({ label });
-  const onDescriptionBlur = () => variable.setState({ description });
+  const onNameBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ name: e.currentTarget.value });
+  const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
+  const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
+    variable.setState({ description: e.currentTarget.value });
   const onHideChange = (hide: VariableHide) => variable.setState({ hide });
 
   return (
@@ -52,12 +51,11 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
 
         <VariableLegend>General</VariableLegend>
         <VariableTextField
-          value={name}
-          onBlur={onNameBlur}
-          onChange={onNameChange}
           name="Name"
-          placeholder="Variable name"
           description="The name of the template variable. (Max. 50 characters)"
+          placeholder="Variable name"
+          defaultValue={name ?? ''}
+          onBlur={onNameBlur}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
           maxLength={VariableNameConstraints.MaxSize}
           required
@@ -65,16 +63,14 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
         <VariableTextField
           name="Label"
           description="Optional display name"
-          value={label}
-          onChange={onLabelChange}
           placeholder="Label name"
+          defaultValue={label ?? ''}
           onBlur={onLabelBlur}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
         />
         <VariableTextAreaField
           name="Description"
-          value={description}
-          onChange={onDescriptionChange}
+          defaultValue={description ?? ''}
           placeholder="Descriptive text"
           onBlur={onDescriptionBlur}
           width={52}
@@ -82,23 +78,14 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
 
         <VariableHideSelect onChange={onHideChange} hide={hide || defaultVariableModel.hide!} type={type} />
 
-        {EditorToRender && <EditorToRender variable={variable} />}
+        {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.state.options} />}
+        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
 
         <div style={{ marginTop: '16px' }}>
           <HorizontalGroup spacing="md" height="inherit">
             {/* <Button variant="destructive" fill="outline" onClick={onModalOpen}>
               Delete
-            </Button> */}
-            {/* <Button
-              type="submit"
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
-              disabled={loading}
-              variant="secondary"
-            >
-              Run query
-              {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
             </Button> */}
             <Button
               variant="secondary"
@@ -106,6 +93,14 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
               onClick={onGoBack}
             >
               Back to list
+            </Button>
+            <Button
+              disabled={runQueryState.loading}
+              variant="secondary"
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+              onClick={onRunQuery}
+            >
+              {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
             </Button>
             <Button
               variant="destructive"
