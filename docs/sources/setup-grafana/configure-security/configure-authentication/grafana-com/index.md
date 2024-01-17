@@ -50,7 +50,7 @@ auto_login = true
 
 ## Skip organization role sync
 
-To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+If a user logs in with their Grafana.com credentials, their assigned org role will override what is defined within the Grafana instance. To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
 
 ```ini
 [auth.grafana_com]
