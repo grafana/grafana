@@ -9,6 +9,7 @@ import { getQueryRunnerFor } from './utils';
 
 export interface DashboardUrlOptions {
   uid?: string;
+  slug?: string;
   subPath?: string;
   updateQuery?: UrlQueryMap;
   /** Set to location.search to preserve current params */
@@ -24,10 +25,17 @@ export interface DashboardUrlOptions {
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
-  let path = `/d/${options.uid}${options.subPath ?? ''}`;
+  let path = `/d/${options.uid}`;
 
   if (options.soloRoute) {
-    path = `/d-solo/${options.uid}${options.subPath ?? ''}`;
+    path = `/d-solo/${options.uid}`;
+  }
+
+  if (options.slug) {
+    path += `/${options.slug}`;
+  }
+  if (options.subPath) {
+    path += options.subPath;
   }
 
   if (options.render) {

@@ -94,6 +94,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     locationService.push(
       getDashboardUrl({
         uid: dashboard.state.uid,
+        slug: dashboard.state.meta.slug,
         currentQueryParams: locationService.getLocation().search,
         updateQuery: {
           inspect: null,

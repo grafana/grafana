@@ -95,6 +95,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     locationService.push(
       getDashboardUrl({
         uid: dashboard.state.uid,
+        slug: dashboard.state.meta.slug,
         currentQueryParams: locationService.getLocation().search,
         updateQuery: {
           editPanel: null,

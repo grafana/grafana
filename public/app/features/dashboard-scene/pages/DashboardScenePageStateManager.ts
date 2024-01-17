@@ -66,6 +66,19 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         // Fill in meta fields
         const dashboard = this.initDashboardMeta(rsp);
 
+        if (dashboard.meta.url) {
+          const dashboardUrl = locationUtil.stripBaseFromUrl(dashboard.meta.url);
+          const currentPath = locationService.getLocation().pathname;
+          if (dashboardUrl !== currentPath) {
+            // Spread current location to persist search params used for navigation
+            locationService.replace({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            });
+            console.log('not correct url correcting', dashboardUrl, currentPath);
+          }
+        }
+
         // Populate nav model in global store according to the folder
         await this.initNavModel(dashboard);
 
