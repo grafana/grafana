@@ -3489,7 +3489,7 @@ __metadata:
     "@types/lodash": "npm:4.14.202"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
-    "@types/systemjs": "npm:6.13.1"
+    "@types/systemjs": "npm:6.13.5"
     esbuild: "npm:0.18.12"
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
@@ -3503,7 +3503,7 @@ __metadata:
     rollup-plugin-sourcemaps: "npm:0.6.3"
     rollup-plugin-terser: "npm:7.0.2"
     rxjs: "npm:7.8.1"
-    systemjs: "npm:6.14.2"
+    systemjs: "npm:6.14.3"
     systemjs-cjs-extra: "npm:0.2.0"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
@@ -9372,10 +9372,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:6.13.1":
-  version: 6.13.1
-  resolution: "@types/systemjs@npm:6.13.1"
-  checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
+"@types/systemjs@npm:6.13.5":
+  version: 6.13.5
+  resolution: "@types/systemjs@npm:6.13.5"
+  checksum: f514baebdffa4530f6daf65c07212edc9e8a7130b22df85217f926788ae87ddd77ccd29e8dde126bba7b669ef7a6575e84ddc5757e7e854ca51392200731f245
   languageName: node
   linkType: hard
 
@@ -17179,7 +17179,7 @@ __metadata:
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
-    "@types/systemjs": "npm:6.13.1"
+    "@types/systemjs": "npm:6.13.5"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/trusted-types": "npm:2.0.7"
@@ -28029,10 +28029,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs@npm:6.14.2":
-  version: 6.14.2
-  resolution: "systemjs@npm:6.14.2"
-  checksum: 5e126987ab10c3a19c3134d1ca82ab18cbf05018b396b0cc64c31c9cd561e5129f134cd0985d1987d7f82bd115a9b03182658ea76d612c58e8acfd446cda550f
+"systemjs@npm:6.14.3":
+  version: 6.14.3
+  resolution: "systemjs@npm:6.14.3"
+  checksum: 5d79c3b7dbd68b246fba6a9fe2372b88765c61cb1dbbd550beaaae0a4b38a1f19de302e203f2106845f959d00c1e7f9976bccf9b0527e907d5f3d8b5c6c5f61a
   languageName: node
   linkType: hard
 
