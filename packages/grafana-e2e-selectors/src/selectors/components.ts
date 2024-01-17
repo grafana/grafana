@@ -95,6 +95,7 @@ export const Components = {
           // valueSelect: 'data-testid Select value',
           // matchOperatorSelect: 'data-testid Select match operator',
           metricSelect: 'data-testid metric select',
+          hints: 'data-testid prometheus hints', // wrapper for hints component
           metricsExplorer: 'data-testid metrics explorer',
           queryAdvisor: 'data-testid query advisor',
         },

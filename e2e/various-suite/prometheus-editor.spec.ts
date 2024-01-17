@@ -75,7 +75,7 @@ describe('Prometheus query editor', () => {
       navigateToEditor('Code', 'prometheusCode');
     });
 
-    it('navigates to the code editor and opens the metrics browser', () => {
+    it('navigates to the code editor and opens the metrics browser with metric search, labels, label values, and all components', () => {
       navigateToEditor('Code', 'prometheusCode');
 
       getResources();
@@ -109,6 +109,18 @@ describe('Prometheus query editor', () => {
       e2e.components.QueryBuilder.labelSelect().should('exist');
       e2e.components.QueryBuilder.matchOperatorSelect().should('exist');
       e2e.components.QueryBuilder.valueSelect().should('exist');
+    });
+
+    it('can select a metric and provide a hint', () => {
+      navigateToEditor('Builder', 'prometheusBuilder');
+
+      getResources();
+
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click();
+
+      selectOption('metric1');
+
+      e2e.components.DataSource.Prometheus.queryEditor.builder.hints().contains('hint: add rate');
     });
 
     it('should have the metrics explorer opened via the metric select', () => {
