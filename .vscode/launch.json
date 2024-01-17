@@ -29,7 +29,7 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["aggregator", "--secure-port", "8443", "--etcd-servers", "http://localhost:2379"]
+      "args": ["aggregator", "--secure-port", "8443"]
     },
     {
       "name": "Attach to Chrome",
