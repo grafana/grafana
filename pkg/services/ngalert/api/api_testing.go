@@ -87,17 +87,16 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	}
 
 	cfg := state.ManagerCfg{
-		Metrics:                 nil,
-		ExternalURL:             srv.appUrl,
-		InstanceStore:           nil,
-		Images:                  &backtesting.NoopImageService{},
-		Clock:                   clock.New(),
-		Historian:               nil,
-		MaxStateSaveConcurrency: 1,
-		Tracer:                  srv.tracer,
-		Log:                     log.New("ngalert.state.manager"),
+		Metrics:       nil,
+		ExternalURL:   srv.appUrl,
+		InstanceStore: nil,
+		Images:        &backtesting.NoopImageService{},
+		Clock:         clock.New(),
+		Historian:     nil,
+		Tracer:        srv.tracer,
+		Log:           log.New("ngalert.state.manager"),
 	}
-	manager := state.NewManager(cfg)
+	manager := state.NewManager(cfg, state.NewNoopPersister())
 	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
 	transitions := manager.ProcessEvalResults(
 		c.Req.Context(),
