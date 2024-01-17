@@ -68,6 +68,8 @@ export interface DashboardSceneState extends SceneObjectState {
   isDirty?: boolean;
   /** meta flags */
   meta: DashboardMeta;
+  /** Version of the dashboard */
+  version?: number;
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel to view in fullscreen */

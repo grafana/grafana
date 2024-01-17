@@ -32,7 +32,7 @@ export const DiffTitle = ({ diff, title }: DiffTitleProps) => {
 
 const getDiffTitleStyles = (theme: GrafanaTheme2) => ({
   embolden: css({
-    'font-weight': `${theme.typography.fontWeightBold}`,
+    fontWeight: theme.typography.fontWeightBold,
   }),
   add: css({
     color: theme.colors.success.main,
@@ -56,6 +56,6 @@ const getDiffTitleStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.success.main,
   }),
   withoutDiff: css({
-    'margin-bottom': theme.spacing(2),
+    marginBottom: theme.spacing(2),
   }),
 });

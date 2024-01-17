@@ -4,10 +4,10 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Spinner, useStyles2 } from '@grafana/ui';
+import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
-import { DiffGroup } from '../VersionHistory/DiffGroup';
-import { DiffViewer } from '../VersionHistory/DiffViewer';
-import { Diffs } from '../VersionHistory/utils';
+import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
+import { DiffViewer } from '../../../dashboard-scene/settings/version-history/DiffViewer';
 
 interface SaveDashboardDiffProps {
   oldValue?: unknown;

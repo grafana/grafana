@@ -1,8 +1,7 @@
 import { Dashboard } from '@grafana/schema';
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { DashboardDataDTO } from 'app/types';
-
-import { Diffs } from '../VersionHistory/utils';
 
 export interface SaveDashboardData {
   clone: Dashboard; // cloned copy

@@ -3,9 +3,9 @@ import React from 'react';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
-import { jsonDiff } from 'app/features/dashboard/components/VersionHistory/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { jsonDiff } from '../settings/version-history/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 
