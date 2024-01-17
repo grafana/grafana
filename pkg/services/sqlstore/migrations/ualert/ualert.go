@@ -243,7 +243,15 @@ func (m *migrateToObjectMatchers) SQL(_ migrator.Dialect) string {
 	return "migrate configurations from matchers to object matchers"
 }
 
-func (m *migrateToObjectMatchers) Exec(sess *xorm.Session, _ *migrator.Migrator) error {
+func sumMatchers(r *definitions.Route) int64 {
+	var sum = int64(len(r.Matchers))
+	for _, rt := range r.Routes {
+		sum += sumMatchers(rt)
+	}
+	return sum
+}
+
+func (m *migrateToObjectMatchers) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// Get configurations for all orgs from the database.
 	var rows []ngmodels.AlertConfiguration
 	if err := sess.Table(&ngmodels.AlertConfiguration{}).Find(&rows); err != nil {
@@ -255,12 +263,26 @@ func (m *migrateToObjectMatchers) Exec(sess *xorm.Session, _ *migrator.Migrator)
 		if err := json.Unmarshal([]byte(row.AlertmanagerConfiguration), &cfg); err != nil {
 			return fmt.Errorf("failed to unmarshal configuration for org %d: %w", row.OrgID, err)
 		}
+		// This shouldn't happen, but in case a configuration is missing a route we will
+		// ignore it instead of panic.
+		if cfg.AlertmanagerConfig.Route == nil {
+			mg.Logger.Debug("Ignoring configuration as it's missing a route", "org", row.OrgID)
+			continue
+		}
+		// No need to change the configuration if there are no occurrences of matchers.
+		numMatchers := sumMatchers(cfg.AlertmanagerConfig.Route)
+		if numMatchers == 0 {
+			mg.Logger.Debug("Ignoring configuration as it has no matchers", "org", row.OrgID)
+			continue
+		}
+		mg.Logger.Debug("Migrating configuration as it has matchers", "org", row.OrgID, "numMatchers", numMatchers)
 		// Save a copy of the original configuration.
 		historicCfg := ngmodels.HistoricConfigFromAlertConfig(row)
 		historicCfg.LastApplied = time.Now().Unix()
 		if _, err := sess.Table("alert_configuration_history").Insert(historicCfg); err != nil {
 			return fmt.Errorf("failed to insert historical configuration for org %d: %w", row.OrgID, err)
 		}
+		mg.Logger.Debug("Saved backup configuration to alert_configuration_history", "org", row.OrgID)
 		// Migrate matchers to object matchers.
 		cfg.AsObjectMatchers()
 		b, err := json.Marshal(cfg)
@@ -271,6 +293,7 @@ func (m *migrateToObjectMatchers) Exec(sess *xorm.Session, _ *migrator.Migrator)
 		if _, err = sess.Table(&ngmodels.AlertConfiguration{}).Update(row); err != nil {
 			return fmt.Errorf("failed to update configuration for org %d: %w", row.OrgID, err)
 		}
+		mg.Logger.Debug("Saved updated configuration", "org", row.OrgID)
 	}
 	return nil
 }
