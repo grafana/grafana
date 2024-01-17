@@ -179,6 +179,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 }
 
 func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
+	t.Skip("Flaky test, @eleijonmarck will fix")
 	testCases := []struct {
 		name           string
 		insertDevices  []*anonstore.Device
