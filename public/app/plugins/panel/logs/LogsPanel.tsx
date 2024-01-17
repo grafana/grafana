@@ -31,6 +31,11 @@ import { Options } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
 interface LogsPanelProps extends PanelProps<Options> {}
+interface LogsPermalinkUrlState {
+  logs?: {
+    id?: string;
+  };
+}
 
 export const LogsPanel = ({
   data,
@@ -58,17 +63,22 @@ export const LogsPanel = ({
   const timeRange = data.timeRange;
   const urlParams = urlUtil.getUrlSearchParams();
   const panelStateEncoded = urlParams?.panelState;
-  let logsPanelState;
-  if (
-    panelStateEncoded &&
-    Array.isArray(panelStateEncoded) &&
-    panelStateEncoded?.length > 0 &&
-    typeof panelStateEncoded[0] === 'string'
-  ) {
-    logsPanelState = JSON.parse(panelStateEncoded[0]);
-  }
+  const getLogsPanelState = (): LogsPermalinkUrlState | undefined => {
+    if (
+      panelStateEncoded &&
+      Array.isArray(panelStateEncoded) &&
+      panelStateEncoded?.length > 0 &&
+      typeof panelStateEncoded[0] === 'string'
+    ) {
+      try {
+        return JSON.parse(panelStateEncoded[0]);
+      } catch (e) {
+        console.error('error parsing logsPanelState', e);
+      }
+    }
 
-  console.log('logsPanelState', logsPanelState);
+    return undefined;
+  };
 
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
 
@@ -262,7 +272,7 @@ export const LogsPanel = ({
           <LogRows
             containerRendered={logsContainerRef.current !== null}
             scrollIntoView={scrollIntoView}
-            permalinkedRowId={logsPanelState?.logs?.id ?? undefined}
+            permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
             onPermalinkClick={onPermalinkClick}
             logRows={logRows}
             showContextToggle={showContextToggle}
