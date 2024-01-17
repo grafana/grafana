@@ -58,6 +58,19 @@ export const LogsPanel = ({
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
   const timeRange = data.timeRange;
+  const urlParams = urlUtil.getUrlSearchParams();
+  const panelStateEncoded = urlParams?.panelState;
+  let logsPanelState;
+  if (
+    panelStateEncoded &&
+    Array.isArray(panelStateEncoded) &&
+    panelStateEncoded?.length > 0 &&
+    typeof panelStateEncoded[0] === 'string'
+  ) {
+    logsPanelState = JSON.parse(panelStateEncoded[0]);
+  }
+
+  console.log('logsPanelState', logsPanelState);
 
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
 
@@ -231,6 +244,16 @@ export const LogsPanel = ({
         <div className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
+            scrollIntoView={(element: HTMLElement) => {
+              if (logsContainerRef.current) {
+                logsContainerRef.current.scroll({
+                  behavior: 'smooth',
+                  top:
+                    logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+                });
+              }
+            }}
+            permalinkedRowId={logsPanelState?.logs?.id ?? undefined}
             onPermalinkClick={onPermalinkClick}
             logRows={logRows}
             showContextToggle={showContextToggle}

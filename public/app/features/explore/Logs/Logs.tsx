@@ -579,6 +579,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       contextRow,
     } = this.state;
 
+    console.log('permalinkedRowId', this.props.panelState?.logs?.id);
+
     const tableHeight = getLogsTableHeight();
     const styles = getStyles(theme, wrapLogMessage, tableHeight);
     const hasData = logRows && logRows.length > 0;
