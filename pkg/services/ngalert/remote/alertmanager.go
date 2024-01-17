@@ -205,7 +205,7 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	if am.shouldSendState(ctx, state) {
 		am.metrics.StateSyncsTotal.Inc()
 		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
-			am.metrics.ConfigSyncErrorsTotal.Inc()
+			am.metrics.StateSyncErrorsTotal.Inc()
 			return err
 		}
 		am.metrics.LastStateSync.SetToCurrentTime()
