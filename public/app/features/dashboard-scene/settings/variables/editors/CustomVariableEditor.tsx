@@ -6,9 +6,10 @@ import { CustomVariableForm } from '../components/CustomVariableForm';
 
 interface CustomVariableEditorProps {
   variable: CustomVariable;
+  onRunQuery: () => void;
 }
 
-export function CustomVariableEditor({ variable }: CustomVariableEditorProps) {
+export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEditorProps) {
   const { query: initialQuery, isMulti, allValue: initialAllValue, includeAll } = variable.useState();
   const [query, setQuery] = useState(initialQuery);
   const [allValue, setAllValue] = useState(initialAllValue);
@@ -27,8 +28,7 @@ export function CustomVariableEditor({ variable }: CustomVariableEditorProps) {
   };
   const onQueryBlur = () => {
     variable.setState({ query });
-    // Call validateAndUpdate() to update the variable options
-    variable.validateAndUpdate();
+    onRunQuery();
   };
   const onAllValueBlur = () => {
     variable.setState({ allValue });

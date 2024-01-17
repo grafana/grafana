@@ -16,8 +16,9 @@ describe('CustomVariableEditor', () => {
       includeAll: true,
       allValue: 'test',
     });
+    const onRunQuery = jest.fn();
 
-    const { getByTestId } = render(<CustomVariableEditor variable={variable} />);
+    const { getByTestId } = render(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
     const queryInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput
@@ -44,8 +45,9 @@ describe('CustomVariableEditor', () => {
       query: 'test, test2',
       value: 'test',
     });
+    const onRunQuery = jest.fn();
 
-    const { getByTestId } = render(<CustomVariableEditor variable={variable} />);
+    const { getByTestId } = render(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
     const multiCheckbox = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitchV2
@@ -71,20 +73,22 @@ describe('CustomVariableEditor', () => {
     expect(allValueInput).toBeInTheDocument();
   });
 
-  it('should call update query and generate new options when input loses focus', () => {
+  it('should call update query and re-run query when input loses focus', () => {
     const variable = new CustomVariable({
       name: 'customVar',
       query: 'test, test2',
       value: 'test',
     });
+    const onRunQuery = jest.fn();
 
-    const { getByTestId } = render(<CustomVariableEditor variable={variable} />);
+    const { getByTestId } = render(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
     const queryInput = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput);
     fireEvent.change(queryInput, { target: { value: 'test3, test4' } });
     fireEvent.blur(queryInput);
 
     expect(variable.state.query).toBe('test3, test4');
+    expect(onRunQuery).toHaveBeenCalled();
   });
 
   it('should update the variable state when all-custom-value input loses focus', () => {
@@ -95,8 +99,9 @@ describe('CustomVariableEditor', () => {
       isMulti: true,
       includeAll: true,
     });
+    const onRunQuery = jest.fn();
 
-    const { getByTestId } = render(<CustomVariableEditor variable={variable} />);
+    const { getByTestId } = render(<CustomVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
     const allValueInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2

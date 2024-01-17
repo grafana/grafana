@@ -87,7 +87,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
 
         <VariableHideSelect onChange={onHideChange} hide={hide || defaultVariableModel.hide!} type={type} />
 
-        {EditorToRender && <EditorToRender variable={variable} />}
+        {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
         {hasVariableOptions(variable) && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
 
