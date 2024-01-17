@@ -273,7 +273,11 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
 
-		return s.SQLStore.DeleteDataSource(ctx, cmd)
+		if err := s.SQLStore.DeleteDataSource(ctx, cmd); err != nil {
+			return err
+		}
+
+		return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
 	})
 }
 
