@@ -3,20 +3,20 @@ package sqlstash
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // #TODO: fix import cycle
 func TestCreate(t *testing.T) {
-	entityDB, err := db.ProvideEntityDB(dbtest.NewFakeDB(), nil, featuremgmt.WithFeatures())
+	entityDB, err := dbimpl.ProvideEntityDB(dbtest.NewFakeDB(), nil, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	s, err := ProvideSQLEntityServer(entityDB)
 	require.NoError(t, err)
