@@ -429,7 +429,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
         placeholder: '300',
-      }
+      },
     });
 
     builder.addNumberInput({
@@ -439,7 +439,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
         placeholder: '600',
-      }
+      },
     });
 
     category = ['Legend'];
