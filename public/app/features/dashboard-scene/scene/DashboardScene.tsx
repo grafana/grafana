@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -25,6 +25,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardMeta } from 'app/types';
 
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardEditView } from '../settings/utils';
@@ -73,6 +74,9 @@ export interface DashboardSceneState extends SceneObjectState {
   viewPanelScene?: ViewPanelScene;
   /** Edit view */
   editview?: DashboardEditView;
+  /** Edit panel */
+  editPanel?: PanelEditor;
+
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
 }
@@ -169,8 +173,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.stopTrackingChanges();
     // Stop url sync before updating url
     this.stopUrlSync();
-    // Now we can update url
-    locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
+
+    // Now we can update urls
+    // We are updating url and removing editview and editPanel.
+    // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
+    // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
+    locationService.replace(
+      locationUtil.getUrlForPartial(this._initialUrlState!, {
+        editPanel: null,
+        editview: null,
+        inspect: null,
+        inspectTab: null,
+      })
+    );
+
+    // locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
     // Update state and disable editing
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
@@ -188,14 +205,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene } = this.state;
+    const { meta, viewPanelScene, editPanel } = this.state;
 
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
         uid: this.state.uid,
         currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null, editview: null },
+        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null },
       }),
     };
 
@@ -216,6 +233,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     if (viewPanelScene) {
       pageNav = {
         text: 'View panel',
+        parentItem: pageNav,
+      };
+    }
+
+    if (editPanel) {
+      pageNav = {
+        text: 'Edit panel',
         parentItem: pageNav,
       };
     }
