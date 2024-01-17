@@ -8,7 +8,7 @@ import { Trans } from '../../utils/i18n';
 import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip';
 
-import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
+import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { ColorPlacement, LabelValue } from './types';
 
 interface Props extends LabelValue {
@@ -111,8 +111,13 @@ export const VizTooltipRow = ({
 
       <div className={styles.valueWrapper}>
         {color && colorPlacement === ColorPlacement.leading && (
-          <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
+          <VizTooltipColorIndicator
+            color={color}
+            colorIndicator={colorIndicator}
+            position={ColorIndicatorPosition.Leading}
+          />
         )}
+
         {!isPinned ? (
           <div className={cx(styles.value, isActive)}>{value}</div>
         ) : (
@@ -138,10 +143,11 @@ export const VizTooltipRow = ({
         )}
 
         {color && colorPlacement === ColorPlacement.trailing && (
-          <>
-            &nbsp;
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
-          </>
+          <VizTooltipColorIndicator
+            color={color}
+            colorIndicator={colorIndicator}
+            position={ColorIndicatorPosition.Trailing}
+          />
         )}
       </div>
     </div>
@@ -161,7 +167,7 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
     fontWeight: 400,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
-    marginRight: theme.spacing(0.5),
+    marginRight: theme.spacing(2),
   }),
   value: css({
     fontWeight: 500,
