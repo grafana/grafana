@@ -357,7 +357,7 @@
           "reqRole": {
             "type": "string"
           },
-          "action": {
+          "reqAction": {
             "type": "string",
             "description": "The RBAC action a user must have to use this route."
           },
