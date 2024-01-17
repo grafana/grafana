@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
+	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 )
@@ -17,6 +18,7 @@ var WireSet = wire.NewSet(
 	playlist.RegisterAPIService,
 	dashboard.RegisterAPIService,
 	example.RegisterAPIService,
+	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 )

@@ -422,6 +422,26 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None && config.featureToggles.newVizTooltips,
     });
 
+    builder.addNumberInput({
+      path: 'tooltip.maxWidth',
+      name: 'Max width',
+      category,
+      settings: {
+        integer: true,
+        placeholder: '300',
+      },
+    });
+
+    builder.addNumberInput({
+      path: 'tooltip.maxHeight',
+      name: 'Max height',
+      category,
+      settings: {
+        integer: true,
+        placeholder: '600',
+      },
+    });
+
     category = ['Legend'];
     builder.addBooleanSwitch({
       path: 'legend.show',
