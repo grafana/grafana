@@ -461,23 +461,14 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				UID:   hit.UID,
-				Title: hit.Title,
+				UID:       hit.UID,
+				Title:     hit.Title,
+				ParentUID: hit.FolderUID,
 			}
 		}
 		page += 1
 	}
 	return namespaceMap, nil
-}
-
-// GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace, SignedInUser: user})
-	if err != nil {
-		return nil, err
-	}
-
-	return folder, nil
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
