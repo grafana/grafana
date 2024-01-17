@@ -94,7 +94,7 @@ export const DefaultCell = (props: TableCellProps) => {
   );
 };
 
-export function getCellStyle(
+function getCellStyle(
   tableStyles: TableStyles,
   cellOptions: TableCellOptions,
   displayValue: DisplayValue,
