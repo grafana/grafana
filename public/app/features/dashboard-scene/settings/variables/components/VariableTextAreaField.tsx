@@ -7,7 +7,8 @@ import { Field, TextArea, useStyles2 } from '@grafana/ui';
 
 interface VariableTextAreaFieldProps {
   name: string;
-  value: string;
+  value?: string;
+  defaultValue?: string;
   placeholder: string;
   onChange?: (event: FormEvent<HTMLTextAreaElement>) => void;
   width: number;
@@ -20,6 +21,7 @@ interface VariableTextAreaFieldProps {
 
 export function VariableTextAreaField({
   value,
+  defaultValue,
   name,
   description,
   placeholder,
@@ -39,6 +41,7 @@ export function VariableTextAreaField({
         id={id}
         rows={2}
         value={value}
+        defaultValue={defaultValue}
         onChange={onChange}
         onBlur={onBlur}
         placeholder={placeholder}
