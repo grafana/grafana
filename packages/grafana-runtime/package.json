@@ -44,7 +44,7 @@
     "history": "4.10.1",
     "lodash": "4.17.21",
     "rxjs": "7.8.1",
-    "systemjs": "6.14.2",
+    "systemjs": "6.14.3",
     "systemjs-cjs-extra": "0.2.0",
     "tslib": "2.6.0"
   },
@@ -61,7 +61,7 @@
     "@types/lodash": "4.14.202",
     "@types/react": "18.2.15",
     "@types/react-dom": "18.2.7",
-    "@types/systemjs": "6.13.1",
+    "@types/systemjs": "6.13.5",
     "esbuild": "0.18.12",
     "lodash": "4.17.21",
     "react": "18.2.0",
