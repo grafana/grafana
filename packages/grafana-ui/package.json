@@ -174,7 +174,7 @@
     "react-dom": "18.2.0",
     "react-select-event": "^5.1.0",
     "react-test-renderer": "18.2.0",
-    "rimraf": "5.0.1",
+    "rimraf": "5.0.5",
     "rollup": "2.79.1",
     "rollup-plugin-copy": "3.5.0",
     "rollup-plugin-dts": "^5.0.0",

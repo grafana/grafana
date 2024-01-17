@@ -3181,7 +3181,7 @@ __metadata:
     react-test-renderer: "npm:18.2.0"
     react-use: "npm:17.4.3"
     regenerator-runtime: "npm:0.14.1"
-    rimraf: "npm:5.0.1"
+    rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3219,7 +3219,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@types/node": "npm:20.8.10"
     esbuild: "npm:0.18.12"
-    rimraf: "npm:5.0.1"
+    rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3495,7 +3495,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    rimraf: "npm:5.0.1"
+    rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3541,7 +3541,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     esbuild: "npm:0.18.12"
     glob: "npm:^10.2.7"
-    rimraf: "npm:5.0.1"
+    rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3686,7 +3686,7 @@ __metadata:
     react-transition-group: "npm:4.4.5"
     react-use: "npm:17.4.3"
     react-window: "npm:1.8.10"
-    rimraf: "npm:5.0.1"
+    rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-dts: "npm:^5.0.0"
@@ -16850,7 +16850,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:10.3.10, glob@npm:^10.0.0, glob@npm:^10.2.2, glob@npm:^10.2.5, glob@npm:^10.2.7":
+"glob@npm:10.3.10, glob@npm:^10.0.0, glob@npm:^10.2.2, glob@npm:^10.2.5, glob@npm:^10.2.7, glob@npm:^10.3.7":
   version: 10.3.10
   resolution: "glob@npm:10.3.10"
   dependencies:
@@ -17356,7 +17356,7 @@ __metadata:
     redux-thunk: "npm:2.4.2"
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:4.1.8"
-    rimraf: "npm:5.0.1"
+    rimraf: "npm:5.0.5"
     rudder-sdk-js: "npm:2.43.0"
     rxjs: "npm:7.8.1"
     sass: "npm:1.69.4"
@@ -26165,6 +26165,17 @@ __metadata:
   bin:
     rimraf: dist/cjs/src/bin.js
   checksum: 0691e4d7482f2de2af8628976413e146cd6b204f52ab88be91a3bb69cb9c8669ee795ef7c1e964e8ec6bfeaec0212326287d53ec3eef26dac406c8f19c97f0c4
+  languageName: node
+  linkType: hard
+
+"rimraf@npm:5.0.5":
+  version: 5.0.5
+  resolution: "rimraf@npm:5.0.5"
+  dependencies:
+    glob: "npm:^10.3.7"
+  bin:
+    rimraf: dist/esm/bin.mjs
+  checksum: a612c7184f96258b7d1328c486b12ca7b60aa30e04229a08bbfa7e964486deb1e9a1b52d917809311bdc39a808a4055c0f950c0280fba194ba0a09e6f0d404f6
   languageName: node
   linkType: hard
 
