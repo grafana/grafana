@@ -175,4 +175,5 @@ export interface FeatureToggles {
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;
   jitterAlertRules?: boolean;
+  jitterAlertRulesWithinGroups?: boolean;
 }

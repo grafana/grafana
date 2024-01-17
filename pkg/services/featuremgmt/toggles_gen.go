@@ -632,6 +632,10 @@ const (
 	FlagNewFolderPicker = "newFolderPicker"
 
 	// FlagJitterAlertRules
-	// Distributes alert rule evaluations more evenly over time
+	// Distributes alert rule evaluations more evenly over time, by rule group
 	FlagJitterAlertRules = "jitterAlertRules"
+
+	// FlagJitterAlertRulesWithinGroups
+	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 )
