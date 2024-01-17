@@ -102,8 +102,6 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       return;
     }
 
-    this._dashboard.onDiscard();
-
     const dashboardDTO: DashboardDTO = {
       dashboard: new DashboardModel(version.data),
       meta: this._dashboard.state.meta,
@@ -111,7 +109,9 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     const dashScene = transformSaveModelToScene(dashboardDTO);
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
-    this._dashboard.setState(newState);
+
+    this._dashboard.setInitialState(newState);
+    this._dashboard.onDiscard();
   }
 
   public fetchVersions(append = false): void {

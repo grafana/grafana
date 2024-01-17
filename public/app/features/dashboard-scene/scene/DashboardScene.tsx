@@ -184,6 +184,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   };
 
+  public setInitialState = (state: DashboardSceneState) => {
+    this._initialState = state;
+  };
+
   public onSave = () => {
     this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
   };
