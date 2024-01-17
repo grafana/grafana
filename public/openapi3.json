@@ -1424,6 +1424,22 @@
         },
         "description": "(empty)"
       },
+      "listTeamsRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/components/schemas/RoleDTO"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "listTokensResponse": {
         "content": {
           "application/json": {
@@ -1432,6 +1448,22 @@
                 "$ref": "#/components/schemas/TokenDTO"
               },
               "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "listUsersRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/components/schemas/RoleDTO"
+                },
+                "type": "array"
+              },
+              "type": "object"
             }
           }
         },
@@ -1971,6 +2003,10 @@
       "ActiveUserStats": {
         "properties": {
           "active_admins_and_editors": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "active_anonymous_devices": {
             "format": "int64",
             "type": "integer"
           },
@@ -9105,6 +9141,32 @@
         },
         "type": "object"
       },
+      "RolesSearchQuery": {
+        "properties": {
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "teamIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "userIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "Route": {
         "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
@@ -10549,6 +10611,10 @@
           "account": {
             "type": "string"
           },
+          "anonymousRatio": {
+            "format": "int64",
+            "type": "integer"
+          },
           "company": {
             "type": "string"
           },
@@ -11579,7 +11645,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11736,6 +11801,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -11791,12 +11857,14 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11851,7 +11919,6 @@
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -11995,6 +12062,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12517,6 +12585,42 @@
         ]
       }
     },
+    "/access-control/teams/roles/search": {
+      "post": {
+        "description": "Lists the roles that have been directly assigned to the given teams.\n\nYou need to have a permission with action `teams.roles:read` and scope `teams:id:*`.",
+        "operationId": "listTeamsRoles",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RolesSearchQuery"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listTeamsRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "List roles assigned to multiple teams.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
     "/access-control/teams/{teamId}/roles": {
       "get": {
         "description": "You need to have a permission with action `teams.roles:read` and scope `teams:id:\u003cteam ID\u003e`.",
@@ -12679,6 +12783,42 @@
           }
         },
         "summary": "Remove team role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/access-control/users/roles/search": {
+      "post": {
+        "description": "Lists the roles that have been directly assigned to the given users. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:*`.",
+        "operationId": "listUsersRoles",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RolesSearchQuery"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listUsersRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "List roles assigned to multiple users.",
         "tags": [
           "access_control",
           "enterprise"
