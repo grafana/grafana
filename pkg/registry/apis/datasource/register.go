@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,14 +18,12 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -38,18 +35,16 @@ type DataSourceAPIBuilder struct {
 
 	pluginJSON    plugins.JSONData
 	querier       Querier
-	dsService     datasources.DataSourceService
-	dsCache       datasources.CacheService
+	pluginContext plugincontext.DataSourcePluginContextProvider
 	accessControl accesscontrol.AccessControl
 }
 
 func RegisterAPIService(
+	querierProvider QuerierProvider,
 	features featuremgmt.FeatureToggles,
 	apiRegistrar grafanaapiserver.APIRegistrar,
+	pluginContext plugincontext.DataSourcePluginContextProvider,
 	pluginStore pluginstore.Store,
-	pluginClient plugins.Client,
-	dsService datasources.DataSourceService,
-	dsCache datasources.CacheService,
 	accessControl accesscontrol.AccessControl,
 ) (*DataSourceAPIBuilder, error) {
 	// This requires devmode!
@@ -69,11 +64,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		querierFactory := func(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
-			return NewDefaultQuerier(ri, pj, pluginClient, dsService, dsCache), nil
-		}
-
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData, querierFactory, dsService, dsCache, accessControl)
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData, querierProvider, pluginContext, accessControl)
 		if err != nil {
 			return nil, err
 		}
@@ -84,16 +75,15 @@ func RegisterAPIService(
 
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
-	querierFactory QuerierFactoryFunc,
-	dsService datasources.DataSourceService,
-	dsCache datasources.CacheService,
+	querierProvider QuerierProvider,
+	pluginContext plugincontext.DataSourcePluginContextProvider,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
 	ri, err := resourceFromPluginID(plugin.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	querier, err := querierFactory(ri, plugin)
+	querier, err := querierProvider.Querier(ri, plugin)
 	if err != nil {
 		return nil, err
 	}
@@ -102,8 +92,7 @@ func NewDataSourceAPIBuilder(
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
 		querier:                querier,
-		dsService:              dsService,
-		dsCache:                dsCache,
+		pluginContext:          pluginContext,
 		accessControl:          accessControl,
 	}, nil
 }
@@ -121,10 +110,6 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		// Added for subresource stubs
 		&metav1.Status{},
 	)
-}
-
-func (b *DataSourceAPIBuilder) GetQuerier() Querier {
-	return b // TODO return nested struct from func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -164,7 +149,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
-		builder:      b,
+		builder:      b.querier,
 		resourceInfo: conn,
 		tableConverter: utils.NewTableConverter(
 			conn.GroupResource(),
@@ -214,89 +199,4 @@ func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinit
 // Register additional routes with the server
 func (b *DataSourceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil
-}
-
-func (b *DataSourceAPIBuilder) getDataSourcePluginContext(ctx context.Context, name string) (*backend.PluginContext, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ds, err := b.dsCache.GetDatasourceByUID(ctx, name, user, false)
-	if err != nil {
-		return nil, err
-	}
-
-	settings := backend.DataSourceInstanceSettings{}
-	settings.ID = ds.ID
-	settings.UID = ds.UID
-	settings.Name = ds.Name
-	settings.URL = ds.URL
-	settings.Updated = ds.Updated
-	settings.User = ds.User
-	settings.JSONData, err = ds.JsonData.ToDB()
-	if err != nil {
-		return nil, err
-	}
-
-	settings.DecryptedSecureJSONData, err = b.dsService.DecryptedValues(ctx, ds)
-	if err != nil {
-		return nil, err
-	}
-	return &backend.PluginContext{
-		OrgID:                      info.OrgID,
-		PluginID:                   b.pluginJSON.ID,
-		PluginVersion:              b.pluginJSON.Info.Version,
-		User:                       &backend.User{},
-		AppInstanceSettings:        &backend.AppInstanceSettings{},
-		DataSourceInstanceSettings: &settings,
-	}, nil
-}
-
-func (b *DataSourceAPIBuilder) Query(ctx context.Context, query *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	_, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return b.querier.Query(ctx, query)
-}
-
-func (b *DataSourceAPIBuilder) Resource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	_, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return err
-	}
-
-	return b.querier.Resource(ctx, req, sender)
-}
-
-func (b *DataSourceAPIBuilder) Health(ctx context.Context, query *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	_, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return b.querier.Health(ctx, query)
-}
-
-func (b *DataSourceAPIBuilder) Datasource(ctx context.Context, name string) (*v0alpha1.DataSourceConnection, error) {
-	_, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	return b.querier.Datasource(ctx, name)
-}
-
-func (b *DataSourceAPIBuilder) Datasources(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
-	_, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return b.querier.Datasources(ctx)
 }

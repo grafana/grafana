@@ -18,6 +18,31 @@ import (
 
 type QuerierFactoryFunc func(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
 
+type QuerierProvider interface {
+	Querier(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
+}
+
+type DefaultQuerierProvider struct {
+	factory QuerierFactoryFunc
+}
+
+func ProvideDefaultQuerierProvider(pluginClient plugins.Client, dsService datasources.DataSourceService,
+	dsCache datasources.CacheService) *DefaultQuerierProvider {
+	return NewQuerierProvider(func(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+		return NewDefaultQuerier(ri, pj, pluginClient, dsService, dsCache), nil
+	})
+}
+
+func NewQuerierProvider(factory QuerierFactoryFunc) *DefaultQuerierProvider {
+	return &DefaultQuerierProvider{
+		factory: factory,
+	}
+}
+
+func (p *DefaultQuerierProvider) Querier(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+	return p.factory(ri, pj)
+}
+
 // Querier is the interface that wraps the Query method.
 type Querier interface {
 	// Query runs the query on behalf of the user in context.
