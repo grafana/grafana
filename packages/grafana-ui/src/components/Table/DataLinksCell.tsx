@@ -2,7 +2,7 @@ import React from 'react';
 
 import { getCellLinks } from '../../utils';
 
-import { getCellStyle, getLinkStyle } from './DefaultCell';
+import { getCellStyle } from './DefaultCell';
 import { TableCellProps } from './types';
 import { getCellOptions } from './utils';
 
@@ -13,21 +13,15 @@ export const DataLinksCell = (props: TableCellProps) => {
 
   const displayValue = field.display!(cell.value);
   const cellOptions = getCellOptions(field);
-
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, false, true);
-  const linkStyle = getLinkStyle(tableStyles, cellOptions, undefined);
 
   return (
     <div {...cellProps} className={cellStyle}>
       {links &&
         links.map((link, idx) => {
-          // if(link.onClick) {
-          //   return <a key={idx} onClick={(e) => {
-          //     link.onClick!(e)
-          //   }} target={link.target}>{link.title}</a>;
-          // }
           return (
-            <span key={idx} className={tableStyles.cellLink}>
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+            <span key={idx} className={tableStyles.cellLink} onClick={link.onClick}>
               <a href={link.href} target={link.target}>
                 {link.title}
               </a>
@@ -37,7 +31,3 @@ export const DataLinksCell = (props: TableCellProps) => {
     </div>
   );
 };
-
-// <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
-
-// <div className={tableStyles.cellText}>{value}</div>

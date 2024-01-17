@@ -138,11 +138,7 @@ export function getCellStyle(
   }
 }
 
-export function getLinkStyle(
-  tableStyles: TableStyles,
-  cellOptions: TableCellOptions,
-  targetClassName: string | undefined
-) {
+function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, targetClassName: string | undefined) {
   if (cellOptions.type === TableCellDisplayMode.Auto) {
     return cx(tableStyles.cellLink, targetClassName);
   }
