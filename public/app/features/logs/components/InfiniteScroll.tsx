@@ -134,7 +134,11 @@ const styles = {
   }),
 };
 
-const outOfRangeMessage = <div className={styles.messageContainer} data-testid="end-of-range">End of the selected time range.</div>;
+const outOfRangeMessage = (
+  <div className={styles.messageContainer} data-testid="end-of-range">
+    End of the selected time range.
+  </div>
+);
 const loadingMessage = (
   <div className={styles.messageContainer}>
     <Spinner />
