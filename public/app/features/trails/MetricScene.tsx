@@ -51,6 +51,14 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       body: state.body ?? buildGraphScene(state.metric),
       ...state,
     });
+
+    this.addActivationHandler(this._onActivate.bind(this));
+  }
+
+  private _onActivate() {
+    if (this.state.actionView === undefined) {
+      this.setActionView('overview');
+    }
   }
 
   getUrlState() {
@@ -118,10 +126,6 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
       getTrailStore().addBookmark(trail);
       setBookmarked(!isBookmarked);
     };
-
-    if (!actionView) {
-      metricScene.setActionView('overview');
-    }
 
     return (
       <Box paddingY={1}>

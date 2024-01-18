@@ -205,7 +205,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
       }),
       AdHocFiltersVariable.create({
-        name: 'filters',
+        name: VAR_FILTERS,
         datasource: trailDS,
         layout: 'vertical',
         filters: initialFilters ?? [],
