@@ -102,7 +102,8 @@ func (fm *FeatureManager) update() {
 		// Update the registry
 		track := 0.0
 
-		if flag.Expression == "true" || (fm.startup[flag.Name]) {
+		startup, ok := fm.startup[flag.Name]
+		if startup || (!ok && flag.Expression == "true") {
 			track = 1
 			enabled[flag.Name] = true
 		}

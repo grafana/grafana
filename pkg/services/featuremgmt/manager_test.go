@@ -75,4 +75,25 @@ func TestFeatureManager(t *testing.T) {
 		require.Equal(t, "second", flag.Description)
 		require.Equal(t, "http://something", flag.DocsURL)
 	})
+
+	t.Run("check startup false flags", func(t *testing.T) {
+		ft := FeatureManager{
+			flags: map[string]*FeatureFlag{},
+			startup: map[string]bool{
+				"a": true,
+				"b": false, // but default true
+			},
+		}
+		ft.registerFlags(FeatureFlag{
+			Name: "a",
+		}, FeatureFlag{
+			Name:       "b",
+			Expression: "true",
+		}, FeatureFlag{
+			Name: "c",
+		})
+		require.True(t, ft.IsEnabledGlobally("a"))
+		require.False(t, ft.IsEnabledGlobally("b"))
+		require.False(t, ft.IsEnabledGlobally("c"))
+	})
 }
