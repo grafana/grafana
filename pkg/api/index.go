@@ -221,6 +221,10 @@ func (hs *HTTPServer) getUserAuthenticatedBy(c *contextmodel.ReqContext, userID 
 		return ""
 	}
 
+	if c.IsRenderCall {
+		return login.RenderModule
+	}
+
 	info, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
 	// we ignore errors where a user does not have external user auth
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
