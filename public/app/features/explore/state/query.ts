@@ -38,6 +38,8 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { infiniteScrollRefId } from 'app/features/logs/logsModel';
+import { combinePanelData } from 'app/features/logs/response';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
@@ -55,7 +57,7 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { visualisationTypeKey } from '../Logs/utils/logs';
-import { decorateData, mergeDataSeries } from '../utils/decorators';
+import { decorateData } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -726,6 +728,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     const queries = logQueries.map((query: DataQuery) => ({
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
+      refId: `${infiniteScrollRefId}${query.refId}`,
     }));
 
     if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
@@ -751,10 +754,13 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
     newQuerySource = combineLatest([runRequest(datasourceInstance, transaction.request), correlations$]).pipe(
-      mergeMap(([data, correlations]) =>
-        decorateData(
-          // Query splitting, otherwise duplicates results
-          data.state === LoadingState.Done ? mergeDataSeries(queryResponse, data) : data,
+      mergeMap(([data, correlations]) => {
+        // For query splitting, otherwise duplicates results
+        if (data.state !== LoadingState.Done) {
+          return of(queryResponse);
+        }
+        return decorateData(
+          combinePanelData(queryResponse, data),
           queryResponse,
           absoluteRange,
           undefined,
@@ -762,8 +768,8 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
           correlations,
           showCorrelationEditorLinks,
           defaultCorrelationEditorDatasource
-        )
-      )
+        );
+      })
     );
 
     newQuerySource.subscribe({

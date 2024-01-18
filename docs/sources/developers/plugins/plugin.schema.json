@@ -272,6 +272,10 @@
             "description": "The minimum role a user must have to see this page in the navigation menu.",
             "enum": ["Admin", "Editor", "Viewer"]
           },
+          "action": {
+            "type": "string",
+            "description": "The RBAC action a user must have to see this page in the navigation menu."
+          },
           "path": {
             "type": "string",
             "description": "Used for app plugins."
@@ -352,6 +356,10 @@
           },
           "reqRole": {
             "type": "string"
+          },
+          "reqAction": {
+            "type": "string",
+            "description": "The RBAC action a user must have to use this route."
           },
           "headers": {
             "type": "array",
@@ -521,6 +529,54 @@
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    "roles": {
+      "type": "array",
+      "description": "List of RBAC roles and their default assignments.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "object",
+            "description": "RBAC role definition to bundle related RBAC permissions on the plugin.",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name of the role."
+              },
+              "description": {
+                "type": "string",
+                "description": "Describe the aim of the role."
+              },
+              "permissions": {
+                "type": "array",
+                "description": "RBAC permission on the plugin.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "action": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "grants": {
+            "type": "array",
+            "description": "Default assignments of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)",
+            "items": {
+              "type": "string"
             }
           }
         }
