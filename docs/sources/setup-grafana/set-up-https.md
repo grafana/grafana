@@ -224,7 +224,7 @@ To adjust permissions, perform the following steps:
 
 ### Use your own CA
 
-If you want to use your own CA or your organization's and make sure the full chain is advertized by Grafana, make sure your `cert_file` contains your signed certificate followed by the full CA bundle chain (not the opposite way around).
+If you want to use your own CA or your organization's and ensure Grafana advertises the full chain, ensure your `cert_file` contains your signed certificate followed by the full CA bundle chain.
 
 ## Configure Grafana HTTPS and restart Grafana
 
