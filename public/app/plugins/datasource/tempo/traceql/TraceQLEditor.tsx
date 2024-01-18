@@ -11,7 +11,7 @@ import { dispatch } from '../_importedDependencies/store';
 import { TempoDatasource } from '../datasource';
 
 import { CompletionProvider, CompletionType } from './autocomplete';
-import { getErrorNodes, setMarkers } from './errorHighlighting';
+import { getErrorNodes, setMarkers } from './highlighting';
 import { languageDefinition } from './traceql';
 
 interface Props {
