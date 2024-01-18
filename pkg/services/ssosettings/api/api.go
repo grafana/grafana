@@ -228,8 +228,8 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 	return response.Empty(http.StatusNoContent)
 }
 
-// swagger:parameters listProviderSettings
-type ListProviderSettingsParams struct {
+// swagger:parameters listAllProvidersSettings
+type ListAllProvidersSettingsParams struct {
 }
 
 // swagger:parameters getProviderSettings
