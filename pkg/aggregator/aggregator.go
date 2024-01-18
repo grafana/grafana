@@ -22,13 +22,6 @@ import (
 	"sync"
 	"time"
 
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
-	"github.com/grafana/grafana/pkg/registry/apis/service"
-	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
-
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
 	apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
@@ -65,6 +58,13 @@ import (
 	apiserver "k8s.io/kube-aggregator/pkg/controllers/status"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 	"k8s.io/kube-openapi/pkg/common"
+
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/clientset"
+	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/registry/apis/service"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver

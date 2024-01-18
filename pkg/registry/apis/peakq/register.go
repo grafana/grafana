@@ -1,4 +1,4 @@
-package service
+package peakq
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,41 +11,41 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
-	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	"github.com/grafana/grafana/pkg/generated/openapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*ServiceAPIBuilder)(nil)
+var _ grafanaapiserver.APIGroupBuilder = (*PeakQAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
-type ServiceAPIBuilder struct{}
+type PeakQAPIBuilder struct{}
 
-func NewServiceAPIBuilder() *ServiceAPIBuilder {
-	return &ServiceAPIBuilder{}
+func NewPeakQAPIBuilder() *PeakQAPIBuilder {
+	return &PeakQAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *ServiceAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *PeakQAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewServiceAPIBuilder()
-	apiregistration.RegisterAPI(NewServiceAPIBuilder())
+	builder := NewPeakQAPIBuilder()
+	apiregistration.RegisterAPI(NewPeakQAPIBuilder())
 	return builder
 }
 
-func (b *ServiceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+func (b *PeakQAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // default authorizer is fine
 }
 
-func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return service.SchemeGroupVersion
+func (b *PeakQAPIBuilder) GetGroupVersion() schema.GroupVersion {
+	return peakq.SchemeGroupVersion
 }
 
-func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gv := service.SchemeGroupVersion
-	err := service.AddToScheme(scheme)
+func (b *PeakQAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	gv := peakq.SchemeGroupVersion
+	err := peakq.AddToScheme(scheme)
 	if err != nil {
 		return err
 	}
@@ -54,36 +54,36 @@ func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
 	// addKnownTypes(scheme, schema.GroupVersion{
-	// 	Group:   service.GROUP,
+	// 	Group:   peakq.GROUP,
 	// 	Version: runtime.APIVersionInternal,
 	// })
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
 }
 
-func (b *ServiceAPIBuilder) GetAPIGroupInfo(
+func (b *PeakQAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(service.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(peakq.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	resourceInfo := service.ExternalNameResourceInfo
+	resourceInfo := peakq.QueryTemplateResourceInfo
 	storage := map[string]rest.Storage{}
-	serviceStorage, err := newStorage(scheme, optsGetter)
+	peakqStorage, err := newStorage(scheme, optsGetter)
 	if err != nil {
 		return nil, err
 	}
-	storage[resourceInfo.StoragePath()] = serviceStorage
-	apiGroupInfo.VersionedResourcesStorageMap[service.VERSION] = storage
+	storage[resourceInfo.StoragePath()] = peakqStorage
+	apiGroupInfo.VersionedResourcesStorageMap[peakq.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
-func (b *ServiceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *PeakQAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return openapi.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
-func (b *ServiceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil
 }

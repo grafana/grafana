@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/generated/clientset/versioned/scheme"
+	"github.com/grafana/grafana/pkg/generated/clientset/clientset/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
