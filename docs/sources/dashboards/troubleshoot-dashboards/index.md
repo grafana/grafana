@@ -1,25 +1,12 @@
 ---
 aliases:
-  - ../features/dashboard/dashboards/
-  - ../panels/working-with-panels/organize-dashboard/
-  - ../reference/dashboard_folders/
-  - ../reference/export_import/
-  - ../reference/timerange/
   - ../troubleshooting/troubleshoot-dashboards/
-  - dashboard-folders/
-  - dashboard-manage/
-  - export-import/
+  - ../reference/timerange/
 keywords:
   - grafana
   - dashboard
-  - dashboard folders
-  - folder
-  - folders
-  - import
-  - export
   - troubleshoot
   - time range
-  - scripting
 labels:
   products:
     - cloud
@@ -27,13 +14,13 @@ labels:
     - oss
 menuTitle: Troubleshoot dashboards
 title: Troubleshoot dashboards
-description: Learn about dashboard folders, generative AI features for dashboards, and troubleshooting
-weight: 8
+description: Learn how to troubleshoot common dashboard issues
+weight: 300
 ---
 
 # Troubleshoot dashboards
 
-This section provides information to help you solve common dashboard problems.
+Use the following strategies to help you solve common dashboard problems.
 
 ## Dashboard is slow
 
@@ -70,17 +57,3 @@ In this graph, we set graph to show bars instead of lines and set the **No value
 ## More examples
 
 You can find more examples in `public/dashboards/` directory of your Grafana installation.
-
-{{% docs/reference %}}
-[Dashboard permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
-[Dashboard permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
-
-[panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
-[panels]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations"
-
-[HTTP API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
-[HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/developer-resources/api-reference/http-api"
-
-[Grafana LLM plugin documentation]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
-[Grafana LLM plugin documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
-{{% /docs/reference %}}
