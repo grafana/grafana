@@ -129,13 +129,11 @@ export const LogsPanel = ({
         logs: { id: row.uid },
       };
 
-      const location = window.location;
-      const currentURL = new URL(location.href);
+      // Grab the current dashboard URL
+      const currentURL = new URL(window.location.href);
 
-      // Add panel state and absolute timerange from the current query, but leave everything else the same
+      // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
       currentURL.searchParams.set('panelState', JSON.stringify(panelState));
-
-      // Set absolute time range
       currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
       currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
 
