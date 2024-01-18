@@ -2,19 +2,16 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { DataSourceVariableForm } from 'app/features/dashboard-scene/settings/variables/components/DatasourceVariableForm';
 
 import { StoreState } from '../../../types';
-import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
-import { VariableSelectField } from '../../dashboard-scene/settings/variables/components/VariableSelectField';
-import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
-import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getDatasourceVariableEditorState } from '../editor/selectors';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getVariablesState } from '../state/selectors';
 import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
+import { toKeyedVariableIdentifier } from '../utils';
 
 import { initDataSourceVariableEditor } from './actions';
 
@@ -76,6 +73,10 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     this.props.onPropChange({ propName, propValue, updateOptions: true });
   };
 
+  onMultiChanged = (event: FormEvent<HTMLInputElement>) => {
+    this.props.changeVariableMultiValue(toKeyedVariableIdentifier(this.props.variable), event.currentTarget.checked);
+  };
+
   getSelectedDataSourceTypeValue = (): string => {
     const { extended } = this.props;
 
@@ -93,49 +94,30 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   };
 
   render() {
-    const { variable, extended, changeVariableMultiValue } = this.props;
+    const { variable, extended } = this.props;
 
     const typeOptions = extended?.dataSourceTypes?.length
       ? extended.dataSourceTypes?.map((ds) => ({ value: ds.value ?? '', label: ds.text }))
       : [];
 
-    const typeValue = typeOptions.find((o) => o.value === variable.query) ?? typeOptions[0];
-
     return (
-      <>
-        <VariableLegend>Data source options</VariableLegend>
-        <VariableSelectField
-          name="Type"
-          value={typeValue}
-          options={typeOptions}
-          onChange={this.onDataSourceTypeChanged}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
-        />
-
-        <VariableTextField
-          value={this.props.variable.regex}
-          name="Instance name filter"
-          placeholder="/.*-(.*)-.*/"
-          onChange={this.onRegExChange}
-          onBlur={this.onRegExBlur}
-          description={
-            <div>
-              Regex filter for which data source instances to choose from in the variable value list. Leave empty for
-              all.
-              <br />
-              <br />
-              Example: <code>/^prod/</code>
-            </div>
-          }
-        />
-
-        <VariableLegend>Selection options</VariableLegend>
-        <SelectionOptionsEditor
-          variable={variable}
-          onPropChange={this.onSelectionOptionsChange}
-          onMultiChanged={changeVariableMultiValue}
-        />
-      </>
+      <DataSourceVariableForm
+        query={variable.query}
+        regex={variable.regex}
+        multi={variable.multi}
+        includeAll={variable.includeAll}
+        optionTypes={typeOptions}
+        onChange={this.onDataSourceTypeChanged}
+        onRegExChange={this.onRegExChange}
+        onRegExBlur={this.onRegExBlur}
+        onMultiChange={this.onMultiChanged}
+        onIncludeAllChange={(event) =>
+          this.onSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked })
+        }
+        onAllValueChange={(event) =>
+          this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
+        }
+      />
     );
   }
 }
