@@ -6,7 +6,6 @@ import { ConstantVariableForm } from '../components/ConstantVariableForm';
 
 interface ConstantVariableEditorProps {
   variable: ConstantVariable;
-  onChange: (variable: ConstantVariable) => void;
 }
 
 export function ConstantVariableEditor({ variable }: ConstantVariableEditorProps) {
