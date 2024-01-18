@@ -18,8 +18,8 @@ const (
 	JitterByRule
 )
 
-// JitterStrategyFromToggles returns the JitterStrategy indicated by the current Grafana feature toggles.
-func JitterStrategyFromToggles(toggles featuremgmt.FeatureToggles) JitterStrategy {
+// JitterStrategyFrom returns the JitterStrategy indicated by the current Grafana feature toggles.
+func JitterStrategyFrom(toggles featuremgmt.FeatureToggles) JitterStrategy {
 	strategy := JitterNever
 	if toggles.IsEnabledGlobally(featuremgmt.FlagJitterAlertRules) {
 		strategy = JitterByGroup
