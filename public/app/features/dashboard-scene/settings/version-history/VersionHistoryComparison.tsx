@@ -3,12 +3,12 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { RevertDashboardModal } from 'app/features/dashboard/components/VersionHistory/RevertDashboardModal';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
 
 import { DiffGroup } from './DiffGroup';
 import { DiffViewer } from './DiffViewer';
-import { RevertDashboardModal } from './RevertDashboardModal';
 import { jsonDiff } from './utils';
 
 type DiffViewProps = {
@@ -70,13 +70,13 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
 
 const getStyles = (theme: GrafanaTheme2) => ({
   spacer: css({
-    'margin-bottom': theme.spacing(4),
+    marginBottom: theme.spacing(4),
   }),
   versionInfo: css({
     color: theme.colors.text.secondary,
-    'font-size': theme.typography.bodySmall.fontSize,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   noMarginBottom: css({
-    'margin-bottom': 0,
+    marginBottom: 0,
   }),
 });
