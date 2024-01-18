@@ -64,6 +64,8 @@ export const LogsPanel = ({
   const urlParams = urlUtil.getUrlSearchParams();
   const panelStateEncoded = urlParams?.panelState;
   const getLogsPanelState = (): LogsPermalinkUrlState | undefined => {
+    console.log(urlUtil.getUrlSearchParams());
+
     if (
       panelStateEncoded &&
       Array.isArray(panelStateEncoded) &&
@@ -127,18 +129,15 @@ export const LogsPanel = ({
         logs: { id: row.uid },
       };
 
-      // Create absolute timerange
-      const range = {
-        from: toUtc(timeRange.from).valueOf(),
-        to: toUtc(timeRange.to).valueOf(),
-      };
       const location = window.location;
       const currentURL = new URL(location.href);
 
       // Add panel state and absolute timerange from the current query, but leave everything else the same
       currentURL.searchParams.set('panelState', JSON.stringify(panelState));
-      currentURL.searchParams.set('from', range?.from.toString(10));
-      currentURL.searchParams.set('to', range?.to.toString(10));
+
+      // Set absolute time range
+      currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
+      currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
 
       await createAndCopyShortLink(currentURL.toString());
 

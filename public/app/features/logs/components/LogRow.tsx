@@ -56,7 +56,7 @@ interface Props extends Themeable2 {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
   permalinkedRowId?: string;
-  scrollIntoView?: (element: HTMLElement) => void | boolean;
+  scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
@@ -180,15 +180,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
     if (!this.state.permalinked && this.logLineRef.current && scrollIntoView && containerRendered) {
       // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
-      const success = scrollIntoView(this.logLineRef.current);
+      scrollIntoView(this.logLineRef.current);
       reportInteraction('grafana_explore_logs_permalink_opened', {
         datasourceType: row.datasourceType ?? 'unknown',
         logRowUid: row.uid,
       });
-
-      if (success !== false) {
-        this.setState({ permalinked: true });
-      }
+      this.setState({ permalinked: true });
     }
   };
 
