@@ -249,7 +249,7 @@
     "@kusto/monaco-kusto": "^7.4.0",
     "@leeoniya/ufuzzy": "1.0.14",
     "@lezer/common": "1.2.1",
-    "@lezer/highlight": "1.1.3",
+    "@lezer/highlight": "1.2.0",
     "@lezer/lr": "1.3.3",
     "@locker/near-membrane-dom": "0.13.3",
     "@locker/near-membrane-shared": "0.13.3",
