@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,8 +12,6 @@ import (
 
 	"github.com/prometheus/prometheus/promql/parser"
 	"golang.org/x/exp/slices"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -923,35 +920,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *contextmodel.ReqContext) response
 }
 
 func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *datasources.DataSource) response.Response {
-	resp, err := hs.pluginFacade.CheckHealth(c.Req.Context(), &pluginclient.CheckHealthRequest{
-		Reference: pluginclient.DatasourceRef(ds.Type, pluginclient.WithDatasource(ds)),
-		Headers:   map[string]string{},
-	})
-	if err != nil {
-		return translatePluginRequestErrorToAPIError(err)
-	}
-
-	payload := map[string]any{
-		"status":  resp.Status.String(),
-		"message": resp.Message,
-	}
-
-	// Unmarshal JSONDetails if it's not empty.
-	if len(resp.JSONDetails) > 0 {
-		var jsonDetails map[string]any
-		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)
-		}
-
-		payload["details"] = jsonDetails
-	}
-
-	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(http.StatusBadRequest, payload)
-	}
-
-	return response.JSON(http.StatusOK, payload)
+	return hs.makePluginCheckHealthRequest(c.Resp, c.Req, pluginclient.DatasourceRef(ds.Type, pluginclient.WithDatasource(ds)))
 }
 
 // swagger:parameters checkDatasourceHealthByID

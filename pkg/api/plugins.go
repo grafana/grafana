@@ -403,8 +403,12 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin 
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	resp, err := hs.pluginFacade.CheckHealth(c.Req.Context(), &pluginclient.CheckHealthRequest{
-		Reference: pluginclient.AppRef(pluginID),
+	return hs.makePluginCheckHealthRequest(c.Resp, c.Req, pluginclient.AppRef(pluginID))
+}
+
+func (hs *HTTPServer) makePluginCheckHealthRequest(w http.ResponseWriter, req *http.Request, ref pluginclient.PluginReference) response.Response {
+	resp, err := hs.pluginFacade.CheckHealth(req.Context(), &pluginclient.CheckHealthRequest{
+		Reference: ref,
 		Headers:   map[string]string{},
 	})
 	if err != nil {
