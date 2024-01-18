@@ -229,7 +229,7 @@ jobs:
             header: levitate-breaking-change-comment
             number: ${{ github.event.pull_request.number }}
             message: |
-              ⚠️ &nbsp;&nbsp;**Possible breaking changes (md version)*** &nbsp;&nbsp ⚠️
+              ⚠️ &nbsp;&nbsp;**Possible breaking changes (md version)**&nbsp;&nbsp; ⚠️
 
               ${{ steps.levitate-markdown.outputs.levitate_markdown }}
 
