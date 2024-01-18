@@ -441,7 +441,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto, cmd.IgnoreDuplicateRowErr)
-	ignoreDuplicateInsert := cmd.IgnoreDuplicateRowErr
+	ignoreDuplicateInsert := errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) && cmd.IgnoreDuplicateRowErr
 	if err != nil && !ignoreDuplicateInsert {
 		return nil, toFolderError(err)
 	}
