@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type PluginReference interface {
@@ -173,6 +175,17 @@ func CallResourceRequestFromHTTPRequest(ref PluginReference, req *http.Request) 
 		return nil, errors.New("req cannot be nil")
 	}
 
+	clonedReq := req.Clone(req.Context())
+	rawURL := web.Params(req)["*"]
+	if clonedReq.URL.RawQuery != "" {
+		rawURL += "?" + clonedReq.URL.RawQuery
+	}
+	urlPath, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	clonedReq.URL = urlPath
+
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read request body: %w", err)
@@ -180,10 +193,10 @@ func CallResourceRequestFromHTTPRequest(ref PluginReference, req *http.Request) 
 
 	return &CallResourceRequest{
 		Reference: ref,
-		Path:      req.URL.Path,
-		Method:    req.Method,
-		URL:       req.URL.String(),
-		Headers:   req.Header,
+		Path:      clonedReq.URL.Path,
+		Method:    clonedReq.Method,
+		URL:       clonedReq.URL.String(),
+		Headers:   clonedReq.Header,
 		Body:      body,
 	}, nil
 }
