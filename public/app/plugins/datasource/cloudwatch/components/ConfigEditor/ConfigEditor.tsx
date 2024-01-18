@@ -295,11 +295,13 @@ function useDatasource(props: Props) {
 
   useEffect(() => {
     if (props.options.version) {
-      getDataSourceSrv().get(props.options.name).then((datasource) => {
-        if (datasource instanceof CloudWatchDatasource) {
-          setDatasource(datasource);
-        }
-      });
+      getDataSourceSrv()
+        .get(props.options.name)
+        .then((datasource) => {
+          if (datasource instanceof CloudWatchDatasource) {
+            setDatasource(datasource);
+          }
+        });
     }
   }, [props.options.version, props.options.name]);
 
