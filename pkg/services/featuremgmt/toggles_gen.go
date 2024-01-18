@@ -103,6 +103,10 @@ const (
 	// Enable support for a persistent (docked) navigation menu
 	FlagDockedMegaMenu = "dockedMegaMenu"
 
+	// FlagReturnToPrevious
+	// Enables the return to previous context functionality
+	FlagReturnToPrevious = "returnToPrevious"
+
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
