@@ -115,6 +115,23 @@ export const Components = {
         },
       },
       exemplarMarker: 'data-testid Exemplar marker',
+      variableQueryEditor: {
+        queryType: 'data-testid query type',
+        labelnames: {
+          metricRegex: 'data-testid label names metric regex',
+        },
+        labelValues: {
+          labelSelect: 'data-testid label values label select',
+          // metric select see queryEditor: builder for more context
+          // label select for metric filtering see queryEditor: builder for more context
+        },
+        metricNames: {
+          metricRegex: 'data-testid metric names metric regex',
+        },
+        varQueryResult: 'data-testid variable query result',
+        seriesQuery: 'data-testid prometheus series query',
+        classicQuery: 'data-testid prometheus classic query',
+      },
     },
   },
   Menu: {
