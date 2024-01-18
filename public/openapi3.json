@@ -1169,6 +1169,16 @@
         },
         "description": "(empty)"
       },
+      "getSSOSettingsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SSOSettings"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getSharingOptionsResponse": {
         "content": {
           "application/json": {
@@ -25087,7 +25097,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/getSSOSettingsResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"

@@ -117,7 +117,7 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 // You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
 //
 // Responses:
-// 200: okResponse
+// 200: getSSOSettingsResponse
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
@@ -234,4 +234,10 @@ type RemoveProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
+}
+
+// swagger:response getSSOSettingsResponse
+type GetSSOSettingsResponse struct {
+	// in: body
+	Body models.SSOSettings `json:"body"`
 }
