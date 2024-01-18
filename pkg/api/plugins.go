@@ -403,13 +403,9 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin 
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.SignedInUser.GetOrgID())
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get plugin settings", err)
-	}
-	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
-		PluginContext: pCtx,
-		Headers:       map[string]string{},
+	resp, err := hs.pluginFacade.CheckHealth(c.Req.Context(), &pluginclient.CheckHealthRequest{
+		Reference: pluginclient.AppRef(pluginID),
+		Headers:   map[string]string{},
 	})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)

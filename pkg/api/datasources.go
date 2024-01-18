@@ -923,26 +923,10 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *contextmodel.ReqContext) response
 }
 
 func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *datasources.DataSource) response.Response {
-	pCtx, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), ds.Type, c.SignedInUser, ds)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Unable to get plugin context", err)
-	}
-	req := &backend.CheckHealthRequest{
-		PluginContext: pCtx,
-		Headers:       map[string]string{},
-	}
-
-	var dsURL string
-	if req.PluginContext.DataSourceInstanceSettings != nil {
-		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
-	}
-
-	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
-	if err != nil {
-		return response.Error(http.StatusForbidden, "Access denied", err)
-	}
-
-	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)
+	resp, err := hs.pluginFacade.CheckHealth(c.Req.Context(), &pluginclient.CheckHealthRequest{
+		Reference: pluginclient.DatasourceRef(ds.Type, pluginclient.WithDatasource(ds)),
+		Headers:   map[string]string{},
+	})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}
