@@ -7,7 +7,7 @@ import {
   FieldType,
   DataFrame,
 } from '@grafana/data';
-import { config, DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
