@@ -347,7 +347,7 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 }
 
 // GetFolders returns org folders by their UIDs.
-// If setFullpath is true it computes also the full path of a folder.
+// If WithFullpath is true it computes also the full path of a folder.
 // The full path is a string that contains the titles of all parent folders separated by a slash.
 // For example, if the folder structure is:
 //
@@ -413,7 +413,7 @@ func getFullpathSQL(dialect migrator.Dialect) string {
 func getFullpathJoinsSQL() string {
 	joins := make([]string, 0, folder.MaxNestedFolderDepth)
 	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
-		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.uid = f%d.parent_uid`, i, i, i-1))
+		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.org_id = f%d.org_id AND f%d.uid = f%d.parent_uid`, i, i, i-1, i, i-1))
 	}
 	return strings.Join(joins, "\n")
 }

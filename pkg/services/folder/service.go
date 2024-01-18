@@ -26,7 +26,10 @@ type Service interface {
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	RegisterService(service RegistryService) error
 	GetDescendantCounts(ctx context.Context, cmd *GetDescendantCountsQuery) (DescendantCounts, error)
-	// GetFolders returns folders with given uids
+	// GetFolders returns org folders by their UIDs.
+	// If WithFullpath is true it computes also the full path of a folder.
+	// The full path is a string that contains the titles of all parent folders separated by a slash.
+	// If a folder contains a slash in its title, it is escaped with a backslash.
 	GetFolders(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
 }
 
