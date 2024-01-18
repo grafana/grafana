@@ -18,22 +18,20 @@ import (
 )
 
 func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.Response {
-	cfg := hs.Cfg.FeatureManagement
-	enabledFeatures := hs.Features.GetEnabled(ctx.Req.Context())
-
 	// object being returned
 	dtos := make([]featuremgmt.FeatureToggleDTO, 0)
 
 	// loop through features an add features that should be visible to dtos
 	for _, ft := range hs.featureManager.GetFlags() {
-		if isFeatureHidden(ft, cfg.HiddenToggles) {
+		flag := ft.Name
+		if hs.featureManager.IsHiddenFromAdminPage(flag, false) {
 			continue
 		}
 		dto := featuremgmt.FeatureToggleDTO{
-			Name:        ft.Name,
+			Name:        flag,
 			Description: ft.Description,
-			Enabled:     enabledFeatures[ft.Name],
-			ReadOnly:    !isFeatureWriteable(ft, cfg.ReadOnlyToggles) || !isFeatureEditingAllowed(*hs.Cfg),
+			Enabled:     hs.featureManager.IsEnabled(ctx.Req.Context(), flag),
+			ReadOnly:    !hs.featureManager.IsEditableFromAdminPage(flag),
 		}
 
 		dtos = append(dtos, dto)
@@ -46,7 +44,7 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response.Response {
-	featureMgmtCfg := hs.Cfg.FeatureManagement
+	featureMgmtCfg := hs.featureManager.Settings
 	if !featureMgmtCfg.AllowEditing {
 		return response.Error(http.StatusForbidden, "feature toggles are read-only", fmt.Errorf("feature toggles are configured to be read-only"))
 	}
@@ -67,7 +65,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 
 	for _, t := range cmd.FeatureToggles {
 		// make sure flag exists, and only continue if flag is writeable
-		if f, ok := hs.featureManager.LookupFlag(t.Name); ok && isFeatureWriteable(f, hs.Cfg.FeatureManagement.ReadOnlyToggles) {
+		if hs.featureManager.IsEditableFromAdminPage(t.Name) {
 			hs.log.Info("UpdateFeatureToggle: updating toggle", "toggle_name", t.Name, "enabled", t.Enabled, "username", ctx.SignedInUser.Login)
 			payload.FeatureToggles[t.Name] = strconv.FormatBool(t.Enabled)
 		} else {
@@ -90,32 +88,6 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 func (hs *HTTPServer) GetFeatureMgmtState(ctx *contextmodel.ReqContext) response.Response {
 	fmState := hs.featureManager.GetState()
 	return response.Respond(http.StatusOK, fmState)
-}
-
-// isFeatureHidden returns whether a toggle should be hidden from the admin page.
-// filters out statuses Unknown, Experimental, and Private Preview
-func isFeatureHidden(flag featuremgmt.FeatureFlag, hideCfg map[string]struct{}) bool {
-	if _, ok := hideCfg[flag.Name]; ok {
-		return true
-	}
-	return flag.Stage == featuremgmt.FeatureStageUnknown || flag.Stage == featuremgmt.FeatureStageExperimental || flag.Stage == featuremgmt.FeatureStagePrivatePreview || flag.HideFromAdminPage
-}
-
-// isFeatureWriteable returns whether a toggle on the admin page can be updated by the user.
-// only allows writing of GA and Deprecated toggles, and excludes the feature toggle admin page toggle
-func isFeatureWriteable(flag featuremgmt.FeatureFlag, readOnlyCfg map[string]struct{}) bool {
-	if _, ok := readOnlyCfg[flag.Name]; ok {
-		return false
-	}
-	if flag.Name == featuremgmt.FlagFeatureToggleAdminPage {
-		return false
-	}
-	return (flag.Stage == featuremgmt.FeatureStageGeneralAvailability || flag.Stage == featuremgmt.FeatureStageDeprecated) && flag.AllowSelfServe
-}
-
-// isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
-func isFeatureEditingAllowed(cfg setting.Cfg) bool {
-	return cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateWebhook != ""
 }
 
 type UpdatePayload struct {

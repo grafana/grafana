@@ -393,9 +393,8 @@ func runGetScenario(
 ) []featuremgmt.FeatureToggleDTO {
 	// Set up server and send request
 	cfg := setting.NewCfg()
-	cfg.FeatureManagement = settings
 
-	fm := featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
+	fm := featuremgmt.WithFeatureManager(settings, append([]*featuremgmt.FeatureFlag{{
 		Name:  featuremgmt.FlagFeatureToggleAdminPage,
 		Stage: featuremgmt.FeatureStageGeneralAvailability,
 	}}, features...), disabled...)
@@ -460,9 +459,7 @@ func runSetScenario(
 ) *http.Response {
 	// Set up server and send request
 	cfg := setting.NewCfg()
-	cfg.FeatureManagement = settings
-
-	features := featuremgmt.WithFeatureManager(append([]*featuremgmt.FeatureFlag{{
+	features := featuremgmt.WithFeatureManager(settings, append([]*featuremgmt.FeatureFlag{{
 		Name:  featuremgmt.FlagFeatureToggleAdminPage,
 		Stage: featuremgmt.FeatureStageGeneralAvailability,
 	}}, serverFeatures...), disabled...)

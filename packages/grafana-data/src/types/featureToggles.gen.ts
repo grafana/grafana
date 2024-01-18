@@ -169,6 +169,7 @@ export interface FeatureToggles {
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
+  kubernetesFeatureToggles?: boolean;
   alertingPreviewUpgrade?: boolean;
   enablePluginsTracingByDefault?: boolean;
   cloudRBACRoles?: boolean;

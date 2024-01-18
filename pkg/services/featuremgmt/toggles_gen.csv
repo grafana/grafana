@@ -150,6 +150,7 @@ regressionTransformation,preview,@grafana/grafana-bi-squad,2023-11-24,false,fals
 displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,false,true
 alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-11-30,false,false,true,false
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,false,true
+kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,2023-12-22,false,false,false,true
 alertingPreviewUpgrade,experimental,@grafana/alerting-squad,2024-01-03,false,false,true,false
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,2024-01-09,false,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,2024-01-10,false,false,true,false

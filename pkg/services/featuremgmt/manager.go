@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -16,13 +17,15 @@ var (
 type FeatureManager struct {
 	isDevMod        bool
 	restartRequired bool
-	allowEditing    bool
-	licensing       licensing.Licensing
-	flags           map[string]*FeatureFlag
-	enabled         map[string]bool   // only the "on" values
-	startup         map[string]bool   // the explicit values registered at startup
-	warnings        map[string]string // potential warnings about the flag
-	log             log.Logger
+
+	Settings setting.FeatureMgmtSettings
+
+	licensing licensing.Licensing
+	flags     map[string]*FeatureFlag
+	enabled   map[string]bool   // only the "on" values
+	startup   map[string]bool   // the explicit values registered at startup
+	warnings  map[string]string // potential warnings about the flag
+	log       log.Logger
 }
 
 // This will merge the flags with the current configuration
@@ -141,20 +144,64 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 }
 
 func (fm *FeatureManager) GetState() *FeatureManagerState {
-	return &FeatureManagerState{RestartRequired: fm.restartRequired, AllowEditing: fm.allowEditing}
+	return &FeatureManagerState{
+		RestartRequired: fm.restartRequired,
+		AllowEditing:    fm.Settings.AllowEditing,
+	}
+}
+
+// isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
+func (fm *FeatureManager) IsFeatureEditingAllowed() bool {
+	return fm.Settings.AllowEditing && fm.Settings.UpdateWebhook != ""
+}
+
+// Flags that can be edited
+func (fm *FeatureManager) IsEditableFromAdminPage(key string) bool {
+	flag, ok := fm.flags[key]
+	if !ok ||
+		!fm.IsFeatureEditingAllowed() ||
+		!flag.AllowSelfServe ||
+		flag.Name == FlagFeatureToggleAdminPage {
+		return false
+	}
+	return flag.Stage == FeatureStageGeneralAvailability ||
+		flag.Stage == FeatureStageDeprecated
+}
+
+// Flags that should not be shown in the UI (regardless of their state)
+func (fm *FeatureManager) IsHiddenFromAdminPage(key string, lenient bool) bool {
+	_, hide := fm.Settings.HiddenToggles[key]
+	flag, ok := fm.flags[key]
+	if !ok || flag.HideFromAdminPage || hide {
+		return true // unknown flag (should we show it as a warning!)
+	}
+
+	// Explicitly hidden from configs
+	_, found := fm.Settings.HiddenToggles[key]
+	if found {
+		return true
+	}
+	if lenient {
+		return false
+	}
+
+	return flag.Stage == FeatureStageUnknown ||
+		flag.Stage == FeatureStageExperimental ||
+		flag.Stage == FeatureStagePrivatePreview
+}
+
+// Get the flags that were explicitly set on startup
+func (fm *FeatureManager) GetStartupFlags() map[string]bool {
+	return fm.startup
+}
+
+// Perhaps expose the flag warnings
+func (fm *FeatureManager) GetWarning() map[string]string {
+	return fm.warnings
 }
 
 func (fm *FeatureManager) SetRestartRequired() {
 	fm.restartRequired = true
-}
-
-// Check to see if a feature toggle exists by name
-func (fm *FeatureManager) LookupFlag(name string) (FeatureFlag, bool) {
-	f, ok := fm.flags[name]
-	if !ok {
-		return FeatureFlag{}, false
-	}
-	return *f, true
 }
 
 // ############# Test Functions #############
@@ -193,7 +240,7 @@ func WithManager(spec ...any) *FeatureManager {
 // WithFeatureManager is used to define feature toggle manager for testing.
 // It should be used when your test feature toggles require metadata beyond `Name` and `Enabled`.
 // You should provide a feature toggle Name at a minimum.
-func WithFeatureManager(flags []*FeatureFlag, disabled ...string) *FeatureManager {
+func WithFeatureManager(cfg setting.FeatureMgmtSettings, flags []*FeatureFlag, disabled ...string) *FeatureManager {
 	count := len(flags)
 	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)
@@ -211,5 +258,11 @@ func WithFeatureManager(flags []*FeatureFlag, disabled ...string) *FeatureManage
 		enabled[f.Name] = !dis[f.Name]
 	}
 
-	return &FeatureManager{enabled: enabled, flags: features, startup: enabled, warnings: map[string]string{}}
+	return &FeatureManager{
+		Settings: cfg,
+		enabled:  enabled,
+		flags:    features,
+		startup:  enabled,
+		warnings: map[string]string{},
+	}
 }
