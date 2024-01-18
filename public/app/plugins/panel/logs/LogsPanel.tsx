@@ -210,7 +210,6 @@ export const LogsPanel = ({
 
   /**
    * Scrolls the given row into view.
-   * Returns false if the reference to the logsContainerRef is not set.
    */
   const scrollIntoView = (row: HTMLElement) => {
     row.scrollIntoView(true);
