@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -28,6 +29,7 @@ type Api struct {
 	accessControl accesscontrol.AccessControl
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
+	license       licensing.Licensing
 	log           log.Logger
 	routeRegister routing.RouteRegister
 }
@@ -39,6 +41,7 @@ func ProvideApi(
 	features featuremgmt.FeatureToggles,
 	md publicdashboards.Middleware,
 	cfg *setting.Cfg,
+	licensing licensing.Licensing,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
@@ -46,6 +49,7 @@ func ProvideApi(
 		accessControl:          ac,
 		cfg:                    cfg,
 		features:               features,
+		license:                licensing,
 		log:                    log.New("publicdashboards.api"),
 		routeRegister:          rr,
 	}
@@ -158,7 +162,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(err)
 	}
 
-	if pd == nil {
+	if pd == nil || (!api.license.FeatureEnabled("publicDashboardsEmailSharing") && pd.Share == EmailShareType) {
 		response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
 	}
 
