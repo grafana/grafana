@@ -26,7 +26,7 @@ weight: 80
 
 # Configure data links
 
-Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them. You can also create links between panels using data links.
+Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them. You can also links panels using data links.
 
 <!-- what we do mean by the "value under the cursor" and when you're linking to using a variable, where is that link going to??? an code snippet representing the example above would be great for explaining this concept-->
 
@@ -37,7 +37,7 @@ stat, gauge, or bar gauge you can click anywhere on the visualization to open th
 
 ## Data link variables
 
-You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a label, time range, series, and variable selection.
+Variables in data links let you send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a label, time range, series, and variable selection.
 
 To see a list of available variables, enter `$` in the data link **URL** field.
 
@@ -56,10 +56,10 @@ You can also use template variables in your data links URLs. For more informatio
 
 These variables allow you to include the current time range in the data link URL:
 
-| Variable            | Description                                                 |
-| ------------------- | ----------------------------------------------------------- |
-| `__url_time_range`  | Current dashboard's time range (i.e. `?from=now-6h&to=now`) |
-| `$__from and $__to` | For more information, refer to [Global variables][].        |
+| Variable            | Description                                                         |
+| ------------------- | ------------------------------------------------------------------- |
+| `__url_time_range`  | Current dashboard's time range (for example, `?from=now-6h&to=now`) |
+| `$__from and $__to` | For more information, refer to [Global variables][].                |
 
 ### Series variables
 
@@ -82,13 +82,13 @@ Field-specific variables are available under `__field` namespace:
 
 Value-specific variables are available under `__value` namespace:
 
-| Variable          | Description                                                               |
-| ----------------- | ------------------------------------------------------------------------- |
-| `__value.time`    | Value's timestamp (Unix ms epoch) to the URL (i.e. `?time=1560268814105`) |
-| `__value.raw`     | Raw value                                                                 |
-| `__value.numeric` | Numeric representation of a value                                         |
-| `__value.text`    | Text representation of a value                                            |
-| `__value.calc`    | Calculation name if the value is result of calculation                    |
+| Variable          | Description                                                                       |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `__value.time`    | Value's timestamp (Unix ms epoch) to the URL (for example, `?time=1560268814105`) |
+| `__value.raw`     | Raw value                                                                         |
+| `__value.numeric` | Numeric representation of a value                                                 |
+| `__value.text`    | Text representation of a value                                                    |
+| `__value.calc`    | Calculation name if the value is result of calculation                            |
 
 Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
 
@@ -142,8 +142,8 @@ If you want to add all of the current dashboard's variables to the URL, then use
 [Google Cloud Monitoring]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/google-cloud-monitoring/query-editor#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer"
 
 [Templates and variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
 
 [Global variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#**from-and-**to"
-[Global variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#**from-and-**to"
+[Global variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables#**from-and-**to"
 {{% /docs/reference %}}
