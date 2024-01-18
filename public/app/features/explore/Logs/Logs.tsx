@@ -447,10 +447,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (!config.featureToggles.logsInfiniteScrolling) {
       return range;
     }
-    
+
     // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
     // Look for the previous sibling log, and use its timestamp
-    const allLogs = this.props.logRows.filter(logRow => logRow.dataFrame.refId === row.dataFrame.refId);
+    const allLogs = this.props.logRows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
     const prevLog = allLogs[allLogs.indexOf(row) - 1];
 
     if (row.timeEpochMs > this.props.absoluteRange.to && !prevLog) {
@@ -459,14 +459,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
       return {
         from: new Date(this.props.absoluteRange.from).toISOString(),
         // Slide 1ms otherwise it's very likely to be omitted in the results
-        to: new Date(row.timeEpochMs+1).toISOString(),
-      }
+        to: new Date(row.timeEpochMs + 1).toISOString(),
+      };
     }
 
     return {
       from: new Date(this.props.absoluteRange.from).toISOString(),
-      to: new Date(prevLog ? prevLog.timeEpochMs : this.props.absoluteRange.to).toISOString()
-    }
+      to: new Date(prevLog ? prevLog.timeEpochMs : this.props.absoluteRange.to).toISOString(),
+    };
   }
 
   onPermalinkClick = async (row: LogRowModel) => {
