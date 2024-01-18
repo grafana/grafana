@@ -6,7 +6,7 @@ labels:
   products:
     - enterprise
     - oss
-menuTitle: Running Grafana using Helm
+menuTitle: Grafana on Helm Charts
 title: Deploy Grafana using Helm Charts
 weight: 500
 ---
