@@ -33,6 +33,7 @@ export const preferredVisualizationTypes = [
 export type PreferredVisualisationType = (typeof preferredVisualizationTypes)[number];
 
 /**
+ * Should be kept in sync with https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/frame_meta.go
  * @public
  */
 export interface QueryResultMeta {
