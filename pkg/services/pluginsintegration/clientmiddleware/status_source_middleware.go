@@ -63,7 +63,21 @@ func (m *StatusSourceMiddleware) QueryData(ctx context.Context, req *backend.Que
 }
 
 func (m *StatusSourceMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return m.next.CallResource(ctx, req, sender)
+	if req == nil || sender == nil {
+		return m.next.CallResource(ctx, req, sender)
+	}
+
+	wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		if res.Error == nil {
+			return sender.Send(res)
+		}
+		// TODO: see how it behaves with wrapped errors
+		if pluginError, ok := res.Error.(backend.Error); ok {
+			m.log.Error("CallResource error", "error", pluginError.Error(), "source", pluginError.Source())
+		}
+		return sender.Send(res)
+	})
+	return m.next.CallResource(ctx, req, wrappedSender)
 }
 
 func (m *StatusSourceMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
