@@ -25,31 +25,34 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   };
 
   return (
-    <ButtonGroup className={styles.wrapper}>
-      <Button
-        icon="angle-left"
-        size="sm"
-        variant="primary"
-        fill="outline"
-        onClick={handleOnClick}
-        title={title?.toString()}
-        className={styles.returnToPrevious}
-      >
-        <Trans i18nKey="return-to-previous.button.title">Back to {{ title }}</Trans>
-      </Button>
-      <Button
-        icon="times"
-        aria-label={t('return-to-previous.button.close', 'Close')}
-        variant="primary"
-        fill="outline"
-        size="sm"
-        onClick={closeButton}
-      />
-    </ButtonGroup>
+    <div className={styles.wrapper}>
+      <ButtonGroup className={styles.buttonGroup}>
+        <Button
+          icon="angle-left"
+          size="sm"
+          variant="primary"
+          fill="outline"
+          onClick={handleOnClick}
+          title={title?.toString()}
+          className={styles.returnToPrevious}
+        >
+          <Trans i18nKey="return-to-previous.button.title">Back to {{ title }}</Trans>
+        </Button>
+        <Button
+          icon="times"
+          aria-label={t('return-to-previous.button.close', 'Close')}
+          variant="primary"
+          fill="outline"
+          size="sm"
+          onClick={closeButton}
+        />
+      </ButtonGroup>
+    </div>
   );
 };
 const getStyles = (theme: GrafanaTheme2) => ({
   returnToPrevious: css({
+    width: '100%',
     ['span']: {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -59,9 +62,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   wrapper: css({
-    backgroundColor: theme.colors.background.secondary,
+    label: 'return-to-previous-wrapper',
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    zIndex: theme.zIndex.portal,
+    width: '100%',
+    position: 'fixed',
+    bottom: `${theme.spacing.x4}`,
+    right: 0,
+  }),
+  buttonGroup: css({
+    width: 'fit-content',
+    backgroundColor: theme.colors.background.secondary,
   }),
 });
 

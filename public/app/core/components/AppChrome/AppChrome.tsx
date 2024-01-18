@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { setReturnToPrevious } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -16,6 +17,7 @@ import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './
 import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
+import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SectionNav } from './SectionNav/SectionNav';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -51,6 +53,17 @@ export function AppChrome({ children }: Props) {
 
   const handleMegaMenu = () => {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
+  };
+
+  const shouldShowReturnToPrevious = () => {
+    if (location.pathname === state.returnToPrevious.href) {
+      setReturnToPrevious({ title: '', href: '' });
+    }
+    return (
+      state.returnToPrevious.href !== '' &&
+      state.returnToPrevious.title !== '' &&
+      location.pathname !== state.returnToPrevious.href
+    );
   };
 
   // Chromeless routes are without topNav, mega menu, search & command palette
@@ -105,6 +118,9 @@ export function AppChrome({ children }: Props) {
         </>
       )}
       {!state.chromeless && <CommandPalette />}
+      {config.featureToggles.returnToPrevious && shouldShowReturnToPrevious() && (
+        <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
+      )}
     </div>
   );
 }
