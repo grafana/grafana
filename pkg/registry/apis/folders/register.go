@@ -15,7 +15,6 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
-	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
@@ -116,7 +115,7 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 		func(obj any) ([]interface{}, error) {
 			r, ok := obj.(*v0alpha1.Folder)
 			if ok {
-				accessor := kinds.MetaAccessor(r)
+				accessor, _ := utils.MetaAccessor(r)
 				return []interface{}{
 					r.Name,
 					r.Spec.Title,

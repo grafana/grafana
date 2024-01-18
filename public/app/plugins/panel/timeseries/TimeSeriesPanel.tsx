@@ -141,6 +141,8 @@ export const TimeSeriesPanel = ({
                         />
                       );
                     }}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 ) : (
                   <>

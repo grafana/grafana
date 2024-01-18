@@ -247,10 +247,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagUseCachingService
-	// When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.
-	FlagUseCachingService = "useCachingService"
-
 	// FlagEnableElasticsearchBackendQuerying
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
@@ -360,7 +356,7 @@ const (
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
-	// Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled
+	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
 	// FlagSplitScopes
@@ -615,6 +611,10 @@ const (
 	// Enables query hints for Loki
 	FlagLokiQueryHints = "lokiQueryHints"
 
+	// FlagKubernetesFeatureToggles
+	// Use the kubernetes API for feature toggle management in the frontend
+	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
+
 	// FlagAlertingPreviewUpgrade
 	// Show Unified Alerting preview and upgrade page in legacy alerting
 	FlagAlertingPreviewUpgrade = "alertingPreviewUpgrade"
@@ -630,4 +630,8 @@ const (
 	// FlagAlertingQueryOptimization
 	// Optimizes eligible queries in order to reduce load on datasources
 	FlagAlertingQueryOptimization = "alertingQueryOptimization"
+
+	// FlagNewFolderPicker
+	// Enables the nested folder picker without having nested folders enabled
+	FlagNewFolderPicker = "newFolderPicker"
 )
