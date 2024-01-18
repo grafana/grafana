@@ -45,7 +45,7 @@ func (f *fakeStore) Get(ctx context.Context, cmd folder.GetFolderQuery) (*folder
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *fakeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
+func (f *fakeStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	return f.ExpectedParentFolders, f.ExpectedError
 }
 
