@@ -12,10 +12,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@adobe/css-tools@npm:^4.3.1":
-  version: 4.3.1
-  resolution: "@adobe/css-tools@npm:4.3.1"
-  checksum: 039a42ffdd41ecf3abcaf09c9fef0ffd634ccbe81c04002fc989e74564eba99bb19169a8f48dadf6442aa2c5c9f0925a7b27ec5c36a1ed1a3515fe77d6930996
+"@adobe/css-tools@npm:^4.3.2":
+  version: 4.3.2
+  resolution: "@adobe/css-tools@npm:4.3.2"
+  checksum: 973dcb7ba5141f57ec726ddec2e94e8947361bb0c5f0e8ebd1e8aa3a84b28e66db4ad843908825f99730d59784ff3c43868b014a7268676a65950cdb850c42cc
   languageName: node
   linkType: hard
 
@@ -2938,7 +2938,7 @@ __metadata:
     "@grafana/runtime": "npm:10.4.0-pre"
     "@grafana/schema": "npm:10.4.0-pre"
     "@grafana/ui": "npm:10.4.0-pre"
-    "@testing-library/jest-dom": "npm:6.1.4"
+    "@testing-library/jest-dom": "npm:6.2.0"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.11"
@@ -3070,7 +3070,7 @@ __metadata:
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.17.1"
     "@reduxjs/toolkit": "npm:1.9.5"
-    "@testing-library/jest-dom": "npm:6.1.4"
+    "@testing-library/jest-dom": "npm:6.2.0"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.11"
@@ -3138,7 +3138,7 @@ __metadata:
     "@rollup/plugin-json": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@testing-library/dom": "npm:9.3.4"
-    "@testing-library/jest-dom": "npm:6.1.4"
+    "@testing-library/jest-dom": "npm:6.2.0"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3-interpolate": "npm:^3.0.0"
@@ -3595,7 +3595,7 @@ __metadata:
     "@storybook/react-webpack5": "npm:7.4.5"
     "@storybook/theming": "npm:7.4.5"
     "@testing-library/dom": "npm:9.3.4"
-    "@testing-library/jest-dom": "npm:6.1.4"
+    "@testing-library/jest-dom": "npm:6.2.0"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/common-tags": "npm:^1.8.0"
@@ -7580,16 +7580,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:6.1.4, @testing-library/jest-dom@npm:^6.1.2":
-  version: 6.1.4
-  resolution: "@testing-library/jest-dom@npm:6.1.4"
+"@testing-library/jest-dom@npm:6.2.0, @testing-library/jest-dom@npm:^6.1.2":
+  version: 6.2.0
+  resolution: "@testing-library/jest-dom@npm:6.2.0"
   dependencies:
-    "@adobe/css-tools": "npm:^4.3.1"
+    "@adobe/css-tools": "npm:^4.3.2"
     "@babel/runtime": "npm:^7.9.2"
     aria-query: "npm:^5.0.0"
     chalk: "npm:^3.0.0"
     css.escape: "npm:^1.5.1"
-    dom-accessibility-api: "npm:^0.5.6"
+    dom-accessibility-api: "npm:^0.6.3"
     lodash: "npm:^4.17.15"
     redent: "npm:^3.0.0"
   peerDependencies:
@@ -7606,7 +7606,7 @@ __metadata:
       optional: true
     vitest:
       optional: true
-  checksum: e5a0cdb96eec509c0c85f2b7a0d08fc1c9f6c10aa49bba0d738bf4bb114c3472b92ace5067aedfaaf848ae13b38ba9296047c219aa24b66c87aa16de33341fdb
+  checksum: 4af88d4b6208eda58fad47a520057893a381b972e7b043d7787c0111c887bdc82ed959bed07c21700f2816d4a1e315a519a0aabce120708ad7ba79577374f0fd
   languageName: node
   linkType: hard
 
@@ -14060,10 +14060,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dom-accessibility-api@npm:^0.5.6, dom-accessibility-api@npm:^0.5.9":
+"dom-accessibility-api@npm:^0.5.9":
   version: 0.5.10
   resolution: "dom-accessibility-api@npm:0.5.10"
   checksum: 3ce183680c598392f89ec13fd04f495f95890c09d3da45909123ff549a10621ca21eee0258f929e4ed16a2cc73255d649174402b5fb7cd790983aa33b5a6fa3f
+  languageName: node
+  linkType: hard
+
+"dom-accessibility-api@npm:^0.6.3":
+  version: 0.6.3
+  resolution: "dom-accessibility-api@npm:0.6.3"
+  checksum: 83d3371f8226487fbad36e160d44f1d9017fb26d46faba6a06fcad15f34633fc827b8c3e99d49f71d5f3253d866e2131826866fd0a3c86626f8eccfc361881ff
   languageName: node
   linkType: hard
 
@@ -16887,7 +16894,7 @@ __metadata:
     "@swc/core": "npm:1.3.104"
     "@swc/helpers": "npm:0.5.3"
     "@testing-library/dom": "npm:9.3.4"
-    "@testing-library/jest-dom": "npm:6.1.4"
+    "@testing-library/jest-dom": "npm:6.2.0"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:14.5.2"
