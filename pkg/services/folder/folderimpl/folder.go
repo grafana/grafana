@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"runtime"
 	"strings"
 	"sync"
@@ -439,8 +440,8 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		User:      user,
 	}
 
-	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
-	ignoreDuplicateInsert := errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) && cmd.IgnoreDuplicateRowErr
+	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto, cmd.IgnoreDuplicateRowErr)
+	ignoreDuplicateInsert := cmd.IgnoreDuplicateRowErr
 	if err != nil && !ignoreDuplicateInsert {
 		return nil, toFolderError(err)
 	}
@@ -456,6 +457,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		} else {
 			dashQuery := &dashboards.GetDashboardQuery{
 				Title: &dashFolder.Title,
+				UID:   dashFolder.UID,
 				OrgID: cmd.OrgID,
 			}
 			if dash, err = s.dashboardStore.GetDashboard(ctx, dashQuery); err != nil {
@@ -592,7 +594,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 		Overwrite: cmd.Overwrite,
 	}
 
-	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
+	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto, false)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -904,7 +906,7 @@ func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string)
 
 // buildSaveDashboardCommand is a simplified version on DashboardServiceImpl.buildSaveDashboardCommand
 // keeping only the meaningful functionality for folders
-func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.SaveDashboardCommand, error) {
+func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO, ignoreDuplicateRowErr bool) (*dashboards.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.OrgID = dto.OrgID
@@ -932,7 +934,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, dashboards.ErrDashboardUidTooLong
 	}
 
-	_, err := s.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
+	_, err := s.validateFolderBeforeSave(ctx, dash, dto.Overwrite, ignoreDuplicateRowErr)
 	if err != nil {
 		return nil, err
 	}
@@ -987,6 +989,140 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	return cmd, nil
+}
+
+func (s *Service) validateFolderBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool, ignoreDuplicateRowErr bool) (bool, error) {
+	isParentFolderChanged := false
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		isParentFolderChanged, err = getExistingDashboardByIDOrUIDForUpdate(sess, dashboard, s.db.GetDialect(), overwrite, ignoreDuplicateRowErr)
+		if err != nil {
+			return err
+		}
+
+		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, s.db.GetDialect(), overwrite,
+			isParentFolderChanged)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return isParentFolderChanged, nil
+}
+
+// getExistingDashboardByTitleAndFolder returns a boolean (on whether the parent folder changed) and an error for if the dashboard already exists.
+func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
+	isParentFolderChanged bool) (bool, error) {
+	var existing dashboards.Dashboard
+	// nolint:staticcheck
+	exists, err := sess.Where("org_id=? AND title=? AND (is_folder=? OR folder_id=?)", dash.OrgID, dash.Title,
+		dialect.BooleanStr(true), dash.FolderID).Get(&existing)
+	if err != nil {
+		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
+	}
+	if exists && dash.ID != existing.ID {
+		if existing.IsFolder && !dash.IsFolder {
+			return isParentFolderChanged, dashboards.ErrDashboardWithSameNameAsFolder
+		}
+
+		if !existing.IsFolder && dash.IsFolder {
+			return isParentFolderChanged, dashboards.ErrDashboardFolderWithSameNameAsDashboard
+		}
+
+		// nolint:staticcheck
+		if !dash.IsFolder && (dash.FolderID != existing.FolderID || dash.ID == 0) {
+			isParentFolderChanged = true
+		}
+
+		if overwrite {
+			dash.SetID(existing.ID)
+			dash.SetUID(existing.UID)
+			dash.SetVersion(existing.Version)
+		} else {
+			return isParentFolderChanged, dashboards.ErrDashboardWithSameNameInFolderExists
+		}
+	}
+
+	return isParentFolderChanged, nil
+}
+
+func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite bool, ignoreDuplicateRowErr bool) (bool, error) {
+	dashWithIdExists := false
+	isParentFolderChanged := false
+	var existingById dashboards.Dashboard
+
+	if dash.ID > 0 {
+		var err error
+		dashWithIdExists, err = sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existingById)
+		if err != nil {
+			return false, fmt.Errorf("SQL query for existing dashboard by ID failed: %w", err)
+		}
+
+		if !dashWithIdExists {
+			return false, dashboards.ErrDashboardNotFound
+		}
+
+		if dash.UID == "" {
+			dash.SetUID(existingById.UID)
+		}
+	}
+
+	dashWithUidExists := false
+	var existingByUid dashboards.Dashboard
+
+	if dash.UID != "" {
+		var err error
+		dashWithUidExists, err = sess.Where("org_id=? AND uid=?", dash.OrgID, dash.UID).Get(&existingByUid)
+		if err != nil {
+			return false, fmt.Errorf("SQL query for existing dashboard by UID failed: %w", err)
+		}
+	}
+
+	if !dashWithIdExists && !dashWithUidExists {
+		return false, nil
+	}
+
+	if dashWithIdExists && dashWithUidExists && existingById.ID != existingByUid.ID {
+		return false, dashboards.ErrDashboardWithSameUIDExists
+	}
+
+	existing := existingById
+
+	if !dashWithIdExists && dashWithUidExists {
+		dash.SetID(existingByUid.ID)
+		dash.SetUID(existingByUid.UID)
+		existing = existingByUid
+	}
+
+	if (existing.IsFolder && !dash.IsFolder) ||
+		(!existing.IsFolder && dash.IsFolder) {
+		return isParentFolderChanged, dashboards.ErrDashboardTypeMismatch
+	}
+
+	if !dash.IsFolder && dash.FolderUID != existing.FolderUID {
+		isParentFolderChanged = true
+	}
+
+	// check for is someone else has written in between
+	if dash.Version != existing.Version {
+		if overwrite || ignoreDuplicateRowErr {
+			dash.SetVersion(existing.Version)
+		} else {
+			return isParentFolderChanged, dashboards.ErrDashboardVersionMismatch
+		}
+	}
+
+	// do not allow plugin dashboard updates without overwrite flag
+	if existing.PluginID != "" && !overwrite {
+		return isParentFolderChanged, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
+	}
+
+	return isParentFolderChanged, nil
 }
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
