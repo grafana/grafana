@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/prometheus/prometheus/model/labels"
 )
 
 // JitterStrategy represents a modifier to alert rule timing that affects how evaluations are distributed.
@@ -53,16 +53,14 @@ func jitterOffsetInTicks(r *ngmodels.AlertRule, baseInterval time.Duration, stra
 }
 
 func jitterHash(r *ngmodels.AlertRule, strategy JitterStrategy) uint64 {
-	l := labels.New(
-		labels.Label{Name: "name", Value: r.RuleGroup},
-		labels.Label{Name: "file", Value: r.NamespaceUID},
-		labels.Label{Name: "orgId", Value: fmt.Sprint(r.OrgID)},
-	)
+	ls := data.Labels{
+		"name":  r.RuleGroup,
+		"file":  r.NamespaceUID,
+		"orgId": fmt.Sprint(r.OrgID),
+	}
 
 	if strategy == JitterByRule {
-		l = labels.New(append(l, labels.Label{
-			Name: "uid", Value: r.UID,
-		})...)
+		ls["uid"] = r.UID
 	}
-	return l.Hash()
+	return uint64(ls.Fingerprint())
 }
