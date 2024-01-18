@@ -1281,7 +1281,6 @@ describe('createSpanLinkFactory', () => {
 
       setLinkSrv(new LinkSrv());
       setTemplateSrv(new TemplateSrv());
-      config.featureToggles.traceToProfiles = true;
     });
 
     it('with default keys when tags not configured', () => {

@@ -367,10 +367,6 @@ const (
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
 
-	// FlagTraceToProfiles
-	// Enables linking between traces and profiles
-	FlagTraceToProfiles = "traceToProfiles"
-
 	// FlagTracesEmbeddedFlameGraph
 	// Enables embedding a flame graph in traces
 	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"

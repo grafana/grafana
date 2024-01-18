@@ -771,14 +771,6 @@ var (
 			Created:           time.Date(2023, time.July, 21, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "traceToProfiles",
-			Description:  "Enables linking between traces and profiles",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Created:      time.Date(2023, time.November, 1, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "tracesEmbeddedFlameGraph",
 			Description:  "Enables embedding a flame graph in traces",
 			Stage:        FeatureStageExperimental,
