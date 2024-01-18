@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { UseTableRowProps } from 'react-table';
 
 import {
   Avatar,
@@ -38,6 +39,7 @@ export const UsersTable = ({
   fetchData,
 }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
+  const showBelongsTo = useMemo(() => users.some((user) => user.orgs), [users]);
   const columns: Array<Column<UserDTO>> = useMemo(
     () => [
       {
@@ -63,23 +65,28 @@ export const UsersTable = ({
         cell: ({ cell: { value } }: Cell<'name'>) => value,
         sortType: 'string',
       },
-      {
-        id: 'orgs',
-        header: 'Belongs to',
-        cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
-          return (
-            <Stack alignItems={'center'}>
-              <OrgUnits units={value} icon={'building'} />
-              {row.original.isAdmin && (
-                <Tooltip placement="top" content="Grafana Admin">
-                  <Icon name="shield" />
-                </Tooltip>
-              )}
-            </Stack>
-          );
-        },
-        sortType: (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
-      },
+      ...(showBelongsTo
+        ? [
+            {
+              id: 'orgs',
+              header: 'Belongs to',
+              cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
+                return (
+                  <Stack alignItems={'center'}>
+                    <OrgUnits units={value} icon={'building'} />
+                    {row.original.isAdmin && (
+                      <Tooltip placement="top" content="Grafana Admin">
+                        <Icon name="shield" />
+                      </Tooltip>
+                    )}
+                  </Stack>
+                );
+              },
+              sortType: (a: UseTableRowProps<UserDTO>, b: UseTableRowProps<UserDTO>) =>
+                (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
+            },
+          ]
+        : []),
       ...(showLicensedRole
         ? [
             {
@@ -140,7 +147,7 @@ export const UsersTable = ({
         },
       },
     ],
-    [showLicensedRole]
+    [showLicensedRole, showBelongsTo]
   );
   return (
     <Stack direction={'column'} gap={2}>
