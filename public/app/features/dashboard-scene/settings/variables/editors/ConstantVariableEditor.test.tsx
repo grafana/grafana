@@ -14,17 +14,14 @@ describe('ConstantVariableEditor', () => {
   });
 
   it('renders constant value', () => {
-    const onChange = jest.fn();
-    render(<ConstantVariableEditor variable={constantVar} onChange={onChange} />);
-
+    render(<ConstantVariableEditor variable={constantVar} />);
     const input = screen.getByRole('textbox', { name: 'Value' });
     expect(input).toBeInTheDocument();
     expect(input).toHaveValue('constant value');
   });
 
   it('changes the value', async () => {
-    const onChange = jest.fn();
-    render(<ConstantVariableEditor variable={constantVar} onChange={onChange} />);
+    render(<ConstantVariableEditor variable={constantVar} />);
 
     const input = screen.getByRole('textbox', { name: 'Value' });
     expect(input).toBeInTheDocument();
