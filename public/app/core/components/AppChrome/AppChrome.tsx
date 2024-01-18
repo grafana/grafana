@@ -56,10 +56,11 @@ export function AppChrome({ children }: Props) {
   };
 
   const shouldShowReturnToPrevious = () => {
-    if (location.pathname === state.returnToPrevious.href) {
+    if (state.returnToPrevious && location.pathname === state.returnToPrevious.href) {
       setReturnToPrevious({ title: '', href: '' });
     }
     return (
+      state.returnToPrevious &&
       state.returnToPrevious.href !== '' &&
       state.returnToPrevious.title !== '' &&
       location.pathname !== state.returnToPrevious.href
@@ -118,7 +119,7 @@ export function AppChrome({ children }: Props) {
         </>
       )}
       {!state.chromeless && <CommandPalette />}
-      {config.featureToggles.returnToPrevious && shouldShowReturnToPrevious() && (
+      {config.featureToggles.returnToPrevious && state.returnToPrevious && shouldShowReturnToPrevious() && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
     </div>
