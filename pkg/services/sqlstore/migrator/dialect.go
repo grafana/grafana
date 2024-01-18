@@ -381,11 +381,15 @@ func (b *BaseDialect) InsertQuery(tableName string, row map[string]any) (string,
 
 	// build query and values
 	for _, col := range keys {
-		cols = append(cols, b.dialect.Quote(col))
+		// #TODO: fix the lines that contain  b.dialect.Quote(...).
+		// b.dialect is currently nil and causing a panic
+		// cols = append(cols, b.dialect.Quote(col))
+		cols = append(cols, fmt.Sprint("`"+col+"`"))
 		vals = append(vals, row[col])
 	}
 
-	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Repeat("?, ", len(row)-1)+"?"), vals, nil
+	// return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Repeat("?, ", len(row)-1)+"?"), vals, nil
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", fmt.Sprint("`"+tableName+"`"), strings.Join(cols, ", "), strings.Repeat("?, ", len(row)-1)+"?"), vals, nil
 }
 
 func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error) {

@@ -308,8 +308,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		current, err := s.read(ctx, tx, &entity.ReadEntityRequest{
-			// #TODO: fix the panic that occurs when this line is uncommented
-			// Key:        r.Entity.Key,
+			Key:        r.Entity.Key,
 			WithBody:   true,
 			WithStatus: true,
 		})
