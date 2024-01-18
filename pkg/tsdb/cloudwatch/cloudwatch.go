@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -61,19 +60,16 @@ const (
 
 var logger = log.New("tsdb.cloudwatch")
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *CloudWatchService {
+func ProvideService(httpClientProvider *httpclient.Provider) *CloudWatchService {
 	logger.Debug("Initializing")
 
-	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
-
+	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), awsds.NewSessionCache())
 	return &CloudWatchService{
-		Cfg:      cfg,
 		Executor: executor,
 	}
 }
 
 type CloudWatchService struct {
-	Cfg      *setting.Cfg
 	Executor *cloudWatchExecutor
 }
 
@@ -81,10 +77,9 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, sessions SessionCache) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
 		im:       im,
-		cfg:      cfg,
 		sessions: sessions,
 	}
 
@@ -94,7 +89,7 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 
 func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		instanceSettings, err := models.LoadCloudWatchSettings(settings)
+		instanceSettings, err := models.LoadCloudWatchSettings(ctx, settings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -120,7 +115,6 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
 	im          instancemgmt.InstanceManager
-	cfg         *setting.Cfg
 	sessions    SessionCache
 	regionCache sync.Map
 
@@ -149,7 +143,7 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 
 	return models.RequestContext{
 		OAMAPIProvider:        NewOAMAPI(sess),
-		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
+		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), instance.Settings.GrafanaSettings),
 		LogsAPIProvider:       NewLogsAPI(sess),
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
@@ -231,7 +225,13 @@ func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx b
 	if err != nil {
 		return err
 	}
-	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), e.cfg)
+
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return err
+	}
+
+	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), instance.Settings.GrafanaSettings)
 	_, err = metricClient.ListMetricsWithPageLimit(ctx, params)
 	return err
 }
@@ -280,7 +280,7 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	}
 
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
-	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
+	if instance.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
 		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
 	}

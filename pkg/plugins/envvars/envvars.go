@@ -125,16 +125,21 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 			m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
 		}
 	}
-	// TODO add support via plugin SDK
-	//if s.cfg.AWSAssumeRoleEnabled {
-	//	m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
-	//}
-	//if len(s.cfg.AWSAllowedAuthProviders) > 0 {
-	//	m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
-	//}
-	//if s.cfg.AWSExternalId != "" {
-	//	m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
-	//}
+
+	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
+		if s.cfg.AWSAssumeRoleEnabled {
+			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
+		}
+		if len(s.cfg.AWSAllowedAuthProviders) > 0 {
+			m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
+		}
+		if s.cfg.AWSExternalId != "" {
+			m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
+		}
+		if s.cfg.AWSListMetricsPageLimit != 0 {
+			m[awsds.GrafanaListMetricsPageLimit] = strconv.Itoa(s.cfg.AWSListMetricsPageLimit)
+		}
+	}
 
 	if s.cfg.ProxySettings.Enabled {
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
@@ -258,6 +263,9 @@ func (s *Service) awsEnvVars() []string {
 	}
 	if s.cfg.AWSExternalId != "" {
 		variables = append(variables, awsds.GrafanaAssumeRoleExternalIdKeyName+"="+s.cfg.AWSExternalId)
+	}
+	if s.cfg.AWSListMetricsPageLimit != 0 {
+		variables = append(variables, awsds.GrafanaListMetricsPageLimit+"="+strconv.Itoa(s.cfg.AWSListMetricsPageLimit))
 	}
 
 	return variables

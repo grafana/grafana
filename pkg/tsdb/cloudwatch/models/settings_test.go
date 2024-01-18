@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -25,7 +26,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		_, err := LoadCloudWatchSettings(settings)
+		_, err := LoadCloudWatchSettings(context.Background(), settings)
 
 		assert.Error(t, err)
 	})
@@ -47,7 +48,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		s, err := LoadCloudWatchSettings(settings)
+		s, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.NoError(t, err)
 		assert.Equal(t, awsds.AuthTypeKeys, s.AuthType)
 		assert.Equal(t, "arn:aws:iam::123456789012:role/grafana", s.AssumeRoleARN)
@@ -78,7 +79,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		s, err := LoadCloudWatchSettings(settings)
+		s, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.NoError(t, err)
 		assert.Equal(t, awsds.AuthTypeDefault, s.AuthType)
 		assert.Equal(t, "arn:aws:iam::123456789012:role/grafana", s.AssumeRoleARN)
@@ -103,7 +104,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		s, err := LoadCloudWatchSettings(settings)
+		s, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.NoError(t, err)
 		assert.Equal(t, time.Minute*30, s.LogsTimeout.Duration)
 	})
@@ -121,7 +122,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		s, err := LoadCloudWatchSettings(settings)
+		s, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.NoError(t, err)
 		assert.Equal(t, time.Minute*10, s.LogsTimeout.Duration)
 	})
@@ -139,7 +140,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		s, err := LoadCloudWatchSettings(settings)
+		s, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.NoError(t, err)
 		assert.Equal(t, time.Duration(1500000000), s.LogsTimeout.Duration)
 	})
@@ -157,7 +158,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		s, err := LoadCloudWatchSettings(settings)
+		s, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.NoError(t, err)
 		assert.Equal(t, 1500*time.Millisecond, s.LogsTimeout.Duration)
 	})
@@ -175,7 +176,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		_, err := LoadCloudWatchSettings(settings)
+		_, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.Error(t, err)
 	})
 	t.Run("Should throw error if logsTimeout is an invalid type", func(t *testing.T) {
@@ -192,7 +193,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 			},
 		}
 
-		_, err := LoadCloudWatchSettings(settings)
+		_, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.Error(t, err)
 	})
 }

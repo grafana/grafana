@@ -5,8 +5,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
@@ -14,10 +14,10 @@ import (
 // this client wraps the CloudWatch API and handles pagination and the composition of the MetricResponse DTO
 type metricsClient struct {
 	models.CloudWatchMetricsAPIProvider
-	config *setting.Cfg
+	config *awsds.AuthSettings
 }
 
-func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, config *setting.Cfg) *metricsClient {
+func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, config *awsds.AuthSettings) *metricsClient {
 	return &metricsClient{CloudWatchMetricsAPIProvider: api, config: config}
 }
 
@@ -37,7 +37,7 @@ func (l *metricsClient) ListMetricsWithPageLimit(ctx context.Context, params *cl
 				cloudWatchMetrics = append(cloudWatchMetrics, metric)
 			}
 		}
-		return !lastPage && pageNum < l.config.AWSListMetricsPageLimit
+		return !lastPage && pageNum < l.config.ListMetricsPageLimit
 	})
 
 	return cloudWatchMetrics, err
