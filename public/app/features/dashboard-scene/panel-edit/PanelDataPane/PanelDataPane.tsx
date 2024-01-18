@@ -143,8 +143,8 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const currentTab = tabs.find((t) => t.tabId === tab);
 
   return (
-    <div>
-      <TabsBar hideBorder={true}>
+    <>
+      <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
             <Tab
@@ -158,12 +158,12 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           );
         })}
       </TabsBar>
-      <TabContent className={styles.tabContent}>
-        <CustomScrollbar autoHeightMin="100%">
+      <CustomScrollbar className={styles.scroll}>
+        <TabContent className={styles.tabContent}>
           <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
-        </CustomScrollbar>
-      </TabContent>
-    </div>
+        </TabContent>
+      </CustomScrollbar>
+    </>
   );
 }
 
@@ -175,6 +175,13 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: 'none',
       borderBottom: 'none',
       borderTopRightRadius: theme.shape.radius.default,
+      flexGrow: 1,
+    }),
+    tabsBar: css({
+      flexShrink: 0,
+    }),
+    scroll: css({
+      background: theme.colors.background.primary,
     }),
   };
 }
