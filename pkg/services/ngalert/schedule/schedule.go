@@ -81,6 +81,7 @@ type schedule struct {
 
 	appURL               *url.URL
 	disableGrafanaFolder bool
+	jitterEvaluations    JitterStrategy
 
 	metrics *metrics.Scheduler
 
@@ -104,6 +105,7 @@ type SchedulerCfg struct {
 	MinRuleInterval      time.Duration
 	DisableGrafanaFolder bool
 	AppURL               *url.URL
+	JitterEvaluations    JitterStrategy
 	EvaluatorFactory     eval.EvaluatorFactory
 	RuleStore            RulesStore
 	Metrics              *metrics.Scheduler
@@ -125,6 +127,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		metrics:               cfg.Metrics,
 		appURL:                cfg.AppURL,
 		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
+		jitterEvaluations:     cfg.JitterEvaluations,
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
@@ -274,7 +277,8 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
-		isReadyToRun := item.IntervalSeconds != 0 && tickNum%itemFrequency == 0
+		offset := jitterOffsetInTicks(item, sch.baseInterval, sch.jitterEvaluations)
+		isReadyToRun := item.IntervalSeconds != 0 && (tickNum%itemFrequency)-offset == 0
 
 		var folderTitle string
 		if !sch.disableGrafanaFolder {
@@ -287,6 +291,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		if isReadyToRun {
+			sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
 				scheduledAt: tick,
 				rule:        item,

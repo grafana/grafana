@@ -171,6 +171,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `tableSharedCrosshair`                      | Enables shared crosshair in table panel                                                                                                                                                                                                                                           |
 | `newFolderPicker`                           | Enables the nested folder picker without having nested folders enabled                                                                                                                                                                                                            |
+| `jitterAlertRules`                          | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                                                                           |
 
 ## Development feature toggles
 

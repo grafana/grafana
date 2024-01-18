@@ -154,3 +154,5 @@ alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-1
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,false,true
 alertingPreviewUpgrade,experimental,@grafana/alerting-squad,2024-01-03,false,false,true,false
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,2024-01-12,false,false,false,true
+jitterAlertRules,experimental,@grafana/alerting-squad,2024-01-17,false,false,true,false
+jitterAlertRulesWithinGroups,experimental,@grafana/alerting-squad,2024-01-17,false,false,true,false

@@ -173,4 +173,6 @@ export interface FeatureToggles {
   lokiQueryHints?: boolean;
   alertingPreviewUpgrade?: boolean;
   newFolderPicker?: boolean;
+  jitterAlertRules?: boolean;
+  jitterAlertRulesWithinGroups?: boolean;
 }
