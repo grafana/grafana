@@ -62,7 +62,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         <Field
           label="Group by"
           description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the default notification policy."
-          {...register(`contactPoints.${alertManager}.groupBy`, { required: true })}
+          {...register(`contactPoints.${alertManager}.groupBy`)}
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
           className={styles.optionalContent}
         >
