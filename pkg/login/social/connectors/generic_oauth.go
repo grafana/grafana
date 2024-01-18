@@ -48,7 +48,7 @@ type SocialGenericOAuth struct {
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
 	config := createOAuthConfig(info, cfg, social.GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, features, cfg),
+		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, features, cfg),
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,

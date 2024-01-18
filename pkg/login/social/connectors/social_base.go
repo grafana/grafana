@@ -36,7 +36,6 @@ type SocialBase struct {
 func newSocialBase(name string,
 	config *oauth2.Config,
 	info *social.OAuthInfo,
-	autoAssignOrgRole string,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 ) *SocialBase {
@@ -46,7 +45,7 @@ func newSocialBase(name string,
 		Config:            config,
 		info:              info,
 		log:               logger,
-		autoAssignOrgRole: autoAssignOrgRole,
+		autoAssignOrgRole: cfg.AutoAssignOrgRole,
 		features:          features,
 		cfg:               cfg,
 	}

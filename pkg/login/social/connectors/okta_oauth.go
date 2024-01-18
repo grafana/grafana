@@ -47,7 +47,7 @@ type OktaClaims struct {
 func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	config := createOAuthConfig(info, cfg, social.OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, features, cfg),
+		SocialBase: newSocialBase(social.OktaProviderName, config, info, features, cfg),
 	}
 
 	if info.UseRefreshToken {
@@ -83,7 +83,7 @@ func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings)
 		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	config := createOAuthConfig(newInfo, s.cfg, social.GitlabProviderName)
+	config := createOAuthConfig(newInfo, s.cfg, social.OktaProviderName)
 
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(config, social.OfflineAccessScope)

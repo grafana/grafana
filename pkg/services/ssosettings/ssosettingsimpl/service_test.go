@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -533,10 +535,13 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			},
 			IsDeleted: false,
 		}
+		var wg sync.WaitGroup
+		wg.Add(1)
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		reloadable.On("Validate", mock.Anything, settings).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			wg.Done()
 			return settings.Provider == provider &&
 				settings.ID == "someid" &&
 				maps.Equal(settings.Settings, map[string]any{
@@ -550,7 +555,11 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
 
 		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			currentTime := time.Now()
 			settings.ID = "someid"
+			settings.Created = currentTime
+			settings.Updated = currentTime
+
 			env.store.ActualSSOSettings = *settings
 			return nil
 		}
@@ -564,8 +573,11 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 				},
 			}, nil
 		}
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.NoError(t, err)
+
+		// Wait for the goroutine first to assert the Reload call
+		wg.Wait()
 
 		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-client-secret"))
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
@@ -575,7 +587,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		env := setupTestEnv(t)
 
 		provider := social.GrafanaComProviderName
-		settings := models.SSOSettings{
+		settings := &models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
 				"client_id":     "client-id",
@@ -596,7 +608,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
-		settings := models.SSOSettings{
+		settings := &models.SSOSettings{
 			Provider: provider,
 			Settings: map[string]any{
 				"client_id":     "client-id",
@@ -632,14 +644,14 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		reloadable.On("Validate", mock.Anything, settings).Return(errors.New("validation failed"))
 		env.reloadables[provider] = reloadable
 
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.Error(t, err)
 	})
 
 	t.Run("returns error if a fallback strategy is not available for the provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
-		settings := models.SSOSettings{
+		settings := &models.SSOSettings{
 			Provider: social.AzureADProviderName,
 			Settings: map[string]any{
 				"client_id":     "client-id",
@@ -674,7 +686,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return(nil, errors.New("encryption failed")).Once()
 
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.Error(t, err)
 	})
 
@@ -706,7 +718,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		env.secrets.On("Decrypt", mock.Anything, []byte("current-client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 		env.secrets.On("Encrypt", mock.Anything, []byte("encrypted-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
 
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.NoError(t, err)
 
 		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("current-client-secret"))
@@ -739,7 +751,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 			return errors.New("failed to upsert settings")
 		}
 
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.Error(t, err)
 	})
 
@@ -763,7 +775,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 
-		err := env.service.Upsert(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.NoError(t, err)
 
 		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-client-secret"))

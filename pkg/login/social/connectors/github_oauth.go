@@ -59,7 +59,7 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 
 	config := createOAuthConfig(info, cfg, social.GitHubProviderName)
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, config, info, cfg.AutoAssignOrgRole, features, cfg),
+		SocialBase:           newSocialBase(social.GitHubProviderName, config, info, features, cfg),
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}

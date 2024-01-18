@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -211,12 +212,18 @@ func TestOAuth_Authenticate(t *testing.T) {
 				tt.req.HTTPRequest.AddCookie(&http.Cookie{Name: oauthPKCECookieName, Value: tt.pkceCookieValue})
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, tt.oauthCfg, fakeConnector{
-				ExpectedUserInfo:        tt.userInfo,
-				ExpectedToken:           &oauth2.Token{},
-				ExpectedIsSignupAllowed: true,
-				ExpectedIsEmailAllowed:  tt.isEmailAllowed,
-			}, nil, nil)
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+				ExpectedConnector: fakeConnector{
+					ExpectedUserInfo:        tt.userInfo,
+					ExpectedToken:           &oauth2.Token{},
+					ExpectedIsSignupAllowed: true,
+					ExpectedIsEmailAllowed:  tt.isEmailAllowed,
+				},
+			}
+
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc)
+
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
 
@@ -279,13 +286,18 @@ func TestOAuth_RedirectURL(t *testing.T) {
 				authCodeUrlCalled = false
 			)
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), setting.NewCfg(), tt.oauthCfg, mockConnector{
-				AuthCodeURLFunc: func(state string, opts ...oauth2.AuthCodeOption) string {
-					authCodeUrlCalled = true
-					require.Len(t, opts, tt.numCallOptions)
-					return ""
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+				ExpectedConnector: mockConnector{
+					AuthCodeURLFunc: func(state string, opts ...oauth2.AuthCodeOption) string {
+						authCodeUrlCalled = true
+						require.Len(t, opts, tt.numCallOptions)
+						return ""
+					},
 				},
-			}, nil, nil)
+			}
+
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), setting.NewCfg(), nil, fakeSocialSvc)
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -387,7 +399,10 @@ func TestOAuth_Logout(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, tt.oauthCfg, mockConnector{}, nil, mockService)
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+			}
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc)
 
 			redirect, ok := c.Logout(context.Background(), &authn.Identity{}, &login.UserAuth{})
 

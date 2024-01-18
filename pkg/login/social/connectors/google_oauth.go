@@ -41,7 +41,7 @@ type googleUserData struct {
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, features, cfg),
+		SocialBase: newSocialBase(social.GoogleProviderName, config, info, features, cfg),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {

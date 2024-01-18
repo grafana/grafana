@@ -130,7 +130,7 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 	return result, nil
 }
 
-func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
+func (s *SSOSettingsService) Upsert(ctx context.Context, settings *models.SSOSettings) error {
 	if !isProviderConfigurable(settings.Provider) {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", settings.Provider)
 	}
@@ -140,7 +140,7 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
 	}
 
-	err := social.Validate(ctx, settings)
+	err := social.Validate(ctx, *settings)
 	if err != nil {
 		return err
 	}
@@ -150,21 +150,21 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 		return err
 	}
 
-	secrets := collectSecrets(settings, *storedSettings)
+	secrets := collectSecrets(settings, storedSettings)
 
 	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings, storedSettings.Settings)
 	if err != nil {
 		return err
 	}
 
-	err = s.store.Upsert(ctx, &settings)
+	err = s.store.Upsert(ctx, settings)
 	if err != nil {
 		return err
 	}
 
 	go func() {
 		settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
-		err = social.Reload(context.Background(), settings)
+		err = social.Reload(context.Background(), *settings)
 		if err != nil {
 			s.logger.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
 		}
@@ -383,7 +383,7 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 // collectSecrets collects all the secrets from the request and the currently stored settings
 // and returns a new map
-func collectSecrets(settings models.SSOSettings, storedSettings models.SSOSettings) map[string]any {
+func collectSecrets(settings *models.SSOSettings, storedSettings *models.SSOSettings) map[string]any {
 	secrets := map[string]any{}
 	for k, v := range settings.Settings {
 		if isSecret(k) {
