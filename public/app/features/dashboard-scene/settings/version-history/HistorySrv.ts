@@ -1,5 +1,3 @@
-import { isNumber } from 'lodash';
-
 import { getBackendSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 
@@ -30,7 +28,7 @@ export class HistorySrv {
   }
 
   getDashboardVersion(dashboardUID: string, version: number) {
-    if (typeof dashboardUID !== 'string' || !isNumber(version)) {
+    if (typeof dashboardUID !== 'string') {
       return Promise.resolve({});
     }
 
@@ -38,7 +36,7 @@ export class HistorySrv {
   }
 
   restoreDashboard(dashboardUID: string, version: number) {
-    if (typeof dashboardUID !== 'string' || !isNumber(version)) {
+    if (typeof dashboardUID !== 'string') {
       return Promise.resolve({});
     }
 

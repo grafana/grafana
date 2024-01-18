@@ -1,15 +1,11 @@
-import { isNumber } from 'lodash';
 import React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, sceneGraph, sceneUtils } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { HorizontalGroup, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -96,28 +92,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     return sceneGraph.getTimeRange(this._dashboard);
   }
 
-  public async onRestore(version: DecoratedRevisionModel): Promise<boolean> {
-    const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
-
-    if (!isNumber(versionRsp.version)) {
-      return false;
-    }
-
-    const dashboardDTO: DashboardDTO = {
-      dashboard: new DashboardModel(version.data),
-      meta: this._dashboard.state.meta,
-    };
-    const dashScene = transformSaveModelToScene(dashboardDTO);
-    const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
-    newState.version = versionRsp.version;
-
-    this._dashboard.setInitialState(newState);
-    this._dashboard.onDiscard();
-
-    return true;
-  }
-
-  public fetchVersions(append = false): void {
+  public fetchVersions = (append = false): void => {
     const uid = this._dashboard.state.uid;
 
     if (!uid) {
@@ -137,7 +112,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       })
       .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));
-  }
+  };
 
   public getDiff = async () => {
     const selectedVersions = this.versions.filter((version) => version.checked);
@@ -230,7 +205,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
             baseInfo={baseInfo!}
             isNewLatest={isNewLatest!}
             diffData={model.diffData}
-            onRestore={model.onRestore.bind(model)}
+            onRestore={dashboard.onRestore}
           />
         )}
       </Page>
@@ -246,7 +221,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
           versions={model.versions}
           onCheck={model.onCheck}
           canCompare={canCompare}
-          onRestore={model.onRestore.bind(model)}
+          onRestore={dashboard.onRestore}
         />
       )}
       {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
@@ -254,7 +229,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
         <VersionsHistoryButtons
           hasMore={hasMore}
           canCompare={canCompare}
-          getVersions={model.fetchVersions.bind(model)}
+          getVersions={model.fetchVersions}
           getDiff={model.getDiff}
           isLastPage={!!isLastPage}
         />

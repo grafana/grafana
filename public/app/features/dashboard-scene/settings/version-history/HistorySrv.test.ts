@@ -72,12 +72,6 @@ describe('historySrv', () => {
       const rsp = await historySrv.getDashboardVersion(emptyDash.uid, 6);
       expect(rsp).toEqual({});
     });
-
-    it('should return an empty object when not given a version', async () => {
-      historySrv = new HistorySrv();
-      const rsp = await historySrv.getDashboardVersion(dash.uid, null as unknown as number);
-      expect(rsp).toEqual({});
-    });
   });
 
   describe('restoreDashboard', () => {
@@ -93,12 +87,6 @@ describe('historySrv', () => {
     it('should return an empty object when not given an id', async () => {
       historySrv = new HistorySrv();
       const rsp = await historySrv.restoreDashboard(emptyDash.uid, 6);
-      expect(rsp).toEqual({});
-    });
-
-    it('should return an empty object when not given a version', async () => {
-      historySrv = new HistorySrv();
-      const rsp = await historySrv.restoreDashboard(dash.uid, null as unknown as number);
       expect(rsp).toEqual({});
     });
   });
