@@ -26,6 +26,7 @@ import {
   getVariableScene,
   hasVariableOptions,
   EditableVariableType,
+  getDefinition,
 } from './utils';
 
 const templateSrv = {
@@ -136,5 +137,66 @@ describe('hasVariableOptions', () => {
   it('should return false for scene variables without options property', () => {
     const variableWithoutOptions = new ConstantVariable({ name: 'MyVariable' });
     expect(hasVariableOptions(variableWithoutOptions)).toBe(false);
+  });
+});
+
+describe('getDefinition', () => {
+  it('returns the correct definition for QueryVariable when definition is defined', () => {
+    const model = new QueryVariable({
+      name: 'custom0',
+      query: '',
+      definition: 'legacy ABC query definition',
+    });
+    expect(getDefinition(model)).toBe('legacy ABC query definition');
+  });
+
+  it('returns the correct definition for QueryVariable when definition is not defined', () => {
+    const model = new QueryVariable({
+      name: 'custom0',
+      query: 'ABC query',
+      definition: '',
+    });
+    expect(getDefinition(model)).toBe('ABC query');
+  });
+
+  it('returns the correct definition for DataSourceVariable', () => {
+    const model = new DataSourceVariable({
+      name: 'ds0',
+      pluginId: 'datasource-plugin',
+      value: 'datasource-value',
+    });
+    expect(getDefinition(model)).toBe('datasource-plugin');
+  });
+
+  it('returns the correct definition for CustomVariable', () => {
+    const model = new CustomVariable({
+      name: 'custom0',
+      query: 'Custom, A, B, C',
+    });
+    expect(getDefinition(model)).toBe('Custom, A, B, C');
+  });
+
+  it('returns the correct definition for IntervalVariable', () => {
+    const model = new IntervalVariable({
+      name: 'interval0',
+      intervals: ['1m', '5m', '15m', '30m', '1h', '6h', '12h', '1d'],
+    });
+    expect(getDefinition(model)).toBe('1m,5m,15m,30m,1h,6h,12h,1d');
+  });
+
+  it('returns the correct definition for TextBoxVariable', () => {
+    const model = new TextBoxVariable({
+      name: 'textbox0',
+      value: 'TextBox Value',
+    });
+    expect(getDefinition(model)).toBe('TextBox Value');
+  });
+
+  it('returns the correct definition for ConstantVariable', () => {
+    const model = new ConstantVariable({
+      name: 'constant0',
+      value: 'Constant Value',
+    });
+    expect(getDefinition(model)).toBe('Constant Value');
   });
 });
