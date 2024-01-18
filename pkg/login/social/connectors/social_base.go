@@ -3,7 +3,6 @@ package connectors
 import (
 	"bytes"
 	"compress/zlib"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -21,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,7 +27,7 @@ type SocialBase struct {
 	*oauth2.Config
 	info              *social.OAuthInfo
 	cfg               *setting.Cfg
-	infoMutex         sync.RWMutex
+	reloadMutex       sync.RWMutex
 	log               log.Logger
 	autoAssignOrgRole string
 	features          featuremgmt.FeatureToggles
@@ -80,24 +78,10 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 }
 
 func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
-	s.infoMutex.RLock()
-	defer s.infoMutex.RUnlock()
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
 	return s.info
-}
-
-func (s *SocialBase) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
-	if err != nil {
-		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
-	}
-
-	s.infoMutex.Lock()
-	defer s.infoMutex.Unlock()
-
-	s.info = info
-
-	return nil
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {

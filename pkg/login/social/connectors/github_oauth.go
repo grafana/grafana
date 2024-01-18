@@ -86,7 +86,39 @@ func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
-	// add specific validation rules for Github
+	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
+	teamIds := mustInts(teamIdsSplitted)
+
+	if len(teamIdsSplitted) != len(teamIds) {
+		s.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
+		return ssosettings.ErrInvalidSettings.Errorf("Failed to parse team ids. Team ids must be a list of numbers.")
+	}
+
+	return nil
+}
+
+func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	config := createOAuthConfig(newInfo, s.cfg, social.GitHubProviderName)
+
+	teamIdsSplitted := util.SplitString(newInfo.Extra[teamIdsKey])
+	teamIds := mustInts(teamIdsSplitted)
+
+	if len(teamIdsSplitted) != len(teamIds) {
+		s.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = newInfo
+	s.teamIds = teamIds
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.SocialBase.Config = config
 
 	return nil
 }

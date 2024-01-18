@@ -69,6 +69,31 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOS
 	return nil
 }
 
+func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	// Override necessary settings
+	newInfo.AuthUrl = s.cfg.GrafanaComURL + "/oauth2/authorize"
+	newInfo.TokenUrl = s.cfg.GrafanaComURL + "/api/oauth2/token"
+	newInfo.AuthStyle = "inheader"
+
+	config := createOAuthConfig(newInfo, s.cfg, social.GrafanaComProviderName)
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = newInfo
+	s.SocialBase.Config = config
+
+	s.url = s.cfg.GrafanaComURL
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+
+	return nil
+}
+
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }

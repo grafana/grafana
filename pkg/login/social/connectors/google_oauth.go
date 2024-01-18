@@ -71,6 +71,27 @@ func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSetti
 	return nil
 }
 
+func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	config := createOAuthConfig(info, s.cfg, social.GoogleProviderName)
+
+	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+		s.log.Warn("Using legacy Google API URL, please update your configuration")
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = info
+	s.SocialBase.Config = config
+
+	return nil
+}
+
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	info := s.GetOAuthInfo()
 

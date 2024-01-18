@@ -165,19 +165,24 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	err := s.SocialBase.Reload(ctx, settings)
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
-		s.log.Error("Failed to reload OAuth settings", "err", err)
-		return err
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	config := createOAuthConfig(s.info, s.cfg, social.AzureADProviderName)
+	config := createOAuthConfig(newInfo, s.cfg, social.AzureADProviderName)
 
-	if s.info.UseRefreshToken {
+	if newInfo.UseRefreshToken {
 		appendUniqueScope(config, social.OfflineAccessScope)
 	}
 
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = newInfo
 	s.SocialBase.Config = config
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
 
 	return nil
 }

@@ -76,7 +76,22 @@ func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
-	// add specific validation rules for Gitlab
+	return nil
+}
+
+func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	config := createOAuthConfig(newInfo, s.cfg, social.GitlabProviderName)
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.info = newInfo
+	s.SocialBase.Config = config
 
 	return nil
 }
