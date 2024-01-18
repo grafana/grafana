@@ -88,15 +88,16 @@ function variableFlowToQueryEditor(variableName: string, queryType: string) {
   switch (queryType) {
     case 'Label names':
       e2e.components.QueryBuilder.labelSelect().should('exist').click({ force: true });
+      selectOption(`${variableName}`);
     case 'Label values':
       e2e.components.QueryBuilder.valueSelect().should('exist').click({ force: true });
+      selectOption(`${variableName}`);
     case 'Metrics':
       e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click({ force: true });
+      selectOption(`${variableName}`);
     default:
     // do nothing
   }
-  // the variable should be present and selectable
-  selectOption(`${variableName}`);
 }
 
 describe('Prometheus variable query editor', () => {
