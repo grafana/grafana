@@ -22,7 +22,7 @@ export interface AppChromeState {
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
-  returnToPrevious: {
+  returnToPrevious?: {
     href: ReturnToPreviousProps['href'];
     title: ReturnToPreviousProps['title'];
   };
@@ -53,10 +53,7 @@ export class AppChromeService {
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
-    returnToPrevious: {
-      href: getReturnToPrevious().href || '',
-      title: getReturnToPrevious().title || '',
-    },
+    returnToPrevious: getReturnToPrevious(),
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -123,9 +120,9 @@ export class AppChromeService {
     return useObservable(this.state, this.state.getValue());
   }
 
-  public setReturnToPrevious(returnToPrevious: AppChromeState['returnToPrevious']) {
-    this.update({ returnToPrevious });
-  }
+  // public setReturnToPrevious(returnToPrevious: AppChromeState['returnToPrevious']) {
+  //   this.update({ returnToPrevious });
+  // }
 
   public setMegaMenuOpen = (newOpenState: boolean) => {
     const { megaMenuDocked } = this.state.getValue();
