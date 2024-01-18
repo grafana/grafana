@@ -171,7 +171,7 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"example": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",

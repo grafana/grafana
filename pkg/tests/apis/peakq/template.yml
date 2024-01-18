@@ -1,0 +1,6 @@
+apiVersion: peakq.grafana.app/v0alpha1
+kind: QueryTemplate
+metadata:
+  name: example
+spec:
+  title: hi

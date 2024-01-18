@@ -7,7 +7,7 @@ package v0alpha1
 // QueryTemplateSpecApplyConfiguration represents an declarative configuration of the QueryTemplateSpec type for use
 // with apply.
 type QueryTemplateSpecApplyConfiguration struct {
-	Example *string `json:"example,omitempty"`
+	Title *string `json:"title,omitempty"`
 }
 
 // QueryTemplateSpecApplyConfiguration constructs an declarative configuration of the QueryTemplateSpec type for use with
@@ -16,10 +16,10 @@ func QueryTemplateSpec() *QueryTemplateSpecApplyConfiguration {
 	return &QueryTemplateSpecApplyConfiguration{}
 }
 
-// WithExample sets the Example field in the declarative configuration to the given value
+// WithTitle sets the Title field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Example field is set to the value of the last call.
-func (b *QueryTemplateSpecApplyConfiguration) WithExample(value string) *QueryTemplateSpecApplyConfiguration {
-	b.Example = &value
+// If called multiple times, the Title field is set to the value of the last call.
+func (b *QueryTemplateSpecApplyConfiguration) WithTitle(value string) *QueryTemplateSpecApplyConfiguration {
+	b.Title = &value
 	return b
 }

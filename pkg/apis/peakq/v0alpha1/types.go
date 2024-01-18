@@ -14,7 +14,7 @@ type QueryTemplate struct {
 }
 
 type QueryTemplateSpec struct {
-	Example string `json:"example,omitempty"`
+	Title string `json:"title,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
