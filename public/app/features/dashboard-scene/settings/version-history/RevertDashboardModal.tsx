@@ -7,7 +7,7 @@ import { DecoratedRevisionModel } from '../VersionsEditView';
 
 export interface RevertDashboardModalProps {
   hideModal: () => void;
-  onRestore: (version: DecoratedRevisionModel) => void;
+  onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
   version: DecoratedRevisionModel;
 }
 
@@ -15,8 +15,14 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
   const notifyApp = useAppNotification();
 
   const onRestoreDashboard = async () => {
-    onRestore(version);
-    notifyApp.success('Dashboard restored', `Restored from version ${version.version}`);
+    const success = await onRestore(version);
+
+    if (success) {
+      notifyApp.success('Dashboard restored', `Restored from version ${version.version}`);
+    } else {
+      notifyApp.error('Dashboard restore failed', `Failed to restore from version ${version.version}`);
+    }
+
     hideModal();
   };
 

@@ -1,12 +1,15 @@
 import { SceneGridItem, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import { Dashboard } from '@grafana/schema';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { VERSIONS_FETCH_LIMIT, VersionsEditView } from './VersionsEditView';
+import { DecoratedRevisionModel, VERSIONS_FETCH_LIMIT, VersionsEditView } from './VersionsEditView';
 import { historySrv } from './version-history';
 
 jest.mock('./version-history/HistorySrv');
+jest.mock('../serialization/transformSaveModelToScene');
 
 describe('VersionsEditView', () => {
   describe('Dashboard versions state', () => {
@@ -108,6 +111,35 @@ describe('VersionsEditView', () => {
 
       expect(versionsView.state.isNewLatest).toBe(true);
     });
+
+    it('should restore the dashboard to the selected version and exit edit mode', async () => {
+      const newVersion = 3;
+
+      const mockScene = new DashboardScene({
+        title: 'new name',
+        uid: 'dash-1',
+        version: 4,
+      });
+
+      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
+
+      return versionsView.onRestore(getVersionMock()).then((res) => {
+        expect(res).toBe(true);
+
+        expect(dashboard.state.version).toBe(newVersion);
+        expect(dashboard.state.title).toBe('new name');
+        expect(dashboard.state.isEditing).toBe(false);
+      });
+    });
+
+    it('should return early if historySrv does not return a valid version number', async () => {
+      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: null });
+
+      return versionsView.onRestore(getVersionMock()).then((res) => {
+        expect(res).toBe(false);
+      });
+    });
   });
 });
 
@@ -150,6 +182,28 @@ function getVersions() {
       checked: false,
     },
   ];
+}
+
+function getVersionMock(): DecoratedRevisionModel {
+  const dash: Dashboard = {
+    title: 'new name',
+    id: 5,
+    schemaVersion: 30,
+  };
+
+  return {
+    id: 2,
+    checked: false,
+    uid: 'uid',
+    parentVersion: 1,
+    version: 2,
+    created: new Date(),
+    createdBy: 'admin',
+    message: '',
+    data: dash,
+    createdDateString: '2017-02-22 20:43:01',
+    ageString: '7 years ago',
+  };
 }
 
 async function buildTestScene() {

@@ -1,3 +1,4 @@
+import { isNumber } from 'lodash';
 import React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
@@ -95,11 +96,11 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     return sceneGraph.getTimeRange(this._dashboard);
   }
 
-  public async onRestore(version: DecoratedRevisionModel) {
+  public async onRestore(version: DecoratedRevisionModel): Promise<boolean> {
     const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
 
-    if (isNaN(versionRsp.version)) {
-      return;
+    if (!isNumber(versionRsp.version)) {
+      return false;
     }
 
     const dashboardDTO: DashboardDTO = {
@@ -112,6 +113,8 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     this._dashboard.setInitialState(newState);
     this._dashboard.onDiscard();
+
+    return true;
   }
 
   public fetchVersions(append = false): void {

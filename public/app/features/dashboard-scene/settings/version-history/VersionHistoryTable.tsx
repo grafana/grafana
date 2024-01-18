@@ -12,7 +12,7 @@ type VersionsTableProps = {
   versions: DecoratedRevisionModel[];
   canCompare: boolean;
   onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
-  onRestore: (version: DecoratedRevisionModel) => void;
+  onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
 };
 
 export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }: VersionsTableProps) => {

@@ -16,7 +16,7 @@ type DiffViewProps = {
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
   diffData: { lhs: string; rhs: string };
-  onRestore: (version: DecoratedRevisionModel) => void;
+  onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
 };
 
 export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest, onRestore }: DiffViewProps) => {

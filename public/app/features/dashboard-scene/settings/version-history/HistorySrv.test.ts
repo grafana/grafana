@@ -34,7 +34,7 @@ describe('historySrv', () => {
   });
 
   describe('getHistoryList', () => {
-    it('should return a versions array for the given dashboard id', () => {
+    it('should return a versions array for the given dashboard id', async () => {
       getMock.mockImplementation(() => Promise.resolve(versionsResponse));
       historySrv = new HistorySrv();
 
@@ -43,21 +43,45 @@ describe('historySrv', () => {
       });
     });
 
-    it('should return an empty array when not given an id', () => {
+    it('should return an empty array when not given an id', async () => {
       return historySrv.getHistoryList(emptyDash.uid, historyListOpts).then((versions) => {
         expect(versions).toEqual([]);
       });
     });
 
-    it('should return an empty array when not given a dashboard id', () => {
+    it('should return an empty array when not given a dashboard id', async () => {
       return historySrv.getHistoryList(null as unknown as string, historyListOpts).then((versions) => {
         expect(versions).toEqual([]);
       });
     });
   });
 
+  describe('getDashboardVersion', () => {
+    it('should return a version object for the given dashboard id and version', async () => {
+      getMock.mockImplementation(() => Promise.resolve(versionsResponse[0]));
+      historySrv = new HistorySrv();
+
+      return historySrv.getDashboardVersion(dash.uid, 4).then((version) => {
+        expect(version).toEqual(versionsResponse[0]);
+      });
+    });
+
+    it('should return an empty object when not given an id', async () => {
+      historySrv = new HistorySrv();
+
+      const rsp = await historySrv.getDashboardVersion(emptyDash.uid, 6);
+      expect(rsp).toEqual({});
+    });
+
+    it('should return an empty object when not given a version', async () => {
+      historySrv = new HistorySrv();
+      const rsp = await historySrv.getDashboardVersion(dash.uid, null as unknown as number);
+      expect(rsp).toEqual({});
+    });
+  });
+
   describe('restoreDashboard', () => {
-    it('should return a success response given valid parameters', () => {
+    it('should return a success response given valid parameters', async () => {
       const version = 6;
       postMock.mockImplementation(() => Promise.resolve(restoreResponse(version)));
       historySrv = new HistorySrv();
@@ -69,6 +93,12 @@ describe('historySrv', () => {
     it('should return an empty object when not given an id', async () => {
       historySrv = new HistorySrv();
       const rsp = await historySrv.restoreDashboard(emptyDash.uid, 6);
+      expect(rsp).toEqual({});
+    });
+
+    it('should return an empty object when not given a version', async () => {
+      historySrv = new HistorySrv();
+      const rsp = await historySrv.restoreDashboard(dash.uid, null as unknown as number);
       expect(rsp).toEqual({});
     });
   });

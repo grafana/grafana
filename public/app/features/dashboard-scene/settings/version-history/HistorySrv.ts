@@ -30,7 +30,7 @@ export class HistorySrv {
   }
 
   getDashboardVersion(dashboardUID: string, version: number) {
-    if (typeof dashboardUID !== 'string') {
+    if (typeof dashboardUID !== 'string' || !isNumber(version)) {
       return Promise.resolve({});
     }
 
