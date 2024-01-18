@@ -166,7 +166,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	if err != nil {
 		return backend.DataResponse{
 			Error:  err,
-			Status: backend.Status(res.StatusCode),
+			Status: backend.StatusBadGateway,
 		}
 	}
 
@@ -185,7 +185,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	if err != nil {
 		return backend.DataResponse{
 			Error:  err,
-			Status: backend.Status(res.StatusCode),
+			Status: backend.StatusBadGateway,
 		}
 	}
 
