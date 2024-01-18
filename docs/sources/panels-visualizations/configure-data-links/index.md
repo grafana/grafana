@@ -28,8 +28,6 @@ weight: 80
 
 Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them. You can also links panels using data links.
 
-<!-- what we do mean by the "value under the cursor" and when you're linking to using a variable, where is that link going to??? an code snippet representing the example above would be great for explaining this concept-->
-
 The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click a data point or line:
 
 ![Time series visualization with a data link displayed](screenshot-time-series-data-link-v10.3.png)
@@ -55,9 +53,6 @@ Azure Monitor, [CloudWatch][], and [Google Cloud Monitoring][] have pre-configur
 You can also use template variables in your data links URLs. For more information, refer to [Templates and variables][].
 
 ### Time range panel variables
-
-<!--would be good to have examples below to show how you format this stuff--assumes a lot of knowledge of how to format these variables-->
-<!--The selections in the UI are in plain language; should the tables below reflect that? And are all the options accounted for below?-->
 
 These variables allow you to include the current time range in the data link URL:
 
