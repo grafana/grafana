@@ -130,7 +130,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 		res := s.instantQuery(traceCtx, client, q, headers)
 		dr.Error = res.Error
 		dr.Frames = res.Frames
-		dr.Status = res.Status
+		// dr.Status = res.Status
 	}
 
 	if q.RangeQuery {
@@ -184,8 +184,8 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
-			Error:  err,
-			Status: backend.Status(res.StatusCode),
+			Error: err,
+			// Status: backend.Status(res.StatusCode),
 		}
 	}
 
