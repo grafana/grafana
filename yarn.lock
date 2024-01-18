@@ -3627,7 +3627,7 @@ __metadata:
     "@types/uuid": "npm:9.0.7"
     ansicolor: "npm:1.1.100"
     calculate-size: "npm:1.1.1"
-    classnames: "npm:2.3.2"
+    classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
     core-js: "npm:3.33.0"
     css-loader: "npm:6.8.1"
@@ -11869,10 +11869,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:2.3.2, classnames@npm:2.x, classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.2.6, classnames@npm:^2.3.1, classnames@npm:^2.3.2":
-  version: 2.3.2
-  resolution: "classnames@npm:2.3.2"
-  checksum: ba3151c12e8b6a84c64b340ab4259ad0408947652009314462d828e94631505989c6a7d7e796bec1d309be9295d3111b498ad18a9d533fe3e6f859e51e574cbb
+"classnames@npm:2.5.1, classnames@npm:2.x, classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.2.6, classnames@npm:^2.3.1, classnames@npm:^2.3.2":
+  version: 2.5.1
+  resolution: "classnames@npm:2.5.1"
+  checksum: 58eb394e8817021b153bb6e7d782cfb667e4ab390cb2e9dac2fc7c6b979d1cc2b2a733093955fc5c94aa79ef5c8c89f11ab77780894509be6afbb91dddd79d15
   languageName: node
   linkType: hard
 
@@ -16979,7 +16979,7 @@ __metadata:
     centrifuge: "npm:4.0.1"
     chance: "npm:^1.0.10"
     chrome-remote-interface: "npm:0.33.0"
-    classnames: "npm:2.3.2"
+    classnames: "npm:2.5.1"
     codeowners: "npm:^5.1.1"
     combokeys: "npm:^3.0.0"
     comlink: "npm:4.4.1"

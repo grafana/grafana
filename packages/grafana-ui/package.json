@@ -63,7 +63,7 @@
     "@react-aria/utils": "3.23.0",
     "ansicolor": "1.1.100",
     "calculate-size": "1.1.1",
-    "classnames": "2.3.2",
+    "classnames": "2.5.1",
     "d3": "7.8.5",
     "date-fns": "2.30.0",
     "hoist-non-react-statics": "3.3.2",
