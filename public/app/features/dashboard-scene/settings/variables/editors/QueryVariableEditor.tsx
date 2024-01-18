@@ -12,7 +12,6 @@ import { getVariableQueryEditor } from 'app/features/variables/editor/getVariabl
 import { isLegacyQueryEditor, isQueryEditor } from 'app/features/variables/guard';
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
-import { VariableQueryEditor } from 'app/plugins/datasource/cloudwatch/components/VariableQueryEditor/VariableQueryEditor';
 
 import { SelectionOptionsForm } from '../components/SelectionOptionsForm';
 import { VariableLegend } from '../components/VariableLegend';
@@ -20,10 +19,10 @@ import { VariableTextAreaField } from '../components/VariableTextAreaField';
 
 interface QueryVariableEditorProps {
   variable: QueryVariable;
-  onChange: (variable: QueryVariable) => void;
+  onRunQuery: () => void;
 }
 
-export function QueryVariableEditor({ variable }: QueryVariableEditorProps) {
+export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
   const { datasource, regex, sort, refresh, isMulti, includeAll, allValue } = variable.useState();
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
@@ -44,8 +43,8 @@ export function QueryVariableEditor({ variable }: QueryVariableEditorProps) {
   const onAllValueChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ allValue: event.currentTarget.value });
   };
-  const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
-    const datasource: DataSourceRef = { uid: ds.uid, type: ds.type };
+  const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
+    const datasource: DataSourceRef = { uid: dsInstanceSettings.uid, type: dsInstanceSettings.type };
     variable.setState({ datasource });
   };
 
@@ -56,7 +55,7 @@ export function QueryVariableEditor({ variable }: QueryVariableEditorProps) {
         <DataSourcePicker current={datasource} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
 
-      <QueryEditor variable={variable} onRunQuery={() => {}} />
+      <QueryEditor variable={variable} onRunQuery={onRunQuery} />
 
       <VariableTextAreaField
         defaultValue={regex}
@@ -104,63 +103,68 @@ interface QueryEditorProps {
   onRunQuery: () => void;
 }
 
-const QueryEditor = ({ variable }: QueryEditorProps) => {
-  const range = sceneGraph.getTimeRange(variable).state;
-  const { datasource, query } = variable.useState();
-  const { value: ds, loading: isLoadingDs } = useAsync(async () => getDataSourceSrv().get(datasource ?? ''));
-
-  const { value: Editor, loading: isLoadingEditor } = useAsync(async () => {
-    return ds ? getVariableQueryEditor(ds) : null;
-  }, [ds]);
+const QueryEditor = ({ variable, onRunQuery }: QueryEditorProps) => {
+  const { value: range } = sceneGraph.getTimeRange(variable).useState();
+  const { datasource: datasourceRef, query: variableQuery } = variable.useState();
+  const { value: datasource } = useAsync(async () => await getDataSourceSrv().get(datasourceRef ?? ''));
+  const { value: Editor } = useAsync(async () => {
+    return datasource ? await getVariableQueryEditor(datasource) : null;
+  }, [datasource]);
 
   const onQueryChange = (query: string) => {
     variable.setState({ query });
   };
 
-  return (
-    <div>
-      {isLoadingDs && <div>Loading datasource...</div>}
-      {isLoadingEditor && <div>Loading editor...</div>}
-      {ds && Editor && <p>DS: {JSON.stringify(ds)}</p>}
-    </div>
-  );
-  // if (ds && Editor && isLegacyQueryEditor(Editor, ds)) {
-  //   return (
-  //     <Box marginBottom={2}>
-  //       <Text element={'h4'}>Query</Text>
-  //       <Box marginTop={1}>
-  //         <VariableQueryEditor
-  //           key={ds.uid}
-  //           datasource={ds}
-  //           query={query}
-  //           templateSrv={getTemplateSrv()}
-  //           onChange={onQueryChange}
-  //         />
-  //       </Box>
-  //     </Box>
-  //   );
-  // }
+  if (!datasource || !Editor) {
+    return null;
+  }
 
-  // if (ds && Editor && isQueryEditor(Editor, ds)) {
-  //   return (
-  //     <Box marginBottom={2}>
-  //       <Text element={'h4'}>Query</Text>
-  //       <Box marginTop={1}>
-  //         <VariableQueryEditor
-  //           key={ds.uid}
-  //           datasource={ds}
-  //           query={query}
-  //           onChange={onQueryChange}
-  //           onRunQuery={() => {}}
-  //           data={{ series: [], state: LoadingState.Done, timeRange: range }}
-  //           range={range}
-  //           onBlur={() => {}}
-  //           history={[]}
-  //         />
-  //       </Box>
-  //     </Box>
-  //   );
-  // }
+  let query;
+  if (typeof variableQuery === 'string') {
+    query = variableQuery || (datasource.variables?.getDefaultQuery?.() ?? '');
+  } else if (datasource) {
+    query = {
+      ...datasource.variables?.getDefaultQuery?.(),
+      ...variableQuery,
+    };
+  }
 
+  if (isLegacyQueryEditor(Editor, datasource)) {
+    return (
+      <Box marginBottom={2}>
+        <Text element={'h4'}>Query</Text>
+        <Box marginTop={1}>
+          <Editor
+            key={datasource.uid}
+            datasource={datasource}
+            query={query}
+            templateSrv={getTemplateSrv()}
+            onChange={onQueryChange}
+          />
+        </Box>
+      </Box>
+    );
+  }
+
+  if (isQueryEditor(Editor, datasource)) {
+    return (
+      <Box marginBottom={2}>
+        <Text element={'h4'}>Query</Text>
+        <Box marginTop={1}>
+          <Editor
+            key={datasource.uid}
+            datasource={datasource}
+            query={query}
+            onChange={onQueryChange}
+            onRunQuery={onRunQuery}
+            data={{ series: [], state: LoadingState.Done, timeRange: range }}
+            range={range}
+            onBlur={() => {}}
+            history={[]}
+          />
+        </Box>
+      </Box>
+    );
+  }
   return null;
 };
