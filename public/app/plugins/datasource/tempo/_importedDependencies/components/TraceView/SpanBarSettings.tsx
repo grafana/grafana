@@ -8,10 +8,8 @@ import {
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigSubSection, ConfigDescriptionLink } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
-
-import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 
 export interface SpanBarOptions {
   type?: string;

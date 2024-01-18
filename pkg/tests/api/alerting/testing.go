@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -260,9 +261,20 @@ func (a apiClient) ReloadCachedPermissions(t *testing.T) {
 }
 
 // CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
-func (a apiClient) CreateFolder(t *testing.T, uID string, title string) {
+func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUID ...string) {
 	t.Helper()
-	payload := fmt.Sprintf(`{"uid": "%s","title": "%s"}`, uID, title)
+	cmd := folder.CreateFolderCommand{
+		UID:   uID,
+		Title: title,
+	}
+	if len(parentUID) > 0 {
+		cmd.ParentUID = parentUID[0]
+	}
+
+	blob, err := json.Marshal(cmd)
+	require.NoError(t, err)
+
+	payload := string(blob)
 	u := fmt.Sprintf("%s/api/folders", a.url)
 	r := strings.NewReader(payload)
 	// nolint:gosec

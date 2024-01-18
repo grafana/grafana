@@ -1,9 +1,6 @@
 package featuremgmt
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -23,14 +20,14 @@ var (
 
 func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*FeatureManager, error) {
 	mgmt := &FeatureManager{
-		isDevMod:     setting.Env != setting.Prod,
-		licensing:    licensing,
-		flags:        make(map[string]*FeatureFlag, 30),
-		enabled:      make(map[string]bool),
-		startup:      make(map[string]bool),
-		warnings:     make(map[string]string),
-		allowEditing: cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateWebhook != "",
-		log:          log.New("featuremgmt"),
+		isDevMod:  setting.Env != setting.Prod,
+		licensing: licensing,
+		flags:     make(map[string]*FeatureFlag, 30),
+		enabled:   make(map[string]bool),
+		startup:   make(map[string]bool),
+		warnings:  make(map[string]string),
+		Settings:  cfg.FeatureManagement,
+		log:       log.New("featuremgmt"),
 	}
 
 	// Register the standard flags
@@ -57,17 +54,6 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 			}
 		}
 		mgmt.startup[key] = val
-	}
-
-	// Load config settings
-	configfile := filepath.Join(cfg.HomePath, "conf", "features.yaml")
-	if _, err := os.Stat(configfile); err == nil {
-		mgmt.log.Info("[experimental] loading features from config file", "path", configfile)
-		mgmt.config = configfile
-		err = mgmt.readFile()
-		if err != nil {
-			return mgmt, err
-		}
 	}
 
 	// update the values
