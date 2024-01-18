@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -318,12 +319,12 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
 		pluginClient: &fakePluginClient{},
+		pluginFacade: &fakePluginFacade{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	resp := httptest.NewRecorder()
-	pCtx := backend.PluginContext{}
-	err := hs.makePluginResourceRequest(resp, req, pCtx)
+	err := hs.makePluginResourceRequest(resp, req, pluginclient.AppRef(""))
 	require.NoError(t, err)
 
 	for {
@@ -356,11 +357,19 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 						"x-another": {"hello"},
 					},
 				},
+				pluginFacade: &fakePluginFacade{
+					headers: map[string][]string{
+						// This should be "overwritten" by the HTTP server
+						ctHeader: {"application/json"},
+
+						// Another header that should still be present
+						"x-another": {"hello"},
+					},
+				},
 			}
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
-			pCtx := backend.PluginContext{}
-			err := hs.makePluginResourceRequest(resp, req, pCtx)
+			err := hs.makePluginResourceRequest(resp, req, pluginclient.AppRef(""))
 			require.NoError(t, err)
 
 			for {
@@ -378,15 +387,18 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	pluginClient := &fakePluginClient{
 		statusCode: http.StatusNoContent,
 	}
+	pluginFacade := &fakePluginFacade{
+		statusCode: http.StatusNoContent,
+	}
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
 		pluginClient: pluginClient,
+		pluginFacade: pluginFacade,
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()
-	pCtx := backend.PluginContext{}
-	err := hs.makePluginResourceRequest(resp, req, pCtx)
+	err := hs.makePluginResourceRequest(resp, req, pluginclient.AppRef(""))
 	require.NoError(t, err)
 
 	for {
@@ -556,6 +568,46 @@ func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallReso
 }
 
 func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if c.QueryDataHandlerFunc != nil {
+		return c.QueryDataHandlerFunc.QueryData(ctx, req)
+	}
+
+	return backend.NewQueryDataResponse(), nil
+}
+
+type fakePluginFacade struct {
+	pluginclient.Client
+
+	req *pluginclient.CallResourceRequest
+
+	pluginclient.QueryDataHandlerFunc
+
+	statusCode int
+	headers    map[string][]string
+}
+
+func (c *fakePluginFacade) CallResource(_ context.Context, req *pluginclient.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	c.req = req
+	bytes, err := json.Marshal(map[string]any{
+		"message": "hello",
+	})
+	if err != nil {
+		return err
+	}
+
+	statusCode := http.StatusOK
+	if c.statusCode != 0 {
+		statusCode = c.statusCode
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  statusCode,
+		Headers: c.headers,
+		Body:    bytes,
+	})
+}
+
+func (c *fakePluginFacade) QueryData(ctx context.Context, req *pluginclient.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if c.QueryDataHandlerFunc != nil {
 		return c.QueryDataHandlerFunc.QueryData(ctx, req)
 	}

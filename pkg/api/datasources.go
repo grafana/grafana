@@ -21,11 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -775,13 +777,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *contextmodel.ReqContext) {
 		return
 	}
 
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
-	if !exists {
-		c.JsonApiErr(500, "Unable to find datasource plugin", err)
-		return
-	}
-
-	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
+	hs.callDatasourceResource(c, ds)
 }
 
 // swagger:route GET /datasources/uid/{uid}/resources/{datasource_proxy_route} datasources callDatasourceResourceWithUID
@@ -812,13 +808,18 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *contextmodel.ReqContext) 
 		return
 	}
 
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
-	if !exists {
-		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
+	hs.callDatasourceResource(c, ds)
+}
+
+func (hs *HTTPServer) callDatasourceResource(c *contextmodel.ReqContext, ds *datasources.DataSource) {
+	ref := pluginclient.DatasourceRef(ds.Type, pluginclient.WithDatasource(ds))
+
+	if err := hs.makePluginResourceRequest(c.Resp, c.Req, ref); err != nil {
+		handleCallResourceError(err, c)
 		return
 	}
 
-	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
+	requestmeta.WithStatusSource(c.Req.Context(), c.Resp.Status())
 }
 
 func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.DataSource) dtos.DataSource {

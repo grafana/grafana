@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient/pluginclientimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -64,6 +65,7 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = textCtx.PluginStore
 		hs.pluginClient = textCtx.PluginClient
+		hs.pluginFacade = pluginclientimpl.ProvideService(textCtx.PluginClient, pcp, nil)
 		hs.log = log.New("test")
 	})
 
@@ -110,6 +112,7 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = textCtx.PluginStore
 		hs.pluginClient = pc
+		hs.pluginFacade = pluginclientimpl.ProvideService(pc, pcp, nil)
 		hs.log = log.New("test")
 	})
 

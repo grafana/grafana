@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,6 +38,7 @@ import (
 
 type IntegrationTestCtx struct {
 	PluginClient   plugins.Client
+	PluginFacade   pluginclient.Client
 	PluginStore    *pluginstore.Service
 	PluginRegistry registry.Service
 }
