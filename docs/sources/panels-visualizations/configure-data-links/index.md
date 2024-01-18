@@ -49,17 +49,18 @@ Azure Monitor, [CloudWatch][], and [Google Cloud Monitoring][] have pre-configur
 
 You can also use template variables in your data links URLs. For more information, refer to [Templates and variables][].
 
-<!--would be good to have examples below to show how you format this stuff--assumes a lot of knowledge of how to format these variables-->
-<!--What the variables look like in the drop-down vs in the docs is a bit confusing-->
-
 ### Time range panel variables
+
+<!--would be good to have examples below to show how you format this stuff--assumes a lot of knowledge of how to format these variables-->
+<!--The selections in the UI are in plain language; should the tables below reflect that? And are all the options accounted fore below?-->
 
 These variables allow you to include the current time range in the data link URL:
 
-| Variable            | Description                                                         |
-| ------------------- | ------------------------------------------------------------------- |
-| `__url_time_range`  | Current dashboard's time range (for example, `?from=now-6h&to=now`) |
-| `$__from and $__to` | For more information, refer to [Global variables][].                |
+| Variable           | Description                                                         |
+| ------------------ | ------------------------------------------------------------------- |
+| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`) |
+| `__from`           | For more information, refer to [Global variables][].                |
+| `__to`             | For more information, refer to [Global variables][].                |
 
 ### Series variables
 
@@ -96,12 +97,12 @@ Using value-specific variables in data links can show different results dependin
 
 To access values and labels from other fields use:
 
-| Variable                             | Description                                |
-| ------------------------------------ | ------------------------------------------ |
-| `${__data.fields[i]}`                | Value of field `i` (on the same row)       |
-| `${__data.fields["NameOfField"]}`    | Value of field using name instead of index |
-| `${__data.fields["NameOfField"]}`    | Value of field using name instead of index |
-| `${__data.fields[1].labels.cluster}` | Access labels of another field             |
+| Variable                          | Description                                |
+| --------------------------------- | ------------------------------------------ |
+| `__data.fields[i]`                | Value of field `i` (on the same row)       |
+| `__data.fields["NameOfField"]`    | Value of field using name instead of index |
+| `__data.fields["NameOfField"]`    | Value of field using name instead of index |
+| `__data.fields[1].labels.cluster` | Access labels of another field             |
 
 ### Template variables
 
