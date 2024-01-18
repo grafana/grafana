@@ -318,7 +318,6 @@ func TestMakePluginResourceRequest(t *testing.T) {
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
-		pluginClient: &fakePluginClient{},
 		pluginFacade: &fakePluginFacade{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -348,15 +347,6 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 			hs := HTTPServer{
 				Cfg: setting.NewCfg(),
 				log: log.New(),
-				pluginClient: &fakePluginClient{
-					headers: map[string][]string{
-						// This should be "overwritten" by the HTTP server
-						ctHeader: {"application/json"},
-
-						// Another header that should still be present
-						"x-another": {"hello"},
-					},
-				},
 				pluginFacade: &fakePluginFacade{
 					headers: map[string][]string{
 						// This should be "overwritten" by the HTTP server
@@ -384,16 +374,12 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 }
 
 func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
-	pluginClient := &fakePluginClient{
-		statusCode: http.StatusNoContent,
-	}
 	pluginFacade := &fakePluginFacade{
 		statusCode: http.StatusNoContent,
 	}
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
-		pluginClient: pluginClient,
 		pluginFacade: pluginFacade,
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
