@@ -2,6 +2,8 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { e2e } from '../utils';
 
+import { getResources } from './helpers/prometheus-helpers';
+
 const DATASOURCE_ID = 'Prometheus';
 
 type editorType = 'Code' | 'Builder';
@@ -178,41 +180,3 @@ describe('Prometheus query editor', () => {
 function selectOption(option: string) {
   cy.get("[aria-label='Select option']").contains(option).should('be.visible').click();
 }
-
-function getResources() {
-  cy.intercept(/__name__/g, metricResponse);
-
-  cy.intercept(/metadata/g, metadataResponse);
-
-  cy.intercept(/labels/g, labelsResponse);
-}
-
-const metricResponse = {
-  status: 'success',
-  data: ['metric1', 'metric2'],
-};
-
-const metadataResponse = {
-  status: 'success',
-  data: {
-    metric1: [
-      {
-        type: 'counter',
-        help: 'metric1 help',
-        unit: '',
-      },
-    ],
-    metric2: [
-      {
-        type: 'counter',
-        help: 'metric2 help',
-        unit: '',
-      },
-    ],
-  },
-};
-
-const labelsResponse = {
-  status: 'success',
-  data: ['__name__', 'action', 'active', 'backend'],
-};
