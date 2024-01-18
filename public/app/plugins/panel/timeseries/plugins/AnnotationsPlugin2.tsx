@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, GrafanaTheme2 } from '@grafana/data';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, FieldType, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -69,7 +69,9 @@ export const AnnotationsPlugin2 = ({
   const getColorByName = useTheme2().visualization.getColorByName;
 
   const annos = useMemo(() => {
-    let annos = annotations.filter((frame) => frame.name !== 'exemplar');
+    let annos = annotations.filter(
+      (frame) => frame.name !== 'exemplar' && frame.length > 0 && frame.fields.some((f) => f.name === 'time')
+    );
 
     if (newRange) {
       let isRegion = newRange.to > newRange.from;
