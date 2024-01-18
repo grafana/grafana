@@ -169,4 +169,6 @@ export interface FeatureToggles {
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
   newFolderPicker?: boolean;
+  jitterAlertRules?: boolean;
+  jitterAlertRulesWithinGroups?: boolean;
 }
