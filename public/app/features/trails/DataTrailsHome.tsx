@@ -10,7 +10,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { newMetricsTrail } from './utils';
+import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {}
 
@@ -21,7 +21,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
   public onNewMetricsTrail = () => {
     const app = getAppFor(this);
-    const trail = newMetricsTrail();
+    const trail = newMetricsTrail(getDatasourceForNewTrail());
 
     getTrailStore().setRecentTrail(trail);
     app.goToUrlForTrail(trail);

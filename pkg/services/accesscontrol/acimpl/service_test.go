@@ -449,6 +449,23 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			},
 		},
 		{
+			name:           "ram only search on scope",
+			siuPermissions: listAllPerms,
+			searchOption:   accesscontrol.SearchOptions{Scope: "teams:id:2"},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(roletype.RoleEditor)},
+				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"}},
+			},
+		},
+		{
 			name:           "view permission on subset of users only",
 			siuPermissions: listSomePerms,
 			searchOption:   searchOption,
