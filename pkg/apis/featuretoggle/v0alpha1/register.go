@@ -22,7 +22,7 @@ var FeatureResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 
 // TogglesResourceInfo represents the actual configuration
 var TogglesResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"featuretoggles", "featuretoggles", "FeatureToggles",
+	"featuretoggles", "featuretoggle", "FeatureToggles",
 	func() runtime.Object { return &FeatureToggles{} },
 	func() runtime.Object { return &FeatureTogglesList{} },
 )
