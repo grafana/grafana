@@ -30,14 +30,19 @@ Data links allow you to provide more granular context to your links. You can cre
 
 <!-- what we do mean by the "value under the cursor" and when you're linking to using a variable, where is that link going to??? an code snippet representing the example above would be great for explaining this concept-->
 
-The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click a data point or line, for visualizations like
-stat, gauge, or bar gauge you can click anywhere on the visualization to open the context menu.
+The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click a data point or line:
 
-<!--screenshot here -->
+![Time series visualization with a data link displayed](screenshot-time-series-data-link-v10.3.png)
+
+For visualizations like stat, gauge, or bar gauge you can click anywhere on the visualization to open the context menu:
+
+![Stat visualization with a data link displayed](screenshot-stat-data-link-v10.3.png)
+
+If there's only one data link in the visualization, clicking anywhere on the visualization opens the link rather than the context menu.
 
 ## Data link variables
 
-Variables in data links let you send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a label, time range, series, and variable selection.
+Variables in data links let you send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a label, time range, series, or variable selection.
 
 To see a list of available variables, enter `$` in the data link **URL** field.
 
@@ -52,7 +57,7 @@ You can also use template variables in your data links URLs. For more informatio
 ### Time range panel variables
 
 <!--would be good to have examples below to show how you format this stuff--assumes a lot of knowledge of how to format these variables-->
-<!--The selections in the UI are in plain language; should the tables below reflect that? And are all the options accounted fore below?-->
+<!--The selections in the UI are in plain language; should the tables below reflect that? And are all the options accounted for below?-->
 
 These variables allow you to include the current time range in the data link URL:
 
