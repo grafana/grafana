@@ -22,6 +22,7 @@ interface Props {
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   onChangeFiscalYearStartMonth?: (month: number) => void;
+  onError?: (error?: string) => void;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
@@ -122,7 +123,7 @@ export const TimePickerContent = (props: Props) => {
 };
 
 const NarrowScreenForm = (props: FormProps) => {
-  const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory } = props;
+  const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onError } = props;
   const styles = useStyles2(getNarrowScreenStyles);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const [collapsedFlag, setCollapsedFlag] = useState(!isAbsolute);
@@ -156,7 +157,13 @@ const NarrowScreenForm = (props: FormProps) => {
       {!collapsed && (
         <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
-            <TimeRangeContent value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
+            <TimeRangeContent
+              value={value}
+              onApply={onChange}
+              timeZone={timeZone}
+              isFullscreen={false}
+              onError={onError}
+            />
           </div>
           {showHistory && (
             <TimeRangeList
@@ -173,7 +180,7 @@ const NarrowScreenForm = (props: FormProps) => {
 };
 
 const FullScreenForm = (props: FormProps) => {
-  const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions } = props;
+  const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
@@ -194,6 +201,7 @@ const FullScreenForm = (props: FormProps) => {
           onApply={onChange}
           isFullscreen={true}
           isReversed={isReversed}
+          onError={onError}
         />
       </div>
       {props.showHistory && (

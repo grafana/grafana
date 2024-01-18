@@ -121,6 +121,14 @@ const getShortcuts = (modKey: string) => {
             'Make time range absolute/permanent'
           ),
         },
+        {
+          keys: ['t', 'c'],
+          description: t('help-modal.shortcuts-description.copy-time-range', 'Copy time range'),
+        },
+        {
+          keys: ['t', 'v'],
+          description: t('help-modal.shortcuts-description.paste-time-range', 'Paste time range'),
+        },
       ],
     },
   ];

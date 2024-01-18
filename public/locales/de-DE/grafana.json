@@ -586,6 +586,7 @@
     "shortcuts-description": {
       "change-theme": "Thema ändern",
       "collapse-all-rows": "Alle Zeilen einklappen",
+      "copy-time-range": "",
       "dashboard-settings": "Dashboard-Einstellungen",
       "duplicate-panel": "Fenster duplizieren",
       "exit-edit/setting-views": "Ansicht beenden/einstellen",
@@ -599,6 +600,7 @@
       "move-time-range-forward": "Zeitbereich nach vorne verschieben",
       "open-search": "Suche öffnen",
       "open-shared-modal": "Geteilter Fenstermodus öffnen",
+      "paste-time-range": "",
       "refresh-all-panels": "Alle Fenster aktualisieren",
       "remove-panel": "Fenster entfernen",
       "save-dashboard": "Dashboard speichern",
@@ -1393,6 +1395,13 @@
       "empty-recent-list-docs": "<0><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></0>",
       "empty-recent-list-info": "Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.",
       "filter-placeholder": "Schnellbereiche suchen"
+    },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
     },
     "footer": {
       "change-settings-button": "Zeiteinstellungen ändern",

@@ -591,6 +591,7 @@
     "shortcuts-description": {
       "change-theme": "Modifier le thème",
       "collapse-all-rows": "Réduire toutes les lignes",
+      "copy-time-range": "",
       "dashboard-settings": "Paramètres du tableau de bord",
       "duplicate-panel": "Dupliquer le panneau",
       "exit-edit/setting-views": "Quitter les affichages de modification/configuration",
@@ -604,6 +605,7 @@
       "move-time-range-forward": "Avancer la plage de temps",
       "open-search": "Ouvrir la recherche",
       "open-shared-modal": "Ouvrir le panneau de partage modal",
+      "paste-time-range": "",
       "refresh-all-panels": "Actualiser tous les panneaux",
       "remove-panel": "Retirer le panneau",
       "save-dashboard": "Enregistrer le tableau de bord",
@@ -1399,6 +1401,13 @@
       "empty-recent-list-docs": "<0><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></0>",
       "empty-recent-list-info": "Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici.",
       "filter-placeholder": "Rechercher dans les plages rapides"
+    },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
     },
     "footer": {
       "change-settings-button": "Modifier les paramètres de l'heure",

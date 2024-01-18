@@ -1,10 +1,19 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { AbsoluteTimeRange, dateTimeForTimeZone, LoadingState, RawTimeRange, TimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  AppEvents,
+  dateTimeForTimeZone,
+  LoadingState,
+  RawTimeRange,
+  TimeRange,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
+import { t } from '@grafana/ui/src/utils/i18n';
+import appEvents from 'app/core/app_events';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
-import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
@@ -164,6 +173,41 @@ export function zoomOut(scale: number): ThunkResult<void> {
     const zoomedRange = getZoomedTimeRange(range, scale);
     dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
   });
+}
+
+export function copyTimeRangeToClipboard(): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const range = getState().explore.panes[Object.keys(getState().explore.panes)[0]]!.range.raw;
+    navigator.clipboard.writeText(JSON.stringify(range));
+
+    appEvents.emit(AppEvents.alertSuccess, [
+      t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
+    ]);
+  };
+}
+
+export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const { range, isError } = await getCopiedTimeRange();
+
+    if (isError === true) {
+      appEvents.emit(AppEvents.alertError, [
+        t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+        t('time-picker.copy-paste.default-error-message', `{{error}} is not a valid time range`, { error: range }),
+      ]);
+      return;
+    }
+
+    const panesSynced = getState().explore.syncedTimes;
+
+    if (panesSynced) {
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: range }));
+      return;
+    }
+
+    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
+  };
 }
 
 /**

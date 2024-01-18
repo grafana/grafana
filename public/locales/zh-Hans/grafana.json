@@ -581,6 +581,7 @@
     "shortcuts-description": {
       "change-theme": "更改主题",
       "collapse-all-rows": "折叠所有行",
+      "copy-time-range": "",
       "dashboard-settings": "仪表板设置",
       "duplicate-panel": "复制面板",
       "exit-edit/setting-views": "退出编辑/设置视图",
@@ -594,6 +595,7 @@
       "move-time-range-forward": "向前移动时间范围",
       "open-search": "打开搜索",
       "open-shared-modal": "打开面板分享模式",
+      "paste-time-range": "",
       "refresh-all-panels": "刷新所有面板",
       "remove-panel": "删除面板",
       "save-dashboard": "保存仪表板",
@@ -1387,6 +1389,13 @@
       "empty-recent-list-docs": "<0><0>阅读文档</0><1>，了解如何输入自定义时间范围的更多信息。</1></0>",
       "empty-recent-list-info": "看起来您之前没有使用过这个时间选择器。一旦您输入了某些时间间隔，最近使用的间隔就会出现在此处。",
       "filter-placeholder": "搜索快速范围"
+    },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
     },
     "footer": {
       "change-settings-button": "更改时间设置",
