@@ -16,10 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
-type QuerierFactoryFunc func(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
+type QuerierFactoryFunc func(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
 
 type QuerierProvider interface {
-	Querier(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
+	Querier(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
 }
 
 type DefaultQuerierProvider struct {
@@ -28,7 +28,7 @@ type DefaultQuerierProvider struct {
 
 func ProvideDefaultQuerierProvider(pluginClient plugins.Client, dsService datasources.DataSourceService,
 	dsCache datasources.CacheService) *DefaultQuerierProvider {
-	return NewQuerierProvider(func(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+	return NewQuerierProvider(func(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
 		return NewDefaultQuerier(ri, pj, pluginClient, dsService, dsCache), nil
 	})
 }
@@ -39,8 +39,8 @@ func NewQuerierProvider(factory QuerierFactoryFunc) *DefaultQuerierProvider {
 	}
 }
 
-func (p *DefaultQuerierProvider) Querier(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
-	return p.factory(ri, pj)
+func (p *DefaultQuerierProvider) Querier(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+	return p.factory(ctx, ri, pj)
 }
 
 // Querier is the interface that wraps the Query method.

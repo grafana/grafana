@@ -51,7 +51,7 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		return nil, err
 	}
 
-	var testsDataQuerierFactory QuerierFactoryFunc = func(ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+	var testsDataQuerierFactory QuerierFactoryFunc = func(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
 		return NewTestDataQuerier(pluginJSON, testdatasource.ProvideService())
 	}
 

@@ -82,7 +82,7 @@ func NewDataSourceAPIBuilder(
 		return nil, err
 	}
 
-	querier, err := querierProvider.Querier(ri, plugin)
+	querier, err := querierProvider.Querier(context.Background(), ri, plugin)
 	if err != nil {
 		return nil, err
 	}
