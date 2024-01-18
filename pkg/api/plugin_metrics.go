@@ -5,9 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -28,7 +27,9 @@ func (hs *HTTPServer) pluginMetricsEndpoint(ctx *web.Context) {
 	pathParts := strings.SplitAfter(ctx.Req.URL.Path, "/")
 	pluginID := pathParts[len(pathParts)-1]
 
-	resp, err := hs.pluginClient.CollectMetrics(ctx.Req.Context(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: pluginID}})
+	resp, err := hs.pluginFacade.CollectMetrics(ctx.Req.Context(), &pluginclient.CollectMetricsRequest{
+		Reference: pluginclient.AppRef(pluginID),
+	})
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			ctx.Resp.WriteHeader(http.StatusNotFound)

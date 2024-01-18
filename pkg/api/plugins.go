@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -305,7 +306,9 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 // /api/plugins/:pluginId/metrics
 func (hs *HTTPServer) CollectPluginMetrics(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	resp, err := hs.pluginClient.CollectMetrics(c.Req.Context(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: pluginID}})
+	resp, err := hs.pluginFacade.CollectMetrics(c.Req.Context(), &pluginclient.CollectMetricsRequest{
+		Reference: pluginclient.AppRef(pluginID),
+	})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}

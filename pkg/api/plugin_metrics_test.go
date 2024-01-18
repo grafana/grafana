@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -23,7 +24,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 				MetricsEndpointBasicAuthUsername: "",
 				MetricsEndpointBasicAuthPassword: "",
 			},
-			pluginClient: &fakePluginClientMetrics{
+			pluginFacade: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),
 				},
@@ -77,7 +78,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 				MetricsEndpointBasicAuthUsername: "user",
 				MetricsEndpointBasicAuthPassword: "pwd",
 			},
-			pluginClient: &fakePluginClientMetrics{
+			pluginFacade: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),
 				},
@@ -120,7 +121,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			Cfg: &setting.Cfg{
 				MetricsEndpointEnabled: false,
 			},
-			pluginClient: &fakePluginClientMetrics{
+			pluginFacade: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),
 				},
@@ -142,13 +143,13 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 }
 
 type fakePluginClientMetrics struct {
-	plugins.Client
+	pluginclient.Client
 
 	store map[string][]byte
 }
 
-func (c *fakePluginClientMetrics) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	metrics, exists := c.store[req.PluginContext.PluginID]
+func (c *fakePluginClientMetrics) CollectMetrics(ctx context.Context, req *pluginclient.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	metrics, exists := c.store[req.Reference.PluginID()]
 
 	if !exists {
 		return nil, plugins.ErrPluginNotRegistered

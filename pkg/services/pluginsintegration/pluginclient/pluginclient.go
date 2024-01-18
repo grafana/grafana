@@ -111,7 +111,7 @@ type QueryDataRequest struct {
 }
 
 // QueryDataHandlerFunc is an adapter to allow the use of
-// ordinary functions as backend.QueryDataHandler. If f is a function
+// ordinary functions as QueryDataHandler. If f is a function
 // with the appropriate signature, QueryDataHandlerFunc(f) is a
 // Handler that calls f.
 type QueryDataHandlerFunc func(ctx context.Context, req *QueryDataRequest) (*backend.QueryDataResponse, error)
@@ -152,6 +152,17 @@ type CallResourceRequest struct {
 
 	// Body the forwarded HTTP body for the request, if any.
 	Body []byte
+}
+
+// CallResourceHandlerFunc is an adapter to allow the use of
+// ordinary functions as CallResourceHandler. If f is a function
+// with the appropriate signature, CallResourceHandlerFunc(f) is a
+// Handler that calls f.
+type CallResourceHandlerFunc func(ctx context.Context, req *CallResourceRequest, sender backend.CallResourceResponseSender) error
+
+// QueryData calls fn(ctx, req).
+func (fn CallResourceHandlerFunc) CallResource(ctx context.Context, req *CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return fn(ctx, req, sender)
 }
 
 type CollectMetricsRequest struct {
