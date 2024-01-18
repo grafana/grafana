@@ -3,6 +3,8 @@ import { usePointerMovedSinceMount } from 'kbar/lib/utils';
 import * as React from 'react';
 import { useVirtual } from 'react-virtual';
 
+import { URLCallback } from './types';
+
 // From https://github.com/timc1/kbar/blob/main/src/KBarResults.tsx
 // TODO: Go back to KBarResults from kbar when https://github.com/timc1/kbar/issues/281 is fixed
 // Remember to remove dependency on react-virtual when removing this file
@@ -157,14 +159,14 @@ export const KBarResults = (props: KBarResultsProps) => {
         {rowVirtualizer.virtualItems.map((virtualRow) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const item = itemsRef.current[virtualRow.index] as ActionImpl & {
-            url?: string;
+            url?: string | URLCallback;
             target?: React.HTMLAttributeAnchorTarget;
           };
 
           // ActionImpl constructor copies all properties from action onto ActionImpl
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
-          const { target, url, id, keywords } = item;
+          const { target, url } = item;
 
           const handlers = typeof item !== 'string' && {
             onPointerMove: () =>
@@ -198,24 +200,11 @@ export const KBarResults = (props: KBarResultsProps) => {
             }
           );
 
-          let href = url;
-
-          // special logic for the add new connection item
-          // pass the matching keyword in as a query param to prepopulate the page
-          if (id === 'navModel.connections-add-new-connection' && search.length >= 3) {
-            const matchingKeyword = keywords
-              ?.split(' ')
-              .find((keyword) => keyword.toLowerCase().includes(search.toLowerCase()));
-            if (matchingKeyword) {
-              href = `${url}?search=${matchingKeyword}`;
-            }
-          }
-
           if (url) {
             return (
               <a
                 key={virtualRow.index}
-                href={href}
+                href={typeof url === 'function' ? url(search) : url}
                 target={target}
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 ref={active ? (activeRef as React.RefObject<HTMLAnchorElement>) : null}
