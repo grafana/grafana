@@ -221,6 +221,12 @@ func (hs *HTTPServer) getUserAuthenticatedBy(c *contextmodel.ReqContext, userID 
 		return ""
 	}
 
+	// Special case for image renderer. Frontend relies on this information
+	// to render dashboards in a bit different way.
+	if c.IsRenderCall {
+		return login.RenderModule
+	}
+
 	info, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
 	// we ignore errors where a user does not have external user auth
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
