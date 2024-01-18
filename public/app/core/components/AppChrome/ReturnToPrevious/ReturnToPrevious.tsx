@@ -33,7 +33,7 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
           variant="primary"
           fill="outline"
           onClick={handleOnClick}
-          title={title?.toString()}
+          title={title}
           className={styles.returnToPrevious}
         >
           <Trans i18nKey="return-to-previous.button.title">Back to {{ title }}</Trans>
