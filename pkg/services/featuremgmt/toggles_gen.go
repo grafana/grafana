@@ -103,6 +103,10 @@ const (
 	// Enable support for a persistent (docked) navigation menu
 	FlagDockedMegaMenu = "dockedMegaMenu"
 
+	// FlagReturnToPrevious
+	// Enables the return to previous context functionality
+	FlagReturnToPrevious = "returnToPrevious"
+
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -404,7 +408,7 @@ const (
 	FlagReportingRetries = "reportingRetries"
 
 	// FlagSseGroupByDatasource
-	// Send query to the same datasource in a single request when using server side expressions
+	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
 
 	// FlagRequestInstrumentationStatusSource

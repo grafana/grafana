@@ -212,6 +212,14 @@ var (
 			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "returnToPrevious",
+			Description:  "Enables the return to previous context functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Created:      time.Date(2024, time.January, 9, 11, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
@@ -850,7 +858,7 @@ var (
 		},
 		{
 			Name:        "sseGroupByDatasource",
-			Description: "Send query to the same datasource in a single request when using server side expressions",
+			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),

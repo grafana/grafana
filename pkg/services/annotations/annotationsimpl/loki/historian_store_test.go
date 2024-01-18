@@ -128,7 +128,36 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, res, 2*numTransitions)
 		})
 
-		t.Run("should not find any when history is outside time range", func(t *testing.T) {
+		t.Run("should return empty results when type is annotation", func(t *testing.T) {
+			fakeLokiClient.Response = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			query := annotations.ItemQuery{
+				OrgID: 1,
+				Type:  "annotation",
+			}
+			res, err := store.Get(
+				context.Background(),
+				&query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Empty(t, res)
+		})
+
+		t.Run("should return empty results when history is outside time range", func(t *testing.T) {
+			fakeLokiClient.Response = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
 			query := annotations.ItemQuery{
 				OrgID:       1,
 				DashboardID: dashboard1.ID,
