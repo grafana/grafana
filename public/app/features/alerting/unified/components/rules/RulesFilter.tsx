@@ -3,7 +3,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -91,6 +92,10 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     setFilterKey((key) => key + 1);
   };
 
+  const handleDashboardChange = (dashboardUid: string | undefined) => {
+    updateFilters({ ...filterState, dashboardUid });
+  };
+
   const clearDataSource = () => {
     updateFilters({ ...filterState, dataSourceNames: [] });
     setFilterKey((key) => key + 1);
@@ -99,7 +104,6 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
     updateFilters({ ...filterState, ruleState: value });
-    setFilterKey((key) => key + 1);
   };
 
   const handleViewChange = (view: string) => {
@@ -108,12 +112,10 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
 
   const handleRuleTypeChange = (ruleType: PromRuleType) => {
     updateFilters({ ...filterState, ruleType });
-    setFilterKey((key) => key + 1);
   };
 
   const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
     updateFilters({ ...filterState, ruleHealth });
-    setFilterKey((key) => key + 1);
   };
 
   const handleClearFiltersClick = () => {
@@ -127,7 +129,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   return (
     <div className={styles.container}>
       <Stack direction="column" gap={1}>
-        <Stack direction="row" gap={1}>
+        <Stack direction="row" gap={1} wrap="wrap">
           <Field
             className={styles.dsPickerContainer}
             label={
@@ -164,6 +166,19 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onClear={clearDataSource}
             />
           </Field>
+
+          <div className={styles.dashboardPickerContainer}>
+            <Label>Dashboard</Label>
+            {/* The key prop is to clear the picker value */}
+            {/* DashboardPicker doesn't do that itself when value is undefined */}
+            <DashboardPicker
+              key={filterState.dashboardUid ? 'dashboard-not-defined' : 'dashboard-defined'}
+              value={filterState.dashboardUid}
+              onChange={(value) => handleDashboardChange(value?.uid)}
+              isClearable
+              cacheOptions
+            />
+          </div>
 
           <div>
             <Label>State</Label>
@@ -246,18 +261,21 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    dsPickerContainer: css`
-      width: 550px;
-      flex-grow: 0;
-      margin: 0;
-    `,
-    searchInput: css`
-      flex: 1;
-      margin: 0;
-    `,
+    container: css({
+      marginBottom: theme.spacing(1),
+    }),
+    dsPickerContainer: css({
+      width: theme.spacing(60),
+      flexGrow: 0,
+      margin: 0,
+    }),
+    dashboardPickerContainer: css({
+      minWidth: theme.spacing(50),
+    }),
+    searchInput: css({
+      flex: 1,
+      margin: 0,
+    }),
   };
 };
 
@@ -297,16 +315,16 @@ function HelpRow({ title, expr }: { title: string; expr: string }) {
 }
 
 const helpStyles = (theme: GrafanaTheme2) => ({
-  grid: css`
-    display: grid;
-    grid-template-columns: max-content auto;
-    gap: ${theme.spacing(1)};
-    align-items: center;
-  `,
-  code: css`
-    display: block;
-    text-align: center;
-  `,
+  grid: css({
+    display: 'grid',
+    gridTemplateColumns: 'max-content auto',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+  }),
+  code: css({
+    display: 'block',
+    textAlign: 'center',
+  }),
 });
 
 export default RulesFilter;
