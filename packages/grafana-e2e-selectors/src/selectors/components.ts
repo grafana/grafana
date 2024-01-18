@@ -259,6 +259,7 @@ export const Components = {
     searchInput: 'data-testid search transformations',
     noTransformationsMessage: 'data-testid no transformations message',
     addTransformationButton: 'data-testid add transformation button',
+    removeAllTransformationsButton: 'data-testid remove all transformations button',
   },
   NavBar: {
     Configuration: {

@@ -68,6 +68,9 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
+  const openDrawer = () => setDrawerOpen(true);
+  const closeDrawer = () => setDrawerOpen(false);
+
   if (!data || !sourceData.data) {
     return;
   }
@@ -80,7 +83,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           return;
         }
         model.changeTransformations([...transformations, { id: selected.value, options: {} }]);
-        setDrawerOpen(false);
+        closeDrawer();
       }}
       isOpen={drawerOpen}
       series={data.series}
@@ -90,7 +93,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   if (transformations.length < 1) {
     return (
       <>
-        <EmptyTransformationsMessage onShowPicker={() => setDrawerOpen(true)}></EmptyTransformationsMessage>
+        <EmptyTransformationsMessage onShowPicker={openDrawer}></EmptyTransformationsMessage>
         {transformationsDrawer}
       </>
     );
@@ -103,12 +106,18 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         <Button
           icon="plus"
           variant="secondary"
-          onClick={() => setDrawerOpen(true)}
+          onClick={openDrawer}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
           Add another transformation
         </Button>
-        <Button className={styles.removeAll} icon="times" variant="secondary" onClick={() => setConfirmModalOpen(true)}>
+        <Button
+          data-testid={selectors.components.Transforms.removeAllTransformationsButton}
+          className={styles.removeAll}
+          icon="times"
+          variant="secondary"
+          onClick={() => setConfirmModalOpen(true)}
+        >
           Delete all transformations
         </Button>
       </ButtonGroup>
