@@ -3,21 +3,33 @@ package sqlstash
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-// #TODO: fix import cycle
 func TestCreate(t *testing.T) {
-	entityDB, err := dbimpl.ProvideEntityDB(dbtest.NewFakeDB(), nil, featuremgmt.WithFeatures())
+	// #TODO: figure out if this is the store we want to use
+	sqlStore := db.InitTestDB(t)
+
+	entityDB, err := dbimpl.ProvideEntityDB(
+		sqlStore,
+		setting.NewCfg(),
+		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
 	require.NoError(t, err)
+
+	// #TODO: this is required for now so that migrations can take place. Find another way?
+	err = entityDB.Init()
+	require.NoError(t, err)
+
 	s, err := ProvideSQLEntityServer(entityDB)
 	require.NoError(t, err)
 

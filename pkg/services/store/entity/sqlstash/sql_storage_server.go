@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"math/rand"
 	"strings"
 	"time"
@@ -21,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
 // Make sure we implement both store + admin
@@ -32,10 +32,19 @@ func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (en
 		return nil, err
 	}
 
+	// #TODO: [temporary change] figure out how to provide session and dialect
+	sess, err := db.GetSession()
+	if err != nil {
+		return nil, err
+	}
+
 	entityServer := &sqlEntityServer{
 		db:        db,
 		log:       log.New("sql-entity-server"),
 		snowflake: snode,
+		// #TODO: [temporary change] figure out how to provide session and dialect
+		dialect: &migrator.SQLite3{},
+		sess:    sess,
 	}
 
 	return entityServer, nil
@@ -299,7 +308,8 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		current, err := s.read(ctx, tx, &entity.ReadEntityRequest{
-			Key:        r.Entity.Key,
+			// #TODO: fix the panic that occurs when this line is uncommented
+			// Key:        r.Entity.Key,
 			WithBody:   true,
 			WithStatus: true,
 		})
