@@ -221,6 +221,8 @@ func (hs *HTTPServer) getUserAuthenticatedBy(c *contextmodel.ReqContext, userID 
 		return ""
 	}
 
+	// Special case for image renderer. Frontend relies on this information
+	// to render dashboards in a bit different way.
 	if c.IsRenderCall {
 		return login.RenderModule
 	}
