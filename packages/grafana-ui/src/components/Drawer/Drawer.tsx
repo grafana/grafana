@@ -48,8 +48,8 @@ export interface Props {
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
   onClose: () => void;
-  /** Enabl */
-  enableResize?: boolean;
+  /** Allow the drawer to be resized */
+  resizable?: boolean;
 }
 
 export function Drawer({
@@ -62,6 +62,7 @@ export function Drawer({
   width,
   size = 'md',
   tabs,
+  resizable
 }: Props) {
   const styles = useStyles2(getStyles);
   const overlayRef = React.useRef(null);
@@ -82,6 +83,42 @@ export function Drawer({
   // Apply size styles (unless deprecated width prop is used)
   const rootClass = cx(styles.drawer, !width && styles.sizes[realsize]);
   const content = <div className={styles.content}>{children}</div>;
+
+  let resizeControls = null;
+  if (resizable) {
+    resizeControls = <>
+      <Button
+        icon="gf-movepane-left"
+        variant="secondary"
+        fill="text"
+        tooltip="Expand"
+        disabled={realsize === 'lg'}
+        onClick={() => {
+          if(realsize === 'sm') {
+            setSize('md')
+          }
+          else if (realsize === 'md') {
+            setSize('lg')
+          }
+        }}
+    />
+    <Button
+      icon="gf-movepane-right"
+      variant="secondary"
+      fill="text"
+      tooltip="Collapse"
+      disabled={realsize === 'sm'}
+      onClick={() => {
+        if (realsize === 'lg') {
+          setSize('md')
+        }
+        else if (realsize === 'md') {
+          setSize('sm')
+        }
+      }}
+      />
+    </>
+  }
 
   return (
     <RcDrawer
@@ -119,36 +156,7 @@ export function Drawer({
           {typeof title === 'string' && (
             <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
               <div className={styles.actions}>
-                <Button
-                  icon="gf-movepane-left"
-                  variant="secondary"
-                  fill="text"
-                  tooltip="Expand"
-                  disabled={realsize === 'lg'}
-                  onClick={() => {
-                    if(realsize === 'sm') {
-                      setSize('md')
-                    }
-                    else if (realsize === 'md') {
-                      setSize('lg')
-                    }
-                  }}
-                />
-                <Button
-                  icon="gf-movepane-right"
-                  variant="secondary"
-                  fill="text"
-                  tooltip="Collapse"
-                  disabled={realsize === 'sm'}
-                  onClick={() => {
-                    if (realsize === 'lg') {
-                      setSize('md')
-                    }
-                    else if (realsize === 'md') {
-                      setSize('sm')
-                    }
-                  }}
-                  />
+                {resizeControls}
                 <Button
                   icon="times"
                   variant="secondary"
