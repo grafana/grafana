@@ -284,10 +284,6 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int6
 }
 
 func (d *PublicDashboardStoreImpl) FindByFolder(ctx context.Context, orgId int64, folderUid string) ([]*PublicDashboard, error) {
-	if orgId == 0 || folderUid == "" {
-		return nil, nil
-	}
-
 	var pubdashes []*PublicDashboard
 
 	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
