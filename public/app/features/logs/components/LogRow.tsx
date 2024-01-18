@@ -178,7 +178,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return;
     }
 
-    if (!this.state.permalinked && this.logLineRef.current && scrollIntoView && containerRendered) {
+    if (!this.state.permalinked && containerRendered && this.logLineRef.current && scrollIntoView) {
       // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
       scrollIntoView(this.logLineRef.current);
       reportInteraction('grafana_explore_logs_permalink_opened', {
