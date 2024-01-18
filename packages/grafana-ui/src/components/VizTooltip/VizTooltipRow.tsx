@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -23,6 +23,7 @@ enum LabelValueTypes {
 }
 
 const SUCCESSFULLY_COPIED_TEXT = 'Copied to clipboard';
+const SHOW_SUCCESS_DURATION = 2 * 1000;
 
 export const VizTooltipRow = ({
   label,
@@ -39,24 +40,60 @@ export const VizTooltipRow = ({
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
   const [showValueTooltip, setShowValueTooltip] = useState(false);
+
   const [copiedText, setCopiedText] = useState<Record<string, string> | null>(null);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   const labelRef = useRef<null | HTMLDivElement>(null);
   const valueRef = useRef<null | HTMLDivElement>(null);
 
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    if (showCopySuccess) {
+      timeoutId = setTimeout(() => {
+        setShowCopySuccess(false);
+      }, SHOW_SUCCESS_DURATION);
+    }
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [showCopySuccess]);
+
   const copyToClipboard = async (text: string, type: LabelValueTypes) => {
-    if (!navigator?.clipboard) {
-      return false;
+    if (!(navigator?.clipboard && window.isSecureContext)) {
+      fallbackCopyToClipboard(text, type);
+      return;
     }
 
     try {
       await navigator.clipboard.writeText(text);
       setCopiedText({ [`${type}`]: text });
-      return true;
+      setShowCopySuccess(true);
     } catch (error) {
       setCopiedText(null);
-      return false;
     }
+  };
+
+  const fallbackCopyToClipboard = (text: string, type: LabelValueTypes) => {
+    // Use a fallback method for browsers/contexts that don't support the Clipboard API.
+    const textarea = document.createElement('textarea');
+    labelRef.current?.appendChild(textarea);
+    textarea.value = text;
+    textarea.focus();
+    textarea.select();
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        setCopiedText({ [`${type}`]: text });
+        setShowCopySuccess(true);
+      }
+    } catch (err) {
+      console.error('Unable to copy to clipboard', err);
+    }
+
+    textarea.remove();
   };
 
   const onMouseEnterLabel = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -88,7 +125,7 @@ export const VizTooltipRow = ({
             <>
               <Tooltip content={label} interactive={false} show={showLabelTooltip}>
                 <>
-                  {copiedText?.label && (
+                  {showCopySuccess && copiedText?.label && (
                     <InlineToast placement="top" referenceElement={labelRef.current}>
                       {SUCCESSFULLY_COPIED_TEXT}
                     </InlineToast>
@@ -124,7 +161,7 @@ export const VizTooltipRow = ({
         ) : (
           <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
             <>
-              {copiedText?.value && (
+              {showCopySuccess && copiedText?.value && (
                 <InlineToast placement="top" referenceElement={valueRef.current}>
                   {SUCCESSFULLY_COPIED_TEXT}
                 </InlineToast>
