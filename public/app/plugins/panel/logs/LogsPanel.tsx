@@ -64,8 +64,6 @@ export const LogsPanel = ({
   const urlParams = urlUtil.getUrlSearchParams();
   const panelStateEncoded = urlParams?.panelState;
   const getLogsPanelState = (): LogsPermalinkUrlState | undefined => {
-    console.log(urlUtil.getUrlSearchParams());
-
     if (
       panelStateEncoded &&
       Array.isArray(panelStateEncoded) &&
