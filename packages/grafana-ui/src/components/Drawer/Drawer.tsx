@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
+import { useClick } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -62,6 +63,8 @@ export function Drawer({
   size = 'md',
   tabs,
 }: Props) {
+  const [drawerWidth, onMouseDown] = useResizebleDrawer();
+
   const styles = useStyles2(getStyles);
   const overlayRef = React.useRef(null);
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
@@ -78,7 +81,7 @@ export function Drawer({
   useBodyClassWhileOpen();
 
   // Apply size styles (unless deprecated width prop is used)
-  const rootClass = cx(styles.drawer, !width && styles.sizes[size]);
+  const rootClass = cx(styles.drawer, !width && styles.sizes[size], drawerWidth && overrideWidth(drawerWidth));
   const content = <div className={styles.content}>{children}</div>;
 
   return (
@@ -114,6 +117,8 @@ export function Drawer({
           {...dialogProps}
           ref={overlayRef}
         >
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+          <div className={styles.resizer} onMouseDown={onMouseDown} />
           {typeof title === 'string' && (
             <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
               <div className={styles.actions}>
@@ -142,6 +147,44 @@ export function Drawer({
   );
 }
 
+function useResizebleDrawer(): [number | undefined, React.EventHandler<React.MouseEvent>] {
+  const [drawerWidth, setDrawerWidth] = useState<number | undefined>(undefined);
+
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    let offsetRight = document.body.offsetWidth - (e.clientX - document.body.offsetLeft);
+    let minWidth = 256;
+    if (offsetRight > minWidth) {
+      setDrawerWidth(offsetRight);
+    }
+  }, []);
+
+  const onMouseUp = useCallback(
+    (e: MouseEvent) => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    },
+    [onMouseMove]
+  );
+
+  function onMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    e.preventDefault();
+    // we will only add listeners when needed, and remove them afterward
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
+  return [drawerWidth, onMouseDown];
+}
+
+function overrideWidth(width: number) {
+  return css({
+    '.rc-drawer-content-wrapper': {
+      width: `${width}px !important`,
+    },
+  });
+}
+
 function useBodyClassWhileOpen() {
   useEffect(() => {
     if (!document.body) {
@@ -164,6 +207,45 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       flex: '1 1 0',
       minHeight: '100%',
+      position: 'relative',
+    }),
+    resizer: css({
+      width: 8,
+      top: 0,
+      left: 0,
+      bottom: 0,
+      position: 'absolute',
+      cursor: 'col-resize',
+      zIndex: theme.zIndex.modal,
+
+      '&::after': {
+        background: theme.components.panel.borderColor,
+        content: '""',
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        transition: '0.2s background ease-in-out',
+        transform: 'translate(-50%, -50%)',
+        borderRadius: theme.shape.radius.default,
+        height: '200px',
+        width: '4px',
+      },
+
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        transition: '0.2s border-color ease-in-out',
+        borderRight: '2px solid transparent',
+        height: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+      },
+
+      '&:hover': {
+        '&::before': {
+          borderColor: theme.colors.primary.border,
+        },
+      },
     }),
     drawer: css({
       '.main-view &': {
