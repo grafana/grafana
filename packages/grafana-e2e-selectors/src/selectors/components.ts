@@ -53,7 +53,7 @@ export const Components = {
       },
     },
     DataSourceHttpSettings: {
-      urlInput: 'Datasource HTTP settings url',
+      urlInput: 'data-testid Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
@@ -61,10 +61,10 @@ export const Components = {
     Prometheus: {
       configPage: {
         connectionSettings: 'Data source connection URL',
-        exemplarsAddButton: 'Add exemplar config button',
-        internalLinkSwitch: 'Internal link switch',
+        exemplarsAddButton: 'data-testid Add exemplar config button',
+        internalLinkSwitch: 'data-testid Internal link switch',
       },
-      exemplarMarker: 'Exemplar marker',
+      exemplarMarker: 'data-testid Exemplar marker',
     },
   },
   Menu: {
@@ -72,8 +72,8 @@ export const Components = {
     MenuGroup: (title: string) => `${title} menu group`,
     MenuItem: (title: string) => `${title} menu item`,
     SubMenu: {
-      container: 'SubMenu container',
-      icon: 'SubMenu icon',
+      container: 'data-testid SubMenu container',
+      icon: 'data-testid SubMenu icon',
     },
   },
   Panels: {
@@ -113,7 +113,7 @@ export const Components = {
         valueV2: 'data-testid Bar gauge value',
       },
       PieChart: {
-        svgSlice: 'Pie Chart Slice',
+        svgSlice: 'data testid Pie Chart Slice',
       },
       Text: {
         container: () => '.markdown-html',
@@ -126,14 +126,14 @@ export const Components = {
     },
   },
   VizLegend: {
-    seriesName: (name: string) => `VizLegend series ${name}`,
+    seriesName: (name: string) => `data-testid VizLegend series ${name}`,
   },
   Drawer: {
     General: {
       title: (title: string) => `Drawer title ${title}`,
       expand: 'Drawer expand',
       contract: 'Drawer contract',
-      close: 'Drawer close',
+      close: 'data-testid Drawer close',
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
     },
   },
@@ -287,7 +287,7 @@ export const Components = {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
   },
   BackButton: {
-    backArrow: 'Go Back',
+    backArrow: 'data-testid Go Back',
   },
   OptionsGroup: {
     group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
@@ -345,16 +345,16 @@ export const Components = {
   TraceViewer: {
     spanBar: 'data-testid SpanBar--wrapper',
   },
-  QueryField: { container: 'Query field' },
+  QueryField: { container: 'data-testid Query field' },
   QueryBuilder: {
-    queryPatterns: 'Query patterns',
-    labelSelect: 'Select label',
-    valueSelect: 'Select value',
-    matchOperatorSelect: 'Select match operator',
+    queryPatterns: 'data-testid Query patterns',
+    labelSelect: 'data-testid Select label',
+    valueSelect: 'data-testid Select value',
+    matchOperatorSelect: 'data-testid Select match operator',
   },
   ValuePicker: {
-    button: (name: string) => `Value picker button ${name}`,
-    select: (name: string) => `Value picker select ${name}`,
+    button: (name: string) => `data-testid Value picker button ${name}`,
+    select: (name: string) => `data-testid Value picker select ${name}`,
   },
   Search: {
     /**
@@ -382,7 +382,7 @@ export const Components = {
     link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
-    icon: 'Loading indicator',
+    icon: 'data-testid Loading indicator',
   },
   CallToActionCard: {
     /**
@@ -392,7 +392,7 @@ export const Components = {
     buttonV2: (name: string) => `data-testid Call to action button ${name}`,
   },
   DataLinksContextMenu: {
-    singleLink: 'Data link',
+    singleLink: 'data-testid Data link',
   },
   CodeEditor: {
     container: 'data-testid Code editor container',

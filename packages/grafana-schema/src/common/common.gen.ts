@@ -9,6 +9,16 @@
 
 
 /**
+ * A topic is attached to DataFrame metadata in query results.
+ * This specifies where the data should be used.
+ */
+export enum DataTopic {
+  AlertStates = 'alertStates',
+  Annotations = 'annotations',
+  Series = 'series',
+}
+
+/**
  * TODO docs
  */
 export interface DataSourceJsonData {

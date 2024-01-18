@@ -2,8 +2,8 @@ import React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
-import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
+import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
 import { SearchTableType } from '../dataquery.gen';
 import { DEFAULT_LIMIT, DEFAULT_SPSS } from '../datasource';
 import { TempoQuery } from '../types';

@@ -8,8 +8,8 @@ import { getLastKey, getVariablesByKey } from '../../../variables/state/selector
 
 export interface Props {
   id?: string;
-  repeat?: string | null;
-  onChange: (name: string | null) => void;
+  repeat?: string;
+  onChange: (name?: string) => void;
 }
 
 export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {

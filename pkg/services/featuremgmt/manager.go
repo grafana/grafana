@@ -19,9 +19,9 @@ type FeatureManager struct {
 	allowEditing    bool
 	licensing       licensing.Licensing
 	flags           map[string]*FeatureFlag
-	enabled         map[string]bool // only the "on" values
-	config          string          // path to config file
-	vars            map[string]any
+	enabled         map[string]bool   // only the "on" values
+	startup         map[string]bool   // the explicit values registered at startup
+	warnings        map[string]string // potential warnings about the flag
 	log             log.Logger
 }
 
@@ -73,16 +73,16 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 }
 
 // meetsRequirements checks if grafana is able to run the given feature due to dev mode or licensing requirements
-func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) bool {
+func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) (bool, string) {
 	if ff.RequiresDevMode && !fm.isDevMod {
-		return false
+		return false, "requires dev mode"
 	}
 
 	if ff.RequiresLicense && (fm.licensing == nil || !fm.licensing.FeatureEnabled(ff.Name)) {
-		return false
+		return false, "license requirement"
 	}
 
-	return true
+	return true, ""
 }
 
 // Update
@@ -90,14 +90,16 @@ func (fm *FeatureManager) update() {
 	enabled := make(map[string]bool)
 	for _, flag := range fm.flags {
 		// if grafana cannot run the feature, omit metrics around it
-		if !fm.meetsRequirements(flag) {
+		ok, reason := fm.meetsRequirements(flag)
+		if !ok {
+			fm.warnings[flag.Name] = reason
 			continue
 		}
 
 		// Update the registry
 		track := 0.0
-		// TODO: CEL - expression
-		if flag.Expression == "true" {
+
+		if flag.Expression == "true" || (fm.startup[flag.Name]) {
 			track = 1
 			enabled[flag.Name] = true
 		}
@@ -106,23 +108,6 @@ func (fm *FeatureManager) update() {
 		featureToggleInfo.WithLabelValues(flag.Name).Set(track)
 	}
 	fm.enabled = enabled
-}
-
-// Run is called by background services
-func (fm *FeatureManager) readFile() error {
-	if fm.config == "" {
-		return nil // not configured
-	}
-
-	cfg, err := readConfigFile(fm.config)
-	if err != nil {
-		return err
-	}
-
-	fm.registerFlags(cfg.Flags...)
-	fm.vars = cfg.Vars
-
-	return nil
 }
 
 // IsEnabled checks if a feature is enabled
@@ -174,10 +159,14 @@ func (fm *FeatureManager) LookupFlag(name string) (FeatureFlag, bool) {
 
 // ############# Test Functions #############
 
+func WithFeatures(spec ...any) FeatureToggles {
+	return WithManager(spec...)
+}
+
 // WithFeatures is used to define feature toggles for testing.
 // The arguments are a list of strings that are optionally followed by a boolean value for example:
 // WithFeatures([]any{"my_feature", "other_feature"}) or WithFeatures([]any{"my_feature", true})
-func WithFeatures(spec ...any) *FeatureManager {
+func WithManager(spec ...any) *FeatureManager {
 	count := len(spec)
 	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)
@@ -192,30 +181,35 @@ func WithFeatures(spec ...any) *FeatureManager {
 			idx++
 		}
 
-		features[key] = &FeatureFlag{Name: key, Enabled: val}
+		features[key] = &FeatureFlag{Name: key}
 		if val {
 			enabled[key] = true
 		}
 	}
 
-	return &FeatureManager{enabled: enabled, flags: features}
+	return &FeatureManager{enabled: enabled, flags: features, startup: enabled, warnings: map[string]string{}}
 }
 
-// WithFeatureFlags is used to define feature toggles for testing.
+// WithFeatureManager is used to define feature toggle manager for testing.
 // It should be used when your test feature toggles require metadata beyond `Name` and `Enabled`.
 // You should provide a feature toggle Name at a minimum.
-func WithFeatureFlags(flags []*FeatureFlag) *FeatureManager {
+func WithFeatureManager(flags []*FeatureFlag, disabled ...string) *FeatureManager {
 	count := len(flags)
 	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)
+
+	dis := make(map[string]bool)
+	for _, v := range disabled {
+		dis[v] = true
+	}
 
 	for _, f := range flags {
 		if f.Name == "" {
 			continue
 		}
 		features[f.Name] = f
-		enabled[f.Name] = f.Enabled
+		enabled[f.Name] = !dis[f.Name]
 	}
 
-	return &FeatureManager{enabled: enabled, flags: features}
+	return &FeatureManager{enabled: enabled, flags: features, startup: enabled, warnings: map[string]string{}}
 }

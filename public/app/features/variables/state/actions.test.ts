@@ -231,7 +231,7 @@ describe('shared actions', () => {
           toKeyedAction(
             key,
             createCustomOptionsFromQuery(
-              toVariablePayload({ ...custom, id: dispatchedActions[4].payload.action.payload.id })
+              toVariablePayload({ ...custom, id: dispatchedActions[4].payload.action.payload.id }, '')
             )
           )
         );
