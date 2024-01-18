@@ -17,7 +17,7 @@ import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegratio
 
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -34,7 +34,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const panel = menu.parent as VizPanel;
     const plugin = panel.getPlugin();
 
-    const location = locationService.getLocation();
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];
     const inspectSubMenu: PanelMenuItem[] = [];
@@ -57,12 +56,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.edit', `Edit`),
           iconClassName: 'eye',
           shortcut: 'e',
-          onClick: () => () => DashboardInteractions.panelMenuItemClicked('edit'),
-          href: getDashboardUrl({
-            uid: dashboard.state.uid,
-            subPath: `/panel-edit/${panelId}`,
-            currentQueryParams: location.search,
-          }),
+          onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
+          href: getEditPanelUrl(panelId),
         });
       }
 

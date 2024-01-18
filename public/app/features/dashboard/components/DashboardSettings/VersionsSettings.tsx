@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 import { config } from '@grafana/runtime';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-
 import {
   historySrv,
   RevisionsModel,
@@ -11,7 +10,7 @@ import {
   VersionHistoryHeader,
   VersionsHistoryButtons,
   VersionHistoryComparison,
-} from '../VersionHistory';
+} from 'app/features/dashboard-scene/settings/version-history';
 
 import { SettingsPageProps } from './types';
 
@@ -22,7 +21,7 @@ type State = {
   isAppending: boolean;
   versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
-  diffData: { lhs: unknown; rhs: unknown };
+  diffData: { lhs: string; rhs: string };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;
@@ -50,8 +49,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
       viewMode: 'list',
       isNewLatest: false,
       diffData: {
-        lhs: {},
-        rhs: {},
+        lhs: '',
+        rhs: '',
       },
     };
   }
@@ -124,8 +123,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
     this.setState({
       baseInfo: undefined,
       diffData: {
-        lhs: {},
-        rhs: {},
+        lhs: '',
+        rhs: '',
       },
       isNewLatest: false,
       newInfo: undefined,

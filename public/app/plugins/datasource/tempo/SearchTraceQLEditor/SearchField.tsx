@@ -18,9 +18,9 @@ import { operators as allOperators, stringOperators, numberOperators, keywordOpe
 import { filterScopedTag, operatorSelectableValue } from './utils';
 
 const getStyles = () => ({
-  dropdown: css`
-    box-shadow: none;
-  `,
+  dropdown: css({
+    boxShadow: 'none',
+  }),
 });
 
 interface Props {

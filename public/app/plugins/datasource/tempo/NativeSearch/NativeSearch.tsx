@@ -262,11 +262,11 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
 export default NativeSearch;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    max-width: 500px;
-  `,
-  alert: css`
-    max-width: 75ch;
-    margin-top: ${theme.spacing(2)};
-  `,
+  container: css({
+    maxWidth: '500px',
+  }),
+  alert: css({
+    maxWidth: '75ch',
+    marginTop: theme.spacing(2),
+  }),
 });
