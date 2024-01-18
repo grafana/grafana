@@ -725,7 +725,8 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
     let newQuerySource: Observable<ExplorePanelData>;
 
     const logQueries = queryResponse.logsResult?.queries || [];
-    const queries = logQueries.map((query: DataQuery) => ({
+    const logRefIds = queryResponse.logsFrames.map(frame => frame.refId);
+    const queries = logQueries.filter(query => logRefIds.includes(query.refId)).map((query: DataQuery) => ({
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
       refId: `${infiniteScrollRefId}${query.refId}`,
