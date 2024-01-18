@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { default as React, useState } from 'react';
 import { Provider } from 'react-redux';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { Props } from 'react-virtualized-auto-sizer';
 
 import { configureStore } from 'app/store/configureStore';
 
@@ -30,7 +30,13 @@ jest.mock('@grafana/ui', () => ({
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
+  return ({ children }: Props) =>
+    children({
+      height: 1,
+      scaledHeight: 1,
+      scaledWidth: 1,
+      width: 1,
+    });
 });
 
 const PayloadEditorWithState = () => {

@@ -128,15 +128,19 @@ export const InfiniteScroll = ({
 };
 
 const styles = {
-  limitReached: css({
+  messageContainer: css({
     textAlign: 'center',
     padding: 0.25,
   }),
 };
 
-const outOfRangeMessage = <div className={styles.limitReached}>End of the selected time range.</div>;
+const outOfRangeMessage = (
+  <div className={styles.messageContainer} data-testid="end-of-range">
+    End of the selected time range.
+  </div>
+);
 const loadingMessage = (
-  <div className={styles.limitReached}>
+  <div className={styles.messageContainer}>
     <Spinner />
   </div>
 );

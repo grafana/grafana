@@ -37,9 +37,18 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 		return []definitions.MuteTimeInterval{}, nil
 	}
 
+	provenances, err := svc.provenanceStore.GetProvenances(ctx, orgID, (&definitions.MuteTimeInterval{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]definitions.MuteTimeInterval, 0, len(rev.cfg.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
-		result = append(result, definitions.MuteTimeInterval{MuteTimeInterval: interval})
+		def := definitions.MuteTimeInterval{MuteTimeInterval: interval}
+		if prov, ok := provenances[def.ResourceID()]; ok {
+			def.Provenance = definitions.Provenance(prov)
+		}
+		result = append(result, def)
 	}
 	return result, nil
 }
@@ -60,12 +69,11 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, or
 		MuteTimeInterval: mt,
 	}
 
-	_, err = svc.provenanceStore.GetProvenance(ctx, &result, orgID)
+	prov, err := svc.provenanceStore.GetProvenance(ctx, &result, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	// TODO uncomment in a follow up
-	// result.Provenance = definitions.Provenance(prov)
+	result.Provenance = definitions.Provenance(prov)
 	return result, nil
 }
 

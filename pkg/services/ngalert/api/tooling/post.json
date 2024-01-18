@@ -1,5 +1,5 @@
 {
- "basePath": "/api/v1",
+ "basePath": "/api",
  "consumes": [
   "application/json"
  ],
@@ -4413,7 +4413,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4598,13 +4597,13 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4653,7 +4652,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4804,6 +4802,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4841,7 +4840,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4961,7 +4959,7 @@
   "version": "1.1.0"
  },
  "paths": {
-  "/api/alertmanager/grafana/api/v2/alerts": {
+  "/alertmanager/grafana/api/v2/alerts": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetGrafanaAMAlerts",
@@ -5022,7 +5020,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/api/v2/alerts/groups": {
+  "/alertmanager/grafana/api/v2/alerts/groups": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetGrafanaAMAlertGroups",
@@ -5083,7 +5081,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/api/v2/silence/{SilenceId}": {
+  "/alertmanager/grafana/api/v2/silence/{SilenceId}": {
    "delete": {
     "description": "delete silence",
     "operationId": "RouteDeleteGrafanaSilence",
@@ -5143,7 +5141,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/api/v2/silences": {
+  "/alertmanager/grafana/api/v2/silences": {
    "get": {
     "description": "get silences",
     "operationId": "RouteGetGrafanaSilences",
@@ -5206,7 +5204,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/api/v2/status": {
+  "/alertmanager/grafana/api/v2/status": {
    "get": {
     "description": "get alertmanager status and configuration",
     "operationId": "RouteGetGrafanaAMStatus",
@@ -5229,7 +5227,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/config/api/v1/alerts": {
+  "/alertmanager/grafana/config/api/v1/alerts": {
    "delete": {
     "description": "deletes the Alerting config for a tenant",
     "operationId": "RouteDeleteGrafanaAlertingConfig",
@@ -5303,7 +5301,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/config/api/v1/receivers": {
+  "/alertmanager/grafana/config/api/v1/receivers": {
    "get": {
     "description": "Get a list of all receivers",
     "operationId": "RouteGetGrafanaReceivers",
@@ -5317,7 +5315,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/config/api/v1/receivers/test": {
+  "/alertmanager/grafana/config/api/v1/receivers/test": {
    "post": {
     "operationId": "RoutePostTestGrafanaReceivers",
     "parameters": [
@@ -5379,7 +5377,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/config/api/v1/templates/test": {
+  "/alertmanager/grafana/config/api/v1/templates/test": {
    "post": {
     "operationId": "RoutePostTestGrafanaTemplates",
     "parameters": [
@@ -5426,7 +5424,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/config/history": {
+  "/alertmanager/grafana/config/history": {
    "get": {
     "description": "gets Alerting configurations that were successfully applied in the past",
     "operationId": "RouteGetGrafanaAlertingConfigHistory",
@@ -5449,7 +5447,7 @@
     ]
    }
   },
-  "/api/alertmanager/grafana/config/history/{id}/_activate": {
+  "/alertmanager/grafana/config/history/{id}/_activate": {
    "post": {
     "description": "revert Alerting configuration to the historical configuration specified by the given id",
     "operationId": "RoutePostGrafanaAlertingConfigHistoryActivate",
@@ -5488,7 +5486,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceUID}/api/v2/alerts": {
+  "/alertmanager/{DatasourceUID}/api/v2/alerts": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAMAlerts",
@@ -5608,7 +5606,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
+  "/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAMAlertGroups",
@@ -5682,7 +5680,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
+  "/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
    "delete": {
     "description": "delete silence",
     "operationId": "RouteDeleteSilence",
@@ -5768,7 +5766,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceUID}/api/v2/silences": {
+  "/alertmanager/{DatasourceUID}/api/v2/silences": {
    "get": {
     "description": "get silences",
     "operationId": "RouteGetSilences",
@@ -5857,7 +5855,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceUID}/api/v2/status": {
+  "/alertmanager/{DatasourceUID}/api/v2/status": {
    "get": {
     "description": "get alertmanager status and configuration",
     "operationId": "RouteGetAMStatus",
@@ -5895,7 +5893,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
+  "/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
    "delete": {
     "description": "deletes the Alerting config for a tenant",
     "operationId": "RouteDeleteAlertingConfig",
@@ -6012,7 +6010,7 @@
     ]
    }
   },
-  "/api/prometheus/grafana/api/v1/alerts": {
+  "/prometheus/grafana/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
     "operationId": "RouteGetGrafanaAlertStatuses",
@@ -6038,7 +6036,7 @@
     ]
    }
   },
-  "/api/prometheus/grafana/api/v1/rules": {
+  "/prometheus/grafana/api/v1/rules": {
    "get": {
     "description": "gets the evaluation statuses of all rules",
     "operationId": "RouteGetGrafanaRuleStatuses",
@@ -6077,7 +6075,7 @@
     ]
    }
   },
-  "/api/prometheus/{DatasourceUID}/api/v1/alerts": {
+  "/prometheus/{DatasourceUID}/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
     "operationId": "RouteGetAlertStatuses",
@@ -6109,7 +6107,7 @@
     ]
    }
   },
-  "/api/prometheus/{DatasourceUID}/api/v1/rules": {
+  "/prometheus/{DatasourceUID}/api/v1/rules": {
    "get": {
     "description": "gets the evaluation statuses of all rules",
     "operationId": "RouteGetRuleStatuses",
@@ -6141,7 +6139,7 @@
     ]
    }
   },
-  "/api/ruler/grafana/api/v1/export/rules": {
+  "/ruler/grafana/api/v1/export/rules": {
    "get": {
     "consumes": [
      "application/json",
@@ -6208,7 +6206,7 @@
     ]
    }
   },
-  "/api/ruler/grafana/api/v1/rules": {
+  "/ruler/grafana/api/v1/rules": {
    "get": {
     "description": "List rule groups",
     "operationId": "RouteGetGrafanaRulesConfig",
@@ -6247,12 +6245,13 @@
     ]
    }
   },
-  "/api/ruler/grafana/api/v1/rules/{Namespace}": {
+  "/ruler/grafana/api/v1/rules/{Namespace}": {
    "delete": {
     "description": "Delete namespace",
     "operationId": "RouteDeleteNamespaceGrafanaRulesConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6282,6 +6281,7 @@
     "operationId": "RouteGetNamespaceGrafanaRulesConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6318,6 +6318,7 @@
     "operationId": "RoutePostNameGrafanaRulesConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6350,7 +6351,7 @@
     ]
    }
   },
-  "/api/ruler/grafana/api/v1/rules/{Namespace}/export": {
+  "/ruler/grafana/api/v1/rules/{Namespace}/export": {
    "post": {
     "consumes": [
      "application/json",
@@ -6360,6 +6361,7 @@
     "operationId": "RoutePostRulesGroupForExport",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6409,12 +6411,13 @@
     ]
    }
   },
-  "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
+  "/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
    "delete": {
     "description": "Delete rule group",
     "operationId": "RouteDeleteGrafanaRuleGroupConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6450,6 +6453,7 @@
     "operationId": "RouteGetGrafanaRuleGroupConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6484,7 +6488,7 @@
     ]
    }
   },
-  "/api/ruler/{DatasourceUID}/api/v1/rules": {
+  "/ruler/{DatasourceUID}/api/v1/rules": {
    "get": {
     "description": "List rule groups",
     "operationId": "RouteGetRulesConfig",
@@ -6536,7 +6540,7 @@
     ]
    }
   },
-  "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}": {
+  "/ruler/{DatasourceUID}/api/v1/rules/{Namespace}": {
    "delete": {
     "description": "Delete namespace",
     "operationId": "RouteDeleteNamespaceRulesConfig",
@@ -6549,6 +6553,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6591,6 +6596,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6640,6 +6646,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6678,7 +6685,7 @@
     ]
    }
   },
-  "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}": {
+  "/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}": {
    "delete": {
     "description": "Delete rule group",
     "operationId": "RouteDeleteRuleGroupConfig",
@@ -6691,6 +6698,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6739,6 +6747,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6779,7 +6788,7 @@
     ]
    }
   },
-  "/api/v1/eval": {
+  "/v1/eval": {
    "post": {
     "consumes": [
      "application/json"
@@ -6811,7 +6820,7 @@
     ]
    }
   },
-  "/api/v1/ngalert": {
+  "/v1/ngalert": {
    "get": {
     "description": "Get the status of the alerting engine",
     "operationId": "RouteGetStatus",
@@ -6831,7 +6840,7 @@
     ]
    }
   },
-  "/api/v1/ngalert/admin_config": {
+  "/v1/ngalert/admin_config": {
    "delete": {
     "consumes": [
      "application/json"
@@ -6920,7 +6929,7 @@
     ]
    }
   },
-  "/api/v1/ngalert/alertmanagers": {
+  "/v1/ngalert/alertmanagers": {
    "get": {
     "operationId": "RouteGetAlertmanagers",
     "produces": [
@@ -6940,7 +6949,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules": {
+  "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
     "responses": {
@@ -6995,7 +7004,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/export": {
+  "/v1/provisioning/alert-rules/export": {
    "get": {
     "operationId": "RouteGetAlertRulesExport",
     "parameters": [
@@ -7052,7 +7061,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}": {
+  "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
@@ -7152,7 +7161,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}/export": {
+  "/v1/provisioning/alert-rules/{UID}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
@@ -7200,7 +7209,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points": {
+  "/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "parameters": [
@@ -7263,7 +7272,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/export": {
+  "/v1/provisioning/contact-points/export": {
    "get": {
     "operationId": "RouteGetContactpointsExport",
     "parameters": [
@@ -7315,7 +7324,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/{UID}": {
+  "/v1/provisioning/contact-points/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -7386,7 +7395,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
@@ -7470,7 +7479,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
@@ -7523,7 +7532,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings": {
+  "/v1/provisioning/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -7578,7 +7587,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/export": {
+  "/v1/provisioning/mute-timings/export": {
    "get": {
     "operationId": "RouteExportMuteTimings",
     "parameters": [
@@ -7617,7 +7626,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}": {
+  "/v1/provisioning/mute-timings/{name}": {
    "delete": {
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
@@ -7699,7 +7708,7 @@
      }
     ],
     "responses": {
-     "200": {
+     "202": {
       "description": "MuteTimeInterval",
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
@@ -7718,7 +7727,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}/export": {
+  "/v1/provisioning/mute-timings/{name}/export": {
    "get": {
     "operationId": "RouteExportMuteTiming",
     "parameters": [
@@ -7764,7 +7773,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies": {
+  "/v1/provisioning/policies": {
    "delete": {
     "consumes": [
      "application/json"
@@ -7838,7 +7847,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies/export": {
+  "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
     "responses": {
@@ -7861,7 +7870,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates": {
+  "/v1/provisioning/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -7881,7 +7890,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates/{name}": {
+  "/v1/provisioning/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "parameters": [
@@ -7976,7 +7985,7 @@
     ]
    }
   },
-  "/api/v1/rule/backtest": {
+  "/v1/rule/backtest": {
    "post": {
     "consumes": [
      "application/json"
@@ -8008,7 +8017,7 @@
     ]
    }
   },
-  "/api/v1/rule/test/grafana": {
+  "/v1/rule/test/grafana": {
    "post": {
     "consumes": [
      "application/json"
@@ -8049,7 +8058,7 @@
     ]
    }
   },
-  "/api/v1/rule/test/{DatasourceUID}": {
+  "/v1/rule/test/{DatasourceUID}": {
    "post": {
     "consumes": [
      "application/json"
@@ -8094,7 +8103,7 @@
     ]
    }
   },
-  "/api/v1/rules/history": {
+  "/v1/rules/history": {
    "get": {
     "operationId": "RouteGetStateHistory",
     "produces": [
@@ -8111,7 +8120,7 @@
     ]
    }
   },
-  "/api/v1/upgrade/channels": {
+  "/v1/upgrade/channels": {
    "post": {
     "operationId": "RoutePostUpgradeAllChannels",
     "parameters": [
@@ -8140,7 +8149,7 @@
     ]
    }
   },
-  "/api/v1/upgrade/channels/{ChannelID}": {
+  "/v1/upgrade/channels/{ChannelID}": {
    "post": {
     "operationId": "RoutePostUpgradeChannel",
     "parameters": [
@@ -8169,7 +8178,7 @@
     ]
    }
   },
-  "/api/v1/upgrade/dashboards": {
+  "/v1/upgrade/dashboards": {
    "post": {
     "operationId": "RoutePostUpgradeAllDashboards",
     "produces": [
@@ -8189,7 +8198,7 @@
     ]
    }
   },
-  "/api/v1/upgrade/dashboards/{DashboardID}": {
+  "/v1/upgrade/dashboards/{DashboardID}": {
    "post": {
     "operationId": "RoutePostUpgradeDashboard",
     "parameters": [
@@ -8225,7 +8234,7 @@
     ]
    }
   },
-  "/api/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}": {
+  "/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}": {
    "post": {
     "operationId": "RoutePostUpgradeAlert",
     "parameters": [
@@ -8261,7 +8270,7 @@
     ]
    }
   },
-  "/api/v1/upgrade/org": {
+  "/v1/upgrade/org": {
    "delete": {
     "operationId": "RouteDeleteOrgUpgrade",
     "produces": [

@@ -1,21 +1,19 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneComponentProps,
-  SceneDataTransformer,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  SceneQueryRunner,
   VizPanel,
-  sceneGraph,
 } from '@grafana/scenes';
-import { Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Container, CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
-import { ShareQueryDataProvider } from '../../scene/ShareQueryDataProvider';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
@@ -96,30 +94,10 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     });
   }
 
-  private getDataObjects(): [SceneQueryRunner | ShareQueryDataProvider | undefined, SceneDataTransformer | undefined] {
-    const dataObj = sceneGraph.getData(this.panelManager.state.panel);
-
-    let runner: SceneQueryRunner | ShareQueryDataProvider | undefined;
-    let transformer: SceneDataTransformer | undefined;
-
-    if (dataObj instanceof SceneQueryRunner || dataObj instanceof ShareQueryDataProvider) {
-      runner = dataObj;
-    }
-
-    if (dataObj instanceof SceneDataTransformer) {
-      transformer = dataObj;
-      if (transformer.state.$data instanceof SceneQueryRunner) {
-        runner = transformer.state.$data;
-      }
-    }
-
-    return [runner, transformer];
-  }
-
   private buildTabs() {
     const panelManager = this.panelManager;
     const panel = panelManager.state.panel;
-    const [runner] = this.getDataObjects();
+    const runner = this.panelManager.queryRunner;
     const tabs: PanelDataPaneTab[] = [];
 
     if (panel) {
@@ -129,6 +107,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
         this.setState({ tabs });
         return;
       }
+
       if (plugin.meta.skipDataQuery) {
         this.setState({ tabs });
         return;
@@ -155,6 +134,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
+  const styles = useStyles2(getStyles);
 
   if (!tabs) {
     return;
@@ -163,8 +143,8 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const currentTab = tabs.find((t) => t.tabId === tab);
 
   return (
-    <div>
-      <TabsBar hideBorder={true}>
+    <>
+      <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
             <Tab
@@ -178,7 +158,30 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           );
         })}
       </TabsBar>
-      <TabContent>{currentTab && <currentTab.Component model={currentTab} />}</TabContent>
-    </div>
+      <CustomScrollbar className={styles.scroll}>
+        <TabContent className={styles.tabContent}>
+          <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
+        </TabContent>
+      </CustomScrollbar>
+    </>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    tabContent: css({
+      padding: theme.spacing(2),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderLeft: 'none',
+      borderBottom: 'none',
+      borderTopRightRadius: theme.shape.radius.default,
+      flexGrow: 1,
+    }),
+    tabsBar: css({
+      flexShrink: 0,
+    }),
+    scroll: css({
+      background: theme.colors.background.primary,
+    }),
+  };
 }
