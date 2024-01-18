@@ -150,7 +150,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                       </div>
                     }
                   >
-                    <Icon name="info-circle" size="sm" />
+                    <Icon id="data-source-picker-inline-help" name="info-circle" size="sm" />
                   </Tooltip>
                 </Stack>
               </Label>
@@ -167,18 +167,21 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
             />
           </Field>
 
-          <div className={styles.dashboardPickerContainer}>
-            <Label>Dashboard</Label>
+          <Field
+            className={styles.dashboardPickerContainer}
+            label={<Label htmlFor="filters-dashboard-picker">Dashboard</Label>}
+          >
             {/* The key prop is to clear the picker value */}
             {/* DashboardPicker doesn't do that itself when value is undefined */}
             <DashboardPicker
+              inputId="filters-dashboard-picker"
               key={filterState.dashboardUid ? 'dashboard-not-defined' : 'dashboard-defined'}
               value={filterState.dashboardUid}
               onChange={(value) => handleDashboardChange(value?.uid)}
               isClearable
               cacheOptions
             />
-          </div>
+          </Field>
 
           <div>
             <Label>State</Label>
