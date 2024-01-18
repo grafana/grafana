@@ -110,9 +110,11 @@ export interface QueryResultMeta {
 
   /**
    * Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID
-   * but that isn't guarantied.
+   * but that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially
+   * with streaming data with frequent updates.
+   * Example: TraceID in Tempo, table name + primary key in SQL
    */
-  uniqueId?: number[];
+  uniqueRowIdFields?: number[];
 }
 
 export interface QueryResultMetaStat extends FieldConfig {

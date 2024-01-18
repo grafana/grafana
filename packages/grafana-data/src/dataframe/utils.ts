@@ -93,8 +93,8 @@ export function hasTimeField(data: DataFrame): boolean {
  * @param rowIndex
  */
 export function getRowUniqueId(dataFrame: DataFrame, rowIndex: number) {
-  if (dataFrame.meta?.uniqueId === undefined) {
+  if (dataFrame.meta?.uniqueRowIdFields === undefined) {
     return undefined;
   }
-  return dataFrame.meta.uniqueId.map((fieldIndex) => dataFrame.fields[fieldIndex].values[rowIndex]).join('-');
+  return dataFrame.meta.uniqueRowIdFields.map((fieldIndex) => dataFrame.fields[fieldIndex].values[rowIndex]).join('-');
 }
