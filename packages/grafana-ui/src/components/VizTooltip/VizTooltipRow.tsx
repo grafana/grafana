@@ -94,7 +94,7 @@ export const VizTooltipRow = ({
                   )}
                   {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
                   <div
-                    className={cx(styles.label, isActive && styles.activeSeries)}
+                    className={cx(styles.label, isActive && styles.activeSeries, navigator?.clipboard && styles.copy)}
                     onMouseEnter={onMouseEnterLabel}
                     onMouseLeave={onMouseLeaveLabel}
                     onClick={() => copyToClipboard(label, LabelValueTypes.label)}
@@ -130,7 +130,7 @@ export const VizTooltipRow = ({
               )}
               {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
               <div
-                className={cx(styles.value, isActive)}
+                className={cx(styles.value, isActive, navigator?.clipboard && styles.copy)}
                 onMouseEnter={onMouseEnterValue}
                 onMouseLeave={onMouseLeaveValue}
                 onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
@@ -182,5 +182,8 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,
     color: theme.colors.text.maxContrast,
+  }),
+  copy: css({
+    cursor: 'pointer',
   }),
 });
