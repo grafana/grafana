@@ -23,10 +23,9 @@ import {
   Field,
   DataLinkConfigOrigin,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 
+import { TraceToProfilesData } from './_importedDependencies/grafana-traces/src';
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
 import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
@@ -517,7 +516,7 @@ export function transformTrace(
     const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
     let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
     if (traceToProfilesOptions?.datasourceUid) {
-      profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+      profilesDataSourceSettings = getDataSourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
     }
 
     if (traceToProfilesOptions && profilesDataSourceSettings) {

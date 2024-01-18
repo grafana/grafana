@@ -181,7 +181,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         children.push(panel);
       } else {
         const panel = new SceneCSSGridItem({
-          $variables: getVariablesWithMetricConstant(metric.name),
+          $variables: new SceneVariableSet({
+            variables: getVariablesWithMetricConstant(metric.name),
+          }),
           body: getCardPanelFor(metric.name),
         });
         metric.itemRef = panel.getRef();
@@ -257,13 +259,15 @@ function getPreviewPanelFor(metric: string, index: number) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
   const vizPanel = autoQuery.preview
-    .vizBuilder(autoQuery.preview)
+    .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
 
   return new SceneCSSGridItem({
-    $variables: getVariablesWithMetricConstant(metric),
+    $variables: new SceneVariableSet({
+      variables: getVariablesWithMetricConstant(metric),
+    }),
     $behaviors: [hideEmptyPreviews(metric)],
     $data: new SceneQueryRunner({
       datasource: trailDS,
