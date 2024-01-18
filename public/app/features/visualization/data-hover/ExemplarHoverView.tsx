@@ -57,6 +57,7 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
       border: `1px solid ${theme.colors.border.weak}`,
       boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
       userSelect: 'text',
+      overflow: 'hidden',
     }),
     exemplarHeader: css({
       display: 'flex',

@@ -43,7 +43,7 @@ interface TooltipPlugin2Props {
     timeRange: TimeRange2 | null
   ) => React.ReactNode;
 
-  maxWidth?: number;
+  maxWidth?: number | 'none';
   maxHeight?: number;
 }
 
@@ -113,7 +113,7 @@ export const TooltipPlugin2 = ({
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  maxWidth ??= DEFAULT_TOOLTIP_WIDTH;
+  maxWidth = isPinned ? 'none' : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
   maxHeight ??= DEFAULT_TOOLTIP_HEIGHT;
   const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
@@ -483,7 +483,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth: number, maxHeight: number) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth: number | 'none', maxHeight: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -495,8 +495,8 @@ const getStyles = (theme: GrafanaTheme2, maxWidth: number, maxHeight: number) =>
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
-    maxWidth: `${maxWidth}px`,
-    maxHeight: `${maxHeight}px`,
+    maxWidth: maxWidth,
+    maxHeight: maxHeight,
     overflowY: 'auto',
   }),
   pinned: css({
