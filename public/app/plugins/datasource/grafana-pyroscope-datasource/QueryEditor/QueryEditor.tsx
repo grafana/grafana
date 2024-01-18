@@ -1,6 +1,6 @@
 import deepEqual from 'fast-deep-equal';
 import { debounce } from 'lodash';
-import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
@@ -27,12 +27,7 @@ export function QueryEditor(props: Props) {
     onRunQuery();
   }
 
-  // Need to reference the query as otherwise when the label selector is changed, only the initial value
-  // of the query is passed into the LabelsEditor (onChange) which renders the CodeEditor for monaco.
-  // The above needs to have a ref to the query so it can get the latest value.
-  const queryRef = useRef(query);
-  queryRef.current = query;
-  const onLabelSelectorChange = useLabelSelector(queryRef, onChange);
+  const onLabelSelectorChange = useLabelSelector(query, onChange);
 
   const profileTypes = useProfileTypes(datasource, range);
   const { labels, getLabelValues } = useLabels(range, datasource, query);
@@ -166,7 +161,13 @@ function useLabels(range: TimeRange | undefined, datasource: PyroscopeDataSource
   return { labels, getLabelValues };
 }
 
-function useLabelSelector(queryRef: MutableRefObject<Query>, onChange: (value: Query) => void) {
+function useLabelSelector(query: Query, onChange: (value: Query) => void) {
+  // Need to reference the query as otherwise when the label selector is changed, only the initial value
+  // of the query is passed into the LabelsEditor (onChange) which renders the CodeEditor for monaco.
+  // The above needs to have a ref to the query so it can get the latest value.
+  const queryRef = useRef(query);
+  queryRef.current = query;
+
   const onChangeDebounced = debounce((value: string) => {
     if (onChange) {
       onChange({ ...queryRef.current, labelSelector: value });
