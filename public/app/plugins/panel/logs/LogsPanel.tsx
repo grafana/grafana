@@ -217,30 +217,10 @@ export const LogsPanel = ({
    * Scrolls the given row into view.
    * Returns false if the reference to the logsContainerRef is not set.
    */
-  const scrollIntoView = useCallback((row: HTMLElement): boolean => {
+  const scrollIntoView = useCallback((row: HTMLElement) => {
     if (logsContainerRef.current && logsContainerRef.current.parentElement) {
-      const rowRect = row.getBoundingClientRect();
-      const containerRect = logsContainerRef.current.getBoundingClientRect();
-      const parentRect = logsContainerRef.current.parentElement.getBoundingClientRect();
-
-      console.log('row', rowRect, row);
-      console.log('container', containerRect, logsContainerRef.current);
-      console.log('parent', parentRect, logsContainerRef.current.parentElement);
-      console.log('--- --- ---');
-
-      // Both of these have the same bug, rows that are pinned near the end of the list do not scroll far enough
-      const scrollingTo = rowRect.top - containerRect.top;
-      // const scrollingTo = logsContainerRef.current.parentElement.scrollTop + rowRect.top - window.innerHeight / 2;
-      console.log('scrollingTo', scrollingTo);
-
-      logsContainerRef.current.parentElement.scroll({
-        behavior: 'smooth',
-        top: scrollingTo,
-        // logsContainerRef.current.parentElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-      });
-      return true;
+      row.scrollIntoView(true);
     }
-    return false;
   }, []);
 
   if (!data || logRows.length === 0) {
