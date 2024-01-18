@@ -212,11 +212,9 @@ export const LogsPanel = ({
    * Scrolls the given row into view.
    * Returns false if the reference to the logsContainerRef is not set.
    */
-  const scrollIntoView = useCallback((row: HTMLElement) => {
-    if (logsContainerRef.current && logsContainerRef.current.parentElement) {
-      row.scrollIntoView(true);
-    }
-  }, []);
+  const scrollIntoView = (row: HTMLElement) => {
+    row.scrollIntoView(true);
+  };
 
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
