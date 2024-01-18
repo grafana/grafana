@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
@@ -21,7 +21,7 @@ var (
 )
 
 type pluginsStorage struct {
-	resourceInfo   *apis.ResourceInfo
+	resourceInfo   *common.ResourceInfo
 	tableConverter rest.TableConvertor
 	cache          *registry
 }
