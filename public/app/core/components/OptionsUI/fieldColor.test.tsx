@@ -42,12 +42,10 @@ describe('fieldColor', () => {
         onChange={() => {}}
         id="test"
         data-testid="test"
-        context={{} as any}
+        context={{ data: [] }}
         item={testRegistryItems[0]}
       />
     );
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
-    fireEvent.focus(screen.getByRole('combobox'));
     await userEvent.type(screen.getByRole('combobox'), '{arrowdown}');
     expect(screen.getByText(/^Foo/i)).toBeInTheDocument();
     expect(screen.getByText(/^Bar/i)).toBeInTheDocument();
