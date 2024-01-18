@@ -11,10 +11,9 @@ import {
   DataSourceTestFailed,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { getAppEvents, usePluginInteractionReporter } from '@grafana/runtime';
+import { getAppEvents, usePluginInteractionReporter, config } from '@grafana/runtime';
 import { Input, InlineField, FieldProps, SecureSocksProxySettings, Field, Divider } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { config } from 'app/core/config';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { store } from 'app/store/store';
