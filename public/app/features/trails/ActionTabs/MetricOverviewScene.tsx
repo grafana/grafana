@@ -15,7 +15,7 @@ import PrometheusLanguageProvider from '../../../plugins/datasource/prometheus/l
 import { PromMetricsMetadataItem } from '../../../plugins/datasource/prometheus/types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { ALL_VARIABLE_VALUE } from '../../variables/constants';
-import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
+import { TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_GROUP_BY } from '../shared';
 import { getMetricSceneFor } from '../utils';
 
 import { getLabelOptions } from './utils';
@@ -109,7 +109,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
                   key={l.label}
                   href={sceneGraph.interpolate(
                     model,
-                    `/data-trails/trail$\{__url.params:exclude:actionView,var-groupby}&actionView=breakdown&var-groupby=${encodeURIComponent(
+                    `${TRAILS_ROUTE}$\{__url.params:exclude:actionView,var-groupby}&actionView=breakdown&var-groupby=${encodeURIComponent(
                       l.value!
                     )}`
                   )}

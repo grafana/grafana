@@ -14,7 +14,7 @@
     "react": "18.2.0",
     "react-use": "17.4.3",
     "rxjs": "7.8.1",
-    "tslib": "2.6.0"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/plugin-configs": "10.4.0-pre",
@@ -22,7 +22,7 @@
     "@testing-library/user-event": "14.5.2",
     "@types/lodash": "4.14.202",
     "@types/react": "18.2.15",
-    "ts-node": "10.9.1",
+    "ts-node": "10.9.2",
     "webpack": "5.89.0"
   },
   "peerDependencies": {

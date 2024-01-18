@@ -9,7 +9,14 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
-import { RevisionsModel, VersionHistoryTable, historySrv } from './version-history';
+import {
+  RevisionsModel,
+  VersionHistoryComparison,
+  VersionHistoryHeader,
+  VersionHistoryTable,
+  VersionsHistoryButtons,
+  historySrv,
+} from './version-history';
 
 export const VERSIONS_FETCH_LIMIT = 10;
 
@@ -22,6 +29,11 @@ export interface VersionsEditViewState extends DashboardEditViewState {
   versions?: DecoratedRevisionModel[];
   isLoading?: boolean;
   isAppending?: boolean;
+  viewMode?: 'list' | 'compare';
+  diffData?: { lhs: string; rhs: string };
+  newInfo?: DecoratedRevisionModel;
+  baseInfo?: DecoratedRevisionModel;
+  isNewLatest?: boolean;
 }
 
 export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> implements DashboardEditView {
@@ -35,6 +47,12 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       versions: [],
       isLoading: true,
       isAppending: true,
+      viewMode: 'list',
+      isNewLatest: false,
+      diffData: {
+        lhs: '',
+        rhs: '',
+      },
     });
 
     this.addActivationHandler(() => {
@@ -44,6 +62,10 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
+  }
+
+  public get diffData(): { lhs: string; rhs: string } {
+    return this.state.diffData ?? { lhs: '', rhs: '' };
   }
 
   public get versions(): DecoratedRevisionModel[] {
@@ -92,6 +114,57 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       .finally(() => this.setState({ isAppending: false }));
   }
 
+  public getDiff = async () => {
+    const selectedVersions = this.versions.filter((version) => version.checked);
+    const [newInfo, baseInfo] = selectedVersions;
+    const isNewLatest = newInfo.version === this._dashboard.state.version;
+
+    this.setState({
+      isLoading: true,
+    });
+
+    if (!this._dashboard.state.uid) {
+      return;
+    }
+
+    const lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
+    const rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.version);
+
+    this.setState({
+      baseInfo,
+      isLoading: false,
+      isNewLatest,
+      newInfo,
+      viewMode: 'compare',
+      diffData: {
+        lhs: lhs.data,
+        rhs: rhs.data,
+      },
+    });
+  };
+
+  public reset = () => {
+    this.setState({
+      baseInfo: undefined,
+      diffData: {
+        lhs: '',
+        rhs: '',
+      },
+      isNewLatest: false,
+      newInfo: undefined,
+      versions: this.versions.map((version) => ({ ...version, checked: false })),
+      viewMode: 'list',
+    });
+  };
+
+  public onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
+    this.setState({
+      versions: this.versions.map((version) =>
+        version.id === versionId ? { ...version, checked: ev.currentTarget.checked } : version
+      ),
+    });
+  };
+
   private decorateVersions(versions: RevisionsModel[]): DecoratedRevisionModel[] {
     const timeZone = this.getTimeRange().getTimeZone();
 
@@ -108,30 +181,58 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
 function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsEditView>) {
   const dashboard = model.getDashboard();
-  const { isLoading, isAppending } = model.useState();
+  const { isLoading, isAppending, viewMode, baseInfo, newInfo, isNewLatest } = model.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-
   const canCompare = model.versions.filter((version) => version.checked).length === 2;
+  const showButtons = model.versions.length > 1;
+  const hasMore = model.versions.length >= model.limit;
+  const isLastPage = model.versions.find((rev) => rev.version === 1);
+
+  if (viewMode === 'compare') {
+    return (
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <VersionHistoryHeader
+          onClick={model.reset}
+          baseVersion={baseInfo?.version}
+          newVersion={newInfo?.version}
+          isNewLatest={isNewLatest}
+        />
+        {isLoading ? (
+          <VersionsHistorySpinner msg="Fetching changes&hellip;" />
+        ) : (
+          <VersionHistoryComparison
+            newInfo={newInfo!}
+            baseInfo={baseInfo!}
+            isNewLatest={isNewLatest!}
+            diffData={model.diffData}
+          />
+        )}
+      </Page>
+    );
+  }
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       {isLoading ? (
         <VersionsHistorySpinner msg="Fetching history list&hellip;" />
       ) : (
-        <VersionHistoryTable
-          versions={model.versions}
-          onCheck={(x, y) => {
-            console.log('todo');
-          }}
-          canCompare={canCompare}
-        />
+        <VersionHistoryTable versions={model.versions} onCheck={model.onCheck} canCompare={canCompare} />
       )}
       {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
+      {showButtons && (
+        <VersionsHistoryButtons
+          hasMore={hasMore}
+          canCompare={canCompare}
+          getVersions={model.fetchVersions.bind(model)}
+          getDiff={model.getDiff}
+          isLastPage={!!isLastPage}
+        />
+      )}
     </Page>
   );
 }
 
-export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
+const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
   <HorizontalGroup>
     <Spinner />
     <em>{msg}</em>

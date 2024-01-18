@@ -2,6 +2,7 @@ package ssosettingsimpl
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -70,6 +71,14 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 		return nil, err
 	}
 
+	if dbSettings != nil {
+		// Settings are coming from the database thus secrets are encrypted
+		dbSettings.Settings, err = s.decryptSecrets(ctx, dbSettings.Settings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 	if err != nil {
 		return nil, err
@@ -103,6 +112,13 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 
 	for _, provider := range ssosettings.AllOAuthProviders {
 		dbSettings := getSettingByProvider(provider, storedSettings)
+		if dbSettings != nil {
+			// Settings are coming from the database thus secrets are encrypted
+			dbSettings.Settings, err = s.decryptSecrets(ctx, dbSettings.Settings)
+			if err != nil {
+				return nil, err
+			}
+		}
 		fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 		if err != nil {
 			return nil, err
@@ -129,7 +145,12 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 		return err
 	}
 
-	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
+	storedSettings, err := s.GetForProvider(ctx, settings.Provider)
+	if err != nil {
+		return err
+	}
+
+	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings, storedSettings.Settings)
 	if err != nil {
 		return err
 	}
@@ -208,7 +229,7 @@ func (s *SSOSettingsService) getFallbackStrategyFor(provider string) (ssosetting
 	return nil, false
 }
 
-func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
+func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings, storedSettings map[string]any) (map[string]any, error) {
 	result := make(map[string]any)
 	for k, v := range settings {
 		if isSecret(k) {
@@ -217,11 +238,15 @@ func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[st
 				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
 			}
 
+			if !isNewSecretValue(strValue) {
+				strValue = storedSettings[k].(string)
+			}
+
 			encryptedSecret, err := s.secrets.Encrypt(ctx, []byte(strValue), secrets.WithoutScope())
 			if err != nil {
 				return result, err
 			}
-			result[k] = string(encryptedSecret)
+			result[k] = base64.RawStdEncoding.EncodeToString(encryptedSecret)
 		} else {
 			result[k] = v
 		}
@@ -289,6 +314,33 @@ func (s *SSOSettingsService) mergeSSOSettings(dbSettings, systemSettings *models
 	return dbSettings
 }
 
+func (s *SSOSettingsService) decryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
+	for k, v := range settings {
+		if isSecret(k) && v != "" {
+			strValue, ok := v.(string)
+			if !ok {
+				s.logger.Error("Failed to parse secret value, it is not a string", "key", k)
+				return nil, fmt.Errorf("secret value is not a string")
+			}
+
+			decoded, err := base64.RawStdEncoding.DecodeString(strValue)
+			if err != nil {
+				s.logger.Error("Failed to decode secret string", "err", err, "value")
+				return nil, err
+			}
+
+			decrypted, err := s.secrets.Decrypt(ctx, decoded)
+			if err != nil {
+				s.logger.Error("Failed to decrypt secret", "err", err)
+				return nil, err
+			}
+
+			settings[k] = string(decrypted)
+		}
+	}
+	return settings, nil
+}
+
 func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
@@ -324,4 +376,8 @@ func isProviderConfigurable(provider string) bool {
 	}
 
 	return false
+}
+
+func isNewSecretValue(value string) bool {
+	return value != setting.RedactedPassword
 }
