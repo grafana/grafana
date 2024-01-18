@@ -1053,3 +1053,107 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 		})
 	}
 }
+
+func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
+	testCases := []struct {
+		name                         string
+		settings                     ssoModels.SSOSettings
+		info                         *social.OAuthInfo
+		expectError                  bool
+		expectedInfo                 *social.OAuthInfo
+		expectedTeamsUrl             string
+		expectedEmailAttributeName   string
+		expectedEmailAttributePath   string
+		expectedNameAttributePath    string
+		expectedGroupsAttributePath  string
+		expectedLoginAttributePath   string
+		expectedIdTokenAttributeName string
+		expectedTeamIdsAttributePath string
+		expectedTeamIds              []string
+		expectedAllowedOrganizations []string
+	}{
+		{
+			name: "successfully reloads the settings",
+			info: &social.OAuthInfo{
+				ClientId:             "client-id",
+				ClientSecret:         "client-secret",
+				TeamsUrl:             "https://host/users",
+				EmailAttributePath:   "email-attr-path",
+				EmailAttributeName:   "email-attr-name",
+				GroupsAttributePath:  "groups-attr-path",
+				TeamIdsAttributePath: "team-ids-attr-path",
+				Extra: map[string]string{
+					teamIdsKey:              "team1",
+					allowedOrganizationsKey: "org1",
+					loginAttributePathKey:   "login-attr-path",
+					idTokenAttributeNameKey: "id-token-attr-name",
+					nameAttributePathKey:    "name-attr-path",
+				},
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "new-client-id",
+					"client_secret":           "new-client-secret",
+					"teams_url":               "https://host/v2/users",
+					"email_attribute_path":    "new-email-attr-path",
+					"email_attribute_name":    "new-email-attr-name",
+					"groups_attribute_path":   "new-group-attr-path",
+					"team_ids_attribute_path": "new-team-ids-attr-path",
+					teamIdsKey:                "team1,team2",
+					allowedOrganizationsKey:   "org1,org2",
+					loginAttributePathKey:     "new-login-attr-path",
+					idTokenAttributeNameKey:   "new-id-token-attr-name",
+					nameAttributePathKey:      "new-name-attr-path",
+				},
+			},
+			expectedInfo: &social.OAuthInfo{
+				ClientId:             "new-client-id",
+				ClientSecret:         "new-client-secret",
+				TeamsUrl:             "https://host/v2/users",
+				EmailAttributePath:   "new-email-attr-path",
+				EmailAttributeName:   "new-email-attr-name",
+				GroupsAttributePath:  "new-group-attr-path",
+				TeamIdsAttributePath: "new-team-ids-attr-path",
+				Extra: map[string]string{
+					teamIdsKey:              "team1,team2",
+					allowedOrganizationsKey: "org1,org2",
+					loginAttributePathKey:   "new-login-attr-path",
+					idTokenAttributeNameKey: "new-id-token-attr-name",
+					nameAttributePathKey:    "new-name-attr-path",
+				},
+			},
+			expectedTeamsUrl:             "https://host/v2/users",
+			expectedEmailAttributeName:   "new-email-attr-name",
+			expectedEmailAttributePath:   "new-email-attr-path",
+			expectedGroupsAttributePath:  "new-group-attr-path",
+			expectedTeamIdsAttributePath: "new-team-ids-attr-path",
+			expectedTeamIds:              []string{"team1", "team2"},
+			expectedAllowedOrganizations: []string{"org1", "org2"},
+			expectedLoginAttributePath:   "new-login-attr-path",
+			expectedIdTokenAttributeName: "new-id-token-attr-name",
+			expectedNameAttributePath:    "new-name-attr-path",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Reload(context.Background(), tc.settings)
+			require.NoError(t, err)
+
+			require.EqualValues(t, tc.expectedInfo, s.info)
+
+			require.EqualValues(t, tc.expectedTeamsUrl, s.teamsUrl)
+			require.EqualValues(t, tc.expectedEmailAttributeName, s.emailAttributeName)
+			require.EqualValues(t, tc.expectedEmailAttributePath, s.emailAttributePath)
+			require.EqualValues(t, tc.expectedGroupsAttributePath, s.groupsAttributePath)
+			require.EqualValues(t, tc.expectedTeamIdsAttributePath, s.teamIdsAttributePath)
+			require.EqualValues(t, tc.expectedTeamIds, s.teamIds)
+			require.EqualValues(t, tc.expectedAllowedOrganizations, s.allowedOrganizations)
+			require.EqualValues(t, tc.expectedLoginAttributePath, s.loginAttributePath)
+			require.EqualValues(t, tc.expectedIdTokenAttributeName, s.idTokenAttributeName)
+			require.EqualValues(t, tc.expectedNameAttributePath, s.nameAttributePath)
+		})
+	}
+}

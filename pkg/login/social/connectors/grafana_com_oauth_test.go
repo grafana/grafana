@@ -343,7 +343,6 @@ func TestSocialGrafanaCom_Reload_ExtraFields(t *testing.T) {
 			require.NoError(t, err)
 
 			require.EqualValues(t, tc.expectedAllowedOrganizations, s.allowedOrganizations)
-
 		})
 	}
 }

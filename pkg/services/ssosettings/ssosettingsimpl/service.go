@@ -271,7 +271,7 @@ func (s *SSOSettingsService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			//TODO: TEMPORARLY TURN OFF BACKGROUND JOB RELOADING s.doReload(ctx)
+			//TODO: TEMPORARILY TURN OFF BACKGROUND JOB RELOADING s.doReload(ctx)
 
 		case <-ctx.Done():
 			return ctx.Err()
@@ -360,7 +360,6 @@ func removeSecrets(settings map[string]any) map[string]any {
 		result[k] = v
 	}
 	return result
-
 }
 
 // mergeSettings merges two maps in a way that the values from the first map are preserved

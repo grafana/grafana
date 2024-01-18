@@ -480,3 +480,57 @@ func TestSocialGitHub_Reload(t *testing.T) {
 		})
 	}
 }
+
+func TestGitHub_Reload_ExtraFields(t *testing.T) {
+	testCases := []struct {
+		name                         string
+		settings                     ssoModels.SSOSettings
+		info                         *social.OAuthInfo
+		expectError                  bool
+		expectedInfo                 *social.OAuthInfo
+		expectedAllowedOrganizations []string
+		expectedTeamIds              []int
+	}{
+		{
+			name: "successfully reloads the settings",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				Extra: map[string]string{
+					"allowed_organizations": "previous",
+					"team_ids":              "",
+				},
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"allowed_organizations": "uuid-1234,uuid-5678",
+					"team_ids":              "123,456",
+				},
+			},
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Name:         "a-new-name",
+				AuthStyle:    "inheader",
+				Extra: map[string]string{
+					"allowed_organizations": "uuid-1234,uuid-5678",
+					"force_use_graph_api":   "false",
+				},
+			},
+			expectedAllowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+			expectedTeamIds:              []int{123, 456},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGitHubProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Reload(context.Background(), tc.settings)
+			require.NoError(t, err)
+
+			require.EqualValues(t, tc.expectedAllowedOrganizations, s.allowedOrganizations)
+			require.EqualValues(t, tc.expectedTeamIds, s.teamIds)
+		})
+	}
+}
