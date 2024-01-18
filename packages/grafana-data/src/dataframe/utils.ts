@@ -88,7 +88,7 @@ export function hasTimeField(data: DataFrame): boolean {
 }
 
 /**
- * Get row id based on the meta.keyBy attribute.
+ * Get row id based on the meta.uniqueRowIdFields attribute.
  * @param dataFrame
  * @param rowIndex
  */
