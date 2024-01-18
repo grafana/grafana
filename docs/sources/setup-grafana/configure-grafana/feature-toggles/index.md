@@ -174,6 +174,7 @@ Experimental features might be changed or removed without prior notice.
 | `kubernetesFeatureToggles`                  | Use the kubernetes API for feature toggle management in the frontend                                                                                                                                                                                                              |
 | `enablePluginsTracingByDefault`             | Enable plugin tracing for all external plugins                                                                                                                                                                                                                                    |
 | `newFolderPicker`                           | Enables the nested folder picker without having nested folders enabled                                                                                                                                                                                                            |
+| `jitterAlertRules`                          | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                                                                           |
 
 ## Development feature toggles
 
