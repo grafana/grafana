@@ -4,7 +4,6 @@ import React, { useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
 import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip';
 
@@ -22,6 +21,8 @@ enum LabelValueTypes {
   label = 'label',
   value = 'value',
 }
+
+const SUCCESSFULLY_COPIED_TEXT = 'Copied to clipboard';
 
 export const VizTooltipRow = ({
   label,
@@ -89,7 +90,7 @@ export const VizTooltipRow = ({
                 <>
                   {copiedText?.label && (
                     <InlineToast placement="top" referenceElement={labelRef.current}>
-                      <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
+                      {SUCCESSFULLY_COPIED_TEXT}
                     </InlineToast>
                   )}
                   {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
@@ -125,7 +126,7 @@ export const VizTooltipRow = ({
             <>
               {copiedText?.value && (
                 <InlineToast placement="top" referenceElement={valueRef.current}>
-                  <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
+                  {SUCCESSFULLY_COPIED_TEXT}
                 </InlineToast>
               )}
               {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
