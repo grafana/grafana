@@ -136,6 +136,9 @@ export const QueryWrapper = ({
   }
 
   const showVizualisation = data.state !== LoadingState.NotStarted;
+  // ⚠️ the query editors want the entire array of queries passed as "DataQuery" NOT "AlertQuery"
+  // TypeScript isn't complaining here because the interfaces just happen to be compatible
+  const editorQueries = cloneDeep(queries.map((query) => query.model));
 
   return (
     <Stack direction="column" gap={0.5}>
@@ -155,7 +158,7 @@ export const QueryWrapper = ({
           onRemoveQuery={onRemoveQuery}
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
-          queries={queries}
+          queries={editorQueries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
           hideDisableQuery={true}
