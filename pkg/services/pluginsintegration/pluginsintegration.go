@@ -42,6 +42,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient/pluginclientimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -114,6 +116,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(auth.ExternalServiceRegistry), new(*serviceregistration.Service)),
 	renderer.ProvideService,
 	wire.Bind(new(rendering.PluginManager), new(*renderer.Manager)),
+	pluginclientimpl.ProvideService,
+	wire.Bind(new(pluginclient.Client), new(*pluginclientimpl.Facade)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
