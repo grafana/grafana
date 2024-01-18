@@ -120,10 +120,6 @@ export class AppChromeService {
     return useObservable(this.state, this.state.getValue());
   }
 
-  // public setReturnToPrevious(returnToPrevious: AppChromeState['returnToPrevious']) {
-  //   this.update({ returnToPrevious });
-  // }
-
   public setMegaMenuOpen = (newOpenState: boolean) => {
     const { megaMenuDocked } = this.state.getValue();
     if (config.featureToggles.dockedMegaMenu) {
