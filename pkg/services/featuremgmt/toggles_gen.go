@@ -367,10 +367,6 @@ const (
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
 
-	// FlagTracesEmbeddedFlameGraph
-	// Enables embedding a flame graph in traces
-	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
-
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
