@@ -93,12 +93,11 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusInternalServerError, "Failed to list all providers settings", err)
 	}
 
-	etag, err := generateFNVETag(providers)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to list all providers settings", err)
 	}
 
-	return response.JSON(http.StatusOK, providers).SetHeader("ETag", etag)
+	return response.JSON(http.StatusOK, providers)
 }
 
 func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettings, error) {
@@ -229,8 +228,12 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 	return response.Empty(http.StatusNoContent)
 }
 
+// swagger:parameters listProviderSettings
+type ListProviderSettingsParams struct {
+}
+
 // swagger:parameters getProviderSettings
-type GetProviderSettingsWrapper struct {
+type GetProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`

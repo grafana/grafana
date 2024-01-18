@@ -139,7 +139,7 @@ func (s *SSOSettingsService) ListWithRedactedSecrets(ctx context.Context) ([]*mo
 	for _, storeSetting := range storeSettings {
 		for k, v := range storeSetting.Settings {
 			if isSecret(k) && v != "" {
-				storeSetting.Settings[k] = "*********"
+				storeSetting.Settings[k] = setting.RedactedPassword
 			}
 		}
 	}
