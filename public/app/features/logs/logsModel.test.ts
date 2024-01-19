@@ -1326,7 +1326,7 @@ describe('logs volume', () => {
         raw: {
           from: FROM,
           to: TO,
-        }
+        },
       },
       timezone: '',
       app: '',
