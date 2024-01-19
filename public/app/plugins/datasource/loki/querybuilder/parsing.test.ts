@@ -673,6 +673,21 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses quantile queries with grouping', () => {
+    expect(buildVisualQueryFromString(`quantile_over_time(0.99, {app="frontend"} [1m]) by (host1, host2)`)).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.QuantileOverTime, params: ['1m', '0.99', 'host1', 'host2'] }],
+      })
+    );
+  });
+
   it('parses query with line format', () => {
     expect(buildVisualQueryFromString('{app="frontend"} | line_format "abc"')).toEqual(
       noErrors({

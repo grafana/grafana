@@ -22,6 +22,8 @@ export const Components = {
     fromField: 'data-testid Time Range from field',
     toField: 'data-testid Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
+    copyTimeRange: 'data-testid TimePicker copy button',
+    pasteTimeRange: 'data-testid TimePicker paste button',
     calendar: {
       label: 'data-testid Time Range calendar',
       openButton: 'data-testid Open time range calendar',
@@ -53,7 +55,7 @@ export const Components = {
       },
     },
     DataSourceHttpSettings: {
-      urlInput: 'Datasource HTTP settings url',
+      urlInput: 'data-testid Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
@@ -61,8 +63,8 @@ export const Components = {
     Prometheus: {
       configPage: {
         connectionSettings: 'Data source connection URL',
-        exemplarsAddButton: 'Add exemplar config button',
-        internalLinkSwitch: 'Internal link switch',
+        exemplarsAddButton: 'data-testid Add exemplar config button',
+        internalLinkSwitch: 'data-testid Internal link switch',
       },
       exemplarMarker: 'data-testid Exemplar marker',
     },
@@ -72,8 +74,8 @@ export const Components = {
     MenuGroup: (title: string) => `${title} menu group`,
     MenuItem: (title: string) => `${title} menu item`,
     SubMenu: {
-      container: 'SubMenu container',
-      icon: 'SubMenu icon',
+      container: 'data-testid SubMenu container',
+      icon: 'data-testid SubMenu icon',
     },
   },
   Panels: {
@@ -133,8 +135,9 @@ export const Components = {
       title: (title: string) => `Drawer title ${title}`,
       expand: 'Drawer expand',
       contract: 'Drawer contract',
-      close: 'Drawer close',
+      close: 'data-testid Drawer close',
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
+      subtitle: 'data-testid drawer subtitle',
     },
   },
   PanelEditor: {
@@ -287,7 +290,7 @@ export const Components = {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
   },
   BackButton: {
-    backArrow: 'Go Back',
+    backArrow: 'data-testid Go Back',
   },
   OptionsGroup: {
     group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
@@ -345,12 +348,12 @@ export const Components = {
   TraceViewer: {
     spanBar: 'data-testid SpanBar--wrapper',
   },
-  QueryField: { container: 'Query field' },
+  QueryField: { container: 'data-testid Query field' },
   QueryBuilder: {
-    queryPatterns: 'Query patterns',
-    labelSelect: 'Select label',
-    valueSelect: 'Select value',
-    matchOperatorSelect: 'Select match operator',
+    queryPatterns: 'data-testid Query patterns',
+    labelSelect: 'data-testid Select label',
+    valueSelect: 'data-testid Select value',
+    matchOperatorSelect: 'data-testid Select match operator',
   },
   ValuePicker: {
     button: (name: string) => `data-testid Value picker button ${name}`,
@@ -382,7 +385,7 @@ export const Components = {
     link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
-    icon: 'Loading indicator',
+    icon: 'data-testid Loading indicator',
   },
   CallToActionCard: {
     /**

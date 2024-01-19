@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -177,10 +178,12 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 			return folder.ErrDatabaseError.Errorf("failed to get folder: %w", err)
 		}
 		if !exists {
-			return folder.ErrFolderNotFound.Errorf("folder not found")
+			// embed dashboards.ErrFolderNotFound
+			return folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
 		}
 		return nil
 	})
+
 	return foldr.WithURL(), err
 }
 
@@ -283,10 +286,10 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 	return folders, err
 }
 
-func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQuery) (folders []*folder.Folder, err error) {
+func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuery) (folders []*folder.Folder, err error) {
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		uid := ""
-		ok, err := sess.SQL("SELECT parent_uid FROM folder WHERE org_id=? AND uid=?", cmd.OrgID, cmd.UID).Get(&uid)
+		ok, err := sess.SQL("SELECT parent_uid FROM folder WHERE org_id=? AND uid=?", q.OrgID, q.UID).Get(&uid)
 		if err != nil {
 			return err
 		}
@@ -295,7 +298,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 		}
 		for {
 			f := &folder.Folder{}
-			ok, err := sess.SQL("SELECT * FROM folder WHERE org_id=? AND uid=?", cmd.OrgID, uid).Get(f)
+			ok, err := sess.SQL("SELECT * FROM folder WHERE org_id=? AND uid=?", q.OrgID, uid).Get(f)
 			if err != nil {
 				return err
 			}

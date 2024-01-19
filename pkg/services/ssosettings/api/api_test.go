@@ -1,25 +1,157 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
+
+func TestSSOSettingsAPI_Update(t *testing.T) {
+	type TestCase struct {
+		desc                string
+		key                 string
+		body                string
+		action              string
+		scope               string
+		expectedError       error
+		expectedServiceCall bool
+		expectedStatusCode  int
+	}
+
+	tests := []TestCase{
+		{
+			desc:                "successfully updates SSO settings",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusNoContent,
+		},
+		{
+			desc:                "fails when action doesn't match",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:read",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails when scope doesn't match",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:read",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails when scope contains another provider",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.okta:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails with not found when key is empty",
+			key:                 "",
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusNotFound,
+		},
+		{
+			desc:                "fails with bad request when body contains invalid json",
+			key:                 social.GitHubProviderName,
+			body:                `{ invalid json }`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusBadRequest,
+		},
+		{
+			desc:                "fails with bad request when key was not found",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       ssosettings.ErrInvalidProvider.Errorf("invalid provider"),
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusBadRequest,
+		},
+		{
+			desc:                "fails with internal server error when service returns an error",
+			key:                 social.GitHubProviderName,
+			body:                `{"settings": {"enabled": true}}`,
+			action:              "settings:write",
+			scope:               "settings:auth.github:*",
+			expectedError:       errors.New("something went wrong"),
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var input models.SSOSettings
+			_ = json.Unmarshal([]byte(tt.body), &input)
+
+			settings := models.SSOSettings{
+				Provider: tt.key,
+				Settings: input.Settings,
+			}
+
+			service := ssosettingstests.NewMockService(t)
+			if tt.expectedServiceCall {
+				service.On("Upsert", mock.Anything, settings).Return(tt.expectedError).Once()
+			}
+			server := setupTests(t, service)
+
+			path := fmt.Sprintf("/api/v1/sso-settings/%s", tt.key)
+			req := server.NewRequest(http.MethodPut, path, bytes.NewBufferString(tt.body))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+				OrgRole:     org.RoleEditor,
+				OrgID:       1,
+				Permissions: getPermissionsForActionAndScope(tt.action, tt.scope),
+			})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
 
 func TestSSOSettingsAPI_Delete(t *testing.T) {
 	type TestCase struct {
@@ -35,7 +167,7 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 	tests := []TestCase{
 		{
 			desc:                "successfully deletes SSO settings",
-			key:                 "azuread",
+			key:                 social.AzureADProviderName,
 			action:              "settings:write",
 			scope:               "settings:auth.azuread:*",
 			expectedError:       nil,
@@ -44,7 +176,7 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 		},
 		{
 			desc:                "fails when action doesn't match",
-			key:                 "azuread",
+			key:                 social.AzureADProviderName,
 			action:              "settings:read",
 			scope:               "settings:auth.azuread:*",
 			expectedError:       nil,
@@ -53,7 +185,7 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 		},
 		{
 			desc:                "fails when scope doesn't match",
-			key:                 "azuread",
+			key:                 social.AzureADProviderName,
 			action:              "settings:write",
 			scope:               "settings:auth.azuread:read",
 			expectedError:       nil,
@@ -62,7 +194,7 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 		},
 		{
 			desc:                "fails when scope contains another provider",
-			key:                 "azuread",
+			key:                 social.AzureADProviderName,
 			action:              "settings:write",
 			scope:               "settings:auth.github:*",
 			expectedError:       nil,
@@ -80,7 +212,7 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 		},
 		{
 			desc:                "fails with not found when key was not found",
-			key:                 "azuread",
+			key:                 social.AzureADProviderName,
 			action:              "settings:write",
 			scope:               "settings:auth.azuread:*",
 			expectedError:       ssosettings.ErrNotFound,
@@ -89,7 +221,7 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 		},
 		{
 			desc:                "fails with internal server error when service returns an error",
-			key:                 "azuread",
+			key:                 social.AzureADProviderName,
 			action:              "settings:write",
 			scope:               "settings:auth.azuread:*",
 			expectedError:       errors.New("something went wrong"),
@@ -117,6 +249,119 @@ func TestSSOSettingsAPI_Delete(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
+	type TestCase struct {
+		desc                string
+		key                 string
+		action              string
+		scope               string
+		expectedResult      *models.SSOSettings
+		expectedError       error
+		expectedServiceCall bool
+		expectedStatusCode  int
+	}
+
+	tests := []TestCase{
+		{
+			desc:   "successfully gets SSO settings",
+			key:    "azuread",
+			action: "settings:read",
+			scope:  "settings:auth.azuread:*",
+			expectedResult: &models.SSOSettings{
+				ID:        "1",
+				Provider:  "azuread",
+				Settings:  make(map[string]interface{}),
+				Created:   time.Now(),
+				Updated:   time.Now(),
+				IsDeleted: false,
+				Source:    models.DB,
+			},
+			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusOK,
+		},
+		{
+			desc:                "fails when action doesn't match",
+			key:                 "azuread",
+			action:              "settings:write",
+			scope:               "settings:auth.azuread:*",
+			expectedResult:      nil,
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails when scope doesn't match",
+			key:                 "azuread",
+			action:              "settings:read",
+			scope:               "settings:auth.azuread:write",
+			expectedResult:      nil,
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails when scope contains another provider",
+			key:                 "azuread",
+			action:              "settings:read",
+			scope:               "settings:auth.github:*",
+			expectedResult:      nil,
+			expectedError:       nil,
+			expectedServiceCall: false,
+			expectedStatusCode:  http.StatusForbidden,
+		},
+		{
+			desc:                "fails with not found when key was not found",
+			key:                 "nonexistant",
+			action:              "settings:read",
+			scope:               "settings:auth.nonexistant:*",
+			expectedResult:      nil,
+			expectedError:       ssosettings.ErrNotFound,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusNotFound,
+		},
+		{
+			desc:                "fails with internal server error when service returns an error",
+			key:                 "azuread",
+			action:              "settings:read",
+			scope:               "settings:auth.azuread:*",
+			expectedResult:      nil,
+			expectedError:       errors.New("something went wrong"),
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service := ssosettingstests.NewMockService(t)
+			if tt.expectedServiceCall {
+				service.On("GetForProviderWithRedactedSecrets", mock.AnythingOfType("*context.valueCtx"), tt.key).Return(tt.expectedResult, tt.expectedError).Once()
+			}
+			server := setupTests(t, service)
+
+			path := fmt.Sprintf("/api/v1/sso-settings/%s", tt.key)
+			req := server.NewRequest(http.MethodGet, path, nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+				OrgRole:     org.RoleEditor,
+				OrgID:       1,
+				Permissions: getPermissionsForActionAndScope(tt.action, tt.scope),
+			})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
+
+			if tt.expectedError == nil {
+				var data models.SSOSettings
+				require.NoError(t, json.NewDecoder(res.Body).Decode(&data))
+			}
+
 			require.NoError(t, res.Body.Close())
 		})
 	}
