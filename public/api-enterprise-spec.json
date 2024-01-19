@@ -8994,6 +8994,12 @@
         "$ref": "#/definitions/RoleDTO"
       }
     },
+    "getSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SSOSettings"
+      }
+    },
     "getSharingOptionsResponse": {
       "description": "",
       "schema": {
@@ -9457,6 +9463,21 @@
         }
       }
     },
+    "searchPermissionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "searchPlaylistsResponse": {
       "description": "",
       "schema": {
@@ -9479,6 +9500,18 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/SearchTeamQueryResult"
+      }
+    },
+    "searchUserPermissionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "searchUsersResponse": {
