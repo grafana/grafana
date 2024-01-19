@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
-	acmodels "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -598,7 +598,7 @@ func init() {
 		Name:      "access_permissions_cache_usage",
 		Help:      "access control permissions cache hit/miss",
 		Namespace: ExporterName,
-	}, []string{"status"}, map[string][]string{"status": acmodels.CacheUsageStatuses})
+	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
 
 	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_library_panels",
