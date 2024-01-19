@@ -334,10 +334,22 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr:          nil,
 		},
 		{
-			desc:     "should not find the user as the user was not logged via OAuth",
+			desc:     "should not find the user as the user has no AuthInfo",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedError = user.ErrUserNotFound
+			},
+			expectHasEntryCalled: false,
+			expectedErr:          nil,
+		},
+		{
+			desc:     "should not find the user as the user has no AuthInfo",
+			identity: &authn.Identity{ID: "user:1234"},
+			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
+				authInfoService.ExpectedError = user.ErrUserNotFound
+				authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule: login.SAMLAuthModule,
+				}
 			},
 			expectHasEntryCalled: false,
 			expectedErr:          nil,
