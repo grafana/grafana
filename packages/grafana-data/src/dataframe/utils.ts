@@ -112,8 +112,7 @@ export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unkn
     }
   } else {
     for (const field of dataFrame.fields) {
-      let val = row[field.name];
-      field.values.push(val);
+      field.values.push(row[field.name]);
     }
   }
   try {
