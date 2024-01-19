@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -125,6 +126,8 @@ var WireExtensionSet = wire.NewSet(
 	finder.ProvideLocalFinder,
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
+
+	plugincontext.ProvideService,
 )
 
 func ProvideClientDecorator(
