@@ -9,7 +9,7 @@ import (
 	time "time"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	versioned "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	clientset "github.com/grafana/grafana/pkg/generated/clientset/clientset"
 	internalinterfaces "github.com/grafana/grafana/pkg/generated/informers/externalversions/internalinterfaces"
 	v0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,14 +34,14 @@ type externalNameInformer struct {
 // NewExternalNameInformer constructs a new informer for ExternalName type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewExternalNameInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+func NewExternalNameInformer(client clientset.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
 	return NewFilteredExternalNameInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
 // NewFilteredExternalNameInformer constructs a new informer for ExternalName type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredExternalNameInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredExternalNameInformer(client clientset.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
@@ -63,7 +63,7 @@ func NewFilteredExternalNameInformer(client versioned.Interface, namespace strin
 	)
 }
 
-func (f *externalNameInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+func (f *externalNameInformer) defaultInformer(client clientset.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
 	return NewFilteredExternalNameInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 

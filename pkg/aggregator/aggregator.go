@@ -23,7 +23,7 @@ import (
 	"time"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/clientset"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
