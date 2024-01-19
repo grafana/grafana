@@ -1,0 +1,139 @@
+import { css } from '@emotion/css';
+import React, { useState } from 'react';
+
+import { arrayUtils, AnnotationQuery } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { Button, DeleteButton, IconButton, useStyles2, VerticalGroup } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
+
+import { DashboardScene } from '../../scene/DashboardScene';
+
+type Props = {
+  dashboard: DashboardScene;
+  onNew: () => void;
+  onEdit: (idx: number) => void;
+};
+
+export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
+  const styles = useStyles2(getStyles);
+  const [annotations, updateAnnotations] = useState(dashboard.state.annotations.list);
+
+  const onMove = (idx: number, direction: number) => {
+    updateAnnotations(arrayUtils.moveItemImmutably(annotations, idx, idx + direction));
+  };
+
+  const onDelete = (idx: number) => {
+    updateAnnotations([...annotations.slice(0, idx), ...annotations.slice(idx + 1)]);
+  };
+
+  const showEmptyListCTA = annotations.length === 0 || (annotations.length === 1 && annotations[0].builtIn);
+
+  const getAnnotationName = (anno: AnnotationQuery) => {
+    if (anno.enable === false) {
+      return (
+        <>
+          <em className="muted">(Disabled) &nbsp; {anno.name}</em>
+        </>
+      );
+    }
+
+    if (anno.builtIn) {
+      return (
+        <>
+          <em className="muted">{anno.name} &nbsp; (Built-in)</em>
+        </>
+      );
+    }
+
+    return <>{anno.name}</>;
+  };
+
+  const dataSourceSrv = getDataSourceSrv();
+  return (
+    <VerticalGroup>
+      {annotations.length > 0 && (
+        <div className={styles.table}>
+          <table role="grid" className="filter-table filter-table--hover">
+            <thead>
+              <tr>
+                <th>Query name</th>
+                <th>Data source</th>
+                <th colSpan={3}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {dashboard.state.annotations.list.map((annotation, idx) => (
+                <tr key={`${annotation.name}-${idx}`}>
+                  {annotation.builtIn ? (
+                    <td role="gridcell" style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
+                      <Button size="sm" fill="text" variant="secondary">
+                        {getAnnotationName(annotation)}
+                      </Button>
+                    </td>
+                  ) : (
+                    <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
+                      <Button size="sm" fill="text" variant="secondary">
+                        {getAnnotationName(annotation)}
+                      </Button>
+                    </td>
+                  )}
+                  <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
+                    {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
+                  </td>
+                  <td role="gridcell" style={{ width: '1%' }}>
+                    {idx !== 0 && <IconButton name="arrow-up" onClick={() => onMove(idx, -1)} tooltip="Move up" />}
+                  </td>
+                  <td role="gridcell" style={{ width: '1%' }}>
+                    {dashboard.state.annotations.list.length > 1 &&
+                    idx !== dashboard.state.annotations.list.length - 1 ? (
+                      <IconButton name="arrow-down" onClick={() => onMove(idx, 1)} tooltip="Move down" />
+                    ) : null}
+                  </td>
+                  <td role="gridcell" style={{ width: '1%' }}>
+                    {!annotation.builtIn && (
+                      <DeleteButton
+                        size="sm"
+                        onConfirm={() => onDelete(idx)}
+                        aria-label={`Delete query with title "${annotation.name}"`}
+                      />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {showEmptyListCTA && (
+        <EmptyListCTA
+          onClick={onNew}
+          title="There are no custom annotation queries added yet"
+          buttonIcon="comment-alt"
+          buttonTitle="Add annotation query"
+          infoBoxTitle="What are annotation queries?"
+          infoBox={{
+            __html: `<p>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines
+          and icons on all graph panels. When you hover over an annotation icon you can get event text &amp; tags for
+          the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or
+          drag region). These will be stored in Grafana's annotation database.
+        </p>
+        Checkout the
+        <a class='external-link' target='_blank' href='http://docs.grafana.org/reference/annotations/'
+          >Annotations documentation</a
+        >
+        for more information.`,
+          }}
+        />
+      )}
+      {!showEmptyListCTA && <ListNewButton onClick={onNew}>New query</ListNewButton>}
+    </VerticalGroup>
+  );
+};
+
+const getStyles = () => ({
+  table: css`
+    width: 100%;
+    overflow-x: scroll;
+  `,
+});

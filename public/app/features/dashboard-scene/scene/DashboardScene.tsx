@@ -18,7 +18,7 @@ import {
   SceneVariable,
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { AnnotationQuery, DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -54,6 +54,8 @@ export interface DashboardSceneState extends SceneObjectState {
   tags?: string[];
   /** Links */
   links: DashboardLink[];
+  /** Annotations */
+  annotations: { list: AnnotationQuery[] };
   /** Is editable */
   editable?: boolean;
   /** A uid when saved */
@@ -82,7 +84,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editview?: DashboardEditView;
   /** Edit panel */
   editPanel?: PanelEditor;
-
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
 }
@@ -120,6 +121,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
+      annotations: state.annotations ?? { list: [] },
       ...state,
     });
 
