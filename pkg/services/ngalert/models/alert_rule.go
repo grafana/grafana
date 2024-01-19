@@ -488,6 +488,15 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 	if alertRule.For < 0 {
 		return fmt.Errorf("%w: field `for` cannot be negative", ErrAlertRuleFailedValidation)
 	}
+
+	if len(alertRule.NotificationSettings) > 0 {
+		if len(alertRule.NotificationSettings) != 1 {
+			return fmt.Errorf("%w: only one notification settings entry is allowed", ErrAlertRuleFailedValidation)
+		}
+		if err := alertRule.NotificationSettings[0].Validate(); err != nil {
+			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid notification settings: %w", err))
+		}
+	}
 	return nil
 }
 

@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"hash/fnv"
 	"slices"
 	"unsafe"
@@ -20,6 +22,43 @@ type NotificationSettings struct {
 	RepeatInterval    *model.Duration
 	MuteTimeIntervals []string
 
+// Validate checks if the NotificationSettings object is valid.
+// It returns an error if any of the validation checks fail.
+// The receiver must be specified.
+// If GroupBy is not empty, it must contain both model.AlertNameLabel and FolderTitleLabel or the special label '...'.
+// GroupWait, GroupInterval, RepeatInterval must be positive durations.
+func (s *NotificationSettings) Validate() error {
+	if s.Receiver == "" {
+		return errors.New("receiver must be specified")
+	}
+	if len(s.GroupBy) > 0 {
+		alertName, folderTitle := false, false
+		for _, lbl := range s.GroupBy {
+			if lbl == "..." {
+				alertName, folderTitle = true, true
+				break
+			}
+			if lbl == model.AlertNameLabel {
+				alertName = true
+			}
+			if lbl == FolderTitleLabel {
+				folderTitle = true
+			}
+		}
+		if !alertName || !folderTitle {
+			return fmt.Errorf("group by override must contain two required labels: '%s' and '%s' or '...' (group by all)", model.AlertNameLabel, FolderTitleLabel)
+		}
+	}
+	if s.GroupWait != nil && *s.GroupWait < 0 {
+		return errors.New("group wait must be a positive duration")
+	}
+	if s.GroupInterval != nil && *s.GroupInterval < 0 {
+		return errors.New("group interval must be a positive duration")
+	}
+	if s.RepeatInterval != nil && *s.RepeatInterval < 0 {
+		return errors.New("repeat interval must be a positive duration")
+	}
+	return nil
 }
 
 // ToLabels converts the NotificationSettings object into a data.Labels object.

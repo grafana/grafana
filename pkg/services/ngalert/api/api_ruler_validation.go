@@ -244,19 +244,19 @@ func validateRuleGroup(
 }
 
 func validateNotificationSettings(n *apimodels.PostableNotificationSettings) ([]ngmodels.NotificationSettings, error) {
-	if n == nil || len(n.Receiver) == 0 {
-		return nil, errors.New("receiver (contact point) name must be specified")
+	s := ngmodels.NotificationSettings{
+		Receiver:          n.Receiver,
+		GroupBy:           n.GroupBy,
+		GroupWait:         n.GroupWait,
+		GroupInterval:     n.GroupInterval,
+		RepeatInterval:    n.RepeatInterval,
+		MuteTimeIntervals: n.MuteTimeIntervals,
 	}
 
-	// TODO add some validation of remaining settings. //TODO remove reserved group by labels (like alertname)
+	if err := s.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid notificaiton settings: %w", err)
+	}
 	return []ngmodels.NotificationSettings{
-		{
-			Receiver:          n.Receiver,
-			GroupBy:           n.GroupBy,
-			GroupWait:         n.GroupWait,
-			GroupInterval:     n.GroupInterval,
-			RepeatInterval:    n.RepeatInterval,
-			MuteTimeIntervals: n.MuteTimeIntervals,
-		},
+		s,
 	}, nil
 }
