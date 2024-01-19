@@ -151,11 +151,13 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	if !options.ReloadCache {
 		permissions, ok := s.cache.Get(key)
 		if ok {
+			metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 			s.log.Debug("Using cached permissions", "key", key)
 			return permissions.([]accesscontrol.Permission), nil
 		}
 	}
 
+	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 	s.log.Debug("Fetch permissions from store", "key", key)
 	permissions, err := s.getUserPermissions(ctx, user, options)
 	if err != nil {

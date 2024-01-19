@@ -13,7 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrInternal = errutil.Internal("accesscontrol.internal")
+const (
+	CacheHit  = "hit"
+	CacheMiss = "miss"
+)
+
+var (
+	ErrInternal        = errutil.Internal("accesscontrol.internal")
+	CacheUsageStatuses = []string{CacheHit, CacheMiss}
+)
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
