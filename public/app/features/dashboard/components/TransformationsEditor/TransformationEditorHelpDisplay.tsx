@@ -24,7 +24,7 @@ export const TransformationEditorHelpDisplay = ({
 
   const helpContent = help ? help : getLinkToDocs();
   const helpElement = (
-    <Drawer title="Transformation help" subtitle={name} onClose={() => onCloseClick(false)}>
+    <Drawer title={name} subtitle="Transformation help" onClose={() => onCloseClick(false)}>
       <OperationRowHelp markdown={helpContent} styleOverrides={{ borderTop: '2px solid' }} />
     </Drawer>
   );
