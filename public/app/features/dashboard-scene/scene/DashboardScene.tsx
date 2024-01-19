@@ -1,5 +1,4 @@
 import * as H from 'history';
-import { isNumber } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
 import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
@@ -210,7 +209,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
 
-    if (!isNumber(versionRsp.version)) {
+    if (!Number.isInteger(versionRsp.version)) {
       return false;
     }
 

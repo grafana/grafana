@@ -167,7 +167,7 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
     });
 
-    it('should restore the dashboard to the selected version and exit edit mode', async () => {
+    it('should restore the dashboard to the selected version and exit edit mode', () => {
       const newVersion = 3;
 
       const mockScene = new DashboardScene({
@@ -188,12 +188,20 @@ describe('DashboardScene', () => {
       });
     });
 
-    it('should return early if historySrv does not return a valid version number', async () => {
-      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: null });
+    it('should return early if historySrv does not return a valid version number', () => {
+      jest
+        .mocked(historySrv.restoreDashboard)
+        .mockResolvedValueOnce({ version: null })
+        .mockResolvedValueOnce({ version: undefined })
+        .mockResolvedValueOnce({ version: Infinity })
+        .mockResolvedValueOnce({ version: NaN })
+        .mockResolvedValue({ version: '10' });
 
-      return scene.onRestore(getVersionMock()).then((res) => {
-        expect(res).toBe(false);
-      });
+      for (let i = 0; i < 5; i++) {
+        scene.onRestore(getVersionMock()).then((res) => {
+          expect(res).toBe(false);
+        });
+      }
     });
   });
 });

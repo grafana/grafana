@@ -34,7 +34,7 @@ describe('historySrv', () => {
   });
 
   describe('getHistoryList', () => {
-    it('should return a versions array for the given dashboard id', async () => {
+    it('should return a versions array for the given dashboard id', () => {
       getMock.mockImplementation(() => Promise.resolve(versionsResponse));
       historySrv = new HistorySrv();
 
@@ -43,13 +43,13 @@ describe('historySrv', () => {
       });
     });
 
-    it('should return an empty array when not given an id', async () => {
+    it('should return an empty array when not given an id', () => {
       return historySrv.getHistoryList(emptyDash.uid, historyListOpts).then((versions) => {
         expect(versions).toEqual([]);
       });
     });
 
-    it('should return an empty array when not given a dashboard id', async () => {
+    it('should return an empty array when not given a dashboard id', () => {
       return historySrv.getHistoryList(null as unknown as string, historyListOpts).then((versions) => {
         expect(versions).toEqual([]);
       });
@@ -57,7 +57,7 @@ describe('historySrv', () => {
   });
 
   describe('getDashboardVersion', () => {
-    it('should return a version object for the given dashboard id and version', async () => {
+    it('should return a version object for the given dashboard id and version', () => {
       getMock.mockImplementation(() => Promise.resolve(versionsResponse[0]));
       historySrv = new HistorySrv();
 
@@ -75,7 +75,7 @@ describe('historySrv', () => {
   });
 
   describe('restoreDashboard', () => {
-    it('should return a success response given valid parameters', async () => {
+    it('should return a success response given valid parameters', () => {
       const version = 6;
       postMock.mockImplementation(() => Promise.resolve(restoreResponse(version)));
       historySrv = new HistorySrv();
