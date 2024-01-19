@@ -22,6 +22,8 @@ export const Components = {
     fromField: 'data-testid Time Range from field',
     toField: 'data-testid Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
+    copyTimeRange: 'data-testid TimePicker copy button',
+    pasteTimeRange: 'data-testid TimePicker paste button',
     calendar: {
       label: 'data-testid Time Range calendar',
       openButton: 'data-testid Open time range calendar',

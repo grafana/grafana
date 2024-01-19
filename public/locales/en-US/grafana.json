@@ -586,6 +586,7 @@
     "shortcuts-description": {
       "change-theme": "Change theme",
       "collapse-all-rows": "Collapse all rows",
+      "copy-time-range": "Copy time range",
       "dashboard-settings": "Dashboard settings",
       "duplicate-panel": "Duplicate Panel",
       "exit-edit/setting-views": "Exit edit/setting views",
@@ -599,6 +600,7 @@
       "move-time-range-forward": "Move time range forward",
       "open-search": "Open search",
       "open-shared-modal": "Open Panel Share Modal",
+      "paste-time-range": "Paste time range",
       "refresh-all-panels": "Refresh all panels",
       "remove-panel": "Remove Panel",
       "save-dashboard": "Save dashboard",
@@ -1393,6 +1395,13 @@
       "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
       "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
+    },
+    "copy-paste": {
+      "copy-success-message": "Time range copied to clipboard",
+      "default-error-message": "{{error}} is not a valid time range",
+      "default-error-title": "Invalid time range",
+      "tooltip-copy": "Copy time range to clipboard",
+      "tooltip-paste": "Paste time range"
     },
     "footer": {
       "change-settings-button": "Change time settings",
