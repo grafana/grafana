@@ -11,6 +11,7 @@ const DATASOURCE_NAME = 'aprometheusAnnotationDS';
 
 /**
  * Click dashboard settings and then the variables tab
+ *
  */
 function navigateToAnnotations() {
   e2e.components.PageToolbar.item('Dashboard settings').click();
