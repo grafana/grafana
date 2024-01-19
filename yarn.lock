@@ -2902,7 +2902,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:10.4.0-pre"
     "@grafana/e2e-selectors": "npm:10.4.0-pre"
-    "@grafana/experimental": "npm:1.7.5"
+    "@grafana/experimental": "npm:1.7.6"
     "@grafana/plugin-configs": "npm:10.4.0-pre"
     "@grafana/runtime": "npm:10.4.0-pre"
     "@grafana/schema": "npm:10.4.0-pre"
@@ -2981,7 +2981,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:10.4.0-pre"
     "@grafana/e2e-selectors": "npm:10.4.0-pre"
-    "@grafana/experimental": "npm:1.7.5"
+    "@grafana/experimental": "npm:1.7.6"
     "@grafana/plugin-configs": "npm:10.4.0-pre"
     "@grafana/runtime": "npm:10.4.0-pre"
     "@grafana/schema": "npm:10.4.0-pre"
@@ -3063,7 +3063,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:1.7.5"
+    "@grafana/experimental": "npm:1.7.6"
     "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/lezer-traceql": "npm:0.0.12"
     "@grafana/monaco-logql": "npm:^0.0.7"
@@ -3326,16 +3326,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.7.5":
-  version: 1.7.5
-  resolution: "@grafana/experimental@npm:1.7.5"
+"@grafana/experimental@npm:1.7.6":
+  version: 1.7.6
+  resolution: "@grafana/experimental@npm:1.7.6"
   dependencies:
     "@types/uuid": "npm:^8.3.3"
+    lodash: "npm:^4.17.21"
+    prismjs: "npm:^1.29.0"
+    react-beautiful-dnd: "npm:^13.1.1"
+    react-popper-tooltip: "npm:^4.4.2"
     react-use: "npm:^17.4.2"
     semver: "npm:^7.5.4"
     uuid: "npm:^8.3.2"
   peerDependencies:
-    "@emotion/css": 11.1.3
+    "@emotion/css": 11.11.2
     "@grafana/data": ^10.0.0
     "@grafana/runtime": ^10.0.0
     "@grafana/ui": ^10.0.0
@@ -3343,7 +3347,7 @@ __metadata:
     react-dom: 17.0.2
     react-select: ^5.2.1
     rxjs: 7.8.0
-  checksum: 33f5e739bbc1646ea00c00b419c35a0b02abbfc35b0fa42d61f05a78a1929567388e4132093a029f88783264e739baeb8bcb53a68bcf1152f055a20be3b87e24
+  checksum: d100f727462782b72898ca991b557c76db016461256afea37df79b3d6bb0ea7049e6a57262351e13227b6a27f51e6be8ce9a711370e00ff7608d9ee4ac58be96
   languageName: node
   linkType: hard
 
@@ -5193,7 +5197,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@popperjs/core@npm:2.11.8":
+"@popperjs/core@npm:2.11.8, @popperjs/core@npm:^2.11.5":
   version: 2.11.8
   resolution: "@popperjs/core@npm:2.11.8"
   checksum: ddd16090cde777aaf102940f05d0274602079a95ad9805bd20bc55dcc7c3a2ba1b99dd5c73e5cc2753c3d31250ca52a67d58059459d7d27debb983a9f552936c
@@ -16922,7 +16926,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:7.0.0"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": "npm:1.7.5"
+    "@grafana/experimental": "npm:1.7.6"
     "@grafana/faro-core": "npm:^1.3.6"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
     "@grafana/flamegraph": "workspace:*"
@@ -23728,7 +23732,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prismjs@npm:1.29.0, prismjs@npm:^1.27.0":
+"prismjs@npm:1.29.0, prismjs@npm:^1.27.0, prismjs@npm:^1.29.0":
   version: 1.29.0
   resolution: "prismjs@npm:1.29.0"
   checksum: 2080db382c2dde0cfc7693769e89b501ef1bfc8ff4f8d25c07fd4c37ca31bc443f6133d5b7c145a73309dc396e829ddb7cc18560026d862a887ae08864ef6b07
@@ -24398,7 +24402,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-beautiful-dnd@npm:13.1.1":
+"react-beautiful-dnd@npm:13.1.1, react-beautiful-dnd@npm:^13.1.1":
   version: 13.1.1
   resolution: "react-beautiful-dnd@npm:13.1.1"
   dependencies:
@@ -24786,7 +24790,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-popper@npm:2.3.0":
+"react-popper-tooltip@npm:^4.4.2":
+  version: 4.4.2
+  resolution: "react-popper-tooltip@npm:4.4.2"
+  dependencies:
+    "@babel/runtime": "npm:^7.18.3"
+    "@popperjs/core": "npm:^2.11.5"
+    react-popper: "npm:^2.3.0"
+  peerDependencies:
+    react: ">=16.6.0"
+    react-dom: ">=16.6.0"
+  checksum: 87192cd6a42f2d04826da82b4a55130a0bc50ef5fbf83328e0560b47a27e363dbe5538a66b835fb0309e2f2c011e20b09029c36c8a241fb790605638f212e6aa
+  languageName: node
+  linkType: hard
+
+"react-popper@npm:2.3.0, react-popper@npm:^2.3.0":
   version: 2.3.0
   resolution: "react-popper@npm:2.3.0"
   dependencies:
