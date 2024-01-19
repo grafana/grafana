@@ -1,5 +1,6 @@
 import { DataQuery, DataSourceRef } from '@grafana/data';
 
+// Legacy. Import from packages/grafana-data
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
     const refId = getRefId(num);

@@ -2,7 +2,8 @@
 // Migrations applied by the DashboardMigrator are performed before the plugin is loaded.
 // DashboardMigrator migrations are tied to a certain minimum version of a dashboard which means they will only be ran once.
 
-import { DataQuery, AnnotationQuery, getNextRefIdChar } from '@grafana/data';
+import { AnnotationQuery, getNextRefId } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { CloudWatchMetricsQuery, LegacyAnnotationQuery, MetricQueryType, MetricEditorMode } from '../types';
 
@@ -19,7 +20,7 @@ export function migrateMultipleStatsMetricsQuery(
     }
   }
   for (const newTarget of newQueries) {
-    newTarget.refId = getNextRefIdChar(panelQueries);
+    newTarget.refId = getNextRefId(panelQueries);
     delete newTarget.statistics;
     panelQueries.push(newTarget);
   }

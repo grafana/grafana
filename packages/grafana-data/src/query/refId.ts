@@ -1,6 +1,9 @@
 import { DataQuery } from '@grafana/schema';
 
-export const getNextRefIdChar = (queries: DataQuery[]): string => {
+/**
+ * Finds the next available refId for a query
+ */
+export const getNextRefId = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
     const refId = getRefId(num);
     if (!queries.some((query) => query.refId === refId)) {

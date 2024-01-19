@@ -1,6 +1,6 @@
 import { DataQuery } from '@grafana/schema';
 
-import { getNextRefIdChar } from '.';
+import { getNextRefId } from '.';
 
 export interface TestQuery extends DataQuery {
   name?: string;
@@ -18,18 +18,18 @@ const singleExtendedDataQuery: DataQuery[] = dataQueryHelper('ABCDEFGHIJKLMNOPQR
 
 describe('Get next refId char', () => {
   it('should return next char', () => {
-    expect(getNextRefIdChar(singleDataQuery)).toEqual('F');
+    expect(getNextRefId(singleDataQuery)).toEqual('F');
   });
 
   it('should get first char', () => {
-    expect(getNextRefIdChar([])).toEqual('A');
+    expect(getNextRefId([])).toEqual('A');
   });
 
   it('should get the first available character if a query has been deleted out of order', () => {
-    expect(getNextRefIdChar(outOfOrderDataQuery)).toEqual('C');
+    expect(getNextRefId(outOfOrderDataQuery)).toEqual('C');
   });
 
   it('should append a new char and start from AA when Z is reached', () => {
-    expect(getNextRefIdChar(singleExtendedDataQuery)).toEqual('AA');
+    expect(getNextRefId(singleExtendedDataQuery)).toEqual('AA');
   });
 });
