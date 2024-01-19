@@ -2,6 +2,7 @@ package peakq
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +14,7 @@ import (
 )
 
 type renderREST struct {
-	// storage *genericregistry.Store
+	getter rest.Getter
 }
 
 var _ = rest.Connecter(&renderREST{})
@@ -26,7 +27,7 @@ func (r *renderREST) Destroy() {
 }
 
 func (r *renderREST) ConnectMethods() []string {
-	return []string{"POST"}
+	return []string{"POST", "GET"}
 }
 
 func (r *renderREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -34,12 +35,13 @@ func (r *renderREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	// TODO!!!
-	// get the value from the store
-	template := &peakq.QueryTemplate{
-		ObjectMeta: v1.ObjectMeta{
-			Name: name,
-		},
+	obj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	template, ok := obj.(*peakq.QueryTemplate)
+	if !ok {
+		return nil, fmt.Errorf("expected query template")
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

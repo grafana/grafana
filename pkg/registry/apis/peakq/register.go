@@ -74,7 +74,9 @@ func (b *PeakQAPIBuilder) GetAPIGroupInfo(
 		return nil, err
 	}
 	storage[resourceInfo.StoragePath()] = peakqStorage
-	storage[resourceInfo.StoragePath("render")] = &renderREST{}
+	storage[resourceInfo.StoragePath("render")] = &renderREST{
+		getter: peakqStorage,
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[peakq.VERSION] = storage
 	return &apiGroupInfo, nil
