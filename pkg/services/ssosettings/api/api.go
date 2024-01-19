@@ -83,7 +83,7 @@ func (api *Api) RegisterAPIEndpoints() {
 // You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
 //
 // Responses:
-// 200: okResponse
+// 200: listSSOSettingsResponse
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
@@ -249,6 +249,12 @@ type RemoveProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
+}
+
+// swagger:response listSSOSettingsResponse
+type ListSSOSettingsResponse struct {
+	// in: body
+	Body []models.SSOSettings `json:"body"`
 }
 
 // swagger:response getSSOSettingsResponse

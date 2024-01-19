@@ -1433,6 +1433,19 @@
         },
         "description": "(empty)"
       },
+      "listSSOSettingsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/SSOSettings"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "listSortOptionsResponse": {
         "content": {
           "application/json": {
@@ -25049,7 +25062,7 @@
         "operationId": "listAllProvidersSettings",
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/listSSOSettingsResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
