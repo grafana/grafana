@@ -1,34 +1,11 @@
 import { e2e } from '../utils';
 import { addDashboard } from '../utils/flows';
 
-import { getResources } from './helpers/prometheus-helpers';
+import { createPromDS, getResources } from './helpers/prometheus-helpers';
 
 const DATASOURCE_ID = 'Prometheus';
 
 const DATASOURCE_NAME = 'prometheusVariableDS';
-
-/**
- * Create a Prom data source
- */
-function createPromDS(name: string): void {
-  // login
-  e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
-
-  // select the prometheus DS
-  e2e.pages.AddDataSource.visit();
-  e2e.pages.AddDataSource.dataSourcePluginsV2(DATASOURCE_ID)
-    .scrollIntoView()
-    .should('be.visible') // prevents flakiness
-    .click();
-
-  // add url for DS to save without error
-  e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('http://prom-url:9090');
-
-  // name the DS
-  e2e.pages.DataSource.name().clear();
-  e2e.pages.DataSource.name().type(name);
-  e2e.pages.DataSource.saveAndTest().click();
-}
 
 /**
  * Click dashboard settings and then the variables tab
@@ -102,7 +79,7 @@ function variableFlowToQueryEditor(variableName: string, queryType: string) {
 
 describe('Prometheus variable query editor', () => {
   beforeEach(() => {
-    createPromDS(DATASOURCE_NAME);
+    createPromDS(DATASOURCE_ID, DATASOURCE_NAME);
   });
 
   it('should navigate to variable query editor', () => {
