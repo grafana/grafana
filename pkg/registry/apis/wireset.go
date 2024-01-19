@@ -15,7 +15,7 @@ import (
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
-	// Should this be here? seems like it should live with standard plugin stuff
+	// read-only datasource abstractions
 	plugincontext.ProvideService,
 	datasource.ProvideDefaultPluginConfigs,
 

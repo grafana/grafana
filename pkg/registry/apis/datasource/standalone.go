@@ -9,8 +9,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
@@ -25,32 +27,44 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		return nil, fmt.Errorf("only %s is currently supported", pluginID)
 	}
 
-	// cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-	// 	// TODO: Add support for args?
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// Run standalone with zero dependencies
+	if true {
+		return NewDataSourceAPIBuilder(
+			plugins.JSONData{
+				ID: pluginID,
+			},
+			testdatasource.ProvideService(), // the client
+			&testdataPluginConfigProvider{
+				startup: v1.Now(),
+			},
+			&actest.FakeAccessControl{ExpectedEvaluate: true},
+		)
+	}
 
-	// _, pluginStore, _, _, err := apiBuilderServices(cfg, pluginID)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// Otherwise manually wire up access to testdata
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		// TODO: Add support for args?
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	// td, exists := pluginStore.Plugin(context.Background(), pluginID)
-	// if !exists {
-	// 	return nil, fmt.Errorf("plugin %s not found", pluginID)
-	// }
+	_, pluginStore, _, _, err := apiBuilderServices(cfg, pluginID)
+	if err != nil {
+		return nil, err
+	}
 
+	td, exists := pluginStore.Plugin(context.Background(), pluginID)
+	if !exists {
+		return nil, fmt.Errorf("plugin %s not found", pluginID)
+	}
 	return NewDataSourceAPIBuilder(
-		plugins.JSONData{
-			ID: pluginID,
-		},
+		td.JSONData,
 		testdatasource.ProvideService(), // the client
 		&testdataPluginConfigProvider{
-			startup: v1.Now(),
+			startup: v1.Now(), // TODO...
 		},
-		&actest.FakeAccessControl{ExpectedEvaluate: true},
+		acimpl.ProvideAccessControl(cfg),
 	)
 }
 
