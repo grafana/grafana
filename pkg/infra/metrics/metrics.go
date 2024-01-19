@@ -109,6 +109,9 @@ var (
 
 	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
 	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
+
+	// MFolderIDsAPICount is a metric counter for folder ids count in the api package
+	MFolderIDsAPICount prometheus.Counter
 )
 
 // Timers
@@ -452,6 +455,12 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
 
+	MFolderIDsAPICount = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
+		Name:      "folder_id_api_count",
+		Help:      "counter for folder id usage in api package",
+		Namespace: ExporterName,
+	})
+
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
 		Help:      "total amount of dashboards",
@@ -736,5 +745,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
 		MStatTotalCorrelations,
+		MFolderIDsAPICount,
 	)
 }
