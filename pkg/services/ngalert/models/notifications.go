@@ -112,6 +112,10 @@ func (s *NotificationSettings) IsAllDefault() bool {
 	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0
 }
 
+// Fingerprint calculates a hash value based on the NotificationSettings object.
+// The hash is calculated by concatenating the strings and durations of the NotificationSettings attributes
+// and using an invalid UTF-8 sequence as a separator. The field GroupBy is normalized to the consistent canonical form.
+// The resulting hash value is returned as a data.Fingerprint.
 func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 	h := fnv.New64()
 	tmp := make([]byte, 8)
