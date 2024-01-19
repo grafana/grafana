@@ -13,6 +13,8 @@ import { e2e } from '../utils';
 const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
 
+// just adding a comment to force these e2e tests to run in CI
+
 type AzureMonitorConfig = {
   secureJsonData: AzureDataSourceSecureJsonData;
   jsonData: AzureDataSourceJsonData;
