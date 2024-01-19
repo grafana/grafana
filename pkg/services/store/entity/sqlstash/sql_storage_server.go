@@ -158,6 +158,17 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 		}
 	}
 
+	// set empty body, meta or status to nil
+	if raw.Body != nil && len(raw.Body) == 0 {
+		raw.Body = nil
+	}
+	if raw.Meta != nil && len(raw.Meta) == 0 {
+		raw.Meta = nil
+	}
+	if raw.Status != nil && len(raw.Status) == 0 {
+		raw.Status = nil
+	}
+
 	return raw, nil
 }
 
