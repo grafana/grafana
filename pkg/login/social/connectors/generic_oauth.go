@@ -96,7 +96,7 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	defer s.reloadMutex.Unlock()
 
 	s.info = newInfo
-	s.SocialBase.Config = config
+	s.Config = config
 
 	s.teamsUrl = newInfo.TeamsUrl
 	s.emailAttributeName = newInfo.EmailAttributeName

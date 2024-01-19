@@ -164,7 +164,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 	for _, test := range tests {
 		provider.info.RoleAttributePath = test.RoleAttributePath
 		provider.info.AllowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
-		provider.autoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
+		provider.cfg.AutoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
 		provider.info.RoleAttributeStrict = test.Cfg.RoleAttributeStrict
 		provider.info.SkipOrgRoleSync = test.Cfg.SkipOrgRoleSync
 

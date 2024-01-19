@@ -180,7 +180,7 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	defer s.reloadMutex.Unlock()
 
 	s.info = newInfo
-	s.SocialBase.Config = config
+	s.Config = config
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
 

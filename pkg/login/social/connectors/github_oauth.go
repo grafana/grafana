@@ -116,9 +116,10 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	defer s.reloadMutex.Unlock()
 
 	s.info = newInfo
+	s.Config = config
+
 	s.teamIds = teamIds
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
-	s.SocialBase.Config = config
 
 	return nil
 }

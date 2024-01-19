@@ -86,7 +86,7 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	defer s.reloadMutex.Unlock()
 
 	s.info = newInfo
-	s.SocialBase.Config = config
+	s.Config = config
 
 	s.url = s.cfg.GrafanaComURL
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])

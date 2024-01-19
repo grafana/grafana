@@ -93,7 +93,7 @@ func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings)
 	defer s.reloadMutex.Unlock()
 
 	s.info = newInfo
-	s.SocialBase.Config = config
+	s.Config = config
 
 	return nil
 }

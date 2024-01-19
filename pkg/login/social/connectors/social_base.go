@@ -25,12 +25,11 @@ import (
 
 type SocialBase struct {
 	*oauth2.Config
-	info              *social.OAuthInfo
-	cfg               *setting.Cfg
-	reloadMutex       sync.RWMutex
-	log               log.Logger
-	autoAssignOrgRole string
-	features          featuremgmt.FeatureToggles
+	info        *social.OAuthInfo
+	cfg         *setting.Cfg
+	reloadMutex sync.RWMutex
+	log         log.Logger
+	features    featuremgmt.FeatureToggles
 }
 
 func newSocialBase(name string,
@@ -42,12 +41,11 @@ func newSocialBase(name string,
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:            config,
-		info:              info,
-		log:               logger,
-		autoAssignOrgRole: cfg.AutoAssignOrgRole,
-		features:          features,
-		cfg:               cfg,
+		Config:   config,
+		info:     info,
+		log:      logger,
+		features: features,
+		cfg:      cfg,
 	}
 }
 
@@ -61,7 +59,7 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
 	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.info.AllowSignup))
 	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.info.AllowedDomains))
-	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.autoAssignOrgRole))
+	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.cfg.AutoAssignOrgRole))
 	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.info.RoleAttributePath))
 	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.info.RoleAttributeStrict))
 	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.info.SkipOrgRoleSync))
@@ -132,9 +130,9 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting
 // if legacy is enabled "" is returned indicating the previous role assignment is used.
 func (s *SocialBase) defaultRole() org.RoleType {
-	if s.autoAssignOrgRole != "" {
+	if s.cfg.AutoAssignOrgRole != "" {
 		s.log.Debug("No role found, returning default.")
-		return org.RoleType(s.autoAssignOrgRole)
+		return org.RoleType(s.cfg.AutoAssignOrgRole)
 	}
 
 	// should never happen
