@@ -92,7 +92,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     return sceneGraph.getTimeRange(this._dashboard);
   }
 
-  public fetchVersions(append = false): void {
+  public fetchVersions = (append = false): void => {
     const uid = this._dashboard.state.uid;
 
     if (!uid) {
@@ -112,7 +112,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       })
       .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));
-  }
+  };
 
   public getDiff = async () => {
     const selectedVersions = this.versions.filter((version) => version.checked);
@@ -205,6 +205,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
             baseInfo={baseInfo!}
             isNewLatest={isNewLatest!}
             diffData={model.diffData}
+            onRestore={dashboard.onRestore}
           />
         )}
       </Page>
@@ -216,14 +217,19 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
       {isLoading ? (
         <VersionsHistorySpinner msg="Fetching history list&hellip;" />
       ) : (
-        <VersionHistoryTable versions={model.versions} onCheck={model.onCheck} canCompare={canCompare} />
+        <VersionHistoryTable
+          versions={model.versions}
+          onCheck={model.onCheck}
+          canCompare={canCompare}
+          onRestore={dashboard.onRestore}
+        />
       )}
       {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
       {showButtons && (
         <VersionsHistoryButtons
           hasMore={hasMore}
           canCompare={canCompare}
-          getVersions={model.fetchVersions.bind(model)}
+          getVersions={model.fetchVersions}
           getDiff={model.getDiff}
           isLastPage={!!isLastPage}
         />
