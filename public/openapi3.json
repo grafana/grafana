@@ -1835,16 +1835,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                "type": "object"
-              },
-              "type": "object"
+              "$ref": "#/components/schemas/UsersPermissions"
             }
           }
         },
@@ -1894,13 +1885,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "additionalProperties": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "type": "object"
+              "$ref": "#/components/schemas/PermissionsByAction"
             }
           }
         },
@@ -7781,6 +7766,12 @@
         "format": "int64",
         "type": "integer"
       },
+      "PermissionsByAction": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Scopes"
+        },
+        "type": "object"
+      },
       "Playlist": {
         "description": "Playlist model",
         "properties": {
@@ -9840,6 +9831,12 @@
         },
         "type": "object"
       },
+      "Scopes": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
       "SearchDeviceQueryResult": {
         "properties": {
           "devices": {
@@ -11838,6 +11835,7 @@
         "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
         "type": "object"
       },
+      "UsersPermissions": {},
       "ValidationError": {
         "properties": {
           "msg": {

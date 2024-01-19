@@ -18,10 +18,16 @@ type SearchPermissionsParams struct {
 	Scope string `json:"scope"`
 }
 
+type Scopes []string
+
+type PermissionsByAction map[string]Scopes
+
+type UsersPermissions map[int64]PermissionsByAction
+
 // swagger:response searchPermissionsResponse
 type SearchPermissionsResponse struct {
 	// in: body
-	Body map[int64]map[string][]string
+	Body UsersPermissions `json:"body"`
 }
 
 // swagger:parameters searchUserPermissions
@@ -46,5 +52,5 @@ type SearchUserPermissionsParams struct {
 // swagger:response searchUserPermissionsResponse
 type SearchUserPermissionsResponse struct {
 	// in: body
-	Body map[string][]string
+	Body PermissionsByAction `json:"body"`
 }
