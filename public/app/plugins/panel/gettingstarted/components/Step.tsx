@@ -60,11 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow-y: hidden;
       width: 100%;
       display: flex;
-      justify-content: center;
-
-      ${theme.breakpoints.down('xxl')} {
-        justify-content: flex-start;
-      }
+      justify-content: flex-start;
     `,
   };
 };
