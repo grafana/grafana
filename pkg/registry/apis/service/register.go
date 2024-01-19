@@ -12,7 +12,6 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/generated/openapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
@@ -80,7 +79,7 @@ func (b *ServiceAPIBuilder) GetAPIGroupInfo(
 }
 
 func (b *ServiceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return openapi.GetOpenAPIDefinitions
+	return service.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server

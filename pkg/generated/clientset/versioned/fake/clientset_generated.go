@@ -5,11 +5,9 @@
 package fake
 
 import (
-	clientset "github.com/grafana/grafana/pkg/generated/clientset/clientset"
-	peakqv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/clientset/typed/peakq/v0alpha1"
-	fakepeakqv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/clientset/typed/peakq/v0alpha1/fake"
-	servicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/clientset/typed/service/v0alpha1"
-	fakeservicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/clientset/typed/service/v0alpha1/fake"
+	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/service/v0alpha1"
+	fakeservicev0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/service/v0alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -66,11 +64,6 @@ var (
 	_ clientset.Interface = &Clientset{}
 	_ testing.FakeClient  = &Clientset{}
 )
-
-// PeakqV0alpha1 retrieves the PeakqV0alpha1Client
-func (c *Clientset) PeakqV0alpha1() peakqv0alpha1.PeakqV0alpha1Interface {
-	return &fakepeakqv0alpha1.FakePeakqV0alpha1{Fake: &c.Fake}
-}
 
 // ServiceV0alpha1 retrieves the ServiceV0alpha1Client
 func (c *Clientset) ServiceV0alpha1() servicev0alpha1.ServiceV0alpha1Interface {

@@ -35,6 +35,7 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Title", Type: "string"},
 				{Name: "Created At", Type: "date"},
 			},
 			func(obj any) ([]interface{}, error) {
@@ -44,6 +45,7 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 				}
 				return []interface{}{
 					m.Name,
+					m.Spec.Title,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			},

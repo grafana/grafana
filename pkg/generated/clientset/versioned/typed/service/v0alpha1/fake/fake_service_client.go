@@ -5,22 +5,22 @@
 package fake
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/clientset/typed/peakq/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/service/v0alpha1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakePeakqV0alpha1 struct {
+type FakeServiceV0alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakePeakqV0alpha1) QueryTemplates(namespace string) v0alpha1.QueryTemplateInterface {
-	return &FakeQueryTemplates{c, namespace}
+func (c *FakeServiceV0alpha1) ExternalNames(namespace string) v0alpha1.ExternalNameInterface {
+	return &FakeExternalNames{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakePeakqV0alpha1) RESTClient() rest.Interface {
+func (c *FakeServiceV0alpha1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

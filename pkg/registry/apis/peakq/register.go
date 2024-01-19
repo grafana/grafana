@@ -12,7 +12,6 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
-	"github.com/grafana/grafana/pkg/generated/openapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
@@ -75,12 +74,14 @@ func (b *PeakQAPIBuilder) GetAPIGroupInfo(
 		return nil, err
 	}
 	storage[resourceInfo.StoragePath()] = peakqStorage
+	storage[resourceInfo.StoragePath("render")] = &renderREST{}
+
 	apiGroupInfo.VersionedResourcesStorageMap[peakq.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *PeakQAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return openapi.GetOpenAPIDefinitions
+	return peakq.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
