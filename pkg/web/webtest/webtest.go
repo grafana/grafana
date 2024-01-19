@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -112,6 +113,9 @@ func RequestWithWebContext(req *http.Request, c *contextmodel.ReqContext) *http.
 }
 
 func RequestWithSignedInUser(req *http.Request, usr *user.SignedInUser) *http.Request {
+	ctx := appcontext.WithUser(req.Context(), usr)
+	*req = *req.WithContext(ctx)
+
 	return RequestWithWebContext(req, &contextmodel.ReqContext{
 		SignedInUser: usr,
 		IsSignedIn:   true,

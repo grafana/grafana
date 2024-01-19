@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -42,7 +41,6 @@ func ProvideService(
 	expressionService *expr.Service,
 	pluginRequestValidator validations.PluginRequestValidator,
 	pluginClient pluginclient.Client,
-	pCtxProvider *plugincontext.Provider,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                    cfg,
@@ -50,7 +48,6 @@ func ProvideService(
 		expressionService:      expressionService,
 		pluginRequestValidator: pluginRequestValidator,
 		pluginClient:           pluginClient,
-		pCtxProvider:           pCtxProvider,
 		log:                    log.New("query_data"),
 		concurrentQueryLimit:   cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	}
@@ -73,7 +70,6 @@ type ServiceImpl struct {
 	expressionService      *expr.Service
 	pluginRequestValidator validations.PluginRequestValidator
 	pluginClient           pluginclient.Client
-	pCtxProvider           *plugincontext.Provider
 	log                    log.Logger
 	concurrentQueryLimit   int
 }

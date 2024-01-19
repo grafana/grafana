@@ -522,17 +522,17 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 }
 
 type fakePluginClient struct {
-	plugins.Client
+	pluginclient.Client
 
-	req *backend.CallResourceRequest
+	req *pluginclient.CallResourceRequest
 
-	backend.QueryDataHandlerFunc
+	pluginclient.QueryDataHandlerFunc
 
 	statusCode int
 	headers    map[string][]string
 }
 
-func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (c *fakePluginClient) CallResource(_ context.Context, req *pluginclient.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
 	bytes, err := json.Marshal(map[string]any{
 		"message": "hello",
@@ -553,7 +553,7 @@ func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallReso
 	})
 }
 
-func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (c *fakePluginClient) QueryData(ctx context.Context, req *pluginclient.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if c.QueryDataHandlerFunc != nil {
 		return c.QueryDataHandlerFunc.QueryData(ctx, req)
 	}
