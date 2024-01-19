@@ -17,13 +17,14 @@ interface QueryVariableEditorProps {
 export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
   const { datasource: datasourceRef, regex, sort, refresh, isMulti, includeAll, allValue, query } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
-  const { value: datasource } = useAsync(
-    async () => await getDataSourceSrv().get(datasourceRef ?? ''),
-    [datasourceRef]
-  );
-  const { value: VariableQueryEditor } = useAsync(async () => {
-    return datasource ? await getVariableQueryEditor(datasource) : undefined;
-  }, [datasource]);
+
+  const { value: dsConfig } = useAsync(async () => {
+    const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
+    const VariableQueryEditor = await getVariableQueryEditor(datasource);
+
+    return { datasource, VariableQueryEditor };
+  }, [datasourceRef]);
+  const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ regex: event.currentTarget.value });
@@ -47,7 +48,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     const datasource: DataSourceRef = { uid: dsInstanceSettings.uid, type: dsInstanceSettings.type };
     variable.setState({ datasource });
   };
-  const onQueryChange = (query: string) => {
+  const onQueryChange = (query: QueryVariable['state']['query']) => {
     variable.setState({ query });
   };
 

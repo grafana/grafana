@@ -26,8 +26,7 @@ export function QueryEditor({
   onQueryChange,
   timeRange,
 }: QueryEditorProps) {
-  let queryWithDefaults = query;
-
+  let queryWithDefaults;
   if (typeof query === 'string') {
     queryWithDefaults = query || (datasource.variables?.getDefaultQuery?.() ?? '');
   } else {
