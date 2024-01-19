@@ -992,7 +992,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 			}
 			dur := time.Since(start)
 			origDur := time.Since(start)
-			d.log.Info("Alternative search query", "time", dur, "dt", origDur - dur, time.Since"results", len(results))
+			d.log.Info("Alternative search query", "time", dur, "dt", origDur-dur, "results", len(results))
 
 			expected := <-resc
 
