@@ -86,3 +86,15 @@ export function anySeriesWithTimeField(data: DataFrame[]) {
 export function hasTimeField(data: DataFrame): boolean {
   return data.fields.some((field) => field.type === FieldType.time);
 }
+
+/**
+ * Get row id based on the meta.uniqueRowIdFields attribute.
+ * @param dataFrame
+ * @param rowIndex
+ */
+export function getRowUniqueId(dataFrame: DataFrame, rowIndex: number) {
+  if (dataFrame.meta?.uniqueRowIdFields === undefined) {
+    return undefined;
+  }
+  return dataFrame.meta.uniqueRowIdFields.map((fieldIndex) => dataFrame.fields[fieldIndex].values[rowIndex]).join('-');
+}

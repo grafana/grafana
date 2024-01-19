@@ -43,6 +43,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
     variable.setState({ description: e.currentTarget.value });
   const onHideChange = (hide: VariableHide) => variable.setState({ hide });
+  const isHasVariableOptions = hasVariableOptions(variable);
 
   return (
     <>
@@ -80,7 +81,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
 
         {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-        {hasVariableOptions(variable) && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
+        {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
 
         <div style={{ marginTop: '16px' }}>
           <HorizontalGroup spacing="md" height="inherit">
@@ -94,14 +95,17 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
             >
               Back to list
             </Button>
-            <Button
-              disabled={runQueryState.loading}
-              variant="secondary"
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
-              onClick={onRunQuery}
-            >
-              {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
-            </Button>
+
+            {isHasVariableOptions && (
+              <Button
+                disabled={runQueryState.loading}
+                variant="secondary"
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+                onClick={onRunQuery}
+              >
+                {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
+              </Button>
+            )}
             <Button
               variant="destructive"
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}

@@ -70,6 +70,10 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 }
 
 func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+	if query.Type == "annotation" {
+		return make([]*annotations.ItemDTO, 0), nil
+	}
+
 	rule := &ngmodels.AlertRule{}
 	if query.AlertID != 0 {
 		var err error
