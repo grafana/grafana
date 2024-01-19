@@ -17,6 +17,7 @@ var WireSet = wire.NewSet(
 
 	// Should this be here? seems like it should live with standard plugin stuff
 	plugincontext.ProvideService,
+	datasource.ProvideDefaultPluginConfigs,
 
 	// Each must be added here *and* in the ServiceSink above
 	playlist.RegisterAPIService,

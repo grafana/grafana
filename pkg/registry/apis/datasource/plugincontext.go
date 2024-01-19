@@ -30,6 +30,17 @@ type PluginConfigProvider interface {
 	PluginContextForDataSource(ctx context.Context, pluginID, uid string) (backend.PluginContext, error)
 }
 
+func ProvideDefaultPluginConfigs(
+	dsService datasources.DataSourceService,
+	dsCache datasources.CacheService,
+	contextProvider *plugincontext.Provider) PluginConfigProvider {
+	return &defaultPluginConfigProvider{
+		dsService:       dsService,
+		dsCache:         dsCache,
+		contextProvider: contextProvider,
+	}
+}
+
 type defaultPluginConfigProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService

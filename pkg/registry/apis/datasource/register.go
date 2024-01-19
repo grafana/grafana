@@ -20,11 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -44,24 +42,13 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiRegistrar grafanaapiserver.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
-
-	contextProvider *plugincontext.Provider,
-	dsService datasources.DataSourceService,
-	dsCache datasources.CacheService,
-
+	pluginConfigs PluginConfigProvider,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 ) (*DataSourceAPIBuilder, error) {
 	// This requires devmode!
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
-	}
-
-	// TODO? these could have their own wire config?
-	pluginContext := &defaultPluginConfigProvider{
-		dsService:       dsService,
-		dsCache:         dsCache,
-		contextProvider: contextProvider,
 	}
 
 	var err error
@@ -76,7 +63,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData, pluginClient, pluginContext, accessControl)
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData, pluginClient, pluginConfigs, accessControl)
 		if err != nil {
 			return nil, err
 		}
