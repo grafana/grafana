@@ -154,16 +154,28 @@ func (m *seedAssignmentOnCallAccessMigrator) SQL(dialect migrator.Dialect) strin
 }
 
 func (m *seedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
+	// Check if the migration is necessary
+	hasEntry := 0
+	_, err := sess.SQL(`SELECT 1 FROM seed_assignment LIMIT 1`).Get(&hasEntry)
+	if hasEntry == 0 {
+		// Skip migration the seed assignment table has not been populated
+		// Hence the oncall access permission can be granted without any risk
+		return nil
+	}
+
+	// Check if the permission has not already been seeded
+	// This is the case for instances that activated the accessControlOnCall feature already.
 	type SeedAssignment struct {
 		BuiltinRole, Action, Scope, Origin string
 	}
 	assigns := []SeedAssignment{}
-	err := sess.SQL(`SELECT builtin_role, action, scope, origin FROM seed_assignment WHERE action = ? AND scope = ?`,
+	err = sess.SQL(`SELECT builtin_role, action, scope, origin FROM seed_assignment WHERE action = ? AND scope = ?`,
 		"plugins.app:access", "plugins:id:grafana-oncall-app").
 		Find(&assigns)
 	if err != nil {
 		return err
 	}
+
 	basicRoles := map[string]bool{"Viewer": true, "Editor": true, "Admin": true, "Grafana Admin": true}
 	for i := range assigns {
 		delete(basicRoles, assigns[i].BuiltinRole)
@@ -172,6 +184,8 @@ func (m *seedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migra
 		return nil
 	}
 
+	// By default basic roles have the permission to access all app plugins. There is no need for this extra permission.
+	// Mark the OnCall Access permission as already seeded to prevent it to be added to basic roles.
 	toSeed := []SeedAssignment{}
 	for br := range basicRoles {
 		toSeed = append(toSeed, SeedAssignment{
