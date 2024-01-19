@@ -310,7 +310,7 @@ export function getPanelMenu(
     }
   }
 
-  if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
+  if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
     subMenu.push({
       text: t('panel.header-menu.get-help', 'Get help'),
       onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Help),
