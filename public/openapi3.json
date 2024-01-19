@@ -7275,8 +7275,18 @@
         "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
         "type": "array"
       },
+      "ObjectMatcher": {
+        "items": {
+          "type": "string"
+        },
+        "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+        "type": "array"
+      },
       "ObjectMatchers": {
-        "$ref": "#/components/schemas/Matchers"
+        "items": {
+          "$ref": "#/components/schemas/ObjectMatcher"
+        },
+        "type": "array"
       },
       "OpsGenieConfig": {
         "properties": {
@@ -11976,6 +11986,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -12132,7 +12143,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12242,13 +12252,13 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
