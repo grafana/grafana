@@ -364,7 +364,6 @@ The following example would add the derived field `traceID regex` based on a reg
 
 {{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" >}}
 
-
 ### InfluxDB native SQL support
 
 InfluxDB introduced [a new version, 3.0](https://www.influxdata.com/blog/introducing-influxdb-3-0/), in April. With this new version, InfluxDB has put [Flux in maintenance mode](https://www.influxdata.com/blog/the-plan-for-influxdb-3-0-open-source/#heading4). But with the new version we have a new querying language, [Native SQL](https://www.influxdata.com/products/sql/). With v10.3.0, Grafana has built-in support for SQL query language in InfluxDB.
