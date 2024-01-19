@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -460,7 +461,13 @@ func setup(t *testing.T) *testContext {
 	}
 
 	pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg,
-		localcache.ProvideService(), &pluginstore.FakePluginStore{}, fakeDatasourceService,
+		localcache.ProvideService(), &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "postgres"}},
+				{JSONData: plugins.JSONData{ID: "testdata"}},
+				{JSONData: plugins.JSONData{ID: "mysql"}},
+			},
+		}, &fakeDatasources.FakeCacheService{}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc,

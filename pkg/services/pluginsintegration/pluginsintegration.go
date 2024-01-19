@@ -44,7 +44,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient/pluginclientimpl"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -96,7 +95,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
-	plugincontext.ProvideService,
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
