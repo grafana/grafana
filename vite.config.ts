@@ -1,5 +1,4 @@
 import react from '@vitejs/plugin-react-swc';
-import { minify } from 'html-minifier-terser';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
@@ -16,6 +15,7 @@ export default defineConfig({
       input: ['./public/app/index.ts', './public/sass/grafana.dark.scss', './public/sass/grafana.light.scss'],
     },
     outDir: './build',
+    assetsDir: './',
   },
   server: {
     // vite binds to ipv6 by default... and that doesn't work for me locally on mac...
@@ -75,24 +75,28 @@ export default defineConfig({
 // var path = 'public/app/features/annotations/partials/event_editor.html';
 // window.angular.module('ng').run(['$templateCache', function(c) { c.put(path, _module_exports) }]);
 // module.exports = path;
+
+// const htmlComponentFile = /\.html\?inline$/;
+
 function angularHtmlImport() {
+  let isDevelopment = true;
   return {
     name: 'transform-angular-html',
+    configResolved(config) {
+      isDevelopment = config.command === 'serve';
+    },
     async transform(src, id) {
-      if (/^.*\.html$/g.test(id)) {
-        const minifierOptions = {
-          collapseWhitespace: false,
-          collapseBooleanAttributes: true,
-          conservativeCollapse: true,
-          minifyJS: true,
-        };
-
+      if (id.endsWith('.html')) {
         const idParts = id.split('/public/');
         const path = idParts[idParts.length - 1];
-        const html = await minify(src, minifierOptions);
-        const stringified = JSON.stringify(html);
-        const result = `let path = 'public/${path}'; angular.module('ng').run(['$templateCache', c => { c.put(path, ${stringified}) }]); export default path;`;
+        // const minifysrc = await minify(src, minifierOptions);
+        const html = isDevelopment ? JSON.stringify(src) : src;
+        const result = `const path = 'public/${path}';
+const htmlTemplate = ${html};
+angular.module('ng').run(['$templateCache', c => { c.put(path, htmlTemplate) }]); export default path;`;
         return { code: result, map: null };
+      } else {
+        return;
       }
     },
   };
