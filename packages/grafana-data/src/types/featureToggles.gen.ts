@@ -42,6 +42,7 @@ export interface FeatureToggles {
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
   dockedMegaMenu?: boolean;
+  returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
@@ -175,4 +176,6 @@ export interface FeatureToggles {
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;
+  jitterAlertRules?: boolean;
+  jitterAlertRulesWithinGroups?: boolean;
 }
