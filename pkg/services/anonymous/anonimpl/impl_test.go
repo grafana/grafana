@@ -179,6 +179,8 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 }
 
 func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
+	fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC) // Fixed timestamp for testing
+
 	testCases := []struct {
 		name           string
 		insertDevices  []*anonstore.Device
@@ -193,15 +195,11 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 					DeviceID:  "32mdo31deeqwes",
 					ClientIP:  "",
 					UserAgent: "test",
-					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-					UpdatedAt: time.Now().Add(-9 * time.Hour).UTC(),
 				},
 				{
 					DeviceID:  "32mdo31deeqwes2",
 					ClientIP:  "",
 					UserAgent: "test2",
-					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-					UpdatedAt: time.Now().Add(-9 * time.Hour).UTC(),
 				},
 			},
 			searchQuery: anonstore.SearchDeviceQuery{
@@ -218,15 +216,11 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 					DeviceID:  "32mdo31deeqwes",
 					ClientIP:  "192.168.0.2:10",
 					UserAgent: "",
-					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-					UpdatedAt: time.Now().Add(-9 * time.Hour).UTC(),
 				},
 				{
 					DeviceID:  "32mdo31deeqwes2",
 					ClientIP:  "192.268.1.3:200",
 					UserAgent: "",
-					CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-					UpdatedAt: time.Now().Add(-9 * time.Hour).UTC(),
 				},
 			},
 			searchQuery: anonstore.SearchDeviceQuery{
@@ -239,8 +233,6 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				DeviceID:  "32mdo31deeqwes",
 				ClientIP:  "192.168.0.2:10",
 				UserAgent: "",
-				CreatedAt: time.Now().Add(-10 * time.Hour).UTC(),
-				UpdatedAt: time.Now().Add(-9 * time.Hour).UTC(),
 			},
 		},
 	}
@@ -250,8 +242,11 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
 	for _, tc := range testCases {
+		store.Reset()
 		t.Run(tc.name, func(t *testing.T) {
 			for _, device := range tc.insertDevices {
+				device.CreatedAt = fixedTime.Add(-10 * time.Hour) // Use fixed time
+				device.UpdatedAt = fixedTime
 				err := anonService.anonStore.CreateOrUpdateDevice(context.Background(), device)
 				require.NoError(t, err)
 			}
