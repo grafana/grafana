@@ -204,6 +204,37 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 				Handler: b.handleCurrentStatus,
 			},
+			{
+				Path: "state",
+				Spec: &spec3.PathProps{
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Tags:        tags,
+							Summary:     "Current toggle editing state of the stack",
+							Description: "Show the state of the stack's feature management service, including whether editing is enabled and whether a restart is pending.",
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &stateSchema,
+														},
+													},
+												},
+												Description: "OK",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: b.handleManagerState,
+			},
 		},
 	}
 }

@@ -59,7 +59,7 @@ export default function AdminFeatureTogglesPage() {
           {isError && getErrorMessage()}
           {isLoading && 'Fetching feature toggles'}
           {featureMgmtState?.allowEditing && <EditingAlert />}
-          {featureToggles && (
+          {!isLoading && featureToggles && (
             <AdminFeatureTogglesTable
               featureToggles={featureToggles}
               allowEditing={featureMgmtState?.allowEditing || false}

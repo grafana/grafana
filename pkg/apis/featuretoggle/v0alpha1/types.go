@@ -99,7 +99,7 @@ type ToggleStatus struct {
 	Enabled bool `json:"enabled"`
 
 	// Can this flag be updated
-	Writeable bool `json:"writeable,omitempty"`
+	Writeable bool `json:"writeable"`
 
 	// Where was the value configured
 	// eg: startup | tenant|org | user | browser
