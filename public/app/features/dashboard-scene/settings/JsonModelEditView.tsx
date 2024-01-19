@@ -86,7 +86,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
           {canSave && (
             <div>
               <Button type="submit" onClick={model.onApplyChange}>
-                <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
+                <Trans i18nKey="dashboard-settings.json-editor.apply-button">Apply changes</Trans>
               </Button>
             </div>
           )}
