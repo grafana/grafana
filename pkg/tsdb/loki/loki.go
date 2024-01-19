@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
@@ -169,6 +170,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
+		instrumentation.UpdateQueryDataMetrics(err, "plugin", dsInfo.URL, fromAlert)
 		return result, err
 	}
 
@@ -240,11 +242,13 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 	defer span.End()
 
 	queryRes, err := runQuery(ctx, api, query, responseOpts, plog)
+	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		queryRes.Error = err
 	}
+	instrumentation.UpdateQueryDataMetrics(queryRes.Error, string(queryRes.ErrorSource), api.url, fromAlert)
 
 	return *queryRes
 }
