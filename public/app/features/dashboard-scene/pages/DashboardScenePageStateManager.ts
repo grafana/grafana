@@ -7,7 +7,7 @@ import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoa
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
-import { DashboardDTO, DashboardMeta, DashboardRoutes } from 'app/types';
+import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -63,11 +63,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       if (rsp) {
-        // Fill in meta fields
-        const dashboard = this.initDashboardMeta(rsp);
-
-        if (dashboard.meta.url) {
-          const dashboardUrl = locationUtil.stripBaseFromUrl(dashboard.meta.url);
+        if (rsp.meta.url) {
+          const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
           const currentPath = locationService.getLocation().pathname;
           if (dashboardUrl !== currentPath) {
             // Spread current location to persist search params used for navigation
@@ -80,9 +77,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         }
 
         // Populate nav model in global store according to the folder
-        await this.initNavModel(dashboard);
+        await this.initNavModel(rsp);
 
-        this.dashboardCache.set(uid, { dashboard, ts: Date.now() });
+        this.dashboardCache.set(uid, { dashboard: rsp, ts: Date.now() });
       }
     } catch (e) {
       // Ignore cancelled errors
@@ -142,13 +139,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     return Date.now() - entry.ts > DASHBOARD_CACHE_TTL;
   }
 
-  private initDashboardMeta(dashboard: DashboardDTO): DashboardDTO {
-    return {
-      ...dashboard,
-      meta: initDashboardMeta(dashboard.meta, Boolean(dashboard.dashboard?.editable)),
-    };
-  }
-
   private async initNavModel(dashboard: DashboardDTO) {
     // only the folder API has information about ancestors
     // get parent folder (if it exists) and put it in the store
@@ -181,26 +171,4 @@ export function getDashboardScenePageStateManager(): DashboardScenePageStateMana
   }
 
   return stateManager;
-}
-
-function initDashboardMeta(source: DashboardMeta, isEditable: boolean) {
-  const result = source ? { ...source } : {};
-
-  result.canShare = source.canShare !== false;
-  result.canSave = source.canSave !== false;
-  result.canStar = source.canStar !== false;
-  result.canEdit = source.canEdit !== false;
-  result.canDelete = source.canDelete !== false;
-
-  result.showSettings = source.canEdit;
-  result.canMakeEditable = source.canSave && !isEditable;
-  result.hasUnsavedFolderChange = false;
-
-  if (!isEditable) {
-    result.canEdit = false;
-    result.canDelete = false;
-    result.canSave = false;
-  }
-
-  return result;
 }
