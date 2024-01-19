@@ -93,10 +93,6 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusInternalServerError, "Failed to list all providers settings", err)
 	}
 
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to list all providers settings", err)
-	}
-
 	return response.JSON(http.StatusOK, providers)
 }
 

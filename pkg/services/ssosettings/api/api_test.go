@@ -374,7 +374,9 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 		action              string
 		scope               string
 		expectedResult      []*models.SSOSettings
-		expectedError       error
+		errFromService      error
+		wantErr             bool
+		expectedErrMessage  string
 		expectedServiceCall bool
 		expectedStatusCode  int
 	}
@@ -386,99 +388,68 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 			scope:  "settings:auth.azuread:*",
 			expectedResult: []*models.SSOSettings{
 				{
-					ID:        "1",
-					Provider:  "azuread",
-					Settings:  make(map[string]interface{}),
-					Created:   time.Now(),
-					Updated:   time.Now(),
-					IsDeleted: false,
-					Source:    models.DB,
-				},
-				{
-					ID:        "2",
-					Provider:  "github",
-					Settings:  make(map[string]interface{}),
-					Created:   time.Now(),
-					Updated:   time.Now(),
-					IsDeleted: false,
-					Source:    models.DB,
+					ID:       "1",
+					Provider: "azuread",
+					Settings: make(map[string]interface{}),
+					Source:   models.DB,
 				},
 			},
-			expectedError:       nil,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusOK,
+		},
+		{
+			desc:                "returns empty list when the user has the action but the scope doesn't match any of the providerss scope",
+			action:              "settings:read",
+			scope:               "settings:auth.saml:write",
+			expectedResult:      []*models.SSOSettings{},
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusOK,
+		},
+		{
+			desc:   "successfully lists SSO settings when scope contains wildcard",
+			action: "settings:read",
+			scope:  "settings:*",
+			expectedResult: []*models.SSOSettings{
+				{
+					ID:       "1",
+					Provider: "azuread",
+					Settings: make(map[string]interface{}),
+					Source:   models.DB,
+				},
+				{
+					ID:       "2",
+					Provider: "github",
+					Settings: make(map[string]interface{}),
+					Source:   models.DB,
+				},
+				{
+					ID:       "3",
+					Provider: "okta",
+					Settings: make(map[string]interface{}),
+					Source:   models.System,
+				},
+			},
 			expectedServiceCall: true,
 			expectedStatusCode:  http.StatusOK,
 		},
 		{
 			desc:                "fails when action doesn't match",
-			action:              "settings:write",
-			scope:               "settings:auth.azuread:*",
+			action:              "madeupaction:read",
+			scope:               "madeupscope:*",
+			wantErr:             true,
+			expectedErrMessage:  "You'll need additional permissions to perform this action. Permissions needed: settings:read",
 			expectedResult:      nil,
-			expectedError:       nil,
 			expectedServiceCall: false,
 			expectedStatusCode:  http.StatusForbidden,
-		},
-		{
-			desc:   "successfully lists SSO settings when scope doesn't match", // TODO: why is this successful?
-			action: "settings:read",
-			scope:  "settings:auth.azuread:write",
-			expectedResult: []*models.SSOSettings{
-				{
-					ID:        "1",
-					Provider:  "azuread",
-					Settings:  make(map[string]interface{}),
-					Created:   time.Now(),
-					Updated:   time.Now(),
-					IsDeleted: false,
-					Source:    models.DB,
-				},
-				{
-					ID:        "2",
-					Provider:  "github",
-					Settings:  make(map[string]interface{}),
-					Created:   time.Now(),
-					Updated:   time.Now(),
-					IsDeleted: false,
-					Source:    models.DB,
-				},
-			},
-			expectedError:       nil,
-			expectedServiceCall: true,
-			expectedStatusCode:  http.StatusOK,
-		},
-		{
-			desc:   "successfully lists SSO settings when scope contains another provider", // TODO: check that only github settings are returned
-			action: "settings:read",
-			scope:  "settings:auth.github:*",
-			expectedResult: []*models.SSOSettings{
-				{
-					ID:        "1",
-					Provider:  "azuread",
-					Settings:  make(map[string]interface{}),
-					Created:   time.Now(),
-					Updated:   time.Now(),
-					IsDeleted: false,
-					Source:    models.DB,
-				},
-				{
-					ID:        "2",
-					Provider:  "github",
-					Settings:  make(map[string]interface{}),
-					Created:   time.Now(),
-					Updated:   time.Now(),
-					IsDeleted: false,
-					Source:    models.DB,
-				},
-			},
-			expectedError:       nil,
-			expectedServiceCall: true,
-			expectedStatusCode:  http.StatusOK,
 		},
 		{
 			desc:                "fails with internal server error when service returns an error",
 			action:              "settings:read",
 			scope:               "settings:auth.azuread:*",
+			errFromService:      errors.New("something went wrong"),
 			expectedResult:      nil,
-			expectedError:       errors.New("something went wrong"),
+			wantErr:             true,
+			expectedErrMessage:  "Failed to list all providers settings",
 			expectedServiceCall: true,
 			expectedStatusCode:  http.StatusInternalServerError,
 		},
@@ -487,8 +458,38 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service := ssosettingstests.NewMockService(t)
+
+			serviceResult := []*models.SSOSettings{
+				{
+					ID:        "1",
+					Provider:  "azuread",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.DB,
+				},
+				{
+					ID:        "2",
+					Provider:  "github",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.DB,
+				},
+				{
+					ID:        "3",
+					Provider:  "okta",
+					Settings:  make(map[string]interface{}),
+					Created:   time.Now(),
+					Updated:   time.Now(),
+					IsDeleted: false,
+					Source:    models.System,
+				},
+			}
 			if tt.expectedServiceCall {
-				service.On("ListWithRedactedSecrets", mock.AnythingOfType("*context.valueCtx")).Return(tt.expectedResult, tt.expectedError).Once()
+				service.On("ListWithRedactedSecrets", mock.AnythingOfType("*context.valueCtx")).Return(serviceResult, tt.errFromService).Once()
 			}
 			server := setupTests(t, service)
 
@@ -504,34 +505,32 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 
 			require.Equal(t, tt.expectedStatusCode, res.StatusCode)
 
-			if tt.expectedError == nil {
-				bodyBytes, err := io.ReadAll(res.Body)
-				if err != nil {
-					t.Fatalf("Failed to read response body: %v", err)
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("Failed to read response body: %v", err)
+			}
+			defer res.Body.Close()
+
+			if tt.wantErr {
+				var accessErrorResponse struct {
+					AccessErrorID string `json:"accessErrorId"`
+					Message       string `json:"message"`
+					Title         string `json:"title"`
 				}
-				res.Body.Close()
-
-				bodyString := string(bodyBytes)
-				t.Logf("Response Body: %s", bodyString)
-
-				var data []*models.SSOSettings
-				err = json.Unmarshal(bodyBytes, &data)
+				err = json.Unmarshal(bodyBytes, &accessErrorResponse)
 				if err != nil {
-					var accessErrorResponse struct {
-						AccessErrorID string `json:"accessErrorId"`
-						Message       string `json:"message"`
-						Title         string `json:"title"`
-					}
-					err = json.Unmarshal(bodyBytes, &accessErrorResponse)
-					if err != nil {
-						t.Fatalf("Failed to unmarshal response body into accessErrorResponse: %v", err)
-					}
-
-					require.Equal(t, "You'll need additional permissions to perform this action. Permissions needed: settings:read", accessErrorResponse.Message)
+					t.Fatalf("Failed to unmarshal response body into accessErrorResponse: %v", err)
 				}
+
+				require.Equal(t, tt.expectedErrMessage, accessErrorResponse.Message)
+				return
 			}
 
-			require.NoError(t, res.Body.Close())
+			var actual []*models.SSOSettings
+			err = json.Unmarshal(bodyBytes, &actual)
+			require.NoError(t, err)
+
+			require.ElementsMatch(t, tt.expectedResult, actual)
 		})
 	}
 }
