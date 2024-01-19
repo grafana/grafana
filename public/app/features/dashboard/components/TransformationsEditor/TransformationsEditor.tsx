@@ -37,7 +37,7 @@ interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
-const VIEW_ALL_VALUE = 'viewAll';
+export const VIEW_ALL_VALUE = 'viewAll';
 export type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 

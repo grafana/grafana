@@ -3,7 +3,10 @@ import React, { FormEvent, useMemo, useState } from 'react';
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
-import { FilterCategory } from 'app/features/dashboard/components/TransformationsEditor/TransformationsEditor';
+import {
+  FilterCategory,
+  VIEW_ALL_VALUE,
+} from 'app/features/dashboard/components/TransformationsEditor/TransformationsEditor';
 
 interface DrawerState {
   search: string;
@@ -43,7 +46,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
   const transformations = allTransformations.filter((t) => {
     if (
       drawerState.selectedFilter &&
-      drawerState.selectedFilter !== 'viewAll' &&
+      drawerState.selectedFilter !== VIEW_ALL_VALUE &&
       !t.categories?.has(drawerState.selectedFilter)
     ) {
       return false;
