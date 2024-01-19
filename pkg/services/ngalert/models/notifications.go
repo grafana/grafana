@@ -75,7 +75,8 @@ func (s *NotificationSettings) Equals(other *NotificationSettings) bool {
 	return slices.Equal(sGr, oGr)
 }
 
-func (s *NotificationSettings) isAllDefault() bool {
+// IsAllDefault checks if the NotificationSettings object has all default values for optional fields (all except Receiver) .
+func (s *NotificationSettings) IsAllDefault() bool {
 	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0
 }
 
