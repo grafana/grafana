@@ -77,7 +77,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   const transformationsDrawer = (
     <TransformationsDrawer
-      onClose={() => setDrawerOpen(false)}
+      onClose={closeDrawer}
       onTransformationAdd={(selected) => {
         if (selected.value === undefined) {
           return;
