@@ -129,10 +129,11 @@ export const Table = memo((props: Props) => {
     },
   });
 
-  const hasUniqueId = !!data.meta?.uniqueId;
+  const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
 
   const options: any = useMemo(() => {
-    // Bit hard to type with the react-table types here, the reducer does not actually match with the TableOptions
+    // This is a bit hard to type with the react-table types here, the reducer does not actually match with the
+    // TableOptions.
     const options: any = {
       columns: memoizedColumns,
       data: memoizedData,

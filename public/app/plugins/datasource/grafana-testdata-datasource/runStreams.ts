@@ -298,7 +298,7 @@ function createMainTraceFrame(target: TestData, maxDataPoints = 1000) {
   data.addField({ name: 'nested', type: FieldType.nestedFrames });
   data.meta = {
     preferredVisualisationType: 'table',
-    uniqueId: [0],
+    uniqueRowIdFields: [0],
   };
   return data;
 }

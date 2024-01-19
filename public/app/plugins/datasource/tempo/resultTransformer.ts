@@ -704,7 +704,7 @@ export function createTableFrameFromTraceQlQuery(
     ],
     meta: {
       preferredVisualisationType: 'table',
-      uniqueId: [0],
+      uniqueRowIdFields: [0],
     },
   });
 
