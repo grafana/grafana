@@ -16,6 +16,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
 import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -48,6 +49,8 @@ import {
 } from './query';
 import * as actions from './query';
 import { makeExplorePaneState } from './utils';
+
+jest.mock('app/features/logs/logsModel');
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
@@ -866,6 +869,9 @@ describe('reducer', () => {
         } as unknown as Observable<DataQueryResponse>;
       };
 
+      jest.mocked(queryLogsVolume).mockImplementation(() => mockDataProvider());
+      jest.mocked(queryLogsSample).mockImplementation(() => mockDataProvider());
+
       const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
@@ -878,8 +884,8 @@ describe('reducer', () => {
                 meta: {
                   id: 'something',
                 },
-                getDataProvider: () => {
-                  return mockDataProvider();
+                getDataProvider: (_: SupplementaryQueryType, request: DataQueryRequest<DataQuery>) => {
+                  return request;
                 },
                 getSupportedSupplementaryQueryTypes: () => [
                   SupplementaryQueryType.LogsVolume,
