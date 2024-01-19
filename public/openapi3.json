@@ -1433,6 +1433,19 @@
         },
         "description": "(empty)"
       },
+      "listSSOSettingsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/SSOSettings"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "listSortOptionsResponse": {
         "content": {
           "application/json": {
@@ -25050,6 +25063,30 @@
         "summary": "Updates an existing notification template.",
         "tags": [
           "provisioning"
+        ]
+      }
+    },
+    "/v1/sso-settings": {
+      "get": {
+        "description": "You need to have a permission with action `settings:read` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "listAllProvidersSettings",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listSSOSettingsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          }
+        },
+        "summary": "List all SSO Settings entries",
+        "tags": [
+          "sso_settings"
         ]
       }
     },
