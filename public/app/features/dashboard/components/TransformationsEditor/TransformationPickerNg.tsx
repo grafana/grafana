@@ -59,7 +59,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
   // This will focus it when it's opened
   const searchInputRef = useCallback((input: HTMLInputElement) => {
     input?.click();
-  }, [])
+  }, []);
 
   return (
     <Drawer size="md" onClose={() => setState({ showPicker: false })} title="Add another transformation">
