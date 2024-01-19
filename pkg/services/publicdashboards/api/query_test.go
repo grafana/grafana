@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -331,7 +332,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	)
 	require.NoError(t, err)
 
-	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService)
+	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService, licensingtest.NewFakeLicensing())
 	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
