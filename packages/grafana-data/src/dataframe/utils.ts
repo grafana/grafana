@@ -120,6 +120,7 @@ export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unkn
     dataFrame.length++;
   } catch (e) {
     // Unfortunate but even though DataFrame as interface defines length some implementation of DataFrame only have
-    // getter. In that case we just skip and assume they define getter for length that does not need updating.
+    // length getter. In that case it will throw and so we just skip and assume they define getter for length that
+    // does not need any external updating.
   }
 }
