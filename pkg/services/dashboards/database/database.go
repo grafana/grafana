@@ -978,17 +978,21 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	// Only use modified search for non-empty search queries, otherwise it's just listing and new query can't help there yet.
 	resc := make(chan []dashboards.DashboardSearchProjection, 1)
+	durc := make(chan time.Duration, 1)
 	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) && d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
 		query.Title != "" && len(query.FolderUIDs) == 0 && len(query.FolderIds) == 0 { //nolint:staticcheck
 		derivedCtx := context.WithoutCancel(ctx)
 		go func() {
+			time.Sleep(500 * time.Millisecond) // add 0.5s delay before running the second query to not interfere with the original one
 			start := time.Now()
 			results, err := d.findDashboards(derivedCtx, query)
 			if err != nil {
 				d.log.Info("Alternative search query failed", "error", err)
 				return
 			}
-			d.log.Info("Alternative search query", "time", time.Since(start), "results", len(results))
+			dur := time.Since(start)
+			origDur := time.Since(start)
+			d.log.Info("Alternative search query", "time", dur, "dt", origDur - dur, time.Since"results", len(results))
 
 			expected := <-resc
 
@@ -1020,6 +1024,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return sess.SQL(sql, params...).Find(&res)
 	})
 	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) {
+		durc <- time.Since(start)
 		d.log.Info("Original search query", "time", time.Since(start), "results", len(res))
 	}
 	if err != nil {
