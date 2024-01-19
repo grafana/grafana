@@ -828,7 +828,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	rr := &entity.ReadEntityRequest{
 		Key:        r.Key,
 		WithBody:   true,
-		WithStatus: false,
+		WithStatus: true,
 	}
 
 	query, err := s.getReadSelect(rr)

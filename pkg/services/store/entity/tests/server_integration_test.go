@@ -154,6 +154,13 @@ func TestIntegrationEntityServer(t *testing.T) {
 		createResp, err := testCtx.client.Create(ctx, createReq)
 		require.NoError(t, err)
 
+		// clean up in case test fails
+		t.Cleanup(func() {
+			_, _ = testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
+				Key: testKey,
+			})
+		})
+
 		versionMatcher := objectVersionMatcher{
 			// updatedRange: []time.Time{before, time.Now()},
 			// updatedBy:    fakeUser,
@@ -218,6 +225,14 @@ func TestIntegrationEntityServer(t *testing.T) {
 		}
 		createResp, err := testCtx.client.Create(ctx, createReq)
 		require.NoError(t, err)
+
+		// clean up in case test fails
+		t.Cleanup(func() {
+			_, _ = testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
+				Key: testKey,
+			})
+		})
+
 		require.Equal(t, entity.CreateEntityResponse_CREATED, createResp.Status)
 
 		body2 := []byte("{\"name\":\"John2\"}")
