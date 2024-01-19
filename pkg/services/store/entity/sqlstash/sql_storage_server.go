@@ -42,9 +42,8 @@ func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (en
 		db:        db,
 		log:       log.New("sql-entity-server"),
 		snowflake: snode,
-		// #TODO: [temporary change] figure out how to provide session and dialect
-		dialect: &migrator.SQLite3{},
-		sess:    sess,
+		dialect:   migrator.NewSQLite3Dialect(),
+		sess:      sess,
 	}
 
 	return entityServer, nil
