@@ -11,10 +11,9 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
-  ariaLabel: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, ariaLabel }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
@@ -39,7 +38,6 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, ari
       href={url}
       target={target}
       onClick={onClick}
-      aria-label={ariaLabel}
     >
       {linkContent}
     </LinkComponent>
