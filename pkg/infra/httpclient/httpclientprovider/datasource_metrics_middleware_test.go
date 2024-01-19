@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 		origExecuteMiddlewareFunc := executeMiddlewareFunc
 		executeMiddlewareCalled := false
 		middlewareCalled := false
-		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
+		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels, requestHistogramLabels prometheus.Labels) http.RoundTripper {
 			executeMiddlewareCalled = true
 			return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 				middlewareCalled = true
@@ -52,7 +53,7 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 		origExecuteMiddlewareFunc := executeMiddlewareFunc
 		executeMiddlewareCalled := false
 		middlewareCalled := false
-		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
+		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels, requestHistogramLabels prometheus.Labels) http.RoundTripper {
 			executeMiddlewareCalled = true
 			return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 				middlewareCalled = true
@@ -90,10 +91,12 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 		origExecuteMiddlewareFunc := executeMiddlewareFunc
 		executeMiddlewareCalled := false
 		labels := prometheus.Labels{}
+		requestHistogramLabels := prometheus.Labels{}
 		middlewareCalled := false
-		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
+		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels, requestDurationLabels prometheus.Labels) http.RoundTripper {
 			executeMiddlewareCalled = true
 			labels = datasourceLabel
+			requestHistogramLabels = requestDurationLabels
 			return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 				middlewareCalled = true
 				return next.RoundTrip(r)
@@ -103,29 +106,56 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 			executeMiddlewareFunc = origExecuteMiddlewareFunc
 		})
 
-		ctx := &testContext{}
-		finalRoundTripper := ctx.createRoundTripper("finalrt")
-		mw := DataSourceMetricsMiddleware()
-		rt := mw.CreateMiddleware(httpclient.Options{Labels: map[string]string{"datasource_name": "My Data Source 123", "datasource_type": "prometheus"}}, finalRoundTripper)
-		require.NotNil(t, rt)
-		middlewareName, ok := mw.(httpclient.MiddlewareName)
-		require.True(t, ok)
-		require.Equal(t, DataSourceMetricsMiddlewareName, middlewareName.MiddlewareName())
-
-		req, err := http.NewRequest(http.MethodGet, "http://", nil)
-		require.NoError(t, err)
-		res, err := rt.RoundTrip(req)
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		if res.Body != nil {
-			require.NoError(t, res.Body.Close())
+		testCases := []struct {
+			description                       string
+			httpClientOptions                 httpclient.Options
+			expectedSecureSocksDSProxyEnabled string
+		}{
+			{
+				description: "secure socks ds proxy is disabled",
+				httpClientOptions: httpclient.Options{
+					Labels: map[string]string{"datasource_name": "My Data Source 123", "datasource_type": "prometheus"},
+				},
+				expectedSecureSocksDSProxyEnabled: "false",
+			},
+			{
+				description: "secure socks ds proxy is enabled",
+				httpClientOptions: httpclient.Options{
+					Labels:       map[string]string{"datasource_name": "My Data Source 123", "datasource_type": "prometheus"},
+					ProxyOptions: &proxy.Options{Enabled: true},
+				},
+				expectedSecureSocksDSProxyEnabled: "true",
+			},
 		}
-		require.Len(t, ctx.callChain, 1)
-		require.ElementsMatch(t, []string{"finalrt"}, ctx.callChain)
-		require.True(t, executeMiddlewareCalled)
-		require.Len(t, labels, 2)
-		require.Equal(t, "My_Data_Source_123", labels["datasource"])
-		require.Equal(t, "prometheus", labels["datasource_type"])
-		require.True(t, middlewareCalled)
+
+		for _, tt := range testCases {
+			t.Run(tt.description, func(t *testing.T) {
+				ctx := &testContext{}
+				finalRoundTripper := ctx.createRoundTripper("finalrt")
+				mw := DataSourceMetricsMiddleware()
+				rt := mw.CreateMiddleware(tt.httpClientOptions, finalRoundTripper)
+				require.NotNil(t, rt)
+				middlewareName, ok := mw.(httpclient.MiddlewareName)
+				require.True(t, ok)
+				require.Equal(t, DataSourceMetricsMiddlewareName, middlewareName.MiddlewareName())
+
+				req, err := http.NewRequest(http.MethodGet, "http://", nil)
+				require.NoError(t, err)
+				res, err := rt.RoundTrip(req)
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				if res.Body != nil {
+					require.NoError(t, res.Body.Close())
+				}
+				require.Len(t, ctx.callChain, 1)
+				require.ElementsMatch(t, []string{"finalrt"}, ctx.callChain)
+				require.True(t, executeMiddlewareCalled)
+				require.Len(t, labels, 2)
+				require.Equal(t, "My_Data_Source_123", labels["datasource"])
+				require.Equal(t, "prometheus", labels["datasource_type"])
+				require.Equal(t, tt.expectedSecureSocksDSProxyEnabled, requestHistogramLabels["secureSocksDSProxyEnabled"])
+				require.True(t, middlewareCalled)
+			})
+		}
 	})
 }

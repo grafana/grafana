@@ -2,6 +2,7 @@ package httpclientprovider
 
 import (
 	"net/http"
+	"strconv"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -27,7 +28,7 @@ var (
 			Name:      "datasource_request_duration_seconds",
 			Help:      "histogram of durations of outgoing data source requests sent from Grafana",
 			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-		}, []string{"datasource", "datasource_type", "code", "method"},
+		}, []string{"datasource", "datasource_type", "code", "method", "secureSocksDSProxyEnabled"},
 	)
 
 	datasourceResponseHistogram = promauto.NewHistogramVec(
@@ -83,15 +84,20 @@ func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
 		}
 
 		labels := prometheus.Labels{"datasource": datasourceLabelName, "datasource_type": datasourceLabelType}
+		requestHistogramLabels := prometheus.Labels{
+			"datasource":                datasourceLabelName,
+			"datasource_type":           datasourceLabelType,
+			"secureSocksDSProxyEnabled": strconv.FormatBool(opts.ProxyOptions != nil && opts.ProxyOptions.Enabled),
+		}
 
-		return executeMiddlewareFunc(next, labels)
+		return executeMiddlewareFunc(next, labels, requestHistogramLabels)
 	})
 }
 
-func executeMiddleware(next http.RoundTripper, labels prometheus.Labels) http.RoundTripper {
+func executeMiddleware(next http.RoundTripper, labels prometheus.Labels, requestHistogramLabels prometheus.Labels) http.RoundTripper {
 	return sdkhttpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 		requestCounter := datasourceRequestCounter.MustCurryWith(labels)
-		requestHistogram := datasourceRequestHistogram.MustCurryWith(labels)
+		requestHistogram := datasourceRequestHistogram.MustCurryWith(requestHistogramLabels)
 		requestInFlight := datasourceRequestsInFlight.With(labels)
 		responseSizeHistogram := datasourceResponseHistogram.With(labels)
 
