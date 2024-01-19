@@ -12,11 +12,12 @@ IS_UPGRADE=false
 if [ "$1" = configure ]; then
   [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
   [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
   if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
     addgroup --system "$GRAFANA_GROUP" --quiet
   fi
   if ! id "$GRAFANA_USER" > /dev/null 2>&1 ; then
-    adduser --system --home /usr/share/grafana --no-create-home \
+    adduser --system --home "$GRAFANA_HOME" --no-create-home \
       --ingroup "$GRAFANA_GROUP" --disabled-password --shell /bin/false \
       "$GRAFANA_USER"
   fi
@@ -28,34 +29,34 @@ if [ "$1" = configure ]; then
 
   # copy user config files
   if [ ! -f $CONF_FILE ]; then
-    cp /usr/share/grafana/conf/sample.ini $CONF_FILE
-    cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+    cp "${GRAFANA_HOME}/conf/sample.ini" $CONF_FILE
+    cp "${GRAFANA_HOME}/conf/ldap.toml" /etc/grafana/ldap.toml
   fi
 
   if [ ! -d $PROVISIONING_CFG_DIR ]; then
     mkdir -p $PROVISIONING_CFG_DIR/dashboards $PROVISIONING_CFG_DIR/datasources
-    cp /usr/share/grafana/conf/provisioning/dashboards/sample.yaml $PROVISIONING_CFG_DIR/dashboards/sample.yaml
-    cp /usr/share/grafana/conf/provisioning/datasources/sample.yaml $PROVISIONING_CFG_DIR/datasources/sample.yaml
+    cp "${GRAFANA_HOME}/conf/provisioning/dashboards/sample.yaml" $PROVISIONING_CFG_DIR/dashboards/sample.yaml
+    cp "${GRAFANA_HOME}/conf/provisioning/datasources/sample.yaml" $PROVISIONING_CFG_DIR/datasources/sample.yaml
   fi
 
   if [ ! -d $PROVISIONING_CFG_DIR/notifiers ]; then
     mkdir -p $PROVISIONING_CFG_DIR/notifiers
-    cp /usr/share/grafana/conf/provisioning/notifiers/sample.yaml $PROVISIONING_CFG_DIR/notifiers/sample.yaml
+    cp "${GRAFANA_HOME}/conf/provisioning/notifiers/sample.yaml" $PROVISIONING_CFG_DIR/notifiers/sample.yaml
   fi
 
   if [ ! -d $PROVISIONING_CFG_DIR/plugins ]; then
     mkdir -p $PROVISIONING_CFG_DIR/plugins
-    cp /usr/share/grafana/conf/provisioning/plugins/sample.yaml $PROVISIONING_CFG_DIR/plugins/sample.yaml
+    cp "${GRAFANA_HOME}/conf/provisioning/plugins/sample.yaml" $PROVISIONING_CFG_DIR/plugins/sample.yaml
   fi
 
   if [ ! -d $PROVISIONING_CFG_DIR/access-control ]; then
     mkdir -p $PROVISIONING_CFG_DIR/access-control
-    cp /usr/share/grafana/conf/provisioning/access-control/sample.yaml $PROVISIONING_CFG_DIR/access-control/sample.yaml
+    cp "${GRAFANA_HOME}/conf/provisioning/access-control/sample.yaml" $PROVISIONING_CFG_DIR/access-control/sample.yaml
   fi
 
   if [ ! -d $PROVISIONING_CFG_DIR/alerting ]; then
     mkdir -p $PROVISIONING_CFG_DIR/alerting
-    cp /usr/share/grafana/conf/provisioning/alerting/sample.yaml $PROVISIONING_CFG_DIR/alerting/sample.yaml
+    cp "${GRAFANA_HOME}/conf/provisioning/alerting/sample.yaml" $PROVISIONING_CFG_DIR/alerting/sample.yaml
   fi
 
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
