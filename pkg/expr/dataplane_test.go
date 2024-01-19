@@ -13,14 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -48,22 +42,17 @@ func TestPassThroughDataplaneExamples(t *testing.T) {
 
 func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, error) {
 	me := &mockEndpoint{
-		map[string]backend.DataResponse{"A": {Frames: frames}},
+		Responses: map[string]backend.DataResponse{"A": {Frames: frames}},
 	}
 
 	cfg := setting.NewCfg()
 
 	s := Service{
-		cfg:         cfg,
-		dataService: me,
-		features:    &featuremgmt.FeatureManager{},
-		pCtxProvider: plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "test"}},
-			}},
-			&datafakes.FakeDataSourceService{}, nil, pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
-		tracer:  tracing.InitializeTracerForTest(),
-		metrics: newMetrics(nil),
+		cfg:          cfg,
+		pluginClient: me,
+		features:     &featuremgmt.FeatureManager{},
+		tracer:       tracing.InitializeTracerForTest(),
+		metrics:      newMetrics(nil),
 	}
 	queries := []Query{{
 		RefID: "A",

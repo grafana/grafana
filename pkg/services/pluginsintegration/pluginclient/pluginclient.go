@@ -78,9 +78,12 @@ func WithDatasourceUID(uid string) DatasourceReferenceOption {
 
 func WithDatasource(ds *datasources.DataSource) DatasourceReferenceOption {
 	return DatasourceReferenceOption(func(ref *datasourceRef) {
-		ref.datasourceID = ds.ID
-		ref.datasourceUID = ds.UID
 		ref.datasource = ds
+
+		if ds != nil {
+			ref.datasourceID = ds.ID
+			ref.datasourceUID = ds.UID
+		}
 	})
 }
 
@@ -152,6 +155,9 @@ type CallResourceRequest struct {
 
 	// Body the forwarded HTTP body for the request, if any.
 	Body []byte
+
+	// Validate if provided, will be used to validate the backend.PluginContext.
+	Validate func(ctx context.Context, pCtx backend.PluginContext) error
 }
 
 // CallResourceHandlerFunc is an adapter to allow the use of

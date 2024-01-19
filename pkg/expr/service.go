@@ -11,11 +11,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -57,31 +55,20 @@ func NodeTypeFromDatasourceUID(uid string) NodeType {
 // Service is service representation for expression handling.
 type Service struct {
 	cfg          *setting.Cfg
-	dataService  backend.QueryDataHandler
-	pCtxProvider pluginContextProvider
 	features     featuremgmt.FeatureToggles
-
-	pluginsClient backend.CallResourceHandler
-
-	tracer  tracing.Tracer
-	metrics *metrics
+	pluginClient pluginclient.Client
+	tracer       tracing.Tracer
+	metrics      *metrics
 }
 
-type pluginContextProvider interface {
-	Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error)
-	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
-}
-
-func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
-	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
+func ProvideService(cfg *setting.Cfg, pluginClient pluginclient.Client, features featuremgmt.FeatureToggles,
+	registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
 	return &Service{
-		cfg:           cfg,
-		dataService:   pluginClient,
-		pCtxProvider:  pCtxProvider,
-		features:      features,
-		tracer:        tracer,
-		metrics:       newMetrics(registerer),
-		pluginsClient: pluginClient,
+		cfg:          cfg,
+		features:     features,
+		tracer:       tracer,
+		metrics:      newMetrics(registerer),
+		pluginClient: pluginClient,
 	}
 }
 

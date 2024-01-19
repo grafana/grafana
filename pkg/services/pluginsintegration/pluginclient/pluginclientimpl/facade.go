@@ -78,6 +78,12 @@ func (f *Facade) CallResource(ctx context.Context, req *pluginclient.CallResourc
 		return err
 	}
 
+	if req.Validate != nil {
+		if err = req.Validate(ctx, *pCtx); err != nil {
+			return err
+		}
+	}
+
 	sdkReq := &backend.CallResourceRequest{
 		PluginContext: *pCtx,
 		Path:          req.Path,

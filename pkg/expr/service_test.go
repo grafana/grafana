@@ -14,14 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -38,16 +33,9 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
-		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: "test"}},
-		},
-	}, &datafakes.FakeDataSourceService{}, nil, fakes.NewFakeLicensingService(), &config.Cfg{})
-
 	s := Service{
 		cfg:          setting.NewCfg(),
-		dataService:  me,
-		pCtxProvider: pCtxProvider,
+		pluginClient: me,
 		features:     &featuremgmt.FeatureManager{},
 		tracer:       tracing.InitializeTracerForTest(),
 		metrics:      newMetrics(nil),
@@ -124,16 +112,9 @@ func TestDSQueryError(t *testing.T) {
 		},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
-		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: "test"}},
-		},
-	}, &datafakes.FakeDataSourceService{}, nil, nil, &config.Cfg{})
-
 	s := Service{
 		cfg:          setting.NewCfg(),
-		dataService:  me,
-		pCtxProvider: pCtxProvider,
+		pluginClient: me,
 		features:     &featuremgmt.FeatureManager{},
 		tracer:       tracing.InitializeTracerForTest(),
 		metrics:      newMetrics(nil),
@@ -185,10 +166,12 @@ func fp(f float64) *float64 {
 }
 
 type mockEndpoint struct {
+	pluginclient.Client
+
 	Responses map[string]backend.DataResponse
 }
 
-func (me *mockEndpoint) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (me *mockEndpoint) QueryData(ctx context.Context, req *pluginclient.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	for _, ref := range req.Queries {
 		resp.Responses[ref.RefID] = me.Responses[ref.RefID]

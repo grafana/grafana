@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/ml"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 )
 
 var (
@@ -61,21 +62,6 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	var result mathexp.Results
 	timeRange := m.TimeRange.AbsoluteTime(now)
 
-	// get the plugin configuration that will be used by client (auth, host, etc)
-	pCtx, err := s.pCtxProvider.Get(ctx, mlPluginID, m.request.User, m.request.OrgId)
-	if err != nil {
-		if errors.Is(err, plugins.ErrPluginNotRegistered) {
-			return result, errMLPluginDoesNotExist
-		}
-		return result, fmt.Errorf("failed to get plugin settings: %w", err)
-	}
-
-	// Plugin must be initialized by the admin first. That will create service account, and update plugin settings so all requests can use it.
-	// Fail if it is not initialized.
-	if pCtx.AppInstanceSettings == nil || !jsoniter.Get(pCtx.AppInstanceSettings.JSONData, "initialized").ToBool() {
-		return mathexp.Results{}, errMLPluginDoesNotExist
-	}
-
 	// responseType and respStatus will be updated below. Use defer to ensure that debug log message is always emitted
 	responseType := "unknown"
 	respStatus := "success"
@@ -92,24 +78,39 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	// Execute the command and provide callback function for sending a request via plugin API.
 	// This lets us make commands abstracted from peculiarities of the transfer protocol.
 	data, err := m.command.Execute(timeRange.From, timeRange.To, func(method string, path string, payload []byte) (response.Response, error) {
-		crReq := &backend.CallResourceRequest{
-			PluginContext: pCtx,
-			Path:          path,
-			Method:        method,
-			URL:           path,
-			Headers:       make(map[string][]string, len(m.request.Headers)),
-			Body:          payload,
+		validate := func(ctx context.Context, pCtx backend.PluginContext) error {
+			// Plugin must be initialized by the admin first. That will create service account, and update plugin settings so all requests can use it.
+			// Fail if it is not initialized.
+			if pCtx.AppInstanceSettings == nil || !jsoniter.Get(pCtx.AppInstanceSettings.JSONData, "initialized").ToBool() {
+				return errMLPluginDoesNotExist
+			}
+
+			return nil
+		}
+
+		crReq := &pluginclient.CallResourceRequest{
+			Reference: pluginclient.AppRef(mlPluginID),
+			Path:      path,
+			Method:    method,
+			URL:       path,
+			Headers:   make(map[string][]string, len(m.request.Headers)),
+			Body:      payload,
+			Validate:  validate,
 		}
 
 		// copy headers from the request to evaluate the expression pipeline. Usually this contains information from upstream, e.g. FromAlert
 		for key, val := range m.request.Headers {
-			crReq.SetHTTPHeader(key, val)
+			crReq.Headers[key] = []string{val}
 		}
 
 		resp := response.CreateNormalResponse(make(http.Header), nil, 0)
 		httpSender := httpresponsesender.New(resp)
-		err = s.pluginsClient.CallResource(ctx, crReq, httpSender)
+		err := s.pluginClient.CallResource(ctx, crReq, httpSender)
 		if err != nil {
+			if errors.Is(err, plugins.ErrPluginNotRegistered) {
+				return nil, errMLPluginDoesNotExist
+			}
+
 			return nil, err
 		}
 		return resp, nil

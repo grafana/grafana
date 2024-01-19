@@ -2,7 +2,6 @@ package expr
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"testing"
@@ -13,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/ml"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -42,26 +40,21 @@ func TestMLNodeExecute(t *testing.T) {
 		Body:    []byte("test-response"),
 	}
 
-	pluginsClient := &recordingCallResourceHandler{
+	pluginClient := &recordingCallResourceHandler{
 		response: expectedResponse,
-	}
-
-	pluginCtx := &fakePluginContextProvider{
-		result: map[string]*backend.AppInstanceSettings{
-			mlPluginID: {
-				JSONData: json.RawMessage(`{ "initialized": true }`),
+		pluginContext: backend.PluginContext{
+			AppInstanceSettings: &backend.AppInstanceSettings{
+				JSONData: []byte(`{ "initialized": true }`),
 			},
 		},
 	}
 
 	s := &Service{
-		cfg:           nil,
-		dataService:   nil,
-		pCtxProvider:  pluginCtx,
-		features:      nil,
-		pluginsClient: pluginsClient,
-		tracer:        nil,
-		metrics:       newMetrics(nil),
+		cfg:          nil,
+		features:     nil,
+		pluginClient: pluginClient,
+		tracer:       nil,
+		metrics:      newMetrics(nil),
 	}
 
 	cmdResponse := data.NewFrame("test",
@@ -99,13 +92,6 @@ func TestMLNodeExecute(t *testing.T) {
 	require.NotNil(t, result)
 	require.NotEmpty(t, result.Values)
 
-	t.Run("should get plugin context", func(t *testing.T) {
-		require.NotEmpty(t, pluginCtx.recordings)
-		require.Equal(t, "Get", pluginCtx.recordings[0].method)
-		require.Equal(t, mlPluginID, pluginCtx.recordings[0].params[0])
-		require.Equal(t, request.User, pluginCtx.recordings[0].params[1])
-	})
-
 	t.Run("should call command execute with correct parameters", func(t *testing.T) {
 		require.NotEmpty(t, cmd.Recordings)
 		rec := cmd.Recordings[0]
@@ -117,14 +103,13 @@ func TestMLNodeExecute(t *testing.T) {
 	})
 
 	t.Run("should call plugin API", func(t *testing.T) {
-		require.NotEmpty(t, pluginsClient.recordings)
-		req := pluginsClient.recordings[0]
+		require.NotEmpty(t, pluginClient.recordings)
+		req := pluginClient.recordings[0]
 		require.Equal(t, cmd.Payload, req.Body)
 		require.Equal(t, cmd.Path, req.Path)
 		require.Equal(t, cmd.Method, req.Method)
 
-		require.NotNil(t, req.PluginContext)
-		require.Equal(t, mlPluginID, req.PluginContext.PluginID)
+		require.Equal(t, mlPluginID, req.Reference.PluginID())
 
 		t.Run("should append request headers to API call", func(t *testing.T) {
 			for key, value := range request.Headers {
@@ -135,16 +120,15 @@ func TestMLNodeExecute(t *testing.T) {
 	})
 
 	t.Run("should fail if plugin is not installed", func(t *testing.T) {
+		pc := *pluginClient
+		pc.pluginContext = backend.PluginContext{}
+
 		s := &Service{
-			cfg:         nil,
-			dataService: nil,
-			pCtxProvider: &fakePluginContextProvider{
-				errorResult: plugins.ErrPluginNotRegistered,
-			},
-			features:      nil,
-			pluginsClient: nil,
-			tracer:        nil,
-			metrics:       nil,
+			cfg:          nil,
+			features:     nil,
+			pluginClient: &pc,
+			tracer:       nil,
+			metrics:      newMetrics(nil),
 		}
 
 		_, err := node.Execute(context.Background(), timeNow, nil, s)
@@ -153,16 +137,14 @@ func TestMLNodeExecute(t *testing.T) {
 
 	t.Run("should fail if plugin settings cannot be retrieved", func(t *testing.T) {
 		expectedErr := errors.New("test-error")
+		pc := *pluginClient
+		pc.errorResult = expectedErr
 		s := &Service{
-			cfg:         nil,
-			dataService: nil,
-			pCtxProvider: &fakePluginContextProvider{
-				errorResult: expectedErr,
-			},
-			features:      nil,
-			pluginsClient: nil,
-			tracer:        nil,
-			metrics:       nil,
+			cfg:          nil,
+			features:     nil,
+			pluginClient: &pc,
+			tracer:       nil,
+			metrics:      newMetrics(nil),
 		}
 
 		_, err := node.Execute(context.Background(), timeNow, nil, s)
@@ -170,20 +152,15 @@ func TestMLNodeExecute(t *testing.T) {
 	})
 
 	t.Run("should fail if plugin is not initialized", func(t *testing.T) {
+		pc := *pluginClient
+		pc.pluginContext = backend.PluginContext{}
+
 		s := &Service{
-			cfg:         nil,
-			dataService: nil,
-			pCtxProvider: &fakePluginContextProvider{
-				result: map[string]*backend.AppInstanceSettings{
-					mlPluginID: {
-						JSONData: json.RawMessage(`{}`),
-					},
-				},
-			},
-			features:      nil,
-			pluginsClient: nil,
-			tracer:        nil,
-			metrics:       nil,
+			cfg:          nil,
+			features:     nil,
+			pluginClient: &pc,
+			tracer:       nil,
+			metrics:      newMetrics(nil),
 		}
 
 		_, err := node.Execute(context.Background(), timeNow, nil, s)
@@ -191,14 +168,13 @@ func TestMLNodeExecute(t *testing.T) {
 	})
 
 	t.Run("should return QueryError if command failed", func(t *testing.T) {
+		pc := *pluginClient
 		s := &Service{
-			cfg:           nil,
-			dataService:   nil,
-			pCtxProvider:  pluginCtx,
-			features:      nil,
-			pluginsClient: pluginsClient,
-			tracer:        nil,
-			metrics:       newMetrics(nil),
+			cfg:          nil,
+			features:     nil,
+			pluginClient: &pc,
+			tracer:       nil,
+			metrics:      newMetrics(nil),
 		}
 
 		cmd := &ml.FakeCommand{

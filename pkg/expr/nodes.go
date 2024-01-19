@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 )
 
 // label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
@@ -223,13 +224,6 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 			defer span.End()
 			firstNode := nodeGroup[0]
-			pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
-			if err != nil {
-				for _, dn := range nodeGroup {
-					vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
-				}
-				return
-			}
 
 			logger := logger.FromContext(ctx).New("datasourceType", firstNode.datasource.Type,
 				"queryRefId", firstNode.refID,
@@ -242,9 +236,9 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				attribute.String("datasource.uid", firstNode.datasource.UID),
 			)
 
-			req := &backend.QueryDataRequest{
-				PluginContext: pCtx,
-				Headers:       firstNode.request.Headers,
+			req := &pluginclient.QueryDataRequest{
+				Reference: pluginclient.DatasourceRef(firstNode.datasource.Type, pluginclient.WithDatasource(firstNode.datasource)),
+				Headers:   firstNode.request.Headers,
 			}
 
 			for _, dn := range nodeGroup {
@@ -272,7 +266,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
 			}
 
-			resp, err := s.dataService.QueryData(ctx, req)
+			resp, err := s.pluginClient.QueryData(ctx, req)
 			if err != nil {
 				for _, dn := range nodeGroup {
 					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(firstNode.refID, firstNode.datasource.UID, err)}
@@ -309,17 +303,13 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 	defer span.End()
 
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
-	if err != nil {
-		return mathexp.Results{}, err
-	}
 	span.SetAttributes(
 		attribute.String("datasource.type", dn.datasource.Type),
 		attribute.String("datasource.uid", dn.datasource.UID),
 	)
 
-	req := &backend.QueryDataRequest{
-		PluginContext: pCtx,
+	req := &pluginclient.QueryDataRequest{
+		Reference: pluginclient.DatasourceRef(dn.datasource.Type, pluginclient.WithDatasource(dn.datasource)),
 		Queries: []backend.DataQuery{
 			{
 				RefID:         dn.refID,
@@ -347,7 +337,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
 	}()
 
-	resp, err := s.dataService.QueryData(ctx, req)
+	resp, err := s.pluginClient.QueryData(ctx, req)
 	if err != nil {
 		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
