@@ -69,7 +69,19 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 	return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
 }
 
-// GET /api/access-control/users/permissions
+// swagger:route GET /access-control/users/permissions/search access_control searchPermissions
+//
+// Search through users permissions.
+//
+// Gets all users' permissions matching the provided search filters. The response contains all permissions grouped by user IDs and actions.
+//
+// You need to have a permission with action `users.permissions:read`.
+//
+// Responses:
+// 200: searchPermissionsResponse
+// 400: badRequestError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{
 		ActionPrefix: c.Query("actionPrefix"),
@@ -96,7 +108,19 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	return response.JSON(http.StatusOK, permsByAction)
 }
 
-// GET /api/access-control/user/:userID/permissions/search
+// swagger:route GET /access-control/user/{user_id}/permissions/search access_control searchUserPermissions
+//
+// Search through a user's permissions.
+//
+// Gets all of a user's permissions matching the provided search filters. The response contains all permissions grouped actions.
+//
+// You need to have a permission with action `users.permissions:read` and scope `users:id:{user_id}`.
+//
+// Responses:
+// 200: searchUserPermissionsResponse
+// 400: badRequestError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) response.Response {
 	userIDString := web.Params(c.Req)[":userID"]
 	userID, err := strconv.ParseInt(userIDString, 10, 64)
