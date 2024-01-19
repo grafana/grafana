@@ -28,7 +28,7 @@ type SearchPermissionsResponse struct {
 type SearchUserPermissionsParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:userId`
+	UserID int64 `json:"user_id"`
 
 	// in:query
 	// required:false
