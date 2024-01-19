@@ -17,6 +17,7 @@ jest.mock('app/core/store', () => {
   return {
     getBool: jest.fn(),
     getObject: jest.fn(),
+    get: jest.fn(),
   };
 });
 

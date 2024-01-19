@@ -8,6 +8,7 @@ import {
   QueryEditorProps,
   BaseVariableModel,
   VariableHide,
+  TypedVariableModel,
 } from '@grafana/data';
 export {
   /** @deprecated Import from @grafana/data instead */
@@ -95,6 +96,7 @@ export type VariableQueryEditorType<
 export interface VariablesChangedEvent {
   refreshAll: boolean;
   panelIds: number[];
+  variable?: TypedVariableModel;
 }
 
 export class VariablesChanged extends BusEventWithPayload<VariablesChangedEvent> {

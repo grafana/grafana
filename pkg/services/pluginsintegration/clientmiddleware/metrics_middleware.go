@@ -2,8 +2,6 @@ package clientmiddleware
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -35,7 +33,7 @@ type MetricsMiddleware struct {
 
 func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) *MetricsMiddleware {
 	var additionalLabels []string
-	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		additionalLabels = []string{"status_source"}
 	}
 	pluginRequestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -110,28 +108,21 @@ func (m *MetricsMiddleware) instrumentPluginRequestSize(ctx context.Context, plu
 }
 
 // instrumentPluginRequest increments the m.pluginRequestCounter metric and tracks the duration of the given request.
-func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(context.Context) error) error {
+func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(context.Context) (requestStatus, error)) error {
 	target, err := m.pluginTarget(ctx, pluginCtx.PluginID)
 	if err != nil {
 		return err
 	}
 
-	status := statusOK
 	start := time.Now()
 
-	err = fn(ctx)
-	if err != nil {
-		status = statusError
-		if errors.Is(err, context.Canceled) {
-			status = statusCancelled
-		}
-	}
+	status, err := fn(ctx)
 	elapsed := time.Since(start)
 
 	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
-	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status, target}
-	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status, target}
-	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status.String(), target}
+	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target}
+	if m.features.IsEnabled(ctx, featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
 		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSource))
 		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSource))
@@ -160,47 +151,21 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 }
 
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	// Setup plugin request status source
-	ctx = pluginrequestmeta.WithStatusSource(ctx, pluginrequestmeta.StatusSourcePlugin)
-
 	var requestSize float64
 	for _, v := range req.Queries {
 		requestSize += float64(len(v.JSON))
 	}
+
 	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, endpointQueryData, requestSize); err != nil {
 		return nil, err
 	}
+
 	var resp *backend.QueryDataResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (status requestStatus, innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
-		if resp == nil || resp.Responses == nil || !m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-			return innerErr
-		}
-
-		// Set downstream status source in the context if there's at least one response with downstream status source,
-		// and if there's no plugin error
-		var hasPluginError bool
-		var hasDownstreamError bool
-		for _, r := range resp.Responses {
-			if r.Error == nil {
-				continue
-			}
-			if r.ErrorSource == backend.ErrorSourceDownstream {
-				hasDownstreamError = true
-			} else {
-				hasPluginError = true
-			}
-		}
-		// A plugin error has higher priority than a downstream error,
-		// so set to downstream only if there's no plugin error
-		if hasDownstreamError && !hasPluginError {
-			if err := pluginrequestmeta.WithDownstreamStatusSource(ctx); err != nil {
-				return fmt.Errorf("failed to set downstream status source: %w", err)
-			}
-		}
-
-		return innerErr
+		return requestStatusFromQueryDataResponse(resp, innerErr), innerErr
 	})
+
 	return resp, err
 }
 
@@ -208,25 +173,27 @@ func (m *MetricsMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, endpointCallResource, float64(len(req.Body))); err != nil {
 		return err
 	}
-	return m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) error {
-		return m.next.CallResource(ctx, req, sender)
+	return m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) (requestStatus, error) {
+		innerErr := m.next.CallResource(ctx, req, sender)
+		return requestStatusFromError(innerErr), innerErr
 	})
 }
 
 func (m *MetricsMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	var result *backend.CheckHealthResult
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCheckHealth, func(ctx context.Context) (innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCheckHealth, func(ctx context.Context) (status requestStatus, innerErr error) {
 		result, innerErr = m.next.CheckHealth(ctx, req)
-		return
+		return requestStatusFromError(innerErr), innerErr
 	})
+
 	return result, err
 }
 
 func (m *MetricsMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	var result *backend.CollectMetricsResult
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCollectMetrics, func(ctx context.Context) (innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCollectMetrics, func(ctx context.Context) (status requestStatus, innerErr error) {
 		result, innerErr = m.next.CollectMetrics(ctx, req)
-		return
+		return requestStatusFromError(innerErr), innerErr
 	})
 	return result, err
 }

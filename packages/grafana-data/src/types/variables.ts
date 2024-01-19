@@ -14,8 +14,6 @@ import { DataQuery } from './query';
 
 /**
  * Enum with the different variable support types
- *
- * @alpha -- experimental
  */
 export enum VariableSupportType {
   Legacy = 'legacy',
@@ -26,8 +24,6 @@ export enum VariableSupportType {
 
 /**
  * Base class for VariableSupport classes
- *
- * @alpha -- experimental
  */
 export abstract class VariableSupportBase<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -44,8 +40,6 @@ export abstract class VariableSupportBase<
 
 /**
  * Extend this class in a data source plugin to use the standard query editor for Query variables
- *
- * @alpha -- experimental
  */
 export abstract class StandardVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -62,8 +56,6 @@ export abstract class StandardVariableSupport<
 
 /**
  * Extend this class in a data source plugin to use a customized query editor for Query variables
- *
- * @alpha -- experimental
  */
 export abstract class CustomVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -89,8 +81,6 @@ export abstract class CustomVariableSupport<
 
 /**
  * Extend this class in a data source plugin to use the query editor in the data source plugin for Query variables
- *
- * @alpha -- experimental
  */
 export abstract class DataSourceVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -104,8 +94,6 @@ export abstract class DataSourceVariableSupport<
 
 /**
  * Defines the standard DatQuery used by data source plugins that implement StandardVariableSupport
- *
- * @alpha -- experimental
  */
 export interface StandardVariableQuery extends DataQuery {
   query: string;

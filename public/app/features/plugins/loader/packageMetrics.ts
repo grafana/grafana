@@ -32,13 +32,18 @@ function createMetricsProxy<T extends object>(obj: T, parentName: string, packag
         }
       }
 
-      const value = Reflect.get(target, key);
+      let value = Reflect.get(target, key);
 
       if (value !== null && typeof value === 'object' && !(value instanceof RegExp)) {
         if (!cachedMetricProxies.has(value)) {
           cachedMetricProxies.set(value, createMetricsProxy(value, `${parentName}.${String(key)}`, packageName));
         }
         return cachedMetricProxies.get(value);
+      }
+
+      // proxies don't play nice with functions scopes
+      if (typeof value === 'function') {
+        value = value.bind(target);
       }
       return value;
     },
@@ -51,6 +56,11 @@ function createMetricsProxy<T extends object>(obj: T, parentName: string, packag
   return obj;
 }
 
+const trackPackagesRe = /^(@grafana|app\/)/;
+
 export function trackPackageUsage<T extends object>(obj: T, packageName: string): T {
-  return createMetricsProxy(obj, packageName, packageName);
+  if (trackPackagesRe.test(packageName)) {
+    return createMetricsProxy(obj, packageName, packageName);
+  }
+  return obj;
 }

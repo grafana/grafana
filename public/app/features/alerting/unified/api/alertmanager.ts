@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { urlUtil } from '@grafana/data';
+import { isObject, urlUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
@@ -206,16 +206,22 @@ function receiversResponseContainsErrors(result: TestReceiversResult) {
   );
 }
 
-function isTestReceiversResult(data: any): data is TestReceiversResult {
-  const receivers = data?.receivers;
-
-  if (Array.isArray(receivers)) {
-    return receivers.every(
-      (receiver: any) => typeof receiver.name === 'string' && Array.isArray(receiver.grafana_managed_receiver_configs)
-    );
+function isTestReceiversResult(data: unknown): data is TestReceiversResult {
+  if (isObject(data) && 'receivers' in data && Array.isArray(data.receivers)) {
+    return data.receivers.every(isSingleTestRecieverResult);
   }
 
   return false;
+}
+
+function isSingleTestRecieverResult(receiver: unknown): receiver is TestReceiversResult {
+  return (
+    isObject(receiver) &&
+    'name' in receiver &&
+    typeof receiver.name === 'string' &&
+    'grafana_managed_receiver_configs' in receiver &&
+    Array.isArray(receiver.grafana_managed_receiver_configs)
+  );
 }
 
 function getReceiverResultError(receiversResult: TestReceiversResult) {

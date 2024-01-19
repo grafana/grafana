@@ -350,6 +350,63 @@ describe('DataSourceWithBackend', () => {
     });
   });
 
+  test('check that queries can skip the query cache', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }],
+      dashboardUID: 'dashA',
+      panelId: 123,
+      range: getDefaultTimeRange(),
+      skipQueryCache: true,
+      requestId: 'request-123',
+      interval: '5s',
+      scopedVars: {},
+      timezone: '',
+      app: '',
+      startTime: 0,
+    });
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchInlineSnapshot(`
+      {
+        "data": {
+          "from": "1697133600000",
+          "queries": [
+            {
+              "applyTemplateVariablesCalled": true,
+              "datasource": {
+                "type": "dummy",
+                "uid": "abc",
+              },
+              "datasourceId": 1234,
+              "filters": undefined,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
+              "refId": "A",
+            },
+          ],
+          "to": "1697155200000",
+        },
+        "headers": {
+          "X-Cache-Skip": "true",
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy",
+        },
+        "hideFromInspector": false,
+        "method": "POST",
+        "requestId": "request-123",
+        "url": "/api/ds/query?ds_type=dummy&requestId=request-123",
+      }
+    `);
+  });
+
   describe('isExpressionReference', () => {
     test('check all possible expression references', () => {
       expect(isExpressionReference('__expr__')).toBeTruthy(); // New UID

@@ -25,10 +25,14 @@ type ProfileType struct {
 }
 
 func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
+	ctxLogger.Debug("Getting profile types", "function", logEntrypoint())
+
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callProfileTypes")
 	defer span.End()
 	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&v1alpha1.ProfileTypesRequest{}))
 	if err != nil {
+		ctxLogger.Error("Failed to get profile types", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -56,24 +60,32 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 
 	data, err := json.Marshal(types)
 	if err != nil {
+		ctxLogger.Error("Failed to marshal profile types", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+
+	ctxLogger.Debug("Successfully got profile types", "function", logEntrypoint())
 	return nil
 }
 
 func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
+	ctxLogger.Debug("Getting label names", "function", logEntrypoint())
+
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callLabelNames")
 	defer span.End()
 	res, err := d.client.Labels(ctx, connect.NewRequest(&v1alpha1.LabelsRequest{}))
 	if err != nil {
+		ctxLogger.Error("Failed to get label names", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -81,49 +93,63 @@ func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallR
 
 	data, err := json.Marshal(res.Msg.LabelNames)
 	if err != nil {
+		ctxLogger.Error("Failed to marshal label names", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+
+	ctxLogger.Debug("Successfully got label names", "function", logEntrypoint())
 	return nil
 }
 
 func (d *ParcaDatasource) callLabelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
+	ctxLogger.Debug("Getting label values", "function", logEntrypoint())
+
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callLabelValues")
 	defer span.End()
 	parsedUrl, err := url.Parse(req.URL)
 	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	label, ok := parsedUrl.Query()["label"]
 	if !ok {
+		ctxLogger.Error("Failed to get label from query", "error", err, "function", logEntrypoint())
 		label = []string{""}
 	}
 	res, err := d.client.Values(ctx, connect.NewRequest(&v1alpha1.ValuesRequest{LabelName: label[0]}))
 	if err != nil {
+		ctxLogger.Error("Failed to get values for given label", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	data, err := json.Marshal(res.Msg.LabelValues)
 	if err != nil {
+		ctxLogger.Error("Failed to marshal label values", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+
+	ctxLogger.Debug("Successfully got label values", "function", logEntrypoint())
 	return nil
 }

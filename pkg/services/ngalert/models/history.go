@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // HistoryQuery represents a query for alert state history.
@@ -16,5 +16,5 @@ type HistoryQuery struct {
 	From         time.Time
 	To           time.Time
 	Limit        int
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }

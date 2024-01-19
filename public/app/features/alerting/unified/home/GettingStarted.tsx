@@ -3,9 +3,8 @@ import React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { EmbeddedScene, SceneFlexLayout, SceneFlexItem, SceneReactObject } from '@grafana/scenes';
-import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, useStyles2, useTheme2, Stack } from '@grafana/ui';
 
 export const getOverviewScene = () => {
   return new EmbeddedScene({
@@ -48,7 +47,7 @@ export default function GettingStarted({ showWelcomeHeader }: { showWelcomeHeade
       </ContentBox>
       <ContentBox className={styles.gettingStartedBlock}>
         <h3>Get started</h3>
-        <Stack direction="column" alignItems="space-between">
+        <Stack direction="column">
           <ul className={styles.list}>
             <li>
               <strong>Create an alert rule</strong> by adding queries and expressions from multiple data sources.
@@ -93,6 +92,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     grid-template-rows: min-content auto auto;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     gap: ${theme.spacing(2)};
+    width: 100%;
   `,
   ctaContainer: css`
     grid-column: 1 / span 5;

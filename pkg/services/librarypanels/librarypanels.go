@@ -164,7 +164,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 			}
 
 			var cmd = model.CreateLibraryElementCommand{
-				FolderID: folderID,
+				FolderID: folderID, // nolint:staticcheck
 				Name:     name,
 				Model:    Model,
 				Kind:     int64(model.PanelElement),
@@ -193,7 +193,7 @@ func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, f
 		if err != nil {
 			return err
 		}
-
+		// nolint:staticcheck
 		q := sess.Table("library_element").Where("org_id = ?", u.GetOrgID()).
 			Where("folder_id = ?", folder.ID).Where("kind = ?", int64(model.PanelElement))
 		count, err = q.Count()

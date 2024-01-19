@@ -220,7 +220,7 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 
 // IsDisabled returns true if FlagPluginsDynamicAngularDetectionPatterns is not enabled.
 func (d *Dynamic) IsDisabled() bool {
-	return !d.features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
+	return !d.features.IsEnabledGlobally(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
 }
 
 // randomSkew returns a random time.Duration between 0 and maxSkew.

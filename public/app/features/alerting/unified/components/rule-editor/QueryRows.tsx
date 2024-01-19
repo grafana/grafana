@@ -10,9 +10,8 @@ import {
   rangeUtil,
   RelativeTimeRange,
 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, Card, Icon } from '@grafana/ui';
+import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';

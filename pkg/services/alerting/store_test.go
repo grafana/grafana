@@ -48,7 +48,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	setup := func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		tagService := tagimpl.ProvideService(ss, ss.Cfg)
+		tagService := tagimpl.ProvideService(ss)
 		cfg := setting.NewCfg()
 		store = &sqlStore{
 			db:         ss,
@@ -335,7 +335,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 	t.Run("Given an alert", func(t *testing.T) {
 		ss := db.InitTestDB(t)
 		cfg := setting.NewCfg()
-		sqlStore := sqlStore{db: ss, cfg: cfg, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg), features: featuremgmt.WithFeatures()}
+		sqlStore := sqlStore{db: ss, cfg: cfg, log: log.New(), tagService: tagimpl.ProvideService(ss), features: featuremgmt.WithFeatures()}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, "", false, "alert")
 		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgID, testDash.ID, simplejson.New(), sqlStore)
@@ -434,12 +434,11 @@ func (ss *sqlStore) pauseAllAlerts(t *testing.T, pauseState bool) error {
 	return err
 }
 
-func insertTestDashboard(t *testing.T, store db.DB, title string, orgId int64,
+func insertTestDashboard(t *testing.T, store db.DB, title string, orgID int64,
 	folderId int64, folderUID string, isFolder bool, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:     orgId,
-		FolderID:  folderId,
+		OrgID:     orgID,
 		FolderUID: folderUID,
 		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]any{

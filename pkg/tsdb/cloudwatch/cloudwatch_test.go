@@ -220,7 +220,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 
 	t.Run("maps log group api response to resource response of log-groups", func(t *testing.T) {
 		logsApi = mocks.LogsAPI{}
-		logsApi.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+		logsApi.On("DescribeLogGroupsWithContext", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
 			LogGroups: []*cloudwatchlogs.LogGroup{
 				{Arn: aws.String("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: aws.String("group_a")},
 			},
@@ -248,7 +248,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		   }
 		]`, string(sender.Response.Body))
 
-		logsApi.AssertCalled(t, "DescribeLogGroups",
+		logsApi.AssertCalled(t, "DescribeLogGroupsWithContext",
 			&cloudwatchlogs.DescribeLogGroupsInput{
 				AccountIdentifiers:    []*string{utils.Pointer("some-account-id")},
 				IncludeLinkedAccounts: utils.Pointer(true),

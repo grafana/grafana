@@ -129,3 +129,7 @@ func (f *FakePyroscopeConnectClient) SelectSeries(ctx context.Context, req *conn
 func (f *FakePyroscopeConnectClient) SelectMergeProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
 	panic("implement me")
 }
+
+func (f *FakePyroscopeConnectClient) SelectMergeSpanProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeSpanProfileRequest]) (*connect.Response[querierv1.SelectMergeSpanProfileResponse], error) {
+	panic("implement me")
+}

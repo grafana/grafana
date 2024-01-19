@@ -3,10 +3,9 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Button, Checkbox, Form, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Form, TextArea, useStyles2, Stack } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';

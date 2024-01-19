@@ -63,8 +63,8 @@ export function addFilterToQuery(query: string, key: string, value: string, modi
     return query;
   }
 
-  key = lucene.term.escape(key);
-  value = lucene.phrase.escape(value);
+  key = escapeFilter(key);
+  value = escapeFilterValue(value);
   const filter = `${modifier}${key}:"${value}"`;
 
   return concatenate(query, filter);
@@ -187,6 +187,7 @@ export function escapeFilter(value: string) {
  * Use this function to escape filter values.
  */
 export function escapeFilterValue(value: string) {
+  value = value.replace(/\\/g, '\\\\');
   return lucene.phrase.escape(value);
 }
 
@@ -198,19 +199,22 @@ function normalizeQuery(query: string) {
 }
 
 function isLeftOnlyAST(ast: unknown): ast is LeftOnlyAST {
-  if (!ast) {
+  if (!ast || typeof ast !== 'object') {
     return false;
   }
+
   if ('left' in ast && !('right' in ast)) {
     return true;
   }
+
   return false;
 }
 
 function isBinaryAST(ast: unknown): ast is BinaryAST {
-  if (!ast) {
+  if (!ast || typeof ast !== 'object') {
     return false;
   }
+
   if ('left' in ast && 'right' in ast) {
     return true;
   }
@@ -222,12 +226,10 @@ function isAST(ast: unknown): ast is AST {
 }
 
 function isNodeTerm(ast: unknown): ast is NodeTerm {
-  if (!ast) {
-    return false;
-  }
-  if ('term' in ast) {
+  if (ast && typeof ast === 'object' && 'term' in ast) {
     return true;
   }
+
   return false;
 }
 
@@ -237,4 +239,9 @@ function parseQuery(query: string) {
   } catch (e) {
     return null;
   }
+}
+
+export function addStringFilterToQuery(query: string, filter: string, contains = true) {
+  const expression = `"${escapeFilterValue(filter)}"`;
+  return query.trim() ? `${query} ${contains ? 'AND' : 'NOT'} ${expression}` : `${contains ? '' : 'NOT '}${expression}`;
 }

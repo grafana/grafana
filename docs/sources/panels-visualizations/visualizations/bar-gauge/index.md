@@ -3,7 +3,7 @@ aliases:
   - ../../features/panels/bar_gauge/
   - ../../panels/visualizations/bar-gauge-panel/
   - ../../visualizations/bar-gauge-panel/
-description: Bar gauge panel options
+description: Configure options for Grafana's bar gauge visualization
 keywords:
   - grafana
   - bar
@@ -91,19 +91,44 @@ This option only applies when the orientation of the bar gauge is horizontal. Wh
 
 Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
 
+### Bar size
+
+Choose a bar size mode.
+
+- **Auto -** Grafana determines the best bar gauge size.
+- **Manual -** Manually configure the bar gauge size.
+
 ### Min width
 
-Limit the minimum width of the bar column in the vertical direction.
+Limit the minimum width of the bar column when the gauge is oriented vertically.
 
-Automatically show x-axis scrollbar when there is a large amount of data.
+Automatically show x-axis scrollbar when there's a large amount of data.
+
+{{% admonition type="note" %}}
+This option only applies when bar size is set to manual.
+{{% /admonition %}}
 
 ### Min height
 
-Limit the minimum height of the bar row in the horizontal direction.
+Limit the minimum height of the bar row when the gauge is oriented horizontally.
 
-Automatically show y-axis scrollbar when there is a large amount of data.
+Automatically show y-axis scrollbar when there's a large amount of data.
+
+{{% admonition type="note" %}}
+This option only applies when bar size is set to manual.
+{{% /admonition %}}
+
+### Max height
+
+Limit the maximum height of the bar row when the gauge is oriented horizontally.
+
+Automatically show y-axis scrollbar when there's a large amount of data.
+
+{{% admonition type="note" %}}
+This option only applies when bar size is set to manual.
+{{% /admonition %}}
 
 {{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
 {{% /docs/reference %}}

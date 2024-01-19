@@ -38,8 +38,8 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) 
       return;
     }
 
-    datasource.labelNamesQuery().then((labelNames: Array<{ text: string }>) => {
-      setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
+    datasource.languageProvider.fetchLabels().then((labelNames: string[]) => {
+      setLabelOptions(labelNames.map((labelName) => ({ label: labelName, value: labelName })));
     });
   }, [datasource, type]);
 

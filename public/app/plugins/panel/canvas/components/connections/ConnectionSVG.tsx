@@ -7,6 +7,7 @@ import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionState } from '../../types';
+import { calculateCoordinates, getConnectionStyles, getParentBoundingClientRect } from '../../utils';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -97,64 +98,24 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     }
   };
 
-  // @TODO revisit, currently returning last row index for field
-  const getRowIndex = (fieldName: string | undefined) => {
-    if (fieldName) {
-      const series = scene.context.getPanelData()?.series[0];
-      const field = series?.fields.find((f) => (f.name = fieldName));
-      const data = field?.values;
-
-      return data ? data.length - 1 : 0;
-    }
-
-    return 0;
-  };
-
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
     return scene.connections.state.map((v, idx) => {
       const { source, target, info } = v;
       const sourceRect = source.div?.getBoundingClientRect();
       const parent = source.div?.parentElement;
-      const parentRect = parent?.getBoundingClientRect();
+      const transformScale = scene.scale;
+      const parentRect = getParentBoundingClientRect(scene);
 
       if (!sourceRect || !parent || !parentRect) {
         return;
       }
 
-      const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
-      const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
+      const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
 
-      // Convert from connection coords to DOM coords
-      // TODO: Break this out into util function and add tests
-      const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2;
-      const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2;
-
-      let x2;
-      let y2;
-
-      if (info.targetName) {
-        const targetRect = target.div?.getBoundingClientRect();
-
-        const targetHorizontalCenter = targetRect!.left - parentRect.left + targetRect!.width / 2;
-        const targetVerticalCenter = targetRect!.top - parentRect.top + targetRect!.height / 2;
-
-        x2 = targetHorizontalCenter + (info.target.x * targetRect!.width) / 2;
-        y2 = targetVerticalCenter - (info.target.y * targetRect!.height) / 2;
-      } else {
-        const parentHorizontalCenter = parentRect.width / 2;
-        const parentVerticalCenter = parentRect.height / 2;
-
-        x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
-        y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
-      }
+      const { strokeColor, strokeWidth } = getConnectionStyles(info, scene, defaultArrowSize);
 
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
-
-      const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
-      const lastRowIndex = getRowIndex(info.size?.field);
-
-      const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
       const selectedStyles = { stroke: '#44aaff', strokeOpacity: 0.6, strokeWidth: strokeWidth + 5 };
@@ -231,19 +192,19 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  editorSVG: css`
-    position: absolute;
-    pointer-events: none;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    display: none;
-  `,
-  connection: css`
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    pointer-events: none;
-  `,
+  editorSVG: css({
+    position: 'absolute',
+    pointerEvents: 'none',
+    width: '100%',
+    height: '100%',
+    zIndex: 1000,
+    display: 'none',
+  }),
+  connection: css({
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    zIndex: 1000,
+    pointerEvents: 'none',
+  }),
 });

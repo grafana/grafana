@@ -20,8 +20,11 @@ func newTracingCfg(grafanaCfg *setting.Cfg) (pCfg.Tracing, error) {
 	}
 	return pCfg.Tracing{
 		OpenTelemetry: pCfg.OpenTelemetryCfg{
-			Address:     ots.Address,
-			Propagation: ots.Propagation,
+			Address:          ots.Address,
+			Propagation:      ots.Propagation,
+			Sampler:          ots.Sampler,
+			SamplerParam:     ots.SamplerParam,
+			SamplerRemoteURL: ots.SamplerRemoteURL,
 		},
 	}, nil
 }

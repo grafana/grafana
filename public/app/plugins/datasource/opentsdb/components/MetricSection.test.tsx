@@ -16,8 +16,16 @@ const setup = (propOverrides?: Object) => {
     aggregator: 'avg',
     alias: 'alias',
   };
+
+  const varQuery: OpenTsdbQuery = {
+    metric: '$variable',
+    refId: 'A',
+    aggregator: 'avg',
+    alias: 'alias',
+  };
+
   const props: MetricSectionProps = {
-    query,
+    query: !propOverrides ? query : varQuery,
     onChange: onChange,
     onRunQuery: onRunQuery,
     suggestMetrics: suggestMetrics,
@@ -41,6 +49,11 @@ describe('MetricSection', () => {
     it('should render metrics select', () => {
       setup();
       expect(screen.getByText('cpu')).toBeInTheDocument();
+    });
+
+    it('should display variables in the metrics select', () => {
+      setup({ variables: true });
+      expect(screen.getByText('$variable')).toBeInTheDocument();
     });
   });
 

@@ -9,10 +9,16 @@ import {
   ScopedVars,
   SelectableValue,
   TimeRange,
+  getDefaultTimeRange,
 } from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse, BackendSrv } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import {
+  DataSourceWithBackend,
+  getBackendSrv,
+  toDataQueryResponse,
+  BackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
@@ -31,8 +37,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
-    public templateSrv: TemplateSrv = getTemplateSrv(),
-    readonly timeSrv: TimeSrv = getTimeSrv()
+    public templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
@@ -54,7 +59,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
-  applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars) {
     const { timeSeriesList, timeSeriesQuery, sloQuery, promQLQuery } = target;
 
     return {
@@ -89,7 +94,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     projectName: string,
     aggregation?: Aggregation,
     timeRange?: TimeRange
-  ) {
+  ): Promise<{ [k: string]: string[] }> {
     const options = {
       targets: [
         {
@@ -107,7 +112,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           ),
         },
       ],
-      range: timeRange ?? this.timeSrv.timeRange(),
+      range: timeRange || getDefaultTimeRange(),
     };
 
     const queries = options.targets;
@@ -130,11 +135,13 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             },
           });
         }),
+
         map(({ data }) => {
           const dataQueryResponse = toDataQueryResponse({
             data: data,
           });
-          const labels = dataQueryResponse?.data
+
+          const labels: Record<string, Set<string>> = dataQueryResponse?.data
             .map((f) => f.meta?.custom?.labels)
             .filter((p) => !!p)
             .reduce((acc, labels) => {
@@ -148,10 +155,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
               }
               return acc;
             }, {});
+
           return Object.fromEntries(
-            Object.entries(labels).map((l: any) => {
-              l[1] = Array.from(l[1]);
-              return l;
+            Object.entries(labels).map(([key, value]) => {
+              const fromArr = Array.from(value);
+              return [key, fromArr];
             })
           );
         })
@@ -332,9 +340,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map(
-      (query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars) as CloudMonitoringQuery
-    );
+    return queries.map((query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars));
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {

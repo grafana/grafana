@@ -18,7 +18,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@18
+brew install node@20
 npm install -g yarn
 ```
 
@@ -61,7 +61,7 @@ To remove precommit hooks, run
 make lefthook-uninstall
 ```
 
-> [!NOTE]  
+> [!NOTE]
 > Contributors working on the frontend are highly encouraged to install the precommit hooks, even if your IDE formats on save, so the `.betterer.results` file is kept up to sync.
 
 ## Build Grafana

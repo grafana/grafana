@@ -1,26 +1,78 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { ThemeSpacingTokens } from '@grafana/data';
+import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
-import { Flex } from '../Flex/Flex';
-import { ResponsiveProp } from '../utils/responsiveness';
-interface StackProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
-  direction?: ResponsiveProp<'column' | 'row'>;
+import { useStyles2 } from '../../../themes';
+import { AlignItems, Direction, FlexProps, JustifyContent, Wrap } from '../types';
+import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
+
+interface StackProps extends FlexProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   gap?: ResponsiveProp<ThemeSpacingTokens>;
+  alignItems?: ResponsiveProp<AlignItems>;
+  justifyContent?: ResponsiveProp<JustifyContent>;
+  direction?: ResponsiveProp<Direction>;
+  wrap?: ResponsiveProp<Wrap>;
+  children?: React.ReactNode;
 }
 
-export const Stack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<StackProps>>(
-  ({ gap = 1, direction = 'column', children, ...rest }, ref) => {
-    return (
-      <Flex ref={ref} gap={gap} direction={direction} wrap="wrap" {...rest}>
-        {React.Children.toArray(children)
-          .filter(Boolean)
-          .map((child, index) => (
-            <div key={index}>{child}</div>
-          ))}
-      </Flex>
-    );
-  }
-);
+export const Stack = React.forwardRef<HTMLDivElement, StackProps>((props, ref) => {
+  const { gap = 1, alignItems, justifyContent, direction, wrap, children, grow, shrink, basis, flex, ...rest } = props;
+  const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap, grow, shrink, basis, flex);
+
+  return (
+    <div ref={ref} className={styles.flex} {...rest}>
+      {children}
+    </div>
+  );
+});
 
 Stack.displayName = 'Stack';
+
+const getStyles = (
+  theme: GrafanaTheme2,
+  gap: StackProps['gap'],
+  alignItems: StackProps['alignItems'],
+  justifyContent: StackProps['justifyContent'],
+  direction: StackProps['direction'],
+  wrap: StackProps['wrap'],
+  grow: StackProps['grow'],
+  shrink: StackProps['shrink'],
+  basis: StackProps['basis'],
+  flex: StackProps['flex']
+) => {
+  return {
+    flex: css([
+      {
+        display: 'flex',
+      },
+      getResponsiveStyle(theme, direction, (val) => ({
+        flexDirection: val,
+      })),
+      getResponsiveStyle(theme, wrap, (val) => ({
+        flexWrap: val,
+      })),
+      getResponsiveStyle(theme, alignItems, (val) => ({
+        alignItems: val,
+      })),
+      getResponsiveStyle(theme, justifyContent, (val) => ({
+        justifyContent: val,
+      })),
+      getResponsiveStyle(theme, gap, (val) => ({
+        gap: theme.spacing(val),
+      })),
+      getResponsiveStyle(theme, grow, (val) => ({
+        flexGrow: val,
+      })),
+      getResponsiveStyle(theme, shrink, (val) => ({
+        flexShrink: val,
+      })),
+      getResponsiveStyle(theme, basis, (val) => ({
+        flexBasis: val,
+      })),
+      getResponsiveStyle(theme, flex, (val) => ({
+        flex: val,
+      })),
+    ]),
+  };
+};

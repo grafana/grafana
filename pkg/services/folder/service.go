@@ -6,17 +6,17 @@ import (
 
 type Service interface {
 	// GetChildren returns an array containing all child folders.
-	GetChildren(ctx context.Context, cmd *GetChildrenQuery) ([]*Folder, error)
+	GetChildren(ctx context.Context, q *GetChildrenQuery) ([]*Folder, error)
 	// GetParents returns an array containing add parent folders if nested folders are enabled
 	// otherwise it returns an empty array
 	GetParents(ctx context.Context, q GetParentsQuery) ([]*Folder, error)
 	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
 
 	// GetFolder takes a GetFolderCommand and returns a folder matching the
-	// request. One of ID, UID, or Title must be included. If multiple values
+	// request. One of UID, ID or Title must be included. If multiple values
 	// are included in the request, Grafana will select one in order of
-	// specificity (ID, UID, Title).
-	Get(ctx context.Context, cmd *GetFolderQuery) (*Folder, error)
+	// specificity (UID, ID, Title).
+	Get(ctx context.Context, q *GetFolderQuery) (*Folder, error)
 
 	// Update is used to update a folder's UID, Title and Description. To change
 	// a folder's parent folder, use Move.
@@ -25,7 +25,7 @@ type Service interface {
 	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	RegisterService(service RegistryService) error
-	GetDescendantCounts(ctx context.Context, cmd *GetDescendantCountsQuery) (DescendantCounts, error)
+	GetDescendantCounts(ctx context.Context, q *GetDescendantCountsQuery) (DescendantCounts, error)
 }
 
 // FolderStore is a folder store.

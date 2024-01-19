@@ -62,6 +62,10 @@ func (sc *SmtpClient) Send(messages ...*Message) (int, error) {
 // buildEmail converts the Message DTO to a gomail message.
 func (sc *SmtpClient) buildEmail(msg *Message) *gomail.Message {
 	m := gomail.NewMessage()
+	// add all static headers to the email message
+	for h, val := range sc.cfg.StaticHeaders {
+		m.SetHeader(h, val)
+	}
 	m.SetHeader("From", msg.From)
 	m.SetHeader("To", msg.To...)
 	m.SetHeader("Subject", msg.Subject)

@@ -25,7 +25,8 @@ describe('valueFormats', () => {
     ${'ms'}               | ${4}         | ${0.0024}                                   | ${'0.0024 ms'}
     ${'ms'}               | ${0}         | ${100}                                      | ${'100 ms'}
     ${'ms'}               | ${2}         | ${1250}                                     | ${'1.25 s'}
-    ${'ms'}               | ${1}         | ${10000086.123}                             | ${'2.8 hour'}
+    ${'ms'}               | ${1}         | ${10000086.123}                             | ${'2.8 hours'}
+    ${'ms'}               | ${1}         | ${-10000086.123}                            | ${'-2.8 hours'}
     ${'ms'}               | ${undefined} | ${1000}                                     | ${'1 s'}
     ${'ms'}               | ${0}         | ${1200}                                     | ${'1 s'}
     ${'short'}            | ${undefined} | ${1000}                                     | ${'1 K'}
@@ -69,8 +70,9 @@ describe('valueFormats', () => {
     ${'dateTimeAsUS'}     | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'07/02/2010 12:00:00 am'}
     ${'dateTimeAsSystem'} | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010-07-02 00:00:00'}
     ${'dtdurationms'}     | ${undefined} | ${100000}                                   | ${'1 minute'}
+    ${'dtdurationms'}     | ${undefined} | ${150000}                                   | ${'2 minutes'}
   `(
-    'With format=$format decimals=$decimals and value=$value then result shoudl be = $expected',
+    'With format=$format decimals=$decimals and value=$value then result should be = $expected',
     async ({ format, value, decimals, expected }) => {
       const result = getValueFormat(format)(value, decimals, undefined, undefined);
       const full = formattedValueToString(result);
@@ -150,6 +152,18 @@ describe('valueFormats', () => {
       const fmt0 = getValueFormat('farenheit');
       const fmt1 = getValueFormat('fahrenheit');
       expect(fmt0).toEqual(fmt1);
+    });
+  });
+
+  describe('getValueFormat with scalable set to false', () => {
+    it.each`
+      value      | expected
+      ${1000000} | ${'1000000 W'}
+      ${0.001}   | ${'0.00100 W'}
+    `('should return a fixed unit regardless of the input value', ({ value, expected }) => {
+      const result = getValueFormat('watt', false)(value);
+      const full = formattedValueToString(result);
+      expect(full).toBe(expected);
     });
   });
 });

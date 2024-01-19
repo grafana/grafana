@@ -70,6 +70,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	q := req.Queries[0]
 
+	myRefID := q.RefID
+
 	tsdbQuery.Start = q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	tsdbQuery.End = q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 
@@ -105,7 +107,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 	}()
 
-	result, err := s.parseResponse(logger, res)
+	result, err := s.parseResponse(logger, res, myRefID)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -136,7 +138,7 @@ func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *
 	return req, nil
 }
 
-func (s *Service) parseResponse(logger log.Logger, res *http.Response) (*backend.QueryDataResponse, error) {
+func (s *Service) parseResponse(logger log.Logger, res *http.Response, myRefID string) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	body, err := io.ReadAll(res.Body)
@@ -181,9 +183,9 @@ func (s *Service) parseResponse(logger log.Logger, res *http.Response) (*backend
 			data.NewField("time", nil, timeVector),
 			data.NewField("value", tags, values)))
 	}
-	result := resp.Responses["A"]
+	result := resp.Responses[myRefID]
 	result.Frames = frames
-	resp.Responses["A"] = result
+	resp.Responses[myRefID] = result
 	return resp, nil
 }
 

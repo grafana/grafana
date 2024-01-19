@@ -4,10 +4,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Mirrors the info exposed in "github.com/grafana/grafana/pkg/setting"
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type RuntimeInfo struct {
 	metav1.TypeMeta `json:",inline"`
 
+	// Unix timestamp when the process started
 	StartupTime int64 `json:"startupTime,omitempty"`
 
 	BuildVersion          string `json:"buildVersion,omitempty"`
@@ -17,4 +19,29 @@ type RuntimeInfo struct {
 	BuildStamp            int64  `json:"buildStamp,omitempty"`
 	IsEnterprise          bool   `json:"enterprise,omitempty"`
 	Packaging             string `json:"packaging,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DummyResource struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec string `json:"spec,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DummyResourceList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []DummyResource `json:"items,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DummySubresource struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// add subresource info here
+	Info string `json:"info,omitempty"`
 }

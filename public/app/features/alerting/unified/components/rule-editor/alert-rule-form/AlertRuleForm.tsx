@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
-import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-hook-form';
+import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { config, logInfo } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2, Stack } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -15,7 +14,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
+import { logInfo, LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
@@ -145,7 +144,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
   };
 
-  const onInvalid = (errors: DeepMap<RuleFormValues, FieldError>): void => {
+  const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {
     if (!existing) {
       trackNewAlerRuleFormError({
         grafana_version: config.buildInfo.version,

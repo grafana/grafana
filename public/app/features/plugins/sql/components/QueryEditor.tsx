@@ -14,7 +14,7 @@ import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'isPostgresInstance'>;
+  queryHeaderProps?: Pick<QueryHeaderProps, 'dialect'>;
 }
 
 export function SqlQueryEditor({
@@ -29,7 +29,7 @@ export function SqlQueryEditor({
   const db = datasource.getDB();
 
   const { preconfiguredDatabase } = datasource;
-  const isPostgresInstance = !!queryHeaderProps?.isPostgresInstance;
+  const dialect = queryHeaderProps?.dialect ?? 'other';
   const { loading, error } = useAsync(async () => {
     return () => {
       if (datasource.getDB(datasource.id).init !== undefined) {
@@ -97,7 +97,7 @@ export function SqlQueryEditor({
         queryRowFilter={queryRowFilter}
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
-        isPostgresInstance={isPostgresInstance}
+        dialect={dialect}
       />
 
       <Space v={0.5} />

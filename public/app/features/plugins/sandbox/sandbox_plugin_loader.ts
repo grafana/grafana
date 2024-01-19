@@ -2,7 +2,7 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { BootData, PluginMeta } from '@grafana/data';
-import { config, logInfo } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
 import { getPluginSettings } from '../pluginSettings';
@@ -15,11 +15,12 @@ import {
   isLiveTarget,
   markDomElementStyleAsALiveTarget,
   patchObjectAsLiveTarget,
+  patchWebAPIs,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
 import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment } from './types';
-import { logError } from './utils';
+import { logError, logInfo } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
 if (process.env.NODE_ENV !== 'production') {
@@ -30,6 +31,7 @@ const pluginImportCache = new Map<string, Promise<System.Module>>();
 const pluginLogCache: Record<string, boolean> = {};
 
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
+  patchWebAPIs();
   try {
     const pluginMeta = await getPluginSettings(pluginId);
     if (!pluginImportCache.has(pluginId)) {
@@ -47,6 +49,9 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
 }
 
 async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.Module> {
+  logInfo('Loading with sandbox', {
+    pluginId: meta.id,
+  });
   return new Promise(async (resolve, reject) => {
     const generalDistortionMap = getGeneralSandboxDistortionMap();
     let sandboxEnvironment: SandboxEnvironment;
@@ -92,6 +97,9 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
         // window.locationSandbox. In the future `window.location` could be a proxy if we
         // want to intercept calls to it.
         locationSandbox: window.location,
+        setImmediate: function (fn: Function, ...args: unknown[]) {
+          return setTimeout(fn, 0, ...args);
+        },
         get monaco() {
           // `window.monaco` may be undefined when invoked. However, plugins have long
           // accessed it directly, aware of this possibility.
@@ -156,7 +164,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           }
 
           try {
-            const resolvedDeps = resolvePluginDependencies(dependencies);
+            const resolvedDeps = resolvePluginDependencies(dependencies, meta.id);
             // execute the plugin's code
             const pluginExportsRaw = factory.apply(null, resolvedDeps);
             // only after the plugin has been executed
@@ -183,7 +191,12 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
     try {
       pluginCode = await getPluginCode(meta);
     } catch (e) {
-      reject(new Error(`Could not load plugin code ${meta.id}: ` + e));
+      const error = new Error(`Could not load plugin code ${meta.id}: ` + e);
+      logError(error, {
+        pluginId: meta.id,
+        error: String(e),
+      });
+      reject(error);
     }
 
     try {
@@ -202,7 +215,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
   });
 }
 
-function resolvePluginDependencies(deps: string[]) {
+function resolvePluginDependencies(deps: string[], pluginId: string) {
   // resolve dependencies
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
@@ -212,7 +225,13 @@ function resolvePluginDependencies(deps: string[]) {
     }
 
     if (!resolvedDep) {
-      throw new Error(`[sandbox] Could not resolve dependency ${dep}`);
+      const error = new Error(`[sandbox] Could not resolve dependency ${dep}`);
+      logError(error, {
+        pluginId,
+        dependency: dep,
+        error: String(error),
+      });
+      throw error;
     }
     resolvedDeps.push(resolvedDep);
   }

@@ -73,10 +73,13 @@ type UpdateServiceAccountResponse struct {
 Developers can re-create the OpenAPI v2 and v3 specifications using the following command:
 
 ```bash
-
 make swagger-clean && make openapi3-gen
 ```
 
 They can observe its output into the `public/api-merged.json` and `public/openapi3.json` files.
 
-Finally, they can browser and try out both the OpenAPI v2 and v3 via the Swagger UI editor (served by the grafana server) by navigating to `/swagger-ui` and `/openapi3` respectively.
+Finally, they can browser and try out both the OpenAPI v2 and v3 via the Swagger UI editor (served by the grafana server) by navigating to `/swagger`.
+
+If there are any issues generating the specifications (e.g., diff containing unrelated changes to your PR or unusually large diff), please run the following two commands to ensure your Swagger version is up to date, then re-run the make commands.
+- `go install github.com/bwplotka/bingo@latest`
+- `bingo get swagger`

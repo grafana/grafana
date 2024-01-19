@@ -4,17 +4,21 @@ import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
 import { InsightsRatingModal } from '../RatingModal';
 
 export function getPausedGrafanaAlertsScene(datasource: DataSourceRef, panelTitle: string) {
+  const expr = INSTANCE_ID
+    ? `sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules{state="paused", id="${INSTANCE_ID}"})`
+    : `sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules{state="paused"})`;
+
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
         instant: true,
-        expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules{state="paused"})',
+        expr,
       },
     ],
   });

@@ -33,10 +33,11 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
     const { text, type, ...disp } = c as any;
+    const values: unknown[] = [];
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: [] as unknown[],
+      values,
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });

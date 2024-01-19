@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,9 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -82,7 +81,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeServiceAccountService{ExpectedServiceAccount: tt.expectedSA, ExpectedErr: tt.expectedErr}
+				a.service = &satests.FakeServiceAccountService{ExpectedServiceAccount: tt.expectedSA, ExpectedErr: tt.expectedErr}
 			})
 			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/", strings.NewReader(tt.body))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
@@ -162,7 +161,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
+				a.service = &satests.FakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
 			})
 			req := server.NewGetRequest(fmt.Sprintf("/api/serviceaccounts/%d", tt.id))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
@@ -224,7 +223,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
+				a.service = &satests.FakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
 			})
 
 			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), strings.NewReader(tt.body))
@@ -278,7 +277,7 @@ func TestServiceAccountsAPI_MigrateApiKeysToServiceAccounts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeServiceAccountService{ExpectedMigrationResult: tt.expectedMigrationResult}
+				a.service = &satests.FakeServiceAccountService{ExpectedMigrationResult: tt.expectedMigrationResult}
 			})
 
 			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/migrate", nil)
@@ -303,7 +302,7 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 	cfg := setting.NewCfg()
 	api := &ServiceAccountsAPI{
 		cfg:                  cfg,
-		service:              &fakeServiceAccountService{},
+		service:              &satests.FakeServiceAccountService{},
 		accesscontrolService: &actest.FakeService{},
 		accesscontrol:        acimpl.ProvideAccessControl(cfg),
 		RouterRegister:       routing.NewRouteRegister(),
@@ -316,49 +315,4 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 	}
 	api.RegisterAPIEndpoints()
 	return webtest.NewServer(t, api.RouterRegister)
-}
-
-var _ service = new(fakeServiceAccountService)
-
-type fakeServiceAccountService struct {
-	service
-	ExpectedErr                   error
-	ExpectedAPIKey                *apikey.APIKey
-	ExpectedServiceAccountTokens  []apikey.APIKey
-	ExpectedServiceAccount        *serviceaccounts.ServiceAccountDTO
-	ExpectedServiceAccountProfile *serviceaccounts.ServiceAccountProfileDTO
-	ExpectedMigrationResult       *serviceaccounts.MigrationResult
-}
-
-func (f *fakeServiceAccountService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	return f.ExpectedServiceAccount, f.ExpectedErr
-}
-
-func (f *fakeServiceAccountService) DeleteServiceAccount(ctx context.Context, orgID, id int64) error {
-	return f.ExpectedErr
-}
-
-func (f *fakeServiceAccountService) RetrieveServiceAccount(ctx context.Context, orgID, id int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return f.ExpectedServiceAccountProfile, f.ExpectedErr
-}
-
-func (f *fakeServiceAccountService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
-	return f.ExpectedServiceAccountTokens, f.ExpectedErr
-}
-
-func (f *fakeServiceAccountService) UpdateServiceAccount(ctx context.Context, orgID, id int64, cmd *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return f.ExpectedServiceAccountProfile, f.ExpectedErr
-}
-
-func (f *fakeServiceAccountService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
-	return f.ExpectedAPIKey, f.ExpectedErr
-}
-
-func (f *fakeServiceAccountService) DeleteServiceAccountToken(ctx context.Context, orgID, id, tokenID int64) error {
-	return f.ExpectedErr
-}
-
-func (f *fakeServiceAccountService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
-	fmt.Printf("fake migration result: %v", f.ExpectedMigrationResult)
-	return f.ExpectedMigrationResult, f.ExpectedErr
 }

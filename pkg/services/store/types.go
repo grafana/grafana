@@ -40,7 +40,7 @@ type WriteValueResponse struct {
 
 type storageTree interface {
 	GetFile(ctx context.Context, orgId int64, path string) (*filestorage.File, error)
-	ListFolder(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*StorageListFrame, error)
+	ListFolder(ctx context.Context, orgId int64, path string, maxFiles int, accessFilter filestorage.PathFilter) (*StorageListFrame, error)
 }
 
 //-------------------------------------------

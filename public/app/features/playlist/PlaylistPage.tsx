@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { ConfirmModal } from '@grafana/ui';
+import { ConfirmModal, LinkButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
@@ -50,46 +50,51 @@ export const PlaylistPage = () => {
     />
   );
 
-  const showSearch = playlists.length > 0 || searchQuery.length > 0;
+  const showSearch = allPlaylists.loading || playlists.length > 0 || searchQuery.length > 0;
 
   return (
-    <Page navId="dashboards/playlists">
-      <Page.Contents isLoading={allPlaylists.loading}>
-        {showSearch && (
-          <PageActionBar
-            searchQuery={searchQuery}
-            linkButton={
-              contextSrv.isEditor
-                ? { title: t('playlist-page.create-button.title', 'New playlist'), href: '/playlists/new' }
-                : undefined
-            }
-            setSearchQuery={setSearchQuery}
-          />
-        )}
+    <Page
+      actions={
+        contextSrv.isEditor ? (
+          <LinkButton href="/playlists/new">
+            <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
+          </LinkButton>
+        ) : undefined
+      }
+      navId="dashboards/playlists"
+    >
+      <Page.Contents>
+        {showSearch && <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
 
-        {!hasPlaylists && searchQuery ? (
-          <EmptyQueryListBanner />
+        {allPlaylists.loading ? (
+          <PlaylistPageList.Skeleton />
         ) : (
-          <PlaylistPageList
-            playlists={playlists}
-            setStartPlaylist={setStartPlaylist}
-            setPlaylistToDelete={setPlaylistToDelete}
-          />
+          <>
+            {!hasPlaylists && searchQuery ? (
+              <EmptyQueryListBanner />
+            ) : (
+              <PlaylistPageList
+                playlists={playlists}
+                setStartPlaylist={setStartPlaylist}
+                setPlaylistToDelete={setPlaylistToDelete}
+              />
+            )}
+            {!showSearch && emptyListBanner}
+            {playlistToDelete && (
+              <ConfirmModal
+                title={playlistToDelete.name}
+                confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
+                body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
+                  name: playlistToDelete.name,
+                })}
+                onConfirm={onDeletePlaylist}
+                isOpen={Boolean(playlistToDelete)}
+                onDismiss={onDismissDelete}
+              />
+            )}
+            {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
+          </>
         )}
-        {!showSearch && emptyListBanner}
-        {playlistToDelete && (
-          <ConfirmModal
-            title={playlistToDelete.name}
-            confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
-            body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
-              name: playlistToDelete.name,
-            })}
-            onConfirm={onDeletePlaylist}
-            isOpen={Boolean(playlistToDelete)}
-            onDismiss={onDismissDelete}
-          />
-        )}
-        {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
       </Page.Contents>
     </Page>
   );

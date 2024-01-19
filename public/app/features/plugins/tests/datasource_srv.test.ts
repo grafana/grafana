@@ -75,7 +75,7 @@ describe('datasource_srv', () => {
       type: 'test-db',
       name: 'mmm',
       uid: 'uid-code-mmm',
-      meta: { metrics: true, annotations: true } as any,
+      meta: { metrics: true, annotations: true },
     },
     '-- Grafana --': {
       type: 'grafana',
@@ -129,6 +129,11 @@ describe('datasource_srv', () => {
       uid: 'no-query',
       meta: { id: 'no-query' },
     },
+    TestData: {
+      type: 'grafana-testdata-datasource',
+      name: 'TestData',
+      meta: { metrics: true, id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
+    },
   };
 
   describe('Given a list of data sources', () => {
@@ -164,7 +169,7 @@ describe('datasource_srv', () => {
       });
 
       it('Can get by variable', async () => {
-        const ds = (await dataSourceSrv.get('${datasource}')) as any;
+        const ds = await dataSourceSrv.get('${datasource}');
         expect(ds.meta).toBe(dataSourceInit.BBB.meta);
 
         const ds2 = await dataSourceSrv.get('${datasource}', { datasource: { text: 'Prom', value: 'uid-code-aaa' } });
@@ -273,7 +278,7 @@ describe('datasource_srv', () => {
     describe('when getting external metric sources', () => {
       it('should return list of explore sources', () => {
         const externalSources = dataSourceSrv.getExternal();
-        expect(externalSources.length).toBe(7);
+        expect(externalSources.length).toBe(8);
       });
     });
 
@@ -304,6 +309,12 @@ describe('datasource_srv', () => {
     it('Can get get list and filter by pluginId', () => {
       const list = dataSourceSrv.getList({ pluginId: 'jaeger' });
       expect(list[0].name).toBe('Jaeger');
+      expect(list.length).toBe(1);
+    });
+
+    it('Can get get list and filter by an alias', () => {
+      const list = dataSourceSrv.getList({ pluginId: 'testdata' });
+      expect(list[0].name).toBe('TestData');
       expect(list.length).toBe(1);
     });
 
@@ -343,6 +354,18 @@ describe('datasource_srv', () => {
             "name": "mmm",
             "type": "test-db",
             "uid": "uid-code-mmm",
+          },
+          {
+            "meta": {
+              "aliasIDs": [
+                "testdata",
+              ],
+              "id": "grafana-testdata-datasource",
+              "metrics": true,
+            },
+            "name": "TestData",
+            "type": "grafana-testdata-datasource",
+            "uid": "TestData",
           },
           {
             "meta": {

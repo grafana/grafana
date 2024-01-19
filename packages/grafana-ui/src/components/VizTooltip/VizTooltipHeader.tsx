@@ -13,21 +13,15 @@ interface Props {
   headerLabel: LabelValue;
   keyValuePairs?: LabelValue[];
   customValueDisplay?: ReactElement | null;
+  isPinned: boolean;
 }
-export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDisplay }: Props) => {
+export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDisplay, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const renderValue = () => {
-    if (customValueDisplay) {
-      return customValueDisplay;
-    }
-
-    return <VizTooltipHeaderLabelValue keyValuePairs={keyValuePairs} />;
-  };
   return (
     <div className={styles.wrapper}>
-      <HeaderLabel headerLabel={headerLabel} />
-      {renderValue()}
+      <HeaderLabel headerLabel={headerLabel} isPinned={isPinned} />
+      {customValueDisplay || <VizTooltipHeaderLabelValue keyValuePairs={keyValuePairs} isPinned={isPinned} />}
     </div>
   );
 };
@@ -37,6 +31,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    paddingBottom: theme.spacing(1),
+    padding: theme.spacing(1),
   }),
 });

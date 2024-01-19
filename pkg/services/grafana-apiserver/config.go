@@ -19,13 +19,15 @@ type config struct {
 	host   string
 	apiURL string
 
+	storageType StorageType
+
 	etcdServers []string
 	dataPath    string
 
 	logLevel int
 }
 
-func newConfig(cfg *setting.Cfg) *config {
+func newConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *config {
 	defaultLogLevel := 0
 	ip := net.ParseIP(cfg.HTTPAddr)
 	apiURL := cfg.AppURL
@@ -44,14 +46,15 @@ func newConfig(cfg *setting.Cfg) *config {
 	host := fmt.Sprintf("%s:%d", ip, port)
 
 	return &config{
-		enabled:     cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
-		devMode:     cfg.Env == setting.Dev,
+		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServer),
+		devMode:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess),
 		dataPath:    filepath.Join(cfg.DataPath, "grafana-apiserver"),
 		ip:          ip,
 		port:        port,
 		host:        host,
 		logLevel:    cfg.SectionWithEnvOverrides("grafana-apiserver").Key("log_level").MustInt(defaultLogLevel),
 		etcdServers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
+		storageType: StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").MustString(string(StorageTypeLegacy))),
 		apiURL:      apiURL,
 	}
 }

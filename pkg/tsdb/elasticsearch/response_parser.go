@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -73,9 +74,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			resSpan.End()
 			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
-			result.Responses[target.RefID] = backend.DataResponse{
-				Error: errors.New(errResult),
-			}
+			result.Responses[target.RefID] = errorsource.Response(errorsource.PluginError(errors.New(errResult), false))
 			continue
 		}
 
@@ -137,8 +136,14 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
+		var sourceString string
 		if hit["_source"] != nil {
 			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
+			sourceMarshalled, err := json.Marshal(flattened)
+			if err != nil {
+				return err
+			}
+			sourceString = string(sourceMarshalled)
 		}
 
 		doc := map[string]interface{}{
@@ -147,7 +152,8 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 			"_index":    hit["_index"],
 			"sort":      hit["sort"],
 			"highlight": hit["highlight"],
-			"_source":   flattened,
+			// In case of logs query we want to have the raw source as a string field so it can be visualized in logs panel
+			"_source": sourceString,
 		}
 
 		for k, v := range flattened {
@@ -230,6 +236,15 @@ func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFie
 
 		for k, v := range flattened {
 			doc[k] = v
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
 		}
 
 		for key := range doc {

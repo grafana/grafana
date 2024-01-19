@@ -144,7 +144,9 @@ func (o *OSSImpl) Section(section string) Section {
 
 func (*OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
 
+// Deprecated: use feature toggles
 func (o *OSSImpl) IsFeatureToggleEnabled(name string) bool {
+	// nolint:staticcheck
 	return o.Cfg.IsFeatureToggleEnabled(name)
 }
 

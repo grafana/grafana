@@ -72,9 +72,10 @@ func writeExcludeSQL(query model.SearchLibraryElementsQuery, builder *db.SQLBuil
 
 type FolderFilter struct {
 	includeGeneralFolder bool
-	folderIDs            []string
-	folderUIDs           []string
-	parseError           error
+	// Deprecated: use FolderUID instead
+	folderIDs  []string
+	folderUIDs []string
+	parseError error
 }
 
 func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
@@ -85,7 +86,7 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 
 	result := FolderFilter{
 		includeGeneralFolder: true,
-		folderIDs:            folderIDs,
+		folderIDs:            folderIDs, // nolint:staticcheck
 		folderUIDs:           folderUIDs,
 		parseError:           nil,
 	}
@@ -98,6 +99,7 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 	if hasFolderFilter {
 		result.includeGeneralFolder = false
 		folderIDs = strings.Split(query.FolderFilter, ",")
+		// nolint:staticcheck
 		result.folderIDs = folderIDs
 		for _, filter := range folderIDs {
 			folderID, err := strconv.ParseInt(filter, 10, 64)
@@ -130,6 +132,7 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQLBuilder) error {
 	var sql bytes.Buffer
 	params := make([]any, 0)
+	// nolint:staticcheck
 	for _, filter := range f.folderIDs {
 		folderID, err := strconv.ParseInt(filter, 10, 64)
 		if err != nil {

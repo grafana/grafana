@@ -98,16 +98,6 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("update user should fail with empty username and password", func(t *testing.T) {
-		err := userService.Update(context.Background(), &user.UpdateUserCommand{
-			Email: "",
-			Login: "",
-			Name:  "name",
-		})
-
-		require.ErrorIs(t, err, user.ErrEmptyUsernameAndEmail)
-	})
-
 	t.Run("GetByID - email conflict", func(t *testing.T) {
 		userService.cfg.CaseInsensitiveLogin = true
 		userStore.ExpectedError = errors.New("email conflict")

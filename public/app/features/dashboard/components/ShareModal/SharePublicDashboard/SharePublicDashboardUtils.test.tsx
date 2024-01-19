@@ -1,9 +1,9 @@
+import { TypedVariableModel } from '@grafana/data';
 import { DataSourceRef, DataQuery } from '@grafana/data/src/types/query';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { VariableModel } from 'app/features/variables/types';
 
 import {
   PublicDashboard,
@@ -38,13 +38,13 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
 
 describe('dashboardHasTemplateVariables', () => {
   it('false', () => {
-    let variables: VariableModel[] = [];
+    let variables: TypedVariableModel[] = [];
     expect(dashboardHasTemplateVariables(variables)).toBe(false);
   });
 
   it('true', () => {
     //@ts-ignore
-    let variables: VariableModel[] = ['a'];
+    let variables: TypedVariableModel[] = ['a'];
     expect(dashboardHasTemplateVariables(variables)).toBe(true);
   });
 });

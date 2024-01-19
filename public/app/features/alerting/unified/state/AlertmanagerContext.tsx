@@ -1,15 +1,15 @@
 import * as React from 'react';
 
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import store from 'app/core/store';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
+import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import {
   AlertManagerDataSource,
-  getAlertmanagerDataSourceByName,
   GRAFANA_RULES_SOURCE_NAME,
+  getAlertmanagerDataSourceByName,
 } from '../utils/datasource';
 
 interface Context {
@@ -30,8 +30,11 @@ interface Props extends React.PropsWithChildren {
 }
 
 const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: Props) => {
-  const [queryParams, updateQueryParams] = useQueryParams();
-  const availableAlertManagers = useAlertManagersByPermission(accessType);
+  const [queryParams, updateQueryParams] = useURLSearchParams();
+  const allAvailableAlertManagers = useAlertManagersByPermission(accessType);
+  const availableAlertManagers = allAvailableAlertManagers.availableInternalDataSources.concat(
+    allAvailableAlertManagers.availableExternalDataSources
+  );
 
   const updateSelectedAlertmanager = React.useCallback(
     (selectedAlertManager: string) => {
@@ -41,7 +44,7 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
 
       if (selectedAlertManager === GRAFANA_RULES_SOURCE_NAME) {
         store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
-        updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: null });
+        updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: undefined });
       } else {
         store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, selectedAlertManager);
         updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: selectedAlertManager });
@@ -50,9 +53,18 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
     [availableAlertManagers, updateQueryParams]
   );
 
-  const sourceFromQuery = queryParams[ALERTMANAGER_NAME_QUERY_KEY];
+  const sourceFromQuery = queryParams.get(ALERTMANAGER_NAME_QUERY_KEY);
   const sourceFromStore = store.get(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
   const defaultSource = GRAFANA_RULES_SOURCE_NAME;
+
+  // This overrides AM in the store to be in sync with the one in the URL
+  // When the user uses multiple tabs with different AMs, the store will be changing all the time
+  // It's safest to always use URLs with alertmanager query param
+  React.useEffect(() => {
+    if (sourceFromQuery && sourceFromQuery !== sourceFromStore) {
+      store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, sourceFromQuery);
+    }
+  }, [sourceFromQuery, sourceFromStore]);
 
   // queryParam > localStorage > default
   const desiredAlertmanager = alertmanagerSourceName ?? sourceFromQuery ?? sourceFromStore ?? defaultSource;

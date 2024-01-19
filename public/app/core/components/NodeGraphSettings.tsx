@@ -7,10 +7,8 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
-
-import { ConfigDescriptionLink } from './ConfigDescriptionLink';
 
 export interface NodeGraphOptions {
   enabled?: boolean;
@@ -70,17 +68,17 @@ export const NodeGraphSection = ({ options, onOptionsChange }: DataSourcePluginO
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    label: infoText;
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-  container: css`
-    label: container;
-    width: 100%;
-  `,
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
+  infoText: css({
+    label: 'infoText',
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
+  container: css({
+    label: 'container',
+    width: '100%',
+  }),
+  row: css({
+    label: 'row',
+    alignItems: 'baseline',
+  }),
 });

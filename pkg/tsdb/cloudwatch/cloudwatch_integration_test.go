@@ -221,7 +221,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 
 	t.Run("Should handle log group fields request", func(t *testing.T) {
 		logApi = mocks.LogsAPI{}
-		logApi.On("GetLogGroupFields", mock.Anything).Return(&cloudwatchlogs.GetLogGroupFieldsOutput{
+		logApi.On("GetLogGroupFieldsWithContext", mock.Anything).Return(&cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
 					Name:    aws.String("field1"),

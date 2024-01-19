@@ -62,6 +62,7 @@ func (r Role) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// swagger:ignore
 type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
@@ -133,6 +134,12 @@ func (r *RoleDTO) IsBasic() bool {
 
 func (r *RoleDTO) IsExternalService() bool {
 	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix) || strings.HasPrefix(r.UID, ExternalServiceRoleUIDPrefix)
+}
+
+// swagger:model RoleDTO
+type RoleDTOStatic struct {
+	RoleDTO
+	Global bool `json:"global" xorm:"-"`
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
@@ -274,8 +281,7 @@ type SetResourcePermissionCommand struct {
 }
 
 type SaveExternalServiceRoleCommand struct {
-	OrgID             int64
-	Global            bool
+	AssignmentOrgID   int64
 	ExternalServiceID string
 	ServiceAccountID  int64
 	Permissions       []Permission
@@ -288,10 +294,6 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 
 	// slugify the external service id ID for the role to have correct name and uid
 	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
-
-	if (cmd.OrgID == GlobalOrgID) != cmd.Global {
-		return fmt.Errorf("invalid org id %d for global role %t", cmd.OrgID, cmd.Global)
-	}
 
 	// Check and deduplicate permissions
 	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
@@ -396,7 +398,6 @@ const (
 
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"
-	ScopeSettingsAuth = "settings:auth:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
 
 	// Team related actions
@@ -466,6 +467,10 @@ const (
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	ScopeSettingsOAuth = func(provider string) string {
+		return Scope("settings", "auth."+provider, "*")
+	}
 
 	// Annotation scopes
 	ScopeAnnotationsRoot             = "annotations"

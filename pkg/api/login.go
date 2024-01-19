@@ -29,8 +29,6 @@ import (
 const (
 	viewIndex            = "index"
 	loginErrorCookieName = "login_error"
-	// #nosec G101 - this is not a hardcoded secret
-	postLogoutRedirectParam = "post_logout_redirect_uri"
 )
 
 var setIndexViewData = (*HTTPServer).setIndexViewData
@@ -91,7 +89,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagClientTokenRotation) {
 		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
 			c.Redirect(hs.Cfg.AppSubURL + "/")
 			return
@@ -129,7 +127,9 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
-		if hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken {
+		if hs.Cfg.AuthProxyEnabled &&
+			hs.Cfg.AuthProxyEnableLoginToken &&
+			c.SignedInUser.AuthenticatedBy == loginservice.AuthProxyAuthModule {
 			user := &user.User{ID: c.SignedInUser.UserID, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
@@ -241,58 +241,31 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 }
 
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		hs.log.Error("failed to retrieve user ID", "error", errID)
-	}
-
-	// If SAML is enabled and this is a SAML user use saml logout
+	// FIXME: restructure saml client to implement authn.LogoutClient
 	if hs.samlSingleLogoutEnabled() {
-		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: userID}
-		if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-			if authInfo.AuthModule == loginservice.SAMLAuthModule {
-				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
-				return
-			}
+		id, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+		if err != nil {
+			hs.log.Error("failed to retrieve user ID", "error", err)
+		}
+
+		authInfo, _ := hs.authInfoService.GetAuthInfo(c.Req.Context(), &loginservice.GetAuthInfoQuery{UserId: id})
+		if authInfo != nil && authInfo.AuthModule == loginservice.SAMLAuthModule {
+			c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
+			return
 		}
 	}
 
-	idTokenHint := ""
-	oidcLogout := isPostLogoutRedirectConfigured(hs.Cfg.SignoutRedirectUrl)
-
-	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
-	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
-		token := hs.oauthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser)
-		if oidcLogout {
-			if token.Valid() {
-				idTokenHint = token.Extra("id_token").(string)
-			} else {
-				hs.log.Warn("Token is not valid")
-			}
-		}
-
-		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
-			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", userID, "error", err)
-		}
-	}
-
-	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
-	if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
-		hs.log.Error("failed to revoke auth token", "error", err)
-	}
-
+	redirect, err := hs.authnService.Logout(c.Req.Context(), c.SignedInUser, c.UserToken)
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
-	rdUrl := hs.Cfg.SignoutRedirectUrl
-	if rdUrl != "" {
-		if oidcLogout {
-			rdUrl = getPostRedirectUrl(hs.Cfg.SignoutRedirectUrl, idTokenHint)
-		}
-		c.Redirect(rdUrl)
-	} else {
-		hs.log.Info("Successful Logout", "User", c.SignedInUser.GetEmail())
+	if err != nil {
+		hs.log.Error("Failed perform proper logout", "error", err)
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
+
+	_, id := c.SignedInUser.GetNamespacedID()
+	hs.log.Info("Successful Logout", "userID", id)
+	c.Redirect(redirect.URL)
 }
 
 func (hs *HTTPServer) tryGetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string) (string, bool) {
@@ -334,7 +307,7 @@ func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err 
 
 func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
 	setCookie := true
-	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
 		var userID int64
 		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
 			var errID error
@@ -405,39 +378,4 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 	}
 
 	return errPublic.Message
-}
-
-func isPostLogoutRedirectConfigured(redirectUrl string) bool {
-	if redirectUrl == "" {
-		return false
-	}
-
-	u, err := url.Parse(redirectUrl)
-	if err != nil {
-		return false
-	}
-
-	q := u.Query()
-	_, ok := q[postLogoutRedirectParam]
-	return ok
-}
-
-func getPostRedirectUrl(rdUrl string, tokenHint string) string {
-	if tokenHint == "" {
-		return rdUrl
-	}
-	if rdUrl == "" {
-		return rdUrl
-	}
-
-	u, err := url.Parse(rdUrl)
-	if err != nil {
-		return rdUrl
-	}
-
-	q := u.Query()
-	q.Set("id_token_hint", tokenHint)
-	u.RawQuery = q.Encode()
-
-	return u.String()
 }

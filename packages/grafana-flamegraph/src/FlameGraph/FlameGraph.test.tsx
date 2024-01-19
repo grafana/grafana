@@ -25,7 +25,7 @@ jest.mock('react-use', () => {
 describe('FlameGraph', () => {
   function setup() {
     const flameGraphData = createDataFrame(data);
-    const container = new FlameGraphDataContainer(flameGraphData);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 
     const setRangeMin = jest.fn();
     const setRangeMax = jest.fn();
@@ -39,7 +39,6 @@ describe('FlameGraph', () => {
         data={container}
         rangeMin={0}
         rangeMax={1}
-        search={''}
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
         onItemFocused={onItemFocused}

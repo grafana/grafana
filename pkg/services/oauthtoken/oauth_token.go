@@ -173,7 +173,7 @@ func checkOAuthRefreshToken(authInfo *login.UserAuth) error {
 	}
 
 	if authInfo.OAuthRefreshToken == "" {
-		logger.Debug("No refresh token available",
+		logger.Warn("No refresh token available",
 			"authmodule", authInfo.AuthModule, "userid", authInfo.UserId)
 		return ErrNoRefreshTokenFound
 	}

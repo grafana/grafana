@@ -56,16 +56,16 @@ func (mockedRT *mockedCompressedRoundTripper) RoundTrip(req *http.Request) (*htt
 	}, nil
 }
 
-func makeMockedAPI(statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback) *LokiAPI {
-	return makeMockedAPIWithUrl("http://localhost:9999", statusCode, contentType, responseBytes, requestCallback)
+func makeMockedAPI(statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback, structuredMetadata bool) *LokiAPI {
+	return makeMockedAPIWithUrl("http://localhost:9999", statusCode, contentType, responseBytes, requestCallback, structuredMetadata)
 }
 
-func makeMockedAPIWithUrl(url string, statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback) *LokiAPI {
+func makeMockedAPIWithUrl(url string, statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback, structuredMetadata bool) *LokiAPI {
 	client := http.Client{
 		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, log.New("test"), tracing.InitializeTracerForTest())
+	return newLokiAPI(&client, url, log.New("test"), tracing.InitializeTracerForTest(), structuredMetadata)
 }
 
 func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback) *LokiAPI {
@@ -73,5 +73,5 @@ func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType stri
 		Transport: &mockedCompressedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, log.New("test"), tracing.InitializeTracerForTest())
+	return newLokiAPI(&client, url, log.New("test"), tracing.InitializeTracerForTest(), false)
 }
