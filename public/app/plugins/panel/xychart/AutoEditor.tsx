@@ -65,6 +65,9 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
           }
         }
       }
+      if (!v.xAxis) {
+        v.xAxis = { label: xName, value: xName };
+      }
     }
 
     return v;
