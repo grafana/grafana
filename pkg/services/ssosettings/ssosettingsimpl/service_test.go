@@ -922,7 +922,17 @@ func setupTestEnv(t *testing.T) testEnv {
 	fallbackStrategy.ExpectedIsMatch = true
 
 	svc := &SSOSettingsService{
-		logger:       log.NewNopLogger(),
+		logger: log.NewNopLogger(),
+		cfg: &setting.Cfg{
+			SSOSettingsConfigurableProviders: map[string]bool{
+				"github":        true,
+				"okta":          true,
+				"azuread":       true,
+				"google":        true,
+				"generic_oauth": true,
+				"gitlab":        true,
+			},
+		},
 		store:        store,
 		ac:           accessControl,
 		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},

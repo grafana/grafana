@@ -131,7 +131,7 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
-	if !isProviderConfigurable(settings.Provider) {
+	if !s.isProviderConfigurable(settings.Provider) {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", settings.Provider)
 	}
 
@@ -341,6 +341,11 @@ func (s *SSOSettingsService) decryptSecrets(ctx context.Context, settings map[st
 	return settings, nil
 }
 
+func (s *SSOSettingsService) isProviderConfigurable(provider string) bool {
+	_, ok := s.cfg.SSOSettingsConfigurableProviders[provider]
+	return ok
+}
+
 func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
@@ -365,16 +370,6 @@ func isSecret(fieldName string) bool {
 			return true
 		}
 	}
-	return false
-}
-
-func isProviderConfigurable(provider string) bool {
-	for _, configurable := range ssosettings.ConfigurableOAuthProviders {
-		if provider == configurable {
-			return true
-		}
-	}
-
 	return false
 }
 
