@@ -25,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var VALID_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+
 func TestService_HasOAuthEntry(t *testing.T) {
 	testCases := []struct {
 		name            string
@@ -246,7 +248,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	authInfoStore := &FakeAuthInfoStore{
 		ExpectedOAuth: &login.UserAuth{
 			AuthModule:        "oauth",
-			OAuthIdToken:      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+			OAuthIdToken:      VALID_JWT,
 			OAuthRefreshToken: "",
 		},
 	}
@@ -357,7 +359,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:   "oauth_generic_idp",
-					OAuthIdToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+					OAuthIdToken: VALID_JWT,
 				}
 			},
 			expectHasEntryCalled: false,
@@ -370,7 +372,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:   "oauth_generic_idp",
-					OAuthIdToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+					OAuthIdToken: VALID_JWT,
 				}
 			},
 			expectHasEntryCalled: false,
@@ -385,7 +387,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:   "oauth_generic_idp",
-					OAuthIdToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+					OAuthIdToken: VALID_JWT,
 				}
 			},
 			expectHasEntryCalled: false,
