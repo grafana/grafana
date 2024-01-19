@@ -323,7 +323,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:     "should skip if the expiration check has been cached",
+			desc:     "should skip when fetching authInfo returns an error",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedError = errors.New("some error")
@@ -352,7 +352,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr:          nil,
 		},
 		{
-			desc:     "should skip sync with a valid JWT token and uses an unknown idp",
+			desc:     "should skip sync with an unknown idp",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
