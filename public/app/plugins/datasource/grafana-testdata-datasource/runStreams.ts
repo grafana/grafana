@@ -51,7 +51,7 @@ export function runSignalStream(
   req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
-    const streamId = `signal-${req.panelId}-${target.refId}`;
+    const streamId = `signal-${req.panelId || 'explore'}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
     const schema: DataFrameSchema = {
@@ -133,7 +133,7 @@ export function runLogsStream(
   req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
-    const streamId = `logs-${req.panelId}-${target.refId}`;
+    const streamId = `logs-${req.panelId || 'explore'}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
     const data = new CircularDataFrame({
@@ -178,7 +178,7 @@ export function runFetchStream(
   req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
-    const streamId = `fetch-${req.panelId}-${target.refId}`;
+    const streamId = `fetch-${req.panelId || 'explore'}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
     let data = new CircularDataFrame({
@@ -256,7 +256,7 @@ export function runTracesStream(
   req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
-    const streamId = `traces-${req.panelId}-${target.refId}`;
+    const streamId = `traces-${req.panelId || 'explore'}-${target.refId}`;
     const data = createMainTraceFrame(target, req.maxDataPoints);
     let timeoutId: ReturnType<typeof setTimeout>;
 
