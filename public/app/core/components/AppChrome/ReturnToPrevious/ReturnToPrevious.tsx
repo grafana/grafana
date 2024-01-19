@@ -17,16 +17,16 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const handleOnClick = () => {
     console.log('Going to...', href);
   };
-  const closeButton = () => {
+  const handleOnDismiss = () => {
     console.log('Closing button');
   };
 
   return (
     <div className={styles.returnToPrevious}>
       <DismissableButton
-        label={t('return-to-previous.button.label', 'Back to {{title}}')}
+        label={t('return-to-previous.button.label', 'Back to {{title}}', { title })}
         onClick={handleOnClick}
-        onDismiss={closeButton}
+        onDismiss={handleOnDismiss}
       />
     </div>
   );
@@ -36,11 +36,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'return-to-previous',
     display: 'flex',
     justifyContent: 'center',
+    left: '50%',
+    transform: 'translateX(-50%)',
     zIndex: theme.zIndex.portal,
-    width: '100%',
     position: 'fixed',
-    bottom: `${theme.spacing.x4}`,
-    right: 0,
+    bottom: theme.spacing.x4,
   }),
 });
 

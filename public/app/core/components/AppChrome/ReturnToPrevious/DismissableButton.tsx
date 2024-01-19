@@ -41,7 +41,7 @@ export const DismissableButton = ({ label, onClick, onDismiss }: DismissableButt
 const getStyles = (theme: GrafanaTheme2) => ({
   mainDismissableButton: css({
     width: '100%',
-    ['span']: {
+    ['> span']: {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
