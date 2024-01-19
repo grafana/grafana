@@ -11,10 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -25,19 +23,19 @@ var (
 )
 
 type rawEntityMatcher struct {
-	grn          *grn.GRN
+	key          string
 	createdRange []time.Time
 	updatedRange []time.Time
 	createdBy    string
 	updatedBy    string
 	body         []byte
-	version      *string
+	version      int64
 }
 
 type objectVersionMatcher struct {
 	updatedRange []time.Time
 	updatedBy    string
-	version      *string
+	version      int64
 	etag         *string
 	comment      *string
 }
@@ -53,16 +51,8 @@ func requireEntityMatch(t *testing.T, obj *entity.Entity, m rawEntityMatcher) {
 	require.NotNil(t, obj)
 
 	mismatches := ""
-	if m.grn != nil {
-		if m.grn.TenantID > 0 && m.grn.TenantID != obj.GRN.TenantID {
-			mismatches += fmt.Sprintf("expected tenant: %d, actual: %d\n", m.grn.TenantID, obj.GRN.TenantID)
-		}
-		if m.grn.ResourceKind != "" && m.grn.ResourceKind != obj.GRN.ResourceKind {
-			mismatches += fmt.Sprintf("expected ResourceKind: %s, actual: %s\n", m.grn.ResourceKind, obj.GRN.ResourceKind)
-		}
-		if m.grn.ResourceIdentifier != "" && m.grn.ResourceIdentifier != obj.GRN.ResourceIdentifier {
-			mismatches += fmt.Sprintf("expected ResourceIdentifier: %s, actual: %s\n", m.grn.ResourceIdentifier, obj.GRN.ResourceIdentifier)
-		}
+	if m.key != "" && m.key != obj.Key {
+		mismatches += fmt.Sprintf("expected key: %s, actual: %s\n", m.key, obj.Key)
 	}
 
 	if len(m.createdRange) == 2 && !timestampInRange(obj.CreatedAt, m.createdRange) {
@@ -89,8 +79,8 @@ func requireEntityMatch(t *testing.T, obj *entity.Entity, m rawEntityMatcher) {
 		}
 	}
 
-	if m.version != nil && *m.version != obj.Version {
-		mismatches += fmt.Sprintf("expected version: %s, actual version: %s\n", *m.version, obj.Version)
+	if m.version != 0 && m.version != obj.ResourceVersion {
+		mismatches += fmt.Sprintf("expected version: %d, actual version: %d\n", m.version, obj.ResourceVersion)
 	}
 
 	require.True(t, len(mismatches) == 0, mismatches)
@@ -112,8 +102,8 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
-	if m.version != nil && *m.version != obj.Version {
-		mismatches += fmt.Sprintf("expected version: %s, actual version: %s\n", *m.version, obj.Version)
+	if m.version != 0 && m.version != obj.ResourceVersion {
+		mismatches += fmt.Sprintf("expected version: %d, actual version: %d\n", m.version, obj.ResourceVersion)
 	}
 
 	require.True(t, len(mismatches) == 0, mismatches)
@@ -133,308 +123,292 @@ func TestIntegrationEntityServer(t *testing.T) {
 	ctx := metadata.AppendToOutgoingContext(testCtx.ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
 	fakeUser := store.GetUserIDString(testCtx.user)
-	firstVersion := "1"
-	kind := entity.StandardKindJSONObj
-	testGrn := &grn.GRN{
-		ResourceKind:       kind,
-		ResourceIdentifier: "my-test-entity",
-	}
+	firstVersion := int64(0)
+	group := "test.grafana.app"
+	resource := "jsonobjs"
+	resource2 := "playlists"
+	namespace := "default"
+	name := "my-test-entity"
+	testKey := "/" + group + "/" + resource + "/" + namespace + "/" + name
 	body := []byte("{\"name\":\"John\"}")
 
 	t.Run("should not retrieve non-existent objects", func(t *testing.T) {
 		resp, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			GRN: testGrn,
+			Key: testKey,
 		})
 		require.NoError(t, err)
 
 		require.NotNil(t, resp)
-		require.Nil(t, resp.GRN)
+		require.Empty(t, resp.Key)
 	})
 
 	t.Run("should be able to read persisted objects", func(t *testing.T) {
 		before := time.Now()
-		writeReq := &entity.WriteEntityRequest{
+		createReq := &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				GRN:     testGrn,
-				Body:    body,
-				Message: "first entity!",
+				Key:       testKey,
+				Group:     group,
+				Resource:  resource,
+				Namespace: namespace,
+				Name:      name,
+				Body:      body,
+				Message:   "first entity!",
 			},
 		}
-		writeResp, err := testCtx.client.Write(ctx, writeReq)
+		createResp, err := testCtx.client.Create(ctx, createReq)
 		require.NoError(t, err)
 
 		versionMatcher := objectVersionMatcher{
 			updatedRange: []time.Time{before, time.Now()},
 			updatedBy:    fakeUser,
-			version:      &firstVersion,
-			comment:      &writeReq.Entity.Message,
+			version:      firstVersion,
+			comment:      &createReq.Entity.Message,
 		}
-		requireVersionMatch(t, writeResp.Entity, versionMatcher)
+		requireVersionMatch(t, createResp.Entity, versionMatcher)
 
 		readResp, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			GRN:      testGrn,
-			Version:  "",
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0,
+			WithBody:        true,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, readResp)
 
-		foundGRN := readResp.GRN
-		require.NotNil(t, foundGRN)
-		require.Equal(t, testCtx.user.OrgID, foundGRN.TenantID) // orgId becomes the tenant id when not set
-		require.Equal(t, testGrn.ResourceKind, foundGRN.ResourceKind)
-		require.Equal(t, testGrn.ResourceIdentifier, foundGRN.ResourceIdentifier)
+		require.Equal(t, testKey, readResp.Key)
+		require.Equal(t, namespace, readResp.Namespace) // orgId becomes the tenant id when not set
+		require.Equal(t, resource, readResp.Resource)
+		require.Equal(t, name, readResp.Name)
 
 		objectMatcher := rawEntityMatcher{
-			grn:          testGrn,
+			key:          testKey,
 			createdRange: []time.Time{before, time.Now()},
 			updatedRange: []time.Time{before, time.Now()},
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body,
-			version:      &firstVersion,
+			version:      firstVersion,
 		}
 		requireEntityMatch(t, readResp, objectMatcher)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
-			GRN:             testGrn,
-			PreviousVersion: writeResp.Entity.Version,
+			Key:             testKey,
+			PreviousVersion: readResp.ResourceVersion,
 		})
 		require.NoError(t, err)
 		require.Equal(t, deleteResp.Status, entity.DeleteEntityResponse_DELETED)
 
 		readRespAfterDelete, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			GRN:      testGrn,
-			Version:  "",
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0,
+			WithBody:        true,
 		})
 		require.NoError(t, err)
-		require.Nil(t, readRespAfterDelete.GRN)
+		require.Empty(t, readRespAfterDelete.Key)
 	})
 
 	t.Run("should be able to update an object", func(t *testing.T) {
 		before := time.Now()
-		testGrn := &grn.GRN{
-			ResourceKind:       kind,
-			ResourceIdentifier: util.GenerateShortUID(),
-		}
 
-		writeReq1 := &entity.WriteEntityRequest{
+		createReq := &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				GRN:     testGrn,
-				Body:    body,
-				Message: "first entity!",
+				Key:       testKey,
+				Group:     group,
+				Resource:  resource,
+				Namespace: namespace,
+				Name:      name,
+				Body:      body,
+				Message:   "first entity!",
 			},
 		}
-		writeResp1, err := testCtx.client.Write(ctx, writeReq1)
+		createResp, err := testCtx.client.Create(ctx, createReq)
 		require.NoError(t, err)
-		require.Equal(t, entity.WriteEntityResponse_CREATED, writeResp1.Status)
+		require.Equal(t, entity.CreateEntityResponse_CREATED, createResp.Status)
 
 		body2 := []byte("{\"name\":\"John2\"}")
 
-		writeReq2 := &entity.WriteEntityRequest{
+		updateReq := &entity.UpdateEntityRequest{
 			Entity: &entity.Entity{
-				GRN:     testGrn,
+				Key:     testKey,
 				Body:    body2,
 				Message: "update1",
 			},
 		}
-		writeResp2, err := testCtx.client.Write(ctx, writeReq2)
+		updateResp, err := testCtx.client.Update(ctx, updateReq)
 		require.NoError(t, err)
-		require.NotEqual(t, writeResp1.Entity.Version, writeResp2.Entity.Version)
+		require.NotEqual(t, createResp.Entity.ResourceVersion, updateResp.Entity.ResourceVersion)
 
 		// Duplicate write (no change)
-		writeDupRsp, err := testCtx.client.Write(ctx, writeReq2)
+		writeDupRsp, err := testCtx.client.Update(ctx, updateReq)
 		require.NoError(t, err)
 		require.Nil(t, writeDupRsp.Error)
-		require.Equal(t, entity.WriteEntityResponse_UNCHANGED, writeDupRsp.Status)
-		require.Equal(t, writeResp2.Entity.Version, writeDupRsp.Entity.Version)
-		require.Equal(t, writeResp2.Entity.ETag, writeDupRsp.Entity.ETag)
+		require.Equal(t, entity.UpdateEntityResponse_UNCHANGED, writeDupRsp.Status)
+		require.Equal(t, updateResp.Entity.ResourceVersion, writeDupRsp.Entity.ResourceVersion)
+		require.Equal(t, updateResp.Entity.ETag, writeDupRsp.Entity.ETag)
 
 		body3 := []byte("{\"name\":\"John3\"}")
-		writeReq3 := &entity.WriteEntityRequest{
+		writeReq3 := &entity.UpdateEntityRequest{
 			Entity: &entity.Entity{
-				GRN:     testGrn,
+				Key:     testKey,
 				Body:    body3,
 				Message: "update3",
 			},
 		}
-		writeResp3, err := testCtx.client.Write(ctx, writeReq3)
+		writeResp3, err := testCtx.client.Update(ctx, writeReq3)
 		require.NoError(t, err)
-		require.NotEqual(t, writeResp3.Entity.Version, writeResp2.Entity.Version)
+		require.NotEqual(t, writeResp3.Entity.ResourceVersion, updateResp.Entity.ResourceVersion)
 
 		latestMatcher := rawEntityMatcher{
-			grn:          testGrn,
+			key:          testKey,
 			createdRange: []time.Time{before, time.Now()},
 			updatedRange: []time.Time{before, time.Now()},
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body3,
-			version:      &writeResp3.Entity.Version,
+			version:      writeResp3.Entity.ResourceVersion,
 		}
 		readRespLatest, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			GRN:      testGrn,
-			Version:  "", // latest
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: 0, // latest
+			WithBody:        true,
 		})
 		require.NoError(t, err)
 		requireEntityMatch(t, readRespLatest, latestMatcher)
 
 		readRespFirstVer, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
-			GRN:      testGrn,
-			Version:  writeResp1.Entity.Version,
-			WithBody: true,
+			Key:             testKey,
+			ResourceVersion: createResp.Entity.ResourceVersion,
+			WithBody:        true,
 		})
 
 		require.NoError(t, err)
 		require.NotNil(t, readRespFirstVer)
 		requireEntityMatch(t, readRespFirstVer, rawEntityMatcher{
-			grn:          testGrn,
+			key:          testKey,
 			createdRange: []time.Time{before, time.Now()},
 			updatedRange: []time.Time{before, time.Now()},
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body,
-			version:      &firstVersion,
+			version:      0,
 		})
 
 		history, err := testCtx.client.History(ctx, &entity.EntityHistoryRequest{
-			GRN: testGrn,
+			Key: testKey,
 		})
 		require.NoError(t, err)
 		require.Equal(t, []*entity.Entity{
 			writeResp3.Entity,
-			writeResp2.Entity,
-			writeResp1.Entity,
+			updateResp.Entity,
+			createResp.Entity,
 		}, history.Versions)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
-			GRN:             testGrn,
-			PreviousVersion: writeResp3.Entity.Version,
+			Key:             testKey,
+			PreviousVersion: writeResp3.Entity.ResourceVersion,
 		})
 		require.NoError(t, err)
 		require.Equal(t, deleteResp.Status, entity.DeleteEntityResponse_DELETED)
 	})
 
 	t.Run("should be able to list objects", func(t *testing.T) {
-		uid2 := "uid2"
-		uid3 := "uid3"
-		uid4 := "uid4"
-		kind2 := entity.StandardKindPlaylist
-		w1, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+		w1, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				GRN:  testGrn,
+				Key:  testKey + "1",
 				Body: body,
 			},
 		})
 		require.NoError(t, err)
 
-		w2, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+		w2, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				GRN: &grn.GRN{
-					ResourceIdentifier: uid2,
-					ResourceKind:       kind,
-				},
+				Key:  testKey + "2",
 				Body: body,
 			},
 		})
 		require.NoError(t, err)
 
-		w3, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+		w3, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				GRN: &grn.GRN{
-					ResourceIdentifier: uid3,
-					ResourceKind:       kind2,
-				},
+				Key:  testKey + "3",
 				Body: body,
 			},
 		})
 		require.NoError(t, err)
 
-		w4, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+		w4, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				GRN: &grn.GRN{
-					ResourceIdentifier: uid4,
-					ResourceKind:       kind2,
-				},
+				Key:  testKey + "4",
 				Body: body,
 			},
 		})
 		require.NoError(t, err)
 
 		resp, err := testCtx.client.List(ctx, &entity.EntityListRequest{
-			Kind:     []string{kind, kind2},
+			Resource: []string{resource, resource2},
 			WithBody: false,
 		})
 		require.NoError(t, err)
 
 		require.NotNil(t, resp)
-		uids := make([]string, 0, len(resp.Results))
+		names := make([]string, 0, len(resp.Results))
 		kinds := make([]string, 0, len(resp.Results))
-		version := make([]string, 0, len(resp.Results))
+		version := make([]int64, 0, len(resp.Results))
 		for _, res := range resp.Results {
-			uids = append(uids, res.GRN.ResourceIdentifier)
-			kinds = append(kinds, res.GRN.ResourceKind)
-			version = append(version, res.Version)
+			names = append(names, res.Name)
+			kinds = append(kinds, res.Resource)
+			version = append(version, res.ResourceVersion)
 		}
-		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
+		require.Equal(t, []string{"my-test-entity", "name2", "name3", "name4"}, names)
 		require.Equal(t, []string{"jsonobj", "jsonobj", "playlist", "playlist"}, kinds)
-		require.Equal(t, []string{
-			w1.Entity.Version,
-			w2.Entity.Version,
-			w3.Entity.Version,
-			w4.Entity.Version,
+		require.Equal(t, []int64{
+			w1.Entity.ResourceVersion,
+			w2.Entity.ResourceVersion,
+			w3.Entity.ResourceVersion,
+			w4.Entity.ResourceVersion,
 		}, version)
 
 		// Again with only one kind
 		respKind1, err := testCtx.client.List(ctx, &entity.EntityListRequest{
-			Kind: []string{kind},
+			Resource: []string{resource},
 		})
 		require.NoError(t, err)
-		uids = make([]string, 0, len(respKind1.Results))
+		names = make([]string, 0, len(respKind1.Results))
 		kinds = make([]string, 0, len(respKind1.Results))
-		version = make([]string, 0, len(respKind1.Results))
+		version = make([]int64, 0, len(respKind1.Results))
 		for _, res := range respKind1.Results {
-			uids = append(uids, res.GRN.ResourceIdentifier)
-			kinds = append(kinds, res.GRN.ResourceKind)
-			version = append(version, res.Version)
+			names = append(names, res.Name)
+			kinds = append(kinds, res.Resource)
+			version = append(version, res.ResourceVersion)
 		}
-		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)
+		require.Equal(t, []string{"my-test-entity", "name2"}, names)
 		require.Equal(t, []string{"jsonobj", "jsonobj"}, kinds)
-		require.Equal(t, []string{
-			w1.Entity.Version,
-			w2.Entity.Version,
+		require.Equal(t, []int64{
+			w1.Entity.ResourceVersion,
+			w2.Entity.ResourceVersion,
 		}, version)
 	})
 
 	t.Run("should be able to filter objects based on their labels", func(t *testing.T) {
 		kind := entity.StandardKindDashboard
-		_, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+		_, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				GRN: &grn.GRN{
-					ResourceKind:       kind,
-					ResourceIdentifier: "blue-green",
-				},
+				Key:  "/grafana/dashboards/blue-green",
 				Body: []byte(dashboardWithTagsBlueGreen),
 			},
 		})
 		require.NoError(t, err)
 
-		_, err = testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+		_, err = testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				GRN: &grn.GRN{
-					ResourceKind:       kind,
-					ResourceIdentifier: "red-green",
-				},
+				Key:  "/grafana/dashboards/red-green",
 				Body: []byte(dashboardWithTagsRedGreen),
 			},
 		})
 		require.NoError(t, err)
 
 		resp, err := testCtx.client.List(ctx, &entity.EntityListRequest{
-			Kind:       []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"red": "",
 			},
@@ -442,12 +416,11 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Len(t, resp.Results, 1)
-		require.Equal(t, resp.Results[0].GRN.ResourceIdentifier, "red-green")
+		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Kind:       []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"red":   "",
 				"green": "",
@@ -456,12 +429,11 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Len(t, resp.Results, 1)
-		require.Equal(t, resp.Results[0].GRN.ResourceIdentifier, "red-green")
+		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Kind:       []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"red": "invalid",
 			},
@@ -471,9 +443,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 0)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Kind:       []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"green": "",
 			},
@@ -483,9 +454,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 2)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Kind:       []string{kind},
-			WithBody:   false,
-			WithLabels: true,
+			Key:      []string{kind},
+			WithBody: false,
 			Labels: map[string]string{
 				"yellow": "",
 			},

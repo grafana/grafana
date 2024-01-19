@@ -1,4 +1,11 @@
-import { behaviors, SceneGridLayout, SceneGridItem, SceneRefreshPicker, SceneTimeRange } from '@grafana/scenes';
+import {
+  behaviors,
+  SceneGridLayout,
+  SceneGridItem,
+  SceneRefreshPicker,
+  SceneTimeRange,
+  SceneTimePicker,
+} from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -33,12 +40,16 @@ describe('GeneralSettingsEditView', () => {
 
     it('should return the dashboard refresh picker', () => {
       expect(settings.getRefreshPicker()).toBe(
-        (dashboard.state?.controls?.[0] as DashboardControls)?.state?.timeControls?.[0]
+        (dashboard.state?.controls?.[0] as DashboardControls)?.state?.timeControls?.[1]
       );
     });
 
     it('should return the cursor sync', () => {
       expect(settings.getCursorSync()).toBe(dashboard.state.$behaviors?.[0]);
+    });
+
+    it('should return the dashboard controls', () => {
+      expect(settings.getDashboardControls()).toBe(dashboard.state.controls?.[0]);
     });
   });
 
@@ -108,10 +119,17 @@ describe('GeneralSettingsEditView', () => {
 
       expect(settings.getCursorSync()?.state.sync).toBe(DashboardCursorSync.Crosshair);
     });
+
+    it('A change to time picker visiblity settings updates the dashboard state', () => {
+      settings.onHideTimePickerChange(true);
+
+      expect(settings.getDashboardControls()?.state.hideTimeControls).toBe(true);
+    });
   });
 });
 
 async function buildTestScene() {
+  const settings = new GeneralSettingsEditView({});
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
     $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off })],
@@ -120,6 +138,7 @@ async function buildTestScene() {
         variableControls: [],
         linkControls: new DashboardLinksControls({}),
         timeControls: [
+          new SceneTimePicker({}),
           new SceneRefreshPicker({
             intervals: ['1s'],
           }),
@@ -143,10 +162,7 @@ async function buildTestScene() {
         }),
       ],
     }),
-  });
-
-  const settings = new GeneralSettingsEditView({
-    dashboardRef: dashboard.getRef(),
+    editview: settings,
   });
 
   activateFullSceneTree(dashboard);

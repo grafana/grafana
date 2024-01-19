@@ -1,16 +1,20 @@
+import { css } from '@emotion/css';
 import React from 'react';
+import { Unsubscribable } from 'rxjs';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectBase,
-  SceneObjectRef,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Container, CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
+
+import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
@@ -18,7 +22,6 @@ import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { PanelDataPaneTab } from './types';
 
 export interface PanelDataPaneState extends SceneObjectState {
-  panelRef: SceneObjectRef<VizPanel>;
   tabs?: PanelDataPaneTab[];
   tab?: string;
 }
@@ -26,6 +29,9 @@ export interface PanelDataPaneState extends SceneObjectState {
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
+  private _initialTabsBuilt = false;
+  private panelSubscription: Unsubscribable | undefined;
+  public panelManager: VizPanelManager;
 
   getUrlState() {
     return {
@@ -42,49 +48,78 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     }
   }
 
-  constructor(state: Omit<PanelDataPaneState, 'tab'> & { tab?: string }) {
+  constructor(panelMgr: VizPanelManager) {
     super({
       tab: 'queries',
-      ...state,
     });
 
-    const { panelRef } = this.state;
-    const panel = panelRef.resolve();
+    this.panelManager = panelMgr;
+    this.addActivationHandler(() => this.onActivate());
+  }
 
-    if (panel) {
-      // The subscription below is needed because the plugin may not be loaded when this pane is mounted.
-      // This can happen i.e. when the user opens the panel editor directly via an URL.
-      this._subs.add(
-        panel.subscribeToState((n, p) => {
-          if (n.pluginVersion || p.pluginId !== n.pluginId) {
-            this.buildTabs();
-          }
-        })
-      );
+  private onActivate() {
+    const panel = this.panelManager.state.panel;
+    this.setupPanelSubscription(panel);
+    this.buildTabs();
+
+    this._subs.add(
+      // Setup subscription for the case when panel type changed
+      this.panelManager.subscribeToState((n, p) => {
+        if (n.panel !== p.panel) {
+          this.buildTabs();
+          this.setupPanelSubscription(n.panel);
+        }
+      })
+    );
+
+    return () => {
+      if (this.panelSubscription) {
+        this.panelSubscription.unsubscribe();
+        this.panelSubscription = undefined;
+      }
+    };
+  }
+
+  private setupPanelSubscription(panel: VizPanel) {
+    if (this.panelSubscription) {
+      this._initialTabsBuilt = false;
+      this.panelSubscription.unsubscribe();
     }
 
-    this.addActivationHandler(() => this.buildTabs());
+    this.panelSubscription = panel.subscribeToState(() => {
+      if (panel.getPlugin() && !this._initialTabsBuilt) {
+        this.buildTabs();
+        this._initialTabsBuilt = true;
+      }
+    });
   }
 
   private buildTabs() {
-    const { panelRef } = this.state;
+    const panelManager = this.panelManager;
+    const panel = panelManager.state.panel;
+    const runner = this.panelManager.queryRunner;
     const tabs: PanelDataPaneTab[] = [];
 
-    if (panelRef) {
-      const plugin = panelRef.resolve().getPlugin();
+    if (panel) {
+      const plugin = panel.getPlugin();
+
       if (!plugin) {
         this.setState({ tabs });
         return;
       }
+
       if (plugin.meta.skipDataQuery) {
         this.setState({ tabs });
         return;
       } else {
-        tabs.push(new PanelDataQueriesTab({}));
-        tabs.push(new PanelDataTransformationsTab({}));
+        if (runner) {
+          tabs.push(new PanelDataQueriesTab(this.panelManager));
+        }
+
+        tabs.push(new PanelDataTransformationsTab(this.panelManager));
 
         if (shouldShowAlertingTab(plugin)) {
-          tabs.push(new PanelDataAlertingTab({}));
+          tabs.push(new PanelDataAlertingTab(this.panelManager));
         }
       }
     }
@@ -99,6 +134,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
+  const styles = useStyles2(getStyles);
 
   if (!tabs) {
     return;
@@ -107,22 +143,45 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const currentTab = tabs.find((t) => t.tabId === tab);
 
   return (
-    <div>
-      <TabsBar hideBorder={true}>
+    <>
+      <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
             <Tab
               key={`${t.getTabLabel()}-${index}`}
               label={t.getTabLabel()}
               icon={t.icon}
-              //   suffix={}
+              counter={t.getItemsCount?.()}
               active={t.tabId === tab}
               onChangeTab={() => model.onChangeTab(t)}
             />
           );
         })}
       </TabsBar>
-      <TabContent>{currentTab && <currentTab.Component model={currentTab} />}</TabContent>
-    </div>
+      <CustomScrollbar className={styles.scroll}>
+        <TabContent className={styles.tabContent}>
+          <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
+        </TabContent>
+      </CustomScrollbar>
+    </>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    tabContent: css({
+      padding: theme.spacing(2),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderLeft: 'none',
+      borderBottom: 'none',
+      borderTopRightRadius: theme.shape.radius.default,
+      flexGrow: 1,
+    }),
+    tabsBar: css({
+      flexShrink: 0,
+    }),
+    scroll: css({
+      background: theme.colors.background.primary,
+    }),
+  };
 }

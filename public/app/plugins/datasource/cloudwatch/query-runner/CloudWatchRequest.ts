@@ -1,28 +1,20 @@
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  getDataSourceRef,
-  ScopedVars,
-} from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { DataSourceInstanceSettings, DataSourceRef, getDataSourceRef, ScopedVars } from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse, getBackendSrv, TemplateSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
 
 import memoizedDebounce from '../memoizedDebounce';
-import { CloudWatchJsonData, CloudWatchQuery, Dimensions, MetricRequest, MultiFilters } from '../types';
+import { CloudWatchJsonData, Dimensions, MetricRequest, MultiFilters } from '../types';
+import { getVariableName } from '../utils/templateVariableUtils';
 
 export abstract class CloudWatchRequest {
   templateSrv: TemplateSrv;
   ref: DataSourceRef;
   dsQueryEndpoint = '/api/ds/query';
-  query: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>;
   debouncedCustomAlert: (title: string, message: string) => void = memoizedDebounce(
     displayCustomError,
     AppNotificationTimeout.Error
@@ -30,12 +22,10 @@ export abstract class CloudWatchRequest {
 
   constructor(
     public instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    templateSrv: TemplateSrv,
-    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse> = () => of({ data: [] })
+    templateSrv: TemplateSrv
   ) {
     this.templateSrv = templateSrv;
     this.ref = getDataSourceRef(instanceSettings);
-    this.query = queryFn;
   }
 
   awsRequest(
@@ -72,7 +62,7 @@ export abstract class CloudWatchRequest {
 
   // get the value for a given template variable
   expandVariableToArray(value: string, scopedVars: ScopedVars): string[] {
-    const variableName = this.templateSrv.getVariableName(value);
+    const variableName = getVariableName(value);
     const valueVar = this.templateSrv.getVariables().find(({ name }) => {
       return name === variableName;
     });
@@ -111,7 +101,7 @@ export abstract class CloudWatchRequest {
   ) {
     if (displayErrorIfIsMultiTemplateVariable && !!target) {
       const variables = this.templateSrv.getVariables();
-      const variable = variables.find(({ name }) => name === this.templateSrv.getVariableName(target));
+      const variable = variables.find(({ name }) => name === getVariableName(target));
       const isMultiVariable =
         variable?.type === 'custom' || variable?.type === 'query' || variable?.type === 'datasource';
       if (isMultiVariable && variable.multi) {

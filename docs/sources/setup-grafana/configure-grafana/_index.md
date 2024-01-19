@@ -1221,6 +1221,12 @@ Override the AAD application client secret.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
+### forward_settings_to_plugins
+
+Set plugins that will receive Azure settings via plugin context.
+
+By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
@@ -1274,6 +1280,13 @@ Name to be used as client identity for EHLO in SMTP dialog, default is `<instanc
 ### startTLS_policy
 
 Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `empty`.
+
+<hr>
+
+## [smtp.static_headers]
+
+Enter key-value pairs on their own lines to be included as headers on outgoing emails. All keys must be in canonical mail header format.
+Examples: `Foo=bar`, `Foo-Header=bar`.
 
 <hr>
 
@@ -2525,3 +2538,11 @@ Move an app plugin (referenced by its id), including all its pages, to a specifi
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
 Format: `<pageUrl> = <sectionId> <sortWeight>`
+
+## [public_dashboards]
+
+This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+
+### enabled
+
+Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.

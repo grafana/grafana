@@ -93,15 +93,6 @@ func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Pl
 	return pluginsList
 }
 
-func (s *Service) Renderer(ctx context.Context) *plugins.Plugin {
-	for _, p := range s.availablePlugins(ctx) {
-		if p.IsRenderer() {
-			return p
-		}
-	}
-	return nil
-}
-
 func (s *Service) SecretsManager(ctx context.Context) *plugins.Plugin {
 	for _, p := range s.availablePlugins(ctx) {
 		if p.IsSecretsManager() {

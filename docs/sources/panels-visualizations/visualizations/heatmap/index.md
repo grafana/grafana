@@ -2,7 +2,7 @@
 aliases:
   - ../../features/panels/heatmap/
   - ../../visualizations/heatmap/
-description: Heatmap visualization documentation
+description: Configure options for Grafana's heatmap visualization
 keywords:
   - grafana
   - heatmap
@@ -21,7 +21,7 @@ weight: 100
 
 Heatmaps allow you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps][].
 
-![](/static/img/docs/v43/heatmap_panel_cover.jpg)
+![A heatmap visualization](/static/img/docs/v43/heatmap_panel_cover.jpg)
 
 ## Calculate from data
 

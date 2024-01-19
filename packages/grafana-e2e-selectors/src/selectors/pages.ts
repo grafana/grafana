@@ -17,11 +17,11 @@ export const Pages = {
     url: '/',
   },
   DataSource: {
-    name: 'Data source settings page name input field',
+    name: 'data-testid Data source settings page name input field',
     delete: 'Data source settings page Delete button',
-    readOnly: 'Data source settings page read only message',
+    readOnly: 'data-testid Data source settings page read only message',
     saveAndTest: 'data-testid Data source settings page Save and Test button',
-    alert: 'Data source settings page Alert',
+    alert: 'data-testid Data source settings page Alert',
   },
   DataSources: {
     url: '/datasources',
@@ -56,6 +56,7 @@ export const Pages = {
       nav: 'Dashboard navigation',
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
+      shareButton: 'data-testid share-button',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -136,12 +137,11 @@ export const Pages = {
             generalLabelInputV2: 'data-testid Variable editor Form Label field',
             generalHideSelect: 'Variable editor Form Hide select',
             generalHideSelectV2: 'data-testid Variable editor Form Hide select',
-            selectionOptionsMultiSwitch: 'Variable editor Form Multi switch',
-            selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
-            selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
-            selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
-            previewOfValuesOption: 'Variable editor Preview of Values option',
-            submitButton: 'Variable editor Submit button',
+            selectionOptionsMultiSwitch: 'data-testid Variable editor Form Multi switch',
+            selectionOptionsIncludeAllSwitch: 'data-testid Variable editor Form IncludeAll switch',
+            selectionOptionsCustomAllInput: 'data-testid Variable editor Form IncludeAll field',
+            previewOfValuesOption: 'data-testid Variable editor Preview of Values option',
+            submitButton: 'data-testid Variable editor Run Query button',
             applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
@@ -208,7 +208,6 @@ export const Pages = {
     linkToRenderedImage: 'Link to rendered image',
   },
   ShareDashboardModal: {
-    shareButton: 'Share dashboard',
     PublicDashboard: {
       Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
@@ -268,12 +267,12 @@ export const Pages = {
     page: 'Plugins list page',
     list: 'Plugins list',
     listItem: 'Plugins list item',
-    signatureErrorNotice: 'Unsigned plugins notice',
+    signatureErrorNotice: 'data-testid Unsigned plugins notice',
   },
   PluginPage: {
     page: 'Plugin page',
-    signatureInfo: 'Plugin signature info',
-    disabledInfo: 'Plugin disabled info',
+    signatureInfo: 'data-testid Plugin signature info',
+    disabledInfo: 'data-testid Plugin disabled info',
   },
   PlaylistForm: {
     name: 'Playlist name',
@@ -328,6 +327,9 @@ export const Pages = {
     },
     UsersListPage: {
       container: 'data-testid users-list-page',
+    },
+    UserAnonListPage: {
+      container: 'data-testid user-anon-list-page',
     },
     UsersListPublicDashboardsPage: {
       container: 'data-testid users-list-public-dashboards-page',

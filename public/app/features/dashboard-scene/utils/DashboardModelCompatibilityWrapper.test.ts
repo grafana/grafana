@@ -7,18 +7,22 @@ import {
   SceneQueryRunner,
   SceneTimeRange,
   VizPanel,
+  SceneTimePicker,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene } from '../scene/DashboardScene';
+import { NEW_LINK } from '../settings/links/utils';
 
 import { DashboardModelCompatibilityWrapper } from './DashboardModelCompatibilityWrapper';
 
 describe('DashboardModelCompatibilityWrapper', () => {
   it('Provide basic prop and function of compatability', () => {
-    const { wrapper } = setup();
+    const { wrapper, scene } = setup();
 
     expect(wrapper.uid).toBe('dash-1');
     expect(wrapper.title).toBe('hello');
@@ -26,10 +30,36 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.editable).toBe(false);
     expect(wrapper.graphTooltip).toBe(DashboardCursorSync.Off);
     expect(wrapper.tags).toEqual(['hello-tag']);
+    expect(wrapper.links).toEqual([NEW_LINK]);
     expect(wrapper.time.from).toBe('now-6h');
     expect(wrapper.timezone).toBe('America/New_York');
     expect(wrapper.weekStart).toBe('friday');
     expect(wrapper.timepicker.refresh_intervals).toEqual(['1s']);
+    expect(wrapper.timepicker.hidden).toEqual(true);
+    expect(wrapper.panels).toHaveLength(5);
+
+    expect(wrapper.panels[0].targets).toHaveLength(1);
+    expect(wrapper.panels[0].targets[0]).toEqual({ refId: 'A' });
+    expect(wrapper.panels[1].targets).toHaveLength(0);
+    expect(wrapper.panels[2].targets).toHaveLength(1);
+    expect(wrapper.panels[2].targets).toEqual([{ refId: 'A', panelId: 1 }]);
+    expect(wrapper.panels[3].targets).toHaveLength(1);
+    expect(wrapper.panels[3].targets[0]).toEqual({ refId: 'A' });
+    expect(wrapper.panels[4].targets).toHaveLength(1);
+    expect(wrapper.panels[4].targets).toEqual([{ refId: 'A', panelId: 1 }]);
+
+    expect(wrapper.panels[0].datasource).toEqual({ uid: 'gdev-testdata', type: 'grafana-testdata-datasource' });
+    expect(wrapper.panels[1].datasource).toEqual(undefined);
+    expect(wrapper.panels[2].datasource).toEqual({ uid: SHARED_DASHBOARD_QUERY, type: 'datasource' });
+    expect(wrapper.panels[3].datasource).toEqual({ uid: 'gdev-testdata', type: 'grafana-testdata-datasource' });
+    expect(wrapper.panels[4].datasource).toEqual({ uid: SHARED_DASHBOARD_QUERY, type: 'datasource' });
+
+    (scene.state.controls![0] as DashboardControls).setState({
+      hideTimeControls: false,
+    });
+
+    const wrapper2 = new DashboardModelCompatibilityWrapper(scene);
+    expect(wrapper2.timepicker.hidden).toEqual(false);
   });
 
   it('Shared tooltip functions', () => {
@@ -61,16 +91,18 @@ describe('DashboardModelCompatibilityWrapper', () => {
   it('Can get fake panel with getPanelById', () => {
     const { wrapper } = setup();
 
-    expect(wrapper.getPanelById(1)!.title).toBe('Panel A');
-    expect(wrapper.getPanelById(2)!.title).toBe('Panel B');
+    expect(wrapper.getPanelById(1)!.title).toBe('Panel with a regular data source query');
+    expect(wrapper.getPanelById(2)!.title).toBe('Panel with no queries');
   });
 
   it('Can remove panel', () => {
     const { wrapper, scene } = setup();
 
+    expect((scene.state.body as SceneGridLayout).state.children.length).toBe(5);
+
     wrapper.removePanel(wrapper.getPanelById(1)!);
 
-    expect((scene.state.body as SceneGridLayout).state.children.length).toBe(1);
+    expect((scene.state.body as SceneGridLayout).state.children.length).toBe(4);
   });
 });
 
@@ -79,6 +111,7 @@ function setup() {
     title: 'hello',
     description: 'hello description',
     tags: ['hello-tag'],
+    links: [NEW_LINK],
     uid: 'dash-1',
     editable: false,
     $timeRange: new SceneTimeRange({
@@ -90,10 +123,12 @@ function setup() {
         variableControls: [],
         linkControls: new DashboardLinksControls({}),
         timeControls: [
+          new SceneTimePicker({}),
           new SceneRefreshPicker({
             intervals: ['1s'],
           }),
         ],
+        hideTimeControls: true,
       }),
     ],
     body: new SceneGridLayout({
@@ -102,17 +137,65 @@ function setup() {
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({
-            title: 'Panel A',
+            title: 'Panel with a regular data source query',
             key: 'panel-1',
             pluginId: 'table',
-            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+            $data: new SceneQueryRunner({
+              key: 'data-query-runner',
+              queries: [{ refId: 'A' }],
+              datasource: { uid: 'gdev-testdata', type: 'grafana-testdata-datasource' },
+            }),
           }),
         }),
         new SceneGridItem({
           body: new VizPanel({
-            title: 'Panel B',
+            title: 'Panel with no queries',
             key: 'panel-2',
             pluginId: 'table',
+          }),
+        }),
+
+        new SceneGridItem({
+          body: new VizPanel({
+            title: 'Panel with a shared query',
+            key: 'panel-3',
+            pluginId: 'table',
+            $data: new SceneQueryRunner({
+              key: 'data-query-runner',
+              queries: [{ refId: 'A', panelId: 1 }],
+              datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
+            }),
+          }),
+        }),
+
+        new SceneGridItem({
+          body: new VizPanel({
+            title: 'Panel with a regular data source query and transformations',
+            key: 'panel-4',
+            pluginId: 'table',
+            $data: new SceneDataTransformer({
+              $data: new SceneQueryRunner({
+                key: 'data-query-runner',
+                queries: [{ refId: 'A' }],
+                datasource: { uid: 'gdev-testdata', type: 'grafana-testdata-datasource' },
+              }),
+              transformations: [],
+            }),
+          }),
+        }),
+        new SceneGridItem({
+          body: new VizPanel({
+            title: 'Panel with a shared query and transformations',
+            key: 'panel-4',
+            pluginId: 'table',
+            $data: new SceneDataTransformer({
+              $data: new SceneQueryRunner({
+                key: 'data-query-runner',
+                queries: [{ refId: 'A', panelId: 1 }],
+                datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
+              }),
+              transformations: [],
+            }),
           }),
         }),
       ],

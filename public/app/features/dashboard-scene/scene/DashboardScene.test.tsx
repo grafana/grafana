@@ -56,47 +56,56 @@ describe('DashboardScene', () => {
       });
 
       it.each`
-        prop              | value
-        ${'title'}        | ${'new title'}
-        ${'description'}  | ${'new description'}
-        ${'tags'}         | ${['tag1', 'tag2']}
-        ${'editable'}     | ${false}
-        ${'graphTooltip'} | ${1}
+        prop             | value
+        ${'title'}       | ${'new title'}
+        ${'description'} | ${'new description'}
+        ${'tags'}        | ${['tag3', 'tag4']}
+        ${'editable'}    | ${false}
+        ${'links'}       | ${[]}
       `(
         'A change to $prop should set isDirty true',
         ({ prop, value }: { prop: keyof DashboardSceneState; value: any }) => {
+          const prevState = scene.state[prop];
           scene.setState({ [prop]: value });
 
           expect(scene.state.isDirty).toBe(true);
 
-          // TODO: Discard doesn't restore the previous state
-          // scene.onDiscard();
-          // expect(scene.state[prop]).toBe(prevState);
+          scene.onDiscard();
+          expect(scene.state[prop]).toEqual(prevState);
         }
       );
 
-      // TODO: Make the dashboard to restore the defaults on discard
-      it.skip('A change to refresh picker interval settings should set isDirty true', () => {
+      it('A change to refresh picker interval settings should set isDirty true', () => {
         const refreshPicker = dashboardSceneGraph.getRefreshPicker(scene)!;
-        const prevState = refreshPicker.state.intervals;
+        const prevState = [...refreshPicker.state.intervals!];
         refreshPicker.setState({ intervals: ['10s'] });
 
         expect(scene.state.isDirty).toBe(true);
 
         scene.onDiscard();
-        expect(refreshPicker.state.intervals).toEqual(prevState);
+        expect(dashboardSceneGraph.getRefreshPicker(scene)!.state.intervals).toEqual(prevState);
       });
 
-      // TODO: Make the dashboard to restore the defaults on discard
-      it.skip('A change to time zone should set isDirty true', () => {
-        const timeRange = scene.state.$timeRange!;
+      it('A change to time picker visibility settings should set isDirty true', () => {
+        const dashboardControls = dashboardSceneGraph.getDashboardControls(scene)!;
+        const prevState = dashboardControls.state.hideTimeControls;
+        dashboardControls.setState({ hideTimeControls: true });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.onDiscard();
+        expect(dashboardSceneGraph.getDashboardControls(scene)!.state.hideTimeControls).toEqual(prevState);
+      });
+
+      it('A change to time zone should set isDirty true', () => {
+        const timeRange = sceneGraph.getTimeRange(scene)!;
         const prevState = timeRange.state.timeZone;
         timeRange.setState({ timeZone: 'UTC' });
 
         expect(scene.state.isDirty).toBe(true);
 
         scene.onDiscard();
-        expect(timeRange.state.timeZone).toBe(prevState);
+        expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
       });
     });
   });
@@ -148,7 +157,12 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
-    $timeRange: new SceneTimeRange({}),
+    description: 'hello description',
+    tags: ['tag1', 'tag2'],
+    editable: true,
+    $timeRange: new SceneTimeRange({
+      timeZone: 'browser',
+    }),
     controls: [
       new DashboardControls({
         variableControls: [],

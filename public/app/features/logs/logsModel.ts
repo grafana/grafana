@@ -10,6 +10,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataTopic,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
@@ -39,12 +40,13 @@ import {
   toUtc,
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
-import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
+import { findMatchingRow, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -200,6 +202,8 @@ function isLogsData(series: DataFrame) {
   return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
 
+export const infiniteScrollRefId = 'infinite-scroll-';
+
 /**
  * Convert dataFrame into LogsModel which consists of creating separate array of log rows and metrics series. Metrics
  * series can be either already included in the dataFrame or will be computed from the log rows.
@@ -214,8 +218,27 @@ export function dataFrameToLogsModel(
   absoluteRange?: AbsoluteTimeRange,
   queries?: DataQuery[]
 ): LogsModel {
+  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
+  let infiniteScrollingResults = false;
+  queries = queries?.map((query) => {
+    if (query.refId.includes(infiniteScrollRefId)) {
+      infiniteScrollingResults = true;
+      return {
+        ...query,
+        refId: query.refId.replace(infiniteScrollRefId, ''),
+      };
+    }
+    return query;
+  });
+  if (infiniteScrollingResults) {
+    dataFrame = dataFrame.map((frame) => ({
+      ...frame,
+      refId: frame.refId?.replace(infiniteScrollRefId, ''),
+    }));
+  }
+
   const { logSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, queries);
+  const logsModel = logSeriesToLogsModel(logSeries, queries, infiniteScrollingResults);
 
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
@@ -349,7 +372,11 @@ function parseTime(
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[] = []): LogsModel | undefined {
+export function logSeriesToLogsModel(
+  logSeries: DataFrame[],
+  queries: DataQuery[] = [],
+  filterDuplicateRows = false
+): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -385,7 +412,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
   const flatAllLabels = allLabels.flat();
   const commonLabels = flatAllLabels.length > 0 ? findCommonLabels(flatAllLabels) : {};
 
-  const rows: LogRowModel[] = [];
+  let rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
@@ -449,6 +476,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       if (idField !== null) {
         row.rowId = idField.values[j];
+      }
+
+      if (filterDuplicateRows && findMatchingRow(row, rows)) {
+        continue;
       }
 
       rows.push(row);
@@ -531,7 +562,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
 // Used to add additional information to Line limit meta info
 function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requestedRangeMs?: number): LogsMetaItem[] {
-  let logsModelMeta = [...logsModel.meta!];
+  if (!logsModel.meta) {
+    return [];
+  }
+  let logsModelMeta = [...logsModel.meta];
 
   const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
   const limit = limitIndex >= 0 && logsModelMeta[limitIndex]?.value;
@@ -546,7 +580,8 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
         visibleRangeMs
       )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
     } else {
-      metaLimitValue = `${limit} (${logsModel.rows.length} returned)`;
+      const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
+      metaLimitValue = `${limit} (${logsModel.rows.length} ${description})`;
     }
 
     logsModelMeta[limitIndex] = {
@@ -658,6 +693,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
         } else {
           const framesByRefId = groupBy(dataQueryResponse.data, 'refId');
           logsVolumeData = dataQueryResponse.data.map((dataFrame) => {
+            // Separate possible annotations from data frames
+            if (dataFrame.meta?.dataTopic === DataTopic.Annotations) {
+              return dataFrame;
+            }
             let sourceRefId = dataFrame.refId || '';
             if (sourceRefId.startsWith('log-volume-')) {
               sourceRefId = sourceRefId.substr('log-volume-'.length);

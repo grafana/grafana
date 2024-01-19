@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
-description: Learn about templating of labels and annotations
+description: Learn about how to template labels and annotations
 keywords:
   - grafana
   - alerting

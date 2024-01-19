@@ -39,29 +39,20 @@ func TestMSSQL(t *testing.T) {
 		t.Skip()
 	}
 
-	x := initMSSQLTestDB(t)
-	origDB := sqleng.NewDB
-	t.Cleanup(func() {
-		sqleng.NewDB = origDB
-	})
-
-	sqleng.NewDB = func(d, c string) (*sql.DB, error) {
-		return x, nil
-	}
-
 	queryResultTransformer := mssqlQueryResultTransformer{}
 	dsInfo := sqleng.DataSourceInfo{}
 	config := sqleng.DataPluginConfiguration{
-		DriverName:        "mssql",
-		ConnectionString:  "",
 		DSInfo:            dsInfo,
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 		RowLimit:          1000000,
 	}
-	endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
-	require.NoError(t, err)
 
-	db := x
+	logger := backend.NewLoggerWith("logger", "mssql.test")
+
+	db := initMSSQLTestDB(t, config.DSInfo.JsonData)
+
+	endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+	require.NoError(t, err)
 
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
@@ -808,13 +799,11 @@ func TestMSSQL(t *testing.T) {
 				queryResultTransformer := mssqlQueryResultTransformer{}
 				dsInfo := sqleng.DataSourceInfo{}
 				config := sqleng.DataPluginConfiguration{
-					DriverName:        "mssql",
-					ConnectionString:  "",
 					DSInfo:            dsInfo,
 					MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 					RowLimit:          1000000,
 				}
-				endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+				endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 				require.NoError(t, err)
 				query := &backend.QueryDataRequest{
 					Queries: []backend.DataQuery{
@@ -1213,14 +1202,12 @@ func TestMSSQL(t *testing.T) {
 			queryResultTransformer := mssqlQueryResultTransformer{}
 			dsInfo := sqleng.DataSourceInfo{}
 			config := sqleng.DataPluginConfiguration{
-				DriverName:        "mssql",
-				ConnectionString:  "",
 				DSInfo:            dsInfo,
 				MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 				RowLimit:          1,
 			}
 
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1335,6 +1322,8 @@ func TestTransformQueryError(t *testing.T) {
 		{err: fmt.Errorf("unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
 		{err: randomErr, expectedErr: randomErr},
 	}
+
+	logger := backend.NewLoggerWith("logger", "mssql.test")
 
 	for _, tc := range tests {
 		resultErr := transformer.TransformQueryError(logger, tc.err)
@@ -1470,24 +1459,31 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr: "server=localhost;database=database;user id=user;password=;",
 		},
 	}
+
+	logger := backend.NewLoggerWith("logger", "mssql.test")
+
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			connStr, err := generateConnectionString(tc.dataSource, nil, nil)
+			connStr, err := generateConnectionString(tc.dataSource, nil, nil, logger)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expConnStr, connStr)
 		})
 	}
 }
 
-func initMSSQLTestDB(t *testing.T) *sql.DB {
+func initMSSQLTestDB(t *testing.T, jsonData sqleng.JsonData) *sql.DB {
 	t.Helper()
 
 	testDB := sqlutil.MSSQLTestDB()
-	x, err := sql.Open(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
+	db, err := sql.Open(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
 		serverIP, 1))
 	require.NoError(t, err)
 
-	return x
+	db.SetMaxOpenConns(jsonData.MaxOpenConns)
+	db.SetMaxIdleConns(jsonData.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(jsonData.ConnMaxLifetime) * time.Second)
+
+	return db
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {

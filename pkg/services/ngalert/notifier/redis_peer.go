@@ -10,8 +10,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	alertingCluster "github.com/grafana/alerting/cluster"
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/redis/go-redis/v9"
@@ -54,7 +54,7 @@ type redisPeer struct {
 	redis     *redis.Client
 	prefix    string
 	logger    log.Logger
-	states    map[string]cluster.State
+	states    map[string]alertingCluster.State
 	subs      map[string]*redis.PubSub
 	statesMtx sync.RWMutex
 
@@ -110,7 +110,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		name:             name,
 		redis:            rdb,
 		logger:           logger,
-		states:           map[string]cluster.State{},
+		states:           map[string]alertingCluster.State{},
 		subs:             map[string]*redis.PubSub{},
 		pushPullInterval: pushPullInterval,
 		readyc:           make(chan struct{}),
@@ -425,7 +425,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	close(p.readyc)
 }
 
-func (p *redisPeer) AddState(key string, state cluster.State, _ prometheus.Registerer) cluster.ClusterChannel {
+func (p *redisPeer) AddState(key string, state alertingCluster.State, _ prometheus.Registerer) alertingCluster.ClusterChannel {
 	p.statesMtx.Lock()
 	defer p.statesMtx.Unlock()
 	p.states[key] = state
@@ -453,7 +453,7 @@ func (p *redisPeer) mergePartialState(buf []byte) {
 	p.messagesReceived.WithLabelValues(update).Inc()
 	p.messagesReceivedSize.WithLabelValues(update).Add(float64(len(buf)))
 
-	var part clusterpb.Part
+	var part alertingClusterPB.Part
 	if err := proto.Unmarshal(buf, &part); err != nil {
 		p.logger.Warn("Error decoding the received broadcast message", "err", err)
 		return
@@ -510,7 +510,7 @@ func (p *redisPeer) mergeFullState(buf []byte) {
 	p.messagesReceived.WithLabelValues(fullState).Inc()
 	p.messagesReceivedSize.WithLabelValues(fullState).Add(float64(len(buf)))
 
-	var fs clusterpb.FullState
+	var fs alertingClusterPB.FullState
 	if err := proto.Unmarshal(buf, &fs); err != nil {
 		p.logger.Warn("Error unmarshaling the received remote state", "err", err)
 		return
@@ -564,8 +564,8 @@ func (p *redisPeer) requestFullState() {
 func (p *redisPeer) LocalState() []byte {
 	p.statesMtx.RLock()
 	defer p.statesMtx.RUnlock()
-	all := &clusterpb.FullState{
-		Parts: make([]clusterpb.Part, 0, len(p.states)),
+	all := &alertingClusterPB.FullState{
+		Parts: make([]alertingClusterPB.Part, 0, len(p.states)),
 	}
 
 	for key, s := range p.states {
@@ -573,7 +573,7 @@ func (p *redisPeer) LocalState() []byte {
 		if err != nil {
 			p.logger.Warn("Error encoding the local state", "err", err, "key", key)
 		}
-		all.Parts = append(all.Parts, clusterpb.Part{Key: key, Data: b})
+		all.Parts = append(all.Parts, alertingClusterPB.Part{Key: key, Data: b})
 	}
 	b, err := proto.Marshal(all)
 	if err != nil {

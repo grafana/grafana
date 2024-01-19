@@ -2,7 +2,7 @@
 aliases:
   - ../../features/panels/canvas/
   - ../../visualizations/canvas/
-description: Canvas visualization documentation
+description: Configure options for Grafana's canvas visualization
 keywords:
   - grafana
   - canvas
@@ -84,6 +84,16 @@ You can set both the size and color of connections based on fixed or field value
 You can edit your canvas inline while in the context of dashboard mode.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" caption="Inline editor demo" >}}
+
+### Pan and zoom
+
+You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
+
+{{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
+
+{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
 
 ### Context menu
 

@@ -11,6 +11,7 @@ labels:
     - oss
 menuTitle: Write expression queries
 title: Write expression queries
+description: Write server-side expressions to manipulate data using math and other operations
 weight: 40
 ---
 

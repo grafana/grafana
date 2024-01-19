@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/recording-rules/
-description: Learn about recording rules
+description: Create recording rules to pre-compute frequently needed or computationally expensive expressions and save the result as a new set of time series
 keywords:
   - grafana
   - alerting
