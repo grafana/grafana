@@ -12,15 +12,17 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-
+// NotificationSettings represents the settings for notifications and used to automatically
+// generate routes that uniquely match a rule to which the setting are assigned
 type NotificationSettings struct {
-	Receiver string
+	Receiver string `json:"receiver"`
 
-	GroupBy           []string
-	GroupWait         *model.Duration
-	GroupInterval     *model.Duration
-	RepeatInterval    *model.Duration
-	MuteTimeIntervals []string
+	GroupBy           []string        `json:"group_by,omitempty"`
+	GroupWait         *model.Duration `json:"group_wait,omitempty"`
+	GroupInterval     *model.Duration `json:"group_interval,omitempty"`
+	RepeatInterval    *model.Duration `json:"repeat_interval,omitempty"`
+	MuteTimeIntervals []string        `json:"mute_time_intervals,omitempty"`
+}
 
 // Validate checks if the NotificationSettings object is valid.
 // It returns an error if any of the validation checks fail.
