@@ -23,7 +23,7 @@ func TestMySQLProxyDialer(t *testing.T) {
 		ServerName:   settings.ServerName,
 	}
 	protocol := "tcp"
-	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
+	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}}, "mysql", "mysql")
 	dbURL := "localhost:5432"
 	network, err := registerProxyDialerContext(protocol, dbURL, opts)
 	require.NoError(t, err)

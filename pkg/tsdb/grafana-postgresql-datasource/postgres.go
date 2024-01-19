@@ -107,7 +107,7 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 		}
 
 		// use the proxy-dialer if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
+		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo, settings.Name, settings.Type)
 		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 			dialer, err := newPostgresProxyDialer(proxyOpts)
 			if err != nil {
