@@ -1831,6 +1831,25 @@
         },
         "description": "(empty)"
       },
+      "searchPermissionsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "type": "object"
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "searchPlaylistsResponse": {
         "content": {
           "application/json": {
@@ -1866,6 +1885,22 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/SearchTeamQueryResult"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "searchUserPermissionsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "object"
             }
           }
         },
@@ -13188,6 +13223,109 @@
         "tags": [
           "access_control",
           "enterprise"
+        ]
+      }
+    },
+    "/access-control/user/{user_id}/permissions/search": {
+      "get": {
+        "description": "Gets all of a user's permissions matching the provided search filters. The response contains all permissions grouped actions.\n\nYou need to have a permission with action `users.permissions:read` and scope `users:id:{user_id}`.",
+        "operationId": "searchUserPermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actionPrefix",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/searchUserPermissionsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Search through a user's permissions.",
+        "tags": [
+          "access_control"
+        ]
+      }
+    },
+    "/access-control/users/permissions/search": {
+      "get": {
+        "description": "Gets all users' permissions matching the provided search filters. The response contains all permissions grouped by user IDs and actions.\n\nYou need to have a permission with action `users.permissions:read`.",
+        "operationId": "searchPermissions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "actionPrefix",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/searchPermissionsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Search through users permissions.",
+        "tags": [
+          "access_control"
         ]
       }
     },
