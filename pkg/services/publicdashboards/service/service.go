@@ -155,6 +155,10 @@ func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAc
 		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Public dashboard is not enabled accessToken: %s", accessToken)
 	}
 
+	if !pd.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && pubdash.Share == EmailShareType {
+		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Dashboard not found accessToken: %s", accessToken)
+	}
+
 	return pubdash, dash, err
 }
 
