@@ -132,6 +132,13 @@ export const Components = {
         seriesQuery: 'data-testid prometheus series query',
         classicQuery: 'data-testid prometheus classic query',
       },
+      annotations: {
+        minStep: 'prometheus-annotation-min-step', // id for autosize input
+        title: 'data-testid prometheus annotation title',
+        tags: 'data-testid prometheus annotation tags',
+        text: 'data-testid prometheus annotation text',
+        seriesValueAsTimestamp: 'data-testid prometheus annotation series value as timestamp',
+      },
     },
   },
   Menu: {
