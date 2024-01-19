@@ -759,11 +759,32 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		log:                  log.New("test-folder-service"),
 		accessControl:        acimpl.ProvideAccessControl(cfg),
 		metrics:              newFoldersMetrics(nil),
+		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 
 	t.Run("When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables", func(t *testing.T) {
 		f, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{SignedInUser: usr, OrgID: orgID, Title: "  my folder  "})
 		require.NoError(t, err)
+
+		assert.Equal(t, "my folder", f.Title)
+
+		dashFolder, err := dashboardFolderStore.GetFolderByUID(context.Background(), orgID, f.UID)
+		require.NoError(t, err)
+
+		nestedFolder, err := nestedFolderStore.Get(context.Background(), folder.GetFolderQuery{UID: &f.UID, OrgID: orgID})
+		require.NoError(t, err)
+
+		assert.Equal(t, dashFolder.Title, nestedFolder.Title)
+	})
+
+	t.Run("When updating a folder it should trim leading and trailing spaces in both dashboard and folder tables", func(t *testing.T) {
+		f, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{SignedInUser: usr, OrgID: orgID, Title: "my folder"})
+		require.NoError(t, err)
+
+		f, err = folderService.Update(context.Background(), &folder.UpdateFolderCommand{SignedInUser: usr, OrgID: orgID, UID: f.UID, NewTitle: util.Pointer("  my updated folder  "), Version: f.Version})
+		require.NoError(t, err)
+
+		assert.Equal(t, "my updated folder", f.Title)
 
 		dashFolder, err := dashboardFolderStore.GetFolderByUID(context.Background(), orgID, f.UID)
 		require.NoError(t, err)

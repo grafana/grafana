@@ -498,7 +498,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		if foldr, err = s.store.Update(ctx, folder.UpdateFolderCommand{
 			UID:            cmd.UID,
 			OrgID:          cmd.OrgID,
-			NewTitle:       cmd.NewTitle,
+			NewTitle:       &dashFolder.Title,
 			NewDescription: cmd.NewDescription,
 			SignedInUser:   user,
 		}); err != nil {
