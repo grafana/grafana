@@ -41,7 +41,7 @@ describe('TransformationEditorHelpDisplay', () => {
     );
 
     // Find and click the modal's close button
-    const closeButton = screen.getByRole('button', { name: 'Drawer close' });
+    const closeButton = screen.getByTestId('data-testid Drawer close');
     fireEvent.click(closeButton);
 
     // Ensure that the onCloseClick function was called with the correct argument
