@@ -586,6 +586,7 @@
     "shortcuts-description": {
       "change-theme": "Cĥäŉģę ŧĥęmę",
       "collapse-all-rows": "Cőľľäpşę äľľ řőŵş",
+      "copy-time-range": "Cőpy ŧįmę řäŉģę",
       "dashboard-settings": "Đäşĥþőäřđ şęŧŧįŉģş",
       "duplicate-panel": "Đūpľįčäŧę Päŉęľ",
       "exit-edit/setting-views": "Ēχįŧ ęđįŧ/şęŧŧįŉģ vįęŵş",
@@ -599,6 +600,7 @@
       "move-time-range-forward": "Mővę ŧįmę řäŉģę ƒőřŵäřđ",
       "open-search": "Øpęŉ şęäřčĥ",
       "open-shared-modal": "Øpęŉ Päŉęľ Ŝĥäřę Mőđäľ",
+      "paste-time-range": "Päşŧę ŧįmę řäŉģę",
       "refresh-all-panels": "Ŗęƒřęşĥ äľľ päŉęľş",
       "remove-panel": "Ŗęmővę Päŉęľ",
       "save-dashboard": "Ŝävę đäşĥþőäřđ",
@@ -1393,6 +1395,13 @@
       "empty-recent-list-docs": "<0><0>Ŗęäđ ŧĥę đőčūmęŉŧäŧįőŉ</0><1> ŧő ƒįŉđ őūŧ mőřę äþőūŧ ĥőŵ ŧő ęŉŧęř čūşŧőm ŧįmę řäŉģęş.</1></0>",
       "empty-recent-list-info": "Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ'ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.",
       "filter-placeholder": "Ŝęäřčĥ qūįčĸ řäŉģęş"
+    },
+    "copy-paste": {
+      "copy-success-message": "Ŧįmę řäŉģę čőpįęđ ŧő čľįpþőäřđ",
+      "default-error-message": "{{error}} įş ŉőŧ ä väľįđ ŧįmę řäŉģę",
+      "default-error-title": "Ĩŉväľįđ ŧįmę řäŉģę",
+      "tooltip-copy": "Cőpy ŧįmę řäŉģę ŧő čľįpþőäřđ",
+      "tooltip-paste": "Päşŧę ŧįmę řäŉģę"
     },
     "footer": {
       "change-settings-button": "Cĥäŉģę ŧįmę şęŧŧįŉģş",

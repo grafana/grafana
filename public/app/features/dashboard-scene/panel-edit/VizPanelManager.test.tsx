@@ -540,10 +540,11 @@ describe('VizPanelManager', () => {
     describe('dashboard queries', () => {
       it('should update queries', () => {
         const { scene, panel } = setupTest('panel-3');
+        scene.setState({
+          editPanel: buildPanelEditScene(panel),
+        });
 
-        const panelEditScene = buildPanelEditScene(scene, panel);
-
-        const vizPanelManager = panelEditScene.state.panelRef.resolve();
+        const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
         vizPanelManager.activate();
         vizPanelManager.state.panel.state.$data?.activate();
 

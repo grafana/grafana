@@ -129,7 +129,7 @@ export const GroupByField = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addFilter: css`
-    margin-left: ${theme.spacing(2)};
-  `,
+  addFilter: css({
+    marginLeft: theme.spacing(2),
+  }),
 });
