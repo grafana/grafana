@@ -121,14 +121,9 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return nil
 	}
 
-	orgID := r.OrgID
-	if orgID == 0 {
-		orgID = identity.OrgID
-	}
-
 	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
 		UserID: userID,
-		OrgID:  orgID,
+		OrgID:  r.OrgID,
 	})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
