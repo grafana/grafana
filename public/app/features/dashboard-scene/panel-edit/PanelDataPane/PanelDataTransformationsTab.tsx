@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import { DragDropContext, Droppable } from 'react-beautiful-dnd';
+import { DragDropContext, DropResult, Droppable } from 'react-beautiful-dnd';
 
 import { DataTransformerConfig, GrafanaTheme2, IconName, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -146,8 +146,24 @@ interface TransformationEditorProps {
 function TransformationsEditor({ transformations, model, data }: TransformationEditorProps) {
   const transformationEditorRows = transformations.map((t, i) => ({ id: `${i} - ${t.id}`, transformation: t }));
 
+  const onDragEnd = (result: DropResult) => {
+    if (!result || !result.destination) {
+      return;
+    }
+
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    if (startIndex === endIndex) {
+      return;
+    }
+    const update = Array.from(transformationEditorRows);
+    const [removed] = update.splice(startIndex, 1);
+    update.splice(endIndex, 0, removed);
+    model.changeTransformations(update.map((t) => t.transformation));
+  };
+
   return (
-    <DragDropContext onDragEnd={() => {}}>
+    <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="transformations-list" direction="vertical">
         {(provided) => {
           return (
