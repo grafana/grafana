@@ -56,27 +56,8 @@ export type FieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
 type FieldName = string;
 type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
 
-function addJsonToDataFrame(dataFrame: DataFrame) {
-  const line = dataFrame.fields.find((field) => field.name === 'Line' || field.name === 'body');
-
-  if (line && line.values.length > 0 && line.values[0]) {
-    if (isLogLineJSON(line.values[0])) {
-      line.config = {
-        ...line.config,
-        custom: {
-          ...line.config.custom,
-          cellOptions: {
-            type: TableCellDisplayMode.JSONView,
-          },
-        },
-      };
-    }
-  }
-}
-
 export function LogsTableWrap(props: Props) {
   const { logsFrames, updatePanelState, panelState } = props;
-  logsFrames.forEach((frame) => addJsonToDataFrame(frame));
 
   const propsColumns = panelState?.columns;
   // Save the normalized cardinality of each label
@@ -93,6 +74,8 @@ export function LogsTableWrap(props: Props) {
   const [currentDataFrame, setCurrentDataFrame] = useState<DataFrame>(
     logsFrames.find((f) => f.refId === panelStateRefId) ?? logsFrames[0]
   );
+
+  addJsonToDataFrame(logsFrames);
 
   const getColumnsFromProps = useCallback(
     (fieldNames: FieldNameMetaStore) => {
@@ -571,6 +554,28 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       paddingRight: theme.spacing(1.5),
     }),
   };
+}
+
+function addJsonToDataFrame(logsFrames: DataFrame[]) {
+  console.time('addJsonToDataFrame');
+  logsFrames.forEach((dataFrame) => {
+    dataFrame.fields.forEach((field) => {
+      if (field && field.values.length > 0) {
+        if (field.values.every((value) => isLogLineJSON(value))) {
+          field.config = {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              cellOptions: {
+                type: TableCellDisplayMode.JSONView,
+              },
+            },
+          };
+        }
+      }
+    });
+  });
+  console.timeEnd('addJsonToDataFrame');
 }
 
 export const getLogsTableHeight = () => {
