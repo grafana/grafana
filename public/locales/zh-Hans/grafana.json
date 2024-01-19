@@ -356,6 +356,7 @@
       "title-label": "标题"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "保存更改",
       "subtitle": "下面的 JSON 模型是定义仪表板的数据结构。这包括仪表板设置、面板设置、布局和查询等等。",
       "title": "JSON 模型"
