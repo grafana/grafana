@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,39 +18,32 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
-// This is used just so wire has something unique to return
+// DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
-	plugin        plugins.JSONData
-	client        plugins.Client
-	dsService     datasources.DataSourceService
-	dsCache       datasources.CacheService
+	pluginJSON    plugins.JSONData
+	querier       Querier
+	pluginContext PluginContextProvider
 	accessControl accesscontrol.AccessControl
 }
 
 func RegisterAPIService(
-	cfg *setting.Cfg,
+	querierProvider QuerierProvider,
 	features featuremgmt.FeatureToggles,
-	apiregistration grafanaapiserver.APIRegistrar,
-	pluginClient plugins.Client,
+	apiRegistrar grafanaapiserver.APIRegistrar,
+	pluginContext PluginContextProvider,
 	pluginStore pluginstore.Store,
-	dsService datasources.DataSourceService,
-	dsCache datasources.CacheService,
 	accessControl accesscontrol.AccessControl,
 ) (*DataSourceAPIBuilder, error) {
 	// This requires devmode!
@@ -71,31 +63,35 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData, pluginClient, dsService, dsCache, accessControl)
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData, querierProvider, pluginContext, accessControl)
 		if err != nil {
 			return nil, err
 		}
-		apiregistration.RegisterAPI(builder)
+		apiRegistrar.RegisterAPI(builder)
 	}
 	return builder, nil // only used for wire
 }
 
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
-	client plugins.Client,
-	dsService datasources.DataSourceService,
-	dsCache datasources.CacheService,
+	querierProvider QuerierProvider,
+	pluginContext PluginContextProvider,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
-	group, err := getDatasourceGroupNameFromPluginID(plugin.ID)
+	ri, err := resourceFromPluginID(plugin.ID)
 	if err != nil {
 		return nil, err
 	}
+
+	querier, err := querierProvider.Querier(context.Background(), ri, plugin)
+	if err != nil {
+		return nil, err
+	}
+
 	return &DataSourceAPIBuilder{
-		connectionResourceInfo: v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
-		plugin:                 plugin,
-		client:                 client,
-		dsService:              dsService,
-		dsCache:                dsCache,
+		connectionResourceInfo: ri,
+		pluginJSON:             plugin,
+		querier:                querier,
+		pluginContext:          pluginContext,
 		accessControl:          accessControl,
 	}, nil
 }
@@ -135,16 +131,24 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
+	group, err := getDatasourceGroupNameFromPluginID(pluginID)
+	if err != nil {
+		return common.ResourceInfo{}, err
+	}
+	return v0alpha1.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
+}
+
 func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
+	_ generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
-		builder:      b,
+		builder:      b.querier,
 		resourceInfo: conn,
 		tableConverter: utils.NewTableConverter(
 			conn.GroupResource(),
@@ -175,8 +179,8 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
 
 	// Frontend proxy
-	if len(b.plugin.Routes) > 0 {
-		storage[conn.StoragePath("proxy")] = &subProxyREST{builder: b}
+	if len(b.pluginJSON.Routes) > 0 {
+		storage[conn.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
 	}
 
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
@@ -194,65 +198,4 @@ func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinit
 // Register additional routes with the server
 func (b *DataSourceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil
-}
-
-func (b *DataSourceAPIBuilder) getDataSourcePluginContext(ctx context.Context, name string) (*backend.PluginContext, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ds, err := b.dsCache.GetDatasourceByUID(ctx, name, user, false)
-	if err != nil {
-		return nil, err
-	}
-
-	settings := backend.DataSourceInstanceSettings{}
-	settings.ID = ds.ID
-	settings.UID = ds.UID
-	settings.Name = ds.Name
-	settings.URL = ds.URL
-	settings.Updated = ds.Updated
-	settings.User = ds.User
-	settings.JSONData, err = ds.JsonData.ToDB()
-	if err != nil {
-		return nil, err
-	}
-
-	settings.DecryptedSecureJSONData, err = b.dsService.DecryptedValues(ctx, ds)
-	if err != nil {
-		return nil, err
-	}
-	return &backend.PluginContext{
-		OrgID:                      info.OrgID,
-		PluginID:                   b.plugin.ID,
-		PluginVersion:              b.plugin.Info.Version,
-		User:                       &backend.User{},
-		AppInstanceSettings:        &backend.AppInstanceSettings{},
-		DataSourceInstanceSettings: &settings,
-	}, nil
-}
-
-func (b *DataSourceAPIBuilder) getDataSource(ctx context.Context, name string) (*datasources.DataSource, error) {
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return b.dsCache.GetDatasourceByUID(ctx, name, user, false)
-}
-
-func (b *DataSourceAPIBuilder) getDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
-	orgId, err := request.OrgIDForList(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return b.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
-		OrgID: orgId,
-		Type:  b.plugin.ID,
-	})
 }

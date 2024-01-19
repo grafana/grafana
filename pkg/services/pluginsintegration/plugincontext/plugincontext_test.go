@@ -42,7 +42,7 @@ func TestGet(t *testing.T) {
 	ds := &fakeDatasources.FakeDataSourceService{}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(),
-		pluginstore.New(preg, &pluginFakes.FakeLoader{}),
+		pluginstore.New(preg, &pluginFakes.FakeLoader{}), &fakeDatasources.FakeCacheService{},
 		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	identity := &user.SignedInUser{OrgID: int64(1), Login: "admin"}

@@ -77,8 +77,8 @@ func apiBuilderServices(cfg *setting.Cfg, pluginID string) (
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	bundleregistryService := bundleregistry.ProvideService()
-	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, acimplService, bundleregistryService)
+	bundleRegistry := bundleregistry.ProvideService()
+	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, acimplService, bundleRegistry)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -88,32 +88,32 @@ func apiBuilderServices(cfg *setting.Cfg, pluginID string) (
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	osskmsprovidersService := osskmsproviders.ProvideService(serviceService, cfg, featureToggles)
-	secretsService, err := manager.ProvideSecretsService(secretsStoreImpl, osskmsprovidersService, serviceService, cfg, featureToggles, usageStats)
+	kmsProviders := osskmsproviders.ProvideService(serviceService, cfg, featureToggles)
+	secretsService, err := manager.ProvideSecretsService(secretsStoreImpl, kmsProviders, serviceService, cfg, featureToggles, usageStats)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 	ossImpl := setting.ProvideProvider(cfg)
-	configCfg, err := config.ProvideConfig(ossImpl, cfg, featureToggles)
+	pluginCfg, err := config.ProvideConfig(ossImpl, cfg, featureToggles)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	inMemory := registry.ProvideService()
+	pluginRegistry := registry.ProvideService()
 	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
-	loaderLoader, err := createLoader(configCfg, inMemory)
+	pluginLoader, err := createLoader(pluginCfg, pluginRegistry)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, newPluginSource(cfg, pluginID), loaderLoader)
+	pluginStore, err := pluginstore.ProvideService(pluginRegistry, newPluginSource(cfg, pluginID), pluginLoader)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	secretsKVStore, err := kvstoreService.ProvideService(sqlStore, secretsService, pluginstoreService, kvStore, featureToggles, cfg)
+	secretsKVStore, err := kvstoreService.ProvideService(sqlStore, secretsService, pluginStore, kvStore, featureToggles, cfg)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService()
-	service13, err := datasourceService.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService)
+	dsPermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService()
+	dsService, err := datasourceService.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, dsPermissionsService, quotaService, pluginStore)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -121,7 +121,7 @@ func apiBuilderServices(cfg *setting.Cfg, pluginID string) (
 	ossProvider := guardian.ProvideGuardian()
 	cacheServiceImpl := datasourceService.ProvideCacheService(cacheService, sqlStore, ossProvider)
 
-	return accessControl, pluginstoreService, service13, cacheServiceImpl, nil
+	return accessControl, pluginStore, dsService, cacheServiceImpl, nil
 }
 
 var _ sources.Registry = (*pluginSource)(nil)
