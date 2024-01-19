@@ -418,6 +418,9 @@
       "label": "Ajouter une nouvelle source de données"
     }
   },
+  "dismissable-button": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
     "rich-history": {
@@ -1227,6 +1230,11 @@
     "tooltip": {
       "interval-selected": "Définir l'intervalle d'actualisation automatique",
       "turned-off": "Actualisation automatique désactivée"
+    }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
     }
   },
   "search": {

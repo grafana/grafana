@@ -418,6 +418,9 @@
       "label": "Añadir nueva fuente de datos"
     }
   },
+  "dismissable-button": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
     "rich-history": {
@@ -1227,6 +1230,11 @@
     "tooltip": {
       "interval-selected": "Establecer intervalo de actualización automática",
       "turned-off": "Actualización automática desactivada"
+    }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
     }
   },
   "search": {

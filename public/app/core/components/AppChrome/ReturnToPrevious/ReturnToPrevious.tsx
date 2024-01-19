@@ -24,7 +24,7 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   return (
     <div className={styles.returnToPrevious}>
       <DismissableButton
-        label={t('return-to-previous.button.label', `Back to ${title}`)}
+        label={t('return-to-previous.button.label', 'Back to {{title}}')}
         onClick={handleOnClick}
         onDismiss={closeButton}
       />

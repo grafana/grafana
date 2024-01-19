@@ -408,6 +408,9 @@
       "label": "添加新数据源"
     }
   },
+  "dismissable-button": {
+    "close": ""
+  },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
     "rich-history": {
@@ -1215,6 +1218,11 @@
     "tooltip": {
       "interval-selected": "设置自动刷新间隔",
       "turned-off": "自动刷新关闭"
+    }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
     }
   },
   "search": {

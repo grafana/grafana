@@ -413,6 +413,9 @@
       "label": "Add new data source"
     }
   },
+  "dismissable-button": {
+    "close": "Close"
+  },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "rich-history": {
@@ -1221,6 +1224,11 @@
     "tooltip": {
       "interval-selected": "Set auto refresh interval",
       "turned-off": "Auto refresh off"
+    }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": "Back to {{title}}"
     }
   },
   "search": {

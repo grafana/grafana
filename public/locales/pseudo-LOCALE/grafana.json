@@ -413,6 +413,9 @@
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
     }
   },
+  "dismissable-button": {
+    "close": "Cľőşę"
+  },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "rich-history": {
@@ -1221,6 +1224,11 @@
     "tooltip": {
       "interval-selected": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ",
       "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
+    }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": "ßäčĸ ŧő {{title}}"
     }
   },
   "search": {
