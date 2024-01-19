@@ -20,9 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -33,22 +35,33 @@ type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
 	pluginJSON    plugins.JSONData
-	querier       Querier
-	pluginContext PluginContextProvider
+	client        plugins.Client // will only ever be called with the same pluginid!
+	pluginsConfig PluginConfigProvider
 	accessControl accesscontrol.AccessControl
 }
 
 func RegisterAPIService(
-	querierProvider QuerierProvider,
 	features featuremgmt.FeatureToggles,
 	apiRegistrar grafanaapiserver.APIRegistrar,
-	pluginContext PluginContextProvider,
+	pluginClient plugins.Client, // access to everything
+
+	contextProvider *plugincontext.Provider,
+	dsService datasources.DataSourceService,
+	dsCache datasources.CacheService,
+
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 ) (*DataSourceAPIBuilder, error) {
 	// This requires devmode!
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
+	}
+
+	// TODO? these could have their own wire config?
+	pluginContext := &defaultPluginConfigProvider{
+		dsService:       dsService,
+		dsCache:         dsCache,
+		contextProvider: contextProvider,
 	}
 
 	var err error
@@ -63,7 +76,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData, querierProvider, pluginContext, accessControl)
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData, pluginClient, pluginContext, accessControl)
 		if err != nil {
 			return nil, err
 		}
@@ -74,15 +87,10 @@ func RegisterAPIService(
 
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
-	querierProvider QuerierProvider,
-	pluginContext PluginContextProvider,
+	client plugins.Client,
+	pluginsConfig PluginConfigProvider,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
 	ri, err := resourceFromPluginID(plugin.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	querier, err := querierProvider.Querier(context.Background(), ri, plugin)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +98,8 @@ func NewDataSourceAPIBuilder(
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
-		querier:                querier,
-		pluginContext:          pluginContext,
+		client:                 client,
+		pluginsConfig:          pluginsConfig,
 		accessControl:          accessControl,
 	}, nil
 }
@@ -148,7 +156,8 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
-		builder:      b.querier,
+		pluginID:     b.pluginJSON.ID,
+		configs:      b.pluginsConfig,
 		resourceInfo: conn,
 		tableConverter: utils.NewTableConverter(
 			conn.GroupResource(),
