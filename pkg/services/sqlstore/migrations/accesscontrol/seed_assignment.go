@@ -47,6 +47,7 @@ func AddSeedAssignmentMigrations(mg *migrator.Migrator) {
 			&migrator.Column{Name: "origin", Type: migrator.DB_Varchar, Length: 190, Nullable: true}))
 
 	mg.AddMigration("add origin to plugin seed_assignment", &seedAssignmentOnCallMigrator{})
+	mg.AddMigration("prevent seeding OnCall access", &seedAssignmentOnCallAccessMigrator{})
 }
 
 type seedAssignmentPrimaryKeyMigrator struct {
@@ -141,5 +142,45 @@ func (m *seedAssignmentOnCallMigrator) Exec(sess *xorm.Session, mig *migrator.Mi
 		"grafana-oncall-app%",
 		"plugins:id:grafana-oncall-app",
 	)
+	return err
+}
+
+type seedAssignmentOnCallAccessMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *seedAssignmentOnCallAccessMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *seedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
+	type SeedAssignment struct {
+		BuiltinRole, Action, Scope, Origin string
+	}
+	assigns := []SeedAssignment{}
+	err := sess.SQL(`SELECT builtin_role, action, scope, origin FROM seed_assignment WHERE action = ? AND scope = ?`,
+		"plugins.app:access", "plugins:id:grafana-oncall-app").
+		Find(&assigns)
+	if err != nil {
+		return err
+	}
+	basicRoles := map[string]bool{"Viewer": true, "Editor": true, "Admin": true, "Grafana Admin": true}
+	for i := range assigns {
+		delete(basicRoles, assigns[i].BuiltinRole)
+	}
+	if len(basicRoles) == 0 {
+		return nil
+	}
+
+	toSeed := []SeedAssignment{}
+	for br := range basicRoles {
+		toSeed = append(toSeed, SeedAssignment{
+			BuiltinRole: br,
+			Action:      "plugins.app:access",
+			Scope:       "plugins:id:grafana-oncall-app",
+			Origin:      "grafana-oncall-app",
+		})
+	}
+	_, err = sess.Table("seed_assignment").InsertMulti(&toSeed)
 	return err
 }
