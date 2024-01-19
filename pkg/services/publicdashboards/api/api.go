@@ -41,7 +41,7 @@ func ProvideApi(
 	features featuremgmt.FeatureToggles,
 	md publicdashboards.Middleware,
 	cfg *setting.Cfg,
-	licensing licensing.Licensing,
+	license licensing.Licensing,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
@@ -49,7 +49,7 @@ func ProvideApi(
 		accessControl:          ac,
 		cfg:                    cfg,
 		features:               features,
-		license:                licensing,
+		license:                license,
 		log:                    log.New("publicdashboards.api"),
 		routeRegister:          rr,
 	}
@@ -163,7 +163,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	if pd == nil || (!api.license.FeatureEnabled("publicDashboardsEmailSharing") && pd.Share == EmailShareType) {
-		response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
+		return response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
 	}
 
 	return response.JSON(http.StatusOK, pd)

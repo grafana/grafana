@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,6 +37,7 @@ type PublicDashboardServiceImpl struct {
 	ac                 accesscontrol.AccessControl
 	serviceWrapper     publicdashboards.ServiceWrapper
 	dashboardService   dashboards.DashboardService
+	license            licensing.Licensing
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -54,6 +56,7 @@ func ProvideService(
 	ac accesscontrol.AccessControl,
 	serviceWrapper publicdashboards.ServiceWrapper,
 	dashboardService dashboards.DashboardService,
+	license licensing.Licensing,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -65,6 +68,7 @@ func ProvideService(
 		ac:                 ac,
 		serviceWrapper:     serviceWrapper,
 		dashboardService:   dashboardService,
+		license:            license,
 	}
 }
 
@@ -194,6 +198,12 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	}
 
 	if existingPubdash != nil {
+		// If there is no license and the public dashboard was email-shared, we should update it to public
+		if !pd.license.FeatureEnabled("publicDashboardsEmailSharing") && existingPubdash.Share == EmailShareType {
+			dto.Uid = existingPubdash.Uid
+			dto.PublicDashboard.Share = PublicShareType
+			return pd.Update(ctx, u, dto)
+		}
 		return nil, ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.DashboardUid)
 	}
 
