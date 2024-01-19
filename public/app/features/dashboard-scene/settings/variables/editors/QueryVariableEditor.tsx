@@ -13,6 +13,7 @@ interface QueryVariableEditorProps {
   variable: QueryVariable;
   onRunQuery: () => void;
 }
+type VariableQueryType = QueryVariable['state']['query'];
 
 export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
   const { datasource: datasourceRef, regex, sort, refresh, isMulti, includeAll, allValue, query } = variable.useState();
@@ -48,8 +49,9 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     const datasource: DataSourceRef = { uid: dsInstanceSettings.uid, type: dsInstanceSettings.type };
     variable.setState({ datasource });
   };
-  const onQueryChange = (query: QueryVariable['state']['query']) => {
+  const onQueryChange = (query: VariableQueryType) => {
     variable.setState({ query });
+    onRunQuery();
   };
 
   return (
