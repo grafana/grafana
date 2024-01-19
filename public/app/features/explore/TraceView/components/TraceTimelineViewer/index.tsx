@@ -16,9 +16,9 @@ import { css } from '@emotion/css';
 import React, { RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { TraceToProfilesOptions } from '@grafana/traces';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';

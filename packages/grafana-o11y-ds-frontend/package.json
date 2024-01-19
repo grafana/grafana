@@ -1,7 +1,7 @@
 {
   "author": "Grafana Labs",
   "license": "AGPL-3.0-only",
-  "name": "@grafana/traces",
+  "name": "@grafana/o11y-ds-frontend",
   "private": true,
   "version": "10.4.0-pre",
   "description": "Library to manage traces in Grafana.",
@@ -9,7 +9,7 @@
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
-    "directory": "packages/grafana-traces"
+    "directory": "packages/grafana-o11y-ds-frontend"
   },
   "main": "src/index.ts",
   "types": "src/index.ts",

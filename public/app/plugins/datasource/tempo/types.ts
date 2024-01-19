@@ -1,5 +1,5 @@
 import { DataSourceJsonData } from '@grafana/data/src';
-import { TraceToLogsOptions } from '@grafana/traces';
+import { TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 
 import { NodeGraphOptions } from './_importedDependencies/components/NodeGraphSettings';
 import { LokiQuery } from './_importedDependencies/datasources/loki/types';
