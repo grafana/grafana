@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 
 import { Switch, InteractiveTable, Tooltip, type CellProps, Button, type SortByFn } from '@grafana/ui';
 
-import { type FeatureToggle, useUpdateFeatureTogglesMutation } from './AdminFeatureTogglesAPI';
+import { FeatureToggle, togglesApi } from './AdminFeatureTogglesAPI';
 
 interface Props {
   featureToggles: FeatureToggle[];
@@ -32,7 +32,6 @@ const sortByEnabled: SortByFn<FeatureToggle> = (a, b) => {
 export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdateSuccess }: Props) {
   const serverToggles = useRef<FeatureToggle[]>(featureToggles);
   const [localToggles, setLocalToggles] = useState<FeatureToggle[]>(featureToggles);
-  const [updateFeatureToggles] = useUpdateFeatureTogglesMutation();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleToggleChange = (toggle: FeatureToggle, newValue: boolean) => {
@@ -47,12 +46,10 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
     setIsSaving(true);
     try {
       const modifiedToggles = getModifiedToggles();
-      const resp = await updateFeatureToggles(modifiedToggles);
-      if (!('error' in resp)) {
-        // server toggles successfully updated
-        serverToggles.current = [...localToggles];
-        onUpdateSuccess();
-      }
+      await togglesApi.updateFeatureToggles(modifiedToggles);
+      // Pretend the values came from a new request
+      serverToggles.current = [...localToggles];
+      onUpdateSuccess(); // should trigger a new get
     } finally {
       setIsSaving(false);
     }
