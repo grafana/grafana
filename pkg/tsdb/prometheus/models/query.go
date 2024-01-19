@@ -254,8 +254,8 @@ func interpolateVariables(
 		rateInterval = calculateRateInterval(queryInterval, requestedMinStep)
 	}
 
-	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(queryInterval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(queryInterval))
+	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(calculatedMinStep/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(calculatedMinStep))
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
@@ -263,8 +263,8 @@ func interpolateVariables(
 	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
 
 	// Repetitive code, we should have functionality to unify these
-	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(queryInterval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(queryInterval))
+	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(calculatedMinStep/time.Millisecond), 10))
+	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(calculatedMinStep))
 	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
