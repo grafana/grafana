@@ -71,6 +71,9 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         window.caches.delete(key);
       }
     }
+
+    // NI fork: Tells iframe-host loading indicator when to disappear
+    window.parent.postMessage({ type: 'iframeLoaded' }, window.parent.location.origin);
   }
 
   renderRoute = (route: RouteDescriptor) => {

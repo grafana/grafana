@@ -14,6 +14,11 @@ export interface Props {
 export function Breadcrumbs({ breadcrumbs, className }: Props) {
   const styles = useStyles2(getStyles);
 
+  window.parent.postMessage(
+    { type: 'breadcrumb', breadcrumbs: breadcrumbs.map(b => ({ label: b.text, url: b.href})) },
+    window.parent.location.origin
+  );
+
   return (
     <nav aria-label="Breadcrumbs" className={className}>
       <ol className={styles.breadcrumbs}>

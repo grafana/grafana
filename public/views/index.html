@@ -299,6 +299,8 @@
         var preloader = document.getElementsByClassName("preloader");
         if (preloader.length) {
           preloader[0].className = "preloader preloader--done";
+          // NI fork: Tells iframe-host loading indicator when to disappear
+          window.parent.postMessage({ type: 'iframeLoaded' }, window.parent.location.origin);
         }
       }
 
