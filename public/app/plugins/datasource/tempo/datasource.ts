@@ -21,6 +21,7 @@ import {
   TestDataSourceResponse,
   urlUtil,
 } from '@grafana/data';
+import { TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import {
   BackendSrvRequest,
   config,
@@ -32,7 +33,6 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
-import { TraceToLogsOptions } from '@grafana/traces';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';

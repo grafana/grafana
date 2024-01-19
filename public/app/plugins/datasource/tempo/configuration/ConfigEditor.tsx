@@ -12,8 +12,8 @@ import {
   convertLegacyAuthProps,
   DataSourceDescription,
 } from '@grafana/experimental';
+import { TraceToLogsSection, TraceToMetricsSection, TraceToProfilesSection } from '@grafana/o11y-ds-frontend';
 import { config } from '@grafana/runtime';
-import { TraceToLogsSection, TraceToMetricsSection, TraceToProfilesSection } from '@grafana/traces';
 import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
 
 import { NodeGraphSection } from '../_importedDependencies/components/NodeGraphSettings';

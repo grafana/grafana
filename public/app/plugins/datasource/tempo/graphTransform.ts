@@ -10,7 +10,7 @@ import {
   FieldType,
   toDataFrame,
 } from '@grafana/data';
-import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '@grafana/traces';
+import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '@grafana/o11y-ds-frontend';
 
 /**
  * Row in a trace dataFrame

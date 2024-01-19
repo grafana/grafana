@@ -14,15 +14,15 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 import {
   TraceToProfilesOptions,
   TraceToMetricQuery,
   TraceToMetricsOptions,
   TraceToLogsOptionsV2,
   TraceToLogsTag,
-} from '@grafana/traces';
+} from '@grafana/o11y-ds-frontend';
+import { getTemplateSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
