@@ -91,7 +91,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, [dispatchReduxAction]);
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
-  const queriesInForm = getValues('queries');
 
   const runQueriesPreview = useCallback(
     (condition?: string) => {
@@ -100,9 +99,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         // Grafana Managed rules and recording rules do
         return;
       }
-      runQueries(queriesInForm, condition || (getValues('condition') ?? ''));
+      runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
     },
-    [isCloudAlertRuleType, runQueries, getValues, queriesInForm]
+    [isCloudAlertRuleType, runQueries, getValues]
   );
 
   // whenever we update the queries we have to update the form too
@@ -186,7 +185,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
       // As a workaround we update form values as soon as possible to avoid stale state
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
-      setValue('queries', updatedQueries, { shouldValidate: false });
 
       updateExpressionAndDatasource(updatedQueries);
 
@@ -199,7 +197,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, setValue, updateExpressionAndDatasource]
+    [queries, updateExpressionAndDatasource]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
