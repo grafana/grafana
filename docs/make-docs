@@ -6,7 +6,13 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
-
+# ## 5.2.0 (2024-01-18)
+#
+# ### Changed
+#
+# - Updated `make vale` to use latest Vale style and configuration.
+# - Updated `make vale` to use platform appropriate image.
+#
 # ## 5.1.2 (2023-11-08)
 #
 # ### Added
@@ -704,13 +710,13 @@ case "${image}" in
     "${PODMAN}" run \
                 --init \
                 --interactive \
-                --platform linux/amd64 \
                 --rm \
+                --workdir /etc/vale \
                 --tty \
                 ${volumes} \
                 "${DOCS_IMAGE}" \
                 "--minAlertLevel=${VALE_MINALERTLEVEL}" \
-                --config=/etc/vale/.vale.ini \
+                '--glob=*.md' \
                 --output=line \
                 /hugo/content/docs | sed "s#$(proj_dst "${proj}")#sources#"
     ;;
