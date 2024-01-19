@@ -199,7 +199,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 
 	if existingPubdash != nil {
 		// If there is no license and the public dashboard was email-shared, we should update it to public
-		if !pd.license.FeatureEnabled("publicDashboardsEmailSharing") && existingPubdash.Share == EmailShareType {
+		if !pd.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && existingPubdash.Share == EmailShareType {
 			dto.Uid = existingPubdash.Uid
 			dto.PublicDashboard.Share = PublicShareType
 			return pd.Update(ctx, u, dto)

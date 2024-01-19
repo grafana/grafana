@@ -162,7 +162,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(err)
 	}
 
-	if pd == nil || (!api.license.FeatureEnabled("publicDashboardsEmailSharing") && pd.Share == EmailShareType) {
+	if pd == nil || (!api.license.FeatureEnabled(FeaturePublicDashboardsEmailSharing) && pd.Share == EmailShareType) {
 		return response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
 	}
 
