@@ -55,7 +55,7 @@ func UpdateQueryDataMetrics(err error, errorSource string, dsUrl string, fromAle
 	}
 
 	isCloudLabel := "false"
-	if strings.Contains(dsUrl, "grafana.net") {
+	if strings.Contains(dsUrl, ".grafana.net") {
 		isCloudLabel = "true"
 	}
 
