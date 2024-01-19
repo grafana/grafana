@@ -12,8 +12,9 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { InlineField, Select, Themeable2 } from '@grafana/ui/';
+import { InlineField, Select, TableCellDisplayMode, Themeable2 } from '@grafana/ui/';
 
+import { isLogLineJSON } from '../../../plugins/datasource/loki/lineParser';
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsColumnSearch } from './LogsColumnSearch';
@@ -55,8 +56,30 @@ export type FieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
 type FieldName = string;
 type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
 
+const addJsonToDataFrame = (dataFrame: DataFrame) => {
+  const line = dataFrame.fields.find((field) => field.name === 'Line' || field.name === 'body');
+
+  if (line && line.values.length > 0 && line.values[0]) {
+    if (isLogLineJSON(line.values[0])) {
+      line.config = {
+        ...line.config,
+        custom: {
+          ...line.config.custom,
+          cellOptions: {
+            type: TableCellDisplayMode.JSONView,
+          },
+        },
+      };
+    }
+  }
+
+  console.log('line', line);
+};
+
 export function LogsTableWrap(props: Props) {
   const { logsFrames, updatePanelState, panelState } = props;
+  logsFrames.forEach((frame) => addJsonToDataFrame(frame));
+
   const propsColumns = panelState?.columns;
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
