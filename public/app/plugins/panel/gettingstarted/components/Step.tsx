@@ -15,7 +15,6 @@ interface Props {
 
 export const Step = ({ step }: Props) => {
   const styles = useStyles2(getStyles);
-  console.log('step:', step);
 
   return (
     <div className={styles.setup}>
