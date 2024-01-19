@@ -30,11 +30,11 @@ Data links allow you to provide more granular context to your links. You can cre
 
 The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click a data point or line:
 
-![Time series visualization with a data link displayed](screenshot-time-series-data-link-v10.3.png)
+![Time series visualization with a data link displayed](/media/docs/grafana/panels-visualizations/screenshot-time-series-data-link-v10.3.png)
 
 For visualizations like stat, gauge, or bar gauge you can click anywhere on the visualization to open the context menu:
 
-![Stat visualization with a data link displayed](screenshot-stat-data-link-v10.3.png)
+![Stat visualization with a data link displayed](/media/docs/grafana/panels-visualizations/screenshot-stat-data-link-v10.3.png)
 
 If there's only one data link in the visualization, clicking anywhere on the visualization opens the link rather than the context menu.
 
