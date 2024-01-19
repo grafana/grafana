@@ -56,7 +56,7 @@ export type FieldNameMeta = (InactiveFieldMeta | ActiveFieldMeta) & GenericMeta;
 type FieldName = string;
 type FieldNameMetaStore = Record<FieldName, FieldNameMeta>;
 
-const addJsonToDataFrame = (dataFrame: DataFrame) => {
+function addJsonToDataFrame(dataFrame: DataFrame) {
   const line = dataFrame.fields.find((field) => field.name === 'Line' || field.name === 'body');
 
   if (line && line.values.length > 0 && line.values[0]) {
@@ -72,9 +72,7 @@ const addJsonToDataFrame = (dataFrame: DataFrame) => {
       };
     }
   }
-
-  console.log('line', line);
-};
+}
 
 export function LogsTableWrap(props: Props) {
   const { logsFrames, updatePanelState, panelState } = props;
