@@ -5,9 +5,15 @@ import {
   DataQueryResponseData,
   Field,
   FieldType,
+  PanelData,
   QueryResultMetaStat,
   shallowCompare,
 } from '@grafana/data';
+
+export function combinePanelData(currentData: PanelData, newData: PanelData): PanelData {
+  const series = combineResponses({ data: currentData.series }, { data: newData.series }).data;
+  return { ...currentData, series };
+}
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {

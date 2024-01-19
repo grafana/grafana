@@ -21,14 +21,14 @@ type store interface {
 	Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error)
 
 	// Get returns a folder.
-	Get(ctx context.Context, cmd folder.GetFolderQuery) (*folder.Folder, error)
+	Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error)
 
 	// GetParents returns an ordered list of parent folder of the given folder.
-	GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error)
+	GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error)
 
 	// GetChildren returns the set of immediate children folders (depth=1) of the
 	// given folder.
-	GetChildren(ctx context.Context, cmd folder.GetChildrenQuery) ([]*folder.Folder, error)
+	GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error)
 
 	// GetHeight returns the height of the folder tree. When parentUID is set, the function would
 	// verify in the meanwhile that parentUID is not present in the subtree of the folder with the given UID.

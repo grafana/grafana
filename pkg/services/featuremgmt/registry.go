@@ -212,6 +212,14 @@ var (
 			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "returnToPrevious",
+			Description:  "Enables the return to previous context functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Created:      time.Date(2024, time.January, 9, 11, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
@@ -513,16 +521,6 @@ var (
 			Created:           time.Date(2023, time.June, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "useCachingService",
-			Description:     "When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaOperatorExperienceSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-			AllowSelfServe:  false,
-			Created:         time.Date(2023, time.April, 12, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:           "enableElasticsearchBackendQuerying",
 			Description:    "Enable the processing of queries and responses in the Elasticsearch data source through backend",
 			Stage:          FeatureStageGeneralAvailability,
@@ -753,7 +751,7 @@ var (
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
-			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
+			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
@@ -860,7 +858,7 @@ var (
 		},
 		{
 			Name:        "sseGroupByDatasource",
-			Description: "Send query to the same datasource in a single request when using server side expressions",
+			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
@@ -1288,6 +1286,16 @@ var (
 			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:              "kubernetesFeatureToggles",
+			Description:       "Use the kubernetes API for feature toggle management in the frontend",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaOperatorExperienceSquad,
+			AllowSelfServe:    false,
+			Created:           time.Date(2023, time.December, 22, 3, 43, 0, 0, time.UTC),
+			HideFromAdminPage: true,
+		},
+		{
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
@@ -1330,6 +1338,30 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
 			Created:      time.Date(2024, time.January, 12, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:              "jitterAlertRules",
+			Description:       "Distributes alert rule evaluations more evenly over time, by rule group",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+			RequiresRestart:   true,
+			Created:           time.Date(2024, time.January, 17, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:              "jitterAlertRulesWithinGroups",
+			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: false,
+			RequiresRestart:   true,
+			Created:           time.Date(2024, time.January, 17, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

@@ -15,9 +15,9 @@
     "title": "Grafana Alerting API.",
     "version": "1.1.0"
   },
-  "basePath": "/api/v1",
+  "basePath": "/api",
   "paths": {
-    "/api/alertmanager/grafana/api/v2/alerts": {
+    "/alertmanager/grafana/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -78,7 +78,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/api/v2/alerts/groups": {
+    "/alertmanager/grafana/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -139,7 +139,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/api/v2/silence/{SilenceId}": {
+    "/alertmanager/grafana/api/v2/silence/{SilenceId}": {
       "get": {
         "description": "get silence",
         "tags": [
@@ -199,7 +199,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/api/v2/silences": {
+    "/alertmanager/grafana/api/v2/silences": {
       "get": {
         "description": "get silences",
         "tags": [
@@ -262,7 +262,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/api/v2/status": {
+    "/alertmanager/grafana/api/v2/status": {
       "get": {
         "description": "get alertmanager status and configuration",
         "tags": [
@@ -285,7 +285,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/config/api/v1/alerts": {
+    "/alertmanager/grafana/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": [
@@ -359,7 +359,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/config/api/v1/receivers": {
+    "/alertmanager/grafana/config/api/v1/receivers": {
       "get": {
         "description": "Get a list of all receivers",
         "tags": [
@@ -373,7 +373,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/config/api/v1/receivers/test": {
+    "/alertmanager/grafana/config/api/v1/receivers/test": {
       "post": {
         "tags": [
           "alertmanager"
@@ -435,7 +435,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/config/api/v1/templates/test": {
+    "/alertmanager/grafana/config/api/v1/templates/test": {
       "post": {
         "produces": [
           "application/json"
@@ -482,7 +482,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/config/history": {
+    "/alertmanager/grafana/config/history": {
       "get": {
         "description": "gets Alerting configurations that were successfully applied in the past",
         "tags": [
@@ -505,7 +505,7 @@
         }
       }
     },
-    "/api/alertmanager/grafana/config/history/{id}/_activate": {
+    "/alertmanager/grafana/config/history/{id}/_activate": {
       "post": {
         "description": "revert Alerting configuration to the historical configuration specified by the given id",
         "tags": [
@@ -544,7 +544,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceUID}/api/v2/alerts": {
+    "/alertmanager/{DatasourceUID}/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -664,7 +664,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
+    "/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -738,7 +738,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
+    "/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
       "get": {
         "description": "get silence",
         "tags": [
@@ -824,7 +824,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceUID}/api/v2/silences": {
+    "/alertmanager/{DatasourceUID}/api/v2/silences": {
       "get": {
         "description": "get silences",
         "tags": [
@@ -913,7 +913,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceUID}/api/v2/status": {
+    "/alertmanager/{DatasourceUID}/api/v2/status": {
       "get": {
         "description": "get alertmanager status and configuration",
         "tags": [
@@ -951,7 +951,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
+    "/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": [
@@ -1068,7 +1068,7 @@
         }
       }
     },
-    "/api/prometheus/grafana/api/v1/alerts": {
+    "/prometheus/grafana/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
         "tags": [
@@ -1094,7 +1094,7 @@
         }
       }
     },
-    "/api/prometheus/grafana/api/v1/rules": {
+    "/prometheus/grafana/api/v1/rules": {
       "get": {
         "description": "gets the evaluation statuses of all rules",
         "tags": [
@@ -1133,7 +1133,7 @@
         }
       }
     },
-    "/api/prometheus/{DatasourceUID}/api/v1/alerts": {
+    "/prometheus/{DatasourceUID}/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
         "tags": [
@@ -1165,7 +1165,7 @@
         }
       }
     },
-    "/api/prometheus/{DatasourceUID}/api/v1/rules": {
+    "/prometheus/{DatasourceUID}/api/v1/rules": {
       "get": {
         "description": "gets the evaluation statuses of all rules",
         "tags": [
@@ -1197,7 +1197,7 @@
         }
       }
     },
-    "/api/ruler/grafana/api/v1/export/rules": {
+    "/ruler/grafana/api/v1/export/rules": {
       "get": {
         "description": "List rules in provisioning format",
         "consumes": [
@@ -1264,7 +1264,7 @@
         }
       }
     },
-    "/api/ruler/grafana/api/v1/rules": {
+    "/ruler/grafana/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": [
@@ -1303,7 +1303,7 @@
         }
       }
     },
-    "/api/ruler/grafana/api/v1/rules/{Namespace}": {
+    "/ruler/grafana/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": [
@@ -1409,7 +1409,7 @@
         }
       }
     },
-    "/api/ruler/grafana/api/v1/rules/{Namespace}/export": {
+    "/ruler/grafana/api/v1/rules/{Namespace}/export": {
       "post": {
         "description": "Converts submitted rule group to provisioning format",
         "consumes": [
@@ -1469,7 +1469,7 @@
         }
       }
     },
-    "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
+    "/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": [
@@ -1546,7 +1546,7 @@
         }
       }
     },
-    "/api/ruler/{DatasourceUID}/api/v1/rules": {
+    "/ruler/{DatasourceUID}/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": [
@@ -1598,7 +1598,7 @@
         }
       }
     },
-    "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}": {
+    "/ruler/{DatasourceUID}/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": [
@@ -1743,7 +1743,7 @@
         }
       }
     },
-    "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}": {
+    "/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": [
@@ -1846,7 +1846,7 @@
         }
       }
     },
-    "/api/v1/eval": {
+    "/v1/eval": {
       "post": {
         "description": "Test rule",
         "consumes": [
@@ -1878,7 +1878,7 @@
         }
       }
     },
-    "/api/v1/ngalert": {
+    "/v1/ngalert": {
       "get": {
         "description": "Get the status of the alerting engine",
         "produces": [
@@ -1898,7 +1898,7 @@
         }
       }
     },
-    "/api/v1/ngalert/admin_config": {
+    "/v1/ngalert/admin_config": {
       "get": {
         "produces": [
           "application/json"
@@ -1987,7 +1987,7 @@
         }
       }
     },
-    "/api/v1/ngalert/alertmanagers": {
+    "/v1/ngalert/alertmanagers": {
       "get": {
         "produces": [
           "application/json"
@@ -2007,7 +2007,7 @@
         }
       }
     },
-    "/api/v1/provisioning/alert-rules": {
+    "/v1/provisioning/alert-rules": {
       "get": {
         "tags": [
           "provisioning",
@@ -2064,7 +2064,7 @@
         }
       }
     },
-    "/api/v1/provisioning/alert-rules/export": {
+    "/v1/provisioning/alert-rules/export": {
       "get": {
         "tags": [
           "provisioning",
@@ -2122,7 +2122,7 @@
         }
       }
     },
-    "/api/v1/provisioning/alert-rules/{UID}": {
+    "/v1/provisioning/alert-rules/{UID}": {
       "get": {
         "tags": [
           "provisioning",
@@ -2225,7 +2225,7 @@
         }
       }
     },
-    "/api/v1/provisioning/alert-rules/{UID}/export": {
+    "/v1/provisioning/alert-rules/{UID}/export": {
       "get": {
         "produces": [
           "application/json",
@@ -2274,7 +2274,7 @@
         }
       }
     },
-    "/api/v1/provisioning/contact-points": {
+    "/v1/provisioning/contact-points": {
       "get": {
         "tags": [
           "provisioning",
@@ -2339,7 +2339,7 @@
         }
       }
     },
-    "/api/v1/provisioning/contact-points/export": {
+    "/v1/provisioning/contact-points/export": {
       "get": {
         "tags": [
           "provisioning",
@@ -2392,7 +2392,7 @@
         }
       }
     },
-    "/api/v1/provisioning/contact-points/{UID}": {
+    "/v1/provisioning/contact-points/{UID}": {
       "put": {
         "consumes": [
           "application/json"
@@ -2465,7 +2465,7 @@
         }
       }
     },
-    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
       "get": {
         "tags": [
           "provisioning",
@@ -2551,7 +2551,7 @@
         }
       }
     },
-    "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
       "get": {
         "produces": [
           "application/json",
@@ -2605,7 +2605,7 @@
         }
       }
     },
-    "/api/v1/provisioning/mute-timings": {
+    "/v1/provisioning/mute-timings": {
       "get": {
         "tags": [
           "provisioning",
@@ -2662,7 +2662,7 @@
         }
       }
     },
-    "/api/v1/provisioning/mute-timings/export": {
+    "/v1/provisioning/mute-timings/export": {
       "get": {
         "tags": [
           "provisioning",
@@ -2702,7 +2702,7 @@
         }
       }
     },
-    "/api/v1/provisioning/mute-timings/{name}": {
+    "/v1/provisioning/mute-timings/{name}": {
       "get": {
         "tags": [
           "provisioning",
@@ -2806,7 +2806,7 @@
         }
       }
     },
-    "/api/v1/provisioning/mute-timings/{name}/export": {
+    "/v1/provisioning/mute-timings/{name}/export": {
       "get": {
         "tags": [
           "provisioning",
@@ -2853,7 +2853,7 @@
         }
       }
     },
-    "/api/v1/provisioning/policies": {
+    "/v1/provisioning/policies": {
       "get": {
         "tags": [
           "provisioning",
@@ -2930,7 +2930,7 @@
         }
       }
     },
-    "/api/v1/provisioning/policies/export": {
+    "/v1/provisioning/policies/export": {
       "get": {
         "tags": [
           "provisioning",
@@ -2954,7 +2954,7 @@
         }
       }
     },
-    "/api/v1/provisioning/templates": {
+    "/v1/provisioning/templates": {
       "get": {
         "tags": [
           "provisioning",
@@ -2975,7 +2975,7 @@
         }
       }
     },
-    "/api/v1/provisioning/templates/{name}": {
+    "/v1/provisioning/templates/{name}": {
       "get": {
         "tags": [
           "provisioning",
@@ -3073,7 +3073,7 @@
         }
       }
     },
-    "/api/v1/rule/backtest": {
+    "/v1/rule/backtest": {
       "post": {
         "description": "Test rule",
         "consumes": [
@@ -3105,7 +3105,7 @@
         }
       }
     },
-    "/api/v1/rule/test/grafana": {
+    "/v1/rule/test/grafana": {
       "post": {
         "description": "Test a rule against Grafana ruler",
         "consumes": [
@@ -3146,7 +3146,7 @@
         }
       }
     },
-    "/api/v1/rule/test/{DatasourceUID}": {
+    "/v1/rule/test/{DatasourceUID}": {
       "post": {
         "description": "Test a rule against external data source ruler",
         "consumes": [
@@ -3191,7 +3191,7 @@
         }
       }
     },
-    "/api/v1/rules/history": {
+    "/v1/rules/history": {
       "get": {
         "produces": [
           "application/json"
@@ -3208,7 +3208,7 @@
         }
       }
     },
-    "/api/v1/upgrade/channels": {
+    "/v1/upgrade/channels": {
       "post": {
         "produces": [
           "application/json"
@@ -3237,7 +3237,7 @@
         }
       }
     },
-    "/api/v1/upgrade/channels/{ChannelID}": {
+    "/v1/upgrade/channels/{ChannelID}": {
       "post": {
         "produces": [
           "application/json"
@@ -3266,7 +3266,7 @@
         }
       }
     },
-    "/api/v1/upgrade/dashboards": {
+    "/v1/upgrade/dashboards": {
       "post": {
         "produces": [
           "application/json"
@@ -3286,7 +3286,7 @@
         }
       }
     },
-    "/api/v1/upgrade/dashboards/{DashboardID}": {
+    "/v1/upgrade/dashboards/{DashboardID}": {
       "post": {
         "produces": [
           "application/json"
@@ -3322,7 +3322,7 @@
         }
       }
     },
-    "/api/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}": {
+    "/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}": {
       "post": {
         "produces": [
           "application/json"
@@ -3358,7 +3358,7 @@
         }
       }
     },
-    "/api/v1/upgrade/org": {
+    "/v1/upgrade/org": {
       "get": {
         "produces": [
           "application/json"
@@ -7597,9 +7597,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -7839,7 +7838,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -8027,7 +8025,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -8035,6 +8032,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8275,7 +8273,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
