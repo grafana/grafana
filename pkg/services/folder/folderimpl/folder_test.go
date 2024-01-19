@@ -732,6 +732,49 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	})
 }
 
+func TestFolderServiceDualWrite(t *testing.T) {
+	g := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+	t.Cleanup(func() {
+		guardian.New = g
+	})
+
+	db := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
+	nestedFolderStore := ProvideStore(db, cfg, features)
+
+	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db), &quotatest.FakeQuotaService{})
+	require.NoError(t, err)
+
+	dashboardFolderStore := ProvideDashboardFolderStore(db)
+
+	folderService := &Service{
+		cfg:                  setting.NewCfg(),
+		store:                nestedFolderStore,
+		db:                   sqlstore.InitTestDB(t),
+		dashboardStore:       dashStore,
+		dashboardFolderStore: dashboardFolderStore,
+		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		log:                  log.New("test-folder-service"),
+		accessControl:        acimpl.ProvideAccessControl(cfg),
+		metrics:              newFoldersMetrics(nil),
+	}
+
+	t.Run("When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables", func(t *testing.T) {
+		f, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{SignedInUser: usr, OrgID: orgID, Title: "  my folder  "})
+		require.NoError(t, err)
+
+		dashFolder, err := dashboardFolderStore.GetFolderByUID(context.Background(), orgID, f.UID)
+		require.NoError(t, err)
+
+		nestedFolder, err := nestedFolderStore.Get(context.Background(), folder.GetFolderQuery{UID: &f.UID, OrgID: orgID})
+		require.NoError(t, err)
+
+		assert.Equal(t, dashFolder.Title, nestedFolder.Title)
+	})
+}
+
 func TestNestedFolderService(t *testing.T) {
 	t.Run("with feature flag unset", func(t *testing.T) {
 		t.Run("Should create a folder in both dashboard and folders tables", func(t *testing.T) {
