@@ -16,7 +16,6 @@ interface DataSourceVariableEditorProps {
   includeAll: boolean;
   onChange: (option: SelectableValue) => void;
   optionTypes: Array<{ value: string; label: string }>;
-  onRegExChange: (event: FormEvent<HTMLInputElement>) => void;
   onRegExBlur: (event: FormEvent<HTMLInputElement>) => void;
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
@@ -31,7 +30,6 @@ export function DataSourceVariableForm({
   optionTypes,
   onChange,
   onRegExBlur,
-  onRegExChange,
   multi,
   includeAll,
   allValue,
@@ -53,10 +51,9 @@ export function DataSourceVariableForm({
       />
 
       <VariableTextField
-        value={regex}
+        defaultValue={regex}
         name="Instance name filter"
         placeholder="/.*-(.*)-.*/"
-        onChange={onRegExChange}
         onBlur={onRegExBlur}
         description={
           <div>

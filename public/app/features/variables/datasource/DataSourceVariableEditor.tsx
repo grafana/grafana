@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
-import { DataSourceVariableForm } from 'app/features/dashboard-scene/settings/variables/components/DatasourceVariableForm';
+import { DataSourceVariableForm } from 'app/features/dashboard-scene/settings/variables/components/DataSourceVariableForm';
 
 import { StoreState } from '../../../types';
 import { initialVariableEditorState } from '../editor/reducer';
@@ -54,13 +54,6 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     this.props.initDataSourceVariableEditor(rootStateKey);
   }
 
-  onRegExChange = (event: FormEvent<HTMLInputElement>) => {
-    this.props.onPropChange({
-      propName: 'regex',
-      propValue: event.currentTarget.value,
-    });
-  };
-
   onRegExBlur = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'regex',
@@ -108,7 +101,6 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
         includeAll={variable.includeAll}
         optionTypes={typeOptions}
         onChange={this.onDataSourceTypeChanged}
-        onRegExChange={this.onRegExChange}
         onRegExBlur={this.onRegExBlur}
         onMultiChange={this.onMultiChanged}
         onIncludeAllChange={(event) =>
