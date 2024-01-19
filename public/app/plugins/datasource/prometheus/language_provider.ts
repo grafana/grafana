@@ -239,11 +239,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * Fetches all values for a label, with optional match[]
    * @param name
    * @param match
+   * @param timeRange
    */
-  fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
+  fetchSeriesValuesWithMatch = async (
+    name: string,
+    match?: string,
+    timeRange: TimeRange = this.timeRange
+  ): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
-    const range = this.datasource.getAdjustedInterval(this.timeRange);
+    const range = this.datasource.getAdjustedInterval(timeRange);
     const urlParams = {
       ...range,
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
