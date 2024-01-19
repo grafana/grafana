@@ -288,7 +288,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           : () => <Redirect to="/admin" />,
     },
     {
-      path: '/admin/authentication/advanced/:provider',
+      path: '/admin/authentication/:provider',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component: config.featureToggles.ssoSettingsApi
         ? SafeDynamicImport(
