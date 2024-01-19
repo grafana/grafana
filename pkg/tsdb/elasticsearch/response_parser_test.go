@@ -129,7 +129,7 @@ func TestProcessLogsResponse(t *testing.T) {
 			require.Equal(t, data.FieldTypeNullableFloat64, logsFieldMap["number"].Type())
 
 			require.Contains(t, logsFieldMap, "_source")
-			require.Equal(t, data.FieldTypeNullableJSON, logsFieldMap["_source"].Type())
+			require.Equal(t, data.FieldTypeNullableString, logsFieldMap["_source"].Type())
 
 			requireStringAt(t, "fdsfs", logsFieldMap["_id"], 0)
 			requireStringAt(t, "kdospaidopa", logsFieldMap["_id"], 1)
@@ -138,10 +138,8 @@ func TestProcessLogsResponse(t *testing.T) {
 			requireStringAt(t, "mock-index", logsFieldMap["_index"], 0)
 			requireStringAt(t, "mock-index", logsFieldMap["_index"], 1)
 
-			actualJson1, err := json.Marshal(logsFieldMap["_source"].At(0).(*json.RawMessage))
-			require.NoError(t, err)
-			actualJson2, err := json.Marshal(logsFieldMap["_source"].At(1).(*json.RawMessage))
-			require.NoError(t, err)
+			actualJson1 := logsFieldMap["_source"].At(0).(*string)
+			actualJson2 := logsFieldMap["_source"].At(1).(*string)
 
 			expectedJson1 := `
 					{
@@ -165,8 +163,8 @@ func TestProcessLogsResponse(t *testing.T) {
 						"fields.lvl": "info"
 					}`
 
-			require.JSONEq(t, expectedJson1, string(actualJson1))
-			require.JSONEq(t, expectedJson2, string(actualJson2))
+			require.JSONEq(t, expectedJson1, *actualJson1)
+			require.JSONEq(t, expectedJson2, *actualJson2)
 		})
 
 		t.Run("creates correct level field", func(t *testing.T) {
