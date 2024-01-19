@@ -53,9 +53,8 @@ type userData struct {
 }
 
 func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
-	config := createOAuthConfig(info, cfg, social.GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase: newSocialBase(social.GitlabProviderName, config, info, features, cfg),
+		SocialBase: newSocialBase(social.GitlabProviderName, info, features, cfg),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -85,13 +84,10 @@ func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSetting
 		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	config := createOAuthConfig(newInfo, s.cfg, social.GitlabProviderName)
-
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.info = newInfo
-	s.Config = config
+	s.SocialBase = newSocialBase(social.GitlabProviderName, newInfo, s.features, s.cfg)
 
 	return nil
 }

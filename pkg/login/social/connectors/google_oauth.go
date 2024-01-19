@@ -39,9 +39,8 @@ type googleUserData struct {
 }
 
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
-	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, config, info, features, cfg),
+		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -77,8 +76,6 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	config := createOAuthConfig(newInfo, s.cfg, social.GoogleProviderName)
-
 	if strings.HasPrefix(newInfo.ApiUrl, legacyAPIURL) {
 		s.log.Warn("Using legacy Google API URL, please update your configuration")
 	}
@@ -86,8 +83,7 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.info = newInfo
-	s.Config = config
+	s.SocialBase = newSocialBase(social.GoogleProviderName, newInfo, s.features, s.cfg)
 
 	return nil
 }

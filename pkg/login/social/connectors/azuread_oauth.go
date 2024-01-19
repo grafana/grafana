@@ -73,16 +73,15 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
-	config := createOAuthConfig(info, cfg, social.AzureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, config, info, features, cfg),
+		SocialBase:           newSocialBase(social.AzureADProviderName, info, features, cfg),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], false),
 	}
 
 	if info.UseRefreshToken {
-		appendUniqueScope(config, social.OfflineAccessScope)
+		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -170,17 +169,15 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	config := createOAuthConfig(newInfo, s.cfg, social.AzureADProviderName)
-
-	if newInfo.UseRefreshToken {
-		appendUniqueScope(config, social.OfflineAccessScope)
-	}
-
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.info = newInfo
-	s.Config = config
+	s.SocialBase = newSocialBase(social.AzureADProviderName, newInfo, s.features, s.cfg)
+
+	if newInfo.UseRefreshToken {
+		appendUniqueScope(s.Config, social.OfflineAccessScope)
+	}
+
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
 

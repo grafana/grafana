@@ -33,7 +33,6 @@ type SocialBase struct {
 }
 
 func newSocialBase(name string,
-	config *oauth2.Config,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
@@ -41,7 +40,7 @@ func newSocialBase(name string,
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:   config,
+		Config:   createOAuthConfig(info, cfg, name),
 		info:     info,
 		log:      logger,
 		features: features,

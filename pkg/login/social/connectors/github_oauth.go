@@ -57,9 +57,8 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 
-	config := createOAuthConfig(info, cfg, social.GitHubProviderName)
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, config, info, features, cfg),
+		SocialBase:           newSocialBase(social.GitHubProviderName, info, features, cfg),
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -103,8 +102,6 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	config := createOAuthConfig(newInfo, s.cfg, social.GitHubProviderName)
-
 	teamIdsSplitted := util.SplitString(newInfo.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 
@@ -115,8 +112,7 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.info = newInfo
-	s.Config = config
+	s.SocialBase = newSocialBase(social.GitHubProviderName, newInfo, s.features, s.cfg)
 
 	s.teamIds = teamIds
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
