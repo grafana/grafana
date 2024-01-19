@@ -242,7 +242,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
 
 	for _, tc := range testCases {
-		store.Reset()
+		err := store.Reset()
+		assert.NoError(t, err)
 		t.Run(tc.name, func(t *testing.T) {
 			for _, device := range tc.insertDevices {
 				device.CreatedAt = fixedTime.Add(-10 * time.Hour) // Use fixed time
