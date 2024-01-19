@@ -128,7 +128,7 @@ You can enable feature toggles through configuration file or environment variabl
 {{% /admonition %}}
 
 If you are using [Grafana OnCall](https://grafana.com/docs/oncall/latest/get-started/), you can try out the integration between Grafana OnCall and RBAC.
-For a detailed list of the available OnCall RBAC roles, refer the table in [Available Grafana OnCall RBAC roles and granted actions](https://grafana.com/docs/oncall/latest/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions).
+For a detailed list of the available OnCall RBAC roles, refer to the table in [Available Grafana OnCall RBAC roles and granted actions](https://grafana.com/docs/oncall/latest/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions).
 
 The following table lists the default RBAC OnCall role assignments to the basic roles:
 
