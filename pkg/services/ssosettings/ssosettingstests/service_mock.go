@@ -124,6 +124,36 @@ func (_m *MockService) List(ctx context.Context) ([]*models.SSOSettings, error) 
 	return r0, r1
 }
 
+// ListWithRedactedSecrets provides a mock function with given fields: ctx
+func (_m *MockService) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListWithRedactedSecrets")
+	}
+
+	var r0 []*models.SSOSettings
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*models.SSOSettings, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []*models.SSOSettings); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*models.SSOSettings)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Patch provides a mock function with given fields: ctx, provider, data
 func (_m *MockService) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
 	ret := _m.Called(ctx, provider, data)

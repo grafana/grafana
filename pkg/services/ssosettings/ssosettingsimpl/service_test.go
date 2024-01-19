@@ -415,6 +415,190 @@ func TestSSOSettingsService_List(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "should return error if any of the fallback strategies was not found",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSettings = []*models.SSOSettings{}
+				env.fallbackStrategy.ExpectedIsMatch = false
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			env := setupTestEnv(t)
+			if tc.setup != nil {
+				tc.setup(env)
+			}
+
+			actual, err := env.service.List(context.Background())
+
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.ElementsMatch(t, tc.want, actual)
+		})
+	}
+}
+
+func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
+	testCases := []struct {
+		name    string
+		setup   func(env testEnv)
+		want    []*models.SSOSettings
+		wantErr bool
+	}{
+		{
+			name: "should return successfully",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSettings = []*models.SSOSettings{
+					{
+						Provider: "github",
+						Settings: map[string]any{
+							"enabled":       true,
+							"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+							"client_id":     "client_id",
+						},
+						Source: models.DB,
+					},
+					{
+						Provider: "okta",
+						Settings: map[string]any{
+							"enabled":      false,
+							"other_secret": base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+							"client_id":    "client_id",
+						},
+						Source: models.DB,
+					},
+				}
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+					"github": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+					"okta": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+					"gitlab": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+					"generic_oauth": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+					"google": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+					"azuread": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+					"grafana_com": {
+						"enabled":       true,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
+					},
+				}
+			},
+			want: []*models.SSOSettings{
+				{
+					Provider: "github",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.DB,
+				},
+				{
+					Provider: "okta",
+					Settings: map[string]any{
+						"enabled":       false,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+						"other_secret":  "*********",
+					},
+					Source: models.DB,
+				},
+				{
+					Provider: "gitlab",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
+				},
+				{
+					Provider: "generic_oauth",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
+				},
+				{
+					Provider: "google",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
+				},
+				{
+					Provider: "azuread",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
+				},
+				{
+					Provider: "grafana_com",
+					Settings: map[string]any{
+						"enabled":       true,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name:    "should return error if store returns an error",
 			setup:   func(env testEnv) { env.store.ExpectedError = fmt.Errorf("error") },
 			want:    nil,
@@ -427,63 +611,119 @@ func TestSSOSettingsService_List(t *testing.T) {
 				env.fallbackStrategy.ExpectedIsMatch = true
 				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
 					"github": {
-						"enabled": false,
+						"enabled":       false,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
 					},
 					"okta": {
-						"enabled": false,
+						"enabled":       false,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
 					},
 					"gitlab": {
-						"enabled": false,
+						"enabled":       false,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
 					},
 					"generic_oauth": {
-						"enabled": false,
+						"enabled":       false,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
 					},
 					"google": {
-						"enabled": false,
+						"enabled":       false,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
 					},
 					"azuread": {
-						"enabled": false,
+						"enabled":       false,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
 					},
 					"grafana_com": {
-						"enabled": false,
+						"enabled":       false,
+						"secret":        "secret",
+						"client_secret": "client_secret",
+						"client_id":     "client_id",
 					},
 				}
 			},
 			want: []*models.SSOSettings{
 				{
 					Provider: "github",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
+					Settings: map[string]any{
+						"enabled":       false,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
 				},
 				{
 					Provider: "okta",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
+					Settings: map[string]any{
+						"enabled":       false,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
 				},
 				{
 					Provider: "gitlab",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
+					Settings: map[string]any{
+						"enabled":       false,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
 				},
 				{
 					Provider: "generic_oauth",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
+					Settings: map[string]any{
+						"enabled":       false,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
 				},
 				{
 					Provider: "google",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
+					Settings: map[string]any{
+						"enabled":       false,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
 				},
 				{
 					Provider: "azuread",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
+					Settings: map[string]any{
+						"enabled":       false,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
 				},
 				{
 					Provider: "grafana_com",
-					Settings: map[string]any{"enabled": false},
-					Source:   models.System,
+					Settings: map[string]any{
+						"enabled":       false,
+						"secret":        "*********",
+						"client_secret": "*********",
+						"client_id":     "client_id",
+					},
+					Source: models.System,
 				},
 			},
 			wantErr: false,
@@ -505,7 +745,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 				tc.setup(env)
 			}
 
-			actual, err := env.service.List(context.Background())
+			actual, err := env.service.ListWithRedactedSecrets(context.Background())
 
 			if tc.wantErr {
 				require.Error(t, err)

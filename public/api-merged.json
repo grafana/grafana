@@ -11383,6 +11383,30 @@
         }
       }
     },
+    "/v1/sso-settings": {
+      "get": {
+        "description": "You need to have a permission with action `settings:read` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "tags": [
+          "sso_settings"
+        ],
+        "summary": "List all SSO Settings entries",
+        "operationId": "listAllProvidersSettings",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listSSOSettingsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          }
+        }
+      }
+    },
     "/v1/sso-settings/{key}": {
       "get": {
         "description": "You need to have a permission with action `settings:read` with scope `settings:auth.\u003cprovider\u003e:*`.",
@@ -23121,6 +23145,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/RoleDTO"
+        }
+      }
+    },
+    "listSSOSettingsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SSOSettings"
         }
       }
     },
