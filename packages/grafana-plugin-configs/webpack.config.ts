@@ -90,7 +90,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
             loader: require.resolve('swc-loader'),
             options: {
               jsc: {
-                baseUrl: '.',
+                baseUrl: path.resolve(__dirname),
                 target: 'es2015',
                 loose: false,
                 parser: {
