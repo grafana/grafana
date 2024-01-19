@@ -365,6 +365,7 @@ The following example would add the derived field `traceID regex` based on a reg
 {{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" >}}
 
 ### InfluxDB native SQL support
+
 <!--Ismail Simsek-->
 <!--internal_enablement_video-->
 
