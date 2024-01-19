@@ -129,7 +129,11 @@ export function Drawer({
                 <Text element="h3" {...titleProps}>
                   {title}
                 </Text>
-                {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+                {subtitle && (
+                  <div className={styles.subtitle} data-testid={selectors.components.Drawer.General.subtitle}>
+                    {subtitle}
+                  </div>
+                )}
                 {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>
             </div>

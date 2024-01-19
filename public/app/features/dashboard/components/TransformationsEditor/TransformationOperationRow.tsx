@@ -13,7 +13,7 @@ import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
-import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
+import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
 import { TransformationData } from './TransformationsEditor';
 import { TransformationsEditorTransformation } from './types';
@@ -172,7 +172,7 @@ export const TransformationOperationRow = ({
           toggleShowDebug={toggleShowDebug}
         />
       </QueryOperationRow>
-      <TransformationEditorHelperModal transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
+      <TransformationEditorHelpDisplay transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
     </>
   );
 };
