@@ -204,10 +204,6 @@ func GatewayTimeout(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusGatewayTimeout, msgID, newOpts...)
 }
 
-func Conflict(msgID string, opts ...BaseOpt) Base {
-	return NewBase(StatusConflict, msgID, opts...)
-}
-
 type BaseOpt func(Base) Base
 
 // WithLogLevel sets a custom log level for all errors instantiated from

@@ -204,7 +204,7 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 			err = json.Unmarshal(b, &folderResp)
 			require.NoError(t, err)
 			assert.Equal(t, other, folderResp.ParentUID)
-			subfolderUnderOther := folderResp.Uid
+			subfolderUnderOther := folderResp.UID
 
 			t.Run("move subfolder to other folder containing folder with that name should fail", func(t *testing.T) {
 				buf.Reset()
@@ -281,5 +281,5 @@ func createFolder(t *testing.T, grafanaListedAddr string, buf *bytes.Buffer) str
 	var folderResp dtos.Folder
 	err = json.Unmarshal(b, &folderResp)
 	require.NoError(t, err)
-	return folderResp.Uid
+	return folderResp.UID
 }
