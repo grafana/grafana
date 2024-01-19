@@ -8,8 +8,9 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
@@ -24,32 +25,39 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		return nil, fmt.Errorf("only %s is currently supported", pluginID)
 	}
 
-	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-		// TODO: Add support for args?
-	})
-	if err != nil {
-		return nil, err
-	}
+	// cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+	// 	// TODO: Add support for args?
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	_, pluginStore, _, _, err := apiBuilderServices(cfg, pluginID)
-	if err != nil {
-		return nil, err
-	}
+	// _, pluginStore, _, _, err := apiBuilderServices(cfg, pluginID)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	td, exists := pluginStore.Plugin(context.Background(), pluginID)
-	if !exists {
-		return nil, fmt.Errorf("plugin %s not found", pluginID)
-	}
+	// td, exists := pluginStore.Plugin(context.Background(), pluginID)
+	// if !exists {
+	// 	return nil, fmt.Errorf("plugin %s not found", pluginID)
+	// }
 
 	return NewDataSourceAPIBuilder(
-		td.JSONData,
+		plugins.JSONData{
+			ID: pluginID,
+		},
 		testdatasource.ProvideService(), // the client
-		&testdataPluginConfigProvider{},
-		acimpl.ProvideAccessControl(cfg),
+		&testdataPluginConfigProvider{
+			startup: v1.Now(),
+		},
+		&actest.FakeAccessControl{ExpectedEvaluate: true},
 	)
 }
 
-type testdataPluginConfigProvider struct{}
+// Simple stub for standalone testing
+type testdataPluginConfigProvider struct {
+	startup v1.Time
+}
 
 var (
 	_ PluginConfigProvider = (*testdataPluginConfigProvider)(nil)
@@ -71,12 +79,19 @@ func (p *testdataPluginConfigProvider) GetDataSource(ctx context.Context, plugin
 
 // ListDatasources implements PluginConfigProvider.
 func (p *testdataPluginConfigProvider) ListDatasources(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
 	return &v0alpha1.DataSourceConnectionList{
 		TypeMeta: v0alpha1.GenericConnectionResourceInfo.TypeMeta(),
 		Items: []v0alpha1.DataSourceConnection{
 			{
 				ObjectMeta: v1.ObjectMeta{
-					Name: "PD8C576611E62080A",
+					Name:              "PD8C576611E62080A",
+					Namespace:         info.Value, // the raw namespace value
+					CreationTimestamp: p.startup,
 				},
 				Title: "gdev-testdata",
 			},
