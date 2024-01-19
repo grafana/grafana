@@ -271,7 +271,7 @@ func (s *SSOSettingsService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			//TODO: TEMPORARILY TURN OFF BACKGROUND JOB RELOADING s.doReload(ctx)
+			s.doReload(ctx)
 
 		case <-ctx.Done():
 			return ctx.Err()

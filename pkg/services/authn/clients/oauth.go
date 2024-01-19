@@ -39,6 +39,9 @@ const (
 )
 
 var (
+	errOAuthClientDisabled = errutil.BadRequest("auth.oauth.disabled", errutil.WithPublicMessage("OAuth client is disabled"))
+	errOAuthInternal       = errutil.Internal("auth.oauth.internal", errutil.WithPublicMessage("An internal error occurred in the OAuth client"))
+
 	errOAuthGenPKCE     = errutil.Internal("auth.oauth.pkce.internal", errutil.WithPublicMessage("An internal error occurred"))
 	errOAuthMissingPKCE = errutil.BadRequest("auth.oauth.pkce.missing", errutil.WithPublicMessage("Missing required pkce cookie"))
 
@@ -88,6 +91,12 @@ func (c *OAuth) Name() string {
 
 func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	r.SetMeta(authn.MetaKeyAuthModule, c.moduleName)
+
+	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if !oauthCfg.Enabled {
+		return nil, errOAuthClientDisabled.Errorf("oauth client is disabled: %s", c.providerName)
+	}
+
 	// get hashed state stored in cookie
 	stateCookie, err := r.HTTPRequest.Cookie(oauthStateCookieName)
 	if err != nil {
@@ -97,8 +106,6 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	if stateCookie.Value == "" {
 		return nil, errOAuthMissingState.Errorf("missing state value in state cookie")
 	}
-
-	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
 
 	// get state returned by the idp and hash it
 	stateQuery := hashOAuthState(r.HTTPRequest.URL.Query().Get(oauthStateQueryName), c.cfg.SecretKey, oauthCfg.ClientSecret)
@@ -120,8 +127,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	connector, errConnector := c.socialService.GetConnector(c.providerName)
 	httpClient, errHTTPClient := c.socialService.GetOAuthHttpClient(c.providerName)
 	if errConnector != nil || errHTTPClient != nil {
-		c.log.Error("Failed to configure oauth client", "client", c.name, "err", errors.Join(errConnector, errHTTPClient))
-		return nil, errConnector
+		return nil, errOAuthInternal.Errorf("failed to get %s oauth client: %w", c.name, errors.Join(errConnector, errHTTPClient))
 	}
 
 	clientCtx := context.WithValue(ctx, oauth2.HTTPClient, httpClient)
@@ -188,6 +194,9 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	var opts []oauth2.AuthCodeOption
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if !oauthCfg.Enabled {
+		return nil, errOAuthClientDisabled.Errorf("oauth client is disabled: %s", c.providerName)
+	}
 
 	if oauthCfg.HostedDomain != "" {
 		opts = append(opts, oauth2.SetAuthURLParam(hostedDomainParamName, oauthCfg.HostedDomain))
@@ -209,7 +218,10 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 		return nil, errOAuthGenState.Errorf("failed to generate state: %w", err)
 	}
 
-	connector, _ := c.socialService.GetConnector(c.providerName)
+	connector, err := c.socialService.GetConnector(c.providerName)
+	if err != nil {
+		return nil, errOAuthInternal.Errorf("failed to get %s oauth connector: %w", c.name, err)
+	}
 
 	return &authn.Redirect{
 		URL: connector.AuthCodeURL(state, opts...),
@@ -229,20 +241,24 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester, info *login
 	}
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if !oauthCfg.Enabled {
+		c.log.FromContext(ctx).Debug("OAuth client is disabled")
+		return nil, false
+	}
 
-	redirctURL := getOAuthSignoutRedirectURL(c.cfg, oauthCfg)
-	if redirctURL == "" {
+	redirectURL := getOAuthSignoutRedirectURL(c.cfg, oauthCfg)
+	if redirectURL == "" {
 		c.log.FromContext(ctx).Debug("No signout redirect url configured")
 		return nil, false
 	}
 
-	if isOICDLogout(redirctURL) && token != nil && token.Valid() {
+	if isOICDLogout(redirectURL) && token != nil && token.Valid() {
 		if idToken, ok := token.Extra("id_token").(string); ok {
-			redirctURL = withIDTokenHint(redirctURL, idToken)
+			redirectURL = withIDTokenHint(redirectURL, idToken)
 		}
 	}
 
-	return &authn.Redirect{URL: redirctURL}, true
+	return &authn.Redirect{URL: redirectURL}, true
 }
 
 // genPKCECodeVerifier returns code verifier that 128 characters random URL-friendly string.
