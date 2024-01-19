@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -68,7 +69,7 @@ func setupTestServer(
 	}
 
 	// build api, this will mount the routes at the same time if the feature is enabled
-	ProvideApi(service, rr, ac, features, &Middleware{}, cfg)
+	ProvideApi(service, rr, ac, features, &Middleware{}, cfg, licensingtest.NewFakeLicensing())
 
 	// connect routes to mux
 	rr.Register(m.Router)
