@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
 
-import { DecoratedRevisionModel } from '../VersionsEditView';
+import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 
 import { RevertDashboardModal } from './RevertDashboardModal';
 
@@ -12,10 +12,9 @@ type VersionsTableProps = {
   versions: DecoratedRevisionModel[];
   canCompare: boolean;
   onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
-  onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
 };
 
-export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }: VersionsTableProps) => {
+export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsTableProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -61,9 +60,8 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
                         icon="history"
                         onClick={() => {
                           showModal(RevertDashboardModal, {
-                            version,
+                            version: version.version,
                             hideModal,
-                            onRestore,
                           });
                         }}
                       >
