@@ -194,7 +194,7 @@ func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Request
 
 		permission := dashboardPermissionMap[hs.dashboardPermissionsService.MapActions(p)]
 
-		metrics.MFolderIDsAPICount.Inc()
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboardACL).Inc()
 		acl = append(acl, &dashboards.DashboardACLInfoDTO{
 			OrgID:          dashboard.OrgID,
 			DashboardID:    dashboard.ID,
