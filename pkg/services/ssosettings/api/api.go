@@ -116,7 +116,6 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 		}
 
 		authorizedProviders = append(authorizedProviders, provider)
-
 	}
 
 	return authorizedProviders, nil

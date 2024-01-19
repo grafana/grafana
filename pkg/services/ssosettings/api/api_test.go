@@ -509,7 +509,6 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to read response body: %v", err)
 			}
-			defer res.Body.Close()
 
 			if tt.wantErr {
 				var accessErrorResponse struct {
@@ -531,6 +530,8 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 			require.NoError(t, err)
 
 			require.ElementsMatch(t, tt.expectedResult, actual)
+			err = res.Body.Close()
+			require.NoError(t, err)
 		})
 	}
 }
