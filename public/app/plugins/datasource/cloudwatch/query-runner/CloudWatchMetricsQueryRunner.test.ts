@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 import { CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
 import { dateTime } from '@grafana/data/src/datetime/moment_wrapper';
 import { toDataQueryResponse } from '@grafana/runtime';
-import * as redux from 'app/store/store';
 
 import {
   namespaceVariable,
@@ -89,6 +88,68 @@ describe('CloudWatchMetricsQueryRunner', () => {
         const response = received[0];
         expect(response.data[0].fields[0].config.interval).toEqual(60000);
         expect(response.data[1].fields[0].config.interval).toEqual(120000);
+      });
+    });
+
+    it('should enrich the error message for throttling errors', async () => {
+      const partialQuery: CloudWatchMetricsQuery = {
+        metricQueryType: MetricQueryType.Search,
+        metricEditorMode: MetricEditorMode.Builder,
+        queryMode: 'Metrics',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {
+          InstanceId: 'i-12345678',
+        },
+        statistic: 'Average',
+        period: '300',
+        expression: '',
+        id: '',
+        region: '',
+        refId: '',
+      };
+
+      const queries: CloudWatchMetricsQuery[] = [
+        { ...partialQuery, refId: 'A', region: 'us-east-1' },
+        { ...partialQuery, refId: 'B', region: 'us-east-2' },
+      ];
+
+      const dataWithThrottlingError = {
+        data: {
+          message: 'Throttling: exception',
+          results: {
+            A: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'A',
+              meta: {},
+            },
+            B: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'B',
+              meta: {},
+            },
+          },
+        },
+      };
+      const expectedUsEast1Message =
+        'Please visit the AWS Service Quotas console at https://us-east-1.console.aws.amazon.com/servicequotas/home?region=us-east-1#!/services/monitoring/quotas/L-5E141212 to request a quota increase or see our documentation at https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas to learn more. Throttling: exception';
+      const expectedUsEast2Message =
+        'Please visit the AWS Service Quotas console at https://us-east-2.console.aws.amazon.com/servicequotas/home?region=us-east-2#!/services/monitoring/quotas/L-5E141212 to request a quota increase or see our documentation at https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas to learn more. Throttling: exception';
+
+      const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
+        response: toDataQueryResponse(dataWithThrottlingError),
+      });
+
+      await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
+        expect(received[0].errors).toHaveLength(2);
+        expect(received[0]?.errors?.[0].message).toEqual(expectedUsEast1Message);
+        expect(received[0]?.errors?.[1].message).toEqual(expectedUsEast2Message);
       });
     });
 
@@ -198,102 +259,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
           const result = received[0];
           expect(getFrameDisplayName(result.data[0])).toBe('CPUUtilization_Average');
           expect(result.data[0].fields[1].values[0]).toBe(1);
-        });
-      });
-    });
-    describe('and throttling exception is thrown', () => {
-      const partialQuery: CloudWatchMetricsQuery = {
-        metricQueryType: MetricQueryType.Search,
-        metricEditorMode: MetricEditorMode.Builder,
-        queryMode: 'Metrics',
-        namespace: 'AWS/EC2',
-        metricName: 'CPUUtilization',
-        dimensions: {
-          InstanceId: 'i-12345678',
-        },
-        statistic: 'Average',
-        period: '300',
-        expression: '',
-        id: '',
-        region: '',
-        refId: '',
-      };
-
-      const queries: CloudWatchMetricsQuery[] = [
-        { ...partialQuery, refId: 'A', region: 'us-east-1' },
-        { ...partialQuery, refId: 'B', region: 'us-east-2' },
-        { ...partialQuery, refId: 'C', region: 'us-east-1' },
-        { ...partialQuery, refId: 'D', region: 'us-east-2' },
-        { ...partialQuery, refId: 'E', region: 'eu-north-1' },
-      ];
-
-      const dataWithThrottlingError = {
-        data: {
-          message: 'Throttling: exception',
-          results: {
-            A: {
-              frames: [],
-              series: [],
-              tables: [],
-              error: 'Throttling: exception',
-              refId: 'A',
-              meta: {},
-            },
-            B: {
-              frames: [],
-              series: [],
-              tables: [],
-              error: 'Throttling: exception',
-              refId: 'B',
-              meta: {},
-            },
-            C: {
-              frames: [],
-              series: [],
-              tables: [],
-              error: 'Throttling: exception',
-              refId: 'C',
-              meta: {},
-            },
-            D: {
-              frames: [],
-              series: [],
-              tables: [],
-              error: 'Throttling: exception',
-              refId: 'D',
-              meta: {},
-            },
-            E: {
-              frames: [],
-              series: [],
-              tables: [],
-              error: 'Throttling: exception',
-              refId: 'E',
-              meta: {},
-            },
-          },
-        },
-      };
-
-      beforeEach(() => {
-        redux.setStore({
-          ...redux.store,
-          dispatch: jest.fn(),
-        });
-      });
-
-      it('should display one alert error message per region+datasource combination', async () => {
-        const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
-          response: toDataQueryResponse(dataWithThrottlingError),
-        });
-        const memoizedDebounceSpy = jest.spyOn(runner, 'debouncedThrottlingAlert');
-
-        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
-          expect(received[0].errors).toHaveLength(5);
-          expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-1');
-          expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-2');
-          expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'eu-north-1');
-          expect(memoizedDebounceSpy).toBeCalledTimes(3);
         });
       });
     });
