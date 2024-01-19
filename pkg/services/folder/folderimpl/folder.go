@@ -457,7 +457,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// well, but for now we take the UID from the newly created folder.
 			UID:         dash.UID,
 			OrgID:       cmd.OrgID,
-			Title:       cmd.Title,
+			Title:       dashFolder.Title,
 			Description: cmd.Description,
 			ParentUID:   cmd.ParentUID,
 		}
