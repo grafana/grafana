@@ -30,7 +30,6 @@ type AlertingStore interface {
 	MarkConfigurationAsApplied(ctx context.Context, cmd *models.MarkConfigurationAsAppliedCmd) error
 	GetAppliedConfigurations(ctx context.Context, orgID int64, limit int) ([]*models.HistoricAlertConfiguration, error)
 	GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error)
-	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (result models.RulesGroup, err error)
 }
 
 // DBstore stores the alert definitions and instances in the database.
