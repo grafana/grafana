@@ -20,8 +20,6 @@ type NotificationSettings struct {
 	RepeatInterval    *model.Duration
 	MuteTimeIntervals []string
 
-	// Cached hash of the settings.
-	hash data.Fingerprint
 }
 
 // ToLabels converts the NotificationSettings object into a data.Labels object.
@@ -73,32 +71,7 @@ func (s *NotificationSettings) IsAllDefault() bool {
 	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0
 }
 
-// normalize ensures that settings are in a consistent canonical form. This is necessary so that congruent settings
-// have the same fingerprint.
-func (s *NotificationSettings) normalize() {
-	// Folder and alert rule name are always included in the groupings.
-	var groupByString []string
-	for _, gb := range s.GroupBy {
-		if gb == models.FolderTitleLabel || gb == model.AlertNameLabel {
-			continue
-		}
-		groupByString = append(groupByString, gb)
-	}
-
-	if len(groupByString) > 0 {
-		s.GroupBy = append([]string{models.FolderTitleLabel, model.AlertNameLabel}, groupByString...)
-	} else {
-		s.GroupBy = groupByString
-	}
-}
-
 func (s *NotificationSettings) Fingerprint() data.Fingerprint {
-	if s.hash != 0 {
-		return s.hash
-	}
-	// Ensure that the settings are normalized before fingerprinting.
-	s.normalize()
-
 	h := fnv.New64()
 	tmp := make([]byte, 8)
 
@@ -128,6 +101,5 @@ func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 	for _, interval := range s.MuteTimeIntervals {
 		writeString(interval)
 	}
-	s.hash = data.Fingerprint(h.Sum64())
-	return s.hash
+	return data.Fingerprint(h.Sum64())
 }
