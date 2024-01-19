@@ -16,9 +16,10 @@ type DiffViewProps = {
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
   diffData: { lhs: string; rhs: string };
+  onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
 };
 
-export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest }: DiffViewProps) => {
+export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest, onRestore }: DiffViewProps) => {
   const diff = jsonDiff(diffData.lhs, diffData.rhs);
   const styles = useStyles2(getStyles);
 
@@ -44,7 +45,8 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
                   icon="history"
                   onClick={() => {
                     showModal(RevertDashboardModal, {
-                      version: baseInfo.version,
+                      version: baseInfo,
+                      onRestore,
                       hideModal,
                     });
                   }}
@@ -70,13 +72,13 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
 
 const getStyles = (theme: GrafanaTheme2) => ({
   spacer: css({
-    'margin-bottom': theme.spacing(4),
+    marginBottom: theme.spacing(4),
   }),
   versionInfo: css({
     color: theme.colors.text.secondary,
-    'font-size': theme.typography.bodySmall.fontSize,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   noMarginBottom: css({
-    'margin-bottom': 0,
+    marginBottom: 0,
   }),
 });

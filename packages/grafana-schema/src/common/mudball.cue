@@ -256,6 +256,8 @@ BarGaugeSizing: "auto" | "manual" @cuetsy(kind="enum")
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
+	maxWidth?: number
+	maxHeight?: number
 } @cuetsy(kind="interface")
 
 Labels: {

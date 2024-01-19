@@ -152,7 +152,47 @@ describe('InfiniteScroll', () => {
         expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
       });
 
-      describe('With absolute range', () => {
+      test('Requests newer logs from the most recent timestamp', async () => {
+        const startPosition = order === LogsSortOrder.Descending ? 10 : 90; // Scroll top
+        const endPosition = order === LogsSortOrder.Descending ? 0 : 100; // Scroll bottom
+
+        const loadMoreMock = jest.fn();
+        const { element, events } = setup(loadMoreMock, startPosition);
+
+        expect(await screen.findByTestId('contents')).toBeInTheDocument();
+        element.scrollTop = endPosition;
+
+        act(() => {
+          events['scroll'](new Event('scroll'));
+        });
+
+        expect(loadMoreMock).toHaveBeenCalledWith({
+          from: rows[rows.length - 1].timeEpochMs,
+          to: absoluteRange.to,
+        });
+      });
+
+      test('Requests older logs from the oldest timestamp', async () => {
+        const startPosition = order === LogsSortOrder.Ascending ? 10 : 90; // Scroll top
+        const endPosition = order === LogsSortOrder.Ascending ? 0 : 100; // Scroll bottom
+
+        const loadMoreMock = jest.fn();
+        const { element, events } = setup(loadMoreMock, startPosition);
+
+        expect(await screen.findByTestId('contents')).toBeInTheDocument();
+        element.scrollTop = endPosition;
+
+        act(() => {
+          events['scroll'](new Event('scroll'));
+        });
+
+        expect(loadMoreMock).toHaveBeenCalledWith({
+          from: absoluteRange.from,
+          to: rows[0].timeEpochMs,
+        });
+      });
+
+      describe('With absolute range matching visible range', () => {
         function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowModel[]) {
           const { element, events } = getMockElement(startPosition);
           render(
@@ -175,6 +215,7 @@ describe('InfiniteScroll', () => {
         ])(
           'It does not request more when scrolling %s',
           async (_: string, startPosition: number, endPosition: number) => {
+            // Visible range matches the current range
             const rows = createLogRows(absoluteRange.from, absoluteRange.to);
             const loadMoreMock = jest.fn();
             const { element, events } = setup(loadMoreMock, startPosition, rows);
@@ -188,11 +229,12 @@ describe('InfiniteScroll', () => {
 
             expect(loadMoreMock).not.toHaveBeenCalled();
             expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+            expect(await screen.findByTestId('end-of-range')).toBeInTheDocument();
           }
         );
       });
 
-      describe('With relative range', () => {
+      describe('With relative range matching visible range', () => {
         function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowModel[]) {
           const { element, events } = getMockElement(startPosition);
           render(
@@ -215,6 +257,7 @@ describe('InfiniteScroll', () => {
         ])(
           'It does not request more when scrolling %s',
           async (_: string, startPosition: number, endPosition: number) => {
+            // Visible range matches the current range
             const rows = createLogRows(absoluteRange.from, absoluteRange.to);
             const loadMoreMock = jest.fn();
             const { element, events } = setup(loadMoreMock, startPosition, rows);
@@ -228,6 +271,7 @@ describe('InfiniteScroll', () => {
 
             expect(loadMoreMock).not.toHaveBeenCalled();
             expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+            expect(await screen.findByTestId('end-of-range')).toBeInTheDocument();
           }
         );
       });
