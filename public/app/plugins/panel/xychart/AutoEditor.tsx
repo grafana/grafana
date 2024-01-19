@@ -88,6 +88,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
             onChange({
               ...value,
               frame: v?.value!,
+              x: undefined,
             });
           }}
         />
