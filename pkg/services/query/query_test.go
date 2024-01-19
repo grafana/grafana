@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -33,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -97,16 +97,6 @@ func TestParseMetricRequest(t *testing.T) {
 		// Make sure we end up with something valid
 		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
 		require.NoError(t, err)
-
-		t.Run("Should forward user and org ID to QueryData from expression request", func(t *testing.T) {
-			require.NotNil(t, tc.pluginContext.req)
-			require.NotNil(t, tc.pluginContext.req.PluginContext.User)
-			require.Equal(t, tc.signedInUser.Login, tc.pluginContext.req.PluginContext.User.Login)
-			require.Equal(t, tc.signedInUser.Name, tc.pluginContext.req.PluginContext.User.Name)
-			require.Equal(t, tc.signedInUser.Email, tc.pluginContext.req.PluginContext.User.Email)
-			require.Equal(t, string(tc.signedInUser.OrgRole), tc.pluginContext.req.PluginContext.User.Role)
-			require.Equal(t, tc.signedInUser.OrgID, tc.pluginContext.req.PluginContext.OrgID)
-		})
 	})
 
 	t.Run("Test a simple mixed datasource query", func(t *testing.T) {
@@ -470,16 +460,10 @@ func setup(t *testing.T) *testContext {
 	}
 
 	pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg,
-		localcache.ProvideService(), &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "postgres"}},
-				{JSONData: plugins.JSONData{ID: "testdata"}},
-				{JSONData: plugins.JSONData{ID: "mysql"}},
-			},
-		}, fakeDatasourceService,
+		localcache.ProvideService(), &pluginstore.FakePluginStore{}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
-	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
+	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc,
 		&featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest())
 	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider) // provider belonging to this package
 	return &testContext{
@@ -543,19 +527,19 @@ func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasource
 }
 
 type fakePluginClient struct {
-	plugins.Client
-	req *backend.QueryDataRequest
+	pluginclient.Client
+	req *pluginclient.QueryDataRequest
 	mu  sync.Mutex
 }
 
-func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (c *fakePluginClient) QueryData(ctx context.Context, req *pluginclient.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.req = req
 
 	// If an expression query ends up getting directly queried, we want it to return an error in our test.
-	if req.PluginContext.PluginID == expr.DatasourceUID {
+	if req.Reference.PluginID() == expr.DatasourceUID {
 		return nil, errors.New("cant query an expression datasource")
 	}
 

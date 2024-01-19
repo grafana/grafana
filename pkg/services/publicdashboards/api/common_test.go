@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -119,7 +120,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	// default fakePluginClient
 	if fpc == nil {
 		fpc = &fakePluginClient{
-			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			QueryDataHandlerFunc: func(ctx context.Context, req *pluginclient.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
 					"A": backend.DataResponse{
 						Frames: []*data.Frame{{}},
@@ -164,11 +165,11 @@ func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) 
 
 // copied from pkg/api/plugins_test.go
 type fakePluginClient struct {
-	plugins.Client
-	backend.QueryDataHandlerFunc
+	pluginclient.Client
+	pluginclient.QueryDataHandlerFunc
 }
 
-func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (c *fakePluginClient) QueryData(ctx context.Context, req *pluginclient.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if c.QueryDataHandlerFunc != nil {
 		return c.QueryDataHandlerFunc.QueryData(ctx, req)
 	}

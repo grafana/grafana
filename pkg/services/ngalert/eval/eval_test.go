@@ -590,7 +590,7 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), store)
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), store)
 			evalCtx := NewContext(context.Background(), u)
 
 			err := evaluator.Validate(evalCtx, condition)
@@ -708,7 +708,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				cache:        cacheService,
 				pluginsStore: store,
 			})
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()), store)
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()), store)
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)

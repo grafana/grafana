@@ -15,10 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,7 +41,7 @@ func ProvideService(
 	dataSourceCache datasources.CacheService,
 	expressionService *expr.Service,
 	pluginRequestValidator validations.PluginRequestValidator,
-	pluginClient plugins.Client,
+	pluginClient pluginclient.Client,
 	pCtxProvider *plugincontext.Provider,
 ) *ServiceImpl {
 	g := &ServiceImpl{
@@ -72,7 +72,7 @@ type ServiceImpl struct {
 	dataSourceCache        datasources.CacheService
 	expressionService      *expr.Service
 	pluginRequestValidator validations.PluginRequestValidator
-	pluginClient           plugins.Client
+	pluginClient           pluginclient.Client
 	pCtxProvider           *plugincontext.Provider
 	log                    log.Logger
 	concurrentQueryLimit   int
@@ -253,14 +253,10 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		}
 	}
 
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
-	if err != nil {
-		return nil, err
-	}
-	req := &backend.QueryDataRequest{
-		PluginContext: pCtx,
-		Headers:       map[string]string{},
-		Queries:       []backend.DataQuery{},
+	req := &pluginclient.QueryDataRequest{
+		Reference: pluginclient.DatasourceRef(ds.Type, pluginclient.WithDatasource(ds)),
+		Headers:   map[string]string{},
+		Queries:   []backend.DataQuery{},
 	}
 
 	for _, q := range queries {
