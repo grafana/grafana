@@ -24,7 +24,7 @@ import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
-import { getAllRulesSourceNames } from './utils/datasource';
+import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -77,6 +77,9 @@ const RuleList = withErrorBoundary(
       return noRules && state.dispatched;
     });
 
+    const grafanaRules = useUnifiedAlertingSelector((state) => state.rulerRules[GRAFANA_RULES_SOURCE_NAME]?.result);
+    const hasGrafanaRules = Object.keys(grafanaRules ?? {}).length > 0;
+
     const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
@@ -126,7 +129,7 @@ const RuleList = withErrorBoundary(
                 <RuleStats namespaces={filteredNamespaces} />
               </div>
               <Stack direction="row" gap={0.5}>
-                <MoreActionsRuleButtons />
+                <MoreActionsRuleButtons enableExport={hasGrafanaRules} />
               </Stack>
             </div>
           </>

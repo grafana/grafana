@@ -3,9 +3,8 @@ import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
-import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
-import { invalidTimeShiftError } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 
+import { IntervalInput, invalidTimeShiftError } from '../_importedDependencies/grafana-traces/src';
 import { TempoJsonData } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}

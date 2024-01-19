@@ -223,7 +223,7 @@ export const XYChartPanel = (props: Props) => {
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight}>
-            {config.featureToggles.newVizTooltips && props.options.tooltip.mode !== TooltipDisplayMode.None && (
+            {showNewVizTooltips && props.options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={builder}
                 hoverMode={TooltipHoverMode.xyOne}
@@ -240,12 +240,14 @@ export const XYChartPanel = (props: Props) => {
                     />
                   );
                 }}
+                maxWidth={props.options.tooltip.maxWidth}
+                maxHeight={props.options.tooltip.maxHeight}
               />
             )}
           </UPlotChart>
         )}
       </VizLayout>
-      {!config.featureToggles.newVizTooltips && (
+      {!showNewVizTooltips && (
         <Portal>
           {hover && props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <VizTooltipContainer

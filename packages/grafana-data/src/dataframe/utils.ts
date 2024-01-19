@@ -88,15 +88,15 @@ export function hasTimeField(data: DataFrame): boolean {
 }
 
 /**
- * Get row id based on the meta.keyBy attribute.
+ * Get row id based on the meta.uniqueRowIdFields attribute.
  * @param dataFrame
  * @param rowIndex
  */
 export function getRowUniqueId(dataFrame: DataFrame, rowIndex: number) {
-  if (dataFrame.meta?.uniqueId === undefined) {
+  if (dataFrame.meta?.uniqueRowIdFields === undefined) {
     return undefined;
   }
-  return dataFrame.meta.uniqueId.map((fieldIndex) => dataFrame.fields[fieldIndex].values[rowIndex]).join('-');
+  return dataFrame.meta.uniqueRowIdFields.map((fieldIndex) => dataFrame.fields[fieldIndex].values[rowIndex]).join('-');
 }
 
 /**

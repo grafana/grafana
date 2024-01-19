@@ -23,10 +23,9 @@ import {
   Field,
   DataLinkConfigOrigin,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 
+import { TraceToProfilesData } from './_importedDependencies/grafana-traces/src';
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
 import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
@@ -517,7 +516,7 @@ export function transformTrace(
     const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
     let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
     if (traceToProfilesOptions?.datasourceUid) {
-      profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+      profilesDataSourceSettings = getDataSourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
     }
 
     if (traceToProfilesOptions && profilesDataSourceSettings) {
@@ -740,11 +739,36 @@ export function createTableFrameFromTraceQlQuery(
 }
 
 export function createTableFrameFromTraceQlQueryAsSpans(
-  data: TraceSearchMetadata[],
+  data: TraceSearchMetadata[] | undefined,
   instanceSettings: DataSourceInstanceSettings
 ): DataFrame[] {
   const spanDynamicAttrs: Record<string, FieldDTO> = {};
   let hasNameAttribute = false;
+
+  data?.forEach((trace) =>
+    getSpanSets(trace).forEach((ss) => {
+      ss.attributes?.forEach((attr) => {
+        spanDynamicAttrs[attr.key] = {
+          name: attr.key,
+          type: FieldType.string,
+          config: { displayNameFromDS: attr.key },
+        };
+      });
+      ss.spans.forEach((span) => {
+        if (span.name) {
+          hasNameAttribute = true;
+        }
+        span.attributes?.forEach((attr) => {
+          spanDynamicAttrs[attr.key] = {
+            name: attr.key,
+            type: FieldType.string,
+            config: { displayNameFromDS: attr.key },
+          };
+        });
+      });
+    })
+  );
+
   const frame = new MutableDataFrame({
     name: 'Spans',
     refId: 'traces',
@@ -836,40 +860,9 @@ export function createTableFrameFromTraceQlQueryAsSpans(
     },
   });
 
-  // According to the parameter type, `data` should never be undefined of null, but the old code had
-  // entries such as `!data` or `data?`, so we keep this check just for safety
-  if (data === undefined || data === null) {
-    console.error(`Unexpected ${data} value for \`data\``);
+  if (!data || !data.length) {
     return [frame];
   }
-
-  if (!data.length) {
-    return [frame];
-  }
-
-  data.forEach((trace) =>
-    getSpanSets(trace).forEach((ss) => {
-      ss.attributes?.forEach((attr) => {
-        spanDynamicAttrs[attr.key] = {
-          name: attr.key,
-          type: FieldType.string,
-          config: { displayNameFromDS: attr.key },
-        };
-      });
-      ss.spans.forEach((span) => {
-        if (span.name) {
-          hasNameAttribute = true;
-        }
-        span.attributes?.forEach((attr) => {
-          spanDynamicAttrs[attr.key] = {
-            name: attr.key,
-            type: FieldType.string,
-            config: { displayNameFromDS: attr.key },
-          };
-        });
-      });
-    })
-  );
 
   data
     // Show the most recent traces

@@ -117,7 +117,7 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 // You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
 //
 // Responses:
-// 200: okResponse
+// 200: getSSOSettingsResponse
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
@@ -177,7 +177,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}
 
-	return response.JSON(http.StatusNoContent, nil)
+	return response.Empty(http.StatusNoContent)
 }
 
 // swagger:route DELETE /v1/sso-settings/{key} sso_settings removeProviderSettings
@@ -209,7 +209,7 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusInternalServerError, "Failed to delete provider settings", err)
 	}
 
-	return response.JSON(http.StatusNoContent, nil)
+	return response.Empty(http.StatusNoContent)
 }
 
 // swagger:parameters getProviderSettings
@@ -234,4 +234,10 @@ type RemoveProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
+}
+
+// swagger:response getSSOSettingsResponse
+type GetSSOSettingsResponse struct {
+	// in: body
+	Body models.SSOSettings `json:"body"`
 }
