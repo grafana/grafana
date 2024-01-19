@@ -21,8 +21,18 @@ type QueryTemplateSpec struct {
 }
 
 type QueryVariable struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key       string     `json:"key"`
+	Value     string     `json:"value"`
+	Positions []Position `json:"positions"`
+}
+
+// Position is where to do a replacements in the targets
+// during render
+type Position struct {
+	TargetIdx int    `json:"targetIdx"`
+	TargetKey string `json:"targetKey"` // JSONPath?
+	Start     int64  `json:"start"`
+	End       int64  `json:"end"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
