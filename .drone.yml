@@ -5,7 +5,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-verify-drone
 node:
@@ -55,7 +56,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-verify-starlark
 node:
@@ -105,7 +107,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-test-frontend
 node:
@@ -184,7 +187,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-lint-frontend
 node:
@@ -273,7 +277,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-test-backend
 node:
@@ -379,7 +384,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-lint-backend
 node:
@@ -474,7 +480,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-build-e2e
 node:
@@ -756,7 +763,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-integration-tests
 node:
@@ -1020,7 +1028,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-docs
 node:
@@ -1094,7 +1103,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-shellcheck
 node:
@@ -1136,7 +1146,8 @@ clone:
   retries: 3
 depends_on: []
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-swagger-gen
 node:
@@ -1199,7 +1210,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: pr-integration-benchmarks
 node:
@@ -1375,7 +1387,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-docs
 node:
@@ -1450,7 +1463,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-test-frontend
 node:
@@ -1507,7 +1521,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-lint-frontend
 node:
@@ -1574,7 +1589,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-test-backend
 node:
@@ -1653,7 +1669,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-lint-backend
 node:
@@ -1727,7 +1744,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-build-e2e-publish
 node:
@@ -2127,7 +2145,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-integration-tests
 node:
@@ -2370,7 +2389,8 @@ depends_on:
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-windows
 platform:
@@ -2414,7 +2434,8 @@ depends_on:
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: main-trigger-downstream
 node:
@@ -2497,7 +2518,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: publish-docker-public
 node:
@@ -2603,7 +2625,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: publish-artifacts-public
 node:
@@ -2672,7 +2695,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: publish-npm-packages-public
 node:
@@ -2737,7 +2761,8 @@ depends_on:
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: publish-packages
 node:
@@ -2825,7 +2850,8 @@ depends_on:
 - main-test-backend
 - main-test-frontend
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: rgm-main-prerelease
 node:
@@ -2900,7 +2926,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: release-whatsnew-checker
 node:
@@ -2944,7 +2971,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: release-test-frontend
 node:
@@ -2999,7 +3027,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: release-test-backend
 node:
@@ -3076,7 +3105,8 @@ depends_on:
 - release-test-backend
 - release-test-frontend
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: rgm-tag-prerelease
 node:
@@ -3147,7 +3177,8 @@ clone:
 depends_on:
 - rgm-tag-prerelease
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: rgm-tag-prerelease-windows
 platform:
@@ -3211,7 +3242,8 @@ depends_on:
 - rgm-tag-prerelease
 - rgm-tag-prerelease-windows
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: rgm-tag-verify-prerelease-assets
 node:
@@ -3256,7 +3288,8 @@ depends_on:
 - release-test-backend
 - release-test-frontend
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: rgm-version-branch-prerelease
 node:
@@ -3321,7 +3354,8 @@ clone:
 depends_on:
 - rgm-version-branch-prerelease
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: rgm-prerelease-verify-prerelease-assets
 node:
@@ -3360,7 +3394,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: nightly-test-frontend
 node:
@@ -3413,7 +3448,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: nightly-test-backend
 node:
@@ -3488,7 +3524,8 @@ depends_on:
 - nightly-test-backend
 - nightly-test-frontend
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: rgm-nightly-build
 node:
@@ -3595,7 +3632,8 @@ clone:
 depends_on:
 - rgm-nightly-build
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: rgm-nightly-publish
 node:
@@ -3744,7 +3782,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: testing-test-backend-windows
 platform:
@@ -3796,7 +3835,8 @@ depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: integration-tests
 node:
@@ -4019,7 +4059,8 @@ clone:
   disable: true
 depends_on: []
 image_pull_secrets:
-- dockerconfigjson
+- gcr
+- gar
 kind: pipeline
 name: publish-ci-windows-test-image
 platform:
@@ -4458,7 +4499,13 @@ get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
 kind: secret
-name: dockerconfigjson
+name: gcr
+---
+get:
+  name: .dockerconfigjson
+  path: secret/data/common/gar
+kind: secret
+name: gar
 ---
 get:
   name: pat
@@ -4629,6 +4676,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1037480721e5ff5c3d4154a03e125043b6ed45a8e658079502d30f89a7325e54
+hmac: 4bf1666abcac37955f5d6b1adc3cea9aba8c0fde01ea5684be9c9deefae75aee
 
 ...
