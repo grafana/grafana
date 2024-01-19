@@ -443,8 +443,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   });
 
   const init = (u: uPlot) => {
-    let over = u.over;
-    over.style.overflow = 'hidden';
     u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt').forEach((el) => {
       el.style.borderRadius = '0';
 
@@ -489,6 +487,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           height: isHovered ? hRect!.h / uPlot.pxRatio : 0,
         };
       },
+    },
+    focus: {
+      prox: 1e3,
+      dist: (u, seriesIdx) => (hRect?.sidx === seriesIdx ? 0 : Infinity),
     },
   };
 
