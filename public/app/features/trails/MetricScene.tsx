@@ -22,6 +22,7 @@ import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
+import { ShareTrailButton } from './ShareTrailButton';
 import { getTrailStore } from './TrailStore/TrailStore';
 import {
   ActionViewDefinition,
@@ -33,7 +34,7 @@ import {
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
 } from './shared';
-import { getTrailFor } from './utils';
+import { getTrailFor, getUrlForTrail } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -132,8 +133,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled>
               Explore
             </ToolbarButton>
-            <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
-            <ToolbarButton variant={'canvas'} icon="share-alt" tooltip="Copy url (todo)" disabled />
+            <ShareTrailButton trailUrl={getUrlForTrail(trail)} />
             <ToolbarButton
               variant={'canvas'}
               icon={
