@@ -11401,7 +11401,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/getSSOSettingsResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -22929,6 +22929,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/RoleDTO"
+      }
+    },
+    "getSSOSettingsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SSOSettings"
       }
     },
     "getSharingOptionsResponse": {

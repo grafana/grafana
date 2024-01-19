@@ -70,4 +70,5 @@ type Middleware interface {
 	HandleApi(c *contextmodel.ReqContext)
 	HandleView(c *contextmodel.ReqContext)
 	HandleAccessView(c *contextmodel.ReqContext)
+	HandleConfirmAccessView(c *contextmodel.ReqContext)
 }
