@@ -72,10 +72,10 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		{
 			name:            "returns true when the auth entry is found",
 			user:            &user.SignedInUser{UserID: 1},
-			want:            &login.UserAuth{AuthModule: "oauth_generic_oauth"},
+			want:            &login.UserAuth{AuthModule: login.GenericOAuthModule},
 			wantExist:       true,
 			wantErr:         false,
-			getAuthInfoUser: login.UserAuth{AuthModule: "oauth_generic_oauth"},
+			getAuthInfoUser: login.UserAuth{AuthModule: login.GenericOAuthModule},
 		},
 	}
 	for _, tc := range testCases {
@@ -109,7 +109,7 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 		TokenType:    "Bearer",
 	}
 	oauth_user := &login.UserAuth{
-		AuthModule:        "oauth_generic_oauth",
+		AuthModule:        login.GenericOAuthModule,
 		OAuthAccessToken:  token.AccessToken,
 		OAuthRefreshToken: token.RefreshToken,
 		OAuthExpiry:       token.Expiry,
@@ -117,7 +117,7 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	}
 	oauth_user_identity := &authn.Identity{
 		ID:              "user:1234",
-		AuthenticatedBy: "oauth_generic_oauth",
+		AuthenticatedBy: login.GenericOAuthModule,
 	}
 
 	authInfoStore.ExpectedOAuth = oauth_user
@@ -188,7 +188,7 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	}
 
 	authInfoStore.ExpectedOAuth = &login.UserAuth{
-		AuthModule:        "oauth_generic_oauth",
+		AuthModule:        login.GenericOAuthModule,
 		OAuthAccessToken:  token.AccessToken,
 		OAuthRefreshToken: token.RefreshToken,
 		OAuthExpiry:       token.Expiry,
@@ -247,7 +247,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 
 	authInfoStore := &FakeAuthInfoStore{
 		ExpectedOAuth: &login.UserAuth{
-			AuthModule:        "oauth",
+			AuthModule:        login.GenericOAuthModule,
 			OAuthIdToken:      VALID_JWT,
 			OAuthRefreshToken: "",
 		},
@@ -347,7 +347,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule: "oauth",
+					AuthModule: login.GenericOAuthModule,
 				}
 			},
 			expectHasEntryCalled: false,
@@ -358,7 +358,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule:   "oauth_generic_idp",
+					AuthModule:   login.GenericOAuthModule,
 					OAuthIdToken: VALID_JWT,
 				}
 			},
@@ -371,7 +371,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule:   "oauth_generic_idp",
+					AuthModule:   login.GenericOAuthModule,
 					OAuthIdToken: VALID_JWT,
 				}
 			},
@@ -386,7 +386,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule:   "oauth_generic_idp",
+					AuthModule:   login.GenericOAuthModule,
 					OAuthIdToken: VALID_JWT,
 				}
 			},
