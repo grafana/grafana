@@ -1,4 +1,4 @@
-import { QueryBuilderOperationDef, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperationDefinition, QueryBuilderOperationParamValue } from '@grafana/experimental';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';
@@ -15,7 +15,7 @@ import {
 } from './operationUtils';
 import { LokiOperationId, LokiOperationOrder, lokiOperators, LokiVisualQueryOperationCategory } from './types';
 
-export function getOperationDefinitions(): QueryBuilderOperationDef[] {
+export function getOperationDefinitions(): QueryBuilderOperationDefinition[] {
   const aggregations = [
     LokiOperationId.Sum,
     LokiOperationId.Min,
@@ -66,7 +66,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     ...createRangeOperationWithGrouping(LokiOperationId.QuantileOverTime),
   ];
 
-  const list: QueryBuilderOperationDef[] = [
+  const list: QueryBuilderOperationDefinition[] = [
     ...aggregations,
     ...aggregationsWithParam,
     ...rangeOperations,
@@ -596,11 +596,14 @@ export function explainOperator(id: LokiOperationId | string): string {
   return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
 }
 
-export function getDefinitionById(id: string): QueryBuilderOperationDef | undefined {
+export function getDefinitionById(id: string): QueryBuilderOperationDefinition | undefined {
   return definitions.find((x) => x.id === id);
 }
 
-export function checkParamsAreValid(def: QueryBuilderOperationDef, params: QueryBuilderOperationParamValue[]): boolean {
+export function checkParamsAreValid(
+  def: QueryBuilderOperationDefinition,
+  params: QueryBuilderOperationParamValue[]
+): boolean {
   // For now we only check if the operation has all the required params.
   if (params.length < def.params.filter((param) => !param.optional).length) {
     return false;

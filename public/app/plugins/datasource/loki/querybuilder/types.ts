@@ -1,5 +1,4 @@
-import { VisualQueryBinary } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
+import { VisualQueryBinary, QueryBuilderLabelFilter, QueryBuilderOperation } from '@grafana/experimental';
 
 /**
  * Visual query model
