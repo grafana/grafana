@@ -46,19 +46,33 @@ func (s *NotificationSettings) ToLabels() data.Labels {
 }
 
 func (s *NotificationSettings) Equals(other *NotificationSettings) bool {
-	if s == nil && other == nil {
-		return true
+	durationEqual := func(d1, d2 *model.Duration) bool {
+		if d1 == nil || d2 == nil {
+			return d1 == d2
+		}
+		return *d1 == *d2
 	}
 	if s == nil || other == nil {
-		return false
+		return s == nil && other == nil
 	}
 	if s.Receiver != other.Receiver {
 		return false
 	}
-	if s.isAllDefault() == other.isAllDefault() {
-		return true
+	if !durationEqual(s.GroupWait, other.GroupWait) {
+		return false
 	}
-	return s.Fingerprint() == other.Fingerprint() // TODO improve it later
+	if !durationEqual(s.GroupInterval, other.GroupInterval) {
+		return false
+	}
+	if !durationEqual(s.RepeatInterval, other.RepeatInterval) {
+		return false
+	}
+	if !slices.Equal(s.MuteTimeIntervals, other.MuteTimeIntervals) {
+		return false
+	}
+	sGr := s.GroupBy
+	oGr := other.GroupBy
+	return slices.Equal(sGr, oGr)
 }
 
 func (s *NotificationSettings) isAllDefault() bool {
