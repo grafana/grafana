@@ -24,7 +24,7 @@ type DSInfo struct {
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.Route,
 	ds DSInfo, cfg *setting.Cfg) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
-
+	req.URL.Path = proxyPath
 	data := templateData{
 		JsonData:       ds.JSONData,
 		SecureJsonData: ds.DecryptedSecureJSONData,
