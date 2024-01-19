@@ -176,7 +176,7 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
                 }}
                 onRemove={(index) => {
                   const newTransformations = transformations.slice();
-                  newTransformations.splice(index);
+                  newTransformations.splice(index, 1);
                   model.changeTransformations(newTransformations);
                 }}
                 configs={transformationEditorRows}
