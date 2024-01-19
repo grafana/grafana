@@ -56,9 +56,9 @@ type Provider struct {
 	logger                log.Logger
 }
 
-// Get allows getting plugin context by its ID. If datasourceUID is not empty string
-// then PluginContext.DataSourceInstanceSettings will be resolved and appended to
-// returned context.
+// Get will retrieve plugin context by the provided pluginID and orgID.
+// This is intended to be used for app plugin requests.
+// PluginContext.AppInstanceSettings will be resolved and appended to the returned context.
 // Note: identity.Requester can be nil.
 func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
@@ -95,9 +95,10 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 	return pCtx, nil
 }
 
-// GetWithDataSource allows getting plugin context by its ID and PluginContext.DataSourceInstanceSettings will be
-// resolved and appended to the returned context.
-// Note: *user.SignedInUser can be nil.
+// GetWithDataSource will retrieve plugin context by the provided pluginID and datasource.
+// This is intended to be used for datasource plugin requests.
+// PluginContext.DataSourceInstanceSettings will be resolved and appended to the returned context.
+// Note: identity.Requester can be nil.
 func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
