@@ -57,7 +57,23 @@ type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
 	Scope        string
-	UserID       int64 // ID for the user for which to return information, if none is specified information is returned for all users.
+	UserID       int64     // ID for the user for which to return information, if none is specified information is returned for all users.
+	wildcards    Wildcards // private field computed based on the Scope
+}
+
+// Wildcards computes the wildcard scopes that include the scope
+func (s *SearchOptions) Wildcards() []string {
+	if s.wildcards != nil {
+		return s.wildcards
+	}
+
+	if s.Scope == "" {
+		s.wildcards = []string{}
+		return s.wildcards
+	}
+
+	s.wildcards = WildcardsFromPrefix(ScopePrefix(s.Scope))
+	return s.wildcards
 }
 
 type SyncUserRolesCommand struct {
