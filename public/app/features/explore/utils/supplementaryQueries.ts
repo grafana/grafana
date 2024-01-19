@@ -135,7 +135,7 @@ export const getSupplementaryQueryProvider = (
         return provider;
       }
       return type === SupplementaryQueryType.LogsVolume
-        ? queryLogsVolume(datasource, provider)
+        ? queryLogsVolume(datasource, provider, { targets: dsRequest.targets })
         : queryLogsSample(datasource, provider);
     } else {
       return getSupplementaryQueryFallback(type, explorePanelData, targets, datasource.name);
