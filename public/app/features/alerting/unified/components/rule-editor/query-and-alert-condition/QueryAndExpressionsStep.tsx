@@ -99,6 +99,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         // Grafana Managed rules and recording rules do
         return;
       }
+
       runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
     },
     [isCloudAlertRuleType, runQueries, getValues]
@@ -185,7 +186,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
       // As a workaround we update form values as soon as possible to avoid stale state
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
-
+      const previousQueries = getValues('queries');
+      const expressionQueries = previousQueries.filter((query) => isExpressionQuery(query.model));
+      setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
       dispatch(setDataQueries(updatedQueries));
@@ -197,7 +200,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource]
+    [queries, updateExpressionAndDatasource, getValues, setValue]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
