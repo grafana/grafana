@@ -63,6 +63,7 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     featureToggles: {
       kubernetesFeatureToggles: false,
+      grafanaAPIServer: false,
     },
   },
 }));
@@ -81,6 +82,7 @@ describe('AdminFeatureTogglesApi', () => {
 
   it('uses the legacy api when the k8s toggles are off', async () => {
     config.featureToggles.kubernetesFeatureToggles = false;
+    config.featureToggles.grafanaAPIServer = false;
 
     const togglesApi = getTogglesAPI();
     await togglesApi.getFeatureToggles();
@@ -105,6 +107,7 @@ describe('AdminFeatureTogglesApi', () => {
 
   it('uses the k8s api when the k8s toggles are on', async () => {
     config.featureToggles.kubernetesFeatureToggles = true;
+    config.featureToggles.grafanaAPIServer = true;
 
     const togglesApi = getTogglesAPI();
     await togglesApi.getFeatureToggles();
