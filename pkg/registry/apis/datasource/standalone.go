@@ -50,7 +50,7 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		return nil, err
 	}
 
-	_, pluginStore, _, _, err := apiBuilderServices(cfg, pluginID)
+	_, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, pluginID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +62,9 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 	return NewDataSourceAPIBuilder(
 		td.JSONData,
 		testdatasource.ProvideService(), // the client
-		&testdataPluginConfigProvider{
-			startup: v1.Now(), // TODO...
+		&defaultPluginConfigProvider{
+			dsService: dsService,
+			dsCache:   dsCache,
 		},
 		&testdataPluginConfigProvider{}, // stub
 		acimpl.ProvideAccessControl(cfg),

@@ -95,6 +95,11 @@ func (q *defaultPluginConfigProvider) ListDatasources(ctx context.Context, plugi
 }
 
 func (q *defaultPluginConfigProvider) GetDataSourceInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
+	if q.contextProvider == nil {
+		// NOTE!!! this is only here for the standalone example
+		// if we cleanup imports this can throw an error
+		return nil, nil
+	}
 	return q.contextProvider.GetDataSourceInstanceSettings(ctx, uid)
 }
 
