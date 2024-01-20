@@ -6,11 +6,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { togglesApi } from './AdminFeatureTogglesAPI';
+import { getTogglesAPI } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
 
 export default function AdminFeatureTogglesPage() {
   const [reload] = useState(1);
+  const togglesApi = getTogglesAPI();
   const featureMgmtState = useAsync(() => togglesApi.getManagerState(), [reload]);
   const featureToggles = useAsync(() => togglesApi.getFeatureToggles(), [reload]);
   const [updateSuccessful, setUpdateSuccessful] = useState(false);

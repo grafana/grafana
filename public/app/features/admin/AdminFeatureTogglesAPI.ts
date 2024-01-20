@@ -78,7 +78,9 @@ class K8sAPI implements FeatureTogglesAPI {
   }
 }
 
-const togglesApi = config.featureToggles.kubernetesFeatureToggles ? new K8sAPI() : new LegacyAPI();
+const getTogglesAPI = (): FeatureTogglesAPI => {
+  return config.featureToggles.kubernetesFeatureToggles ? new K8sAPI() : new LegacyAPI();
+};
 
-export { togglesApi };
+export { getTogglesAPI };
 export type { FeatureToggle, FeatureMgmtState };
