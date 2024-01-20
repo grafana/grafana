@@ -91,15 +91,15 @@ describe('AdminFeatureTogglesApi', () => {
     const expected = [
       {
         method: 'get',
-        url: '/featuremgmt',
+        url: '/api/featuremgmt',
       },
       {
         method: 'get',
-        url: '/featuremgmt/state',
+        url: '/api/featuremgmt/state',
       },
       {
         method: 'post',
-        url: '/featuremgmt',
+        url: '/api/featuremgmt',
       },
     ];
     expect(testBackendSrv.apiCalls).toEqual(expect.arrayContaining(expected));
