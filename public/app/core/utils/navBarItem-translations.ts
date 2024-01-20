@@ -76,7 +76,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'groups':
       return t('nav.alerting-groups.title', 'Groups');
     case 'alerting-admin':
-      return t('nav.alerting-admin.title', 'Admin');
+      return t('nav.alerting-admin.title', 'Settings');
     case 'cfg':
       return t('nav.config.title', 'Administration');
     case 'cfg/general':

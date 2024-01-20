@@ -300,7 +300,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     path: '/alerting/admin',
     roles: () => ['Admin'],
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertingAdmin" */ 'app/features/alerting/unified/Admin')
+      () => import(/* webpackChunkName: "AlertingAdmin" */ 'app/features/alerting/unified/Settings')
     ),
   },
 ];

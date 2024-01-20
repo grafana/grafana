@@ -680,7 +680,7 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "title": "Admin"
+      "title": "Settings"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",

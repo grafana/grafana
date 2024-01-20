@@ -8,10 +8,11 @@ interface NeedHelpInfoProps {
   contentText: string | JSX.Element;
   externalLink?: string;
   linkText?: string;
-  title: string;
+  title?: string;
 }
-export function NeedHelpInfo({ contentText, externalLink, linkText, title }: NeedHelpInfoProps) {
+export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Need help?' }: NeedHelpInfoProps) {
   const styles = useStyles2(getStyles);
+
   return (
     <Toggletip
       content={<div className={styles.mutedText}>{contentText}</div>}
