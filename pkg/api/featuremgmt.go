@@ -58,7 +58,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	payload := UpdatePayload{
+	payload := featuremgmt.FeatureToggleWebhookPayload{
 		FeatureToggles: make(map[string]string, len(cmd.FeatureToggles)),
 		User:           ctx.SignedInUser.Email,
 	}
@@ -90,12 +90,7 @@ func (hs *HTTPServer) GetFeatureMgmtState(ctx *contextmodel.ReqContext) response
 	return response.Respond(http.StatusOK, fmState)
 }
 
-type UpdatePayload struct {
-	FeatureToggles map[string]string `json:"feature_toggles"`
-	User           string            `json:"user"`
-}
-
-func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload UpdatePayload, logger log.Logger) error {
+func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload featuremgmt.FeatureToggleWebhookPayload, logger log.Logger) error {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return err

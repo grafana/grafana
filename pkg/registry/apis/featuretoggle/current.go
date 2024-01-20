@@ -1,15 +1,22 @@
 package featuretoggle
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"strconv"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -90,7 +97,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 		return
 	}
 
-	changes := map[string]bool{}
+	changes := map[string]string{} // TODO would be nice to have this be a bool on the HG side
 	for k, v := range request.Enabled {
 		current := b.features.IsEnabled(ctx, k)
 		if current != v {
@@ -99,7 +106,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 				_, _ = w.Write([]byte("can not edit toggle: " + k))
 				return
 			}
-			changes[k] = v
+			changes[k] = strconv.FormatBool(v)
 		}
 	}
 
@@ -108,5 +115,60 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 		return
 	}
 
-	_, _ = w.Write([]byte("TODO... actually UPDATE/call webhook: "))
+	payload := featuremgmt.FeatureToggleWebhookPayload{
+		FeatureToggles: changes,
+		User:           "unknown",
+	}
+	reqCtx := contexthandler.FromContext(r.Context())
+	if reqCtx != nil && reqCtx.SignedInUser != nil {
+		payload.User = reqCtx.SignedInUser.Email
+	}
+
+	err = sendWebhookUpdate(b.features.Settings, payload)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("failed to perform webhook request: " + err.Error()))
+		return
+	}
+
+	b.features.SetRestartRequired()
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("feature toggles updated successfully"))
+}
+
+func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload featuremgmt.FeatureToggleWebhookPayload) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, cfg.UpdateWebhook, bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+cfg.UpdateWebhookToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		if body, err := io.ReadAll(resp.Body); err != nil {
+			return fmt.Errorf("SendWebhookUpdate failed with status=%d, error: %s", resp.StatusCode, string(body))
+		} else {
+			return fmt.Errorf("SendWebhookUpdate failed with status=%d, error: %w", resp.StatusCode, err)
+		}
+	}
+
+	return nil
 }

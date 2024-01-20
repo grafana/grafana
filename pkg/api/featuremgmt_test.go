@@ -346,7 +346,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "Bearer "+s.UpdateWebhookToken, r.Header.Get("Authorization"))
 
-				var req UpdatePayload
+				var req featuremgmt.FeatureToggleWebhookPayload
 				require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
 
 				assert.Equal(t, "true", req.FeatureToggles["toggle4"])

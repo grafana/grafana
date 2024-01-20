@@ -151,3 +151,8 @@ type FeatureManagerState struct {
 	RestartRequired bool `json:"restartRequired"`
 	AllowEditing    bool `json:"allowEditing"`
 }
+
+type FeatureToggleWebhookPayload struct {
+	FeatureToggles map[string]string `json:"feature_toggles"`
+	User           string            `json:"user"`
+}
