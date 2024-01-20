@@ -1,51 +1,60 @@
 package datasource
 
 import (
+	"context"
 	"fmt"
-	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
-// This is a helper function to create a new datasource API server for a group
+// NewStandaloneDatasource is a helper function to create a new datasource API server for a group.
 // This currently has no dependencies and only works for testdata.  In future iterations
 // this will include here (or elsewhere) versions that can load config from HG api or
-// the remote SQL directly
+// the remote SQL directly.
 func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
+	pluginID := "grafana-testdata-datasource"
+
 	if group != "testdata.datasource.grafana.app" {
-		return nil, fmt.Errorf("only testadata is currently supported")
+		return nil, fmt.Errorf("only %s is currently supported", pluginID)
 	}
 
-	orgId := int64(1)
-	pluginId := "grafana-testdata-datasource"
-	now := time.Now()
-	dss := []*datasources.DataSource{
-		{
-			OrgID:   orgId, // default -- used in the list command
-			Type:    pluginId,
-			UID:     "builtin", // fake for now
-			Created: now,
-			Updated: now,
-			Name:    "Testdata (builtin)",
-		},
-		{
-			OrgID:   orgId, // default -- used in the list command
-			Type:    pluginId,
-			UID:     "PD8C576611E62080A", // match the gdev version
-			Created: now,
-			Updated: now,
-			Name:    "gdev-testdata",
-		},
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		// TODO: Add support for args?
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	_, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, pluginID)
+	if err != nil {
+		return nil, err
+	}
+
+	td, exists := pluginStore.Plugin(context.Background(), pluginID)
+	if !exists {
+		return nil, fmt.Errorf("plugin %s not found", pluginID)
+	}
+
+	var testsDataQuerierFactory QuerierFactoryFunc = func(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+		return NewDefaultQuerier(ri, td.JSONData, testdatasource.ProvideService(), dsService, dsCache), nil
+	}
+
 	return NewDataSourceAPIBuilder(
-		plugins.JSONData{ID: pluginId}, testdatasource.ProvideService(),
-		&fakeDatasources.FakeDataSourceService{DataSources: dss},
-		&fakeDatasources.FakeCacheService{DataSources: dss},
-		// Always allow... but currently not called in standalone!
-		&actest.FakeAccessControl{ExpectedEvaluate: true},
+		td.JSONData,
+		NewQuerierProvider(testsDataQuerierFactory),
+		&TestDataPluginContextProvider{},
+		acimpl.ProvideAccessControl(cfg),
 	)
+}
+
+type TestDataPluginContextProvider struct{}
+
+func (p *TestDataPluginContextProvider) PluginContextForDataSource(_ context.Context, _, _ string) (backend.PluginContext, error) {
+	return backend.PluginContext{}, nil
 }

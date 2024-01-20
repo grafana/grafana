@@ -57,6 +57,26 @@ describe('LokiQueryBuilder', () => {
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
   });
 
+  it('does refetch label values with the correct timerange', async () => {
+    const props = createDefaultProps();
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+    props.datasource.languageProvider.fetchSeriesLabels = jest
+      .fn()
+      .mockReturnValue({ job: ['a'], instance: ['b'], baz: ['bar'] });
+
+    render(<LokiQueryBuilder {...props} query={defaultQuery} />);
+    await userEvent.click(screen.getByLabelText('Add'));
+    const labels = screen.getByText(/Label filters/);
+    const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
+    await userEvent.click(selects[3]);
+    await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
+    await userEvent.click(screen.getByText('job'));
+    await userEvent.click(selects[5]);
+    expect(props.datasource.languageProvider.fetchSeriesLabels).toHaveBeenNthCalledWith(2, '{baz="bar"}', {
+      timeRange: mockTimeRange,
+    });
+  });
+
   it('does not show already existing label names as option in label filter', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);

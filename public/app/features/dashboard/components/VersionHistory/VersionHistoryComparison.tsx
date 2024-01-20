@@ -3,19 +3,19 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
+import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
+import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 
-import { DiffGroup } from './DiffGroup';
-import { DiffViewer } from './DiffViewer';
 import { RevertDashboardModal } from './RevertDashboardModal';
-import { jsonDiff } from './utils';
 
 type DiffViewProps = {
   isNewLatest: boolean;
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
-  diffData: { lhs: unknown; rhs: unknown };
+  diffData: { lhs: string; rhs: string };
 };
 
 export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest }: DiffViewProps) => {
@@ -69,14 +69,14 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  spacer: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
-  versionInfo: css`
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-  noMarginBottom: css`
-    margin-bottom: 0;
-  `,
+  spacer: css({
+    marginBottom: theme.spacing(4),
+  }),
+  versionInfo: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  noMarginBottom: css({
+    marginBottom: 0,
+  }),
 });
