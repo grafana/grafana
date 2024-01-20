@@ -9,7 +9,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
-	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/atomic"
 	"xorm.io/xorm"
 
