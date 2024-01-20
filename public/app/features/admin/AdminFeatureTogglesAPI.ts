@@ -79,7 +79,7 @@ class K8sAPI implements FeatureTogglesAPI {
 }
 
 const getTogglesAPI = (): FeatureTogglesAPI => {
-  return config.featureToggles.kubernetesFeatureToggles && config.featureToggles.grafanaAPIServer
+  return config.featureToggles.kubernetesFeatureToggles && config.featureToggles.grafanaAPIServerWithExperimentalAPIs
     ? new K8sAPI()
     : new LegacyAPI();
 };
