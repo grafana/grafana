@@ -32,7 +32,7 @@ func getResolvedToggleState(ctx context.Context, features *featuremgmt.FeatureMa
 	warnings := features.GetWarning()
 	for _, f := range features.GetFlags() {
 		name := f.Name
-		if features.IsHiddenFromAdminPage(name, true) {
+		if features.IsHiddenFromAdminPage(name, false) {
 			continue
 		}
 
