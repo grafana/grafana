@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
@@ -27,7 +28,11 @@ type PluginConfigProvider interface {
 
 	// Return settings (decrypted!) for a specific plugin
 	// This will require "query" permission for the user in context
-	PluginContextForDataSource(ctx context.Context, pluginID, uid string) (backend.PluginContext, error)
+	GetDataSourceInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error)
+}
+
+type PluginContextWrapper interface {
+	PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
 }
 
 func ProvideDefaultPluginConfigs(
@@ -44,6 +49,12 @@ func ProvideDefaultPluginConfigs(
 type defaultPluginConfigProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
+	contextProvider *plugincontext.Provider
+}
+
+type directPluginConfigProvider struct {
+	sql             db.DB
+	cache           map[string]*v0alpha1.DataSourceConnectionList
 	contextProvider *plugincontext.Provider
 }
 
@@ -83,8 +94,8 @@ func (q *defaultPluginConfigProvider) ListDatasources(ctx context.Context, plugi
 	return asConnectionList(ds, info.Value)
 }
 
-func (q *defaultPluginConfigProvider) PluginContextForDataSource(ctx context.Context, pluginID, uid string) (backend.PluginContext, error) {
-	return q.contextProvider.PluginContextForDataSource(ctx, pluginID, uid)
+func (q *defaultPluginConfigProvider) GetDataSourceInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
+	return q.contextProvider.GetDataSourceInstanceSettings(ctx, uid)
 }
 
 func asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceConnection, error) {

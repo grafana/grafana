@@ -37,6 +37,7 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 			&testdataPluginConfigProvider{
 				startup: v1.Now(),
 			},
+			&testdataPluginConfigProvider{}, // stub
 			&actest.FakeAccessControl{ExpectedEvaluate: true},
 		)
 	}
@@ -64,6 +65,7 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		&testdataPluginConfigProvider{
 			startup: v1.Now(), // TODO...
 		},
+		&testdataPluginConfigProvider{}, // stub
 		acimpl.ProvideAccessControl(cfg),
 	)
 }
@@ -114,6 +116,11 @@ func (p *testdataPluginConfigProvider) ListDatasources(ctx context.Context, plug
 }
 
 // PluginContextForDataSource implements PluginConfigProvider.
-func (*testdataPluginConfigProvider) PluginContextForDataSource(ctx context.Context, pluginID string, uid string) (backend.PluginContext, error) {
-	return backend.PluginContext{}, nil
+func (*testdataPluginConfigProvider) GetDataSourceInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
+	return &backend.DataSourceInstanceSettings{}, nil
+}
+
+// PluginContextWrapper
+func (*testdataPluginConfigProvider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
+	return backend.PluginContext{DataSourceInstanceSettings: datasourceSettings}, nil
 }

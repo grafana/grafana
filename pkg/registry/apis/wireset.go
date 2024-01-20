@@ -17,6 +17,7 @@ var WireSet = wire.NewSet(
 
 	// read-only datasource abstractions
 	plugincontext.ProvideService,
+	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
 
 	// Each must be added here *and* in the ServiceSink above

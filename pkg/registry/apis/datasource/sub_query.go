@@ -71,7 +71,7 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, erro
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.pluginsConfig.PluginContextForDataSource(ctx, r.builder.pluginJSON.ID, name)
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		return nil, err
 	}
