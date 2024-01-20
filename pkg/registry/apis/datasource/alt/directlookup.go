@@ -13,22 +13,16 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
-// This reads directly from SQL
-func ProvideSQLBasedPluginConfigs(
-	sql db.DB,
-	contextProvider *plugincontext.Provider) datasource.PluginConfigProvider {
+func ProvideSQLBasedPluginConfigs(sql db.DB) datasource.PluginConfigProvider {
 	return &sqlPluginConfigProvider{
-		sql:             sql,
-		contextProvider: contextProvider,
+		sql: sql,
 	}
 }
 
 type sqlPluginConfigProvider struct {
-	sql             db.DB
-	contextProvider *plugincontext.Provider
+	sql db.DB
 }
 
 func (q *sqlPluginConfigProvider) GetDataSource(ctx context.Context, pluginID, uid string) (*v0alpha1.DataSourceConnection, error) {
@@ -84,5 +78,6 @@ func (q *sqlPluginConfigProvider) ListDatasources(ctx context.Context, pluginID 
 }
 
 func (q *sqlPluginConfigProvider) GetDataSourceInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
-	return q.contextProvider.GetDataSourceInstanceSettings(ctx, uid)
+	// TODO!! NOTE, this only works with testdata for now
+	return &backend.DataSourceInstanceSettings{}, nil
 }
