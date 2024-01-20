@@ -241,6 +241,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     description: oldModel.description,
     editable: oldModel.editable,
     meta: oldModel.meta,
+    version: oldModel.version,
     body: new SceneGridLayout({
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
@@ -251,6 +252,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
       timeZone: oldModel.timezone,
       weekStart: oldModel.weekStart,
+      UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
     $behaviors: [

@@ -21,6 +21,8 @@ var (
 type Service interface {
 	// List returns all SSO settings from DB and config files
 	List(ctx context.Context) ([]*models.SSOSettings, error)
+	// ListWithRedactedSecrets returns all SSO settings from DB and config files with secret values redacted
+	ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error)
 	// GetForProvider returns the SSO settings for a given provider (DB or config file)
 	GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error)
 	// GetForProviderWithRedactedSecrets returns the SSO settings for a given provider (DB or config file) with secret values redacted
@@ -61,6 +63,5 @@ type Store interface {
 	Get(ctx context.Context, provider string) (*models.SSOSettings, error)
 	List(ctx context.Context) ([]*models.SSOSettings, error)
 	Upsert(ctx context.Context, settings models.SSOSettings) error
-	Patch(ctx context.Context, provider string, data map[string]any) error
 	Delete(ctx context.Context, provider string) error
 }

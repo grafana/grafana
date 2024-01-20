@@ -22,6 +22,8 @@ export const Components = {
     fromField: 'data-testid Time Range from field',
     toField: 'data-testid Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
+    copyTimeRange: 'data-testid TimePicker copy button',
+    pasteTimeRange: 'data-testid TimePicker paste button',
     calendar: {
       label: 'data-testid Time Range calendar',
       openButton: 'data-testid Open time range calendar',
@@ -135,6 +137,7 @@ export const Components = {
       contract: 'Drawer contract',
       close: 'data-testid Drawer close',
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
+      subtitle: 'data-testid drawer subtitle',
     },
   },
   PanelEditor: {
@@ -382,7 +385,7 @@ export const Components = {
     link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
-    icon: 'Loading indicator',
+    icon: 'data-testid Loading indicator',
   },
   CallToActionCard: {
     /**

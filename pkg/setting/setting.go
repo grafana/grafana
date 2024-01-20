@@ -342,6 +342,9 @@ type Cfg struct {
 	ExtendedJWTExpectIssuer   string
 	ExtendedJWTExpectAudience string
 
+	// SSO Settings Auth
+	SSOSettingsReloadInterval time.Duration
+
 	// Dataproxy
 	SendUserHeader                 bool
 	DataProxyLogging               bool
@@ -599,6 +602,7 @@ func RedactedValue(key, value string) string {
 		"ACCOUNT_KEY",
 		"ENCRYPTION_KEY",
 		"VAULT_TOKEN",
+		"CLIENT_SECRET",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1622,6 +1626,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
+
+	// SSO Settings
+	ssoSettings := iniFile.Section("sso_settings")
+	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)
 
 	return nil
 }
