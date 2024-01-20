@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
@@ -20,10 +19,10 @@ import (
 // Authorization checks will happen within each function, and the user in ctx will
 // limit which namespace/tenant/org we are talking to
 type PluginConfigProvider interface {
-	// Datasource gets all data source plugins (with elevated permissions).
+	// GetDataSource gets a specific datasource (that the user in context can see)
 	GetDataSource(ctx context.Context, pluginID, uid string) (*v0alpha1.DataSourceConnection, error)
 
-	// Datasources lists all data sources (with elevated permissions).
+	// ListDatasources lists all data sources the user in context can see
 	ListDatasources(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error)
 
 	// Return settings (decrypted!) for a specific plugin
@@ -31,6 +30,7 @@ type PluginConfigProvider interface {
 	GetDataSourceInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error)
 }
 
+// PluginContext requires adding system settings (feature flags, etc) to the datasource config
 type PluginContextWrapper interface {
 	PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
 }
@@ -49,12 +49,6 @@ func ProvideDefaultPluginConfigs(
 type defaultPluginConfigProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
-	contextProvider *plugincontext.Provider
-}
-
-type directPluginConfigProvider struct {
-	sql             db.DB
-	cache           map[string]*v0alpha1.DataSourceConnectionList
 	contextProvider *plugincontext.Provider
 }
 
@@ -84,14 +78,21 @@ func (q *defaultPluginConfigProvider) ListDatasources(ctx context.Context, plugi
 		return nil, err
 	}
 
-	ds, err := q.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+	dss, err := q.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
 		OrgID: info.OrgID,
 		Type:  pluginID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return asConnectionList(ds, info.Value)
+	result := &v0alpha1.DataSourceConnectionList{
+		Items: []v0alpha1.DataSourceConnection{},
+	}
+	for _, ds := range dss {
+		v, _ := asConnection(ds, info.Value)
+		result.Items = append(result.Items, *v)
+	}
+	return result, nil
 }
 
 func (q *defaultPluginConfigProvider) GetDataSourceInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
@@ -119,16 +120,4 @@ func asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceCo
 		meta.SetUpdatedTimestamp(&ds.Updated)
 	}
 	return v, err
-}
-
-func asConnectionList(dss []*datasources.DataSource, ns string) (*v0alpha1.DataSourceConnectionList, error) {
-	result := &v0alpha1.DataSourceConnectionList{
-		Items: []v0alpha1.DataSourceConnection{},
-	}
-	for _, ds := range dss {
-		v, _ := asConnection(ds, ns)
-		result.Items = append(result.Items, *v)
-	}
-
-	return result, nil
 }
