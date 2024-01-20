@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
@@ -30,6 +30,24 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
       }),
     [options, regex]
   );
+  const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
+
+  const selectCheckValue = useMemo(() => items.length === selectedItems.length, [items, selectedItems]);
+  const selectCheckIndeterminate = useMemo(
+    () => selectedItems.length > 0 && items.length > selectedItems.length,
+    [items, selectedItems]
+  );
+  const selectCheckLabel = useMemo(
+    () => (selectedItems.length ? `${selectedItems.length} selected` : `Select all`),
+    [selectedItems]
+  );
+  const selectCheckDescription = useMemo(
+    () =>
+      items.length !== selectedItems.length
+        ? 'Add all displayed values to the filter'
+        : 'Remove all displayed values from the filter',
+    [items, selectedItems]
+  );
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -46,6 +64,16 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
     },
     [onChange, values]
   );
+
+  const onSelectChanged = useCallback(() => {
+    if (items.length === selectedItems.length) {
+      const newValues = values.filter((item) => !items.includes(item));
+      onChange(newValues);
+    } else {
+      const newValues = [...new Set([...values, ...items])];
+      onChange(newValues);
+    }
+  }, [onChange, values, items, selectedItems]);
 
   return (
     <VerticalGroup spacing="md">
@@ -72,6 +100,20 @@ export const FilterList = ({ options, values, caseSensitive, onChange }: Props) 
           }}
         </List>
       )}
+      {items.length && (
+        <VerticalGroup spacing="xs">
+          <div className={cx(styles.selectDivider)} />
+          <div className={cx(styles.filterListRow)}>
+            <Checkbox
+              value={selectCheckValue}
+              indeterminate={selectCheckIndeterminate}
+              label={selectCheckLabel}
+              description={selectCheckDescription}
+              onChange={onSelectChanged}
+            />
+          </div>
+        </VerticalGroup>
+      )}
     </VerticalGroup>
   );
 };
@@ -91,5 +133,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ':hover': {
       backgroundColor: theme.colors.action.hover,
     },
+  }),
+  selectDivider: css({
+    label: 'selectDivider',
+    width: '100%',
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+    padding: theme.spacing(0.5, 2),
   }),
 });

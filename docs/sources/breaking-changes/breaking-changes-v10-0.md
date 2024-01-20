@@ -1,5 +1,5 @@
 ---
-description: Breaking changes for Grafana v10.0
+description: Learn about breaking changes in Grafana v10.0
 keywords:
   - grafana
   - breaking changes

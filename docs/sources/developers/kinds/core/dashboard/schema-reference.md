@@ -195,11 +195,12 @@ Sensitive information stripped: queries (metric, template,annotation) and panel 
 Time picker configuration
 It defines the default config for the time picker and the refresh picker for the specific dashboard.
 
-| Property            | Type     | Required | Default                               | Description                                                                                       |
-|---------------------|----------|----------|---------------------------------------|---------------------------------------------------------------------------------------------------|
-| `hidden`            | boolean  | **Yes**  | `false`                               | Whether timepicker is visible or not.                                                             |
-| `refresh_intervals` | string[] | **Yes**  | `[5s 10s 30s 1m 5m 15m 30m 1h 2h 1d]` | Interval options available in the refresh picker dropdown.                                        |
-| `time_options`      | string[] | **Yes**  | `[5m 15m 1h 6h 12h 24h 2d 7d 30d]`    | Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. |
+| Property            | Type     | Required | Default                               | Description                                                                                                                           |
+|---------------------|----------|----------|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `hidden`            | boolean  | **Yes**  | `false`                               | Whether timepicker is visible or not.                                                                                                 |
+| `refresh_intervals` | string[] | **Yes**  | `[5s 10s 30s 1m 5m 15m 30m 1h 2h 1d]` | Interval options available in the refresh picker dropdown.                                                                            |
+| `time_options`      | string[] | **Yes**  | `[5m 15m 1h 6h 12h 24h 2d 7d 30d]`    | Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.                                     |
+| `nowDelay`          | string   | No       |                                       | Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. |
 
 ### Panels
 
@@ -219,6 +220,7 @@ use the output of one transformation as the input to another transformation, etc
 | `options`  |                                 | **Yes**  |         | Options to be passed to the transformer<br/>Valid options depend on the transformer id                                                                                                                                                                                              |
 | `disabled` | boolean                         | No       |         | Disabled transformations are skipped                                                                                                                                                                                                                                                |
 | `filter`   | [MatcherConfig](#matcherconfig) | No       |         | Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.<br/>It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type. |
+| `topic`    | string                          | No       |         | Where to pull DataFrames from as input to transformation<br/>Possible values are: `series`, `annotations`, `alertStates`.                                                                                                                                                           |
 
 ### MatcherConfig
 

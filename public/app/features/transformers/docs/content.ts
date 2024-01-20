@@ -68,7 +68,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
   - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
   
-  > **Note:** **Cumulative functions** and **Window functions** modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **addFieldFromCalculationStatFunctions** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  > **Note:** **Cumulative functions** and **Window functions** modes are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`addFieldFromCalculationStatFunctions\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
   In the example below, we added two fields together and named them Sum.
 
@@ -501,8 +501,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
-  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **formatString** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
-  `;
+  > **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`formatString\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.`;
     },
   },
   formatTime: {
@@ -1385,11 +1384,11 @@ export const transformationDocsContent: TransformationDocsContentType = {
   There are two different models:
 
   - **Linear regression** - Fits a linear function to the data.
-  ${buildImageContent(
-    '/static/img/docs/transformations/linear-regression.png',
-    imageRenderType,
-    'A time series visualization with a straight line representing the linear function'
-  )}
+${buildImageContent(
+  '/static/img/docs/transformations/linear-regression.png',
+  imageRenderType,
+  'A time series visualization with a straight line representing the linear function'
+)}
   - **Polynomial regression** - Fits a polynomial function to the data.
   ${buildImageContent(
     '/static/img/docs/transformations/polynomial-regression.png',
@@ -1397,7 +1396,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     'A time series visualization with a curved line representing the polynomial function'
   )}
 
-  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  > **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
   `;
     },
   },

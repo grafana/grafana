@@ -147,7 +147,7 @@ func TestParsePluginTestdata(t *testing.T) {
 		},
 	}
 
-	staticRootPath, err := filepath.Abs("../manager/testdata")
+	staticRootPath, err := filepath.Abs(filepath.Join("..", "manager", "testdata"))
 	require.NoError(t, err)
 	dfs := os.DirFS(staticRootPath)
 	ents, err := fs.ReadDir(dfs, ".")
@@ -240,7 +240,7 @@ func TestParseTreeZips(t *testing.T) {
 		},
 	}
 
-	staticRootPath, err := filepath.Abs("../storage/testdata")
+	staticRootPath, err := filepath.Abs(filepath.Join("..", "storage", "testdata"))
 	require.NoError(t, err)
 	ents, err := os.ReadDir(staticRootPath)
 	require.NoError(t, err)

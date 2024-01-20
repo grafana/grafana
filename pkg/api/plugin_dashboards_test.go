@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -44,6 +45,12 @@ func TestGetPluginDashboards(t *testing.T) {
 	s := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.pluginDashboardService = pluginDashboardService
 		hs.QuotaService = quotatest.New(false, nil)
+		hs.pluginStore = &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: existingPluginID}},
+				{JSONData: plugins.JSONData{ID: "boom"}},
+			},
+		}
 	})
 
 	t.Run("Not signed in should return 404 Not Found", func(t *testing.T) {

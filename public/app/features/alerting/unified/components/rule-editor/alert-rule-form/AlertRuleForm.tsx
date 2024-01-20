@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
-import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-hook-form';
+import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -144,7 +144,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
   };
 
-  const onInvalid = (errors: DeepMap<RuleFormValues, FieldError>): void => {
+  const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {
     if (!existing) {
       trackNewAlerRuleFormError({
         grafana_version: config.buildInfo.version,
