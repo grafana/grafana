@@ -102,6 +102,16 @@ export class TrailStore {
 
   setRecentTrail(trail: DataTrail) {
     this._recent = this._recent.filter((t) => t !== trail.getRef());
+
+    // Check if any existing "recent" entries have equivalent 'current' urlValue to the new trail
+    const newTrailUrlValues = getCurrentUrlValues(this._serializeTrail(trail)) || {};
+    this._recent = this._recent.filter((t) => {
+      // Use the current step urlValues to filter out equivalent states
+      const urlValues = getCurrentUrlValues(this._serializeTrail(t.resolve()));
+      // Only keep trails with sufficiently unique urlValues on their current step
+      return !relevantUrlValuesAreEquivalent(newTrailUrlValues, urlValues);
+    });
+
     this._recent.unshift(trail.getRef());
     this._save();
   }
@@ -131,4 +141,27 @@ export function getTrailStore(): TrailStore {
   }
 
   return store;
+}
+
+function getCurrentUrlValues({ history, currentStep }: SerializedTrail) {
+  return history[currentStep]?.urlValues || history.at(-1)?.urlValues;
+}
+
+function relevantUrlValuesAreEquivalent(a: SceneObjectUrlValues, b: SceneObjectUrlValues) {
+  const baseValuesMatch =
+    a.metric === b.metric &&
+    a.from === b.from &&
+    a.to === b.to &&
+    a['var-ds'] === b['var-ds'] &&
+    a['var-groupby'] === b['var-groupby'];
+
+  const [aFilters, bFilters] = [a, b].map((vals) => {
+    // ensure type is for each filter string[]
+    const filters = typeof vals['var-filters'] === 'string' ? [vals['var-filters']] : vals['var-filters'] || [];
+    return filters;
+  });
+  const filtersMatch =
+    aFilters.every((filter) => bFilters.includes(filter)) && bFilters.every((filter) => aFilters.includes(filter));
+
+  return baseValuesMatch && filtersMatch;
 }
