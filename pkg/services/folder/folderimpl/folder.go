@@ -56,7 +56,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	r prometheus.Registerer,
 ) folder.Service {
-	store := ProvideStore(db, cfg, features)
+	store := ProvideStore(db, cfg)
 	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
