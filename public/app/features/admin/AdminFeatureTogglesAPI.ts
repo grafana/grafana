@@ -40,13 +40,13 @@ interface FeatureTogglesAPI {
 
 class LegacyAPI implements FeatureTogglesAPI {
   getManagerState(): Promise<FeatureMgmtState> {
-    return getBackendSrv().get<FeatureMgmtState>('/featuremgmt/state');
+    return getBackendSrv().get<FeatureMgmtState>('/api/featuremgmt/state');
   }
   getFeatureToggles(): Promise<FeatureToggle[]> {
-    return getBackendSrv().get<FeatureToggle[]>('/featuremgmt');
+    return getBackendSrv().get<FeatureToggle[]>('/api/featuremgmt');
   }
   updateFeatureToggles(toggles: FeatureToggle[]): Promise<void> {
-    return getBackendSrv().post('/featuremgmt', { featureToggles: toggles });
+    return getBackendSrv().post('/api/featuremgmt', { featureToggles: toggles });
   }
 }
 

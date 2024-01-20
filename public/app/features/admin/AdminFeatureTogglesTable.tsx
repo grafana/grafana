@@ -30,6 +30,8 @@ const sortByEnabled: SortByFn<FeatureToggle> = (a, b) => {
 };
 
 export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdateSuccess }: Props) {
+  // sort manually, doesn't look like it can be automatically done in the table
+  featureToggles.sort((a, b) => a.name.localeCompare(b.name));
   const serverToggles = useRef<FeatureToggle[]>(featureToggles);
   const [localToggles, setLocalToggles] = useState<FeatureToggle[]>(featureToggles);
   const [isSaving, setIsSaving] = useState(false);
