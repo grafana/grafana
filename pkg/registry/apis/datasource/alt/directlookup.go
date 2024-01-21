@@ -44,12 +44,18 @@ func (q *sqlPluginConfigProvider) ListDatasources(ctx context.Context, pluginID 
 		return nil, err
 	}
 
+	// :( alias support
+	typeFilter := "= " + pluginID
+	if pluginID == "grafana-testdata-datasource" {
+		typeFilter = "in ('grafana-testdata-datasource', 'testdata')"
+	}
+
 	dss := &v0alpha1.DataSourceConnectionList{
 		ListMeta: v1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
 	}
-	rows, err := q.sql.GetSqlxSession().Query(ctx, "SELECT uid,name,created,updated FROM data_source WHERE org_id=? AND "+q.sql.Quote("type")+"=?", info.OrgID, pluginID)
+	rows, err := q.sql.GetSqlxSession().Query(ctx, "SELECT uid,name,created,updated FROM data_source WHERE org_id=? AND "+q.sql.Quote("type")+typeFilter, info.OrgID)
 	if err != nil {
 		return nil, err
 	}
