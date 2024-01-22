@@ -108,8 +108,6 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
-  traceToProfiles?: boolean;
-  tracesEmbeddedFlameGraph?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -178,4 +176,5 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
+  onPremToCloudMigrations?: boolean;
 }

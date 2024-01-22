@@ -2270,9 +2270,18 @@
    "title": "OAuth2 is the oauth2 client configuration.",
    "type": "object"
   },
+  "ObjectMatcher": {
+   "items": {
+    "type": "string"
+   },
+   "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+   "type": "array"
+  },
   "ObjectMatchers": {
-   "$ref": "#/definitions/Matchers",
-   "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed."
+   "items": {
+    "$ref": "#/definitions/ObjectMatcher"
+   },
+   "type": "array"
   },
   "OpsGenieConfig": {
    "properties": {
@@ -4414,6 +4423,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4542,7 +4552,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4652,13 +4661,13 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",

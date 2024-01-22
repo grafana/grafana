@@ -57,9 +57,8 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 
-	config := createOAuthConfig(info, cfg, social.GitHubProviderName)
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase:           newSocialBase(social.GitHubProviderName, info, features, cfg),
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -86,7 +85,37 @@ func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
-	// add specific validation rules for Github
+	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
+	teamIds := mustInts(teamIdsSplitted)
+
+	if len(teamIdsSplitted) != len(teamIds) {
+		s.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
+		return ssosettings.ErrInvalidSettings.Errorf("Failed to parse team ids. Team ids must be a list of numbers.")
+	}
+
+	return nil
+}
+
+func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	teamIdsSplitted := util.SplitString(newInfo.Extra[teamIdsKey])
+	teamIds := mustInts(teamIdsSplitted)
+
+	if len(teamIdsSplitted) != len(teamIds) {
+		s.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.SocialBase = newSocialBase(social.GitHubProviderName, newInfo, s.features, s.cfg)
+
+	s.teamIds = teamIds
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 
 	return nil
 }
