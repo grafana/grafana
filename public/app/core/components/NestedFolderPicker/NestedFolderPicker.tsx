@@ -85,6 +85,10 @@ export function NestedFolderPicker({
   const lastSearchTimestamp = useRef<number>(0);
 
   useEffect(() => {
+    if (!search) {
+      setSearchResults(null);
+      return;
+    }
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
     debouncedSearch(search).then((queryResponse) => {
