@@ -82,17 +82,16 @@ func TestProcessTicks(t *testing.T) {
 		Log:              log.New("ngalert.scheduler"),
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:                 testMetrics.GetStateMetrics(),
-		ExternalURL:             nil,
-		InstanceStore:           nil,
-		Images:                  &state.NoopImageService{},
-		Clock:                   mockedClock,
-		Historian:               &state.FakeHistorian{},
-		MaxStateSaveConcurrency: 1,
-		Tracer:                  testTracer,
-		Log:                     log.New("ngalert.state.manager"),
+		Metrics:       testMetrics.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: nil,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+		Tracer:        testTracer,
+		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(managerCfg)
+	st := state.NewManager(managerCfg, state.NewNoopPersister())
 
 	sched := NewScheduler(schedCfg, st)
 
@@ -906,11 +905,12 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Images:                  &state.NoopImageService{},
 		Clock:                   mockedClock,
 		Historian:               &state.FakeHistorian{},
-		MaxStateSaveConcurrency: 1,
 		Tracer:                  testTracer,
 		Log:                     log.New("ngalert.state.manager"),
+		MaxStateSaveConcurrency: 1,
 	}
-	st := state.NewManager(managerCfg)
+	syncStatePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.perist"), managerCfg)
+	st := state.NewManager(managerCfg, syncStatePersister)
 
 	return NewScheduler(schedCfg, st)
 }

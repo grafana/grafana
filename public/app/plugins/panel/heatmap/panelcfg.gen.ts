@@ -126,6 +126,8 @@ export interface FilterValueRange {
  * Controls tooltip options
  */
 export interface HeatmapTooltip {
+  maxHeight?: number;
+  maxWidth?: number;
   /**
    * Controls how the tooltip is shown
    */
