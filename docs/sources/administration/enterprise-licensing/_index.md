@@ -198,9 +198,9 @@ Settings updates at runtime are not affected by an expired license.
 
 #### Email sharing
 
-Email-shared dashboards won't be available for external users anymore. These dashboards will become private again but you will be able to make them public to everybody if you want to. 
+Email-shared dashboards won't be available for external users anymore. These dashboards will become private again but you will be able to make them public to everybody if you want to.
 
-Configurations will be kept and restored if you update your license. 
+Configurations will be kept and restored if you update your license.
 
 ## Grafana Enterprise license restrictions
 
