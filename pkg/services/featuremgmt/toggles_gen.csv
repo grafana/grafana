@@ -9,7 +9,7 @@ lokiExperimentalStreaming,experimental,@grafana/observability-logs,2023-06-19,fa
 featureHighlights,GA,@grafana/grafana-as-code,2022-02-03,false,false,false,false
 migrationLocking,preview,@grafana/backend-platform,2022-02-15,false,false,false,false
 storage,experimental,@grafana/grafana-app-platform-squad,2022-03-17,false,false,false,false
-correlations,preview,@grafana/explore-squad,2022-09-16,false,false,false,false
+correlations,GA,@grafana/explore-squad,2022-09-16,false,false,false,false
 exploreContentOutline,GA,@grafana/explore-squad,2023-11-03,false,false,false,true
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,2022-05-03,false,false,false,false
 traceToMetrics,experimental,@grafana/observability-traces-and-profiling,2022-03-07,false,false,false,true

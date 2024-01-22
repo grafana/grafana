@@ -95,11 +95,12 @@ var (
 			Created:     time.Date(2022, time.March, 17, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "correlations",
-			Description: "Correlations page",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaExploreSquad,
-			Created:     time.Date(2022, time.September, 16, 12, 0, 0, 0, time.UTC),
+			Name:           "correlations",
+			Description:    "Correlations page",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaExploreSquad,
+			AllowSelfServe: true,
+			Created:        time.Date(2022, time.September, 16, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "exploreContentOutline",
