@@ -100,6 +100,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	status := backend.HealthStatusOk
 	message := "Successfully queried the Google Cloud Monitoring API."

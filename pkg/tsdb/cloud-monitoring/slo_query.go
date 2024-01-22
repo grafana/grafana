@@ -16,7 +16,7 @@ func (sloQ *cloudMonitoringSLO) run(ctx context.Context, req *backend.QueryDataR
 
 func (sloQ *cloudMonitoringSLO) parseResponse(queryRes *backend.DataResponse,
 	response any, executedQueryString string) error {
-	return parseTimeSeriesResponse(queryRes, response.(cloudMonitoringResponse), executedQueryString, nil, sloQ.params, []string{})
+	return parseTimeSeriesResponse(queryRes, response.(cloudMonitoringResponse), executedQueryString, sloQ, sloQ.params, []string{})
 }
 
 func (sloQ *cloudMonitoringSLO) buildDeepLink() string {

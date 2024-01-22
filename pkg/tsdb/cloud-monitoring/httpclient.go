@@ -1,7 +1,6 @@
 package cloudmonitoring
 
 import (
-	"crypto/tls"
 	"net/http"
 
 	"github.com/grafana/grafana-google-sdk-go/pkg/tokenprovider"
@@ -59,13 +58,7 @@ func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middlewa
 	return tokenprovider.AuthMiddleware(provider), nil
 }
 
-type Provider interface {
-	New(...httpclient.Options) (*http.Client, error)
-	GetTransport(...httpclient.Options) (http.RoundTripper, error)
-	GetTLSConfig(...httpclient.Options) (*tls.Config, error)
-}
-
-func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvider Provider, route string) (*http.Client, error) {
+func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvider *httpclient.Provider, route string) (*http.Client, error) {
 	m, err := getMiddleware(model, route)
 	if err != nil {
 		return nil, err
