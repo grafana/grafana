@@ -7,14 +7,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type Service struct {
+type Metrics struct {
 	log log.Logger
 }
 
 func RegisterMetrics(
 	prom prometheus.Registerer,
-) (*Service, error) {
-	s := &Service{
+) (*Metrics, error) {
+	s := &Metrics{
 		log: log.New("cloudmigrations.metrics"),
 	}
 
@@ -25,7 +25,7 @@ func RegisterMetrics(
 	return s, nil
 }
 
-func (s *Service) registerMetrics(prom prometheus.Registerer) error {
+func (s *Metrics) registerMetrics(prom prometheus.Registerer) error {
 	for _, m := range promMetrics {
 		if err := prom.Register(m); err != nil {
 			var alreadyRegisterErr prometheus.AlreadyRegisteredError

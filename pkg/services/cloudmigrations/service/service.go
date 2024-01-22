@@ -8,10 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/cloudmigrations"
 	"github.com/grafana/grafana/pkg/services/cloudmigrations/api"
+	"github.com/grafana/grafana/pkg/services/cloudmigrations/metrics"
 	"github.com/grafana/grafana/pkg/services/cloudmigrations/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // CloudMigrationsServiceImpl Define the Service Implementation.
@@ -23,7 +25,8 @@ type CloudMigrationsServiceImpl struct {
 	features  featuremgmt.FeatureToggles
 	dsService datasources.DataSourceService
 
-	api *api.MigrationAPI
+	api     *api.MigrationAPI
+	metrics *metrics.Metrics
 }
 
 var LogPrefix = "cloudmigrations.service"
@@ -38,21 +41,28 @@ func ProvideService(
 	sqlStore db.DB,
 	dsService datasources.DataSourceService,
 	routeRegister routing.RouteRegister,
+	prom prometheus.Registerer,
 ) cloudmigrations.CloudMigrationService {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}
 	}
 
-	service := &CloudMigrationsServiceImpl{
+	s := &CloudMigrationsServiceImpl{
 		log:       log.New(LogPrefix),
 		cfg:       cfg,
 		sqlStore:  sqlStore,
 		features:  features,
 		dsService: dsService,
 	}
-	service.api = api.RegisterApi(routeRegister, service)
+	s.api = api.RegisterApi(routeRegister, s)
 
-	return service
+	if m, err := metrics.RegisterMetrics(prom); err != nil {
+		s.log.Warn("error registering prom metrics", "error", err.Error())
+	} else {
+		s.metrics = m
+	}
+
+	return s
 }
 
 func (cm *CloudMigrationsServiceImpl) MigrateDatasources(ctx context.Context, request *models.MigrateDatasourcesRequest) (*models.MigrateDatasourcesResponse, error) {
