@@ -1,9 +1,10 @@
 package models
 
 type MigrateDatasourcesRequest struct {
-	MigrateToPDC bool
+	MigrateToPDC       bool
+	MigrateCredentials bool
 }
 
 type MigrateDatasourcesResponse struct {
-	DashboardsMigrated int
+	DatasourcesMigrated int
 }

@@ -44,15 +44,15 @@ func (api *MigrationAPI) registerEndpoints() {
 
 func (api *MigrationAPI) MigrateDatasources(c *contextmodel.ReqContext) response.Response {
 
-	var req models.MigrateDatasourcesRequest
+	var req migrateDatasourcesRequestDTO
 	if err := web.Bind(c.Req, &req); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	resp, err := api.cloudMigrationsService.MigrateDatasources(c.Req.Context(), nil)
+	resp, err := api.cloudMigrationsService.MigrateDatasources(c.Req.Context(), &models.MigrateDatasourcesRequest{MigrateToPDC: req.MigrateToPDC, MigrateCredentials: req.MigrateCredentials})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "data source migrations error", err)
 	}
 
-	return response.JSON(http.StatusOK, resp)
+	return response.JSON(http.StatusOK, migrateDatasourcesResponseDTO{DatasourcesMigrated: resp.DatasourcesMigrated})
 }
