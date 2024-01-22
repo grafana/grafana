@@ -73,7 +73,7 @@ func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSetti
 func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
-		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
 	if strings.HasPrefix(newInfo.ApiUrl, legacyAPIURL) {

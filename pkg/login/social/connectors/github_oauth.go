@@ -99,7 +99,7 @@ func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSetti
 func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
-		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
 	teamIdsSplitted := util.SplitString(newInfo.Extra[teamIdsKey])

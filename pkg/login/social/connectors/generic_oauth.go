@@ -86,7 +86,7 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
-		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
 	s.reloadMutex.Lock()

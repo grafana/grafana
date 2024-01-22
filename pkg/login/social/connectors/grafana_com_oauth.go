@@ -71,7 +71,7 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOS
 func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
 	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
-		return fmt.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
 	// Override necessary settings
