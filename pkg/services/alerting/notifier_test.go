@@ -229,7 +229,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 		}
 
 		origNewImageUploaderProvider := newImageUploaderProvider
-		newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
+		newImageUploaderProvider = func(cfg *setting.Cfg) (imguploader.ImageUploader, error) {
 			return imageUploader, nil
 		}
 		defer func() {
@@ -258,7 +258,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			},
 		}
 
-		scenarioCtx.notificationService = newNotificationService(renderService, store, nil, nil)
+		scenarioCtx.notificationService = newNotificationService(nil, renderService, store, nil, nil)
 		fn(scenarioCtx)
 	})
 }

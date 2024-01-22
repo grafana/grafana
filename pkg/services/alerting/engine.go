@@ -84,7 +84,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator validations
 	e.evalHandler = NewEvalHandler(e.DataService)
 	e.ruleReader = newRuleReader(store)
 	e.log = log.New("alerting.engine")
-	e.resultHandler = newResultHandler(e.RenderService, store, notificationService, encryptionService.GetDecryptedValue)
+	e.resultHandler = newResultHandler(cfg, e.RenderService, store, notificationService, encryptionService.GetDecryptedValue)
 
 	e.registerUsageMetrics()
 

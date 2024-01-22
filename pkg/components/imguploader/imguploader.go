@@ -32,8 +32,8 @@ var (
 	logger = log.New("imguploader")
 )
 
-func NewImageUploader() (ImageUploader, error) {
-	switch setting.ImageUploadProvider {
+func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
+	switch cfg.ImageUploadProvider {
 	case "s3":
 		s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
 		if err != nil {
@@ -118,8 +118,8 @@ func NewImageUploader() (ImageUploader, error) {
 		return NewLocalImageUploader()
 	}
 
-	if setting.ImageUploadProvider != "" {
-		logger.Error("The external image storage configuration is invalid", "unsupported provider", setting.ImageUploadProvider)
+	if cfg.ImageUploadProvider != "" {
+		logger.Error("The external image storage configuration is invalid", "unsupported provider", cfg.ImageUploadProvider)
 	}
 
 	return NopImageUploader{}, nil

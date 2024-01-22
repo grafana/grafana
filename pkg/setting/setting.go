@@ -141,8 +141,6 @@ var (
 
 	// Grafana.NET URL
 	GrafanaComUrl string
-
-	ImageUploadProvider string
 )
 
 // TODO move all global vars to this struct
@@ -1221,7 +1219,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
-	ImageUploadProvider = cfg.ImageUploadProvider
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))

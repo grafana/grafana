@@ -20,8 +20,8 @@ import (
 // for stubbing in tests
 //
 //nolint:gocritic
-var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
-	return imguploader.NewImageUploader()
+var newImageUploaderProvider = func(cfg *setting.Cfg) (imguploader.ImageUploader, error) {
+	return imguploader.NewImageUploader(cfg)
 }
 
 // NotifierPlugin holds meta information about a notifier.
@@ -87,8 +87,9 @@ type ShowWhen struct {
 	Is    string `json:"is"`
 }
 
-func newNotificationService(renderService rendering.Service, sqlStore AlertStore, notificationSvc *notifications.NotificationService, decryptFn GetDecryptedValueFn) *notificationService {
+func newNotificationService(cfg *setting.Cfg, renderService rendering.Service, sqlStore AlertStore, notificationSvc *notifications.NotificationService, decryptFn GetDecryptedValueFn) *notificationService {
 	return &notificationService{
+		cfg:                 cfg,
 		log:                 log.New("alerting.notifier"),
 		renderService:       renderService,
 		sqlStore:            sqlStore,
@@ -98,6 +99,7 @@ func newNotificationService(renderService rendering.Service, sqlStore AlertStore
 }
 
 type notificationService struct {
+	cfg                 *setting.Cfg
 	log                 log.Logger
 	renderService       rendering.Service
 	sqlStore            AlertStore
@@ -202,7 +204,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 }
 
 func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout time.Duration) (err error) {
-	uploader, err := newImageUploaderProvider()
+	uploader, err := newImageUploaderProvider(n.cfg)
 	if err != nil {
 		return err
 	}

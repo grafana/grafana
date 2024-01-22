@@ -98,7 +98,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 
 		// Image uploading is an optional feature
 		if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
-			m, err := imguploader.NewImageUploader()
+			m, err := imguploader.NewImageUploader(cfg)
 			if err != nil {
 				return nil, fmt.Errorf("failed to initialize uploading screenshot service: %w", err)
 			}
