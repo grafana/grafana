@@ -140,9 +140,9 @@ func ParseNumber(value any) *float64 {
 }
 
 func ParseString(value any) *string {
-	switch value.(type) {
+	switch val := value.(type) {
 	case string:
-		return ToPtr(value.(string))
+		return ToPtr(val)
 	default:
 		return ToPtr(fmt.Sprintf("%v", value))
 	}
