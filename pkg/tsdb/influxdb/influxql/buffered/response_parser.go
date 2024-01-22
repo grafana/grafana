@@ -241,6 +241,12 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 
 		if !hasTimeCol {
 			newFrame := newFrameWithoutTimeField(row, query)
+			if len(frames) == 0 {
+				newFrame.Meta = &data.FrameMeta{
+					ExecutedQueryString:    query.RawQuery,
+					PreferredVisualization: util.GetVisType(query.ResultFormat),
+				}
+			}
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
@@ -342,12 +348,5 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 
 	field := data.NewField("Value", nil, values)
 	frame := data.NewFrame(row.Name, field)
-	frame.Meta = &data.FrameMeta{
-		ExecutedQueryString:    query.RawQuery,
-		PreferredVisualization: util.TableVisType,
-	}
-	if query.ResultFormat == "logs" {
-		frame.Meta.PreferredVisualization = util.LogsVisType
-	}
 	return frame
 }
