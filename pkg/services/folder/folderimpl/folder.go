@@ -406,6 +406,7 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 	return s.store.GetParents(ctx, q)
 }
 
+// Deprecated: use getFolderByUID instead
 func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*folder.Folder, error) {
 	if id == 0 {
 		return &folder.GeneralFolder, nil

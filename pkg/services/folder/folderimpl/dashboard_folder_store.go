@@ -43,6 +43,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 	return dashboards.FromDashboard(&dashboard), err
 }
 
+// Deprecated: use GetFolderByUID instead
 func (d *DashboardFolderStoreImpl) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, ID: id}

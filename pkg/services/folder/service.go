@@ -36,6 +36,7 @@ type FolderStore interface {
 	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*Folder, error)
 	// GetFolderByUID retrieves a folder by its UID
 	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*Folder, error)
+	// Deprecated: use GetFolderByUID instead
 	// GetFolderByID retrieves a folder by its ID
 	GetFolderByID(ctx context.Context, orgID int64, id int64) (*Folder, error)
 	// GetFolders returns all folders for the given orgID and UIDs.
