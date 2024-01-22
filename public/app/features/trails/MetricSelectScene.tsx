@@ -126,7 +126,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       const metric = sortedMetricNames[index];
 
       const metricName = String(metric.value);
-      if (!metricName.toLowerCase().match(searchRegex)) {
+
+      if (!searchRegex || !searchRegex.test(metricName)) {
         continue;
       }
 
@@ -327,7 +328,15 @@ function createSearchRegExp(spaceSeparatedMetricNames: string) {
   const searchParts = spaceSeparatedMetricNames
     ?.toLowerCase()
     .split(splitSeparator)
-    .filter((part) => part.length > 0);
-  const regex = `(.*${searchParts?.join('.*|.*')}.*)`;
-  return new RegExp(regex);
+    .filter((part) => part.length > 0)
+    .map((part) => `(?=(.*${part}.*))`);
+
+  if (searchParts.length === 0) {
+    return null;
+  }
+
+  const regex = searchParts.join('');
+  //  (?=(.*expr1.*))(?=().*expr2.*))...
+  // The ?=(...) lookahead allows us to match these in any order.
+  return new RegExp(regex, 'igy');
 }
