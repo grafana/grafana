@@ -3482,7 +3482,7 @@ __metadata:
     react-use: "npm:17.4.0"
     rxjs: "npm:7.8.1"
     ts-jest: "npm:29.1.2"
-    ts-node: "npm:10.9.1"
+    ts-node: "npm:10.9.2"
     tslib: "npm:2.6.0"
     typescript: "npm:5.2.2"
   peerDependencies:
