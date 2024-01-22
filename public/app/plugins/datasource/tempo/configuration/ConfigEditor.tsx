@@ -14,14 +14,13 @@ import {
 } from '@grafana/experimental';
 import {
   NodeGraphSection,
+  SpanBarSection,
   TraceToLogsSection,
   TraceToMetricsSection,
   TraceToProfilesSection,
 } from '@grafana/o11y-ds-frontend';
 import { config } from '@grafana/runtime';
 import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
-
-import { SpanBarSection } from '../_importedDependencies/components/TraceView/SpanBarSettings';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
