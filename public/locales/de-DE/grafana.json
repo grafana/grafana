@@ -413,9 +413,6 @@
       "label": "Neue Datenquelle hinzufügen"
     }
   },
-  "dismissable-button": {
-    "close": ""
-  },
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
     "rich-history": {
@@ -1229,7 +1226,8 @@
   "return-to-previous": {
     "button": {
       "label": ""
-    }
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {

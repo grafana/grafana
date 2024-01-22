@@ -418,9 +418,6 @@
       "label": "Ajouter une nouvelle source de données"
     }
   },
-  "dismissable-button": {
-    "close": ""
-  },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
     "rich-history": {
@@ -1235,7 +1232,8 @@
   "return-to-previous": {
     "button": {
       "label": ""
-    }
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {

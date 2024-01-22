@@ -413,9 +413,6 @@
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
     }
   },
-  "dismissable-button": {
-    "close": "Cľőşę"
-  },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "rich-history": {
@@ -1229,7 +1226,8 @@
   "return-to-previous": {
     "button": {
       "label": "ßäčĸ ŧő {{title}}"
-    }
+    },
+    "dismissable-button": "Cľőşę"
   },
   "search": {
     "actions": {

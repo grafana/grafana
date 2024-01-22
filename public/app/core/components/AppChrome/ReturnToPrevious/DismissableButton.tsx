@@ -29,7 +29,7 @@ export const DismissableButton = ({ label, onClick, onDismiss }: DismissableButt
       </Button>
       <Button
         icon="times"
-        aria-label={t('dismissable-button.close', 'Close')}
+        aria-label={t('return-to-previous.dismissable-button', 'Close')}
         variant="primary"
         fill="outline"
         size="sm"

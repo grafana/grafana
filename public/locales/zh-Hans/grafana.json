@@ -408,9 +408,6 @@
       "label": "添加新数据源"
     }
   },
-  "dismissable-button": {
-    "close": ""
-  },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
     "rich-history": {
@@ -1223,7 +1220,8 @@
   "return-to-previous": {
     "button": {
       "label": ""
-    }
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {

@@ -413,9 +413,6 @@
       "label": "Add new data source"
     }
   },
-  "dismissable-button": {
-    "close": "Close"
-  },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "rich-history": {
@@ -1229,7 +1226,8 @@
   "return-to-previous": {
     "button": {
       "label": "Back to {{title}}"
-    }
+    },
+    "dismissable-button": "Close"
   },
   "search": {
     "actions": {
