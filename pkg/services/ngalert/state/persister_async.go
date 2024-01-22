@@ -17,7 +17,7 @@ type AsyncStatePersister struct {
 	store                InstanceStore
 }
 
-func NewAsyncStatePersisiter(log log.Logger, cfg ManagerCfg) StatePersister {
+func NewAsyncStatePersister(log log.Logger, cfg ManagerCfg) StatePersister {
 	return &AsyncStatePersister{
 		log:                  log,
 		store:                cfg.InstanceStore,
@@ -26,7 +26,6 @@ func NewAsyncStatePersisiter(log log.Logger, cfg ManagerCfg) StatePersister {
 }
 
 func (a *AsyncStatePersister) Async(ctx context.Context, ticker *clock.Ticker, cache *cache) {
-infLoop:
 	for {
 		select {
 		case <-ticker.C:
@@ -34,15 +33,15 @@ infLoop:
 				a.log.Error("Failed to do a full state sync to database", "err", err)
 			}
 		case <-ctx.Done():
-			a.log.Info("Stopping state sync...")
+			a.log.Info("Scheduler is shutting down, doing a final state sync.")
 			if err := a.fullSync(context.Background(), cache); err != nil {
 				a.log.Error("Failed to do a full state sync to database", "err", err)
 			}
 			ticker.Stop()
-			break infLoop
+			a.log.Info("State async worker is shut down.")
+			return
 		}
 	}
-	a.log.Info("State sync shut down")
 }
 
 func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache) error {

@@ -222,9 +222,6 @@ func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance
 			_, err = sess.Exec("INSERT INTO alert_instance (rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time) VALUES (?,?,?,?,?,?,?,?,?)",
 				alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 			if err != nil {
-				if rbErr := sess.Rollback(); rbErr != nil {
-					st.Logger.Error("Failed to roll back on full sync", "err", rbErr)
-				}
 				return fmt.Errorf("failed to insert into alert_instance table: %w", err)
 			}
 		}

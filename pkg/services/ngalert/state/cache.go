@@ -353,6 +353,7 @@ func (c *cache) asInstances(skipNormalState bool) []ngModels.AlertInstance {
 					LastEvalTime:      v2.LastEvaluationTime,
 					CurrentStateSince: v2.StartsAt,
 					CurrentStateEnd:   v2.EndsAt,
+					ResultFingerprint: v2.ResultFingerprint.String(),
 				})
 			}
 		}

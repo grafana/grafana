@@ -18,7 +18,7 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 		store := &FakeInstanceStore{}
 		logger := log.New("async.test")
 
-		persister := NewAsyncStatePersisiter(logger, ManagerCfg{
+		persister := NewAsyncStatePersister(logger, ManagerCfg{
 			InstanceStore: store,
 		})
 
@@ -52,7 +52,7 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 		store := &FakeInstanceStore{}
 		logger := log.New("async.test")
 
-		persister := NewAsyncStatePersisiter(logger, ManagerCfg{
+		persister := NewAsyncStatePersister(logger, ManagerCfg{
 			InstanceStore: store,
 		})
 
