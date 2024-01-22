@@ -778,6 +778,26 @@ func TestIntegrationGetFolders(t *testing.T) {
 		}
 	})
 
+	t.Run("get folders by UIDs batching should work as expected", func(t *testing.T) {
+		ff, err := folderStore.GetFolders(context.Background(), folder.GetFoldersQuery{OrgID: orgID, UIDs: uids, BatchSize: 3})
+		require.NoError(t, err)
+		assert.Equal(t, len(uids), len(ff))
+		for _, f := range folders {
+			folderInResponseIdx := slices.IndexFunc(ff, func(rf *folder.Folder) bool {
+				return rf.UID == f.UID
+			})
+			assert.NotEqual(t, -1, folderInResponseIdx)
+			rf := ff[folderInResponseIdx]
+			assert.Equal(t, f.UID, rf.UID)
+			assert.Equal(t, f.OrgID, rf.OrgID)
+			assert.Equal(t, f.Title, rf.Title)
+			assert.Equal(t, f.Description, rf.Description)
+			assert.NotEmpty(t, rf.Created)
+			assert.NotEmpty(t, rf.Updated)
+			assert.NotEmpty(t, rf.URL)
+		}
+	})
+
 	t.Run("get folders by UIDs with fullpath should succeed", func(t *testing.T) {
 		ff, err := folderStore.GetFolders(context.Background(), folder.GetFoldersQuery{OrgID: orgID, UIDs: uids, WithFullpath: true})
 		require.NoError(t, err)

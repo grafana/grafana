@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const DEFAULT_BATCH_SIZE = 999
+
 type sqlStore struct {
 	db  db.DB
 	log log.Logger
@@ -367,24 +369,38 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([
 	if len(q.UIDs) == 0 {
 		return []*folder.Folder{}, nil
 	}
+
+	if q.BatchSize == 0 {
+		q.BatchSize = DEFAULT_BATCH_SIZE
+	}
+
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		s := `SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`
-		// compute full path column if requested
-		if q.WithFullpath {
-			s += fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect()))
-		}
-		s += ` FROM folder f0`
-		// join the same table multiple times to compute the full path of a folder
-		if q.WithFullpath {
-			s += getFullpathJoinsSQL()
-		}
-		s += ` WHERE f0.org_id=? AND f0.uid IN (?` + strings.Repeat(", ?", len(q.UIDs)-1) + `)`
-		args := []any{q.OrgID}
-		for _, uid := range q.UIDs {
-			args = append(args, uid)
-		}
-		return sess.SQL(s, args...).Find(&folders)
+		return batch(len(q.UIDs), int(q.BatchSize), func(start, end int) error {
+			partialFolders := make([]*folder.Folder, 0, DEFAULT_BATCH_SIZE)
+			partialIDs := q.UIDs[start:min(end, len(q.UIDs))]
+			s := `SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`
+			// compute full path column if requested
+			if q.WithFullpath {
+				s += fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect()))
+			}
+			s += ` FROM folder f0`
+			// join the same table multiple times to compute the full path of a folder
+			if q.WithFullpath {
+				s += getFullpathJoinsSQL()
+			}
+			s += ` WHERE f0.org_id=? AND f0.uid IN (?` + strings.Repeat(", ?", len(partialIDs)-1) + `)`
+			args := []any{q.OrgID}
+			for _, uid := range partialIDs {
+				args = append(args, uid)
+			}
+			err := sess.SQL(s, args...).Find(&partialFolders)
+			if err != nil {
+				return err
+			}
+			folders = append(folders, partialFolders...)
+			return nil
+		})
 	}); err != nil {
 		return nil, err
 	}
@@ -414,4 +430,21 @@ func getFullpathJoinsSQL() string {
 		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.org_id = f%d.org_id AND f%d.uid = f%d.parent_uid`, i, i, i-1, i, i-1))
 	}
 	return strings.Join(joins, "\n")
+}
+
+func batch(count, batchSize int, eachFn func(start, end int) error) error {
+	for i := 0; i < count; {
+		end := i + batchSize
+		if end > count {
+			end = count
+		}
+
+		if err := eachFn(i, end); err != nil {
+			return err
+		}
+
+		i = end
+	}
+
+	return nil
 }
