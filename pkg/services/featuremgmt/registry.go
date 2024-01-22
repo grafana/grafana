@@ -721,14 +721,6 @@ var (
 			Created:         time.Date(2023, time.July, 18, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "awsAsyncQueryCaching",
-			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
-			Owner:       awsDatasourcesSquad,
-			Created:     time.Date(2023, time.July, 21, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:              "splitScopes",
 			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
 			Stage:             FeatureStageGeneralAvailability,
@@ -748,22 +740,6 @@ var (
 			RequiresRestart:   false,
 			HideFromAdminPage: true, // Much like splitScopes, this is internal work
 			Created:           time.Date(2023, time.December, 20, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:         "traceToProfiles",
-			Description:  "Enables linking between traces and profiles",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Created:      time.Date(2023, time.November, 1, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:         "tracesEmbeddedFlameGraph",
-			Description:  "Enables embedding a flame graph in traces",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Created:      time.Date(2023, time.November, 2, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "permissionsFilterRemoveSubquery",
