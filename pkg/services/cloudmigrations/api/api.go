@@ -43,7 +43,6 @@ func (api *MigrationAPI) registerEndpoints() {
 }
 
 func (api *MigrationAPI) MigrateDatasources(c *contextmodel.ReqContext) response.Response {
-
 	var req migrateDatasourcesRequestDTO
 	if err := web.Bind(c.Req, &req); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
