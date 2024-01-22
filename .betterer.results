@@ -529,11 +529,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "packages/grafana-o11y-ds-frontend/src/NodeGraph/NodeGraphSettings.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
     "packages/grafana-o11y-ds-frontend/src/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
