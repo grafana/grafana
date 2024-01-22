@@ -30,10 +30,11 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
     onChange({ target: { name, value: Number(value) } });
   };
 
+  const streamType = query?.stream?.type || 'signal';
   const fields =
-    query?.stream?.type === 'signal'
+    streamType === 'signal'
       ? streamingClientFields
-      : query?.stream?.type === 'logs' || query?.stream?.type === 'traces'
+      : ['logs', 'traces'].includes(streamType)
       ? [streamingClientFields[0]] // speed
       : [];
 
