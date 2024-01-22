@@ -16,21 +16,19 @@ labels:
     - oss
 menuTitle: Configure value mappings
 title: Configure value mappings
-description: Configure value mappings to change the visual treatment of data in your visualizations
+description: Configure value mappings to change how data appears in your visualizations
 weight: 90
 ---
 
 # Configure value mappings
 
-In addition to field overrides, value mapping is a technique that you can use to change the visual treatment of data that appears in a visualization.
+In addition to field overrides, value mapping is a technique you can use to change how data appears in a visualization.
 
-Values mapped using value mappings bypass the unit formatting. This means that a text value mapped to a numerical value is not formatted using the configured unit.
+For example, the mapping applied in the following image causes the visualization to display the text `Cold`, `Good`, and `Hot` in blue, green, and red for ranges of temperatures rather than actual temperature values. Using value mappings this way can make data faster and easier to understand and interpret.
 
-![Value mappings example](/static/img/docs/value-mappings/value-mappings-example-8-0.png)
+![Value mappings applied to a gauge visualization](screenshot-value-mappings-v10.4.png)
 
-If value mappings are present in a panel, then Grafana displays a summary in the side pane of the panel editor.
-
-You can also use the dots on the left to drag and reorder value mappings in the list.
+Value mappings bypass unit formatting, like color or number of decimal places displayed, set in the **Standard options** section of panel editor. When value mappings are present in a panel, Grafana displays a summary of them in the **Value mappings** section of the editor panel.
 
 ## Types of value mappings
 
@@ -96,3 +94,6 @@ The following image shows a table visualization with value mappings. If you want
 1. (Optional) Enter display text.
 1. (Optional) Set the color.
 1. Click **Update** to save the value mapping.
+   You can also use the dots on the left to drag and reorder value mappings in the list.
+
+<!-- ![Value mappings example](/static/img/docs/value-mappings/value-mappings-example-8-0.png) -->
