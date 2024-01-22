@@ -138,9 +138,6 @@ var (
 
 	// News Feed
 	NewsFeedEnabled bool
-
-	// Grafana.NET URL
-	GrafanaComUrl string
 )
 
 // TODO move all global vars to this struct
@@ -1209,13 +1206,13 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	// check old key name
-	GrafanaComUrl = valueAsString(iniFile.Section("grafana_net"), "url", "")
-	if GrafanaComUrl == "" {
-		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
+	grafanaComUrl := valueAsString(iniFile.Section("grafana_net"), "url", "")
+	if grafanaComUrl == "" {
+		grafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
 	}
-	cfg.GrafanaComURL = GrafanaComUrl
+	cfg.GrafanaComURL = grafanaComUrl
 
-	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", GrafanaComUrl+"/api")
+	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
