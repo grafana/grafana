@@ -35,7 +35,7 @@ module.exports = (env = {}) =>
       rules: [
         {
           test: /\.tsx?$/,
-          exclude: /node_modules/,
+          // exclude: /node_modules/,
           use: {
             loader: 'esbuild-loader',
             options: esbuildOptions,
@@ -54,13 +54,13 @@ module.exports = (env = {}) =>
     },
 
     // enable persistent cache for faster builds
-    cache: {
-      type: 'filesystem',
-      name: 'grafana-default-production',
-      buildDependencies: {
-        config: [__filename],
-      },
-    },
+    // cache: {
+    //   type: 'filesystem',
+    //   name: 'grafana-default-production',
+    //   buildDependencies: {
+    //     config: [__filename],
+    //   },
+    // },
 
     plugins: [
       new MiniCssExtractPlugin({
