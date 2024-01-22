@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
-import { Tooltip, Icon, InteractiveTable, type CellProps } from '@grafana/ui';
+import { Tooltip, Icon, InteractiveTable, type CellProps, Column } from '@grafana/ui';
 import { LdapRole } from 'app/types';
 
 interface Props {
@@ -9,33 +9,40 @@ interface Props {
 }
 
 export const LdapUserGroups = ({ groups, showAttributeMapping }: Props) => {
-  const items = showAttributeMapping ? groups : groups.filter((item) => item.orgRole);
-  const columns = [
-    {
-      id: 'groupDN',
-      header: 'LDAP Group',
-      visible: () => !!showAttributeMapping,
-    },
-    {
-      id: 'orgName',
-      header: 'Organization',
-      cell: (props: CellProps<LdapRole, string | undefined>) =>
-        props.value && props.row.original.orgRole ? props.value : '',
-    },
-    {
-      id: 'orgRole',
-      header: 'Role',
-      cell: (props: CellProps<LdapRole, string | undefined>) =>
-        props.value || (
-          <>
-            No match{' '}
-            <Tooltip content="No matching organizations found">
-              <Icon name="info-circle" />
-            </Tooltip>
-          </>
-        ),
-    },
-  ];
+  const items = useMemo(
+    () => (showAttributeMapping ? groups : groups.filter((item) => item.orgRole)),
+    [groups, showAttributeMapping]
+  );
+
+  const columns = useMemo<Array<Column<LdapRole>>>(
+    () => [
+      {
+        id: 'groupDN',
+        header: 'LDAP Group',
+        visible: () => !!showAttributeMapping,
+      },
+      {
+        id: 'orgName',
+        header: 'Organization',
+        cell: (props: CellProps<LdapRole, string | undefined>) =>
+          props.value && props.row.original.orgRole ? props.value : '',
+      },
+      {
+        id: 'orgRole',
+        header: 'Role',
+        cell: (props: CellProps<LdapRole, string | undefined>) =>
+          props.value || (
+            <>
+              No match{' '}
+              <Tooltip content="No matching organizations found">
+                <Icon name="info-circle" />
+              </Tooltip>
+            </>
+          ),
+      },
+    ],
+    [showAttributeMapping]
+  );
 
   return (
     <InteractiveTable
