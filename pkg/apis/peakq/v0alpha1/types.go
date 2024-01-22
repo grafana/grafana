@@ -3,6 +3,7 @@ package v0alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
@@ -15,24 +16,56 @@ type QueryTemplate struct {
 }
 
 type QueryTemplateSpec struct {
-	Title     string                `json:"title,omitempty"`
-	Variables []QueryVariable       `json:"vars,omitempty"`
-	Targets   []common.Unstructured `json:"targets,omitempty"`
+	Title     string          `json:"title,omitempty"`
+	Variables []QueryVariable `json:"vars,omitempty"`
+	Targets   []Target
 }
 
+type Target struct {
+	// DataType is the returned Dataplane type from the query.
+	DataType data.FrameType `json:"dataType,omitempty"`
+
+	// DataTypeVersion is the version for the Dataplane type.
+	DataTypeVersion data.FrameTypeVersion `json:"dataTypeVersion,omitempty"`
+
+	Properties common.Unstructured
+}
+
+// QueryVariable is the definition of a variable that will be interpolated
+// in targets.
 type QueryVariable struct {
-	Key       string     `json:"key"`
-	Value     string     `json:"value"`
+	// Key is the name of the variable.
+	Key string `json:"key"`
+
+	// SelectedValue is the value that will be interpolated
+	// for each position during render. This value is not stored.
+	SelectedValue string `json:"selectedValue"`
+
+	// DefaultValue is the value to be used when there is no selected value
+	// during render.
+	DefaultValue string `json:"defaultValue"`
+
+	// Positions is a list of where to perform the interpolation
+	// within targets during render.
 	Positions []Position `json:"positions"`
 }
 
-// Position is where to do a replacements in the targets
-// during render
+// Position is where to do replacement in the targets
+// during render.
 type Position struct {
-	TargetIdx int    `json:"targetIdx"`
-	TargetKey string `json:"targetKey"` // JSONPath?
-	Start     int64  `json:"start"`
-	End       int64  `json:"end"`
+	// IndexIdx is the index of the target in The QueryTemplateSpec Targets property.
+	TargetIdx int `json:"targetIdx"`
+
+	// TargetKey is the location of the property within the the target properties.
+	// The format for this is not figured out yet (Maybe JSONPath?).
+	TargetKey string `json:"targetKey"`
+
+	// Start is the byte offset within TargetKey's property of the variable.
+	// It is the start location for replacements).
+	Start int64 `json:"start"`
+
+	// End is the byte offset of the end of the variable.
+	End int64 `json:"end"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
