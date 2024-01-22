@@ -74,7 +74,7 @@ Content-Type: application/json
       "clientId": "my_azuread_client",
       "clientSecret": "*********",
       "enabled": true,
-      "scopes": "user:email,read:org"
+      "scopes": "openid,email,profile"
       // rest of the settings
     },
     "source":    "system",
