@@ -15,8 +15,8 @@ import {
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
+import { NodeGraphOptions } from '@grafana/o11y-ds-frontend';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 

@@ -12,11 +12,15 @@ import {
   convertLegacyAuthProps,
   DataSourceDescription,
 } from '@grafana/experimental';
-import { TraceToLogsSection, TraceToMetricsSection, TraceToProfilesSection } from '@grafana/o11y-ds-frontend';
+import {
+  NodeGraphSection,
+  TraceToLogsSection,
+  TraceToMetricsSection,
+  TraceToProfilesSection,
+} from '@grafana/o11y-ds-frontend';
 import { config } from '@grafana/runtime';
 import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
 
-import { NodeGraphSection } from '../_importedDependencies/components/NodeGraphSettings';
 import { SpanBarSection } from '../_importedDependencies/components/TraceView/SpanBarSettings';
 
 import { LokiSearchSettings } from './LokiSearchSettings';

@@ -12,8 +12,8 @@ import {
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
+import { NodeGraphOptions } from '@grafana/o11y-ds-frontend';
 import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { apiPrefix } from './constants';
