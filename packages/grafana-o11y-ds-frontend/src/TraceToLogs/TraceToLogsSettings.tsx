@@ -3,8 +3,8 @@ import React, { useCallback, useMemo } from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
+import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';
 

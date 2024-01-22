@@ -8,11 +8,10 @@ import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker, DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
-import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 import { ProfileTypesCascader } from '../pyroscope/ProfileTypesCascader';
 import { ProfileTypeMessage } from '../pyroscope/types';
