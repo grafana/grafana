@@ -63,14 +63,15 @@ func (b *QueryAPIBuilder) processRequest(ctx context.Context, req parsedQueryReq
 
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
-func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return b.helper.ExecuteQueryData(ctx, &req)
+func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req groupedQueries) (*backend.QueryDataResponse, error) {
+	// convert pluginId to group+version
+	return b.runner.ExecuteQueryData(ctx, req.pluginId, "v0alpha1", req.uid, req.query)
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
-func buildErrorResponse(err error, req backend.QueryDataRequest) *backend.QueryDataResponse {
+func buildErrorResponse(err error, req groupedQueries) *backend.QueryDataResponse {
 	rsp := backend.NewQueryDataResponse()
-	for _, query := range req.Queries {
+	for _, query := range req.query {
 		rsp.Responses[query.RefID] = backend.DataResponse{
 			Error: err,
 		}
@@ -79,13 +80,13 @@ func buildErrorResponse(err error, req backend.QueryDataRequest) *backend.QueryD
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []groupedQueries) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(b.concurrentQueryLimit) // prevent too many concurrent requests
 	rchan := make(chan *backend.QueryDataResponse, len(requests))
 
 	// Create panic recovery function for loop below
-	recoveryFn := func(req backend.QueryDataRequest) {
+	recoveryFn := func(req groupedQueries) {
 		if r := recover(); r != nil {
 			var err error
 			b.log.Error("query datasource panic", "error", r, "stack", log.Stack(1))

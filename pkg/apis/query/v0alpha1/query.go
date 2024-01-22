@@ -8,8 +8,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// Generic query request with shared time across all values
 // Copied from: https://github.com/grafana/grafana/blob/main/pkg/api/dtos/models.go#L62
 type QueryRequest struct {
+	metav1.TypeMeta `json:",inline"`
+
 	// From Start time in epoch timestamps in milliseconds or relative using Grafana time units.
 	// required: true
 	// example: now-1h

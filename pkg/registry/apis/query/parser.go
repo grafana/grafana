@@ -13,20 +13,32 @@ import (
 )
 
 type parsedQueryRequest struct {
-	Requests []backend.QueryDataRequest
-
-	// Lookup by RefID
-	ByRefID map[string]*v0alpha1.GenericDataQuery
+	// The queries broken into requests
+	Requests []groupedQueries
 
 	// Optionally show the additional query properties
 	Expressions []v0alpha1.GenericDataQuery
 }
 
+type groupedQueries struct {
+	// the plugin type
+	pluginId string
+
+	// The datasource name/uid
+	uid string
+
+	// The raw backend query objects
+	query []backend.DataQuery
+}
+
+func (d *groupedQueries) key() string {
+	return fmt.Sprintf("%s/%s", d.pluginId, d.uid)
+}
+
 func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
-	mixed := make(map[string]backend.QueryDataRequest)
-	parsed := parsedQueryRequest{
-		ByRefID: make(map[string]*v0alpha1.GenericDataQuery),
-	}
+	mixed := make(map[string]*groupedQueries)
+	parsed := parsedQueryRequest{}
+	byRefID := make(map[string]*v0alpha1.GenericDataQuery)
 
 	var err error
 	tr := legacydata.NewDataTimeRange(raw.From, raw.To)
@@ -36,11 +48,11 @@ func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
 	}
 
 	for idx, q := range raw.Queries {
-		if parsed.ByRefID[q.RefID] != nil {
+		if byRefID[q.RefID] != nil {
 			return parsed, fmt.Errorf("invalid query, duplicate refId: " + q.RefID)
 		}
 		ptr := &raw.Queries[idx]
-		parsed.ByRefID[q.RefID] = ptr
+		byRefID[q.RefID] = ptr
 
 		// Extract out the expressions queries earlier
 		if expr.IsDataSource(q.Datasource.Type) || expr.IsDataSource(q.Datasource.UID) {
@@ -48,7 +60,7 @@ func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
 			continue
 		}
 
-		// Forward queries to the
+		// Convert to a backend DataQuery
 		dq := backend.DataQuery{
 			RefID:         q.RefID,
 			QueryType:     q.QueryType,
@@ -71,25 +83,26 @@ func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
 			dq.Interval = time.Duration(time.Second)
 		}
 
-		// Just the lookup key
-		key := q.Datasource.Type + "/" + q.Datasource.UID
-		req, ok := mixed[key]
-		if !ok {
-			req = backend.QueryDataRequest{
-				PluginContext: backend.PluginContext{
-					PluginID: q.Datasource.Type, // Partial information
-					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-						UID:  q.Datasource.Type,
-						Type: q.Datasource.Type,
-					},
-				},
-				Queries: []backend.DataQuery{dq},
-			}
-			mixed[key] = req
-			parsed.Requests = append(parsed.Requests, req)
-		} else {
-			req.Queries = append(req.Queries, dq)
+		g := &groupedQueries{pluginId: q.Datasource.Type, uid: q.Datasource.UID}
+		group, ok := mixed[g.key()]
+		if !ok || group == nil {
+			group = g
+			mixed[g.key()] = g
 		}
+		group.query = append(group.query, dq)
+	}
+
+	for _, q := range parsed.Expressions {
+		// TODO: parse and build tree, for now just fail fast on unknown commands
+		_, err := expr.GetExpressionCommandType(q.AdditionalProperties())
+		if err != nil {
+			return parsed, err
+		}
+	}
+
+	// Add each request
+	for _, v := range mixed {
+		parsed.Requests = append(parsed.Requests, *v)
 	}
 
 	return parsed, nil

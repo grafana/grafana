@@ -12,34 +12,56 @@ import (
 	testdata "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
-type QueryHelper interface {
+type QueryRunner interface {
 	// Runs the query as the user in context
-	ExecuteQueryData(ctx context.Context, query *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
+	ExecuteQueryData(ctx context.Context,
+		// The k8s group for the datasource (pluginId)
+		group string,
 
-	// Get all plugins (with elevated permissions)
+		// The group version (eg v0alpha1)
+		apiVersion string,
+
+		// The datasource name/uid
+		name string,
+
+		// The raw backend query objects
+		query []backend.DataQuery,
+	) (*backend.QueryDataResponse, error)
+
+	// Get the list of available datasource plugins
+	// The values will be managed though API discovery/reconciliation
 	GetDatasourcePlugins(ctx context.Context) (*v0alpha1.DataSourcePluginList, error)
 
-	// List all datasources (with elevated permissions)
-	GetDataSources(ctx context.Context, orgId int64) (*v0alpha1.DataSourceList, error)
+	// Get the list of all datasource instances (across all plugins)
+	// The values will be managed though API discovery/reconciliation
+	GetDataSources(ctx context.Context, namespace string) (*v0alpha1.DataSourceList, error)
 }
 
-var _ QueryHelper = (*dummyTestDataRunner)(nil)
+var _ QueryRunner = (*dummyTestDataRunner)(nil)
 
 type dummyTestDataRunner struct{}
 
 // ExecuteQueryData implements QueryHelper.
-func (d *dummyTestDataRunner) ExecuteQueryData(ctx context.Context, query *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if query.PluginContext.DataSourceInstanceSettings == nil {
-		return nil, fmt.Errorf("type should be set in the instance settings")
-	}
-	if query.PluginContext.DataSourceInstanceSettings.Type != "grafana-testdata-datasource" {
-		return nil, fmt.Errorf("only testdata supported here")
-	}
-	return testdata.ProvideService().QueryData(ctx, query)
+func (d *dummyTestDataRunner) ExecuteQueryData(ctx context.Context,
+	// The k8s group for the datasource (pluginId)
+	group string,
+
+	// The group version (eg v0alpha1)
+	apiVersion string,
+
+	// The datasource name/uid
+	name string,
+
+	// The raw backend query objects
+	query []backend.DataQuery,
+) (*backend.QueryDataResponse, error) {
+	return testdata.ProvideService().QueryData(ctx, &backend.QueryDataRequest{
+		Queries: query,
+	})
 }
 
 // GetDataSources implements QueryHelper.
-func (d *dummyTestDataRunner) GetDataSources(ctx context.Context, orgId int64) (*v0alpha1.DataSourceList, error) {
+func (d *dummyTestDataRunner) GetDataSources(ctx context.Context, namespace string) (*v0alpha1.DataSourceList, error) {
 	return &v0alpha1.DataSourceList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),

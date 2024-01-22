@@ -27,14 +27,14 @@ type QueryAPIBuilder struct {
 	log                    log.Logger
 	concurrentQueryLimit   int
 	UserFacingDefaultError string
-	helper                 QueryHelper
+	runner                 QueryRunner
 }
 
 func NewQueryAPIBuilder() *QueryAPIBuilder {
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4, // from config?
 		log:                  log.New("query_apiserver"),
-		helper:               &dummyTestDataRunner{},
+		runner:               &dummyTestDataRunner{},
 	}
 }
 
