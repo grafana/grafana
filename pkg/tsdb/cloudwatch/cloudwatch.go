@@ -285,10 +285,6 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 		return nil, err
 	}
 
-	// added for testing
-	logLevel := aws.LogDebugWithSigning
-	sess.Config.LogLevel = &logLevel
-
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
 	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
@@ -297,7 +293,6 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 		if sess.Config.HTTPClient.Transport != nil {
 			tr, ok = sess.Config.HTTPClient.Transport.(*http.Transport)
 			if !ok {
-				//TODO this is not desired
 				return nil, errors.New("session http client transport is not of type http.Transport")
 			}
 		} else {
