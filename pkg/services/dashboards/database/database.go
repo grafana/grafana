@@ -1,10 +1,10 @@
 package database
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 	"time"
 
@@ -1092,9 +1092,7 @@ UNION ALL
 SELECT org_id, 'folder' as kind, uid, 0, parent_uid, title FROM folder WHERE MATCH(title) AGAINST({{ .Arg .Text }})
 {{ end }}
 {{- define "text-search-legacy" -}}
-SELECT org_id, 'dashboard' as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title {{ .Dialect.LikeStr }} {{ .Arg .Text }} AND NOT is_folder
-UNION ALL
-SELECT org_id, 'folder' as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title {{ .Dialect.LikeStr }} {{ .Arg .Text }} AND is_folder
+SELECT org_id, CASE WHEN is_folder THEN 'folder' ELSE 'dashboard' END as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title {{ .Dialect.LikeStr }} {{ .Arg .Text }} AND NOT is_folder
 {{ end }}
 
 SELECT org_id, kind, uid, entity.id, title, dashboard_tag.term as term, folder_uid, folder_title FROM (
@@ -1126,7 +1124,7 @@ SELECT org_id, kind, uid, entity.id, title, dashboard_tag.term as term, folder_u
 		(
 			p.kind = 'dashboards' AND
 			p.action = 'dashboards:read' AND
-			(p.identifier = entity.uid OR p.identifier IN (f4.uid, f3.uid, f2.uid, f1.uid))
+			p.identifier IN (entity.uid, f4.uid, f3.uid, f2.uid, f1.uid)
 		) OR (
 			p.kind = 'folders' AND
 			p.action = 'folders:read' AND
@@ -1184,7 +1182,7 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 		HasSplitScopes: d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes),
 	}
 
-	sql := &bytes.Buffer{}
+	sql := &strings.Builder{}
 	if err := searchSQL.Execute(sql, data); err != nil {
 		return nil, err
 	}
