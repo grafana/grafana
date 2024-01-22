@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentInput, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { ToolbarButtonVariant } from '@grafana/ui/src/components/ToolbarButton';
 
 import { TraceToLogsTag } from './TraceToLogsSettings';
 
@@ -12,8 +11,6 @@ interface Props {
   onChange: (values: TraceToLogsTag[]) => void;
   id?: string;
 }
-
-const VARIANT = 'none' as ToolbarButtonVariant;
 
 export const TagMappingInput = ({ values, onChange, id }: Props) => {
   const styles = useStyles2(getStyles);
@@ -60,7 +57,6 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               onClick={() => onChange([...values.slice(0, idx), ...values.slice(idx + 1)])}
               className={cx(styles.removeTag, 'query-part')}
               aria-label="Remove tag"
-              variant={VARIANT}
               type="button"
               icon="times"
             />
@@ -71,7 +67,6 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
                 className="query-part"
                 aria-label="Add tag"
                 type="button"
-                variant={VARIANT}
                 icon="plus"
               />
             ) : null}
@@ -84,7 +79,6 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
           className="query-part"
           aria-label="Add tag"
           type="button"
-          variant={VARIANT}
         />
       )}
     </div>

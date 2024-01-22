@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Drawer } from '@grafana/ui';
@@ -111,14 +112,16 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
             <QueryAssistantButton llmAppEnabled={llmAppEnabled} metric={query.metric} setShowDrawer={setShowDrawer} />
           </div>
         )}
-        <QueryBuilderHints<PromVisualQuery>
-          datasource={datasource}
-          query={query}
-          onChange={onChange}
-          data={data}
-          queryModeller={promQueryModeller}
-          buildVisualQueryFromString={buildVisualQueryFromString}
-        />
+        <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
+          <QueryBuilderHints<PromVisualQuery>
+            datasource={datasource}
+            query={query}
+            onChange={onChange}
+            data={data}
+            queryModeller={promQueryModeller}
+            buildVisualQueryFromString={buildVisualQueryFromString}
+          />
+        </div>
       </OperationsEditorRow>
       {showExplain && (
         <OperationListExplained<PromVisualQuery>

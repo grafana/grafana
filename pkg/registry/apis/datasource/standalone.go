@@ -9,18 +9,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
-// NewStandaloneDatasource is a helper function to create a new datasource API server for a group.
-// This currently has no dependencies and only works for testdata.  In future iterations
-// this will include here (or elsewhere) versions that can load config from HG api or
-// the remote SQL directly.
-func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
+// NewTestDataAPIServer is a helper function to create a new datasource API server for a group.
+// This currently builds its dependencies manually and only works for testdata.
+func NewTestDataAPIServer(group string) (*DataSourceAPIBuilder, error) {
 	pluginID := "grafana-testdata-datasource"
 
 	if group != "testdata.datasource.grafana.app" {
@@ -50,7 +47,7 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		return nil, err
 	}
 
-	_, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, pluginID)
+	accessControl, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, pluginID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +64,7 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 			dsCache:   dsCache,
 		},
 		&testdataPluginConfigProvider{}, // stub
-		acimpl.ProvideAccessControl(cfg),
+		accessControl,
 	)
 }
 
