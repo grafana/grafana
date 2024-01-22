@@ -78,9 +78,9 @@ func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
 			dq.MaxDataPoints = 100
 		}
 		if q.IntervalMS > 0 {
-			dq.Interval = time.Duration(q.IntervalMS) * time.Millisecond
+			dq.Interval = time.Millisecond * time.Duration(q.IntervalMS)
 		} else {
-			dq.Interval = time.Duration(time.Second)
+			dq.Interval = time.Second
 		}
 
 		g := &groupedQueries{pluginId: q.Datasource.Type, uid: q.Datasource.UID}

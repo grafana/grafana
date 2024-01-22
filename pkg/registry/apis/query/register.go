@@ -101,7 +101,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	querySchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryRequest"].Schema
 
 	var exampleQuery any
-	json.Unmarshal([]byte(`{
+	_ = json.Unmarshal([]byte(`{
 		"queries": [
 		  {
 			"refId": "A",
