@@ -347,6 +347,7 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 }
 
 // GetFolders returns org folders by their UIDs.
+// If UIDs is empty, it returns all folders in the org.
 // If WithFullpath is true it computes also the full path of a folder.
 // The full path is a string that contains the titles of all parent folders separated by a slash.
 // For example, if the folder structure is:
@@ -366,10 +367,6 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 //
 // The full path of C is "A/B\/C".
 func (ss *sqlStore) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
-	if len(q.UIDs) == 0 {
-		return []*folder.Folder{}, nil
-	}
-
 	if q.BatchSize == 0 {
 		q.BatchSize = DEFAULT_BATCH_SIZE
 	}
