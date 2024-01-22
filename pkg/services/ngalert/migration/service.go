@@ -65,6 +65,7 @@ func ProvideService(
 		migrationStore:    migrationStore,
 		encryptionService: encryptionService,
 		silences: &silenceHandler{
+			dataPath:          cfg.DataPath,
 			createSilenceFile: openReplace,
 		},
 	}, nil

@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSilences(t *testing.T) {
@@ -78,19 +79,31 @@ func TestSilences(t *testing.T) {
 				_, err = x.Insert(test.alerts)
 				require.NoError(t, err)
 
-				service := NewTestMigrationService(t, sqlStore, nil)
+				cfg := setting.NewCfg()
+				cfg.DataPath = "/a/b/c"
+				service := NewTestMigrationService(t, sqlStore, cfg)
 
 				sb := stringsBuilderCloser{
 					Builder: &strings.Builder{},
 				}
 				silenceFileAsString := func(filename string) (io.WriteCloser, error) {
+					_, err := sb.WriteString(filename)
+					require.NoError(t, err)
 					return sb, nil
 				}
 				service.silences.createSilenceFile = silenceFileAsString
 
 				require.NoError(t, service.migrateAllOrgs(context.Background()))
 
-				st, err := decodeState(strings.NewReader(sb.String()))
+				expectedFilename := ""
+				if len(test.expectedSilences) > 0 {
+					expectedFilename = cfg.DataPath + "/alerting/1/silences"
+					filename := sb.String()[:len(expectedFilename)]
+					require.Equal(t, expectedFilename, filename)
+				}
+
+				contents := sb.String()[len(expectedFilename):]
+				st, err := decodeState(strings.NewReader(contents))
 				require.NoError(t, err)
 				require.Len(t, st, len(test.expectedSilences))
 
