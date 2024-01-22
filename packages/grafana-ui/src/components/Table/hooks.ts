@@ -37,7 +37,7 @@ export function useFixScrollbarContainer(
 
 /**
   react-table caches the height of cells, so we need to reset them when expanding/collapsing rows.
-  We use lastExpandedOrCollapsedIndex since collapsed rows disappear from expandedIndexes but still keep their expanded
+  We use `lastExpandedOrCollapsedIndex` since collapsed rows disappear from `expandedIndexes` but still keep their expanded
   height.
  */
 export function useResetVariableListSizeCache(

@@ -15,7 +15,7 @@ For each dataframe and index in the nested field, the dataframe will be rendered
 
 ### Unique rowId
 
-In some cases it makes sense to persist the state of opened/closed state of the sub-tables, for example with streaming queries where user may manipulate the state while additional data is still loading. In such cases use `dataframe.meta.uniqueRowIdFields` property to specify which fields create unique row id and table will use it to persist the state across data changes.
+In some cases it makes sense to persist the opened/closed state of the sub-tables. For example: with streaming queries where a user may manipulate the state while additional data is still loading. In such cases use `dataframe.meta.uniqueRowIdFields` property to specify which fields create unique row id and table will use it to persist the state across data changes.
 
 ## Custom dataframe properties
 
