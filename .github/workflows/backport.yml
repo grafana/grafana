@@ -15,7 +15,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main
+          ref: callum-fix-unintentional-backport
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: "Generate token"
