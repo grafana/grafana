@@ -151,6 +151,15 @@ describe('ElasticDatasource', () => {
       const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
       expect(lastCall[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/test-${today}/_mapping`);
     });
+
+    it('should call `/_mapping` with an empty index', async () => {
+      const { ds, fetchMock } = getTestContext({ jsonData: { index: '' } });
+
+      await ds.testDatasource();
+
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      expect(lastCall[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_mapping`);
+    });
   });
 
   describe('When issuing metric query with interval pattern', () => {

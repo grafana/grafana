@@ -205,7 +205,18 @@ export class ElasticDatasource
       indexList = [this.indexPattern.getIndexForToday()];
     }
 
-    const indexUrlList = indexList.map((index) => index + url);
+    // make sure `url` does not start with a slash
+    url = url.replace(/^\//, '');
+
+    const indexUrlList = indexList.map((index) => {
+      // make sure `index` does not end with a slash
+      index = index.replace(/\/$/, '');
+      if (index === '') {
+        return url;
+      }
+
+      return `${index}/${url}`;
+    });
 
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexUrlList.length;

@@ -190,7 +190,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	// - empty string for fetching db version
 	// - ?/_mapping for fetching index mapping
 	// - _msearch for executing getTerms queries
-	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
 		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
