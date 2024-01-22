@@ -10,16 +10,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -121,9 +117,10 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	assert.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
-	authInfoQuery := &login.GetAuthInfoQuery{UserId: 1}
+	authInfoQuery := &login.GetAuthInfoQuery{}
 	resultUsr, err := srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
-	require.Nil(t, err)
+
+	assert.Nil(t, err)
 
 	// User's token data had not been updated
 	assert.Equal(t, resultUsr.OAuthAccessToken, token.AccessToken)
@@ -193,10 +190,10 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	assert.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
-	authInfoQuery := &login.GetAuthInfoQuery{UserId: 1}
+	authInfoQuery := &login.GetAuthInfoQuery{}
 	authInfo, err := srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	// newToken should be returned after the .Token() call, therefore the User had to be updated
 	assert.Equal(t, authInfo.OAuthAccessToken, newToken.AccessToken)
@@ -232,8 +229,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	}
 
 	authInfoStore := &FakeAuthInfoStore{}
-	authInfoService := authinfoimpl.ProvideService(authInfoStore, remotecache.NewFakeCacheStorage(),
-		secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+	authInfoService := authinfoimpl.ProvideService(authInfoStore)
 	return &Service{
 		Cfg:                  setting.NewCfg(),
 		SocialService:        socialService,

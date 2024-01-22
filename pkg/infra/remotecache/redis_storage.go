@@ -3,7 +3,6 @@ package remotecache
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -94,15 +93,7 @@ func (s *redisStorage) Set(ctx context.Context, key string, data []byte, expires
 
 // GetByteArray returns the value as byte array
 func (s *redisStorage) Get(ctx context.Context, key string) ([]byte, error) {
-	item, err := s.c.Get(ctx, key).Bytes()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil, ErrCacheItemNotFound
-		}
-		return nil, err
-	}
-
-	return item, nil
+	return s.c.Get(ctx, key).Bytes()
 }
 
 // Delete delete a key from session.
