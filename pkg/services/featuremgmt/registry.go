@@ -1348,5 +1348,12 @@ var (
 			RequiresRestart:   true,
 			Created:           time.Date(2024, time.January, 17, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:        "onPremToCloudMigrations",
+			Description: "In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Created:     time.Date(2024, time.January, 22, 3, 30, 00, 00, time.UTC),
+		},
 	}
 )
