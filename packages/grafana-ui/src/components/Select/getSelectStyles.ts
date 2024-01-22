@@ -127,6 +127,10 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       label: 'grafana-select-multi-value-remove',
       margin: theme.spacing(0, 0.5),
       cursor: 'pointer',
+
+      // enabling remove values in opened state
+      // https://github.com/grafana/grafana/issues/77698
+      zIndex: theme.zIndex.portal + 1,
       svg: {
         marginBottom: 0,
       },

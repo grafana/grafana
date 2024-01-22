@@ -340,9 +340,9 @@
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
+/packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
 
-
-# root files, mostly frontend
+# root files, mostly frontend 
 .browserslistrc @grafana/frontend-ops
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
@@ -375,7 +375,6 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
-/public/app/core/components/TraceToLogs @grafana/observability-traces-and-profiling
 /public/app/core/components/GraphNG/ @grafana/dataviz-squad
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad

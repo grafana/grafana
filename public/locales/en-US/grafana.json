@@ -1224,6 +1224,12 @@
       "turned-off": "Auto refresh off"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "label": "Back to {{title}}"
+    },
+    "dismissable-button": "Close"
+  },
   "search": {
     "actions": {
       "include-panels": "Include panels",
