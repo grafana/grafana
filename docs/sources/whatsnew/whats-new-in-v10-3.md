@@ -166,8 +166,6 @@ You can now view percent change in stat visualizations. This makes it easier to 
 
 {{< youtube id="mB9FU0myZo8" >}}
 
-<!--{{< video-embed src="/media/docs/grafana/2024-01-05-Stat-Percent-Change-Enablement-Video-(USE).mp4" max-width="750px" caption="Stat percent change enablement video" >}}-->
-
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/#show-percent-change)
 
 ### Data visualization quality of life improvements
