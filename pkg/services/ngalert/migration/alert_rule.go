@@ -96,13 +96,11 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 
 	if parsedSettings.ExecutionErrorState == "keep_state" {
 		om.rulesWithErrorSilenceLabels++
-		n, v := getLabelForErrorSilenceMatching()
-		ar.Labels[n] = v
+		ar.Labels[ngmodels.MigratedSilenceLabelErrorKeepState] = "true"
 	}
 	if parsedSettings.NoDataState == "keep_state" {
 		om.rulesWithNoDataSilenceLabels++
-		n, v := getLabelForNoDataSilenceMatching()
-		ar.Labels[n] = v
+		ar.Labels[ngmodels.MigratedSilenceLabelNodataKeepState] = "true"
 	}
 
 	// We do some validation and pre-save operations early in order to track these errors as part of the migration state.

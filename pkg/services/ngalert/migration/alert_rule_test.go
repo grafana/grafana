@@ -275,8 +275,7 @@ func TestMakeAlertRule(t *testing.T) {
 		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.NoError(t, err)
 
-		n, v := getLabelForErrorSilenceMatching()
-		require.Equal(t, ar.Labels[n], v)
+		require.Equal(t, ar.Labels[models.MigratedSilenceLabelErrorKeepState], "true")
 	})
 
 	t.Run("keep last state nodata dash alert is silenced", func(t *testing.T) {
@@ -288,8 +287,7 @@ func TestMakeAlertRule(t *testing.T) {
 		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.NoError(t, err)
 
-		n, v := getLabelForNoDataSilenceMatching()
-		require.Equal(t, ar.Labels[n], v)
+		require.Equal(t, ar.Labels[models.MigratedSilenceLabelNodataKeepState], "true")
 	})
 }
 

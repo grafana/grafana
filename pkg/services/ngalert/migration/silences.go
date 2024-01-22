@@ -24,7 +24,6 @@ var TimeNow = time.Now
 
 // errorSilence creates a silence that matches DatasourceError alerts for rules which have a label attached when ExecutionErrorState was set to keep_state.
 func errorSilence() *pb.MeshSilence {
-	n, v := getLabelForErrorSilenceMatching()
 	return &pb.MeshSilence{
 		Silence: &pb.Silence{
 			Id: util.GenerateShortUID(),
@@ -36,8 +35,8 @@ func errorSilence() *pb.MeshSilence {
 				},
 				{
 					Type:    pb.Matcher_EQUAL,
-					Name:    n,
-					Pattern: v,
+					Name:    models.MigratedSilenceLabelErrorKeepState,
+					Pattern: "true",
 				},
 			},
 			StartsAt:  TimeNow(),
@@ -51,7 +50,6 @@ func errorSilence() *pb.MeshSilence {
 
 // noDataSilence creates a silence that matches DatasourceNoData alerts for rules which have a label attached when NoDataState was set to keep_state.
 func noDataSilence() *pb.MeshSilence {
-	n, v := getLabelForNoDataSilenceMatching()
 	return &pb.MeshSilence{
 		Silence: &pb.Silence{
 			Id: util.GenerateShortUID(),
@@ -63,8 +61,8 @@ func noDataSilence() *pb.MeshSilence {
 				},
 				{
 					Type:    pb.Matcher_EQUAL,
-					Name:    n,
-					Pattern: v,
+					Name:    models.MigratedSilenceLabelNodataKeepState,
+					Pattern: "true",
 				},
 			},
 			StartsAt:  TimeNow(),
@@ -135,14 +133,4 @@ func openReplace(filename string) (io.WriteCloser, error) {
 		filename: filename,
 	}
 	return rf, nil
-}
-
-// getLabelForErrorSilenceMatching returns the key, value for a label that will match a silence rule intended for legacy alerts with error state = keep_state.
-func getLabelForErrorSilenceMatching() (string, string) {
-	return models.MigratedSilenceLabelPrefix + "error_keep_state__", "true"
-}
-
-// getLabelForNoDataSilenceMatching returns the key, value for a label that will match a silence rule intended for legacy alerts with nodata state = keep_state.
-func getLabelForNoDataSilenceMatching() (string, string) {
-	return models.MigratedSilenceLabelPrefix + "nodata_keep_state__", "true"
 }
