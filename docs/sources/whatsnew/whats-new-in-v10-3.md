@@ -54,6 +54,8 @@ _Available in public preview in Grafana Open Source and Enterprise_
 
 The improved navigation menu gives you a better overview by showing all levels of navigation items in a more compact design. We also implemented a better dock and improved scrolling behavior. Furthermore, we improved the structure of the nav menu and added several new items.
 
+{{< youtube id="IhpghtVykLc" >}}
+
 ## Table data in PDF reports
 
 <!--Agnès Toulet-->
@@ -70,6 +72,8 @@ We've added two format options to the report creation form:
 - **Attach a separate PDF of table data** - Generates a separate PDF file for your table panel data.
 
 To try out this feature, enable the `pdfTables` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) or contact Grafana Support to have it enabled in on your Grafana Cloud stack.
+
+{{< youtube id="1fzQQI8O838" >}}
 
 ## Dashboards and visualizations
 
@@ -113,7 +117,7 @@ Canvas visualizations now support panning and zooming. This allows you to both c
 
 To enable this feature, you must first enable the `canvasPanelPanZoom` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
-{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
+{{< youtube id="CF-HFkcytRA" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/)
 
@@ -140,7 +144,7 @@ To try out the new tooltips, enable the `newVizTooltips` [feature toggle](https:
 As this is an ongoing project, the dashboard shared cursor and annotations features are not yet fully supported.
 {{% /admonition %}}
 
-{{< video-embed src="/media/docs/grafana/2024-01-05-Tooltips-Enablement-Video.mp4" max-width="750px" caption="Improved tooltips enablement video" >}}
+{{< youtube id="0Rp6FYfHu6Q" >}}
 
 ### Plot enum values in your time series and state timeline visualizations\*
 
@@ -150,7 +154,7 @@ _Generally available in all editions of Grafana_
 
 You can now plot enum values in your time series and state timeline visualizations. This feature is useful when you want to visualize the state of a system, such as the status of a service or the health of a device. For example, you can use this feature to visualize the status of a service as `ON`, `STANDBY`, or `OFF`. To display enum values you can [use the convert field transform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#convert-field-type).
 
-{{< video-embed src="/media/docs/grafana/2024-01-05-Enum-Enablement-Video.mp4" caption="Enum enablement video" >}}
+{{< youtube id="FG0hBFfgpps" >}}
 
 ### View percent change in stat visualizations
 
@@ -160,7 +164,9 @@ _Generally available in all editions of Grafana_
 
 You can now view percent change in stat visualizations. This makes it easier to understand your data by showing how metrics are changing over time.
 
-{{< video-embed src="/media/docs/grafana/2024-01-05-Stat-Percent-Change-Enablement-Video-(USE).mp4" max-width="750px" caption="Stat percent change enablement video" >}}
+{{< youtube id="mB9FU0myZo8" >}}
+
+<!--{{< video-embed src="/media/docs/grafana/2024-01-05-Stat-Percent-Change-Enablement-Video-(USE).mp4" max-width="750px" caption="Stat percent change enablement video" >}}-->
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/#show-percent-change)
 
@@ -231,6 +237,8 @@ If you would also like to try out the **Embedded Flame Graph** feature, please e
 
 Note: in order to determine that there is a profile for a given span and render the 'Profiles for this span' button or the embedded flame graph in the span details, the 'pyroscope.profile.id' key-value pair must exist in your span tags.
 
+{{< youtube id="AG8VzfFMLxo" >}}
+
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-profiles)
 
 ### FlameGraph: Collapsing similar items in the graph\*
@@ -243,7 +251,7 @@ Sometimes profile stacks contain lots of levels with similar repeating items, fo
 
 To try it out, enable the ‘traceToProfiles’ feature toggle. To enable it in your Grafana Cloud stack, contact Grafana Support.
 
-{{< video-embed src="https://github.com/grafana/grafana/assets/1014802/0b3f29b7-c02b-44a4-9895-6e62c472c933" >}}
+{{< youtube id="Y1c32Cf5nSE" >}}
 
 ## Alerting
 
@@ -270,6 +278,8 @@ Export your alerting resources, such as alert rules, contact points, and notific
 _Generally available in all editions of Grafana_
 
 The Contact points list view has been redesigned and split into two tabs: Contact Points and Notification Templates, making it easier to view all contact point information at a glance. You can now search for name and type of contact points and integrations, view how many notification policies each contact point is being used for, and navigate directly to the linked notification policies.
+
+{{< youtube id="_eOhSmbYK8Q" >}}
 
 ### Create alerts from panels\*
 
@@ -309,6 +319,8 @@ Table view was created to help facilitate ease of use in a point and click UI, a
 
 Tables can be configured and shared with team members via explore URLs or by adding the table to a dashboard panel.
 
+{{< youtube id="OAZeqqNpEjc" >}}
+
 ## Data sources
 
 ### Data source Admin permission\*
@@ -341,6 +353,8 @@ The `useCachingService` feature toggle must also be enabled to use this feature.
 _Generally available in all editions of Grafana_
 
 Introducing several improvements to the Loki data source.
+
+{{< youtube id="ievPSzmCrAk" >}}
 
 #### Line filter "or" syntax\*
 
@@ -375,6 +389,8 @@ InfluxDB introduced [a new version, 3.0](https://www.influxdata.com/blog/introdu
 
 All you need to do is set up your InfluxDB Cloud Account and create your InfluxDB data source on Grafana with the query language "SQL" selected.
 
+{{< youtube id="jGclGsv5PBA" >}}
+
 ## Authentication and authorization
 
 ### Grafana Anonymous Access\*
@@ -401,5 +417,7 @@ When anonymous access has been enabled, any device which accesses Grafana in the
 - Navigate to Administration -> Users to access the anonymous devices tab.
 
 - A new statistic has been added to the Usage & Stats page, displaying active anonymous devices from the last 30 days.
+
+{{< youtube id="B72X3_9e-ds" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/grafana/)
