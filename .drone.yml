@@ -809,7 +809,7 @@ services:
   - name: mysql80
     path: /var/lib/mysql
 - commands:
-  - /bin/mimir -target=backend
+  - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
   image: grafana/mimir:r274-1780c50
   name: mimir_backend
@@ -1256,7 +1256,7 @@ services:
   - name: mysql80
     path: /var/lib/mysql
 - commands:
-  - /bin/mimir -target=backend
+  - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
   image: grafana/mimir:r274-1780c50
   name: mimir_backend
@@ -2192,7 +2192,7 @@ services:
   - name: mysql80
     path: /var/lib/mysql
 - commands:
-  - /bin/mimir -target=backend
+  - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
   image: grafana/mimir:r274-1780c50
   name: mimir_backend
@@ -3983,7 +3983,7 @@ services:
   - name: mysql80
     path: /var/lib/mysql
 - commands:
-  - /bin/mimir -target=backend
+  - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
   image: grafana/mimir:r274-1780c50
   name: mimir_backend
@@ -4779,6 +4779,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 818573a7d485db86c43840ae339fc4e7611f3d186ba9d2232b3648bb8fce3c9d
+hmac: e3ab1ec1c6d9e85f235c0d662808509453e3efa9431da4de420098d1f4e536cc
 
 ...
