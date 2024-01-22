@@ -396,8 +396,8 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     return false;
   }
 
-  public variableUpdatesCompleted(changedVars: Set<SceneVariable>) {
-    if (changedVars.size > 0) {
+  public variableUpdateCompleted(variable: SceneVariable, hasChanged: boolean) {
+    if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
     }
