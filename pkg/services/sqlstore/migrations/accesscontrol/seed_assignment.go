@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+const PreventSeedingOnCallAccessID = "prevent seeding OnCall access"
+
 const migSQLITERoleNameNullable = `ALTER TABLE seed_assignment ADD COLUMN tmp_role_name VARCHAR(190) DEFAULT NULL;
 UPDATE seed_assignment SET tmp_role_name = role_name;
 ALTER TABLE seed_assignment DROP COLUMN role_name;
@@ -47,7 +49,7 @@ func AddSeedAssignmentMigrations(mg *migrator.Migrator) {
 			&migrator.Column{Name: "origin", Type: migrator.DB_Varchar, Length: 190, Nullable: true}))
 
 	mg.AddMigration("add origin to plugin seed_assignment", &seedAssignmentOnCallMigrator{})
-	mg.AddMigration("prevent seeding OnCall access", &seedAssignmentOnCallAccessMigrator{})
+	mg.AddMigration(PreventSeedingOnCallAccessID, &SeedAssignmentOnCallAccessMigrator{})
 }
 
 type seedAssignmentPrimaryKeyMigrator struct {
@@ -145,15 +147,15 @@ func (m *seedAssignmentOnCallMigrator) Exec(sess *xorm.Session, mig *migrator.Mi
 	return err
 }
 
-type seedAssignmentOnCallAccessMigrator struct {
+type SeedAssignmentOnCallAccessMigrator struct {
 	migrator.MigrationBase
 }
 
-func (m *seedAssignmentOnCallAccessMigrator) SQL(dialect migrator.Dialect) string {
+func (m *SeedAssignmentOnCallAccessMigrator) SQL(dialect migrator.Dialect) string {
 	return CodeMigrationSQL
 }
 
-func (m *seedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
+func (m *SeedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
 	// Check if the migration is necessary
 	hasEntry := 0
 	_, err := sess.SQL(`SELECT 1 FROM seed_assignment LIMIT 1`).Get(&hasEntry)
