@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorRow, EditorRows, EditorSwitch, Space } from '@grafana/experimental';
 import { AutoSizeInput, Input } from '@grafana/ui';
 
@@ -56,6 +57,7 @@ export function AnnotationQueryEditor(props: Props) {
                 });
               }}
               defaultValue={query.interval}
+              id={selectors.components.DataSource.Prometheus.annotations.minStep}
             />
           </EditorField>
         </EditorRow>
@@ -78,6 +80,7 @@ export function AnnotationQueryEditor(props: Props) {
                 titleFormat: event.currentTarget.value,
               });
             }}
+            data-testid={selectors.components.DataSource.Prometheus.annotations.title}
           />
         </EditorField>
         <EditorField label="Tags">
@@ -91,6 +94,7 @@ export function AnnotationQueryEditor(props: Props) {
                 tagKeys: event.currentTarget.value,
               });
             }}
+            data-testid={selectors.components.DataSource.Prometheus.annotations.tags}
           />
         </EditorField>
         <EditorField
@@ -109,6 +113,7 @@ export function AnnotationQueryEditor(props: Props) {
                 textFormat: event.currentTarget.value,
               });
             }}
+            data-testid={selectors.components.DataSource.Prometheus.annotations.text}
           />
         </EditorField>
         <EditorField
@@ -125,6 +130,7 @@ export function AnnotationQueryEditor(props: Props) {
                 useValueForTime: event.currentTarget.value,
               });
             }}
+            data-testid={selectors.components.DataSource.Prometheus.annotations.seriesValueAsTimestamp}
           />
         </EditorField>
       </EditorRow>

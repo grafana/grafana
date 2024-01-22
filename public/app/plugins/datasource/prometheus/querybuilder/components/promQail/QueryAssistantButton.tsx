@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Tooltip, useTheme2 } from '@grafana/ui';
 
@@ -32,6 +33,7 @@ export function QueryAssistantButton(props: Props) {
           setShowDrawer(true);
         }}
         disabled={!metric || !llmAppEnabled}
+        data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.queryAdvisor}
       >
         <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
         {'\u00A0'}Get query suggestions

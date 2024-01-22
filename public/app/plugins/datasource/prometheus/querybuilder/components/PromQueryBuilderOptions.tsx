@@ -1,6 +1,7 @@
 import React, { SyntheticEvent } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorRow, EditorSwitch } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
@@ -61,56 +62,69 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
 
   return (
     <EditorRow>
-      <QueryOptionGroup
-        title="Options"
-        collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel, app)}
-      >
-        <PromQueryLegendEditor
-          legendFormat={query.legendFormat}
-          onChange={(legendFormat) => onChange({ ...query, legendFormat })}
-          onRunQuery={onRunQuery}
-        />
-        <EditorField
-          label="Min step"
-          tooltip={
-            <>
-              An additional lower limit for the step parameter of the Prometheus query and for the{' '}
-              <code>$__interval</code> and <code>$__rate_interval</code> variables.
-            </>
-          }
+      <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options}>
+        <QueryOptionGroup
+          title="Options"
+          collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel, app)}
         >
-          <AutoSizeInput
-            type="text"
-            aria-label="Set lower limit for the step parameter"
-            placeholder={'auto'}
-            minWidth={10}
-            onCommitChange={onChangeStep}
-            defaultValue={query.interval}
+          <PromQueryLegendEditor
+            legendFormat={query.legendFormat}
+            onChange={(legendFormat) => onChange({ ...query, legendFormat })}
+            onRunQuery={onRunQuery}
           />
-        </EditorField>
-        <EditorField label="Format">
-          <Select value={formatOption} allowCustomValue onChange={onChangeFormat} options={FORMAT_OPTIONS} />
-        </EditorField>
-        <EditorField label="Type">
-          <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
-        </EditorField>
-        {shouldShowExemplarSwitch(query, app) && (
-          <EditorField label="Exemplars">
-            <EditorSwitch value={query.exemplar || false} onChange={onExemplarChange} />
-          </EditorField>
-        )}
-        {query.intervalFactor && query.intervalFactor > 1 && (
-          <EditorField label="Resolution">
-            <Select
-              aria-label="Select resolution"
-              isSearchable={false}
-              options={INTERVAL_FACTOR_OPTIONS}
-              onChange={onIntervalFactorChange}
-              value={INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor)}
+          <EditorField
+            label="Min step"
+            tooltip={
+              <>
+                An additional lower limit for the step parameter of the Prometheus query and for the{' '}
+                <code>$__interval</code> and <code>$__rate_interval</code> variables.
+              </>
+            }
+          >
+            <AutoSizeInput
+              id={selectors.components.DataSource.Prometheus.queryEditor.step}
+              type="text"
+              aria-label="Set lower limit for the step parameter"
+              placeholder={'auto'}
+              minWidth={10}
+              onCommitChange={onChangeStep}
+              defaultValue={query.interval}
             />
           </EditorField>
-        )}
-      </QueryOptionGroup>
+          <EditorField label="Format">
+            <Select
+              data-testid={selectors.components.DataSource.Prometheus.queryEditor.format}
+              value={formatOption}
+              allowCustomValue
+              onChange={onChangeFormat}
+              options={FORMAT_OPTIONS}
+            />
+          </EditorField>
+          <EditorField label="Type" data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}>
+            <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
+          </EditorField>
+          {shouldShowExemplarSwitch(query, app) && (
+            <EditorField label="Exemplars">
+              <EditorSwitch
+                value={query.exemplar || false}
+                onChange={onExemplarChange}
+                id={selectors.components.DataSource.Prometheus.queryEditor.exemplars}
+              />
+            </EditorField>
+          )}
+          {query.intervalFactor && query.intervalFactor > 1 && (
+            <EditorField label="Resolution">
+              <Select
+                aria-label="Select resolution"
+                isSearchable={false}
+                options={INTERVAL_FACTOR_OPTIONS}
+                onChange={onIntervalFactorChange}
+                value={INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor)}
+              />
+            </EditorField>
+          )}
+        </QueryOptionGroup>
+      </div>
     </EditorRow>
   );
 });

@@ -3,6 +3,7 @@ import React, { ChangeEvent } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   Button,
   HorizontalGroup,
@@ -493,9 +494,14 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                   onChange={this.onChangeMetricSearch}
                   aria-label="Filter expression for metric"
                   value={metricSearchTerm}
+                  data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
                 />
               </div>
-              <div role="list" className={styles.valueListWrapper}>
+              <div
+                role="list"
+                className={styles.valueListWrapper}
+                data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.metricList}
+              >
                 <FixedSizeList
                   height={Math.min(450, metricCount * LIST_ITEM_SIZE)}
                   itemCount={metricCount}
@@ -537,6 +543,9 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                   onChange={this.onChangeLabelSearch}
                   aria-label="Filter expression for label"
                   value={labelSearchTerm}
+                  data-testid={
+                    selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.labelNamesFilter
+                  }
                 />
               </div>
               {/* Using fixed height here to prevent jumpy layout */}
@@ -564,6 +573,9 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                   onChange={this.onChangeValueSearch}
                   aria-label="Filter expression for label values"
                   value={valueSearchTerm}
+                  data-testid={
+                    selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.labelValuesFilter
+                  }
                 />
               </div>
               <div className={styles.valueListArea} ref={this.valueListsRef}>
@@ -625,10 +637,16 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
           </div>
           {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
           <HorizontalGroup>
-            <Button aria-label="Use selector for query button" disabled={empty} onClick={this.onClickRunQuery}>
+            <Button
+              data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useQuery}
+              aria-label="Use selector for query button"
+              disabled={empty}
+              onClick={this.onClickRunQuery}
+            >
               Use query
             </Button>
             <Button
+              data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useAsRateQuery}
               aria-label="Use selector as metrics button"
               variant="secondary"
               disabled={empty}
@@ -637,6 +655,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               Use as rate query
             </Button>
             <Button
+              data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.validateSelector}
               aria-label="Validate submit button"
               variant="secondary"
               disabled={empty}
@@ -644,7 +663,12 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
             >
               Validate selector
             </Button>
-            <Button aria-label="Selector clear button" variant="secondary" onClick={this.onClickClear}>
+            <Button
+              data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.clear}
+              aria-label="Selector clear button"
+              variant="secondary"
+              onClick={this.onClickClear}
+            >
               Clear
             </Button>
             <div className={cx(styles.status, (status || error) && styles.statusShowing)}>

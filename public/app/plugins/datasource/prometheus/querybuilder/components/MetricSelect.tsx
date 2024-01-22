@@ -4,6 +4,7 @@ import React, { RefCallback, useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
@@ -188,6 +189,7 @@ export function MetricSelect({
           {...props.innerProps}
           ref={props.innerRef}
           className={`${styles.customOptionWidth} metric-encyclopedia-open`}
+          aria-label="Select option"
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {
@@ -259,6 +261,7 @@ export function MetricSelect({
   const asyncSelect = () => {
     return (
       <AsyncSelect
+        data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
         isClearable={variableEditor ? true : false}
         inputId="prometheus-metric-select"
         className={styles.select}

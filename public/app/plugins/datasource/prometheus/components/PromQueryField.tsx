@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
 import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
@@ -230,6 +231,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   onClick={this.onClickChooserButton}
                   disabled={buttonDisabled}
                   type="button"
+                  data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
                 >
                   {chooserText}
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
