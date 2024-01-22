@@ -35,6 +35,14 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		},
 	)
 
+	httpRequestsTotal := prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: "grafana",
+			Name:      "http_requests_total",
+			Help:      "A gauge of total requests served by Grafana.",
+		},
+	)
+
 	histogramLabels := []string{"handler", "status_code", "method"}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagRequestInstrumentationStatusSource) {
@@ -73,12 +81,14 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 	)
 
 	promRegister.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
+	promRegister.MustRegister(httpRequestsTotal)
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			rw := web.Rw(w, r)
 			now := time.Now()
 			httpRequestsInFlight.Inc()
+			httpRequestsTotal.Inc()
 			defer httpRequestsInFlight.Dec()
 			next.ServeHTTP(w, r)
 
