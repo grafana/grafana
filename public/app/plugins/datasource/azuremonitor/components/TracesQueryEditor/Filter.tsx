@@ -248,7 +248,6 @@ const Filter = (
         width={25}
       />
       <ButtonSelect<string>
-        placeholder="Operator"
         value={item.operation ? { label: item.operation === 'eq' ? '=' : '!=', value: item.operation } : undefined}
         options={[
           { label: '=', value: 'eq' },
