@@ -24,7 +24,7 @@ import {
   DataLinkConfigOrigin,
 } from '@grafana/data';
 import { TraceToProfilesData } from '@grafana/o11y-ds-frontend';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
@@ -511,40 +511,38 @@ export function transformTrace(
   }
 
   // Get profiles links
-  if (config.featureToggles.traceToProfiles) {
-    const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
-    const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
-    let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-    if (traceToProfilesOptions?.datasourceUid) {
-      profilesDataSourceSettings = getDataSourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
-    }
+  const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
+  const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
+  let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+  if (traceToProfilesOptions?.datasourceUid) {
+    profilesDataSourceSettings = getDataSourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+  }
 
-    if (traceToProfilesOptions && profilesDataSourceSettings) {
-      const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
-      const dataLink: DataLink = {
-        title: RelatedProfilesTitle,
-        url: '',
-        internal: {
-          datasourceUid: profilesDataSourceSettings.uid,
-          datasourceName: profilesDataSourceSettings.name,
-          query: {
-            labelSelector: customQuery ? customQuery : '{${__tags}}',
-            groupBy: [],
-            profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
-            queryType: 'profile',
-            spanSelector: ['${__span.tags["pyroscope.profile.id"]}'],
-            refId: 'profile',
-          },
+  if (traceToProfilesOptions && profilesDataSourceSettings) {
+    const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
+    const dataLink: DataLink = {
+      title: RelatedProfilesTitle,
+      url: '',
+      internal: {
+        datasourceUid: profilesDataSourceSettings.uid,
+        datasourceName: profilesDataSourceSettings.name,
+        query: {
+          labelSelector: customQuery ? customQuery : '{${__tags}}',
+          groupBy: [],
+          profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
+          queryType: 'profile',
+          spanSelector: ['${__span.tags["pyroscope.profile.id"]}'],
+          refId: 'profile',
         },
-        origin: DataLinkConfigOrigin.Datasource,
-      };
+      },
+      origin: DataLinkConfigOrigin.Datasource,
+    };
 
-      frame.fields.forEach((field: Field) => {
-        if (field.name === 'tags') {
-          field.config.links = [dataLink];
-        }
-      });
-    }
+    frame.fields.forEach((field: Field) => {
+      if (field.name === 'tags') {
+        field.config.links = [dataLink];
+      }
+    });
   }
 
   let data = [...response.data];

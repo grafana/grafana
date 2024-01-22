@@ -145,7 +145,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   );
 
   useEffect(() => {
-    if (config.featureToggles.traceToProfiles && !Object.keys(traceFlameGraphs).includes(profileTagValue)) {
+    if (!Object.keys(traceFlameGraphs).includes(profileTagValue)) {
       let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
       if (traceToProfilesOptions && traceToProfilesOptions?.datasourceUid) {
         profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);

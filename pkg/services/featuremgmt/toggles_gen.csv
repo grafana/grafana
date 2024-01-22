@@ -89,8 +89,6 @@ grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-s
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,2023-07-18,false,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,2023-07-21,false,false,false,false
 splitScopes,GA,@grafana/identity-access-team,2023-07-21,false,false,true,false
-traceToProfiles,experimental,@grafana/observability-traces-and-profiling,2023-11-01,false,false,false,true
-tracesEmbeddedFlameGraph,experimental,@grafana/observability-traces-and-profiling,2023-11-02,false,false,false,true
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,2023-08-02,false,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,2023-07-21,false,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,2023-07-26,false,false,true,false

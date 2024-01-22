@@ -397,19 +397,18 @@ export default function SpanDetail(props: SpanDetailProps) {
             createFocusSpanLink={createFocusSpanLink}
           />
         )}
-        {config.featureToggles.tracesEmbeddedFlameGraph &&
-          span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
-            <SpanFlameGraph
-              span={span}
-              timeZone={timeZone}
-              traceFlameGraphs={traceFlameGraphs}
-              setTraceFlameGraphs={setTraceFlameGraphs}
-              traceToProfilesOptions={traceToProfilesOptions}
-              setRedrawListView={setRedrawListView}
-              traceDuration={traceDuration}
-              traceName={traceName}
-            />
-          )}
+        {span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
+          <SpanFlameGraph
+            span={span}
+            timeZone={timeZone}
+            traceFlameGraphs={traceFlameGraphs}
+            setTraceFlameGraphs={setTraceFlameGraphs}
+            traceToProfilesOptions={traceToProfilesOptions}
+            setRedrawListView={setRedrawListView}
+            traceDuration={traceDuration}
+            traceName={traceName}
+          />
+        )}
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
           {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
