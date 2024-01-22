@@ -19,10 +19,12 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
       {
         id: 'host',
         header: 'Host',
+        disableGrow: true,
       },
       {
         id: 'port',
         header: 'Port',
+        disableGrow: true,
       },
       {
         id: 'available',

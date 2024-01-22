@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Box, Text } from '@grafana/ui';
+import { Box, Stack, Text } from '@grafana/ui';
 import { LdapUser } from 'app/types';
 
 import { LdapUserGroups } from './LdapUserGroups';
@@ -15,7 +15,7 @@ interface Props {
 
 export const LdapUserInfo = ({ ldapUser, showAttributeMapping }: Props) => {
   return (
-    <>
+    <Stack direction="column" gap={2}>
       <LdapUserMappingInfo info={ldapUser.info} showAttributeMapping={showAttributeMapping} />
       <LdapUserPermissions permissions={ldapUser.permissions} />
       {ldapUser.roles && ldapUser.roles.length > 0 && (
@@ -29,6 +29,6 @@ export const LdapUserInfo = ({ ldapUser, showAttributeMapping }: Props) => {
           <Text>No teams found via LDAP</Text>
         </Box>
       )}
-    </>
+    </Stack>
   );
 };
