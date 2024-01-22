@@ -1,8 +1,9 @@
+import uFuzzy from '@leeoniya/ufuzzy';
 import { createSelector } from '@reduxjs/toolkit';
 
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 
-import { RequestStatus, PluginCatalogStoreState } from '../types';
+import { RequestStatus, PluginCatalogStoreState, CatalogPlugin } from '../types';
 
 import { pluginsAdapter } from './reducer';
 
@@ -31,12 +32,55 @@ export type PluginFilters = {
 
 export const selectPlugins = (filters: PluginFilters) =>
   createSelector(selectAll, (plugins) => {
+    console.log('filters', filters);
     const keyword = filters.keyword ? unEscapeStringFromRegex(filters.keyword.toLowerCase()) : '';
 
-    return plugins.filter((plugin) => {
-      const fieldsToSearchIn = [plugin.name, plugin.orgName].filter(Boolean).map((f) => f.toLowerCase());
+    function filterObjects(plugins: CatalogPlugin[]): { [key: string]: string } {
+      return plugins.reduce(
+        (result, { id, name, type }: CatalogPlugin) => {
+          result[id] = `${id} - ${name} - ${type}`;
+          return result;
+        },
+        {} as { [key: string]: string }
+      );
+    }
+    function fuzzySearch(query: string, dataArray: string[]) {
+      let opts = {};
+      let uf = new uFuzzy(opts);
+      let idxs = uf.filter(dataArray, query);
 
-      if (keyword && !fieldsToSearchIn.some((f) => f.includes(keyword))) {
+      if (idxs != null && idxs.length > 0) {
+        const resultObject: { [key: string]: string } = {};
+        for (let i = 0; i < idxs.length; i++) {
+          resultObject[idxs[i]] = dataArray[idxs[i]];
+        }
+        return resultObject;
+      } else {
+        return null;
+      }
+    }
+    const pluginsForSearch: { [key: string]: string } = filterObjects(plugins);
+
+    const pluginsAfterFuzzySearch = fuzzySearch(keyword, Object.values(pluginsForSearch));
+    console.log('pluginsAfterFuzzySearch', pluginsAfterFuzzySearch);
+
+    return plugins.filter((plugin) => {
+      // const fieldsToSearchIn = [plugin.name, plugin.orgName].filter(Boolean).map((f) => f.toLowerCase());
+
+      // if (keyword && !fieldsToSearchIn.some((f) => f.includes(keyword))) {
+      //   return false;
+      // }
+      // if(pluginsAfterFuzzySearch != null) {
+      //   const filteredIds = Object.keys(pluginsAfterFuzzySearch).map(String);
+      //   const filteredPlugins = plugins.filter((plugin) => filteredIds.includes(plugin.id));
+      // }
+      if (keyword && pluginsAfterFuzzySearch === null) {
+        console.log('test1');
+        return false;
+      }
+
+      if (keyword && pluginsAfterFuzzySearch != null && !Object.keys(pluginsAfterFuzzySearch).includes(plugin.id)) {
+        console.log('test2');
         return false;
       }
 
@@ -52,6 +96,7 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
+      console.log('test0');
       return true;
     });
   });

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+// import uFuzzy from '@leeoniya/ufuzzy';
 import React, { ReactElement } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -39,6 +40,39 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     },
     sortBy
   );
+
+  console.log('plugins', plugins);
+  // console.log('filteredPlugins', filteredPlugins);
+
+  // function filterObjects(plugins: CatalogPlugin[]): { [key: string]: string } {
+  //   return plugins.reduce((result, { id, name, type }: CatalogPlugin) => {
+  //       result[id] = `${id} - ${name} - ${type}`;
+  //       return result;
+  //   }, {} as { [key: string]: string });
+  // }
+
+  // const pluginsForSearch:  { [key: string]: string }  = filterObjects(plugins);
+  // console.log('pluginsForSearch', pluginsForSearch);
+
+  // function fuzzySearch(query: string, dataArray: string[]) {
+  //   let opts = {};
+
+  //   let uf = new uFuzzy(opts);
+  //   let idxs = uf.filter(dataArray, query);
+
+  //   if (idxs != null && idxs.length > 0) {
+  //     // Create an object with keys as indices and values as matching strings
+  //     const resultObject: { [key: string]: string } = {};
+  //     for (let i = 0; i < idxs.length; i++) {
+  //         resultObject[idxs[i]] = dataArray[idxs[i]];
+  //     }
+  //     return resultObject;
+  // } else {
+  //     // Return an object with an ERROR key and message
+  //     return null;
+  // }
+  //}
+
   const filterByOptions = [
     { value: 'all', label: 'All' },
     { value: 'installed', label: 'Installed' },
@@ -58,6 +92,18 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
 
   const onSearch = (q: string) => {
     history.push({ query: { filterBy, filterByType, q } });
+
+    // const pluginsAfterFuzzySearch = fuzzySearch(q, Object.values(pluginsForSearch));
+    // if(pluginsAfterFuzzySearch != null) {
+    // const filteredIds = Object.keys(pluginsAfterFuzzySearch).map(String);
+
+    // const filteredPlugins = plugins.filter((plugin) => filteredIds.includes(plugin.id));
+
+    // setFilteredPlugins(filteredPlugins)
+    // }
+    // else {
+    //   console.log('no results')
+    // }
   };
 
   // How should we handle errors?
