@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/patrickmn/go-cache"
+	goproxy "golang.org/x/net/proxy"
 )
 
 const (
@@ -48,6 +51,7 @@ type DataSource struct {
 	Settings      models.CloudWatchSettings
 	HTTPClient    *http.Client
 	tagValueCache *cache.Cache
+	ProxyOpts     *proxy.Options
 }
 
 const (
@@ -113,6 +117,8 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			Settings:      instanceSettings,
 			HTTPClient:    httpClient,
 			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+			//this is used to build a custom dialer when secure socks proxy is enabled
+			ProxyOpts: opts.ProxyOptions,
 		}, nil
 	}
 }
@@ -279,12 +285,42 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 		return nil, err
 	}
 
+	// added for testing
+	logLevel := aws.LogDebugWithSigning
+	sess.Config.LogLevel = &logLevel
+
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
 	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
-		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
-	}
+		var tr *http.Transport
+		var ok bool
+		if sess.Config.HTTPClient.Transport != nil {
+			tr, ok = sess.Config.HTTPClient.Transport.(*http.Transport)
+			if !ok {
+				//TODO this is not desired
+				return nil, errors.New("session http client transport is not of type http.Transport")
+			}
+		} else {
+			trTmp, ok := http.DefaultTransport.(*http.Transport)
+			if !ok {
+				//this should not happen but validating just in case
+				return nil, errors.New("default http client transport is not of type http.Transport")
+			}
+			tr = trTmp.Clone()
+		}
 
+		dialer, err := proxy.New(instance.ProxyOpts).NewSecureSocksProxyContextDialer()
+		if err != nil {
+			return nil, fmt.Errorf("error building Secure socks proxy dialer: %w", err)
+		}
+		contextDialer, ok := dialer.(goproxy.ContextDialer)
+		if !ok {
+			return nil, err
+		}
+
+		tr.DialContext = contextDialer.DialContext
+		sess.Config.HTTPClient.Transport = tr
+	}
 	return sess, nil
 }
 
