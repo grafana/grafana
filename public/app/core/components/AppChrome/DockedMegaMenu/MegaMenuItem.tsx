@@ -6,6 +6,7 @@ import { useLocalStorage } from 'react-use';
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
 import { useStyles2, Text, IconButton, Icon } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { t } from 'app/core/internationalization';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -122,7 +123,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               ))
           ) : (
             <div className={styles.emptyMessage} aria-live="polite">
-              {link.emptyMessage}
+              {t('navigation.megamenu.starredEmptyMessage', link.emptyMessage)}
             </div>
           )}
         </ul>

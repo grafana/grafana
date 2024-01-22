@@ -980,6 +980,8 @@
     "megamenu": {
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
+      "listLevel1": "",
+      "starredEmptyMessage": "",
       "undock": "Desanclar el menú"
     },
     "toolbar": {

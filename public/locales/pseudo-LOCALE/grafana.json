@@ -974,6 +974,8 @@
     "megamenu": {
       "close": "Cľőşę męŉū",
       "dock": "Đőčĸ męŉū",
+      "listLevel1": "ŉävįģäŧįőŉ",
+      "starredEmptyMessage": "",
       "undock": "Ůŉđőčĸ męŉū"
     },
     "toolbar": {
