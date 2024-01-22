@@ -975,7 +975,7 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "listLevel1": "navigation",
-      "starredEmptyMessage": "",
+      "starredEmptyMessage": "Your starred dashboards will appear here",
       "undock": "Undock menu"
     },
     "toolbar": {
