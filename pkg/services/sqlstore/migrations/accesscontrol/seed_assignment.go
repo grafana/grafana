@@ -158,8 +158,7 @@ func (m *SeedAssignmentOnCallAccessMigrator) SQL(dialect migrator.Dialect) strin
 func (m *SeedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
 	// Check if the migration is necessary
 	hasEntry := 0
-	_, err := sess.SQL(`SELECT 1 FROM seed_assignment LIMIT 1`).Get(&hasEntry)
-	if err != nil {
+	if _, err := sess.SQL(`SELECT 1 FROM seed_assignment LIMIT 1`).Get(&hasEntry); err != nil {
 		return err
 	}
 	if hasEntry == 0 {
@@ -174,7 +173,7 @@ func (m *SeedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migra
 		BuiltinRole, Action, Scope, Origin string
 	}
 	assigns := []SeedAssignment{}
-	err = sess.SQL(`SELECT builtin_role, action, scope, origin FROM seed_assignment WHERE action = ? AND scope = ?`,
+	err := sess.SQL(`SELECT builtin_role, action, scope, origin FROM seed_assignment WHERE action = ? AND scope = ?`,
 		"plugins.app:access", "plugins:id:grafana-oncall-app").
 		Find(&assigns)
 	if err != nil {
