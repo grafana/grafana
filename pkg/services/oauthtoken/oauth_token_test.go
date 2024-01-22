@@ -299,8 +299,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		oauthInfo *social.OAuthInfo
 		setupEnv  func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService)
 
-		expectHasEntryCalled bool
-		expectedErr          error
+		expectedErr error
 	}
 
 	tests := []testCase{
@@ -333,8 +332,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedError = errors.New("some error")
 			},
-			expectHasEntryCalled: false,
-			expectedErr:          nil,
+			expectedErr: nil,
 		},
 		{
 			desc:     "should not find the user as the user has no AuthInfo",
@@ -342,8 +340,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedError = user.ErrUserNotFound
 			},
-			expectHasEntryCalled: false,
-			expectedErr:          nil,
+			expectedErr: nil,
 		},
 		{
 			desc:     "should not find the user as the user has no AuthInfo",
@@ -354,8 +351,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					AuthModule: login.SAMLAuthModule,
 				}
 			},
-			expectHasEntryCalled: false,
-			expectedErr:          nil,
+			expectedErr: nil,
 		},
 		{
 			desc:     "should refresh the token if the auth module is oauth",
@@ -365,8 +361,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					AuthModule: login.GenericOAuthModule,
 				}
 			},
-			expectHasEntryCalled: false,
-			expectedErr:          nil,
+			expectedErr: nil,
 		},
 		{
 			desc:     "should skip sync with an unknown idp",
@@ -377,9 +372,8 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					OAuthIdToken: VALID_JWT,
 				}
 			},
-			expectHasEntryCalled: false,
-			expectedErr:          nil,
-			oauthInfo:            nil,
+			expectedErr: nil,
+			oauthInfo:   nil,
 		},
 		{
 			desc:     "should skip refresh token if oauth provider token handling is disabled",
@@ -390,8 +384,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					OAuthIdToken: VALID_JWT,
 				}
 			},
-			expectHasEntryCalled: false,
-			expectedErr:          nil,
+			expectedErr: nil,
 			oauthInfo: &social.OAuthInfo{
 				UseRefreshToken: false,
 			},
@@ -405,8 +398,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					OAuthIdToken: VALID_JWT,
 				}
 			},
-			expectHasEntryCalled: false,
-			expectedErr:          nil,
+			expectedErr: nil,
 			oauthInfo: &social.OAuthInfo{
 				UseRefreshToken: true,
 			},
