@@ -22,7 +22,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         name: histogramFieldInfo.bucketCount.name,
         description: histogramFieldInfo.bucketCount.description,
         settings: {
-          placeholder: 'Default: 20',
+          placeholder: `Default: ${defaultOptions.bucketCount}`,
           min: 0,
         },
         showIf: (opts, data) => !originalDataHasHistogram(data),
@@ -43,7 +43,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         name: histogramFieldInfo.bucketOffset.name,
         description: histogramFieldInfo.bucketOffset.description,
         settings: {
-          placeholder: 'Default: 0',
+          placeholder: `Default: ${defaultOptions.bucketOffset}`,
           min: 0,
         },
         showIf: (opts, data) => !originalDataHasHistogram(data),

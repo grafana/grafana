@@ -38,7 +38,7 @@ export const histogramBucketSizes = [
 ];
 /* eslint-enable */
 
-const DEFAULT_BUCKET_COUNT = 20;
+const DEFAULT_BUCKET_COUNT = 30;
 
 const histFilter: number[] = [];
 const histSort = (a: number, b: number) => a - b;

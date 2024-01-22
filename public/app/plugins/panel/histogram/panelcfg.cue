@@ -30,7 +30,7 @@ composableKinds: PanelCfg: {
 					common.OptionsWithTooltip
 
 					//Bucket count (approx)
-					bucketCount?: int32 & >0 | *20
+					bucketCount?: int32 & >0 | *30
 					//Size of each bucket
 					bucketSize?: int32
 					//Offset buckets by this amount

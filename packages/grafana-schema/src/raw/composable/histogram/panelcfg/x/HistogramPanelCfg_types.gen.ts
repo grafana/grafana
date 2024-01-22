@@ -33,7 +33,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
 }
 
 export const defaultOptions: Partial<Options> = {
-  bucketCount: 20,
+  bucketCount: 30,
   bucketOffset: 0,
 };
 
