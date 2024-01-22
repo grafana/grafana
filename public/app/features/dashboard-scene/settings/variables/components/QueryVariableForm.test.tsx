@@ -5,7 +5,6 @@ import { of } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
-  dateTime,
   LoadingState,
   PanelData,
   getDefaultTimeRange,
