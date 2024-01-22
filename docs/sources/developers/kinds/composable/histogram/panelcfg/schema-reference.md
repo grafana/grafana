@@ -97,6 +97,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 |----------------|-----------------------------------------|----------|---------|----------------------------------------------------------------------------|
 | `legend`       | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
 | `tooltip`      | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
+| `bucketCount`  | integer                                 | No       |         | Bucket count (approx)                                                      |
 | `bucketOffset` | int32                                   | No       | `0`     | Offset buckets by this amount                                              |
 | `bucketSize`   | integer                                 | No       |         | Size of each bucket                                                        |
 | `combine`      | boolean                                 | No       |         | Combines multiple series into a single histogram                           |

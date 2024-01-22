@@ -12,6 +12,10 @@ import * as common from '@grafana/schema';
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   /**
+   * Bucket count (approx)
+   */
+  bucketCount?: number;
+  /**
    * Offset buckets by this amount
    */
   bucketOffset?: number;

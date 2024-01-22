@@ -29,6 +29,8 @@ composableKinds: PanelCfg: {
 					common.OptionsWithLegend
 					common.OptionsWithTooltip
 
+					//Bucket count (approx)
+					bucketCount?: int32
 					//Size of each bucket
 					bucketSize?: int32
 					//Offset buckets by this amount

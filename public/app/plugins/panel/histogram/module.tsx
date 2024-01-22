@@ -18,6 +18,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         showIf: (opts, data) => originalDataHasHistogram(data),
       })
       .addNumberInput({
+        path: 'bucketCount',
+        name: histogramFieldInfo.bucketCount.name,
+        description: histogramFieldInfo.bucketCount.description,
+        settings: {
+          placeholder: 'Default: 20',
+          min: 0,
+        },
+        defaultValue: defaultOptions.bucketCount,
+        showIf: (opts, data) => !originalDataHasHistogram(data),
+      })
+      .addNumberInput({
         path: 'bucketSize',
         name: histogramFieldInfo.bucketSize.name,
         description: histogramFieldInfo.bucketSize.description,
