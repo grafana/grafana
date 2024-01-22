@@ -724,9 +724,9 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
 
     let newQuerySource: Observable<ExplorePanelData>;
 
-    const logQueries = queryResponse.logsResult?.queries || [];
+    const queries = queryResponse.logsResult?.queries || [];
     const logRefIds = queryResponse.logsFrames.map((frame) => frame.refId);
-    const queries = logQueries
+    const logQueries = queries
       .filter((query) => logRefIds.includes(query.refId))
       .map((query: DataQuery) => ({
         ...query,
@@ -734,7 +734,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
         refId: `${infiniteScrollRefId}${query.refId}`,
       }));
 
-    if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
+    if (!hasNonEmptyQuery(logQueries) || !datasourceInstance) {
       return;
     }
 
@@ -752,7 +752,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       },
       getFiscalYearStartMonth(getState().user)
     );
-    const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, false, timeZone, scopedVars);
+    const transaction = buildQueryTransaction(exploreId, logQueries, queryOptions, range, false, timeZone, scopedVars);
 
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
@@ -767,7 +767,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
           queryResponse,
           absoluteRange,
           undefined,
-          queries,
+          logQueries,
           correlations,
           showCorrelationEditorLinks,
           defaultCorrelationEditorDatasource
