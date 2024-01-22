@@ -361,6 +361,7 @@
       "title-label": "Title"
     },
     "json-editor": {
+      "apply-button": "Apply changes",
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
       "title": "JSON Model"
@@ -1222,6 +1223,12 @@
       "interval-selected": "Set auto refresh interval",
       "turned-off": "Auto refresh off"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": "Back to {{title}}"
+    },
+    "dismissable-button": "Close"
   },
   "search": {
     "actions": {
