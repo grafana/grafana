@@ -29,7 +29,7 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
       {
         id: 'available',
         cell: (serverInfo: CellProps<ServerInfo>) => {
-          return serverInfo.available ? (
+          return serverInfo.cell.value ? (
             <Stack justifyContent="end">
               <Tooltip content="Connection is available">
                 <Icon name="check" className="pull-right" />
