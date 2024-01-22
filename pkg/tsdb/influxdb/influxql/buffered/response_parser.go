@@ -328,6 +328,11 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 			if len(valuePair) >= 2 {
 				values = append(values, util.ParseString(valuePair[1]))
 			}
+		} else if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW DIAGNOSTICS")) {
+			// https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/show-diagnostics/
+			for _, vp := range valuePair {
+				values = append(values, util.ParseString(vp))
+			}
 		} else {
 			if len(valuePair) >= 1 {
 				values = append(values, util.ParseString(valuePair[0]))
