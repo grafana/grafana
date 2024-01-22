@@ -24,7 +24,6 @@ type DSInfo struct {
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.Route,
 	ds DSInfo, cfg *setting.Cfg) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
-	req.URL.Path = proxyPath
 	data := templateData{
 		JsonData:       ds.JSONData,
 		SecureJsonData: ds.DecryptedSecureJSONData,
@@ -49,6 +48,9 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		req.URL.Host = routeURL.Host
 		req.Host = routeURL.Host
 		req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
+	} else {
+		// fix https://github.com/grafana/grafana/issues/80856 when we skip URL then /{{route.Path}} shall be deleted to avoid error from HTTP severs which not allow dynamic HTTP handlers
+		req.URL.Path = proxyPath
 	}
 
 	if err := addQueryString(req, route, data); err != nil {
