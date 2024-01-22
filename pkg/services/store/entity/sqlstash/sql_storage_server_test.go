@@ -3,13 +3,16 @@ package sqlstash
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
@@ -17,21 +20,7 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	// #TODO: figure out if this is the store we want to use
-	sqlStore := db.InitTestDB(t)
-
-	entityDB, err := dbimpl.ProvideEntityDB(
-		sqlStore,
-		setting.NewCfg(),
-		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
-	require.NoError(t, err)
-
-	// #TODO: this is required for now so that migrations can take place. Find another way?
-	err = entityDB.Init()
-	require.NoError(t, err)
-
-	s, err := ProvideSQLEntityServer(entityDB)
-	require.NoError(t, err)
+	s := setUpTestServer(t)
 
 	tests := []struct {
 		name string
@@ -72,5 +61,35 @@ func TestCreate(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 		})
+	}
+}
+
+func setUpTestServer(t *testing.T) *sqlEntityServer {
+	// #TODO: figure out if this is the store we want to use
+	sqlStore := db.InitTestDB(t)
+
+	entityDB, err := dbimpl.ProvideEntityDB(
+		sqlStore,
+		setting.NewCfg(),
+		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
+	require.NoError(t, err)
+
+	// #TODO: this is required for now so that migrations can take place. Find another way?
+	err = entityDB.Init()
+	require.NoError(t, err)
+
+	snode, err := snowflake.NewNode(rand.Int63n(1024))
+	require.NoError(t, err)
+
+	// #TODO: [temporary change] figure out how to provide session
+	sess, err := entityDB.GetSession()
+	require.NoError(t, err)
+
+	return &sqlEntityServer{
+		db:        entityDB,
+		log:       log.New("sql-entity-server-test"),
+		snowflake: snode,
+		dialect:   sqlStore.Dialect,
+		sess:      sess,
 	}
 }

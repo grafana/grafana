@@ -32,18 +32,10 @@ func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (en
 		return nil, err
 	}
 
-	// #TODO: [temporary change] figure out how to provide session and dialect
-	sess, err := db.GetSession()
-	if err != nil {
-		return nil, err
-	}
-
 	entityServer := &sqlEntityServer{
 		db:        db,
 		log:       log.New("sql-entity-server"),
 		snowflake: snode,
-		dialect:   migrator.NewSQLite3Dialect(),
-		sess:      sess,
 	}
 
 	return entityServer, nil
