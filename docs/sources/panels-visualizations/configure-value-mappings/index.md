@@ -28,7 +28,7 @@ For example, the mapping applied in the following image causes the visualization
 
 ![Value mappings applied to a gauge visualization](screenshot-value-mappings-v10.4.png)
 
-Value mappings bypass unit formatting, like color or number of decimal places displayed, set in the **Standard options** section of panel editor. When value mappings are present in a panel, Grafana displays a summary of them in the **Value mappings** section of the editor panel.
+Value mappings bypass unit formatting set in the **Standard options** section of panel editor, like color or number of decimal places displayed. When value mappings are present in a panel, Grafana displays a summary of them in the **Value mappings** section of the editor panel.
 
 ## Types of value mappings
 
