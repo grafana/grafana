@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 
 import { SceneObject, SceneObjectRef, SceneObjectUrlValues, getUrlSyncManager, sceneUtils } from '@grafana/scenes';
 
@@ -109,7 +109,7 @@ export class TrailStore {
       // Use the current step urlValues to filter out equivalent states
       const urlValues = getCurrentUrlValues(this._serializeTrail(t.resolve()));
       // Only keep trails with sufficiently unique urlValues on their current step
-      return !relevantUrlValuesAreEquivalent(newTrailUrlValues, urlValues);
+      return !isEqual(newTrailUrlValues, urlValues);
     });
 
     this._recent.unshift(trail.getRef());
@@ -145,23 +145,4 @@ export function getTrailStore(): TrailStore {
 
 function getCurrentUrlValues({ history, currentStep }: SerializedTrail) {
   return history[currentStep]?.urlValues || history.at(-1)?.urlValues;
-}
-
-function relevantUrlValuesAreEquivalent(a: SceneObjectUrlValues, b: SceneObjectUrlValues) {
-  const baseValuesMatch =
-    a.metric === b.metric &&
-    a.from === b.from &&
-    a.to === b.to &&
-    a['var-ds'] === b['var-ds'] &&
-    a['var-groupby'] === b['var-groupby'];
-
-  const [aFilters, bFilters] = [a, b].map((vals) => {
-    // ensure type is for each filter string[]
-    const filters = typeof vals['var-filters'] === 'string' ? [vals['var-filters']] : vals['var-filters'] || [];
-    return filters;
-  });
-  const filtersMatch =
-    aFilters.every((filter) => bFilters.includes(filter)) && bFilters.every((filter) => aFilters.includes(filter));
-
-  return baseValuesMatch && filtersMatch;
 }
