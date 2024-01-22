@@ -58,10 +58,9 @@ var (
 	customInitPath = "conf/custom.ini"
 
 	// App settings.
-	Env          = Dev
-	AppUrl       string
-	AppSubUrl    string
-	InstanceName string
+	Env       = Dev
+	AppUrl    string
+	AppSubUrl string
 
 	// build
 	BuildVersion          string
@@ -77,21 +76,6 @@ var (
 	CookieSecure           bool
 	CookieSameSiteDisabled bool
 	CookieSameSiteMode     http.SameSite
-
-	// Dashboard history
-	DashboardVersionsToKeep int
-	MinRefreshInterval      string
-
-	// User settings
-	AllowUserSignUp         bool
-	AllowUserOrgCreate      bool
-	VerifyEmailEnabled      bool
-	LoginHint               string
-	PasswordHint            string
-	DisableSignoutMenu      bool
-	ExternalUserMngLinkUrl  string
-	ExternalUserMngLinkName string
-	ExternalUserMngInfo     string
 )
 
 // TODO move all global vars to this struct
@@ -104,6 +88,12 @@ type Cfg struct {
 	configFiles                  []string
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
+
+	// App settings.
+	Env          string
+	AppUrl       string
+	AppSubUrl    string
+	InstanceName string
 
 	// HTTP Server Settings
 	CertFile         string
@@ -225,6 +215,8 @@ type Cfg struct {
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
+	DashboardVersionsToKeep  int
+	MinRefreshInterval       string
 	DefaultHomeDashboardPath string
 
 	// Auth
@@ -373,8 +365,6 @@ type Cfg struct {
 
 	ErrTemplateName string
 
-	Env string
-
 	StackID string
 	Slug    string
 
@@ -416,6 +406,16 @@ type Cfg struct {
 
 	Quota QuotaSettings
 
+	// User settings
+	AllowUserSignUp            bool
+	AllowUserOrgCreate         bool
+	VerifyEmailEnabled         bool
+	LoginHint                  string
+	PasswordHint               string
+	DisableSignoutMenu         bool
+	ExternalUserMngLinkUrl     string
+	ExternalUserMngLinkName    string
+	ExternalUserMngInfo        string
 	AutoAssignOrg              bool
 	AutoAssignOrgId            int
 	AutoAssignOrgRole          string
@@ -1017,13 +1017,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if Target != "" {
 		cfg.Target = util.SplitString(Target)
 	}
-	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
-	cfg.Env = Env
+	cfg.Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
 	//nolint:staticcheck
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
-	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
+	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
 	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
@@ -1052,9 +1051,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
-	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
-	MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
-
+	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
@@ -1180,7 +1178,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.Logger.Error("secure_socks_datasource_proxy unable to start up", "err", err.Error())
 	}
 
-	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
+	if cfg.VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
@@ -1500,7 +1498,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
-	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// Deprecated
 	cfg.OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
@@ -1621,8 +1619,8 @@ func readOAuth2ServerSettings(cfg *Cfg) {
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	users := iniFile.Section("users")
-	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
-	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
+	cfg.AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
+	cfg.AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
@@ -1631,18 +1629,18 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			string(roletype.RoleViewer),
 			string(roletype.RoleEditor),
 			string(roletype.RoleAdmin)})
-	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
+	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
 
-	LoginHint = valueAsString(users, "login_hint", "")
-	PasswordHint = valueAsString(users, "password_hint", "")
+	cfg.LoginHint = valueAsString(users, "login_hint", "")
+	cfg.PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
 	cfg.DefaultLanguage = valueAsString(users, "default_language", "")
 	cfg.HomePage = valueAsString(users, "home_page", "")
-	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
-	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
-	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
+	cfg.ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
+	cfg.ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
+	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)

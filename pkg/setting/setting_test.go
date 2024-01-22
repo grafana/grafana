@@ -249,7 +249,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		hostname, err := os.Hostname()
 		require.Nil(t, err)
-		require.Equal(t, hostname, InstanceName)
+		require.Equal(t, hostname, cfg.InstanceName)
 	})
 
 	t.Run("Reading callback_url should add trailing slash", func(t *testing.T) {

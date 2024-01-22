@@ -271,7 +271,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		})
 	}
 
-	if !setting.DisableSignoutMenu {
+	if !s.cfg.DisableSignoutMenu {
 		// add sign out first
 		children = append(children, &navtree.NavLink{
 			Text:         "Sign out",
