@@ -375,9 +375,10 @@ type Cfg struct {
 	DateFormats DateFormats
 
 	// User
-	UserInviteMaxLifetime time.Duration
-	HiddenUsers           map[string]struct{}
-	CaseInsensitiveLogin  bool // Login and Email will be considered case insensitive
+	UserInviteMaxLifetime        time.Duration
+	HiddenUsers                  map[string]struct{}
+	CaseInsensitiveLogin         bool // Login and Email will be considered case insensitive
+	VerificationEmailMaxLifetime time.Duration
 
 	// Service Accounts
 	SATokenExpirationDayLimit int
@@ -1769,6 +1770,13 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			cfg.HiddenUsers[user] = struct{}{}
 		}
 	}
+
+	verificationEmailMaxLifetimeVal := valueAsString(users, "verification_email_max_lifetime_duration", "1h")
+	verificationEmailMaxLifetimeDuration, err := gtime.ParseDuration(verificationEmailMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+	cfg.VerificationEmailMaxLifetime = verificationEmailMaxLifetimeDuration
 
 	return nil
 }
