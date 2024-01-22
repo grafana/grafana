@@ -60,7 +60,9 @@ export const TimeSeriesTooltip = ({
   }
 
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, theme });
-  let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
+  const dataIdx = dataIdxs[seriesIdx!]!;
+
+  let xVal = xFieldFmt(xField!.values[dataIdxs[0] ?? dataIdx]).text;
   let links: Array<LinkModel<Field>> = [];
   let contentLabelValue: LabelValue[] = [];
 
@@ -71,7 +73,6 @@ export const TimeSeriesTooltip = ({
       return null;
     }
 
-    const dataIdx = dataIdxs[seriesIdx!]!;
     xVal = xFieldFmt(xField!.values[dataIdx]).text;
     const fieldFmt = field.display || getDisplayProcessor({ field, theme });
     const display = fieldFmt(field.values[dataIdx]);
