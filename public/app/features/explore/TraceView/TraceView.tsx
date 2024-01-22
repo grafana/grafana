@@ -14,13 +14,11 @@ import {
   mapInternalLinkToExplore,
   SplitOpen,
 } from '@grafana/data';
+import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { TempoQuery } from '@grafana-plugins/tempo/types';
-import { getTraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useDispatch, useSelector } from 'app/types';

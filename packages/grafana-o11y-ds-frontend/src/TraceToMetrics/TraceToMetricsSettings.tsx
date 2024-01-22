@@ -9,8 +9,8 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
+import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
@@ -228,17 +228,17 @@ export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePl
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
-  queryRow: css`
-    label: queryRow;
-    display: flex;
-    flex-flow: wrap;
-  `,
+  infoText: {
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  },
+  row: css({
+    label: 'row',
+    alignItems: 'baseline',
+  }),
+  queryRow: css({
+    label: 'queryRow',
+    display: 'flex',
+    flexFlow: 'wrap',
+  }),
 });

@@ -9,13 +9,13 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
-import { DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
+import { DataSourcePicker, DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { ProfileTypesCascader } from 'app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/ProfileTypesCascader';
-import { ProfileTypeMessage } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
+import { ProfileTypesCascader } from '../pyroscope/ProfileTypesCascader';
+import { ProfileTypeMessage } from '../pyroscope/types';
+
 export interface TraceToProfilesOptions {
   datasourceUid?: string;
   tags?: Array<{ key: string; value?: string }>;

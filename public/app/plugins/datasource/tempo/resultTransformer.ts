@@ -23,9 +23,9 @@ import {
   Field,
   DataLinkConfigOrigin,
 } from '@grafana/data';
+import { TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 
-import { TraceToProfilesData } from './_importedDependencies/grafana-traces/src';
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
 import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';

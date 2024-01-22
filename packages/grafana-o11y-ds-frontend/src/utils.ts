@@ -65,6 +65,7 @@ export function makeSpanMap<T>(getSpan: (index: number) => { span: T; id: string
       }
     }
   }
+  // Discussion on this type assertion here: https://github.com/grafana/grafana/pull/80362/files#r1451019375
   return spanMap as { [id: string]: { span: T; children: string[] } };
 }
 
