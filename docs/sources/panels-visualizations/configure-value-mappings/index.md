@@ -60,7 +60,7 @@ Refer to the following examples to learn more about value mapping.
 
 ### Time series example
 
-The following image shows a time series visualization with value mappings. Value mapping colors are not applied to this visualization, but the display text is shown on the axis.
+The following image shows a time series visualization with value mappings. Value mapping colors aren't applied to this visualization, but the display text is shown on the axis.
 
 ![Value mappings time series example](/static/img/docs/value-mappings/value-mappings-summary-example-8-0.png)
 
@@ -100,4 +100,4 @@ The following image shows a table visualization with value mappings. If you want
 1. (Optional) Set the color.
 1. Click **Update** to save the value mapping.
 
-After you've added a mapping, the **Add value mappings** button is replaced by an **Edit value mappings** button, which you can click to add or update mappings.
+After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
