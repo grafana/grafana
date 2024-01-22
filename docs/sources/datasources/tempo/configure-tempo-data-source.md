@@ -86,6 +86,8 @@ To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
 | **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
 | **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
 
+### Configure trace to logs
+
 The following table describes the ways in which you can configure your trace to logs settings:
 
 | Setting name              | Description                                                                                                                                                                                                                                                                                                  |
