@@ -1224,6 +1224,12 @@
       "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "label": "ßäčĸ ŧő {{title}}"
+    },
+    "dismissable-button": "Cľőşę"
+  },
   "search": {
     "actions": {
       "include-panels": "Ĩŉčľūđę päŉęľş",

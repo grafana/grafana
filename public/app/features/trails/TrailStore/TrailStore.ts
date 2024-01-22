@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 
 import { SceneObject, SceneObjectRef, SceneObjectUrlValues, getUrlSyncManager, sceneUtils } from '@grafana/scenes';
 
@@ -102,6 +102,16 @@ export class TrailStore {
 
   setRecentTrail(trail: DataTrail) {
     this._recent = this._recent.filter((t) => t !== trail.getRef());
+
+    // Check if any existing "recent" entries have equivalent 'current' urlValue to the new trail
+    const newTrailUrlValues = getCurrentUrlValues(this._serializeTrail(trail)) || {};
+    this._recent = this._recent.filter((t) => {
+      // Use the current step urlValues to filter out equivalent states
+      const urlValues = getCurrentUrlValues(this._serializeTrail(t.resolve()));
+      // Only keep trails with sufficiently unique urlValues on their current step
+      return !isEqual(newTrailUrlValues, urlValues);
+    });
+
     this._recent.unshift(trail.getRef());
     this._save();
   }
@@ -131,4 +141,8 @@ export function getTrailStore(): TrailStore {
   }
 
   return store;
+}
+
+function getCurrentUrlValues({ history, currentStep }: SerializedTrail) {
+  return history[currentStep]?.urlValues || history.at(-1)?.urlValues;
 }
