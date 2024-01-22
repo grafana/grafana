@@ -199,14 +199,13 @@ export class ElasticDatasource
    * @param url the url to query the index on, for example `_mapping`. Must not start with a slash.
    */
 
-  private requestAllIndices(url: string, range = getDefaultTimeRange()) {
+  private requestAllIndices(range = getDefaultTimeRange()) {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
     }
 
-    // make sure `url` does not start with a slash
-    url = url.replace(/^\//, '');
+    const url = '_mapping';
 
     const indexUrlList = indexList.map((index) => {
       // make sure `index` does not end with a slash
@@ -719,7 +718,7 @@ export class ElasticDatasource
       nested: 'nested',
       histogram: 'number',
     };
-    return this.requestAllIndices('_mapping', range).pipe(
+    return this.requestAllIndices(range).pipe(
       map((result) => {
         const shouldAddField = (obj: any, key: string) => {
           if (this.isMetadataField(key)) {
