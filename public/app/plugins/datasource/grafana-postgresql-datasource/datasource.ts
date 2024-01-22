@@ -67,7 +67,12 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
-    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), { refId: 'columns' });
+    const { table } = query;
+    if (table === undefined) {
+      // if no table-name, we are not able to query for fields
+      return [];
+    }
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(table), { refId: 'columns' });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values[i];
