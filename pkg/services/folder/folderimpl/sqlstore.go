@@ -373,28 +373,29 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([
 	if q.BatchSize == 0 {
 		q.BatchSize = DEFAULT_BATCH_SIZE
 	}
-
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		return batch(len(q.UIDs), int(q.BatchSize), func(start, end int) error {
 			partialFolders := make([]*folder.Folder, 0, DEFAULT_BATCH_SIZE)
 			partialIDs := q.UIDs[start:min(end, len(q.UIDs))]
-			s := `SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`
+			s := strings.Builder{}
+			s.WriteString(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
 			// compute full path column if requested
 			if q.WithFullpath {
-				s += fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect()))
+				s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect())))
 			}
-			s += ` FROM folder f0`
+			s.WriteString(` FROM folder f0`)
 			// join the same table multiple times to compute the full path of a folder
 			if q.WithFullpath {
-				s += getFullpathJoinsSQL()
+				s.WriteString(getFullpathJoinsSQL())
 			}
-			s += ` WHERE f0.org_id=? AND f0.uid IN (?` + strings.Repeat(", ?", len(partialIDs)-1) + `)`
+			s.WriteString(` WHERE f0.org_id=? AND f0.uid IN (?` + strings.Repeat(", ?", len(partialIDs)-1) + `)`)
 			args := []any{q.OrgID}
 			for _, uid := range partialIDs {
 				args = append(args, uid)
 			}
-			err := sess.SQL(s, args...).Find(&partialFolders)
+
+			err := sess.SQL(s.String(), args...).Find(&partialFolders)
 			if err != nil {
 				return err
 			}
