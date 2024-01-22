@@ -7,7 +7,6 @@ import {
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
@@ -29,10 +28,8 @@ interface RowRepeaterBehaviorState extends SceneObjectState {
 export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
-    onVariableUpdatesCompleted: this._onVariableChanged.bind(this),
+    onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
   });
-
-  private _isWaitingForVariables = false;
 
   public constructor(state: RowRepeaterBehaviorState) {
     super(state);
@@ -41,28 +38,18 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
   }
 
   private _activationHandler() {
-    // If we our variable is ready we can process repeats on activation
-    if (sceneGraph.hasVariableDependencyInLoadingState(this)) {
-      this._isWaitingForVariables = true;
-    } else {
-      this._performRepeat();
-    }
+    this._performRepeat();
   }
 
-  private _onVariableChanged(changedVariables: Set<SceneVariable>, dependencyChanged: boolean): void {
-    if (dependencyChanged) {
-      this._performRepeat();
-      return;
-    }
-
-    // If we are waiting for variables and the variable is no longer loading then we are ready to repeat as well
-    if (this._isWaitingForVariables && !sceneGraph.hasVariableDependencyInLoadingState(this)) {
-      this._isWaitingForVariables = false;
-      this._performRepeat();
-    }
+  private _onVariableUpdateCompleted(): void {
+    this._performRepeat();
   }
 
   private _performRepeat() {
+    if (this._variableDependency.hasDependencyInLoadingState()) {
+      return;
+    }
+
     const variable = sceneGraph.lookupVariable(this.state.variableName, this.parent?.parent!);
 
     if (!variable) {

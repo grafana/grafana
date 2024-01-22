@@ -21,7 +21,6 @@ import {
   SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
-  SceneVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
@@ -226,7 +225,7 @@ describe('transformSceneToSaveModel', () => {
       const rowRepeater = rowWithRepeat.state.$behaviors![0] as RowRepeaterBehavior;
 
       // trigger row repeater
-      rowRepeater.variableDependency?.variableUpdatesCompleted(new Set<SceneVariable>([variable]));
+      rowRepeater.variableDependency?.variableUpdateCompleted(variable, true);
 
       // Make sure the repeated rows have been added to runtime scene model
       expect(grid.state.children.length).toBe(5);

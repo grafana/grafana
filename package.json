@@ -245,7 +245,7 @@
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "1.30.0",
+    "@grafana/scenes": "^2.0.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@kusto/monaco-kusto": "^7.4.0",

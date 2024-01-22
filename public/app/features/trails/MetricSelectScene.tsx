@@ -13,7 +13,6 @@ import {
   QueryVariable,
   sceneGraph,
   VariableDependencyConfig,
-  SceneVariable,
   SceneCSSGridLayout,
   SceneCSSGridItem,
   SceneObjectRef,
@@ -50,6 +49,7 @@ const ROW_CARD_HEIGHT = '64px';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
+  private ignoreNextUpdate = false;
 
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
@@ -71,17 +71,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_METRIC_NAMES],
-    onVariableUpdatesCompleted: this._onVariableChanged.bind(this),
+    onVariableUpdateCompleted: this.onVariableUpdateCompleted.bind(this),
   });
 
-  private _onVariableChanged(changedVariables: Set<SceneVariable>, dependencyChanged: boolean): void {
-    if (dependencyChanged) {
-      this.updateMetrics();
-      this.buildLayout();
-    }
+  private onVariableUpdateCompleted(): void {
+    this.updateMetrics();
+    this.buildLayout();
   }
 
-  private ignoreNextUpdate = false;
   private _onActivate() {
     if (this.state.body.state.children.length === 0) {
       this.buildLayout();
