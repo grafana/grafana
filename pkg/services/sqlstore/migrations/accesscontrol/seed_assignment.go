@@ -159,6 +159,9 @@ func (m *SeedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migra
 	// Check if the migration is necessary
 	hasEntry := 0
 	_, err := sess.SQL(`SELECT 1 FROM seed_assignment LIMIT 1`).Get(&hasEntry)
+	if err != nil {
+		return err
+	}
 	if hasEntry == 0 {
 		// Skip migration the seed assignment table has not been populated
 		// Hence the oncall access permission can be granted without any risk
