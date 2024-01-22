@@ -32,25 +32,27 @@ Value mappings bypass unit formatting set in the **Standard options** section of
 
 ## Types of value mappings
 
-{{% admonition type="note" %}}
-The new value mappings are not compatible with some visualizations, such as Graph (old), Text, and Heatmap.
-{{% /admonition %}}
+Grafana supports the following value mapping types:
 
-Grafana supports the following value mappings:
+### Value
 
-<!--Update images to match examples -->
+A **Value** mapping maps specific values to text and a color. For example, you can configure a mapping so that all instances of the value `10` appear as **Perfection!** rather than the number. Use **Value** mapping when you want to format a single value.
+![The value 10 mapped to the text Perfection!](screenshot-map-value-v10.4.png)
 
-- **Value:** Maps text values to a color or different display text. For example, you can configure a value mapping so that all instances of the value `10` appear as **Perfection!** rather than the number. Map a value when you want to format a single value.
-  ![Map a value](/static/img/docs/value-mappings/map-value-8-0.png)
+### Range
 
-- **Range:** Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display **Low** or **High** rather than the number. Map a range of values when you want to format multiple, continuous values.
-  ![Map a range](/static/img/docs/value-mappings/map-range-8-0.png)
+A **Range** mapping maps numerical ranges to text and a color. For example, if a value is within a certain range, you can configure a range value mapping to display **Low** or **High** rather than the number. Use **Range** mapping when you want to format multiple, continuous values.
+![Ranges of numbers mapped to the text Low and High with colors yellow and red](screenshot-map-range-v10.4.png)
 
-- **Regex:** Maps regular expressions to replacement text and a color. For example, if a value is `www.example.com`, you can configure a regex value mapping so that Grafana displays **www** and truncates the domain. Map a regular expression when you want to format the text and color of a regular expression value.
-  <!--Add an image here-->
+### Regex
 
-- **Special** Maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to a display text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Map a special value when you want to format uncommon, boolean, or empty values.
-  ![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)
+A **Regex** mapping maps regular expressions to text and a color. For example, if a value is `www.example.com`, you can configure a regular expression value mapping so that Grafana displays **www** and truncates the domain. Use the **Regex** mapping when you want to format the text and color of a regular expression value.
+![A regular expression used to truncate full URLs to the text wwww](screenshot-map-regex-v10.4.png)
+
+### Special
+
+A **Special** mapping maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Use the **Special** mapping when you want to format uncommon, boolean, or empty values.
+![The value null mapped to the text N/A](screenshot-map-special-v10.4.png)
 
 ## Examples
 
@@ -64,13 +66,13 @@ The following image shows a time series visualization with value mappings. Value
 
 ### Stat example
 
-The following image shows a Stat visualization with value mappings and text colors applied. You can hide the sparkline so it doesn't interfere with the values.
+The following image shows a stat visualization with value mappings and text colors applied. You can hide the sparkline so it doesn't interfere with the values.
 
 ![Value mappings stat example](/static/img/docs/value-mappings/value-mappings-stat-example-8-0.png)
 
 ### Bar gauge example
 
-The following image shows a bar gauge visualization with value mappings. The value mapping colors are applied to the text, but not to the gauges.
+The following image shows a bar gauge visualization with value mappings. Note that the value mapping colors are applied to the text, but not to the gauges.
 
 ![Value mappings bar gauge example](/static/img/docs/value-mappings/value-mappings-bar-gauge-example-8-0.png)
 
