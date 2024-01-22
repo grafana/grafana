@@ -40,7 +40,8 @@ interface TooltipPlugin2Props {
     isPinned: boolean,
     dismiss: () => void,
     // selected time range (for annotation triggering)
-    timeRange: TimeRange2 | null
+    timeRange: TimeRange2 | null,
+    viaSync: boolean,
   ) => React.ReactNode;
 
   maxWidth?: number;
@@ -162,6 +163,7 @@ export const TooltipPlugin2 = ({
     let selectedRange: TimeRange2 | null = null;
     let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
     let closestSeriesIdx: number | null = null;
+    let viaSync = false;
 
     let pendingRender = false;
     let pendingPinned = false;
@@ -217,7 +219,7 @@ export const TooltipPlugin2 = ({
         isHovering: _isHovering,
         contents:
           _isHovering || selectedRange != null
-            ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange)
+            ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange, viaSync)
             : null,
         dismiss,
       };
@@ -225,6 +227,7 @@ export const TooltipPlugin2 = ({
       setState(state);
 
       selectedRange = null;
+      viaSync = false;
     };
 
     const dismiss = () => {
@@ -410,45 +413,55 @@ export const TooltipPlugin2 = ({
 
     // fires on mousemoves
     config.addHook('setCursor', (u) => {
-      let { left = -10, top = -10 } = u.cursor;
+      let { left = -10, top = -10, event } = u.cursor;
 
       if (left >= 0 || top >= 0) {
-        let { width, height } = sizeRef.current!;
+        viaSync = event == null;
 
-        let clientX = u.rect.left + left;
-        let clientY = u.rect.top + top;
+        let transform = '';
 
-        if (offsetY) {
-          if (clientY + height < winHeight || clientY - height < 0) {
-            offsetY = 0;
-          } else if (offsetY !== -height) {
-            offsetY = -height;
-          }
+        // this means it's a synthetic event from uPlot's sync
+        if (viaSync) {
+          // TODO: smarter positioning here to avoid viewport clipping?
+          transform = `translateX(${left}px) translateY(${u.rect.height / 2}px) translateY(-50%)`;
         } else {
-          if (clientY + height > winHeight && clientY - height >= 0) {
-            offsetY = -height;
+          let { width, height } = sizeRef.current!;
+
+          let clientX = u.rect.left + left;
+          let clientY = u.rect.top + top;
+
+          if (offsetY) {
+            if (clientY + height < winHeight || clientY - height < 0) {
+              offsetY = 0;
+            } else if (offsetY !== -height) {
+              offsetY = -height;
+            }
+          } else {
+            if (clientY + height > winHeight && clientY - height >= 0) {
+              offsetY = -height;
+            }
           }
+
+          if (offsetX) {
+            if (clientX + width < winWidth || clientX - width < 0) {
+              offsetX = 0;
+            } else if (offsetX !== -width) {
+              offsetX = -width;
+            }
+          } else {
+            if (clientX + width > winWidth && clientX - width >= 0) {
+              offsetX = -width;
+            }
+          }
+
+          const shiftX = offsetX !== 0 ? 'translateX(-100%)' : '';
+          const shiftY = offsetY !== 0 ? 'translateY(-100%)' : '';
+
+          // TODO: to a transition only when switching sides
+          // transition: transform 100ms;
+
+          transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
         }
-
-        if (offsetX) {
-          if (clientX + width < winWidth || clientX - width < 0) {
-            offsetX = 0;
-          } else if (offsetX !== -width) {
-            offsetX = -width;
-          }
-        } else {
-          if (clientX + width > winWidth && clientX - width >= 0) {
-            offsetX = -width;
-          }
-        }
-
-        const shiftX = offsetX !== 0 ? 'translateX(-100%)' : '';
-        const shiftY = offsetY !== 0 ? 'translateY(-100%)' : '';
-
-        // TODO: to a transition only when switching sides
-        // transition: transform 100ms;
-
-        const transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
 
         if (_isHovering) {
           if (domRef.current != null) {
