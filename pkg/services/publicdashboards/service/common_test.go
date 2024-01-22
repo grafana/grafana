@@ -1,6 +1,8 @@
 package service
 
 import (
+	"testing"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
@@ -13,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"testing"
 )
 
 func newPublicDashboardServiceImpl(

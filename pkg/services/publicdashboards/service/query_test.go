@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/services/query"
 	"strconv"
 	"testing"
 	"time"
@@ -21,6 +20,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
