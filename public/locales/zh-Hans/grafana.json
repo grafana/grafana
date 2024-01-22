@@ -1218,6 +1218,12 @@
       "turned-off": "自动刷新关闭"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
+  },
   "search": {
     "actions": {
       "include-panels": "包括面板",

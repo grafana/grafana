@@ -3,11 +3,10 @@ import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import { TraceToLogsSection, TraceToMetricsSection } from '@grafana/o11y-ds-frontend';
 import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings, useStyles2, Divider, Stack } from '@grafana/ui';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
-import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsSection } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
