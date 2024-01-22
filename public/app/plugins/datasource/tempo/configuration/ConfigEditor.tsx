@@ -59,12 +59,9 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         </>
       ) : null}
 
-      {config.featureToggles.traceToProfiles && (
-        <>
-          <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
-          <Divider spacing={4} />
-        </>
-      )}
+      <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
+
       <ConfigSection
         title="Additional settings"
         description="Additional settings are optional settings that can be configured for more control over your data source."
