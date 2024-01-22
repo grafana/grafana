@@ -27,7 +27,7 @@
     "react": "18.2.0",
     "react-use": "17.4.0",
     "rxjs": "7.8.1",
-    "tslib": "2.6.0"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
