@@ -30,7 +30,11 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
     }
 
     let urlOrCallback: CommandPaletteAction['url'] = url;
-    if (url && navItem.id === 'connections-add-new-connection') {
+    if (
+      url &&
+      (navItem.id === 'connections-add-new-connection' ||
+        navItem.id === 'standalone-plugin-page-/connections/add-new-connection')
+    ) {
       urlOrCallback = (searchQuery: string) => {
         const matchingKeyword = keywords?.find((keyword) => keyword.toLowerCase().includes(searchQuery.toLowerCase()));
         return matchingKeyword ? `${url}?search=${matchingKeyword}` : url;
