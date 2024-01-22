@@ -123,7 +123,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               ))
           ) : (
             <div className={styles.emptyMessage} aria-live="polite">
-              {t('navigation.megamenu.starredEmptyMessage', 'Your starred dashboards will appear here')}
+              {link.emptyMessage}
             </div>
           )}
         </ul>
