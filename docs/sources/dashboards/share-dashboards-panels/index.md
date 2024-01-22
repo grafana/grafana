@@ -191,6 +191,29 @@ To create a library panel from the **Share Panel** dialog:
 1. Click **Create library panel** to save your changes.
 1. Save the dashboard.
 
+<!-- ORPHANED CONTENT FROM MANAGE DASHBOARDS
+
+### Export a dashboard
+
+The dashboard export action creates a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
+
+1. Click **Dashboards** in the main menu.
+1. Open the dashboard you want to export.
+1. Click the **Share** icon in the top navigation bar.
+1. Click **Export**.
+
+   If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
+
+1. Click **Save to file**.
+
+Grafana downloads a JSON file to your local machine.
+
+#### Make a dashboard portable
+
+If you want to export a dashboard for others to use, you can add template variables for things like a metric prefix (use a constant variable) and server name.
+
+A template variable of the type `Constant` is automatically hidden in the dashboard, and is also added as a required input when the dashboard is imported. -->
+
 {{% docs/reference %}}
 [Export and import dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#export-and-import-dashboards"
 [Export and import dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#export-and-import-dashboards"
