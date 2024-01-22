@@ -201,70 +201,72 @@ This optional step uses a python script to generate the sample logs used in this
 
    ```
    #!/bin/env python3
-   ​
-   import datetime
-   import math
-   import random
-   import sys
-   import time
-
-
-   ​# Simulation parameters
-   requests_per_second = 2
-   failure_rate = 0.05
-   get_post_ratio = 0.9
-   get_average_duration_ms = 500
-   post_average_duration_ms = 2000
-   ​
-   ​
-   while True:
-   # Exponential distribution random value of average 1/lines_per_second.
-   d = random.expovariate(requests_per_second)
-   time.sleep(d)
-   if random.random() < failure_rate:
-       status = "500"
-   else:
-       status = "200"
-   if random.random() < get_post_ratio:
-       method = "GET"
-       duration_ms = math.floor(random.expovariate(1/get_average_duration_ms))
-   else:
-       method = "POST"
-       duration_ms = math.floor(random.expovariate(1/post_average_duration_ms))
-   timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
-   print(f"{timestamp} level=info method={method} url=/ status={status} duration={duration_ms}ms")
-   sys.stdout.flush()
    ```
+
+import datetime
+import math
+import random
+import sys
+import time
+
+requests_per_second = 2
+failure_rate = 0.05
+get_post_ratio = 0.9
+get_average_duration_ms = 500
+post_average_duration_ms = 2000
+
+while True:
+
+    # Exponential distribution random value of average 1/lines_per_second.
+    d = random.expovariate(requests_per_second)
+    time.sleep(d)
+    if random.random() < failure_rate:
+        status = "500"
+    else:
+        status = "200"
+    if random.random() < get_post_ratio:
+        method = "GET"
+        duration_ms = math.floor(random.expovariate(1/get_average_duration_ms))
+    else:
+        method = "POST"
+        duration_ms = math.floor(random.expovariate(1/post_average_duration_ms))
+    timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
+    print(f"{timestamp} level=info method={method} url=/ status={status} duration={duration_ms}ms")
+    sys.stdout.flush()
+
+```
 
 1. Give the script executable permissions.
 
-   In a terminal window on linux-based systems run the command:
+In a terminal window on linux-based systems run the command:
 
-   ```
-   chmod 755  ./web-server-logs-simulator.py
-   ```
+```
+
+chmod 755 ./web-server-logs-simulator.py
+
+````
 
 1. Run the script.
 
-   - Use `tee` to direct the script output to the console and the specified file path. For example, if promtail is
-     configured to monitor `/var/log` for `.log` files you can direct the script output to `/var/log/web_requests.log` file.
+- Use `tee` to direct the script output to the console and the specified file path. For example, if promtail is
+  configured to monitor `/var/log` for `.log` files you can direct the script output to `/var/log/web_requests.log` file.
 
-   - To avoid running the script with elevated permissions, create the log file manually and change the permissions for the output file only.
+- To avoid running the script with elevated permissions, create the log file manually and change the permissions for the output file only.
 
-     ```
-     sudo touch /var/log/web_requests.log
-     chmod 755 /var/log/web_requests.log
-     python3 ./web-server-logs-simulator.py | tee -a /var/log/web_requests.log
-     ```
+  ```
+  sudo touch /var/log/web_requests.log
+  chmod 755 /var/log/web_requests.log
+  python3 ./web-server-logs-simulator.py | tee -a /var/log/web_requests.log
+  ```
 
 1. Verify that the logs are showing up in Grafana’s Explore view:
 
-   - Navigate to explore in Grafana.
-   - Select the Loki datasource from the drop-down.
-   - Check the toggle for **builder | code** in the top right corner of the query box and switch the query mode to builder if it’s not already selected.
-   - Select the filename label from the drop-down and choose your `web_requests.log` file from the value drop-down.
-   - Click **Run Query**.
-   - You should see logs and a graph of log volume.
+- Navigate to explore in Grafana.
+- Select the Loki datasource from the drop-down.
+- Check the toggle for **builder | code** in the top right corner of the query box and switch the query mode to builder if it’s not already selected.
+- Select the filename label from the drop-down and choose your `web_requests.log` file from the value drop-down.
+- Click **Run Query**.
+- You should see logs and a graph of log volume.
 
 ### Troubleshooting the script
 
@@ -288,115 +290,132 @@ that generates the sample logs used in this tutorial to create alerts.
 1. Start a command line from a directory of your choice.
 1. From that directory, get a `docker-compose.yaml` file to run Grafana, Loki, and Promtail:
 
-   **Bash**
+**Bash**
 
-   ```
-   wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
-   ```
+````
 
-   **Windows Powershell**
+wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
 
-   ```
-   $client = new-object System.Net.WebClient
-   $client.DownloadFile("https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml",
-   "C:\Users\$Env:UserName\Desktop\docker-compose.yaml")
-   #downloads the file to the Desktop
-   ```
+```
+
+**Windows Powershell**
+
+```
+
+$client = new-object System.Net.WebClient
+$client.DownloadFile("https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml",
+"C:\Users\$Env:UserName\Desktop\docker-compose.yaml")
+#downloads the file to the Desktop
+
+```
 
 1. Run the container
 
-   ```
-   docker compose up -d
-   ```
+```
+
+docker compose up -d
+
+```
 
 1. Create and edit a python file that will generate logs.
 
-   **Bash**
+**Bash**
 
-   ```
-   touch web-server-logs-simulator.py && nano web-server-logs-simulator.py
-   ```
+```
 
-   **Windows Powershell**
+touch web-server-logs-simulator.py && nano web-server-logs-simulator.py
 
-   ```
-   New-Item web-server-logs-simulator.py ; notepad web-server-logs-simulator.py
-   ```
+```
+
+**Windows Powershell**
+
+```
+
+New-Item web-server-logs-simulator.py ; notepad web-server-logs-simulator.py
+
+```
 
 1. Paste the following code into the file
 
-   ```
-   #!/bin/env python3
+```
 
-   import datetime
-   import math
-   import random
-   import sys
-   import time
+#!/bin/env python3
 
+import datetime
+import math
+import random
+import sys
+import time
 
+requests_per_second = 2
+failure_rate = 0.05
+get_post_ratio = 0.9
+get_average_duration_ms = 500
+post_average_duration_ms = 2000
 
-   requests_per_second = 2
-   failure_rate = 0.05
-   get_post_ratio = 0.9
-   get_average_duration_ms = 500
-   post_average_duration_ms = 2000
+while True:
 
+# Exponential distribution random value of average 1/lines_per_second.
 
-   while True:
-   # Exponential distribution random value of average 1/lines_per_second.
-   d = random.expovariate(requests_per_second)
-   time.sleep(d)
-   if random.random() < failure_rate:
-       status = "500"
-   else:
-       status = "200"
-   if random.random() < get_post_ratio:
-       method = "GET"
-       duration_ms = math.floor(random.expovariate(1/get_average_duration_ms))
-   else:
-       method = "POST"
-       duration_ms = math.floor(random.expovariate(1/post_average_duration_ms))
-   timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
-   print(f"{timestamp} level=info method={method} url=/ status={status} duration={duration_ms}ms")
-   sys.stdout.flush()
-   ```
+d = random.expovariate(requests_per_second)
+time.sleep(d)
+if random.random() < failure_rate:
+status = "500"
+else:
+status = "200"
+if random.random() < get_post_ratio:
+method = "GET"
+duration_ms = math.floor(random.expovariate(1/get_average_duration_ms))
+else:
+method = "POST"
+duration_ms = math.floor(random.expovariate(1/post_average_duration_ms))
+timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
+print(f"{timestamp} level=info method={method} url=/ status={status} duration={duration_ms}ms")
+sys.stdout.flush()
+
+```
 
 1. Execute the log-generating python script.
 
-   In a terminal window on linux-based systems run the command:
+In a terminal window on linux-based systems run the command:
 
-   ```
-   chmod 755  ./web-server-logs-simulator.py
-   ```
+```
 
-   - Use `tee` to direct the script output to the console and the specified file path. For example, if promtail is
-     configured to monitor `/var/log` for `.log` files you can direct the script output to `/var/log/web_requests.log` file.
+chmod 755 ./web-server-logs-simulator.py
 
-   - To avoid running the script with elevated permissions, create the log file manually and change the permissions for the output file only.
+```
 
-   ```
-   sudo touch /var/log/web_requests.log
-   chmod 755 /var/log/web_requests.log
-   python3 ./web-server-logs-simulator.py | tee -a /var/log/web_requests.log
-   ```
+- Use `tee` to direct the script output to the console and the specified file path. For example, if promtail is
+  configured to monitor `/var/log` for `.log` files you can direct the script output to `/var/log/web_requests.log` file.
 
-   **Running on Windows**
+- To avoid running the script with elevated permissions, create the log file manually and change the permissions for the output file only.
 
-   Run Powershell as administrator
+```
 
-   ```
-   python ./web-server-logs-simulator.py | Tee-Object "C:\ProgramFiles\GrafanaLabs\grafana\var\log\web_requests.log"
-   ```
+sudo touch /var/log/web_requests.log
+chmod 755 /var/log/web_requests.log
+python3 ./web-server-logs-simulator.py | tee -a /var/log/web_requests.log
+
+```
+
+**Running on Windows**
+
+Run Powershell as administrator
+
+```
+
+python ./web-server-logs-simulator.py | Tee-Object "C:\ProgramFiles\GrafanaLabs\grafana\var\log\web_requests.log"
+
+```
 
 1. Verify that the logs are showing up in Grafana’s Explore view:
 
-   - Navigate to explore in Grafana.
-   - Select the Loki datasource from the drop-down.
-   - Check the toggle for **builder | code** in the top right corner of the query box and switch the query mode to builder if it’s not already selected.
-   - Select the filename label from the drop-down and choose your `web_requests.log` file from the value drop-down.
-   - Click **Run Query**.
-   - You should see logs and a graph of log volume.
+- Navigate to explore in Grafana.
+- Select the Loki datasource from the drop-down.
+- Check the toggle for **builder | code** in the top right corner of the query box and switch the query mode to builder if it’s not already selected.
+- Select the filename label from the drop-down and choose your `web_requests.log` file from the value drop-down.
+- Click **Run Query**.
+- You should see logs and a graph of log volume.
 
 ### Troubleshooting the script
 
@@ -406,3 +425,4 @@ If you don't see the logs in Explore, check these things:
 - If the file is empty, check that you followed the steps above to create the file and change the permissions.
 - If the file exists, verify that promtail is running and check that it is configured correctly.
 - In Grafana Explore, check that the time range is only for the last 5 minutes.
+```
