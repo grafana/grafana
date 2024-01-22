@@ -943,6 +943,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
+		Env:    Dev,
 		Target: []string{"all"},
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),

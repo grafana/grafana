@@ -60,7 +60,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		locale = parts[0]
 	}
 
-	appURL := setting.AppUrl
+	appURL := hs.Cfg.AppUrl
 	appSubURL := hs.Cfg.AppSubURL
 
 	// special case when doing localhost call from image renderer
@@ -170,7 +170,7 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 
 	// Anonymous users do not have an email or auth info
 	if namespace != identity.NamespaceUser {
-		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppUrl}
 	}
 
 	if !c.IsSignedIn {
@@ -180,10 +180,10 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	userID, err := identity.IntIdentifier(namespace, id)
 	if err != nil {
 		hs.log.Error("Failed to parse user ID", "error", err)
-		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppUrl}
 	}
 
-	identifier := c.SignedInUser.GetEmail() + "@" + setting.AppUrl
+	identifier := c.SignedInUser.GetEmail() + "@" + hs.Cfg.AppUrl
 
 	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {

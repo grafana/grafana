@@ -128,8 +128,8 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	encryptedError, err := hs.SecretsService.Encrypt(context.Background(), []byte(oauthError.Error()), secrets.WithoutScope())
 	require.NoError(t, err)
 	expCookiePath := "/"
-	if len(setting.AppSubUrl) > 0 {
-		expCookiePath = setting.AppSubUrl
+	if len(cfg.AppSubUrl) > 0 {
+		expCookiePath = cfg.AppSubUrl
 	}
 	cookie := http.Cookie{
 		Name:     loginErrorCookieName,

@@ -228,7 +228,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Edition:       hs.License.Edition(),
 			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
 			HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
-			Env:           setting.Env,
+			Env:           hs.Cfg.Env,
 		},
 
 		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{

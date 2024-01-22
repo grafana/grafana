@@ -41,11 +41,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	{
 		oldVersion := setting.BuildVersion
 		oldCommit := setting.BuildCommit
-		oldEnv := setting.Env
 		t.Cleanup(func() {
 			setting.BuildVersion = oldVersion
 			setting.BuildCommit = oldCommit
-			setting.Env = oldEnv
 		})
 	}
 
@@ -111,7 +109,6 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	// TODO: Remove
 	setting.BuildVersion = cfg.BuildVersion
 	setting.BuildCommit = cfg.BuildCommit
-	setting.Env = cfg.Env
 
 	tests := []struct {
 		desc        string
@@ -125,7 +122,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 				BuildInfo: buildInfo{
 					Version: setting.BuildVersion,
 					Commit:  setting.BuildCommit,
-					Env:     setting.Env,
+					Env:     cfg.Env,
 				},
 			},
 		},
@@ -136,7 +133,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 				BuildInfo: buildInfo{
 					Version: "",
 					Commit:  "",
-					Env:     setting.Env,
+					Env:     cfg.Env,
 				},
 			},
 		},
