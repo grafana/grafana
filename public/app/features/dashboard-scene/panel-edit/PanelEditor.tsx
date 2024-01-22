@@ -95,6 +95,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     locationService.push(
       getDashboardUrl({
         uid: dashboard.state.uid,
+        slug: dashboard.state.meta.slug,
         currentQueryParams: locationService.getLocation().search,
         updateQuery: {
           editPanel: null,
@@ -125,6 +126,13 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
         secondary: new SceneFlexItem({
           body: new PanelDataPane(vizPanelMgr),
         }),
+        primaryPaneStyles: {
+          minHeight: 0,
+          overflow: 'hidden',
+        },
+        secondaryPaneStyles: {
+          minHeight: 0,
+        },
       }),
       secondary: new SceneFlexItem({
         body: new PanelOptionsPane(vizPanelMgr),
