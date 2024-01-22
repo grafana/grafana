@@ -265,8 +265,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return {
       ...expandedQuery,
       adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
-      query: this.templateSrv.replace(query.query ?? '', scopedVars, this.interpolateQueryExpr), // The raw query text
-      rawSql: this.templateSrv.replace(query.rawSql ?? '', scopedVars, this.interpolateQueryExpr), // The raw query text
+      query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw influxql query text
+      rawSql: this.templateSrv.replace(query.rawSql ?? '', scopedVars, this.interpolateQueryExpr), // The raw sql query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, this.interpolateQueryExpr),
       measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, this.interpolateQueryExpr),
