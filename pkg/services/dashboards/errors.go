@@ -37,7 +37,7 @@ var (
 		Status:     "name-exists",
 	}
 	ErrDashboardVersionMismatch = DashboardErr{
-		Reason:     "The dashboard has been changed by someone else",
+		Reason:     "The dashboard has been changed by someone else or model version less than latest version",
 		StatusCode: 412,
 		Status:     "version-mismatch",
 	}
