@@ -477,6 +477,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
+		fmt.Println("hello!!", savedFolder.Data)
+
 		count, err = dashboardStore.CountDashboardsInFolder(
 			context.Background(),
 			// nolint:staticcheck

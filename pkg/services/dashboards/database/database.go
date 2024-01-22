@@ -1007,10 +1007,21 @@ func (d *dashboardStore) CountDashboardsInFolder(
 	var count int64
 	var err error
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		fmt.Println("here is FolderUID", req.FolderUID)
+		foo := []dashboards.Dashboard{}
+		// err := sess.SQL("SELECT * FROM dashboard WHERE org_id=?", req.OrgID).Find(&foo)
+		// fmt.Println("err here", err)
+		count, err = sess.SQL("SELECT count (*) FROM dashboard WHERE folder_uid=''", req.FolderUID).Count()
+		fmt.Println("count and err here", count, err)
+		// fmt.Println("foo list here", foo)
+		for _, x := range foo {
+			fmt.Println("x is here", x.OrgID, x.FolderUID, x.IsFolder)
+		}
 		// nolint:staticcheck
-		session := sess.In("folder_id", req.FolderID).In("org_id", req.OrgID).
+		session := sess.Where("folder_uid", req.FolderUID).In("org_id", req.OrgID).
 			In("is_folder", d.store.GetDialect().BooleanStr(false))
 		count, err = session.Count(&dashboards.Dashboard{})
+		fmt.Println("count and err", count, err)
 		return err
 	})
 	return count, err

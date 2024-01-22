@@ -7,6 +7,7 @@ package xorm
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -31,6 +32,8 @@ func (session *Session) Count(bean ...interface{}) (int64, error) {
 	}
 
 	var total int64
+	fmt.Println("sqlstring", sqlStr)
+	fmt.Println("args here", args)
 	err = session.queryRow(sqlStr, args...).Scan(&total)
 	if err == sql.ErrNoRows || err == nil {
 		return total, nil
