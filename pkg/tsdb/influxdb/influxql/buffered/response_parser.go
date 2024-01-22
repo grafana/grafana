@@ -326,11 +326,11 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	for _, valuePair := range row.Values {
 		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
 			if len(valuePair) >= 2 {
-				values = append(values, util.ToPtr(valuePair[1].(string)))
+				values = append(values, util.ParseString(valuePair[1]))
 			}
 		} else {
 			if len(valuePair) >= 1 {
-				values = append(values, util.ToPtr(valuePair[0].(string)))
+				values = append(values, util.ParseString(valuePair[0]))
 			}
 		}
 	}
