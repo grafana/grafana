@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -157,12 +158,12 @@ func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plu
 }
 
 // SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
-// It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin does not have
-// forward_host_env_vars = true in its plugin settings.
+// It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin is not present in the
+// ForwardHostEnvVars plugin ids list.
 func SkipHostEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		p.SkipHostEnvVars = cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
-			cfg.PluginSettings[p.ID]["forward_host_env_vars"] != "true"
+			!slices.Contains(cfg.ForwardHostEnvVars, p.ID)
 		return p, nil
 	}
 }

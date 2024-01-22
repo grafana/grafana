@@ -15,6 +15,7 @@ labels:
     - oss
 menuTitle: Manage library panels
 title: Manage library panels
+description: Create reusable library panels that you can use in any dashboard
 weight: 300
 ---
 
@@ -30,7 +31,7 @@ When you create a library panel, the panel on the source dashboard is converted 
 
 1. Open a panel in edit mode.
 1. In the panel display options, click the down arrow option to bring changes to the visualization.
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-create-lib-panel-from-edit-9-5.png" class="docs-image--no-shadow" max-width= "800px" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-create-lib-panel-from-edit-9-5.png" class="docs-image--no-shadow" max-width= "800px" alt="Library panels tab of the panel editor pane" >}}
 1. Click **Library panels**, and then click **+ Create library panel** to open the create dialog.
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder to save the library panel.
@@ -41,7 +42,7 @@ Once created, you can modify the library panel using any dashboard on which it a
 
 You can also create a library panel directly from the edit menu of any panel.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-create-from-more-9-5.png" class="docs-image--no-shadow" max-width= "900px" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-create-from-more-9-5.png" class="docs-image--no-shadow" max-width= "900px" alt="Create library panel option in the panel menu" >}}
 
 ## Add a library panel to a dashboard
 
@@ -77,7 +78,7 @@ You can view a list of available library panels and search for a library panel.
 1. Click **Library panels**.
 
    You can see a list of previously defined library panels.
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-library-panel-list-9-5.png" class="docs-image--no-shadow" max-width= "900px" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-library-panel-list-9-5.png" class="docs-image--no-shadow" max-width= "900px" alt="Library panels page with list of library panels" >}}
 
 1. Search for a specific library panel if you know its name.
 

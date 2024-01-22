@@ -13,7 +13,9 @@ export interface SerializedTrail {
     urlValues: SceneObjectUrlValues;
     type: TrailStepType;
     description: string;
+    parentIndex: number;
   }>;
+  currentStep: number;
 }
 
 export class TrailStore {
@@ -55,8 +57,14 @@ export class TrailStore {
 
     t.history.map((step) => {
       this._loadFromUrl(trail, step.urlValues);
+      const parentIndex = step.parentIndex ?? trail.state.history.state.steps.length - 1;
+      // Set the parent of the next trail step by setting the current step in history.
+      trail.state.history.setState({ currentStep: parentIndex });
       trail.state.history.addTrailStep(trail, step.type);
     });
+
+    const currentStep = t.currentStep ?? trail.state.history.state.steps.length - 1;
+    trail.state.history.setState({ currentStep });
 
     return trail;
   }
@@ -68,10 +76,12 @@ export class TrailStore {
         urlValues: getUrlSyncManager().getUrlState(stepTrail),
         type: step.type,
         description: step.description,
+        parentIndex: step.parentIndex,
       };
     });
     return {
       history,
+      currentStep: trail.state.history.state.currentStep,
     };
   }
 

@@ -56,16 +56,7 @@ lineage: schemas: [{
 			}
 
 			// Configuration of the time picker shown at the top of a dashboard.
-			timepicker?: {
-				// Whether timepicker is visible or not.
-				hidden: bool | *false
-				// Interval options available in the refresh picker dropdown.
-				refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-				// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
-				collapse: bool | *false
-				// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-				time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
-			}
+			timepicker?: #TimePickerConfig
 
 			// The month that the fiscal year starts on.  0 = January, 11 = December
 			fiscalYearStartMonth?: uint8 & <12 | *0
@@ -447,9 +438,24 @@ lineage: schemas: [{
 			disabled?: bool
 			// Optional frame matcher. When missing it will be applied to all results
 			filter?: #MatcherConfig
+			// Where to pull DataFrames from as input to transformation
+			topic?: "series" | "annotations" | "alertStates" // replaced with common.DataTopic
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
 			options: _
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		// Time picker configuration
+		// It defines the default config for the time picker and the refresh picker for the specific dashboard.
+		#TimePickerConfig: {
+			// Whether timepicker is visible or not.
+			hidden: bool | *false
+			// Interval options available in the refresh picker dropdown.
+			refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+			// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+			time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+			// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+			nowDelay?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		// 0 for no shared crosshair or tooltip (default).

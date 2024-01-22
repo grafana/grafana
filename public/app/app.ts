@@ -56,6 +56,7 @@ import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
+import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
@@ -79,7 +80,7 @@ import { createPluginExtensionRegistry } from './features/plugins/extensions/cre
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { PluginPreloadResult, preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -195,8 +196,12 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      // Preload selected app plugins
-      const preloadResults = await preloadPlugins(config.apps);
+      let preloadResults: PluginPreloadResult[] = [];
+
+      if (contextSrv.user.orgRole !== '') {
+        // Preload selected app plugins
+        preloadResults = await preloadPlugins(config.apps);
+      }
 
       // Create extension registry out of preloaded plugins and core extensions
       const extensionRegistry = createPluginExtensionRegistry([
@@ -214,6 +219,8 @@ export class GrafanaApp {
       const queryParams = locationService.getSearchObject();
       const chromeService = new AppChromeService();
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
+      const newAssetsChecker = new NewFrontendAssetsChecker();
+      newAssetsChecker.start();
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);
@@ -230,6 +237,7 @@ export class GrafanaApp {
         location: locationService,
         chrome: chromeService,
         keybindings: keybindingsService,
+        newAssetsChecker,
         config,
       };
 
@@ -265,7 +273,7 @@ function initEchoSrv() {
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
-    // Metrics below are marked in public/views/index-template.html
+    // Metrics below are marked in public/views/index.html
     const jsLoadMetricName = 'frontend_boot_js_done_time_seconds';
     const cssLoadMetricName = 'frontend_boot_css_time_seconds';
 

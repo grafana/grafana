@@ -24,7 +24,7 @@ const (
 	FlagPanelTitleSearch = "panelTitleSearch"
 
 	// FlagPublicDashboards
-	// Enables public access to dashboards
+	// [Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.
 	FlagPublicDashboards = "publicDashboards"
 
 	// FlagPublicDashboardsEmailSharing
@@ -103,13 +103,17 @@ const (
 	// Enable support for a persistent (docked) navigation menu
 	FlagDockedMegaMenu = "dockedMegaMenu"
 
+	// FlagReturnToPrevious
+	// Enables the return to previous context functionality
+	FlagReturnToPrevious = "returnToPrevious"
+
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagEntityStore
-	// SQL-based entity store (requires storage flag also)
-	FlagEntityStore = "entityStore"
+	// FlagUnifiedStorage
+	// SQL-based k8s storage
+	FlagUnifiedStorage = "unifiedStorage"
 
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
@@ -146,10 +150,6 @@ const (
 	// FlagNestedFolderPicker
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
-
-	// FlagAccessTokenExpirationCheck
-	// Enable OAuth access_token expiration check and token refresh using the refresh_token
-	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
 
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
@@ -251,10 +251,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagUseCachingService
-	// When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.
-	FlagUseCachingService = "useCachingService"
-
 	// FlagEnableElasticsearchBackendQuerying
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
@@ -355,12 +351,16 @@ const (
 	// Register experimental APIs with the k8s API server
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
+	// FlagGrafanaAPIServerEnsureKubectlAccess
+	// Start an additional https handler and write kubectl options
+	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
+
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
-	// Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled
+	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
 	// FlagSplitScopes
@@ -408,7 +408,7 @@ const (
 	FlagReportingRetries = "reportingRetries"
 
 	// FlagSseGroupByDatasource
-	// Send query to the same datasource in a single request when using server side expressions
+	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
 
 	// FlagRequestInstrumentationStatusSource
@@ -475,6 +475,10 @@ const (
 	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
+	// FlagKubernetesSnapshots
+	// Use the kubernetes API in the frontend to support playlists
+	FlagKubernetesSnapshots = "kubernetesSnapshots"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -506,10 +510,6 @@ const (
 	// FlagPluginsInstrumentationStatusSource
 	// Include a status source label for plugin request metrics and logs
 	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
-
-	// FlagCostManagementUi
-	// Toggles the display of the cost management ui plugin
-	FlagCostManagementUi = "costManagementUi"
 
 	// FlagManagedPluginsInstall
 	// Install managed plugins directly from plugins catalog
@@ -563,6 +563,10 @@ const (
 	// Enables the SSO settings API
 	FlagSsoSettingsApi = "ssoSettingsApi"
 
+	// FlagCanvasPanelPanZoom
+	// Allow pan and zoom in canvas panel
+	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
+
 	// FlagLogsInfiniteScrolling
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
@@ -591,6 +595,10 @@ const (
 	// Disables passing host environment variable to plugin processes
 	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
 
+	// FlagTableSharedCrosshair
+	// Enables shared crosshair in table panel
+	FlagTableSharedCrosshair = "tableSharedCrosshair"
+
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
@@ -598,4 +606,44 @@ const (
 	// FlagDisplayAnonymousStats
 	// Enables anonymous stats to be shown in the UI for Grafana
 	FlagDisplayAnonymousStats = "displayAnonymousStats"
+
+	// FlagAlertStateHistoryAnnotationsFromLoki
+	// Enable using Loki as the source for panel annotations generated by alert rules
+	FlagAlertStateHistoryAnnotationsFromLoki = "alertStateHistoryAnnotationsFromLoki"
+
+	// FlagLokiQueryHints
+	// Enables query hints for Loki
+	FlagLokiQueryHints = "lokiQueryHints"
+
+	// FlagKubernetesFeatureToggles
+	// Use the kubernetes API for feature toggle management in the frontend
+	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
+
+	// FlagAlertingPreviewUpgrade
+	// Show Unified Alerting preview and upgrade page in legacy alerting
+	FlagAlertingPreviewUpgrade = "alertingPreviewUpgrade"
+
+	// FlagEnablePluginsTracingByDefault
+	// Enable plugin tracing for all external plugins
+	FlagEnablePluginsTracingByDefault = "enablePluginsTracingByDefault"
+
+	// FlagCloudRBACRoles
+	// Enabled grafana cloud specific RBAC roles
+	FlagCloudRBACRoles = "cloudRBACRoles"
+
+	// FlagAlertingQueryOptimization
+	// Optimizes eligible queries in order to reduce load on datasources
+	FlagAlertingQueryOptimization = "alertingQueryOptimization"
+
+	// FlagNewFolderPicker
+	// Enables the nested folder picker without having nested folders enabled
+	FlagNewFolderPicker = "newFolderPicker"
+
+	// FlagJitterAlertRules
+	// Distributes alert rule evaluations more evenly over time, by rule group
+	FlagJitterAlertRules = "jitterAlertRules"
+
+	// FlagJitterAlertRulesWithinGroups
+	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 )

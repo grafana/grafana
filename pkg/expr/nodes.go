@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -45,10 +46,10 @@ type rawNode struct {
 	idx int64
 }
 
-func (rn *rawNode) GetCommandType() (c CommandType, err error) {
-	rawType, ok := rn.Query["type"]
+func GetExpressionCommandType(rawQuery map[string]any) (c CommandType, err error) {
+	rawType, ok := rawQuery["type"]
 	if !ok {
-		return c, fmt.Errorf("no expression command type in query for refId %v", rn.RefID)
+		return c, errors.New("no expression command type in query")
 	}
 	typeString, ok := rawType.(string)
 	if !ok {
@@ -97,7 +98,7 @@ func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars
 }
 
 func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, error) {
-	commandType, err := rn.GetCommandType()
+	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
 	}

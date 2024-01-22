@@ -216,6 +216,22 @@ describe('timeSeriesTableTransformer', () => {
     expect(results[0].fields[0].values[0].fields[0].values[0]).toBe(10);
     expect(results[0].fields[0].values[0].fields[1].values[0]).toBe(2);
   });
+
+  it('Will correctly fill in gaps in labels', () => {
+    const series = [
+      getTimeSeries('A', { instance: 'A', pod: 'AA' }),
+      getTimeSeries('A', { instance: 'B' }),
+      getTimeSeries('A', { instance: 'C', pod: 'CC' }),
+    ];
+
+    const results = timeSeriesToTableTransform({}, series);
+    expect(results).toHaveLength(1);
+    const result = results[0];
+    expect(result.refId).toBe('A');
+    expect(result.fields).toHaveLength(3);
+    expect(result.fields[0].values).toEqual(['A', 'B', 'C']);
+    expect(result.fields[1].values).toEqual(['AA', '', 'CC']);
+  });
 });
 
 function assertFieldsEqual(field1: Field, field2: Field) {

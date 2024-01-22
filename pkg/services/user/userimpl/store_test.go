@@ -377,8 +377,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		ss.CacheService.Flush()
-
 		query := &user.GetSignedInUserQuery{OrgID: users[1].OrgID, UserID: users[1].ID}
 		result, err := userStore.GetSignedInUser(context.Background(), query)
 		require.NoError(t, err)
@@ -540,8 +538,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
-
-		ss.CacheService.Flush()
 
 		query3 := &user.GetSignedInUserQuery{OrgID: users[1].OrgID, UserID: users[1].ID}
 		query3Result, err := userStore.GetSignedInUser(context.Background(), query3)

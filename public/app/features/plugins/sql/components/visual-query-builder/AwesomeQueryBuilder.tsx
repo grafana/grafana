@@ -31,6 +31,8 @@ export const emptyInitTree: JsonTree = {
 const TIME_FILTER = 'timeFilter';
 const macros = [TIME_FILTER];
 
+// Widgets are the components rendered for each field type see the docs for more info
+// https://github.com/ukrbublik/react-awesome-query-builder/blob/master/CONFIG.adoc#configwidgets
 export const widgets: Widgets = {
   ...BasicConfig.widgets,
   text: {
@@ -83,6 +85,7 @@ export const widgets: Widgets = {
         />
       );
     },
+    // Function for formatting widget’s value in SQL WHERE query.
     sqlFormatValue: (val, field, widget, operator, operatorDefinition, rightFieldDef) => {
       if (operator === Op.MACROS) {
         if (macros.includes(val)) {
@@ -105,6 +108,8 @@ export const widgets: Widgets = {
   },
 };
 
+// Settings are the configuration options for the query builder see the docs for more info
+// https://github.com/ukrbublik/react-awesome-query-builder/blob/master/CONFIG.adoc#configsettings
 export const settings: Settings = {
   ...BasicConfig.settings,
   canRegroup: false,
@@ -113,6 +118,7 @@ export const settings: Settings = {
   showNot: false,
   addRuleLabel: buttonLabels.add,
   deleteLabel: buttonLabels.remove,
+  // This is the component that renders conjunctions (logical operators)
   renderConjs: function Conjunctions(conjProps) {
     return (
       <Select
@@ -125,6 +131,7 @@ export const settings: Settings = {
       />
     );
   },
+  // This is the component that renders fields
   renderField: function Field(fieldProps) {
     const fields = fieldProps?.config?.fields || {};
     return (
@@ -149,6 +156,7 @@ export const settings: Settings = {
       />
     );
   },
+  // This is the component used for the Add/Remove buttons
   renderButton: function RAQBButton(buttonProps) {
     return (
       <Button
@@ -161,6 +169,7 @@ export const settings: Settings = {
       />
     );
   },
+  // This is the component used for the fields operator selector
   renderOperator: function Operator(operatorProps) {
     return (
       <Select
@@ -211,6 +220,9 @@ const customTypes = {
   },
 };
 
+// This is the configuration for the query builder that doesn't include the fields but all the other configuration for the UI
+// Fields should be added dynamically based on returned data
+// See the doc for more info https://github.com/ukrbublik/react-awesome-query-builder/blob/master/CONFIG.adoc
 export const raqbConfig: Config = {
   ...BasicConfig,
   widgets,

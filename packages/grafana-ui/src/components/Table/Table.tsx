@@ -1,7 +1,5 @@
-import { css, cx } from '@emotion/css';
-import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Cell,
   useAbsoluteLayout,
   useExpanded,
   useFilters,
@@ -20,10 +18,9 @@ import { useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
-import { getExpandedRowHeight, ExpandedRow } from './ExpandedRow';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
-import { TableCell } from './TableCell';
+import { RowsList } from './RowsList';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
@@ -50,6 +47,7 @@ export const Table = memo((props: Props) => {
     enablePagination,
     cellHeight = TableCellHeight.Sm,
     timeRange,
+    enableSharedCrosshair = false,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -231,64 +229,6 @@ export const Table = memo((props: Props) => {
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
-  const rowIndexForPagination = useCallback(
-    (index: number) => {
-      return state.pageIndex * state.pageSize + index;
-    },
-    [state.pageIndex, state.pageSize]
-  );
-
-  const RenderRow = useCallback(
-    ({ index, style }: { index: number; style: CSSProperties }) => {
-      const indexForPagination = rowIndexForPagination(index);
-      const row = rows[indexForPagination];
-
-      prepareRow(row);
-
-      const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
-
-      return (
-        <div {...row.getRowProps({ style })} className={cx(tableStyles.row, expandedRowStyle)}>
-          {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedDataField && state.expanded[row.index] && (
-            <ExpandedRow
-              nestedData={nestedDataField}
-              tableStyles={tableStyles}
-              rowIndex={index}
-              width={width}
-              cellHeight={cellHeight}
-            />
-          )}
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-              timeRange={timeRange}
-              frame={data}
-            />
-          ))}
-        </div>
-      );
-    },
-    [
-      rowIndexForPagination,
-      rows,
-      prepareRow,
-      state.expanded,
-      tableStyles,
-      nestedDataField,
-      width,
-      cellHeight,
-      onCellFilterAdded,
-      timeRange,
-      data,
-    ]
-  );
-
   const onNavigate = useCallback(
     (toPage: number) => {
       gotoPage(toPage - 1);
@@ -322,24 +262,6 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  const getItemSize = (index: number): number => {
-    const indexForPagination = rowIndexForPagination(index);
-    const row = rows[indexForPagination];
-    if (state.expanded[row.index] && nestedDataField) {
-      return getExpandedRowHeight(nestedDataField, index, tableStyles);
-    }
-
-    return tableStyles.rowHeight;
-  };
-
-  const handleScroll: UIEventHandler = (event) => {
-    const { scrollTop } = event.currentTarget;
-
-    if (listRef.current !== null) {
-      listRef.current.scrollTo(scrollTop);
-    }
-  };
-
   return (
     <div
       {...getTableProps()}
@@ -356,20 +278,26 @@ export const Table = memo((props: Props) => {
           )}
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
-                <VariableSizeList
-                  // This component needs an unmount/remount when row height or page changes
-                  key={tableStyles.rowHeight + state.pageIndex}
-                  height={listHeight}
-                  itemCount={itemCount}
-                  itemSize={getItemSize}
-                  width={'100%'}
-                  ref={listRef}
-                  style={{ overflow: undefined }}
-                >
-                  {RenderRow}
-                </VariableSizeList>
-              </CustomScrollbar>
+              <RowsList
+                data={data}
+                rows={rows}
+                width={width}
+                cellHeight={cellHeight}
+                headerHeight={headerHeight}
+                rowHeight={tableStyles.rowHeight}
+                itemCount={itemCount}
+                pageIndex={state.pageIndex}
+                listHeight={listHeight}
+                listRef={listRef}
+                tableState={state}
+                prepareRow={prepareRow}
+                timeRange={timeRange}
+                onCellFilterAdded={onCellFilterAdded}
+                nestedDataField={nestedDataField}
+                tableStyles={tableStyles}
+                footerPaginationEnabled={Boolean(enablePagination)}
+                enableSharedCrosshair={enableSharedCrosshair}
+              />
             </div>
           ) : (
             <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>

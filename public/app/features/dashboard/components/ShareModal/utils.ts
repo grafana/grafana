@@ -49,6 +49,9 @@ export function buildParams({
     searchParams.set('viewPanel', String(panel.id));
   }
 
+  // Token is unique to the authenticated identity and should not be shared with the URL,
+  // so we are stripping it from the query params as a safety measure.
+  searchParams.delete('auth_token');
   return searchParams;
 }
 

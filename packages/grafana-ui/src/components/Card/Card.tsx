@@ -84,7 +84,11 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
-  const { href, onClick, isSelected } = context ?? { href: undefined, onClick: undefined, isSelected: undefined };
+  const { href, onClick, isSelected } = context ?? {
+    href: undefined,
+    onClick: undefined,
+    isSelected: undefined,
+  };
 
   return (
     <h2 className={cx(styles.heading, className)}>
@@ -99,7 +103,8 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly checked={isSelected} />}
+      {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
+      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} readOnly />}
     </h2>
   );
 };
@@ -119,6 +124,9 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
     lineHeight: theme.typography.body.lineHeight,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
+    '& input[readonly]': {
+      cursor: 'inherit',
+    },
   }),
   linkHack: css({
     all: 'unset',

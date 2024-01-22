@@ -13,7 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrInternal = errutil.Internal("accesscontrol.internal")
+const (
+	CacheHit  = "hit"
+	CacheMiss = "miss"
+)
+
+var (
+	ErrInternal        = errutil.Internal("accesscontrol.internal")
+	CacheUsageStatuses = []string{CacheHit, CacheMiss}
+)
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
@@ -62,6 +70,7 @@ func (r Role) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// swagger:ignore
 type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
@@ -133,6 +142,12 @@ func (r *RoleDTO) IsBasic() bool {
 
 func (r *RoleDTO) IsExternalService() bool {
 	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix) || strings.HasPrefix(r.UID, ExternalServiceRoleUIDPrefix)
+}
+
+// swagger:model RoleDTO
+type RoleDTOStatic struct {
+	RoleDTO
+	Global bool `json:"global" xorm:"-"`
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {

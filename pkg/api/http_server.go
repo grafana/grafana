@@ -1,10 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"net/http"
 	"os"
@@ -12,6 +19,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -118,7 +126,8 @@ type HTTPServer struct {
 	RouteRegister                routing.RouteRegister
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
-	Features                     *featuremgmt.FeatureManager
+	Features                     featuremgmt.FeatureToggles
+	featureManager               *featuremgmt.FeatureManager
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
 	navTreeService               navtree.Service
@@ -205,6 +214,7 @@ type HTTPServer struct {
 	authnService         authn.Service
 	starApi              *starApi.API
 	promRegister         prometheus.Registerer
+	promGatherer         prometheus.Gatherer
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	namespacer           request.NamespaceMapper
 	anonService          anonymous.Service
@@ -248,7 +258,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
-	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
+	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -281,7 +291,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ShortURLService:              shortURLService,
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
-		Features:                     features,
+		Features:                     features, // a read only view of the managers state
+		featureManager:               features,
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
@@ -348,6 +359,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
+		promGatherer:                 promGatherer,
 		clientConfigProvider:         clientConfigProvider,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
@@ -429,7 +441,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			return err
 		}
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
+		if err := hs.httpSrv.ServeTLS(listener, "", ""); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
@@ -482,21 +494,93 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 	}
 }
 
-func (hs *HTTPServer) configureHttps() error {
+func (hs *HTTPServer) selfSignedCert() ([]tls.Certificate, error) {
+	template := &x509.Certificate{
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		SubjectKeyId:          []byte{1},
+		SerialNumber:          big.NewInt(1),
+		Subject: pkix.Name{
+			CommonName: hs.Cfg.Domain,
+		},
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(1, 0, 0),
+		// see http://golang.org/pkg/crypto/x509/#KeyUsage
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+	}
+
+	// generate private key
+	privatekey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return nil, fmt.Errorf("error generating tls private key: %w", err)
+	}
+
+	publickey := &privatekey.PublicKey
+
+	// create a self-signed certificate
+	var parent = template
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, parent, publickey, privatekey)
+	if err != nil {
+		return nil, fmt.Errorf("error generating tls self-signed certificate: %w", err)
+	}
+
+	// encode certificate and private key to PEM
+	certPEM := new(bytes.Buffer)
+	_ = pem.Encode(certPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	})
+
+	certPrivKeyPEM := new(bytes.Buffer)
+	_ = pem.Encode(certPrivKeyPEM, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privatekey),
+	})
+
+	// create tlsCertificate from generated certificate and private key
+	tlsCert, err := tls.X509KeyPair(certPEM.Bytes(), certPrivKeyPEM.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("error creating tls self-signed certificate: %w", err)
+	}
+
+	return []tls.Certificate{tlsCert}, nil
+}
+
+func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
+	// if we don't have either a cert or key specified, generate a self-signed certificate
+	if hs.Cfg.CertFile == "" && hs.Cfg.KeyFile == "" {
+		return hs.selfSignedCert()
+	}
+
 	if hs.Cfg.CertFile == "" {
-		return errors.New("cert_file cannot be empty when using HTTPS")
+		return nil, errors.New("cert_file cannot be empty when using HTTPS")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return errors.New("cert_key cannot be empty when using HTTPS")
+		return nil, errors.New("cert_key cannot be empty when using HTTPS")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
+		return nil, fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
 	}
 
 	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+	}
+
+	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
+	}
+
+	return []tls.Certificate{tlsCert}, nil
+}
+
+func (hs *HTTPServer) configureHttps() error {
+	tlsCerts, err := hs.tlsCertificates()
+	if err != nil {
+		return err
 	}
 
 	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
@@ -513,6 +597,7 @@ func (hs *HTTPServer) configureHttps() error {
 		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
 
 	tlsCfg := &tls.Config{
+		Certificates: tlsCerts,
 		MinVersion:   minTlsVersion,
 		CipherSuites: tlsCiphers,
 	}
@@ -524,20 +609,9 @@ func (hs *HTTPServer) configureHttps() error {
 }
 
 func (hs *HTTPServer) configureHttp2() error {
-	if hs.Cfg.CertFile == "" {
-		return errors.New("cert_file cannot be empty when using HTTP2")
-	}
-
-	if hs.Cfg.KeyFile == "" {
-		return errors.New("cert_key cannot be empty when using HTTP2")
-	}
-
-	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf("cannot find SSL cert_file at %q", hs.Cfg.CertFile)
-	}
-
-	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf("cannot find SSL key_file at %q", hs.Cfg.KeyFile)
+	tlsCerts, err := hs.tlsCertificates()
+	if err != nil {
+		return err
 	}
 
 	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
@@ -551,6 +625,7 @@ func (hs *HTTPServer) configureHttp2() error {
 		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
 
 	tlsCfg := &tls.Config{
+		Certificates: tlsCerts,
 		MinVersion:   minTlsVersion,
 		CipherSuites: tlsCiphers,
 		NextProtos:   []string{"h2", "http/1.1"},
@@ -583,7 +658,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.UseMiddleware(middleware.Gziper())
 	}
 
-	m.UseMiddleware(middleware.Recovery(hs.Cfg))
+	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
@@ -649,7 +724,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 	}
 
 	promhttp.
-		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
+		HandlerFor(hs.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
 		ServeHTTP(ctx.Resp, ctx.Req)
 }
 

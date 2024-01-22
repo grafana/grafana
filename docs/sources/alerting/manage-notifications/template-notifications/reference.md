@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/reference/
-description: Reference for templating notifications
+description: Learn about templating notifications options
 keywords:
   - grafana
   - alerting

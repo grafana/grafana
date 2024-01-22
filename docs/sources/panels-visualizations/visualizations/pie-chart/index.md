@@ -10,6 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's pie chart visualization
 title: Pie chart
 weight: 100
 ---

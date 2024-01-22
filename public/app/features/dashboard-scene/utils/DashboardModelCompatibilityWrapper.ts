@@ -9,12 +9,16 @@ import {
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
+  SceneObject,
   VizPanel,
 } from '@grafana/scenes';
+import { DataSourceRef } from '@grafana/schema';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 
-import { findVizPanelByKey, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
+import { dashboardSceneGraph } from './dashboardSceneGraph';
+import { findVizPanelByKey, getPanelIdForVizPanel, getQueryRunnerFor, getVizPanelKeyForPanelId } from './utils';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent
@@ -47,6 +51,41 @@ export class DashboardModelCompatibilityWrapper {
     return this._scene.state.title;
   }
 
+  public get description() {
+    return this._scene.state.description;
+  }
+
+  public get editable() {
+    return this._scene.state.editable;
+  }
+
+  public get graphTooltip() {
+    return this._getSyncMode();
+  }
+
+  public get timepicker() {
+    return {
+      refresh_intervals: dashboardSceneGraph.getRefreshPicker(this._scene)?.state.intervals,
+      hidden: dashboardSceneGraph.getDashboardControls(this._scene)?.state.hideTimeControls ?? false,
+    };
+  }
+
+  public get timezone() {
+    return this.getTimezone();
+  }
+
+  public get weekStart() {
+    return sceneGraph.getTimeRange(this._scene).state.weekStart;
+  }
+
+  public get tags() {
+    return this._scene.state.tags;
+  }
+
+  public get links() {
+    return this._scene.state.links;
+  }
+
   public get meta() {
     return this._scene.state.meta;
   }
@@ -57,6 +96,13 @@ export class DashboardModelCompatibilityWrapper {
       from: time.state.from,
       to: time.state.to,
     };
+  }
+
+  public get panels() {
+    const panels = findAllObjects(this._scene, (o) => {
+      return Boolean(o instanceof VizPanel);
+    });
+    return panels.map((p) => new PanelCompatibilityWrapper(p as VizPanel));
   }
 
   /**
@@ -174,7 +220,9 @@ class PanelCompatibilityWrapper {
   constructor(private _vizPanel: VizPanel) {}
 
   public get id() {
-    const id = getPanelIdForVizPanel(this._vizPanel);
+    const id = getPanelIdForVizPanel(
+      this._vizPanel.parent instanceof LibraryVizPanel ? this._vizPanel.parent : this._vizPanel
+    );
 
     if (isNaN(id)) {
       console.error('VizPanel key could not be translated to a legacy numeric panel id', this._vizPanel);
@@ -200,6 +248,20 @@ class PanelCompatibilityWrapper {
     return [];
   }
 
+  public get targets() {
+    const queryRunner = getQueryRunnerFor(this._vizPanel);
+    if (!queryRunner) {
+      return [];
+    }
+
+    return queryRunner.state.queries;
+  }
+
+  public get datasource(): DataSourceRef | null | undefined {
+    const queryRunner = getQueryRunnerFor(this._vizPanel);
+    return queryRunner?.state.datasource;
+  }
+
   public refresh() {
     console.error('Scenes PanelCompatibilityWrapper.refresh no implemented (yet)');
   }
@@ -211,4 +273,17 @@ class PanelCompatibilityWrapper {
   public getQueryRunner() {
     console.error('Scenes PanelCompatibilityWrapper.getQueryRunner no implemented (yet)');
   }
+}
+
+function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean) {
+  let result: SceneObject[] = [];
+  root.forEachChild((child) => {
+    if (check(child)) {
+      result.push(child);
+    } else {
+      result = result.concat(findAllObjects(child, check));
+    }
+  });
+
+  return result;
 }

@@ -5,16 +5,8 @@ import {
   PluginExtensionPoints,
   getTimeZone,
 } from '@grafana/data';
-import { config, getPluginLinkExtensions, locationService, reportInteraction } from '@grafana/runtime';
-import {
-  LocalValueVariable,
-  SceneDataTransformer,
-  SceneGridRow,
-  SceneQueryRunner,
-  VizPanel,
-  VizPanelMenu,
-  sceneGraph,
-} from '@grafana/scenes';
+import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
+import { LocalValueVariable, SceneGridRow, VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -24,13 +16,13 @@ import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
 
 import { ShareModal } from '../sharing/ShareModal';
-import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { DashboardInteractions } from '../utils/interactions';
+import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
-import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -42,7 +34,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const panel = menu.parent as VizPanel;
     const plugin = panel.getPlugin();
 
-    const location = locationService.getLocation();
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];
     const inspectSubMenu: PanelMenuItem[] = [];
@@ -54,7 +45,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
         shortcut: 'v',
-        onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'view' }),
+        onClick: () => DashboardInteractions.panelMenuItemClicked('view'),
         href: getViewPanelUrl(panel),
       });
 
@@ -65,13 +56,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.edit', `Edit`),
           iconClassName: 'eye',
           shortcut: 'e',
-          onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'edit' }),
-          href: getDashboardUrl({
-            uid: dashboard.state.uid,
-            subPath: `/panel-edit/${panelId}`,
-            currentQueryParams: location.search,
-            useExperimentalURL: true,
-          }),
+          onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
+          href: getEditPanelUrl(panelId),
         });
       }
 
@@ -79,7 +65,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.share', `Share`),
         iconClassName: 'share-alt',
         onClick: () => {
-          reportInteraction('dashboards_panelheader_menu', { item: 'share' });
+          DashboardInteractions.panelMenuItemClicked('share');
           dashboard.showModal(new ShareModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
         },
         shortcut: 'p s',
@@ -92,7 +78,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.create-library-panel', `Create library panel`),
           iconClassName: 'share-alt',
           onClick: () => {
-            reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
+            DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
             dashboard.showModal(
               new ShareModal({
                 panelRef: panel.getRef(),
@@ -115,7 +101,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.explore', `Explore`),
         iconClassName: 'compass',
         shortcut: 'p x',
-        onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'explore' }),
+        onClick: () => DashboardInteractions.panelMenuItemClicked('explore'),
         href: exploreUrl,
       });
     }
@@ -127,7 +113,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         onClick: (e) => {
           e.preventDefault();
           locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
-          reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data });
+          DashboardInteractions.panelMenuInspectClicked(InspectTab.Data);
         },
       });
 
@@ -138,7 +124,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           onClick: (e) => {
             e.preventDefault();
             locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Query });
-            reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Query });
+            DashboardInteractions.panelMenuInspectClicked(InspectTab.Query);
           },
         });
       }
@@ -150,7 +136,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       onClick: (e) => {
         e.preventDefault();
         locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.JSON });
-        reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.JSON });
+        DashboardInteractions.panelMenuInspectClicked(InspectTab.JSON);
       },
     });
 
@@ -162,7 +148,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       onClick: (e) => {
         if (!e.isDefaultPrevented()) {
           locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
-          reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data });
+          DashboardInteractions.panelMenuInspectClicked(InspectTab.Data);
         }
       },
       subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
@@ -223,7 +209,7 @@ export function getPanelLinksBehavior(panel: PanelModel) {
     const links = panelLinks.map((panelLink) => ({
       ...panelLink,
       onClick: (e: any, origin: any) => {
-        reportInteraction('dashboards_panelheader_datalink_clicked', { has_multiple_links: panelLinks.length > 1 });
+        DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
         panelLink.onClick?.(e, origin);
       },
     }));
@@ -233,21 +219,9 @@ export function getPanelLinksBehavior(panel: PanelModel) {
 
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
   const timeRange = sceneGraph.getTimeRange(panel);
-  let queryRunner = panel.state.$data;
-  let targets: DataQuery[] = [];
+  let queryRunner = getQueryRunnerFor(panel);
+  const targets: DataQuery[] = queryRunner?.state.queries as DataQuery[];
   const id = getPanelIdForVizPanel(panel);
-
-  if (queryRunner instanceof SceneDataTransformer) {
-    queryRunner = queryRunner.state.$data;
-  }
-
-  if (queryRunner instanceof SceneQueryRunner) {
-    targets = queryRunner.state.queries;
-  }
-
-  if (queryRunner instanceof ShareQueryDataProvider) {
-    targets = [queryRunner.state.query];
-  }
 
   let scopedVars = {};
 

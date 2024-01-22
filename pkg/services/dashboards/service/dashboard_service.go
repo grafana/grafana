@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
@@ -49,6 +54,7 @@ type DashboardServiceImpl struct {
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	ac                   accesscontrol.AccessControl
+	metrics              *dashboardsMetrics
 }
 
 // This is the uber service that implements a three smaller services
@@ -56,7 +62,7 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
-	folderSvc folder.Service,
+	folderSvc folder.Service, r prometheus.Registerer,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -69,6 +75,7 @@ func ProvideDashboardServiceImpl(
 		ac:                   ac,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
+		metrics:              newDashboardsMetrics(r),
 	}
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
@@ -342,42 +349,17 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	return dash, nil
 }
 
-func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
-	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, false)
+func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand) (*folder.Folder, error) {
+	dto.SignedInUser = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
+
+	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
+		dr.log.Error("failed to create folder for provisioned dashboards", "folder", dto.Title, "org", dto.OrgID, "err", err)
 		return nil, err
 	}
 
-	dash, err := dr.dashboardStore.SaveDashboard(ctx, *cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	dashAlertInfo := alerting.DashAlertInfo{
-		User:  dto.User,
-		Dash:  dash,
-		OrgID: dto.OrgID,
-	}
-
-	// extract/save legacy alerts only if legacy alerting is enabled
-	if setting.IsLegacyAlertingEnabled() {
-		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		err = dr.dashboardStore.SaveAlerts(ctx, dash.ID, alerts)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if dto.Dashboard.ID == 0 {
-		dr.setDefaultPermissions(ctx, dto, dash, true)
-	}
-
-	return dash, nil
+	dr.setDefaultFolderPermissions(ctx, dto, f, true)
+	return f, nil
 }
 
 func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO,
@@ -525,6 +507,35 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	}
 }
 
+func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
+	inFolder := f.ParentUID != ""
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	if !provisioned {
+		namespaceID, userIDstr := cmd.SignedInUser.GetNamespacedID()
+		userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+
+		if err != nil {
+			dr.log.Error("Could not make user admin", "folder", cmd.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
+		} else if namespaceID == identity.NamespaceUser && userID > 0 {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+			})
+		}
+	}
+
+	if !inFolder {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}...)
+	}
+
+	if _, err := dr.folderPermissions.SetPermissions(ctx, cmd.OrgID, f.UID, permissions...); err != nil {
+		dr.log.Error("Could not set default folder permissions", "folder", f.Title, "error", err)
+	}
+}
+
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
 	return dr.dashboardStore.GetDashboard(ctx, query)
 }
@@ -537,7 +548,112 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
+func (dr *DashboardServiceImpl) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
+	return dr.getDashboardsSharedWithUser(ctx, user)
+}
+
+func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
+	permissions := user.GetPermissions()
+	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
+	sharedDashboards := make([]*dashboards.Dashboard, 0)
+	dashboardUids := make([]string, 0)
+	for _, p := range dashboardPermissions {
+		if dashboardUid, found := strings.CutPrefix(p, dashboards.ScopeDashboardsPrefix); found {
+			if !slices.Contains(dashboardUids, dashboardUid) {
+				dashboardUids = append(dashboardUids, dashboardUid)
+			}
+		}
+	}
+
+	if len(dashboardUids) == 0 {
+		return sharedDashboards, nil
+	}
+
+	dashboardsQuery := &dashboards.GetDashboardsQuery{
+		DashboardUIDs: dashboardUids,
+		OrgID:         user.GetOrgID(),
+	}
+	sharedDashboards, err := dr.dashboardStore.GetDashboards(ctx, dashboardsQuery)
+	if err != nil {
+		return nil, err
+	}
+	return dr.filterUserSharedDashboards(ctx, user, sharedDashboards)
+}
+
+// filterUserSharedDashboards filter dashboards directly assigned to user, but not located in folders with view permissions
+func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, user identity.Requester, userDashboards []*dashboards.Dashboard) ([]*dashboards.Dashboard, error) {
+	filteredDashboards := make([]*dashboards.Dashboard, 0)
+
+	folderUIDs := make([]string, 0)
+	for _, dashboard := range userDashboards {
+		folderUIDs = append(folderUIDs, dashboard.FolderUID)
+	}
+
+	dashFolders, err := dr.folderStore.GetFolders(ctx, user.GetOrgID(), folderUIDs)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+	}
+
+	for _, dashboard := range userDashboards {
+		// Filter out dashboards if user has access to parent folder
+		if dashboard.FolderUID == "" {
+			continue
+		}
+
+		dashFolder, ok := dashFolders[dashboard.FolderUID]
+		if !ok {
+			dr.log.Error("failed to fetch folder by UID from store", "uid", dashboard.FolderUID)
+			continue
+		}
+
+		g, err := guardian.NewByFolder(ctx, dashFolder, user.GetOrgID(), user)
+		if err != nil {
+			dr.log.Error("failed to check folder permissions", "folder uid", dashboard.FolderUID, "error", err)
+			continue
+		}
+
+		canView, err := g.CanView()
+		if err != nil {
+			dr.log.Error("failed to fetch dashboard", "uid", dashboard.UID, "error", err)
+			continue
+		}
+		if !canView {
+			filteredDashboards = append(filteredDashboards, dashboard)
+		}
+	}
+	return filteredDashboards, nil
+}
+
+func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, user identity.Requester) ([]string, error) {
+	userDashboards, err := dr.getDashboardsSharedWithUser(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	userDashboardUIDs := make([]string, 0)
+	for _, dashboard := range userDashboards {
+		userDashboardUIDs = append(userDashboardUIDs, dashboard.UID)
+	}
+	return userDashboardUIDs, nil
+}
+
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
+		start := time.Now()
+		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
+		if err != nil {
+			dr.metrics.sharedWithMeFetchDashboardsRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
+			return nil, err
+		}
+		if len(userDashboardUIDs) == 0 {
+			return []dashboards.DashboardSearchProjection{}, nil
+		}
+		query.DashboardUIDs = userDashboardUIDs
+		query.FolderUIDs = []string{}
+
+		defer func(t time.Time) {
+			dr.metrics.sharedWithMeFetchDashboardsRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
+		}(time.Now())
+	}
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
