@@ -32,7 +32,7 @@ To use trace to profiles, navigate to **Explore** and query a trace. Each span n
 
 To use trace to profiles, you must have a configured Grafana Pyroscope data source. For more information, refer to the [Grafana Pyroscope data source documentation](/docs/grafana/latest/datasources/grafana-pyroscope/).
 
-## Use a simple configuration
+## Simple configuration
 
 To use a simple configuration, follow these steps:
 
@@ -49,7 +49,7 @@ To use a simple configuration, follow these steps:
 1. Do not select **Use custom query**.
 1. Select **Save and Test**.
 
-## Configure a custom query
+## Custom query
 
 To use a custom query with the configuration, follow these steps:
 
@@ -63,7 +63,7 @@ To use a custom query with the configuration, follow these steps:
 1. Specify a custom query to be used to query profile data. You can use various variables to make that query relevant for current span. The link is shown only if all the variables are interpolated with non-empty values to prevent creating an invalid query. You can interpolate the configured tags using the `$__tags` keyword.
 1. Select **Save and Test**.
 
-## Variables that can be used in a custom query
+## Custom query variables
 
 To use a variable you need to wrap it in `${}`. For example, `${__span.name}`.
 
