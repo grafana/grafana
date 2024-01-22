@@ -36,7 +36,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 
   getItemsCount() {
-    console.log('getItemsCount', this.getQueries().length);
     return this.getQueries().length;
   }
 
@@ -113,7 +112,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   getQueries() {
-    console.log('getQueries', this._panelManager.queryRunner.state.queries);
     return this._panelManager.queryRunner.state.queries;
   }
 
