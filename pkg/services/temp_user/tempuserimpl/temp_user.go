@@ -68,3 +68,19 @@ func (s *Service) ExpireOldUserInvites(ctx context.Context, cmd *tempuser.Expire
 	}
 	return nil
 }
+
+func (s *Service) ExpireOldVerifications(ctx context.Context, cmd *tempuser.ExpireTempUsersCommand) error {
+	err := s.store.ExpireOldVerifications(ctx, cmd)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) ExpirePreviousVerifications(ctx context.Context, cmd *tempuser.ExpirePreviousVerificationsCommand) error {
+	err := s.store.ExpirePreviousVerifications(ctx, cmd)
+	if err != nil {
+		return err
+	}
+	return nil
+}
