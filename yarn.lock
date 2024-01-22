@@ -3067,6 +3067,7 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/lezer-traceql": "npm:0.0.12"
     "@grafana/monaco-logql": "npm:^0.0.7"
+    "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:10.4.0-pre"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
@@ -3456,6 +3457,39 @@ __metadata:
   checksum: a900e24912476997f30349e6ee24041c0cffebf6706d8b9203eb952f12c768fc0fd6be8d7abe86d02019a0d8f26b83d15ffd0fb09d97047307e2ba5b4ba43a1b
   languageName: node
   linkType: hard
+
+"@grafana/o11y-ds-frontend@workspace:*, @grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend":
+  version: 0.0.0-use.local
+  resolution: "@grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
+    "@grafana/experimental": "npm:1.7.5"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
+    "@grafana/tsconfig": "npm:^1.2.0-rc1"
+    "@grafana/ui": "workspace:*"
+    "@testing-library/jest-dom": "npm:^6.1.2"
+    "@testing-library/react": "npm:14.1.2"
+    "@testing-library/user-event": "npm:14.5.2"
+    "@types/jest": "npm:^29.5.4"
+    "@types/react": "npm:18.2.15"
+    "@types/systemjs": "npm:6.13.5"
+    "@types/testing-library__jest-dom": "npm:5.14.9"
+    jest: "npm:^29.6.4"
+    react: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    ts-jest: "npm:29.1.1"
+    ts-node: "npm:10.9.1"
+    tslib: "npm:2.6.0"
+    typescript: "npm:5.2.2"
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
+  languageName: unknown
+  linkType: soft
 
 "@grafana/plugin-configs@npm:10.4.0-pre, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
@@ -16933,6 +16967,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/monaco-logql": "npm:^0.0.7"
+    "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:1.30.0"
     "@grafana/schema": "workspace:*"
