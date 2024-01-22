@@ -1,3 +1,4 @@
+import { merge } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
@@ -20,6 +21,10 @@ export interface GroupByFieldOptions {
 
 export interface GroupByTransformerOptions {
   fields: Record<string, GroupByFieldOptions>;
+}
+
+interface FieldMap {
+  [key: string]: Field,
 }
 
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
@@ -75,105 +80,69 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
         const processed: DataFrame[] = [];
 
         for (const frame of data) {
-          const groupByFields: Field[] = [];
 
-          for (const field of frame.fields) {
-            if (shouldGroupOnField(field, options)) {
-              groupByFields.push(field);
-            }
-          }
-
+          // Create a list of fields to group on
+          // If there are none we skip the rest
+          const groupByFields: Field[] = frame.fields.filter((field) => shouldGroupOnField(field, options));
           if (groupByFields.length === 0) {
-            continue; // No group by field in this frame, ignore the frame
+            continue; 
           }
 
           // Group the values by fields and groups so we can get all values for a
           // group for a given field.
-          const valuesByGroupKey = new Map<string, Record<string, Field>>();
-          for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-            const groupKey = String(groupByFields.map((field) => field.values[rowIndex]));
-            const valuesByField = valuesByGroupKey.get(groupKey) ?? {};
+          const valuesByGroupKey = groupValuesByKey(frame, groupByFields);
+          
+          // Add the grouped fields to the resulting fields of the transformation
+          const groupedFields: Field[] = createGroupedFields(groupByFields, valuesByGroupKey);
 
-            if (!valuesByGroupKey.has(groupKey)) {
-              valuesByGroupKey.set(groupKey, valuesByField);
-            }
+          
+          console.log(groupedFields);
+          // const aggregatedFields: Field[] = [];
+          const aggregatedFields = calculateFieldAggregations(frame, valuesByGroupKey, options);
+          console.log(groupedFields, aggregatedFields);
 
-            for (let field of frame.fields) {
-              const fieldName = getFieldDisplayName(field);
-
-              if (!valuesByField[fieldName]) {
-                valuesByField[fieldName] = {
-                  name: fieldName,
-                  type: field.type,
-                  config: { ...field.config },
-                  values: [],
-                };
-              }
-
-              valuesByField[fieldName].values.push(field.values[rowIndex]);
-            }
-          }
-
-          const fields: Field[] = [];
-
-          for (const field of groupByFields) {
-            const values: unknown[] = [];
-            const fieldName = getFieldDisplayName(field);
-
-            valuesByGroupKey.forEach((value) => {
-              values.push(value[fieldName].values[0]);
-            });
-
-            fields.push({
-              name: field.name,
-              type: field.type,
-              config: {
-                ...field.config,
-              },
-              values: values,
-            });
-          }
+          const allFields = merge(groupedFields, aggregatedFields);
 
           // Then for each calculations configured, compute and add a new field (column)
-          for (const field of frame.fields) {
-            if (!shouldCalculateField(field, options)) {
-              continue;
-            }
+          // for (const field of frame.fields) {
+          //   if (!shouldCalculateField(field, options)) {
+          //     continue;
+          //   }
 
-            const fieldName = getFieldDisplayName(field);
-            const aggregations = options.fields[fieldName].aggregations;
-            const valuesByAggregation: Record<string, unknown[]> = {};
+          //   const fieldName = getFieldDisplayName(field);
+          //   const aggregations = options.fields[fieldName].aggregations;
+          //   const valuesByAggregation: Record<string, unknown[]> = {};
 
-            valuesByGroupKey.forEach((value) => {
-              const fieldWithValuesForGroup = value[fieldName];
-              const results = reduceField({
-                field: fieldWithValuesForGroup,
-                reducers: aggregations,
-              });
+          //   valuesByGroupKey.forEach((value) => {
+          //     const fieldWithValuesForGroup = value[fieldName];
+          //     const results = reduceField({
+          //       field: fieldWithValuesForGroup,
+          //       reducers: aggregations,
+          //     });
 
-              for (const aggregation of aggregations) {
-                if (!Array.isArray(valuesByAggregation[aggregation])) {
-                  valuesByAggregation[aggregation] = [];
-                }
-                valuesByAggregation[aggregation].push(results[aggregation]);
-              }
-            });
+          //     for (const aggregation of aggregations) {
+          //       if (!Array.isArray(valuesByAggregation[aggregation])) {
+          //         valuesByAggregation[aggregation] = [];
+          //       }
+          //       valuesByAggregation[aggregation].push(results[aggregation]);
+          //     }
+          //   });
 
-            for (const aggregation of aggregations) {
-              const aggregationField: Field = {
-                name: `${fieldName} (${aggregation})`,
-                values: valuesByAggregation[aggregation] ?? [],
-                type: FieldType.other,
-                config: {},
-              };
+          //   for (const aggregation of aggregations) {
+          //     const aggregationField: Field = {
+          //       name: `${fieldName} (${aggregation})`,
+          //       values: valuesByAggregation[aggregation] ?? [],
+          //       type: FieldType.other,
+          //       config: {},
+          //     };
 
-              aggregationField.type = detectFieldType(aggregation, field, aggregationField);
-              fields.push(aggregationField);
-            }
-          }
+          //     aggregationField.type = detectFieldType(aggregation, field, aggregationField);
+          //     fields.push(aggregationField);
+          //   }
+          // }
 
           processed.push({
-            fields,
+            fields: allFields,
             length: valuesByGroupKey.size,
           });
         }
@@ -197,7 +166,7 @@ const shouldCalculateField = (field: Field, options: GroupByTransformerOptions):
   );
 };
 
-const detectFieldType = (aggregation: string, sourceField: Field, targetField: Field): FieldType => {
+function detectFieldType(aggregation: string, sourceField: Field, targetField: Field): FieldType {
   switch (aggregation) {
     case ReducerID.allIsNull:
       return FieldType.boolean;
@@ -210,3 +179,109 @@ const detectFieldType = (aggregation: string, sourceField: Field, targetField: F
       return guessFieldTypeForField(targetField) ?? FieldType.string;
   }
 };
+
+
+/**
+ * 
+ * @param frame 
+ */
+export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
+  const valuesByGroupKey = new Map<string, FieldMap>();
+
+  for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+    const groupKey = String(groupByFields.map((field) => field.values[rowIndex]));
+    const valuesByField = valuesByGroupKey.get(groupKey) ?? {};
+
+    if (!valuesByGroupKey.has(groupKey)) {
+      valuesByGroupKey.set(groupKey, valuesByField);
+    }
+
+    for (let field of frame.fields) {
+      const fieldName = getFieldDisplayName(field);
+
+      if (!valuesByField[fieldName]) {
+        valuesByField[fieldName] = {
+          name: fieldName,
+          type: field.type,
+          config: { ...field.config },
+          values: [],
+        };
+      }
+
+      valuesByField[fieldName].values.push(field.values[rowIndex]);
+    }
+  }
+
+  return valuesByGroupKey;
+}
+
+
+export function createGroupedFields(groupByFields: Field[], valuesByGroupKey: Map<string, FieldMap>) {
+  const groupedFields: Field[] = [];
+
+  for (const field of groupByFields) {
+    const values: any[] = [];
+    const fieldName = getFieldDisplayName(field);
+
+    valuesByGroupKey.forEach((value) => {
+      values.push(value[fieldName].values[0]);
+    });
+
+    groupedFields.push({
+      name: field.name,
+      type: field.type,
+      config: {
+        ...field.config,
+      },
+      values,
+    });
+  }
+
+  return groupedFields;
+}
+
+export function calculateFieldAggregations(frame: DataFrame, valuesByGroupKey: Map<string, FieldMap>, options: GroupByTransformerOptions) {
+  const fieldAggregations: Field[] = [];
+
+  for (const field of frame.fields) {
+    if (!shouldCalculateField(field, options)) {
+      continue;
+    }
+
+    const fieldName = getFieldDisplayName(field);
+    const aggregations = options.fields[fieldName].aggregations;
+    const valuesByAggregation: Record<string, unknown[]> = {};
+
+    valuesByGroupKey.forEach((value) => {
+      const fieldWithValuesForGroup = value[fieldName];
+      const results = reduceField({
+        field: fieldWithValuesForGroup,
+        reducers: aggregations,
+      });
+
+      for (const aggregation of aggregations) {
+        if (!Array.isArray(valuesByAggregation[aggregation])) {
+          valuesByAggregation[aggregation] = [];
+        }
+        valuesByAggregation[aggregation].push(results[aggregation]);
+      }
+    });
+
+    console.log(valuesByAggregation);
+
+    for (const aggregation of aggregations) {
+      const aggregationField = {
+        name: `${fieldName} (${aggregation})`,
+        values: [],
+        type: FieldType.other,
+        config: {},
+      };
+
+      // aggregationField.type = detectFieldType(aggregation, field, aggregationField);
+      fieldAggregations.push(aggregationField);
+    }
+  }
+
+
+  return fieldAggregations;
+}

@@ -6,6 +6,7 @@ import { DataFrame, FieldType, Field } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 import { ReducerID, reduceField } from '../fieldReducer'; 
 
+import { createGroupedFields, groupValuesByKey, GroupByFieldOptions } from './groupBy';
 import { DataTransformerID } from './ids';
 
 export enum GroupByOperationID {
@@ -13,9 +14,8 @@ export enum GroupByOperationID {
   groupBy = 'groupby',
 }
 
-export interface GroupToSubframeFieldOptions {
-  aggregations: ReducerID[];
-  operation: GroupByOperationID | null;
+export interface GroupToSubframeFieldOptions extends GroupByFieldOptions {
+  showSubtableHeaders?: boolean;
 }
 
 export interface GroupToSubframeTransformerOptions {
@@ -25,12 +25,6 @@ export interface GroupToSubframeTransformerOptions {
 interface FieldMap {
   [key: string]: Field,
 }
-
-interface GroupValue2Fields {
-  [key: string]: FieldMap,
-}
-
-
 
 export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTransformerOptions> = {
   id: DataTransformerID.groupToSubframe,
@@ -47,6 +41,7 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
+        
         const hasValidConfig = Object.keys(options.fields).find(
           (name) => options.fields[name].operation === GroupByOperationID.groupBy
         );
@@ -57,99 +52,24 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
         const processed: DataFrame[] = [];
 
         for (const frame of data) {
-          const groupByFields: Field[] = [];
 
-          for (const field of frame.fields) {
-            if (shouldGroupOnField(field, options)) {
-              groupByFields.push(field);
-            }
-          }
-
+          // Create a list of fields to group on
+          // If there are none we skip the rest
+          const groupByFields: Field[] = frame.fields.filter((field) => shouldGroupOnField(field, options));
           if (groupByFields.length === 0) {
-            continue; // No group by field in this frame, ignore the frame
+            continue; 
           }
 
           // Group the values by fields and groups so we can get all values for a
           // group for a given field.
+          const valuesByGroupKey = groupValuesByKey(frame, groupByFields);
+
+          // Add the grouped fields to the resulting fields of the transformation
+          const fields: Field[] = createGroupedFields(groupByFields, valuesByGroupKey);
+
+          // Group data into sub frames so they will display as tables
+          const subFrames: DataFrame[][] = groupToSubframes(valuesByGroupKey, options);
           
-          const valuesByGroupKey = new Map<string, FieldMap>();
-          for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-            const groupKey = String(groupByFields.map((field) => field.values[rowIndex]));
-            const valuesByField = valuesByGroupKey.get(groupKey) ?? {};
-
-            if (!valuesByGroupKey.has(groupKey)) {
-              valuesByGroupKey.set(groupKey, valuesByField);
-            }
-
-            for (let field of frame.fields) {
-              const fieldName = getFieldDisplayName(field);
-
-              if (!valuesByField[fieldName]) {
-                valuesByField[fieldName] = {
-                  name: fieldName,
-                  type: field.type,
-                  config: { ...field.config },
-                  values: [],
-                };
-              }
-
-              valuesByField[fieldName].values.push(field.values[rowIndex]);
-            }
-          }
-
-          // Construct a subframe of any fields
-          // that aren't being group on or reduced
-          const subFrames: DataFrame[][] = [];
-          for (const [, value] of valuesByGroupKey) {
-            const nestedFields: Field[] = [];
-
-            for (const [fieldName, field] of Object.entries(value)) {
-              const fieldOpts = options.fields[fieldName];
-
-              if (fieldOpts === undefined) {
-                nestedFields.push(field);
-              }
-              // Depending on the configuration form state all of the following are possible
-              else if (
-                fieldOpts.aggregations === undefined || 
-                (fieldOpts.operation === GroupByOperationID.aggregate && fieldOpts.aggregations.length === 0) || 
-                (fieldOpts.operation === null || fieldOpts.operation === undefined)
-              ) {
-                nestedFields.push(field);
-              }
-            }
-            
-            // If there are any values in the subfields
-            // push a new subframe with the fields
-            // otherwise push an empty frame
-            if (nestedFields.length > 0) {
-              subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length)]);
-            }
-            else {
-              subFrames.push([createSubframe([], 0)]);
-            }
-          }
-          // At this point we have fields for each nested frame
-          // However we need to turn them into frames so they can be nested 
-          const fields: Field[] = [];
-          for (const field of groupByFields) {
-            const values: any[] = [];
-            const fieldName = getFieldDisplayName(field);
-
-            valuesByGroupKey.forEach((value) => {
-              values.push(value[fieldName].values[0]);
-            });
-
-            fields.push({
-              name: field.name,
-              type: field.type,
-              config: {
-                ...field.config,
-              },
-              values: values,
-            });
-          }
-
           // Then for each calculations configured, compute and add a new field (column)
           for (let i = 0; i < frame.fields.length; i++) {
             const field = frame.fields[i];
@@ -193,7 +113,7 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
 
           fields.push({
             config: {},
-            name: "NF",
+            name: "Nested frames",
             type: FieldType.nestedFrames,
             values: subFrames
           });
@@ -216,7 +136,7 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
  */
 function createSubframe(fields: Field[], frameLength: number) {
   return { 
-    meta: { custom: { noHeader: true } },
+    meta: { custom: { noHeader: false } },
     length: frameLength,
     fields,
   }
@@ -249,3 +169,47 @@ const detectFieldType = (aggregation: string, sourceField: Field, targetField: F
       return guessFieldTypeForField(targetField) ?? FieldType.string;
   }
 };
+
+/**
+ * 
+ * @param valuesByGroupKey 
+ * @param options 
+ * @returns 
+ */
+function groupToSubframes(valuesByGroupKey: Map<string, FieldMap>, options: GroupToSubframeTransformerOptions): DataFrame[][] {
+  const subFrames: DataFrame[][] = [];
+
+  // Construct a subframe of any fields
+  // that aren't being group on or reduced
+  for (const [, value] of valuesByGroupKey) {
+    const nestedFields: Field[] = [];
+
+    for (const [fieldName, field] of Object.entries(value)) {
+      const fieldOpts = options.fields[fieldName];
+
+      if (fieldOpts === undefined) {
+        nestedFields.push(field);
+      }
+      // Depending on the configuration form state all of the following are possible
+      else if (
+        fieldOpts.aggregations === undefined || 
+        (fieldOpts.operation === GroupByOperationID.aggregate && fieldOpts.aggregations.length === 0) || 
+        (fieldOpts.operation === null || fieldOpts.operation === undefined)
+      ) {
+        nestedFields.push(field);
+      }
+    }
+    
+    // If there are any values in the subfields
+    // push a new subframe with the fields
+    // otherwise push an empty frame
+    if (nestedFields.length > 0) {
+      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length)]);
+    }
+    else {
+      subFrames.push([createSubframe([], 0)]);
+    }
+  }
+
+  return subFrames;
+}
