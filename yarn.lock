@@ -3327,27 +3327,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.7.5":
-  version: 1.7.5
-  resolution: "@grafana/experimental@npm:1.7.5"
-  dependencies:
-    "@types/uuid": "npm:^8.3.3"
-    react-use: "npm:^17.4.2"
-    semver: "npm:^7.5.4"
-    uuid: "npm:^8.3.2"
-  peerDependencies:
-    "@emotion/css": 11.1.3
-    "@grafana/data": ^10.0.0
-    "@grafana/runtime": ^10.0.0
-    "@grafana/ui": ^10.0.0
-    react: 17.0.2
-    react-dom: 17.0.2
-    react-select: ^5.2.1
-    rxjs: 7.8.0
-  checksum: 33f5e739bbc1646ea00c00b419c35a0b02abbfc35b0fa42d61f05a78a1929567388e4132093a029f88783264e739baeb8bcb53a68bcf1152f055a20be3b87e24
-  languageName: node
-  linkType: hard
-
 "@grafana/experimental@npm:1.7.6":
   version: 1.7.6
   resolution: "@grafana/experimental@npm:1.7.6"
@@ -3486,7 +3465,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:1.7.5"
+    "@grafana/experimental": "npm:1.7.6"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
