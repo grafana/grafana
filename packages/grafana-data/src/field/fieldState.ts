@@ -167,7 +167,7 @@ export function getUniqueFieldName(field: Field, frame?: DataFrame) {
     for (let i = 0; i < frame.fields.length; i++) {
       const otherField = frame.fields[i];
 
-      if (isEqual(field, otherField)) {
+      if (field === otherField || isEqual(field, otherField)) {
         foundSelf = true;
 
         if (dupeCount > 0) {
