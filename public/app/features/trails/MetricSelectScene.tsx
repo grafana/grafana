@@ -115,7 +115,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       return;
     }
 
-    const searchRegex = new RegExp(this.state.searchQuery ?? '.*');
+    const searchRegex = createSearchRegExp(this.state.searchQuery || '');
     const metricNames = variable.state.options;
     const sortedMetricNames =
       trail.state.metric !== undefined ? sortRelatedMetrics(metricNames, trail.state.metric) : metricNames;
@@ -126,7 +126,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       const metric = sortedMetricNames[index];
 
       const metricName = String(metric.value);
-      if (!metricName.match(searchRegex)) {
+      if (!metricName.toLowerCase().match(searchRegex)) {
         continue;
       }
 
@@ -318,4 +318,16 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
     }),
   };
+}
+
+// Consider any sequence of characters not permitted for metric names as a sepratator
+const splitSeparator = /[^a-z0-9_:]+/;
+
+function createSearchRegExp(spaceSeparatedMetricNames: string) {
+  const searchParts = spaceSeparatedMetricNames
+    ?.toLowerCase()
+    .split(splitSeparator)
+    .filter((part) => part.length > 0);
+  const regex = `(.*${searchParts?.join('.*|.*')}.*)`;
+  return new RegExp(regex);
 }
