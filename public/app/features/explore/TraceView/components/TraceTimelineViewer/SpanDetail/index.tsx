@@ -18,11 +18,11 @@ import cx from 'classnames';
 import React from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
@@ -397,19 +397,18 @@ export default function SpanDetail(props: SpanDetailProps) {
             createFocusSpanLink={createFocusSpanLink}
           />
         )}
-        {config.featureToggles.tracesEmbeddedFlameGraph &&
-          span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
-            <SpanFlameGraph
-              span={span}
-              timeZone={timeZone}
-              traceFlameGraphs={traceFlameGraphs}
-              setTraceFlameGraphs={setTraceFlameGraphs}
-              traceToProfilesOptions={traceToProfilesOptions}
-              setRedrawListView={setRedrawListView}
-              traceDuration={traceDuration}
-              traceName={traceName}
-            />
-          )}
+        {span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
+          <SpanFlameGraph
+            span={span}
+            timeZone={timeZone}
+            traceFlameGraphs={traceFlameGraphs}
+            setTraceFlameGraphs={setTraceFlameGraphs}
+            traceToProfilesOptions={traceToProfilesOptions}
+            setRedrawListView={setRedrawListView}
+            traceDuration={traceDuration}
+            traceName={traceName}
+          />
+        )}
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
           {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
