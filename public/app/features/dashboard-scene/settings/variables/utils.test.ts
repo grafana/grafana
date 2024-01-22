@@ -76,7 +76,7 @@ describe('getVariableTypeSelectOptions', () => {
 
 describe('getVariableEditor', () => {
   it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
-    'should define an editor for every variable type',
+    'should define an editor for variable type "%s"',
     (type) => {
       const editor = getVariableEditor(type);
       expect(editor).toBeDefined();
@@ -91,7 +91,7 @@ describe('getVariableEditor', () => {
     ['datasource', DataSourceVariableEditor],
     ['adhoc', AdHocFiltersVariableEditor],
     ['textbox', TextBoxVariableEditor],
-  ])('should return the correct editor for each variable type', (type, ExpectedVariableEditor) => {
+  ])('should return the correct editor for variable type "%s"', (type, ExpectedVariableEditor) => {
     expect(getVariableEditor(type as EditableVariableType)).toBe(ExpectedVariableEditor);
   });
 });
