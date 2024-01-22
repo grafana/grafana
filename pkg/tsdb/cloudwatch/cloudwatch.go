@@ -296,6 +296,8 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 				return nil, errors.New("session http client transport is not of type http.Transport")
 			}
 		} else {
+			// following go standar library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
+			// then we use http.DefaultTransport
 			trTmp, ok := http.DefaultTransport.(*http.Transport)
 			if !ok {
 				//this should not happen but validating just in case
