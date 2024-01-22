@@ -27,7 +27,7 @@ Use the following strategies to help you solve common dashboard problems.
 - Are you trying to render dozens (or hundreds or thousands) of time-series on a graph? This can cause the browser to lag. Try using functions like `highestMax` (in Graphite) to reduce the returned series.
 - Sometimes the series names can be very large. This causes larger response sizes. Try using `alias` to reduce the size of the returned series names.
 - Are you querying many time-series or for a long range of time? Both of these conditions can cause Grafana or your data source to pull in a lot of data, which may slow it down.
-- It could be high load on your network infrastructure. If the slowness isn't consistent, this may be the problem.
+- There could be high load on your network infrastructure. If the slowness isn't consistent, this may be the problem.
 
 ## Dashboard refresh rate issues
 
@@ -35,24 +35,26 @@ By default, Grafana queries your data source every 30 seconds. Setting a low ref
 
 We recommend the following:
 
-- Only enable auto-refreshing on dashboards, panels, or variables unless if necessary. Users can refresh their browser manually, or you can set the refresh rate for a time period that makes sense (every ten minutes, every hour, and so on).
-- If it's required, then set the refresh rate to once a minute. Users can always refresh the dashboard manually.
-- If your dashboard has a longer time period (such as a week), then you really don't need automated refreshing.
+- Only enable auto-refreshing on dashboards, panels, or variables if necessary. Users can refresh their browser manually.
+- If you require auto-refreshing, then set the refresh rate to once a minute or another longer time period that makes sense, such as every 10 minutes or every hour.
+- If your dashboard has a longer time range, such as a week, then you really don't need automated refreshing and you should disable it.
 
 ### Handling or rendering null data is wrong or confusing
 
-Some applications publish data intermittently; for example, they only post a metric when an event occurs. By default, Grafana graphs connect lines between the data points. This can be very deceiving.
+Some applications publish data intermittently; for example, they only post a metric when an event occurs. By default, Grafana graphs connect lines between the data points, but this can be deceptive.
 
-In the picture below we've enabled:
+The graph in the following image has:
 
-- Points and 3-point radius to highlight where data points are actually present.
-- **Connect null values\* is set to **Always\*\*.
+- Points and 3-point radius enabled to highlight where data points are actually present.
+- **Connect null values\* set to **Always\*\*.
 
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_connected.png" max-width="1200px" alt="Graph with null values connected" >}}
 
-In this graph, we set graph to show bars instead of lines and set the **No value** under **Standard options** to **0**. There is a very big difference in the visuals.
+The graph in this next image is set to show bars instead of lines and the **No value** option under **Standard options** is set to **0**.
 
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" alt="Graph with null values not connected" >}}
+
+As you can see, there's a significant difference in the visualizations.
 
 ## More examples
 
