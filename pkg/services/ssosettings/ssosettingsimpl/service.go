@@ -136,7 +136,14 @@ func (s *SSOSettingsService) ListWithRedactedSecrets(ctx context.Context) ([]*mo
 		return nil, err
 	}
 
-	for _, storeSetting := range storeSettings {
+	configurableSettings := make([]*models.SSOSettings, 0, len(s.cfg.SSOSettingsConfigurableProviders))
+	for _, provider := range storeSettings {
+		if s.isProviderConfigurable(provider.Provider) {
+			configurableSettings = append(configurableSettings, provider)
+		}
+	}
+
+	for _, storeSetting := range configurableSettings {
 		for k, v := range storeSetting.Settings {
 			if strVal, ok := v.(string); ok {
 				storeSetting.Settings[k] = setting.RedactedValue(k, strVal)
@@ -144,11 +151,11 @@ func (s *SSOSettingsService) ListWithRedactedSecrets(ctx context.Context) ([]*mo
 		}
 	}
 
-	return storeSettings, nil
+	return configurableSettings, nil
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, settings *models.SSOSettings) error {
-	if !isProviderConfigurable(settings.Provider) {
+	if !s.isProviderConfigurable(settings.Provider) {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", settings.Provider)
 	}
 
@@ -195,6 +202,9 @@ func (s *SSOSettingsService) Patch(ctx context.Context, provider string, data ma
 }
 
 func (s *SSOSettingsService) Delete(ctx context.Context, provider string) error {
+	if !s.isProviderConfigurable(provider) {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", provider)
+	}
 	return s.store.Delete(ctx, provider)
 }
 
