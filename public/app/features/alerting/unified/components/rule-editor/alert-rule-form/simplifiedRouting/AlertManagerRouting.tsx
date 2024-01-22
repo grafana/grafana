@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, CollapsableSection, Icon, Link, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, CollapsableSection, LoadingPlaceholder, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -50,7 +50,9 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
           contactPoints={contactPoints}
           onSelectContactPoint={setSelectedContactPointWithMetadata}
         />
-        <LinkToContactPoints />
+        <div className={styles.contactPointsInfo}>
+          <LinkToContactPoints />
+        </div>
       </Stack>
       {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
         <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
@@ -73,13 +75,9 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
 function LinkToContactPoints() {
   const hrefToContactPoints = '/alerting/notifications';
   return (
-    <Link target="_blank" href={createUrl(hrefToContactPoints)} rel="noopener" aria-label="View alert rule">
-      <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
-        <Text color="secondary">To browse contact points and create new ones, go to</Text>
-        <Text color="link">Contact points</Text>
-        <Icon name={'external-link-alt'} size="sm" color="link" />
-      </Stack>
-    </Link>
+    <TextLink external href={createUrl(hrefToContactPoints)} aria-label="View or create contact points">
+      View or create contact points
+    </TextLink>
   );
 }
 
@@ -116,5 +114,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     marginTop: theme.spacing(2),
+  }),
+  contactPointsInfo: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1),
   }),
 });
