@@ -193,16 +193,11 @@ Using a semi-relative time range, as time progresses, your dashboard will automa
 #### Copy and paste time range
 
 You can copy and paste the time range from a dashboard to **Explore** and vice versa, or from one dashboard to another.
-
-##### Copy time range (t+c)
+Click the **Copy time range to clipboard** icon to copy the current time range to the clipboard. Then paste the time range into **Explore** or another dashboard.
 
 <img class="no-shadow" src="/media/docs/grafana/dashboards/screenshot-copy-paste-time-range.png" max-width="900">
 
-Click the **Copy time range to clipboard** icon to copy the current time range to the clipboard. You can then paste the time range into Explore.
-
-##### Paste time range (t+v)
-
-Click the **Paste time range** icon to paste the time range from the clipboard into the current time range. Currently
+You can also copy and paste a time range using the the keyboard shortcuts `t+c` and `t+v` respectively.
 
 #### Zoom out (Cmd+Z or Ctrl+Z)
 
