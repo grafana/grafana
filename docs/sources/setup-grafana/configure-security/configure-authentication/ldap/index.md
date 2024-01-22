@@ -239,7 +239,7 @@ org_role = "Viewer"
 
 {{% admonition type="note" %}}
 Commenting out a group mapping requires also commenting out the header of
-said group or it will fail validation as an empty mapping. 
+said group or it will fail validation as an empty mapping.
 {{% /admonition %}}
 
 Example:
