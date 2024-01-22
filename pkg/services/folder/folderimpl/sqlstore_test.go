@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -29,7 +28,7 @@ func TestIntegrationCreate(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -149,7 +148,7 @@ func TestIntegrationDelete(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -196,7 +195,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -371,7 +370,7 @@ func TestIntegrationGet(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -450,7 +449,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -518,7 +517,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -698,7 +697,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -731,7 +730,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	foldersNum := 10
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 

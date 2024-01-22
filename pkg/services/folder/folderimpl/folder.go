@@ -56,7 +56,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	r prometheus.Registerer,
 ) folder.Service {
-	store := ProvideStore(db, cfg, features)
+	store := ProvideStore(db, cfg)
 	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
@@ -457,7 +457,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// well, but for now we take the UID from the newly created folder.
 			UID:         dash.UID,
 			OrgID:       cmd.OrgID,
-			Title:       cmd.Title,
+			Title:       dashFolder.Title,
 			Description: cmd.Description,
 			ParentUID:   cmd.ParentUID,
 		}
@@ -498,7 +498,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		if foldr, err = s.store.Update(ctx, folder.UpdateFolderCommand{
 			UID:            cmd.UID,
 			OrgID:          cmd.OrgID,
-			NewTitle:       cmd.NewTitle,
+			NewTitle:       &dashFolder.Title,
 			NewDescription: cmd.NewDescription,
 			SignedInUser:   user,
 		}); err != nil {
