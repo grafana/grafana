@@ -15,7 +15,7 @@ interface Props {
 
 export const LdapUserInfo = ({ ldapUser, showAttributeMapping }: Props) => {
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={4}>
       <LdapUserMappingInfo info={ldapUser.info} showAttributeMapping={showAttributeMapping} />
       <LdapUserPermissions permissions={ldapUser.permissions} />
       {ldapUser.roles && ldapUser.roles.length > 0 && (
