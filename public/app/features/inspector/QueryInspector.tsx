@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import { LoadingState, PanelData } from '@grafana/data';
-import { parseKeyValue } from '@grafana/data/src/utils/url';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Stack } from '@grafana/ui';
@@ -49,19 +48,15 @@ export class QueryInspector extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const { instanceId } = this.props;
     this.subs.add(
       backendSrv.getInspectorStream().subscribe({
         next: (response) => {
           let update = true;
-          if (instanceId && response?.config?.url) {
-            const urlParams = parseKeyValue(response.config.url);
-            if (urlParams.requestId) {
-              update = urlParams.requestId.startsWith(instanceId);
-            }
+          if (this.props.instanceId && response?.requestId) {
+            update = response.requestId.startsWith(this.props.instanceId);
           }
           if (update) {
-            return this.onDataSourceResponse(response);
+            return this.onDataSourceResponse(response.response);
           }
         },
       })

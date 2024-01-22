@@ -692,7 +692,7 @@ describe('backendSrv', () => {
 
         let inspectorPacket: FetchResponse | FetchError;
         backendSrv.getInspectorStream().subscribe({
-          next: (rsp) => (inspectorPacket = rsp),
+          next: (rsp) => (inspectorPacket = rsp.response),
         });
 
         await backendSrv.datasourceRequest(options).catch((error) => {
