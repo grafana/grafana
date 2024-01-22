@@ -70,7 +70,7 @@ Content-Type: application/json
     "id":        "2",
     "provider":  "azuread",
     "settings": {
-      "authUrl": "https://login.microsoftonline.com/to29fk1j-7cfd-4456-9a5c-c0bfd5cx90ka/oauth2/v2.0/authorize",
+      "authUrl": "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/oauth2/v2.0/authorize",
       "clientId": "my_azuread_client",
       "clientSecret": "*********",
       "enabled": true,
