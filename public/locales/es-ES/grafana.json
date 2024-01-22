@@ -25,6 +25,9 @@
       "user": "Usuario"
     }
   },
+  "bouncing-loader": {
+    "label": ""
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancelar",
@@ -243,7 +246,7 @@
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "add-widget-body": "Crear listas, reducciones y otros «widgets»",
-      "add-widget-button": "Añadir «widget»",
+      "add-widget-button": "Añadir widget",
       "add-widget-header": "Añadir un «widget»",
       "import-a-dashboard-body": "Importar el tablero desde el archivo o <1>grafana.com</1>.",
       "import-a-dashboard-header": "Importar un tablero",
@@ -313,13 +316,14 @@
       "save": "Guardar panel de control",
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
+      "share-button": "",
       "unmark-favorite": "Deshacer marca como favorito"
     },
     "validation": {
       "invalid-dashboard-id": "No se ha podido encontrar un ID de Grafana.com válido",
       "invalid-json": "JSON no válido",
-      "tags-expected-array": "etiquetas de matriz prevista",
-      "tags-expected-strings": "matrices de cadenas de las etiquetas previstas"
+      "tags-expected-array": "etiquetas: matriz prevista",
+      "tags-expected-strings": "etiquetas: matriz de cadenas prevista"
     }
   },
   "dashboard-import": {
@@ -362,6 +366,7 @@
       "title-label": "Título"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "Guardar cambios",
       "subtitle": "El siguiente modelo JSON es la estructura de datos que define el tablero. Incluye ajustes del tablero, ajustes del panel, diseño, consultas, etc.",
       "title": "Modelo JSON"
@@ -450,7 +455,7 @@
       "star-query-tooltip": "Consulta destacada",
       "switch-datasource-button": "Cambiar la fuente de datos y ejecutar la consulta",
       "unstar-query-tooltip": "Desmarcar consulta",
-      "update-comment-form": "Actualizar el formulario de comentario"
+      "update-comment-form": "Actualizar el formulario de comentarios"
     },
     "rich-history-container": {
       "loading": "Cargando..."
@@ -532,7 +537,13 @@
     },
     "toolbar": {
       "aria-label": "Barra de herramientas de Explore",
+      "copy-link": "",
+      "copy-link-abs-time": "",
+      "copy-links-absolute-category": "",
+      "copy-links-normal-category": "",
       "copy-shortened-link": "Copiar enlace acortado",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "Ejecutar consulta",
       "split-close": "Cerrar",
@@ -547,6 +558,9 @@
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Cerrar"
     },
@@ -578,6 +592,7 @@
     "shortcuts-description": {
       "change-theme": "Cambiar tema",
       "collapse-all-rows": "Contraer todas las filas",
+      "copy-time-range": "",
       "dashboard-settings": "Ajustes del panel de control",
       "duplicate-panel": "Duplicar panel",
       "exit-edit/setting-views": "Salir de las opciones de edición/ajustes",
@@ -591,6 +606,7 @@
       "move-time-range-forward": "Mover el rango de tiempo hacia delante",
       "open-search": "Abrir búsqueda",
       "open-shared-modal": "Abrir el modo de panel compartido",
+      "paste-time-range": "",
       "refresh-all-panels": "Actualizar todos los paneles",
       "remove-panel": "Eliminar panel",
       "save-dashboard": "Guardar panel de control",
@@ -600,7 +616,7 @@
       "toggle-auto-fit": "Cambiar los paneles de ajuste automático (característica experimental)",
       "toggle-exemplars": "Alternar los ejemplares en todo el panel",
       "toggle-graph-crosshair": "Alternar la retícula del gráfico compartido",
-      "toggle-kiosk": "Alternar al modo de quiosco (oculta la navegación superior)",
+      "toggle-kiosk": "Alternar el modo quiosco (oculta la navegación superior)",
       "toggle-panel-edit": "Cambiar la vista de edición del panel",
       "toggle-panel-fullscreen": "Cambiar la vista de pantalla completa del panel",
       "toggle-panel-legend": "Cambiar leyenda del panel",
@@ -614,7 +630,7 @@
       "copy-to-clipboard": "Copiar al portapapeles",
       "description": "El inspector de consultas le permite ver la solicitud y la respuesta sin procesar. Para recopilar estos datos, Grafana necesita emitir una nueva consulta. Haga clic en el botón actualizar situado debajo para activar una nueva consulta.",
       "expand-all": "Expandir todo",
-      "no-data": "Aún no se ha recogido ninguna solicitud o respuesta. Pulse el botón para actualizar",
+      "no-data": "Aún no se ha recogido ninguna solicitud o respuesta. Pulse el botón de actualizar",
       "refresh": "Actualizar"
     }
   },
@@ -635,11 +651,11 @@
     "modal": {
       "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
       "body_many": "",
-      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:",
+      "body_other": "Este panel se está utilizando en {{count}} paneles de control. Elija qué panel quiere ver en el panel de control:",
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
       "button-view-panel2": "Ver panel en el panel de control...",
-      "panel-not-linked": "El panel no está vinculado a un panel de control. Añádelo a un panel de control y vuelva a intentarlo.",
+      "panel-not-linked": "El panel no está vinculado a un panel de control. Añádalo a un panel de control y vuelva a intentarlo.",
       "select-no-options-message": "No se ha encontrado ningún tablero",
       "select-placeholder": "Empezar a escribir para buscar el panel de control",
       "title": "Ver el panel en el tablero"
@@ -651,7 +667,7 @@
   },
   "login": {
     "error": {
-      "blocked": "Ha excedido el número de intentos de inicio de sesión para este usuario. Por favor, inténtelo de nuevo más tarde.",
+      "blocked": "Ha excedido el número de intentos de inicio de sesión para este usuario. Inténtelo de nuevo más tarde.",
       "invalid-user-or-password": "Nombre de usuario o contraseña no válidos",
       "title": "Error al iniciar sesión",
       "unknown": "Se ha producido un error desconocido"
@@ -664,6 +680,9 @@
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
+    },
+    "alert-list-legacy": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -700,6 +719,10 @@
     "alerting-silences": {
       "subtitle": "Detener notificaciones de una o más reglas de alerta",
       "title": "Silencios"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "Aplicaciones de gestión de alertas e incidentes",
@@ -765,7 +788,7 @@
       "title": "Paneles de control"
     },
     "data-sources": {
-      "subtitle": "Ver y gestionar las conexiones de sus fuentes de datos",
+      "subtitle": "Vea y gestione las conexiones de sus fuentes de datos",
       "title": "Orígenes de datos"
     },
     "datasources": {
@@ -780,7 +803,7 @@
     },
     "frontend": {
       "subtitle": "",
-      "title": ""
+      "title": "Interfaz"
     },
     "frontend-app": {
       "title": "Interfaz"
@@ -815,6 +838,9 @@
     },
     "integrations": {
       "title": "Integraciones"
+    },
+    "k6": {
+      "title": ""
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -882,7 +908,7 @@
       "title": "Consultas grabadas"
     },
     "reporting": {
-      "title": "Cración de informes"
+      "title": "Creación de informes"
     },
     "scenes": {
       "title": "Escenas"
@@ -935,6 +961,10 @@
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
       "title": "Equipos"
     },
+    "testing-and-synthetics": {
+      "subtitle": "",
+      "title": ""
+    },
     "upgrading": {
       "title": "Estadísticas y licencia"
     },
@@ -949,8 +979,8 @@
     },
     "megamenu": {
       "close": "Cerrar menú",
-      "dock": "Menú base",
-      "undock": ""
+      "dock": "Anclar el menú",
+      "undock": "Desanclar el menú"
     },
     "toolbar": {
       "close-menu": "Cerrar menú",
@@ -960,6 +990,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Últimas entradas del blog"
   },
   "notifications": {
@@ -1046,6 +1079,120 @@
       "old-password-label": "Contraseña antigua",
       "old-password-required": "Se requiere la contraseña antigua",
       "passwords-must-match": "Las contraseñas deben coincidir"
+    }
+  },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "usage-ack-desc": "",
+      "usage-ack-desc-tooltip": ""
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "",
+      "copy-button": "",
+      "dashboard-url-field-label": "",
+      "email-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "",
+      "public-share-type-option-label": "",
+      "revoke-public-URL-button": "",
+      "revoke-public-URL-button-title": "",
+      "settings-title": ""
+    },
+    "create-page": {
+      "generate-public-url-button": "",
+      "unsupported-features-desc": "",
+      "welcome-title": ""
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "",
+      "revoke-orphaned-body-text": "",
+      "revoke-title": ""
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": "",
+      "invite-field-desc": "",
+      "invite-field-label": "",
+      "resend-button": "",
+      "resend-button-title": "",
+      "revoke-button": "",
+      "revoke-button-title": ""
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "save-dashboard-changes-alert-title": "",
+      "unsupport-data-source-alert-readmore-link": "",
+      "unsupported-data-source-alert-desc": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert-desc": "",
+      "unsupported-template-variable-alert-title": ""
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "",
+      "expand-settings-tooltip": ""
+    },
+    "settings-configuration": {
+      "default-time-range-label": "",
+      "default-time-range-label-desc": "",
+      "show-annotations-label": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-label": "",
+      "time-range-picker-label-desc": ""
+    },
+    "settings-summary": {
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "dashboard-title": {
+      "orphaned-title": "",
+      "orphaned-tooltip": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "",
+      "open-dashboard-list-text": "",
+      "public-dashboard-link": "",
+      "public-dashboard-setting": ""
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "",
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "revoke-access-title": "",
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
+    },
+    "modal": {
+      "dashboard-modal-title": ""
+    },
+    "table-header": {
+      "activated-label": "",
+      "activated-tooltip": "",
+      "email-label": "",
+      "last-active-label": "",
+      "origin-label": "",
+      "role-label": ""
     }
   },
   "query-operation": {
@@ -1177,6 +1324,7 @@
       "link": "Enlace",
       "panel-embed": "Incrustar",
       "public-dashboard": "Tablero público",
+      "public-dashboard-title": "",
       "snapshot": "Instantánea"
     },
     "theme-picker": {
@@ -1255,6 +1403,13 @@
       "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
     },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
+    },
     "footer": {
       "change-settings-button": "Cambiar ajustes de tiempo",
       "fiscal-year-option": "Ejercicio fiscal",
@@ -1312,7 +1467,7 @@
       "username-label": "Nombre de usuario"
     },
     "tabs": {
-      "general": ""
+      "general": "General"
     }
   },
   "user-session": {
@@ -1324,6 +1479,11 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": ""
+    }
   },
   "variable": {
     "adhoc": {

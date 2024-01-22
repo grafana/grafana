@@ -164,6 +164,7 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
+
   if (root instanceof DashboardScene) {
     return root;
   }

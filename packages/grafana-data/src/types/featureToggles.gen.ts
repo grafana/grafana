@@ -42,8 +42,9 @@ export interface FeatureToggles {
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
   dockedMegaMenu?: boolean;
+  returnToPrevious?: boolean;
   grpcServer?: boolean;
-  entityStore?: boolean;
+  unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -53,7 +54,6 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
-  accessTokenExpirationCheck?: boolean;
   emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -79,7 +79,6 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
-  useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
@@ -105,6 +104,7 @@ export interface FeatureToggles {
   metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
+  grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
@@ -144,7 +144,6 @@ export interface FeatureToggles {
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
-  costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -158,6 +157,7 @@ export interface FeatureToggles {
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
+  canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
@@ -165,6 +165,17 @@ export interface FeatureToggles {
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
+  tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
+  alertStateHistoryAnnotationsFromLoki?: boolean;
+  lokiQueryHints?: boolean;
+  kubernetesFeatureToggles?: boolean;
+  alertingPreviewUpgrade?: boolean;
+  enablePluginsTracingByDefault?: boolean;
+  cloudRBACRoles?: boolean;
+  alertingQueryOptimization?: boolean;
+  newFolderPicker?: boolean;
+  jitterAlertRules?: boolean;
+  jitterAlertRulesWithinGroups?: boolean;
 }

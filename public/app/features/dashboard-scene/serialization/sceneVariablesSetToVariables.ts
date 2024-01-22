@@ -25,6 +25,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         },
         options: [],
         query: variable.state.query,
+        definition: variable.state.definition,
         datasource: variable.state.datasource,
         sort: variable.state.sort,
         refresh: variable.state.refresh,

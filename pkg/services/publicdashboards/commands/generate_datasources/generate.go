@@ -13,9 +13,8 @@ import (
 var grafanaDatasources = []string{expr.DatasourceType, "datasource"}
 
 // there are some datasources that have backend flag as true but don't call /ds/query endpoint
-var unsupportedDataSourcesMap = map[string]bool{
-	"cloudwatch": true,
-}
+// through DataSourceWithBackend class
+var unsupportedDataSourcesMap = map[string]bool{}
 
 type listPluginResponse struct {
 	Items []struct {

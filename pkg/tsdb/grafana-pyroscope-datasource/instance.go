@@ -6,14 +6,17 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql/parser"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -26,9 +29,9 @@ var (
 )
 
 type ProfilingClient interface {
-	ProfileTypes(context.Context) ([]*ProfileType, error)
-	LabelNames(ctx context.Context) ([]string, error)
-	LabelValues(ctx context.Context, label string) ([]string, error)
+	ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error)
+	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error)
+	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
@@ -39,11 +42,10 @@ type PyroscopeDatasource struct {
 	httpClient *http.Client
 	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
-	ac         accesscontrol.AccessControl
 }
 
 // NewPyroscopeDatasource creates a new datasource instance.
-func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
+func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	ctxLogger := logger.FromContext(ctx)
 	opt, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
@@ -60,7 +62,6 @@ func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.P
 		httpClient: httpClient,
 		client:     NewPyroscopeClient(httpClient, settings.URL),
 		settings:   settings,
-		ac:         ac,
 	}, nil
 }
 
@@ -85,7 +86,30 @@ func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.Cal
 
 func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctxLogger := logger.FromContext(ctx)
-	types, err := d.client.ProfileTypes(ctx)
+
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
+		return err
+	}
+	query := u.Query()
+
+	var start, end int64
+	if query.Has("start") && query.Has("end") {
+		start, err = strconv.ParseInt(query.Get("start"), 10, 64)
+		if err != nil {
+			ctxLogger.Error("Failed to parse start as int", "error", err, "function", logEntrypoint())
+			return err
+		}
+
+		end, err = strconv.ParseInt(query.Get("end"), 10, 64)
+		if err != nil {
+			ctxLogger.Error("Failed to parse end as int", "error", err, "function", logEntrypoint())
+			return err
+		}
+	}
+
+	types, err := d.client.ProfileTypes(ctx, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return err
@@ -105,17 +129,45 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 
 func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctxLogger := logger.FromContext(ctx)
-	res, err := d.client.LabelNames(ctx)
+
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
+		return err
+	}
+	query := u.Query()
+
+	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
+	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
+	labelSelector := query.Get("query")
+	matchers, err := parser.ParseMetricSelector(labelSelector)
+	if err != nil {
+		ctxLogger.Error("Could not parse label selector", "error", err, "function", logEntrypoint())
+		return fmt.Errorf("failed parsing label selector: %v", err)
+	}
+
+	labelNames, err := d.client.LabelNames(ctx, labelSelector, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelNames: %v", err)
 	}
-	data, err := json.Marshal(res)
+
+	finalLabels := make([]string, 0)
+	for _, label := range labelNames {
+		if slices.ContainsFunc(matchers, func(m *labels.Matcher) bool {
+			return m.Name == label
+		}) {
+			continue
+		}
+		finalLabels = append(finalLabels, label)
+	}
+
+	jsonResponse, err := json.Marshal(finalLabels)
 	if err != nil {
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Headers: req.Headers, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -139,7 +191,11 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 	}
 	query := u.Query()
 
-	res, err := d.client.LabelValues(ctx, query["label"][0])
+	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
+	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
+	label := query.Get("label")
+
+	res, err := d.client.LabelValues(ctx, label, query.Get("query"), start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelValues: %v", err)
@@ -166,7 +222,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 // contains Frames ([]*Frame).
 func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	ctxLogger := logger.FromContext(ctx)
-	ctxLogger.Debug("Processing queries", "queryLenght", len(req.Queries), "function", logEntrypoint())
+	ctxLogger.Debug("Processing queries", "queryLength", len(req.Queries), "function", logEntrypoint())
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -195,7 +251,11 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
-	if _, err := d.client.ProfileTypes(ctx); err != nil {
+	// Since this is a health check mechanism and we only care about whether the
+	// request succeeded or failed, we set the window to be small.
+	start := time.Now().Add(-5 * time.Minute).UnixMilli()
+	end := time.Now().UnixMilli()
+	if _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
 	}

@@ -22,9 +22,19 @@ import {
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
+  SceneQueryRunner,
+  SceneRefreshPicker,
+  SceneTimePicker,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardCursorSync, defaultDashboard, Panel, RowPanel, VariableType } from '@grafana/schema';
+import {
+  DashboardCursorSync,
+  defaultDashboard,
+  defaultTimePickerConfig,
+  Panel,
+  RowPanel,
+  VariableType,
+} from '@grafana/schema';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -35,7 +45,7 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -58,6 +68,11 @@ describe('transformSaveModelToScene', () => {
         weekStart: 'saturday',
         fiscalYearStartMonth: 2,
         timezone: 'America/New_York',
+        timepicker: {
+          ...defaultTimePickerConfig,
+          hidden: true,
+        },
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
         templating: {
           list: [
             {
@@ -93,20 +108,29 @@ describe('transformSaveModelToScene', () => {
       const oldModel = new DashboardModel(dash);
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const dashboardControls = scene.state.controls![0] as DashboardControls;
 
       expect(scene.state.title).toBe('test');
       expect(scene.state.uid).toBe('test-uid');
+      expect(scene.state.links).toHaveLength(1);
+      expect(scene.state.links![0].title).toBe('Link 1');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
       expect(scene.state?.$timeRange?.state.fiscalYearStartMonth).toEqual(2);
       expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
       expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
+
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
-      expect(scene.state.controls).toBeDefined();
-      expect(scene.state.controls![0]).toBeInstanceOf(DashboardControls);
-      expect((scene.state.controls![0] as DashboardControls).state.variableControls[1]).toBeInstanceOf(AdHocFilterSet);
-      expect(
-        ((scene.state.controls![0] as DashboardControls).state.variableControls[1] as AdHocFilterSet).state.name
-      ).toBe('CoolFilters');
+      expect(dashboardControls).toBeDefined();
+      expect(dashboardControls).toBeInstanceOf(DashboardControls);
+      expect(dashboardControls.state.variableControls[1]).toBeInstanceOf(AdHocFilterSet);
+      expect((dashboardControls.state.variableControls[1] as AdHocFilterSet).state.name).toBe('CoolFilters');
+      expect(dashboardControls.state.timeControls).toHaveLength(2);
+      expect(dashboardControls.state.timeControls[0]).toBeInstanceOf(SceneTimePicker);
+      expect(dashboardControls.state.timeControls[1]).toBeInstanceOf(SceneRefreshPicker);
+      expect((dashboardControls.state.timeControls[1] as SceneRefreshPicker).state.intervals).toEqual(
+        defaultTimePickerConfig.refresh_intervals
+      );
+      expect(dashboardControls.state.hideTimeControls).toBe(true);
     });
 
     it('should apply cursor sync behavior', () => {
@@ -118,9 +142,28 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(2);
+      expect(scene.state.$behaviors).toHaveLength(4);
       expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
       expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+    });
+
+    it('should initialize the Dashboard Scene with empty template variables', () => {
+      const dash = {
+        ...defaultDashboard,
+        title: 'test empty dashboard with no variables',
+        uid: 'test-uid',
+        time: { from: 'now-10h', to: 'now' },
+        weekStart: 'saturday',
+        fiscalYearStartMonth: 2,
+        timezone: 'America/New_York',
+        templating: {
+          list: [],
+        },
+      };
+      const oldModel = new DashboardModel(dash);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+      expect(scene.state.$variables?.state.variables).toBeDefined();
     });
   });
 
@@ -343,7 +386,9 @@ describe('transformSaveModelToScene', () => {
       };
 
       const { vizPanel } = buildGridItemForTest(panel);
-      expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+      expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
+      expect(vizPanel.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
+      expect((vizPanel.state.$data?.state.$data as SceneQueryRunner).state.queries).toEqual(panel.targets);
     });
 
     it('should not set SceneQueryRunner for plugins with skipDataQuery', () => {
@@ -455,7 +500,7 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it('should migrate query variable', () => {
+    it('should migrate query variable with definition', () => {
       const variable: QueryVariableModel = {
         allValue: null,
         current: {
@@ -467,7 +512,7 @@ describe('transformSaveModelToScene', () => {
           uid: 'P15396BDD62B2BE29',
           type: 'influxdb',
         },
-        definition: '',
+        definition: 'SHOW TAG VALUES  WITH KEY = "datacenter"',
         hide: 0,
         includeAll: false,
         label: 'Datacenter',
@@ -536,6 +581,7 @@ describe('transformSaveModelToScene', () => {
         type: 'query',
         value: 'America',
         hide: 0,
+        definition: 'SHOW TAG VALUES  WITH KEY = "datacenter"',
       });
     });
 

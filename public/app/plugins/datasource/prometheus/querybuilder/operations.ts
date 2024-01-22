@@ -4,11 +4,11 @@ import {
   defaultAddOperationHandler,
   functionRendererLeft,
   functionRendererRight,
-  getPromAndLokiOperationDisplayName,
+  getPromOperationDisplayName,
   getRangeVectorParamDef,
   rangeRendererLeftWithParams,
   rangeRendererRightWithParams,
-} from './shared/operationUtils';
+} from './operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -265,7 +265,7 @@ export function createFunction(definition: Partial<QueryBuilderOperationDef>): Q
   return {
     ...definition,
     id: definition.id!,
-    name: definition.name ?? getPromAndLokiOperationDisplayName(definition.id!),
+    name: definition.name ?? getPromOperationDisplayName(definition.id!),
     params: definition.params ?? [],
     defaultParams: definition.defaultParams ?? [],
     category: definition.category ?? PromVisualQueryOperationCategory.Functions,
@@ -277,7 +277,7 @@ export function createFunction(definition: Partial<QueryBuilderOperationDef>): Q
 export function createRangeFunction(name: string, withRateInterval = false): QueryBuilderOperationDef {
   return {
     id: name,
-    name: getPromAndLokiOperationDisplayName(name),
+    name: getPromOperationDisplayName(name),
     params: [getRangeVectorParamDef(withRateInterval)],
     defaultParams: [withRateInterval ? '$__rate_interval' : '$__interval'],
     alternativesKey: 'range function',

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { CSSProperties, FC } from 'react';
 
 import {
-  FieldConfigEditorProps,
+  StandardEditorProps,
   FieldColorModeId,
   SelectableValue,
   FieldColor,
@@ -17,7 +17,7 @@ import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana
 
 import { ColorValueEditor } from './color';
 
-type Props = FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>;
+type Props = StandardEditorProps<FieldColor | undefined, FieldColorConfigSettings>;
 
 export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const theme = useTheme2();
@@ -28,20 +28,22 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
 
-  const options = availableOptions.map((mode) => {
-    let suffix = mode.isByValue ? ' (by value)' : '';
+  const options = availableOptions
+    .filter((mode) => !mode.excludeFromPicker)
+    .map((mode) => {
+      let suffix = mode.isByValue ? ' (by value)' : '';
 
-    return {
-      value: mode.id,
-      label: `${mode.name}${suffix}`,
-      description: mode.description,
-      isContinuous: mode.isContinuous,
-      isByValue: mode.isByValue,
-      component() {
-        return <FieldColorModeViz mode={mode} theme={theme} />;
-      },
-    };
-  });
+      return {
+        value: mode.id,
+        label: `${mode.name}${suffix}`,
+        description: mode.description,
+        isContinuous: mode.isContinuous,
+        isByValue: mode.isByValue,
+        component() {
+          return <FieldColorModeViz mode={mode} theme={theme} />;
+        },
+      };
+    });
 
   const onModeChange = (newMode: SelectableValue<string>) => {
     onChange({

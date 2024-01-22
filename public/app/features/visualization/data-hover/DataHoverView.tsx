@@ -10,9 +10,12 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
+
+import { ExemplarHoverView } from './ExemplarHoverView';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -110,6 +113,10 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
 
   const { displayValues, links } = dispValuesAndLinks;
 
+  if (config.featureToggles.newVizTooltips && header === 'Exemplar') {
+    return <ExemplarHoverView displayValues={displayValues} links={links} header={header} />;
+  }
+
   return (
     <div className={styles.wrapper}>
       {header && (
@@ -142,45 +149,44 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
 };
 const getStyles = (theme: GrafanaTheme2, padding = 0) => {
   return {
-    wrapper: css`
-      padding: ${padding}px;
-      background: ${theme.components.tooltip.background};
-      border-radius: ${theme.shape.borderRadius(2)};
-    `,
-    header: css`
-      background: ${theme.colors.background.secondary};
-      align-items: center;
-      align-content: center;
-      display: flex;
-      padding-bottom: ${theme.spacing(1)};
-    `,
-    title: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-      overflow: hidden;
-      display: inline-block;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      flex-grow: 1;
-    `,
-    infoWrap: css`
-      padding: ${theme.spacing(1)};
-      background: transparent;
-      border: none;
-      th {
-        font-weight: ${theme.typography.fontWeightMedium};
-        padding: ${theme.spacing(0.25, 2, 0.25, 0)};
-      }
+    wrapper: css({
+      padding: `${padding}px`,
+      background: theme.components.tooltip.background,
+      borderRadius: theme.shape.borderRadius(2),
+    }),
+    header: css({
+      background: theme.colors.background.secondary,
+      alignItems: 'center',
+      alignContent: 'center',
+      display: 'flex',
+      paddingBottom: theme.spacing(1),
+    }),
+    title: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      overflow: 'hidden',
+      display: 'inline-block',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      flexGrow: 1,
+    }),
+    infoWrap: css({
+      padding: theme.spacing(1),
+      background: 'transparent',
+      border: 'none',
+      th: {
+        fontWeight: theme.typography.fontWeightMedium,
+        padding: theme.spacing(0.25, 2, 0.25, 0),
+      },
 
-      tr {
-        border-bottom: 1px solid ${theme.colors.border.weak};
-        &:last-child {
-          border-bottom: none;
-        }
-      }
-    `,
-    highlight: css``,
-    link: css`
-      color: ${theme.colors.text.link};
-    `,
+      tr: {
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+        '&:last-child': {
+          borderBottom: 'none',
+        },
+      },
+    }),
+    link: css({
+      color: theme.colors.text.link,
+    }),
   };
 };

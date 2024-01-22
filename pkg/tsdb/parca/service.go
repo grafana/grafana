@@ -8,9 +8,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
 // Make sure ParcaDatasource implements required interfaces. This is important to do
@@ -33,7 +33,7 @@ type Service struct {
 	logger log.Logger
 }
 
-var logger = log.New("tsdb.parca")
+var logger = backend.NewLoggerWith("logger", "tsdb.parca")
 
 // Return the file, line, and (full-path) function name of the caller
 func getRunContext() (string, int, string) {
@@ -63,14 +63,14 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 	return in, nil
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		logger: logger,
 	}
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return NewParcaDatasource(ctx, httpClientProvider, settings)
 	}

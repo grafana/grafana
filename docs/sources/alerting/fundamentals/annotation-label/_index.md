@@ -3,7 +3,7 @@ aliases:
   - ../alerting-rules/alert-annotation-label/
   - ../unified-alerting/alerting-rules/alert-annotation-label/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/
-description: Annotations and labels for alerting
+description: Learn how to use annotations and labels to store key information about alerts
 keywords:
   - grafana
   - alerting

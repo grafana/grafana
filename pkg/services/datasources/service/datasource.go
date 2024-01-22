@@ -273,7 +273,11 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
 
-		return s.SQLStore.DeleteDataSource(ctx, cmd)
+		if err := s.SQLStore.DeleteDataSource(ctx, cmd); err != nil {
+			return err
+		}
+
+		return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
 	})
 }
 
@@ -528,11 +532,12 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:   s.cfg.SecureSocksDSProxy.ClientCert,
-				ClientKey:    s.cfg.SecureSocksDSProxy.ClientKey,
-				RootCA:       s.cfg.SecureSocksDSProxy.RootCA,
-				ProxyAddress: s.cfg.SecureSocksDSProxy.ProxyAddress,
-				ServerName:   s.cfg.SecureSocksDSProxy.ServerName,
+				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCert,
+				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKey,
+				RootCA:        s.cfg.SecureSocksDSProxy.RootCA,
+				ProxyAddress:  s.cfg.SecureSocksDSProxy.ProxyAddress,
+				ServerName:    s.cfg.SecureSocksDSProxy.ServerName,
+				AllowInsecure: s.cfg.SecureSocksDSProxy.AllowInsecure,
 			},
 		}
 

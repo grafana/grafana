@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
 
 import { isEmptyObject, SelectableValue } from '@grafana/data';
-import { getBackendSrv, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { VariableRefresh } from '../../../variables/types';
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
@@ -116,12 +117,12 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       });
     } finally {
       if (external) {
-        reportInteraction('dashboards_sharing_snapshot_publish_clicked', {
+        DashboardInteractions.publishSnapshotClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
         });
       } else {
-        reportInteraction('dashboards_sharing_snapshot_local_clicked', {
+        DashboardInteractions.publishSnapshotLocalClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
         });

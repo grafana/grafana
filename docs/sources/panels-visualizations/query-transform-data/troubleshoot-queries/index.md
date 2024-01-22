@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../troubleshooting/troubleshoot-queries/
-description: Guide to troubleshooting Grafana queries
+description: Troubleshoot Grafana queries
 keywords:
   - grafana
   - troubleshooting

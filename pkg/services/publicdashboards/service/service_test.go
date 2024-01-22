@@ -312,8 +312,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 
 	// #nosec G101 -- This is dummy/test token
 	accessToken := "c54b1c4dd2b143a1a7a43005264d256d"
-	// nolint:staticcheck
-	d := &dashboards.Dashboard{UID: "mydashboard", Data: data, Slug: "dashboardSlug", Created: now, Updated: now, Version: 1, FolderID: 1}
+	d := &dashboards.Dashboard{UID: "mydashboard", OrgID: 0, Data: data, Slug: "dashboardSlug", Created: now, Updated: now, Version: 1, FolderUID: "myFolder"}
 
 	testCases := []struct {
 		Name        string
@@ -345,7 +344,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 					Updated:                d.Updated,
 					Version:                d.Version,
 					IsFolder:               false,
-					FolderId:               d.FolderID, // nolint:staticcheck
+					FolderUid:              d.FolderUID,
 					PublicDashboardEnabled: true,
 				},
 			},
@@ -373,7 +372,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 					Updated:                d.Updated,
 					Version:                d.Version,
 					IsFolder:               false,
-					FolderId:               d.FolderID, // nolint:staticcheck
+					FolderUid:              d.FolderUID,
 					PublicDashboardEnabled: true,
 				},
 			},
@@ -414,8 +413,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 				assert.Equal(t, test.DashResp.Meta.Updated, dashboardFullWithMeta.Meta.Updated)
 				assert.Equal(t, test.DashResp.Meta.Version, dashboardFullWithMeta.Meta.Version)
 				assert.Equal(t, false, dashboardFullWithMeta.Meta.IsFolder)
-				// nolint:staticcheck
-				assert.Equal(t, test.DashResp.Meta.FolderId, dashboardFullWithMeta.Meta.FolderId)
+				assert.Equal(t, test.DashResp.Meta.FolderUid, dashboardFullWithMeta.Meta.FolderUid)
 				assert.Equal(t, test.DashResp.Meta.PublicDashboardEnabled, dashboardFullWithMeta.Meta.PublicDashboardEnabled)
 
 				// hide the timepicker if the time selection is disabled
@@ -1792,8 +1790,7 @@ func TestDeleteByDashboard(t *testing.T) {
 		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: true}
 		pubdash1 := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
 		pubdash2 := &PublicDashboard{Uid: "3", OrgId: 1, DashboardUid: dashboard.UID}
-		store.On("FindByDashboardFolder", mock.Anything, mock.Anything).Return([]*PublicDashboard{pubdash1, pubdash2}, nil)
-		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+		store.On("FindByFolder", mock.Anything, mock.Anything, mock.Anything).Return([]*PublicDashboard{pubdash1, pubdash2}, nil)
 		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
 
 		err := pd.DeleteByDashboard(context.Background(), dashboard)
@@ -1895,7 +1892,6 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		FolderID:  folderId, // nolint:staticcheck
 		FolderUID: folderUID,
 		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]any{

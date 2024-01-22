@@ -4,7 +4,9 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/oauth2"
 
@@ -12,8 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -212,7 +216,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				ExpectedToken:           &oauth2.Token{},
 				ExpectedIsSignupAllowed: true,
 				ExpectedIsEmailAllowed:  tt.isEmailAllowed,
-			}, nil)
+			}, nil, nil)
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
 
@@ -264,7 +268,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 		{
 			desc:              "should generate redirect url with pkce if configured",
 			oauthCfg:          &social.OAuthInfo{UsePKCE: true},
-			numCallOptions:    2,
+			numCallOptions:    1,
 			authCodeUrlCalled: true,
 		},
 	}
@@ -281,7 +285,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 					require.Len(t, opts, tt.numCallOptions)
 					return ""
 				},
-			}, nil)
+			}, nil, nil)
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -297,6 +301,113 @@ func TestOAuth_RedirectURL(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestOAuth_Logout(t *testing.T) {
+	type testCase struct {
+		desc     string
+		cfg      *setting.Cfg
+		oauthCfg *social.OAuthInfo
+
+		expectedOK            bool
+		expectedURL           string
+		expectedIDTokenHint   string
+		expectedPostLogoutURI string
+	}
+
+	tests := []testCase{
+		{
+			desc:     "should not return redirect url if not configured for client or globably",
+			cfg:      &setting.Cfg{},
+			oauthCfg: &social.OAuthInfo{},
+		},
+		{
+			desc: "should return redirect url for globably configured redirect url",
+			cfg: &setting.Cfg{
+				SignoutRedirectUrl: "http://idp.com/logout",
+			},
+			oauthCfg:    &social.OAuthInfo{},
+			expectedURL: "http://idp.com/logout",
+			expectedOK:  true,
+		},
+		{
+			desc: "should return redirect url for client configured redirect url",
+			cfg:  &setting.Cfg{},
+			oauthCfg: &social.OAuthInfo{
+				SignoutRedirectUrl: "http://idp.com/logout",
+			},
+			expectedURL: "http://idp.com/logout",
+			expectedOK:  true,
+		},
+		{
+			desc: "client specific url should take precedence",
+			cfg: &setting.Cfg{
+				SignoutRedirectUrl: "http://idp.com/logout",
+			},
+			oauthCfg: &social.OAuthInfo{
+				SignoutRedirectUrl: "http://idp-2.com/logout",
+			},
+			expectedURL: "http://idp-2.com/logout",
+			expectedOK:  true,
+		},
+		{
+			desc: "should add id token hint if oicd logout is configured and token is valid",
+			cfg:  &setting.Cfg{},
+			oauthCfg: &social.OAuthInfo{
+				SignoutRedirectUrl: "http://idp.com/logout?post_logout_redirect_uri=http%3A%3A%2F%2Ftest.com%2Flogin",
+			},
+			expectedURL:           "http://idp.com/logout",
+			expectedIDTokenHint:   "id_token_hint=some.id.token",
+			expectedPostLogoutURI: "http%3A%3A%2F%2Ftest.com%2Flogin",
+			expectedOK:            true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var (
+				getTokenCalled        bool
+				invalidateTokenCalled bool
+			)
+
+			mockService := &oauthtokentest.MockOauthTokenService{
+				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester) *oauth2.Token {
+					getTokenCalled = true
+					token := &oauth2.Token{
+						AccessToken: "some.access.token",
+						Expiry:      time.Now().Add(10 * time.Minute),
+					}
+					return token.WithExtra(map[string]any{
+						"id_token": "some.id.token",
+					})
+				},
+				InvalidateOAuthTokensFunc: func(_ context.Context, _ *login.UserAuth) error {
+					invalidateTokenCalled = true
+					return nil
+				},
+			}
+
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, tt.oauthCfg, mockConnector{}, nil, mockService)
+
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{}, &login.UserAuth{})
+
+			assert.Equal(t, tt.expectedOK, ok)
+			if tt.expectedOK {
+				assert.True(t, strings.HasPrefix(redirect.URL, tt.expectedURL))
+				assert.Contains(t, redirect.URL, tt.expectedIDTokenHint)
+				assert.Contains(t, redirect.URL, tt.expectedPostLogoutURI)
+			}
+
+			assert.True(t, getTokenCalled)
+			assert.True(t, invalidateTokenCalled)
+		})
+	}
+}
+
+func TestGenPKCECodeVerifier(t *testing.T) {
+	verifier, err := genPKCECodeVerifier()
+	assert.NoError(t, err)
+	assert.Len(t, verifier, 128)
 }
 
 type mockConnector struct {

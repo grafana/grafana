@@ -229,15 +229,31 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
     exportModifiedRuleGroup: build.mutation<
       string,
-      { payload: ModifyExportPayload; format: ExportFormats; nameSpace: string }
+      { payload: ModifyExportPayload; format: ExportFormats; nameSpaceUID: string }
     >({
-      query: ({ payload, format, nameSpace }) => ({
-        url: `/api/ruler/grafana/api/v1/rules/${nameSpace}/export/`,
+      query: ({ payload, format, nameSpaceUID }) => ({
+        url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/export/`,
         params: { format: format },
         responseType: 'text',
         data: payload,
         method: 'POST',
       }),
+    }),
+    exportMuteTimings: build.query<string, { format: ExportFormats }>({
+      query: ({ format }) => ({
+        url: `/api/v1/provisioning/mute-timings/export/`,
+        params: { format: format },
+        responseType: 'text',
+      }),
+      keepUnusedDataFor: 0,
+    }),
+    exportMuteTiming: build.query<string, { format: ExportFormats; muteTiming: string }>({
+      query: ({ format, muteTiming }) => ({
+        url: `/api/v1/provisioning/mute-timings/${muteTiming}/export/`,
+        params: { format: format },
+        responseType: 'text',
+      }),
+      keepUnusedDataFor: 0,
     }),
   }),
 });

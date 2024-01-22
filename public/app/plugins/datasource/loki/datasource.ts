@@ -48,7 +48,6 @@ import { DataQuery } from '@grafana/schema';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
-import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
@@ -86,6 +85,7 @@ import {
   isQueryWithError,
   requestSupportsSplitting,
 } from './queryUtils';
+import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
@@ -208,7 +208,7 @@ export class LokiDatasource
     }
 
     const normalizedQuery = getNormalizedLokiQuery(query);
-    const expr = removeCommentsFromQuery(normalizedQuery.expr);
+    let expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
 
     switch (options.type) {
@@ -217,6 +217,11 @@ export class LokiDatasource
         isQuerySuitable = !!(expr && isLogsQuery(expr) && normalizedQuery.queryType === LokiQueryType.Range);
         if (!isQuerySuitable) {
           return undefined;
+        }
+
+        const dropErrorExpression = `${expr} | drop __error__`;
+        if (isQueryWithError(this.interpolateString(dropErrorExpression, placeHolderScopedVars)) === false) {
+          expr = dropErrorExpression;
         }
 
         return {
@@ -685,6 +690,9 @@ export class LokiDatasource
     // If we have stream selector, use /series endpoint
     if (query.stream) {
       const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
+      if (!result[query.label]) {
+        return [];
+      }
       return result[query.label].map((value: string) => ({ text: value }));
     }
 
@@ -943,9 +951,15 @@ export class LokiDatasource
   getLogRowContextQuery = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    origQuery?: DataQuery
+    origQuery?: DataQuery,
+    cacheFilters?: boolean
   ): Promise<DataQuery> => {
-    return await this.logContextProvider.getLogRowContextQuery(row, options, getLokiQueryFromDataQuery(origQuery));
+    return await this.logContextProvider.getLogRowContextQuery(
+      row,
+      options,
+      getLokiQueryFromDataQuery(origQuery),
+      cacheFilters
+    );
   };
 
   /**
@@ -1077,10 +1091,21 @@ export class LokiDatasource
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr, adhocFilters);
 
+    const variables = {
+      ...rest,
+
+      // pass through for backend interpolation. Need to be in scopedVars for Scenes though
+      __interval: {
+        value: '$__interval',
+      },
+      __interval_ms: {
+        value: '$__interval_ms',
+      },
+    };
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, rest),
-      expr: this.templateSrv.replace(exprWithAdHoc, rest, this.interpolateQueryExpr),
+      expr: this.templateSrv.replace(exprWithAdHoc, variables, this.interpolateQueryExpr),
     };
   }
 

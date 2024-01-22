@@ -8,6 +8,11 @@ import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon } from '@grafana/ui';
 
 import { StoreState, ThunkDispatch } from '../../../types';
+import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
+import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
+import { VariableValuesPreview } from '../../dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { variableAdapters } from '../adapters';
 import { hasOptions } from '../guard';
 import { updateOptions } from '../state/actions';
@@ -19,12 +24,7 @@ import { VariableHide } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
-import { VariableHideSelect } from './VariableHideSelect';
-import { VariableLegend } from './VariableLegend';
-import { VariableTextAreaField } from './VariableTextAreaField';
-import { VariableTextField } from './VariableTextField';
 import { VariableTypeSelect } from './VariableTypeSelect';
-import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, variableEditorMount, variableEditorUnMount } from './actions';
 import { OnPropChangeArguments, VariableNameConstraints } from './types';
 
@@ -138,6 +138,14 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
     locationService.partial({ editIndex: null });
   };
 
+  getVariableOptions = () => {
+    const { variable } = this.props;
+    if (!hasOptions(variable)) {
+      return [];
+    }
+    return variable.options.map((option) => ({ label: String(option.text), value: String(option.value) }));
+  };
+
   render() {
     const { variable } = this.props;
     const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
@@ -188,7 +196,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
 
           {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
 
-          {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
+          {hasOptions(this.props.variable) ? <VariableValuesPreview options={this.getVariableOptions()} /> : null}
 
           <div style={{ marginTop: '16px' }}>
             <HorizontalGroup spacing="md" height="inherit">
@@ -197,7 +205,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
               </Button>
               <Button
                 type="submit"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
                 disabled={loading}
                 variant="secondary"
               >

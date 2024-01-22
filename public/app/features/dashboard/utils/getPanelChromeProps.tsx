@@ -1,8 +1,9 @@
 import React from 'react';
 
 import { LinkModel, PanelData, PanelPlugin, renderMarkdown } from '@grafana/data';
-import { config, getTemplateSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { config, getTemplateSrv, locationService } from '@grafana/runtime';
 import { PanelPadding } from '@grafana/ui';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
@@ -42,7 +43,7 @@ export function getPanelChromeProps(props: CommonProps) {
 
     if (!descriptionInteractionReported) {
       // Description rendering function can be called multiple times due to re-renders but we want to report the interaction once.
-      reportInteraction('dashboards_panelheader_description_displayed');
+      DashboardInteractions.panelDescriptionShown();
       descriptionInteractionReported = true;
     }
 
@@ -59,7 +60,7 @@ export function getPanelChromeProps(props: CommonProps) {
     return panelLinks.map((panelLink) => ({
       ...panelLink,
       onClick: (...args) => {
-        reportInteraction('dashboards_panelheader_datalink_clicked', { has_multiple_links: panelLinks.length > 1 });
+        DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
         panelLink.onClick?.(...args);
       },
     }));
@@ -73,12 +74,12 @@ export function getPanelChromeProps(props: CommonProps) {
   const onOpenErrorInspect = (e: React.SyntheticEvent) => {
     e.stopPropagation();
     locationService.partial({ inspect: props.panel.id, inspectTab: InspectTab.Error });
-    reportInteraction('dashboards_panelheader_statusmessage_clicked');
+    DashboardInteractions.panelStatusMessageClicked();
   };
 
   const onCancelQuery = () => {
     props.panel.getQueryRunner().cancelQuery();
-    reportInteraction('dashboards_panelheader_cancelquery_clicked', { data_state: props.data.state });
+    DashboardInteractions.panelCancelQueryClicked({ data_state: props.data.state });
   };
 
   const padding: PanelPadding = props.plugin.noPadding ? 'none' : 'md';
@@ -121,7 +122,7 @@ export function getPanelChromeProps(props: CommonProps) {
   const title = props.panel.getDisplayTitle();
 
   const onOpenMenu = () => {
-    reportInteraction('dashboards_panelheader_menu', { item: 'menu' });
+    DashboardInteractions.panelMenuShown();
   };
 
   return {

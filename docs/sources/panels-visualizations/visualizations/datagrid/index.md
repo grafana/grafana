@@ -3,7 +3,7 @@ aliases:
   - ../../features/panels/datagrid_panel/
   - ../../reference/datagrid/
   - ../../visualizations/datagrid/
-description: Learn about datagrid panel visualization features.
+description: Configure options for Grafana's datagrid visualization
 keywords:
   - grafana
   - dashboard

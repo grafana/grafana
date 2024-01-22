@@ -24,6 +24,7 @@ labels:
     - oss
 menuTitle: Panel editor overview
 title: Panel editor overview
+description: Learn about the features of the panel editor
 weight: 20
 ---
 
