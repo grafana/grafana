@@ -39,9 +39,8 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
-	config := createOAuthConfig(info, cfg, social.GrafanaComProviderName)
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase:           newSocialBase(social.GrafanaComProviderName, info, features, cfg),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -65,6 +64,28 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOS
 	}
 
 	// add specific validation rules for GrafanaCom
+
+	return nil
+}
+
+func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	// Override necessary settings
+	newInfo.AuthUrl = s.cfg.GrafanaComURL + "/oauth2/authorize"
+	newInfo.TokenUrl = s.cfg.GrafanaComURL + "/api/oauth2/token"
+	newInfo.AuthStyle = "inheader"
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.SocialBase = newSocialBase(social.GrafanaComProviderName, newInfo, s.features, s.cfg)
+
+	s.url = s.cfg.GrafanaComURL
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 
 	return nil
 }
