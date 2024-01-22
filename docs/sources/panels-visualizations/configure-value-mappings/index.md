@@ -84,18 +84,20 @@ The following image shows a table visualization with value mappings. If you want
 
 ## Add a value mapping
 
-1. Open a panel for which you want to map a value.
-1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
+1. Navigate to the panel you want to update.
+1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. Scroll to the **Value mappings** section and expand it.
+1. Click **Add value mappings**.
 1. Click **Add a new mapping** and then select one of the following:
 
-   - **Value** - Enter the value for Grafana to match.
-   - **Range** - Enter the beginning and ending values in the range for Grafana to match.
-   - **Regex** - Enter the regular expression pattern for Grafana to match.
-   - **Special** - Select the special value for Grafana to match.
+   - **Value** - Enter a single value to match.
+   - **Range** - Enter the beginning and ending values of a range to match.
+   - **Regex** - Enter a regular expression pattern to match.
+   - **Special** - Select a special value to match.
 
 1. (Optional) Enter display text.
 1. (Optional) Set the color.
 1. Click **Update** to save the value mapping.
-   You can also use the dots on the left to drag and reorder value mappings in the list.
 
-<!-- ![Value mappings example](/static/img/docs/value-mappings/value-mappings-example-8-0.png) -->
+After you've added a mapping, the **Add value mappings** button is replaced by an **Edit value mappings** button, which you can click to add or update mappings.
