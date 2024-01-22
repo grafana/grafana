@@ -721,6 +721,14 @@ var (
 			Created:         time.Date(2023, time.July, 18, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:        "awsAsyncQueryCaching",
+			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsDatasourcesSquad,
+			Created:     time.Date(2023, time.July, 21, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:              "splitScopes",
 			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
 			Stage:             FeatureStageGeneralAvailability,
