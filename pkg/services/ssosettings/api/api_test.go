@@ -134,7 +134,7 @@ func TestSSOSettingsAPI_Update(t *testing.T) {
 
 			service := ssosettingstests.NewMockService(t)
 			if tt.expectedServiceCall {
-				service.On("Upsert", mock.Anything, settings).Return(tt.expectedError).Once()
+				service.On("Upsert", mock.Anything, &settings).Return(tt.expectedError).Once()
 			}
 			server := setupTests(t, service)
 

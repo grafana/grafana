@@ -147,7 +147,7 @@ func (s *SSOSettingsService) ListWithRedactedSecrets(ctx context.Context) ([]*mo
 	return storeSettings, nil
 }
 
-func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
+func (s *SSOSettingsService) Upsert(ctx context.Context, settings *models.SSOSettings) error {
 	if !isProviderConfigurable(settings.Provider) {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", settings.Provider)
 	}
@@ -157,7 +157,7 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
 	}
 
-	err := social.Validate(ctx, settings)
+	err := social.Validate(ctx, *settings)
 	if err != nil {
 		return err
 	}
@@ -166,6 +166,8 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 	if err != nil {
 		return err
 	}
+
+	secrets := collectSecrets(settings, storedSettings)
 
 	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings, storedSettings.Settings)
 	if err != nil {
@@ -178,7 +180,8 @@ func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSett
 	}
 
 	go func() {
-		err = social.Reload(context.Background(), settings)
+		settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
+		err = social.Reload(context.Background(), *settings)
 		if err != nil {
 			s.logger.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
 		}
@@ -249,7 +252,7 @@ func (s *SSOSettingsService) getFallbackStrategyFor(provider string) (ssosetting
 func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings, storedSettings map[string]any) (map[string]any, error) {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if isSecret(k) {
+		if isSecret(k) && v != "" {
 			strValue, ok := v.(string)
 			if !ok {
 				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
@@ -315,20 +318,24 @@ func (s *SSOSettingsService) doReload(ctx context.Context) {
 
 // mergeSSOSettings merges the settings from the database with the system settings
 // Required because it is possible that the user has configured some of the settings (current Advanced OAuth settings)
-// and the rest of the settings are loaded from the system settings
+// and the rest of the settings have to be loaded from the system settings
 func (s *SSOSettingsService) mergeSSOSettings(dbSettings, systemSettings *models.SSOSettings) *models.SSOSettings {
 	if dbSettings == nil {
 		s.logger.Debug("No SSO Settings found in the database, using system settings")
 		return systemSettings
 	}
 
-	s.logger.Debug("Merging SSO Settings", "dbSettings", dbSettings.Settings, "systemSettings", systemSettings.Settings)
+	s.logger.Debug("Merging SSO Settings", "dbSettings", removeSecrets(dbSettings.Settings), "systemSettings", removeSecrets(systemSettings.Settings))
 
-	finalSettings := mergeSettings(dbSettings.Settings, systemSettings.Settings)
+	result := &models.SSOSettings{
+		Provider: dbSettings.Provider,
+		Source:   dbSettings.Source,
+		Settings: mergeSettings(dbSettings.Settings, systemSettings.Settings),
+		Created:  dbSettings.Created,
+		Updated:  dbSettings.Updated,
+	}
 
-	dbSettings.Settings = finalSettings
-
-	return dbSettings
+	return result
 }
 
 func (s *SSOSettingsService) decryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
@@ -358,6 +365,22 @@ func (s *SSOSettingsService) decryptSecrets(ctx context.Context, settings map[st
 	return settings, nil
 }
 
+// removeSecrets removes all the secrets from the map and replaces them with a redacted password
+// and returns a new map
+func removeSecrets(settings map[string]any) map[string]any {
+	result := make(map[string]any)
+	for k, v := range settings {
+		if isSecret(k) {
+			result[k] = setting.RedactedPassword
+			continue
+		}
+		result[k] = v
+	}
+	return result
+}
+
+// mergeSettings merges two maps in a way that the values from the first map are preserved
+// and the values from the second map are added only if they don't exist in the first map
 func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
@@ -372,6 +395,32 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 	}
 
 	return settings
+}
+
+// collectSecrets collects all the secrets from the request and the currently stored settings
+// and returns a new map
+func collectSecrets(settings *models.SSOSettings, storedSettings *models.SSOSettings) map[string]any {
+	secrets := map[string]any{}
+	for k, v := range settings.Settings {
+		if isSecret(k) {
+			if isNewSecretValue(v.(string)) {
+				secrets[k] = v.(string) // use the new value
+				continue
+			}
+			secrets[k] = storedSettings.Settings[k] // keep the currently stored value
+		}
+	}
+	return secrets
+}
+
+func overrideMaps(maps ...map[string]any) map[string]any {
+	result := make(map[string]any)
+	for _, m := range maps {
+		for k, v := range m {
+			result[k] = v
+		}
+	}
+	return result
 }
 
 func isSecret(fieldName string) bool {

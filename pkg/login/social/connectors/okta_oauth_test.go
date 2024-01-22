@@ -193,11 +193,12 @@ func TestSocialOkta_Validate(t *testing.T) {
 
 func TestSocialOkta_Reload(t *testing.T) {
 	testCases := []struct {
-		name         string
-		info         *social.OAuthInfo
-		settings     ssoModels.SSOSettings
-		expectError  bool
-		expectedInfo *social.OAuthInfo
+		name           string
+		info           *social.OAuthInfo
+		settings       ssoModels.SSOSettings
+		expectError    bool
+		expectedInfo   *social.OAuthInfo
+		expectedConfig *oauth2.Config
 	}{
 		{
 			name: "SSO provider successfully updated",
@@ -218,6 +219,14 @@ func TestSocialOkta_Reload(t *testing.T) {
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
 			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Endpoint: oauth2.Endpoint{
+					AuthURL: "some-new-url",
+				},
+				RedirectURL: "/login/okta",
+			},
 		},
 		{
 			name: "fails if settings contain invalid values",
@@ -237,6 +246,11 @@ func TestSocialOkta_Reload(t *testing.T) {
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "client-id",
+				ClientSecret: "client-secret",
+				RedirectURL:  "/login/okta",
+			},
 		},
 	}
 
@@ -247,10 +261,12 @@ func TestSocialOkta_Reload(t *testing.T) {
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+				return
 			}
+			require.NoError(t, err)
+
 			require.EqualValues(t, tc.expectedInfo, s.info)
+			require.EqualValues(t, tc.expectedConfig, s.Config)
 		})
 	}
 }

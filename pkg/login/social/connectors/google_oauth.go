@@ -39,9 +39,8 @@ type googleUserData struct {
 }
 
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
-	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -67,6 +66,24 @@ func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSetti
 	}
 
 	// add specific validation rules for Google
+
+	return nil
+}
+
+func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	if strings.HasPrefix(newInfo.ApiUrl, legacyAPIURL) {
+		s.log.Warn("Using legacy Google API URL, please update your configuration")
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.SocialBase = newSocialBase(social.GoogleProviderName, newInfo, s.features, s.cfg)
 
 	return nil
 }
@@ -225,7 +242,7 @@ type googleGroupResp struct {
 }
 
 func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData) ([]string, error) {
-	s.log.Debug("Retrieving groups", "scopes", s.SocialBase.Config.Scopes)
+	s.log.Debug("Retrieving groups", "scopes", s.Config.Scopes)
 	if !slices.Contains(s.Scopes, googleIAMScope) {
 		return nil, nil
 	}
