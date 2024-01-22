@@ -36,9 +36,3 @@ export interface GrafanaPyroscope extends common.DataQuery {
    */
   spanSelector?: Array<string>;
 }
-
-export const defaultGrafanaPyroscope: Partial<GrafanaPyroscope> = {
-  groupBy: [],
-  labelSelector: '{}',
-  spanSelector: [],
-};
