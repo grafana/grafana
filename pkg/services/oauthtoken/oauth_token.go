@@ -34,6 +34,7 @@ var (
 const maxOAuthTokenCacheTTL = 10 * time.Minute
 
 type Service struct {
+	// TODO: add logger
 	Cfg               *setting.Cfg
 	SocialService     social.Service
 	AuthInfoService   login.AuthInfoService
@@ -274,7 +275,7 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	duration := time.Since(start)
-	o.tokenRefreshDuration.WithLabelValues(authProvider, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
+	o.tokenRefreshDuration.WithLabelValues(authProvider, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds()) // TODO add promethoeus registry
 
 	if err != nil {
 		logger.Error("Failed to retrieve oauth access token",
@@ -307,6 +308,8 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 		}
 		logger.Debug("Updated oauth info for user", "userId", usr.UserId)
 	}
+
+	fmt.Println("token", token)
 
 	return token, nil
 }
@@ -343,6 +346,7 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 		t1IdToken == t2IdToken
 }
 
+// TODO
 func needTokenRefresh(usr *login.UserAuth) (*oauth2.Token, bool, time.Duration) {
 	var accessTokenExpires, idTokenExpires time.Time
 	var hasAccessTokenExpired, hasIdTokenExpired bool

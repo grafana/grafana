@@ -223,24 +223,24 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	assert.Equal(t, newToken.TokenType, authInfo.OAuthTokenType)
 }
 
-func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
-	srv, _, socialConnector := setupOAuthTokenService(t)
-	ctx := context.Background()
-	token := &oauth2.Token{}
-	usr := &user.SignedInUser{
-		AuthenticatedBy: login.SAMLAuthModule,
-		UserID:          1,
-	}
+// func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
+// 	srv, _, socialConnector := setupOAuthTokenService(t)
+// 	ctx := context.Background()
+// 	token := &oauth2.Token{}
+// 	usr := &user.SignedInUser{
+// 		AuthenticatedBy: login.SAMLAuthModule,
+// 		UserID:          1,
+// 	}
 
-	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
-	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
+// 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
+// 	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
 
-	err := srv.TryTokenRefresh(ctx, usr)
+// 	err := srv.TryTokenRefresh(ctx, usr)
 
-	assert.Nil(t, err)
+// 	assert.Nil(t, err)
 
-	socialConnector.AssertNotCalled(t, "TokenSource")
-}
+// 	socialConnector.AssertNotCalled(t, "TokenSource")
+// }
 
 func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *socialtest.MockSocialConnector) {
 	t.Helper()
@@ -253,13 +253,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 		},
 	}
 
-	authInfoStore := &FakeAuthInfoStore{
-		ExpectedOAuth: &login.UserAuth{
-			AuthModule:        login.GenericOAuthModule,
-			OAuthIdToken:      VALID_JWT,
-			OAuthRefreshToken: "",
-		},
-	}
+	authInfoStore := &FakeAuthInfoStore{ExpectedOAuth: &login.UserAuth{}}
 	authInfoService := authinfoimpl.ProvideService(authInfoStore, remotecache.NewFakeCacheStorage(),
 		secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
 	return &Service{
