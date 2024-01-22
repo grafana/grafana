@@ -96,10 +96,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   };
 
-  onRegExChange = (event: FormEvent<HTMLTextAreaElement>) => {
-    this.setState({ regex: event.currentTarget.value });
-  };
-
   onRegExBlur = async (event: FormEvent<HTMLTextAreaElement>) => {
     const regex = event.currentTarget.value;
     if (this.props.variable.regex !== regex) {
@@ -148,7 +144,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         VariableQueryEditor={VariableQueryEditor}
         timeRange={timeRange}
         regex={variable.regex}
-        onRegExChange={this.onRegExChange}
+        onRegExChange={this.onRegExBlur}
         sort={variable.sort}
         onSortChange={this.onSortChange}
         refresh={variable.refresh}

@@ -102,9 +102,17 @@ export function QueryVariableEditorForm({
         width={52}
       />
 
-      <QueryVariableSortSelect onChange={onSortChange} sort={sort} />
+      <QueryVariableSortSelect
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
+        onChange={onSortChange}
+        sort={sort}
+      />
 
-      <QueryVariableRefreshSelect onChange={onRefreshChange} refresh={refresh} />
+      <QueryVariableRefreshSelect
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
+        onChange={onRefreshChange}
+        refresh={refresh}
+      />
 
       <VariableLegend>Selection options</VariableLegend>
       <SelectionOptionsForm

@@ -102,13 +102,6 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
             >
               {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
             </Button>
-            <Button
-              variant="destructive"
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
-              onClick={onDiscardChanges}
-            >
-              Discard changes
-            </Button>
           </HorizontalGroup>
         </div>
       </form>
