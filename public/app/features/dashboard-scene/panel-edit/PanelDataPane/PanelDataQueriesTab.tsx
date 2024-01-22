@@ -3,6 +3,7 @@ import React from 'react';
 import { DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
 import { SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+import { Button, HorizontalGroup } from '@grafana/ui';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
@@ -99,8 +100,18 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   getQueries() {
+    console.log('getQueries', this._panelManager.queryRunner.state.queries);
     return this._panelManager.queryRunner.state.queries;
   }
+
+  updateQueries = () => {
+    const queries = this.getQueries();
+    const query = { ...queries[0], key: 'B', refId: 'B' };
+    console.log('updateQueries', query);
+    this._panelManager.queryRunner.setState({
+      queries: [...queries, query],
+    });
+  };
 
   get panelManager() {
     return this._panelManager;
@@ -135,6 +146,30 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
       />
+
+      <HorizontalGroup spacing="md" align="flex-start">
+        {/* {showAddButton && ( */}
+        <Button
+          icon="plus"
+          onClick={model.updateQueries}
+          variant="secondary"
+          // data-testid={selectors.components.QueryTab.addQuery}
+        >
+          Add query
+        </Button>
+        {/* )} */}
+        {/* {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && ( */}
+        <Button
+          icon="plus"
+          // onClick={this.onAddExpressionClick}
+          variant="secondary"
+          // className={styles.expressionButton}
+          data-testid="query-tab-add-expression"
+        >
+          <span>Expression&nbsp;</span>
+        </Button>
+        {/* )} */}
+      </HorizontalGroup>
     </>
   );
 }
