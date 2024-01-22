@@ -1,6 +1,9 @@
 package notifications
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type FakeMailer struct {
 	Sent []*Message
@@ -12,7 +15,7 @@ func NewFakeMailer() *FakeMailer {
 	}
 }
 
-func (fm *FakeMailer) Send(messages ...*Message) (int, error) {
+func (fm *FakeMailer) Send(ctx context.Context, messages ...*Message) (int, error) {
 	sentEmailsCount := 0
 	for _, msg := range messages {
 		fm.Sent = append(fm.Sent, msg)
@@ -27,7 +30,7 @@ func NewFakeDisconnectedMailer() *FakeDisconnectedMailer {
 	return &FakeDisconnectedMailer{}
 }
 
-func (fdm *FakeDisconnectedMailer) Send(messages ...*Message) (int, error) {
+func (fdm *FakeDisconnectedMailer) Send(ctx context.Context, messages ...*Message) (int, error) {
 	return 0, fmt.Errorf("connect: connection refused")
 }
 

@@ -20,6 +20,7 @@ type SmtpSettings struct {
 	StartTLSPolicy string
 	SkipVerify     bool
 	StaticHeaders  map[string]string
+	EnableTracing  bool
 
 	SendWelcomeEmailOnSignUp bool
 	TemplatesPatterns        []string
@@ -52,6 +53,8 @@ func (cfg *Cfg) readSmtpSettings() error {
 	if err := cfg.readGrafanaSmtpStaticHeaders(); err != nil {
 		return err
 	}
+
+	cfg.Smtp.EnableTracing = sec.Key("enable_tracing").MustBool(false)
 
 	return nil
 }
