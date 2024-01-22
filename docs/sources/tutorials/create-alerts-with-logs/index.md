@@ -218,7 +218,7 @@ post_average_duration_ms = 2000
 
 
 while True:
-    
+
     # Exponential distribution random value of average 1/lines_per_second.
     d = random.expovariate(requests_per_second)
     time.sleep(d)
@@ -246,7 +246,7 @@ In a terminal window on linux-based systems run the command:
 
 chmod 755 ./web-server-logs-simulator.py
 
-````
+```
 
 1. Run the script.
 
@@ -359,7 +359,7 @@ post_average_duration_ms = 2000
 
 
 while True:
-    
+
     # Exponential distribution random value of average 1/lines_per_second.
     d = random.expovariate(requests_per_second)
     time.sleep(d)
@@ -429,4 +429,7 @@ If you don't see the logs in Explore, check these things:
 - If the file is empty, check that you followed the steps above to create the file and change the permissions.
 - If the file exists, verify that promtail is running and check that it is configured correctly.
 - In Grafana Explore, check that the time range is only for the last 5 minutes.
+
+```
+
 ```
