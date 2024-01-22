@@ -36,4 +36,14 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	require.Len(t, req.Queries, 1)
 	require.Equal(t, "b1808c48-9fc9-4045-82d7-081781f8a553", req.Queries[0].Datasource.UID)
 	require.Equal(t, "spreadsheetID", req.Queries[0].AdditionalProperties()["spreadsheet"])
+
+	// Write the query (with additional spreadsheetID) to JSON
+	out, err := json.MarshalIndent(req.Queries[0], "", "  ")
+	require.NoError(t, err)
+
+	// And read it back with standard JSON marshal functions
+	query := &v0alpha1.GenericDataQuery{}
+	err = json.Unmarshal(out, query)
+	require.NoError(t, err)
+	require.Equal(t, "spreadsheetID", query.AdditionalProperties()["spreadsheet"])
 }

@@ -119,7 +119,7 @@ func (g *GenericDataQuery) DeepCopy() *GenericDataQuery {
 
 // MarshalJSON ensures that the unstructured object produces proper
 // JSON when passed to Go's standard JSON library.
-func (g *GenericDataQuery) MarshalJSON() ([]byte, error) {
+func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	vals := map[string]any{}
 	if g.props != nil {
 		for k, v := range g.props {

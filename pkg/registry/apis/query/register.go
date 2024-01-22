@@ -100,7 +100,8 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	querySchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryRequest"].Schema
 
-	var exampleQuery any
+	var randomWalkQuery any
+	var randomWalkTable any
 	_ = json.Unmarshal([]byte(`{
 		"queries": [
 		  {
@@ -112,12 +113,30 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 			  "uid": "PD8C576611E62080A"
 			},
 			"intervalMs": 60000,
-			"maxDataPoints": 462
+			"maxDataPoints": 20
 		  }
 		],
 		"from": "1704893381544",
 		"to": "1704914981544"
-	  }`), &exampleQuery)
+	  }`), &randomWalkQuery)
+
+	_ = json.Unmarshal([]byte(`{
+		  "queries": [
+			{
+			  "refId": "A",
+			  "scenarioId": "random_walk_table",
+			  "seriesCount": 1,
+			  "datasource": {
+				"type": "grafana-testdata-datasource",
+				"uid": "PD8C576611E62080A"
+			  },
+			  "intervalMs": 60000,
+			  "maxDataPoints": 20
+			}
+		  ],
+		  "from": "1704893381544",
+		  "to": "1704914981544"
+		}`), &randomWalkTable)
 
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{},
@@ -148,7 +167,21 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 									Content: map[string]*spec3.MediaType{
 										"application/json": {
 											MediaTypeProps: spec3.MediaTypeProps{
-												Schema: querySchema.WithExample(exampleQuery),
+												Schema: querySchema.WithExample(randomWalkQuery),
+												Examples: map[string]*spec3.Example{
+													"random_walk": {
+														ExampleProps: spec3.ExampleProps{
+															Summary: "random walk",
+															Value:   randomWalkQuery,
+														},
+													},
+													"random_walk_table": {
+														ExampleProps: spec3.ExampleProps{
+															Summary: "random walk (table)",
+															Value:   randomWalkTable,
+														},
+													},
+												},
 											},
 										},
 									},

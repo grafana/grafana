@@ -55,6 +55,9 @@ func (d *dummyTestDataRunner) ExecuteQueryData(ctx context.Context,
 	// The raw backend query objects
 	query []backend.DataQuery,
 ) (*backend.QueryDataResponse, error) {
+	if group != "testdata.datasource.grafana.app" {
+		return nil, fmt.Errorf("expecting testdata requests")
+	}
 	return testdata.ProvideService().QueryData(ctx, &backend.QueryDataRequest{
 		Queries: query,
 	})

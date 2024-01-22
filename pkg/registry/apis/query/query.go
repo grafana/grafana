@@ -33,14 +33,11 @@ func (b *QueryAPIBuilder) handleQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: accept headers for protobuf
-	if false {
-		proto, _ := backend.ConvertToProtobuf{}.QueryDataResponse(rsp)
-		_, _ = w.Write([]byte(proto.String())) // ???
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(rsp)
+	if err != nil {
+		_, _ = w.Write([]byte("Error executing query: " + err.Error()))
 	}
-
-	data, _ := json.Marshal(rsp)
-	_, _ = w.Write(data)
 }
 
 // See:
@@ -65,7 +62,14 @@ func (b *QueryAPIBuilder) processRequest(ctx context.Context, req parsedQueryReq
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
 func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req groupedQueries) (*backend.QueryDataResponse, error) {
 	// convert pluginId to group+version
-	return b.runner.ExecuteQueryData(ctx, req.pluginId, "v0alpha1", req.uid, req.query)
+	group := ""
+	apiVersion := "v0alpha" // whatever is installed
+	if req.pluginId == "testdata" || req.pluginId == "grafana-testdata-datasource" {
+		group = "testdata.datasource.grafana.app"
+	} else {
+		return nil, fmt.Errorf("only testdata supported right now")
+	}
+	return b.runner.ExecuteQueryData(ctx, group, apiVersion, req.uid, req.query)
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
