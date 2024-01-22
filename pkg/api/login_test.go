@@ -122,8 +122,6 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	})
 
 	cfg.LoginCookieName = loginCookieName
-	setting.SecretKey = "login_testing"
-
 	cfg.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")

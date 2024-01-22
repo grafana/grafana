@@ -20,7 +20,7 @@ func TestImageUploaderFactory(t *testing.T) {
 			cfg.ImageUploadProvider = "s3"
 
 			t.Run("with bucket url https://foo.bar.baz.s3-us-east-2.amazonaws.com", func(t *testing.T) {
-				s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
+				s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
 				require.NoError(t, err)
 				_, err = s3sec.NewKey("bucket_url", "https://foo.bar.baz.s3-us-east-2.amazonaws.com")
 				require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestImageUploaderFactory(t *testing.T) {
 			})
 
 			t.Run("with bucket url https://s3.amazonaws.com/mybucket", func(t *testing.T) {
-				s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
+				s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
 				require.NoError(t, err)
 				_, err = s3sec.NewKey("bucket_url", "https://s3.amazonaws.com/my.bucket.com")
 				require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestImageUploaderFactory(t *testing.T) {
 			})
 
 			t.Run("with bucket url https://s3-us-west-2.amazonaws.com/mybucket", func(t *testing.T) {
-				s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
+				s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
 				require.NoError(t, err)
 				_, err = s3sec.NewKey("bucket_url", "https://s3-us-west-2.amazonaws.com/my.bucket.com")
 				require.NoError(t, err)

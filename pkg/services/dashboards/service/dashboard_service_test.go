@@ -118,17 +118,17 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should return validation error if alert data is invalid", func(t *testing.T) {
-				origAlertingEnabledSet := setting.AlertingEnabled != nil
+				origAlertingEnabledSet := service.cfg.AlertingEnabled != nil
 				origAlertingEnabledVal := false
 				if origAlertingEnabledSet {
-					origAlertingEnabledVal = *setting.AlertingEnabled
+					origAlertingEnabledVal = *(service.cfg.AlertingEnabled)
 				}
-				setting.AlertingEnabled = util.Pointer(true)
+				service.cfg.AlertingEnabled = util.Pointer(true)
 				t.Cleanup(func() {
 					if !origAlertingEnabledSet {
-						setting.AlertingEnabled = nil
+						service.cfg.AlertingEnabled = nil
 					} else {
-						setting.AlertingEnabled = &origAlertingEnabledVal
+						service.cfg.AlertingEnabled = &origAlertingEnabledVal
 					}
 				})
 

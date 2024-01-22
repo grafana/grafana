@@ -116,7 +116,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(dashboardLink)
 	}
 
-	if setting.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+	if s.cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		exploreChildNavLinks := s.buildExploreNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
@@ -129,14 +129,14 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
-	if setting.ProfileEnabled && c.IsSignedIn {
+	if s.cfg.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
 	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.SignedInUser.GetOrgID()]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
+	if s.cfg.AlertingEnabled != nil && *(s.cfg.AlertingEnabled) {
 		if legacyAlertSection := s.buildLegacyAlertNavLinks(c); legacyAlertSection != nil {
 			treeRoot.AddSection(legacyAlertSection)
 		}
@@ -208,7 +208,7 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 }
 
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
-	if setting.HelpEnabled {
+	if s.cfg.HelpEnabled {
 		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, getShortCommitHash(setting.BuildCommit, 10))
 		if s.cfg.AnonymousHideVersion && !c.IsSignedIn {
 			helpVersion = setting.ApplicationName

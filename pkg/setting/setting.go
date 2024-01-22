@@ -80,8 +80,6 @@ var (
 	// HTTP server options
 	StaticRootPath string
 
-	// Security settings.
-	SecretKey              string
 	DisableGravatar        bool
 	DataProxyWhiteList     map[string]bool
 	CookieSecure           bool
@@ -103,41 +101,10 @@ var (
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
 
-	// HTTP auth
-	SigV4AuthEnabled bool
-	AzureAuthEnabled bool
-
-	// Global setting objects.
-	Raw *ini.File
-
 	// for logging purposes
 	configFiles                  []string
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
-
-	// Alerting
-	AlertingEnabled            *bool
-	ExecuteAlerts              bool
-	AlertingRenderLimit        int
-	AlertingErrorOrTimeout     string
-	AlertingNoDataOrNullValues string
-
-	AlertingEvaluationTimeout   time.Duration
-	AlertingNotificationTimeout time.Duration
-	AlertingMaxAttempts         int
-	AlertingMinInterval         int64
-
-	// Explore UI
-	ExploreEnabled bool
-
-	// Help UI
-	HelpEnabled bool
-
-	// Profile UI
-	ProfileEnabled bool
-
-	// News Feed
-	NewsFeedEnabled bool
 )
 
 // TODO move all global vars to this struct
@@ -544,6 +511,30 @@ type Cfg struct {
 
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
+
+	// Alerting
+	AlertingEnabled            *bool
+	ExecuteAlerts              bool
+	AlertingRenderLimit        int
+	AlertingErrorOrTimeout     string
+	AlertingNoDataOrNullValues string
+
+	AlertingEvaluationTimeout   time.Duration
+	AlertingNotificationTimeout time.Duration
+	AlertingMaxAttempts         int
+	AlertingMinInterval         int64
+
+	// Explore UI
+	ExploreEnabled bool
+
+	// Help UI
+	HelpEnabled bool
+
+	// Profile UI
+	ProfileEnabled bool
+
+	// News Feed
+	NewsFeedEnabled bool
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1021,9 +1012,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.Raw = iniFile
 
-	// Temporarily keep global, to make refactor in steps
-	Raw = cfg.Raw
-
 	cfg.BuildVersion = BuildVersion
 	cfg.BuildCommit = BuildCommit
 	cfg.EnterpriseBuildCommit = EnterpriseBuildCommit
@@ -1129,21 +1117,21 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
-	if err := readAlertingSettings(iniFile); err != nil {
+	if err := cfg.readAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
 	explore := iniFile.Section("explore")
-	ExploreEnabled = explore.Key("enabled").MustBool(true)
+	cfg.ExploreEnabled = explore.Key("enabled").MustBool(true)
 
 	help := iniFile.Section("help")
-	HelpEnabled = help.Key("enabled").MustBool(true)
+	cfg.HelpEnabled = help.Key("enabled").MustBool(true)
 
 	profile := iniFile.Section("profile")
-	ProfileEnabled = profile.Key("enabled").MustBool(true)
+	cfg.ProfileEnabled = profile.Key("enabled").MustBool(true)
 
 	news := iniFile.Section("news")
-	NewsFeedEnabled = news.Key("news_feed_enabled").MustBool(true)
+	cfg.NewsFeedEnabled = news.Key("news_feed_enabled").MustBool(true)
 
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
@@ -1418,8 +1406,7 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
-	SecretKey = valueAsString(security, "secret_key", "")
-	cfg.SecretKey = SecretKey
+	cfg.SecretKey = valueAsString(security, "secret_key", "")
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 
@@ -1541,13 +1528,11 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
 
 	// SigV4
-	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
-	cfg.SigV4AuthEnabled = SigV4AuthEnabled
+	cfg.SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
 	cfg.SigV4VerboseLogging = auth.Key("sigv4_verbose_logging").MustBool(false)
 
 	// Azure Auth
-	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
-	cfg.AzureAuthEnabled = AzureAuthEnabled
+	cfg.AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
 
 	// ID response header
 	cfg.IDResponseHeaderEnabled = auth.Key("id_response_header_enabled").MustBool(false)
@@ -1728,27 +1713,33 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	return nil
 }
 
-func readAlertingSettings(iniFile *ini.File) error {
+func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
 	enabled, err := alerting.Key("enabled").Bool()
-	AlertingEnabled = nil
+	cfg.AlertingEnabled = nil
 	if err == nil {
-		AlertingEnabled = &enabled
+		cfg.AlertingEnabled = &enabled
 	}
-	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
-	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
+	cfg.ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	cfg.AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 
-	AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
-	AlertingNoDataOrNullValues = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
+	cfg.AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
+	cfg.AlertingNoDataOrNullValues = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
 
 	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
-	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
+	cfg.AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
-	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
-	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
+	cfg.AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
+	cfg.AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
+	cfg.AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
 	return nil
+}
+
+// IsLegacyAlertingEnabled returns whether the legacy alerting is enabled or not.
+// It's safe to be used only after readAlertingSettings() and ReadUnifiedAlertingSettings() are executed.
+func (cfg *Cfg) IsLegacyAlertingEnabled() bool {
+	return cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled)
 }
 
 func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
@@ -1811,12 +1802,6 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCServerNetwork)
 	}
 	return nil
-}
-
-// IsLegacyAlertingEnabled returns whether the legacy alerting is enabled or not.
-// It's safe to be used only after readAlertingSettings() and ReadUnifiedAlertingSettings() are executed.
-func IsLegacyAlertingEnabled() bool {
-	return AlertingEnabled != nil && *AlertingEnabled
 }
 
 func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {

@@ -24,7 +24,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewEmailNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewEmailNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -41,7 +41,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewEmailNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewEmailNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			emailNotifier := not.(*EmailNotifier)
 
 			require.Nil(t, err)
@@ -65,7 +65,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewEmailNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewEmailNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			emailNotifier := not.(*EmailNotifier)
 
 			require.Nil(t, err)

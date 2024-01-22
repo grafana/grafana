@@ -103,6 +103,6 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 		folderPermissions:              folderPermissions,
 		dashboardPermissions:           dashboardPermissions,
 		orgService:                     orgService,
-		legacyAlertNotificationService: legacyalerting.ProvideService(sqlStore, encryptionservice.SetupTestService(t), nil),
+		legacyAlertNotificationService: legacyalerting.ProvideService(cfg, sqlStore, encryptionservice.SetupTestService(t), nil),
 	}
 }

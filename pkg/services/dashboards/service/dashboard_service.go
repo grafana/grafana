@@ -311,7 +311,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), false)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, dr.cfg.IsLegacyAlertingEnabled(), false)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +330,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	}
 
 	// extract/save legacy alerts only if legacy alerting is enabled
-	if setting.IsLegacyAlertingEnabled() {
+	if dr.cfg.IsLegacyAlertingEnabled() {
 		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
 		if err != nil {
 			return nil, err
@@ -371,7 +371,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), !allowUiUpdate)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, dr.cfg.IsLegacyAlertingEnabled(), !allowUiUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +388,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	}
 
 	// extract/save legacy alerts only if legacy alerting is enabled
-	if setting.IsLegacyAlertingEnabled() {
+	if dr.cfg.IsLegacyAlertingEnabled() {
 		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
 		if err != nil {
 			return nil, err

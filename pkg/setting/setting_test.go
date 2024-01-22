@@ -474,7 +474,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "false",
 			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -482,8 +482,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, true)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, *(cfg.AlertingEnabled), true)
 			},
 		},
 		{
@@ -492,7 +492,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "true",
 			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -500,8 +500,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, false)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, *(cfg.AlertingEnabled), false)
 			},
 		},
 		{
@@ -510,7 +510,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "true",
 			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -524,7 +524,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "false",
 			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -532,8 +532,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, true)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, *(cfg.AlertingEnabled), true)
 			},
 		},
 		{
@@ -542,7 +542,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "true",
 			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -550,8 +550,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, false)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, *(cfg.AlertingEnabled), false)
 			},
 		},
 		{
@@ -560,7 +560,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -568,8 +568,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, true, *cfg.UnifiedAlerting.Enabled)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, false, *AlertingEnabled)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, false, *(cfg.AlertingEnabled))
 			},
 		},
 		{
@@ -578,15 +578,15 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "invalid",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
 				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, false, *AlertingEnabled)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, false, *(cfg.AlertingEnabled))
 			},
 		},
 		{
@@ -595,7 +595,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "",
 			isEnterprise:           true,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -603,8 +603,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, true, *cfg.UnifiedAlerting.Enabled)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, false, *AlertingEnabled)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, false, *(cfg.AlertingEnabled))
 			},
 		},
 		{
@@ -613,15 +613,15 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "invalid",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
 				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, false, *AlertingEnabled)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, false, *(cfg.AlertingEnabled))
 			},
 		},
 		{
@@ -630,7 +630,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -638,8 +638,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, false)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, *(cfg.AlertingEnabled), false)
 			},
 		},
 		{
@@ -648,15 +648,15 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "invalid",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
 				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, false, *AlertingEnabled)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, false, *(cfg.AlertingEnabled))
 			},
 		},
 		{
@@ -665,7 +665,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "",
 			isEnterprise:           true,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -673,8 +673,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, false)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, *(cfg.AlertingEnabled), false)
 			},
 		},
 		{
@@ -683,15 +683,15 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "invalid",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
 				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, false, *AlertingEnabled)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, false, *(cfg.AlertingEnabled))
 			},
 		},
 		{
@@ -700,7 +700,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -708,7 +708,7 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.True(t, *cfg.UnifiedAlerting.Enabled)
-				assert.Nil(t, AlertingEnabled)
+				assert.Nil(t, cfg.AlertingEnabled)
 			},
 		},
 		{
@@ -717,15 +717,15 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "invalid",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
 				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, false, *AlertingEnabled)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, false, *(cfg.AlertingEnabled))
 			},
 		},
 		{
@@ -734,7 +734,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "",
 			isEnterprise:           true,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -742,7 +742,7 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.True(t, *cfg.UnifiedAlerting.Enabled)
-				assert.Nil(t, AlertingEnabled)
+				assert.Nil(t, cfg.AlertingEnabled)
 			},
 		},
 		{
@@ -751,15 +751,15 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "invalid",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
 				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, false, *AlertingEnabled)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, false, *(cfg.AlertingEnabled))
 			},
 		},
 		{
@@ -768,7 +768,7 @@ func TestAlertingEnabled(t *testing.T) {
 			unifiedAlertingEnabled: "false",
 			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
+				err := cfg.readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
@@ -776,8 +776,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, false)
+				assert.NotNil(t, cfg.AlertingEnabled)
+				assert.Equal(t, *(cfg.AlertingEnabled), false)
 			},
 		},
 	}
@@ -790,9 +790,6 @@ func TestAlertingEnabled(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			IsEnterprise = tc.isEnterprise
-			t.Cleanup(func() {
-				AlertingEnabled = nil
-			})
 
 			f := ini.Empty()
 			cfg := NewCfg()

@@ -35,7 +35,7 @@ var (
 func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 	switch cfg.ImageUploadProvider {
 	case "s3":
-		s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
+		s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +64,7 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 
 		return NewS3Uploader(endpoint, region, bucket, path, "public-read", accessKey, secretKey, pathStyleAccess), nil
 	case "webdav":
-		webdavSec, err := setting.Raw.GetSection("external_image_storage.webdav")
+		webdavSec, err := cfg.Raw.GetSection("external_image_storage.webdav")
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 
 		return NewWebdavImageUploader(url, username, password, public_url)
 	case "gcs":
-		gcssec, err := setting.Raw.GetSection("external_image_storage.gcs")
+		gcssec, err := cfg.Raw.GetSection("external_image_storage.gcs")
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +102,7 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 
 		return gcs.NewUploader(keyFile, bucketName, path, enableSignedURLs, suExp)
 	case "azure_blob":
-		azureBlobSec, err := setting.Raw.GetSection("external_image_storage.azure_blob")
+		azureBlobSec, err := cfg.Raw.GetSection("external_image_storage.azure_blob")
 		if err != nil {
 			return nil, err
 		}
