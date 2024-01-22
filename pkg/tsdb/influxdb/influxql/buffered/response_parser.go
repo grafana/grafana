@@ -339,7 +339,10 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	frame := data.NewFrame(row.Name, field)
 	frame.Meta = &data.FrameMeta{
 		ExecutedQueryString:    query.RawQuery,
-		PreferredVisualization: util.GetVisType(query.ResultFormat),
+		PreferredVisualization: util.TableVisType,
+	}
+	if query.ResultFormat == "logs" {
+		frame.Meta.PreferredVisualization = util.LogsVisType
 	}
 	return frame
 }
