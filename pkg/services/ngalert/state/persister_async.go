@@ -15,20 +15,22 @@ type AsyncStatePersister struct {
 	// doNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods.
 	doNotSaveNormalState bool
 	store                InstanceStore
+	ticker               *clock.Ticker
 }
 
-func NewAsyncStatePersister(log log.Logger, cfg ManagerCfg) StatePersister {
+func NewAsyncStatePersister(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg) StatePersister {
 	return &AsyncStatePersister{
 		log:                  log,
 		store:                cfg.InstanceStore,
+		ticker:               ticker,
 		doNotSaveNormalState: cfg.DoNotSaveNormalState,
 	}
 }
 
-func (a *AsyncStatePersister) Async(ctx context.Context, ticker *clock.Ticker, cache *cache) {
+func (a *AsyncStatePersister) Async(ctx context.Context, cache *cache) {
 	for {
 		select {
-		case <-ticker.C:
+		case <-a.ticker.C:
 			if err := a.fullSync(ctx, cache); err != nil {
 				a.log.Error("Failed to do a full state sync to database", "err", err)
 			}
@@ -37,7 +39,7 @@ func (a *AsyncStatePersister) Async(ctx context.Context, ticker *clock.Ticker, c
 			if err := a.fullSync(context.Background(), cache); err != nil {
 				a.log.Error("Failed to do a full state sync to database", "err", err)
 			}
-			ticker.Stop()
+			a.ticker.Stop()
 			a.log.Info("State async worker is shut down.")
 			return
 		}
