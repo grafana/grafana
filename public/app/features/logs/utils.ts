@@ -298,13 +298,14 @@ export function targetIsElement(target: EventTarget | null): target is Element {
   return target instanceof Element;
 }
 
-export function findMatchingRow(target: LogRowModel, rows: LogRowModel[]) {
-  return rows.find((row) => {
-    if (target.dataFrame.refId !== row.dataFrame.refId) {
-      return false;
+export function createLogRowsMap() {
+  const logRowsSet = new Set();
+  return function (target: LogRowModel): boolean {
+    let id = `${target.dataFrame.refId}_${target.rowId ? target.rowId : `${target.timeEpochNs}_${target.entry}`}`;
+    if (logRowsSet.has(id)) {
+      return true;
     }
-    const sameId = target.rowId && row.rowId && target.rowId === row.rowId;
-    const sameSignature = row.entry === target.entry && row.timeEpochNs === target.timeEpochNs;
-    return sameId || sameSignature;
-  });
+    logRowsSet.add(id);
+    return false;
+  };
 }

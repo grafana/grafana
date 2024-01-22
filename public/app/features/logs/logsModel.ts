@@ -46,7 +46,7 @@ import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
-import { findMatchingRow, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
+import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -415,6 +415,7 @@ export function logSeriesToLogsModel(
   let rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
+  const findMatchingRow = createLogRowsMap();
   for (const info of allSeries) {
     const { logsFrame, rawFrame: series, frameLabels } = info;
     const { timeField, timeNanosecondField, bodyField: stringField, severityField: logLevelField, idField } = logsFrame;
@@ -478,7 +479,7 @@ export function logSeriesToLogsModel(
         row.rowId = idField.values[j];
       }
 
-      if (filterDuplicateRows && findMatchingRow(row, rows)) {
+      if (filterDuplicateRows && findMatchingRow(row)) {
         continue;
       }
 
