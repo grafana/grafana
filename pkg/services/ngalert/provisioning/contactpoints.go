@@ -12,8 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
@@ -27,11 +25,10 @@ type ContactPointService struct {
 	provenanceStore   ProvisioningStore
 	xact              TransactionManager
 	log               log.Logger
-	ac                accesscontrol.AccessControl
 }
 
 func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
-	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger, ac accesscontrol.AccessControl) *ContactPointService {
+	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger) *ContactPointService {
 	return &ContactPointService{
 		configStore: &alertmanagerConfigStoreImpl{
 			store: store,
@@ -40,7 +37,6 @@ func NewContactPointService(store AMConfigStore, encryptionService secrets.Servi
 		provenanceStore:   provenanceStore,
 		xact:              xact,
 		log:               log,
-		ac:                ac,
 	}
 }
 
@@ -52,23 +48,8 @@ type ContactPointQuery struct {
 	Decrypt bool
 }
 
-func (ecp *ContactPointService) canDecryptSecrets(ctx context.Context, u identity.Requester) bool {
-	if u == nil {
-		return false
-	}
-	permitted, err := ecp.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets))
-	if err != nil {
-		ecp.log.Error("Failed to evaluate user permissions", "error", err)
-		permitted = false
-	}
-	return permitted
-}
-
 // GetContactPoints returns contact points. If q.Decrypt is true and the user is an OrgAdmin, decrypted secure settings are included instead of redacted ones.
-func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery, u identity.Requester) ([]apimodels.EmbeddedContactPoint, error) {
-	if q.Decrypt && !ecp.canDecryptSecrets(ctx, u) {
-		return nil, fmt.Errorf("%w: user requires Admin role or alert.provisioning.secrets:read permission to view decrypted secure settings", ErrPermissionDenied)
-	}
+func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery) ([]apimodels.EmbeddedContactPoint, error) {
 	revision, err := ecp.configStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err

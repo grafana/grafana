@@ -9,9 +9,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -23,6 +26,7 @@ const disableProvenanceHeaderName = "X-Disable-Provenance"
 
 type ProvisioningSrv struct {
 	log                 log.Logger
+	ac                  accesscontrol.AccessControl
 	policies            NotificationPolicyService
 	contactPointService ContactPointService
 	templates           TemplateService
@@ -31,7 +35,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user identity.Requester) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
@@ -128,7 +132,7 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 		Name:  c.Query("name"),
 		OrgID: c.SignedInUser.GetOrgID(),
 	}
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, nil)
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrPermissionDenied) {
 			return ErrResp(http.StatusForbidden, err, "")
@@ -144,7 +148,16 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 		OrgID:   c.SignedInUser.GetOrgID(),
 		Decrypt: c.QueryBoolWithDefault("decrypt", false),
 	}
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
+
+	if q.Decrypt {
+		action := accesscontrol.ActionAlertingProvisioningReadSecrets
+		evaluator := accesscontrol.EvalPermission(action)
+		if !accesscontrol.HasAccess(srv.ac, c)(evaluator) {
+			return response.Err(authz.NewAuthorizationErrorWithPermissions("read contact point secrets", evaluator))
+		}
+	}
+
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrPermissionDenied) {
 			return ErrResp(http.StatusForbidden, err, "")
@@ -619,4 +632,8 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 			SetHeader("Content-Disposition", `attachment;filename=export.tf`)
 	}
 	return resp.SetHeader("Content-Type", "text/hcl")
+}
+
+func saveTrans(ctx context.Context) error {
+	return nil
 }
