@@ -186,8 +186,8 @@ func (m *SeedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migra
 		return nil
 	}
 
-	// By default basic roles have the permission to access all app plugins. There is no need for this extra permission.
-	// Mark the OnCall Access permission as already seeded to prevent it to be added to basic roles.
+	// By default, basic roles have access to all app plugins; no need for extra permission.
+	// Mark OnCall Access permission as already seeded to prevent it from being added to basic roles.
 	toSeed := []SeedAssignment{}
 	for br := range basicRoles {
 		toSeed = append(toSeed, SeedAssignment{
