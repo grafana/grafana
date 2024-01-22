@@ -4,7 +4,7 @@
 // spec for the Grafana Alerting API.
 //
 //	 Schemes: http, https
-//	 BasePath: /api/v1
+//	 BasePath: /api
 //	 Version: 1.1.0
 //
 //	 Consumes:

@@ -78,7 +78,7 @@ export const LokiQueryBuilder = React.memo<Props>(
         values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
       } else {
         const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-        const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+        const result = await datasource.languageProvider.fetchSeriesLabels(expr, { timeRange });
         values = result[datasource.interpolateString(forLabel.label)];
       }
 
