@@ -55,6 +55,8 @@ const (
 const zoneInfo = "ZONEINFO"
 
 var (
+	customInitPath = "conf/custom.ini"
+
 	// App settings.
 	Env          = Dev
 	AppUrl       string
@@ -72,15 +74,6 @@ var (
 	// packaging
 	Packaging = "unknown"
 
-	// Paths
-	HomePath       string
-	CustomInitPath = "conf/custom.ini"
-
-	// HTTP server options
-	StaticRootPath string
-
-	DisableGravatar        bool
-	DataProxyWhiteList     map[string]bool
 	CookieSecure           bool
 	CookieSameSiteDisabled bool
 	CookieSameSiteMode     http.SameSite
@@ -192,6 +185,8 @@ type Cfg struct {
 	CSPReportOnlyTemplate            string
 	AngularSupportEnabled            bool
 	DisableFrontendSandboxForPlugins []string
+	DisableGravatar                  bool
+	DataProxyWhiteList               map[string]bool
 
 	TempDataLifetime time.Duration
 
@@ -808,7 +803,7 @@ func makeAbsolute(path string, root string) string {
 
 func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 	if configFile == "" {
-		configFile = filepath.Join(cfg.HomePath, CustomInitPath)
+		configFile = filepath.Join(cfg.HomePath, customInitPath)
 		// return without error if custom file does not exist
 		if !pathExists(configFile) {
 			return nil
@@ -846,7 +841,7 @@ func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File)
 
 func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	// load config defaults
-	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
+	defaultConfigFile := path.Join(cfg.HomePath, "conf/defaults.ini")
 	cfg.configFiles = append(cfg.configFiles, defaultConfigFile)
 
 	// check if config file exists
@@ -899,7 +894,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	// update data path and logging config
 	dataPath := valueAsString(parsedFile.Section("paths"), "data", "")
 
-	cfg.DataPath = makeAbsolute(dataPath, HomePath)
+	cfg.DataPath = makeAbsolute(dataPath, cfg.HomePath)
 	err = cfg.initLogging(parsedFile)
 	if err != nil {
 		return nil, err
@@ -924,7 +919,6 @@ func pathExists(path string) bool {
 func (cfg *Cfg) setHomePath(args CommandLineArgs) {
 	if args.HomePath != "" {
 		cfg.HomePath = args.HomePath
-		HomePath = cfg.HomePath
 		return
 	}
 
@@ -934,7 +928,6 @@ func (cfg *Cfg) setHomePath(args CommandLineArgs) {
 		panic(err)
 	}
 
-	HomePath = cfg.HomePath
 	// check if homepath is correct
 	if pathExists(filepath.Join(cfg.HomePath, "conf/defaults.ini")) {
 		return
@@ -943,7 +936,6 @@ func (cfg *Cfg) setHomePath(args CommandLineArgs) {
 	// try down one path
 	if pathExists(filepath.Join(cfg.HomePath, "../conf/defaults.ini")) {
 		cfg.HomePath = filepath.Join(cfg.HomePath, "../")
-		HomePath = cfg.HomePath
 	}
 }
 
@@ -985,7 +977,7 @@ func (cfg *Cfg) validateStaticRootPath() error {
 		return nil
 	}
 
-	if _, err := os.Stat(path.Join(StaticRootPath, "build")); err != nil {
+	if _, err := os.Stat(path.Join(cfg.StaticRootPath, "build")); err != nil {
 		cfg.Logger.Error("Failed to detect generated javascript files in public/build")
 	}
 
@@ -999,7 +991,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	// Fix for missing IANA db on Windows
 	_, zoneInfoSet := os.LookupEnv(zoneInfo)
 	if runtime.GOOS == "windows" && !zoneInfoSet {
-		if err := os.Setenv(zoneInfo, filepath.Join(HomePath, "tools", "zoneinfo.zip")); err != nil {
+		if err := os.Setenv(zoneInfo, filepath.Join(cfg.HomePath, "tools", "zoneinfo.zip")); err != nil {
 			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
 		}
 	}
@@ -1033,10 +1025,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
-	cfg.PluginsPath = makeAbsolute(plugins, HomePath)
-	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
+	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
+	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
-	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
+	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
 	if err := cfg.readServerSettings(iniFile); err != nil {
 		return err
@@ -1330,7 +1322,7 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 		logModes = strings.Split(logModeStr, " ")
 	}
 	logsPath := valueAsString(file.Section("paths"), "logs", "")
-	cfg.LogsPath = makeAbsolute(logsPath, HomePath)
+	cfg.LogsPath = makeAbsolute(logsPath, cfg.HomePath)
 	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
@@ -1355,7 +1347,7 @@ func (cfg *Cfg) LogConfigSources() {
 	}
 
 	cfg.Logger.Info("Target", "target", cfg.Target)
-	cfg.Logger.Info("Path Home", "path", HomePath)
+	cfg.Logger.Info("Path Home", "path", cfg.HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
 	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPath)
@@ -1406,7 +1398,7 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	cfg.SecretKey = valueAsString(security, "secret_key", "")
-	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
@@ -1461,11 +1453,11 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 
 	// read data source proxy whitelist
-	DataProxyWhiteList = make(map[string]bool)
+	cfg.DataProxyWhiteList = make(map[string]bool)
 	securityStr := valueAsString(security, "data_source_proxy_whitelist", "")
 
 	for _, hostAndIP := range util.SplitString(securityStr) {
-		DataProxyWhiteList[hostAndIP] = true
+		cfg.DataProxyWhiteList[hostAndIP] = true
 	}
 
 	// admin
@@ -1863,8 +1855,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
 	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	staticRoot := valueAsString(server, "static_root_path", "")
-	StaticRootPath = makeAbsolute(staticRoot, HomePath)
-	cfg.StaticRootPath = StaticRootPath
+	cfg.StaticRootPath = makeAbsolute(staticRoot, cfg.HomePath)
 
 	if err := cfg.validateStaticRootPath(); err != nil {
 		return err

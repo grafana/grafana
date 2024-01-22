@@ -185,6 +185,7 @@ func NewSlackNotifier(cfg *setting.Cfg, model *models.AlertNotification, fn aler
 		token:          token,
 		upload:         uploadImage,
 		log:            log.New("alerting.notifier.slack"),
+		homePath:       cfg.HomePath,
 	}, nil
 }
 
@@ -203,6 +204,7 @@ type SlackNotifier struct {
 	token          string
 	upload         bool
 	log            log.Logger
+	homePath       string
 }
 
 // Notify sends an alert notification to Slack.
@@ -408,7 +410,7 @@ func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log 
 	if evalContext.ImageOnDiskPath == "" {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `setting.HomePath` comes from Grafana's configuration file.
-		evalContext.ImageOnDiskPath = filepath.Join(setting.HomePath, "public/img/mixed_styles.png")
+		evalContext.ImageOnDiskPath = filepath.Join(sn.homePath, "public/img/mixed_styles.png")
 	}
 	log.Info("Uploading to slack via file.upload API")
 	headers, uploadBody, err := sn.generateSlackBody(evalContext.ImageOnDiskPath, token, recipient)

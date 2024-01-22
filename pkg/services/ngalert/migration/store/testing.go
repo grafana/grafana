@@ -73,10 +73,10 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
+		cfg, features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
+		cfg, features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(

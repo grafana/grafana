@@ -54,13 +54,13 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("sample.ini should load successfully", func(t *testing.T) {
-		customInitPath := CustomInitPath
-		CustomInitPath = "conf/sample.ini"
+		oldCustomInitPath := customInitPath
+		customInitPath = "conf/sample.ini"
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 		// Restore CustomInitPath to avoid side effects.
-		CustomInitPath = customInitPath
+		customInitPath = oldCustomInitPath
 	})
 
 	t.Run("Should be able to override via environment variables", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestLoadingSettings(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, "superduper", cfg.AdminUser)
-		require.Equal(t, filepath.Join(HomePath, "data"), cfg.DataPath)
+		require.Equal(t, filepath.Join(cfg.HomePath, "data"), cfg.DataPath)
 		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
 	})
 
@@ -147,7 +147,7 @@ func TestLoadingSettings(t *testing.T) {
 			Args: []string{
 				"cfg:default.server.domain=test2",
 			},
-			Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+			Config: filepath.Join("../../", "pkg/setting/testdata/override.ini"),
 		})
 		require.Nil(t, err)
 
@@ -161,7 +161,7 @@ func TestLoadingSettings(t *testing.T) {
 			Args: []string{
 				"cfg:default.server.min_tls_version=TLS1.3",
 			},
-			Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+			Config: filepath.Join("../../", "pkg/setting/testdata/override.ini"),
 		})
 		require.Nil(t, err)
 
@@ -173,7 +173,7 @@ func TestLoadingSettings(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
-				Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
+				Config:   filepath.Join("../../", "pkg/setting/testdata/override_windows.ini"),
 				Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
 			})
 			require.Nil(t, err)
@@ -183,7 +183,7 @@ func TestLoadingSettings(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
-				Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+				Config:   filepath.Join("../../", "pkg/setting/testdata/override.ini"),
 				Args:     []string{"cfg:default.paths.data=/tmp/data"},
 			})
 			require.Nil(t, err)
@@ -197,7 +197,7 @@ func TestLoadingSettings(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
-				Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
+				Config:   filepath.Join("../../", "pkg/setting/testdata/override_windows.ini"),
 				Args:     []string{`cfg:paths.data=c:\tmp\data`},
 			})
 			require.Nil(t, err)
@@ -207,7 +207,7 @@ func TestLoadingSettings(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
-				Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+				Config:   filepath.Join("../../", "pkg/setting/testdata/override.ini"),
 				Args:     []string{"cfg:paths.data=/tmp/data"},
 			})
 			require.Nil(t, err)
@@ -275,7 +275,10 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("Test reading string values from .ini file", func(t *testing.T) {
-		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+		iniFile, err := ini.Load(path.Join(cfg.HomePath, "pkg/setting/testdata/invalid.ini"))
 		require.Nil(t, err)
 
 		t.Run("If key is found - should return value from ini file", func(t *testing.T) {

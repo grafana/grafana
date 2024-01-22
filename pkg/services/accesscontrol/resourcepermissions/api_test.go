@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -432,7 +431,7 @@ func TestApi_setUserPermission(t *testing.T) {
 
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
-	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	server.UseMiddleware(web.Renderer(path.Join("", "views"), "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
 	service.api.router.Register(server)
 	return server

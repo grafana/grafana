@@ -100,7 +100,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgName:                    c.OrgName,
 			OrgRole:                    c.SignedInUser.GetOrgRole(),
 			OrgCount:                   hs.getUserOrgCount(c, userID),
-			GravatarUrl:                dtos.GetGravatarUrl(c.SignedInUser.GetEmail()),
+			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.SignedInUser.GetEmail()),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
 			LightTheme:                 theme.Type == "light",
@@ -149,7 +149,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
-	if setting.DisableGravatar {
+	if hs.Cfg.DisableGravatar {
 		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/img/user_profile.png"
 	}
 

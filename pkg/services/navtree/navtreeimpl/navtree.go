@@ -252,7 +252,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	if c.SignedInUser.GetLogin() != c.SignedInUser.GetDisplayName() {
 		login = c.SignedInUser.GetLogin()
 	}
-	gravatarURL := dtos.GetGravatarUrl(c.SignedInUser.GetEmail())
+	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.SignedInUser.GetEmail())
 
 	children := []*navtree.NavLink{
 		{

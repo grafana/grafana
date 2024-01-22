@@ -83,7 +83,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 
 	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
-	m.UseMiddleware(web.Renderer(filepath.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	m.UseMiddleware(web.Renderer(filepath.Join("", "views"), "[[", "]]"))
 	m.Get("/api/frontend/settings/", hs.GetFrontendSettings)
 
 	return m, hs
