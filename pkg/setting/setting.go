@@ -100,11 +100,6 @@ var (
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
-
-	// for logging purposes
-	configFiles                  []string
-	appliedCommandLineProperties []string
-	appliedEnvOverrides          []string
 )
 
 // TODO move all global vars to this struct
@@ -112,6 +107,11 @@ type Cfg struct {
 	Target []string
 	Raw    *ini.File
 	Logger log.Logger
+
+	// for logging purposes
+	configFiles                  []string
+	appliedCommandLineProperties []string
+	appliedEnvOverrides          []string
 
 	// HTTP Server Settings
 	CertFile         string
@@ -645,8 +645,8 @@ func RedactedURL(value string) (string, error) {
 	return strings.Join(chunks, " "), nil
 }
 
-func applyEnvVariableOverrides(file *ini.File) error {
-	appliedEnvOverrides = make([]string, 0)
+func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
+	cfg.appliedEnvOverrides = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			envKey := EnvKey(section.Name(), key.Name())
@@ -654,7 +654,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
-				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+				cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 			}
 		}
 	}
@@ -748,22 +748,22 @@ func EnvKey(sectionName string, keyName string) string {
 	return envKey
 }
 
-func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
-	appliedCommandLineProperties = make([]string, 0)
+func (cfg *Cfg) applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
+	cfg.appliedCommandLineProperties = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			keyString := fmt.Sprintf("default.%s.%s", section.Name(), key.Name())
 			value, exists := props[keyString]
 			if exists {
 				key.SetValue(value)
-				appliedCommandLineProperties = append(appliedCommandLineProperties,
+				cfg.appliedCommandLineProperties = append(cfg.appliedCommandLineProperties,
 					fmt.Sprintf("%s=%s", keyString, RedactedValue(keyString, value)))
 			}
 		}
 	}
 }
 
-func applyCommandLineProperties(props map[string]string, file *ini.File) {
+func (cfg *Cfg) applyCommandLineProperties(props map[string]string, file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DefaultSection {
@@ -773,7 +773,7 @@ func applyCommandLineProperties(props map[string]string, file *ini.File) {
 			keyString := sectionName + key.Name()
 			value, exists := props[keyString]
 			if exists {
-				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+				cfg.appliedCommandLineProperties = append(cfg.appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 				key.SetValue(value)
 			}
 		}
@@ -841,14 +841,14 @@ func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File)
 		}
 	}
 
-	configFiles = append(configFiles, configFile)
+	cfg.configFiles = append(cfg.configFiles, configFile)
 	return nil
 }
 
 func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	// load config defaults
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
-	configFiles = append(configFiles, defaultConfigFile)
+	cfg.configFiles = append(cfg.configFiles, defaultConfigFile)
 
 	// check if config file exists
 	if _, err := os.Stat(defaultConfigFile); os.IsNotExist(err) {
@@ -869,7 +869,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	// command line props
 	commandLineProps := cfg.getCommandLineProperties(args.Args)
 	// load default overrides
-	applyCommandLineDefaultProperties(commandLineProps, parsedFile)
+	cfg.applyCommandLineDefaultProperties(commandLineProps, parsedFile)
 
 	// load specified config file
 	err = cfg.loadSpecifiedConfigFile(args.Config, parsedFile)
@@ -883,13 +883,13 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	}
 
 	// apply environment overrides
-	err = applyEnvVariableOverrides(parsedFile)
+	err = cfg.applyEnvVariableOverrides(parsedFile)
 	if err != nil {
 		return nil, err
 	}
 
 	// apply command line overrides
-	applyCommandLineProperties(commandLineProps, parsedFile)
+	cfg.applyCommandLineProperties(commandLineProps, parsedFile)
 
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)
@@ -1338,19 +1338,19 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer
 
-	for _, file := range configFiles {
+	for _, file := range cfg.configFiles {
 		cfg.Logger.Info("Config loaded from", "file", file)
 	}
 
-	if len(appliedCommandLineProperties) > 0 {
-		for _, prop := range appliedCommandLineProperties {
+	if len(cfg.appliedCommandLineProperties) > 0 {
+		for _, prop := range cfg.appliedCommandLineProperties {
 			cfg.Logger.Info("Config overridden from command line", "arg", prop)
 		}
 	}
 
-	if len(appliedEnvOverrides) > 0 {
+	if len(cfg.appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
-		for _, prop := range appliedEnvOverrides {
+		for _, prop := range cfg.appliedEnvOverrides {
 			cfg.Logger.Info("Config overridden from Environment variable", "var", prop)
 		}
 	}
