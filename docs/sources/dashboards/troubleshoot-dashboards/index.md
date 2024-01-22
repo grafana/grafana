@@ -55,7 +55,3 @@ The graph in this next image is set to show bars instead of lines and the **No v
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" alt="Graph with null values not connected" >}}
 
 As you can see, there's a significant difference in the visualizations.
-
-## More examples
-
-You can find more examples in `public/dashboards/` directory of your Grafana installation.
