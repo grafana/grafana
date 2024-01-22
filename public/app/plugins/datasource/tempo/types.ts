@@ -1,8 +1,8 @@
 import { DataSourceJsonData } from '@grafana/data/src';
+import { TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 
 import { NodeGraphOptions } from './_importedDependencies/components/NodeGraphSettings';
 import { LokiQuery } from './_importedDependencies/datasources/loki/types';
-import { TraceToLogsOptions } from './_importedDependencies/grafana-traces/src';
 import { TempoQuery as TempoBase, TempoQueryType, TraceqlFilter } from './dataquery.gen';
 
 export interface SearchQueryParams {
