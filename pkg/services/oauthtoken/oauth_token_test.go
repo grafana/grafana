@@ -184,37 +184,43 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 		TokenType:    "Bearer",
 	}
 
-	usr := &user.SignedInUser{
-		AuthenticatedBy: login.GenericOAuthModule,
-		UserID:          1,
-	}
-
-	authInfoStore.ExpectedOAuth = &login.UserAuth{
+	userAuth := &login.UserAuth{
+		AuthId:            "subject",
 		AuthModule:        login.GenericOAuthModule,
 		OAuthAccessToken:  token.AccessToken,
 		OAuthRefreshToken: token.RefreshToken,
 		OAuthExpiry:       token.Expiry,
 		OAuthTokenType:    token.TokenType,
+		UserId:            1,
+	}
+	signedInUser := &user.SignedInUser{
+		AuthenticatedBy: login.GenericOAuthModule,
+		UserID:          1,
 	}
 
-	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.ReuseTokenSource(token, oauth2.StaticTokenSource(newToken)), nil)
-	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
+	authInfoStore.ExpectedOAuth = userAuth
 
-	err := srv.TryTokenRefresh(ctx, usr)
+	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.ReuseTokenSource(token, oauth2.StaticTokenSource(newToken)), nil)
+
+	err := srv.TryTokenRefresh(ctx, signedInUser)
 
 	assert.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
-	authInfoQuery := &login.GetAuthInfoQuery{UserId: 1}
+	authInfoQuery := &login.GetAuthInfoQuery{
+		UserId:     1,
+		AuthModule: login.GenericOAuthModule,
+		AuthId:     "subject",
+	}
 	authInfo, err := srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 
 	require.Nil(t, err)
 
 	// newToken should be returned after the .Token() call, therefore the User had to be updated
-	assert.Equal(t, authInfo.OAuthAccessToken, newToken.AccessToken)
-	assert.Equal(t, authInfo.OAuthExpiry, newToken.Expiry)
-	assert.Equal(t, authInfo.OAuthRefreshToken, newToken.RefreshToken)
-	assert.Equal(t, authInfo.OAuthTokenType, newToken.TokenType)
+	assert.Equal(t, newToken.AccessToken, authInfo.OAuthAccessToken)
+	assert.Equal(t, newToken.Expiry, authInfo.OAuthExpiry)
+	assert.Equal(t, newToken.RefreshToken, authInfo.OAuthRefreshToken)
+	assert.Equal(t, newToken.TokenType, authInfo.OAuthTokenType)
 }
 
 func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
