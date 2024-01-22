@@ -110,6 +110,22 @@ describe('DashboardModelCompatibilityWrapper', () => {
 
     expect((scene.state.body as SceneGridLayout).state.children.length).toBe(4);
   });
+
+  it('Checks if annotations are editable', () => {
+    const { wrapper, scene } = setup();
+
+    expect(wrapper.canEditAnnotations()).toBe(true);
+    expect(wrapper.canEditAnnotations(scene.state.uid)).toBe(false);
+
+    scene.setState({
+      meta: {
+        canEdit: false,
+        canMakeEditable: false,
+      },
+    });
+
+    expect(wrapper.canEditAnnotations()).toBe(false);
+  });
 });
 
 function setup() {
@@ -120,6 +136,22 @@ function setup() {
     links: [NEW_LINK],
     uid: 'dash-1',
     editable: false,
+    meta: {
+      canEdit: true,
+      canMakeEditable: true,
+      annotationsPermissions: {
+        organization: {
+          canEdit: true,
+          canAdd: true,
+          canDelete: true,
+        },
+        dashboard: {
+          canEdit: false,
+          canAdd: false,
+          canDelete: false,
+        },
+      },
+    },
     $timeRange: new SceneTimeRange({
       weekStart: 'friday',
       timeZone: 'America/New_York',

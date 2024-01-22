@@ -1,3 +1,6 @@
+import { map, of } from 'rxjs';
+
+import { DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
 import { SceneDataLayers, SceneGridItem, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -6,6 +9,37 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AnnotationsEditView } from './AnnotationsEditView';
+
+const getDataSourceSrvSpy = jest.fn();
+const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
+  const result: PanelData = {
+    state: LoadingState.Loading,
+    series: [],
+    timeRange: request.range,
+  };
+
+  return of([]).pipe(
+    map(() => {
+      result.state = LoadingState.Done;
+      result.series = [];
+
+      return result;
+    })
+  );
+});
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    getDataSourceSrvSpy();
+  },
+  getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
+    return runRequestMock(ds, request);
+  },
+  config: {
+    publicDashboardAccessToken: 'ac123',
+  },
+}));
 
 describe('AnnotationsEditView', () => {
   describe('Dashboard annotations state', () => {
@@ -40,6 +74,10 @@ async function buildTestScene() {
             enable: true,
             iconColor: 'red',
             name: 'test',
+            datasource: {
+              type: 'grafana',
+              uid: '-- Grafana --',
+            },
           },
           name: 'test',
           isEnabled: true,
