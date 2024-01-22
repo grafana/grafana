@@ -31,6 +31,7 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/query"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -69,7 +70,9 @@ func setupTestServer(
 	}
 
 	// build api, this will mount the routes at the same time if the feature is enabled
-	ProvideApi(service, rr, ac, features, &Middleware{}, cfg, licensingtest.NewFakeLicensing())
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", publicdashboardModels.FeaturePublicDashboardsEmailSharing).Return(false)
+	ProvideApi(service, rr, ac, features, &Middleware{}, cfg, license)
 
 	// connect routes to mux
 	rr.Register(m.Router)

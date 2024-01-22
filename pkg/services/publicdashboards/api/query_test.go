@@ -332,7 +332,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	)
 	require.NoError(t, err)
 
-	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService, licensingtest.NewFakeLicensing())
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", FeaturePublicDashboardsEmailSharing).Return(false)
+	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService, license)
 	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
