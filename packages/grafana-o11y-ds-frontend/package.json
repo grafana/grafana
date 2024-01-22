@@ -27,7 +27,7 @@
     "react": "18.2.0",
     "react-use": "17.4.0",
     "rxjs": "7.8.1",
-    "tslib": "2.6.0"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
@@ -41,7 +41,7 @@
     "jest": "^29.6.4",
     "react": "18.2.0",
     "ts-jest": "29.1.2",
-    "ts-node": "10.9.1",
+    "ts-node": "10.9.2",
     "typescript": "5.2.2"
   },
   "peerDependencies": {
