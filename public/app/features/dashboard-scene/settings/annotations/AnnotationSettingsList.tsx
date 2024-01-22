@@ -1,30 +1,27 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
-import { arrayUtils, AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, IconButton, useStyles2, VerticalGroup } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-
 type Props = {
-  dashboard: DashboardScene;
+  annotations: AnnotationQuery[];
   onNew: () => void;
   onEdit: (idx: number) => void;
 };
 
-export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
+export const AnnotationSettingsList = ({ annotations, onNew, onEdit }: Props) => {
   const styles = useStyles2(getStyles);
-  const [annotations, updateAnnotations] = useState(dashboard.state.annotations.list);
 
   const onMove = (idx: number, direction: number) => {
-    updateAnnotations(arrayUtils.moveItemImmutably(annotations, idx, idx + direction));
+    console.log('todo: onMove');
   };
 
   const onDelete = (idx: number) => {
-    updateAnnotations([...annotations.slice(0, idx), ...annotations.slice(idx + 1)]);
+    console.log('todo: onDelete');
   };
 
   const showEmptyListCTA = annotations.length === 0 || (annotations.length === 1 && annotations[0].builtIn);
@@ -63,7 +60,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
               </tr>
             </thead>
             <tbody>
-              {dashboard.state.annotations.list.map((annotation, idx) => (
+              {annotations.map((annotation, idx) => (
                 <tr key={`${annotation.name}-${idx}`}>
                   {annotation.builtIn ? (
                     <td role="gridcell" style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
@@ -85,8 +82,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
                     {idx !== 0 && <IconButton name="arrow-up" onClick={() => onMove(idx, -1)} tooltip="Move up" />}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
-                    {dashboard.state.annotations.list.length > 1 &&
-                    idx !== dashboard.state.annotations.list.length - 1 ? (
+                    {annotations.length > 1 && idx !== annotations.length - 1 ? (
                       <IconButton name="arrow-down" onClick={() => onMove(idx, 1)} tooltip="Move down" />
                     ) : null}
                   </td>
@@ -132,8 +128,8 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
 };
 
 const getStyles = () => ({
-  table: css`
-    width: 100%;
-    overflow-x: scroll;
-  `,
+  table: css({
+    width: '100%',
+    overflowX: 'scroll',
+  }),
 });
