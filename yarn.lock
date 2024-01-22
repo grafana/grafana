@@ -3483,7 +3483,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     ts-jest: "npm:29.1.2"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.6.0"
+    tslib: "npm:2.6.2"
     typescript: "npm:5.2.2"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
