@@ -1281,6 +1281,10 @@ Name to be used as client identity for EHLO in SMTP dialog, default is `<instanc
 
 Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `empty`.
 
+### enable_tracing
+
+Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.oentelemetry.*` sections.
+
 <hr>
 
 ## [smtp.static_headers]
@@ -2538,3 +2542,11 @@ Move an app plugin (referenced by its id), including all its pages, to a specifi
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
 Format: `<pageUrl> = <sectionId> <sortWeight>`
+
+## [public_dashboards]
+
+This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+
+### enabled
+
+Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.

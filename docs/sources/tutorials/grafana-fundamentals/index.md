@@ -20,9 +20,7 @@ weight: 10
 
 ## Introduction
 
-In this tutorial, you'll learn how to use Grafana to set up a monitoring solution for your application.
-
-In this tutorial, you'll:
+In this tutorial, you'll learn how to use Grafana to set up a monitoring solution for your application, and:
 
 - Explore metrics and logs
 - Build dashboards
@@ -234,8 +232,6 @@ Every panel consists of a _query_ and a _visualization_. The query defines _what
    sum(rate(tns_request_duration_seconds_count[5m])) by(route)
    ```
 
-1. Click **Options** under the query field to open the panel.
-1. In the **Legend** field, select **Custom** and then enter `route` to rename the series in the legend. The graph legend updates when you click outside the field.
 1. In the panel editor on the right, under **Panel options**, change the panel title to "Traffic".
 1. Click **Apply** in the top-right corner to save the panel and go back to the dashboard view.
 1. Click the **Save dashboard** (disk) icon at the top of the dashboard to save your dashboard.
@@ -248,6 +244,7 @@ When things go bad, it often helps if you understand the context in which the fa
 In the next part of the tutorial, we will simulate some common use cases that someone would add annotations for.
 
 1. To manually add an annotation, click anywhere in your graph, then click **Add annotation**.
+   Note: you might need to save the dashboard first.
 1. In **Description**, enter **Migrated user database**.
 1. Click **Save**.
 
@@ -274,11 +271,9 @@ Manually annotating your dashboard is fine for those single events. For regularl
    {filename="/var/log/tns-app.log"} |= "error"
    ```
 
-<!--this add button is gone rn. look into this -->
-
-1. Click **Apply**. Grafana displays the **Annotations** page, with your new annotation in the list.
-1. Click the name of the dashboard in the breadcrumb at the top of the screen to return to your dashboard.
-1. At the top of your dashboard, there is now a toggle with the name **Errors** to display the results of the newly created annotation query. The toggle is enabled by default.
+1. Click **Apply**. Grafana displays the Annotations list, with your new annotation.
+1. Click on your dashboard name to return to your dashboard.
+1. At the top of your dashboard, there is now a toggle to display the results of the newly created annotation query. Press it if it's not already enabled.
 
 The log lines returned by your query are now displayed as annotations in the graph.
 
@@ -304,19 +299,21 @@ To begin, let's set up a webhook contact point. Once we have a usable endpoint, 
 In this step, we'll set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
 1. Browse to [requestbin.com](https://requestbin.com).
-1. Under the **Create Request Bin** button, click the **public bin** link.
+1. Under the **Create Request Bin** button
+1. From RequestBin, Copy the endpoint URL.
 
 Your request bin is now waiting for the first request.
 
-1. Copy the endpoint URL.
+<!-- 1. Copy the endpoint URL. -->
 
 Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
 
-1. Return to Grafana. Click the menu icon and, in the sidebar, click **Alerting** and then **Contact points**.
+1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
 1. Click **+ Add contact point**.
 1. In **Name**, write **RequestBin**.
-1. In the **Integration** dropdown menu, choose **Webhook**.
-1. In **Url**, paste the endpoint to your request bin.
+1. In **Integration**, choose **Webhook**.
+1. In **URL**, paste the endpoint to your request bin.
+
 1. Click **Test** to send a test alert to your request bin.
 1. Navigate back to the request bin you created earlier. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
 1. Return to Grafana and click **Save contact point**.
@@ -327,16 +324,23 @@ We have now created a dummy webhook endpoint and created a new Alerting Contact 
 
 Now that Grafana knows how to notify us, it's time to set up an alert rule:
 
-1. In the sidebar, click **Alert rules**.
-1. Click **New alert rule**.
-1. In section **1**, name the rule `fundamentals-test`.
-1. For section **2**, select **Grafana Managed Alert** as the rule type. Next, find query box **A**. Choose your Prometheus datasource and enter the same query that we used in our earlier panel: `sum(rate(tns_request_duration_seconds_count[5m])) by(route)`. Click **Run queries**. You should see some data in the graph.
-1. Now scroll down to query box **B**. Change the operation from **Reduce** to **Classic condition**. [You can read more about classic and multi-dimensional conditions here](/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule). For conditions enter the following: `WHEN last() OF A IS ABOVE 0.2`. Delete query **C**.
-1. In section **3**, Select **+ Add New** in **Folder** dropdown menu. Name the new folder `fundamentals` and press enter. This will create the folder needed. In **Evaluation Group**, name the group also `fundamentals` for now. In the **for** field, enter `0m`. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
-1. In section **4**, you can add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
-1. In the top right corner of the page, click **Save rule and exit**.
-1. In the sidebar, click **Notification policies**.
-1. Under **Default policy**, click the button with the three dots and select **Edit**. Change the **Default contact point** to **RequestBin**. Click **Update default policy**.
+1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
+1. Click **+ New alert rule**.
+1. For **Section 1**, name the rule `fundamentals-test`.
+1. For **Section 2**, Find the **query A** box. Choose your Prometheus datasource. Note that the rule type should automatically switch to Grafana-managed alert.
+1. Switch to code mode by checking the Builder/Code toggle.
+1. Enter the same query that we used in our earlier panel `sum(rate(tns_request_duration_seconds_count[5m])) by(route)`
+1. Press **Preview**. You should see some data returned.
+1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value [You can read more about queries and conditions here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. In **Section 3**, in Folder, create a new folder, by typing a name for the folder. This folder will contain our alerts. For example: `fundamentals`. Then, click + add new or hit enter twice.
+1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
+1. Choose an Evaluation interval (how often the alert will be evaluated). For example, every `30s` (30 seconds).
+1. Set the pending period . This is the time that a condition has to be met until the alert enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
+1. In **Section 4**, you can optionally add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
+1. Click **Save rule and exit** at the top of the page.
+1. In Grafana's sidebar, navigate to **Notification policies**.
+1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** to **RequestBin**.
+
    As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to
    specific contact points.
 

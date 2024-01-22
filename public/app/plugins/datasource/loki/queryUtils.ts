@@ -195,7 +195,7 @@ export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | 
 }
 
 /**
- * Parses the query and looks for error nodes. If there is at least one, it returns false.
+ * Parses the query and looks for error nodes. If there is at least one, it returns true.
  * Grafana variables are considered errors, so if you need to validate a query
  * with variables you should interpolate it first.
  */

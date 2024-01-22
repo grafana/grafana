@@ -10,16 +10,25 @@ import {
   TimeRange,
   toUtc,
   IntervalValues,
+  AppEvents,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
+import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
-import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
-import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../types/events';
+import {
+  AbsoluteTimeEvent,
+  CopyTimeEvent,
+  PasteTimeEvent,
+  ShiftTimeEvent,
+  ShiftTimeEventDirection,
+  ZoomOutEvent,
+} from '../../../types/events';
 import { TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
@@ -49,6 +58,14 @@ export class TimeSrv {
 
     appEvents.subscribe(AbsoluteTimeEvent, (e) => {
       this.makeAbsoluteTime(e.payload.updateUrl);
+    });
+
+    appEvents.subscribe(CopyTimeEvent, () => {
+      this.copyTimeRangeToClipboard();
+    });
+
+    appEvents.subscribe(PasteTimeEvent, (e) => {
+      this.pasteTimeRangeFromClipboard(e.payload.updateUrl);
     });
 
     document.addEventListener('visibilitychange', () => {
@@ -354,6 +371,30 @@ export class TimeSrv {
 
   makeAbsoluteTime(updateUrl: boolean) {
     const { from, to } = this.timeRange();
+    this.setTime({ from, to }, updateUrl);
+  }
+
+  copyTimeRangeToClipboard() {
+    const { raw } = this.timeRange();
+    navigator.clipboard.writeText(JSON.stringify({ from: raw.from, to: raw.to }));
+    appEvents.emit(AppEvents.alertSuccess, [
+      t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
+    ]);
+  }
+
+  async pasteTimeRangeFromClipboard(updateUrl = true) {
+    const { range, isError } = await getCopiedTimeRange();
+
+    if (isError === true) {
+      appEvents.emit(AppEvents.alertError, [
+        t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+        t('time-picker.copy-paste.default-error-message', '{{error}} is not a valid time range', { error: range }),
+      ]);
+      return;
+    }
+
+    const { from, to } = range;
+
     this.setTime({ from, to }, updateUrl);
   }
 

@@ -23,9 +23,8 @@ import {
   Field,
   DataLinkConfigOrigin,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
@@ -512,40 +511,38 @@ export function transformTrace(
   }
 
   // Get profiles links
-  if (config.featureToggles.traceToProfiles) {
-    const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
-    const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
-    let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-    if (traceToProfilesOptions?.datasourceUid) {
-      profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
-    }
+  const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
+  const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
+  let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+  if (traceToProfilesOptions?.datasourceUid) {
+    profilesDataSourceSettings = getDataSourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+  }
 
-    if (traceToProfilesOptions && profilesDataSourceSettings) {
-      const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
-      const dataLink: DataLink = {
-        title: RelatedProfilesTitle,
-        url: '',
-        internal: {
-          datasourceUid: profilesDataSourceSettings.uid,
-          datasourceName: profilesDataSourceSettings.name,
-          query: {
-            labelSelector: customQuery ? customQuery : '{${__tags}}',
-            groupBy: [],
-            profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
-            queryType: 'profile',
-            spanSelector: ['${__span.tags["pyroscope.profile.id"]}'],
-            refId: 'profile',
-          },
+  if (traceToProfilesOptions && profilesDataSourceSettings) {
+    const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
+    const dataLink: DataLink = {
+      title: RelatedProfilesTitle,
+      url: '',
+      internal: {
+        datasourceUid: profilesDataSourceSettings.uid,
+        datasourceName: profilesDataSourceSettings.name,
+        query: {
+          labelSelector: customQuery ? customQuery : '{${__tags}}',
+          groupBy: [],
+          profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
+          queryType: 'profile',
+          spanSelector: ['${__span.tags["pyroscope.profile.id"]}'],
+          refId: 'profile',
         },
-        origin: DataLinkConfigOrigin.Datasource,
-      };
+      },
+      origin: DataLinkConfigOrigin.Datasource,
+    };
 
-      frame.fields.forEach((field: Field) => {
-        if (field.name === 'tags') {
-          field.config.links = [dataLink];
-        }
-      });
-    }
+    frame.fields.forEach((field: Field) => {
+      if (field.name === 'tags') {
+        field.config.links = [dataLink];
+      }
+    });
   }
 
   let data = [...response.data];
@@ -734,35 +731,34 @@ export function createTableFrameFromTraceQlQuery(
 }
 
 export function createTableFrameFromTraceQlQueryAsSpans(
-  data: TraceSearchMetadata[],
+  data: TraceSearchMetadata[] | undefined,
   instanceSettings: DataSourceInstanceSettings
 ): DataFrame[] {
   const spanDynamicAttrs: Record<string, FieldDTO> = {};
   let hasNameAttribute = false;
 
-  data?.forEach(
-    (t) =>
-      t.spanSets?.forEach((ss) => {
-        ss.attributes?.forEach((attr) => {
+  data?.forEach((trace) =>
+    getSpanSets(trace).forEach((ss) => {
+      ss.attributes?.forEach((attr) => {
+        spanDynamicAttrs[attr.key] = {
+          name: attr.key,
+          type: FieldType.string,
+          config: { displayNameFromDS: attr.key },
+        };
+      });
+      ss.spans.forEach((span) => {
+        if (span.name) {
+          hasNameAttribute = true;
+        }
+        span.attributes?.forEach((attr) => {
           spanDynamicAttrs[attr.key] = {
             name: attr.key,
             type: FieldType.string,
             config: { displayNameFromDS: attr.key },
           };
         });
-        ss.spans.forEach((span) => {
-          if (span.name) {
-            hasNameAttribute = true;
-          }
-          span.attributes?.forEach((attr) => {
-            spanDynamicAttrs[attr.key] = {
-              name: attr.key,
-              type: FieldType.string,
-              config: { displayNameFromDS: attr.key },
-            };
-          });
-        });
-      })
+      });
+    })
   );
 
   const frame = new MutableDataFrame({
@@ -856,7 +852,7 @@ export function createTableFrameFromTraceQlQueryAsSpans(
     },
   });
 
-  if (!data?.length) {
+  if (!data || !data.length) {
     return [frame];
   }
 
@@ -864,7 +860,7 @@ export function createTableFrameFromTraceQlQueryAsSpans(
     // Show the most recent traces
     .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
     .forEach((trace) => {
-      trace.spanSets?.forEach((spanSet) => {
+      getSpanSets(trace).forEach((spanSet) => {
         spanSet.spans.forEach((span) => {
           frame.add(transformSpanToTraceData(span, spanSet, trace));
         });
@@ -873,6 +869,23 @@ export function createTableFrameFromTraceQlQueryAsSpans(
 
   return [frame];
 }
+
+/**
+ * Get the spansets of a trace.
+ *
+ * Field `spanSets` is preferred to `spanSet` since the latter is deprecated in Tempo, but we
+ * support both for backward compatibility.
+ *
+ * @param trace a trace
+ * @returns the spansets of the trace, if existing
+ */
+const getSpanSets = (trace: TraceSearchMetadata): Spanset[] => {
+  if (trace.spanSets && trace.spanSet) {
+    console.warn('Both `spanSets` and `spanSet` are set. `spanSet` will be ignored');
+  }
+
+  return trace.spanSets || (trace.spanSet ? [trace.spanSet] : []);
+};
 
 const traceSubFrame = (
   trace: TraceSearchMetadata,

@@ -6,10 +6,12 @@ import (
 	"math/rand"
 	"slices"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -181,6 +183,12 @@ func WithNamespace(namespace *folder.Folder) AlertRuleMutator {
 func WithInterval(interval time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.IntervalSeconds = int64(interval.Seconds())
+	}
+}
+
+func WithIntervalBetween(min, max int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.IntervalSeconds = rand.Int63n(max-min) + min
 	}
 }
 
@@ -509,6 +517,46 @@ func CreateLokiQuery(refID string, expr string, intervalMs int64, maxDataPoints 
             }
 		}`, refID, expr, intervalMs, maxDataPoints, queryType, datasourceUID, datasources.DS_LOKI)),
 	}
+}
+
+func CreateHysteresisExpression(t *testing.T, refID string, inputRefID string, threshold int, recoveryThreshold int) AlertQuery {
+	t.Helper()
+	q := AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.DatasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "type": "threshold",
+            "datasource": {
+                "uid": "%[5]s",
+                "type": "%[6]s"
+            },
+			"expression": "%[2]s",
+            "conditions": [
+                {
+                    "type": "query",
+                    "evaluator": {
+                        "params": [
+                            %[3]d
+                        ],
+                        "type": "gt"
+                    },
+					"unloadEvaluator": {
+                        "params": [
+                            %[4]d
+                        ],
+                        "type": "lt"
+					}
+                }
+            ]
+		}`, refID, inputRefID, threshold, recoveryThreshold, expr.DatasourceUID, expr.DatasourceType)),
+	}
+	h, err := q.IsHysteresisExpression()
+	require.NoError(t, err)
+	require.Truef(t, h, "test model is expected to be a hysteresis expression")
+	return q
 }
 
 type AlertInstanceMutator func(*AlertInstance)

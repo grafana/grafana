@@ -239,37 +239,34 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 
 	defer span.End()
 
-	frames, err := runQuery(ctx, api, query, responseOpts, plog)
-	queryRes := backend.DataResponse{}
+	queryRes, err := runQuery(ctx, api, query, responseOpts, plog)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		queryRes.Error = err
-	} else {
-		queryRes.Frames = frames
 	}
 
-	return queryRes
+	return *queryRes
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
-func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) (data.Frames, error) {
-	frames, err := api.DataQuery(ctx, *query, responseOpts)
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) (*backend.DataResponse, error) {
+	res, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
 		plog.Error("Error querying loki", "error", err)
-		return data.Frames{}, err
+		return res, err
 	}
 
-	for _, frame := range frames {
+	for _, frame := range res.Frames {
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
 			plog.Error("Error adjusting frame", "error", err)
-			return data.Frames{}, err
+			return res, err
 		}
 	}
 
-	return frames, nil
+	return res, nil
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {

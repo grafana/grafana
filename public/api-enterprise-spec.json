@@ -318,6 +318,41 @@
         }
       }
     },
+    "/access-control/teams/roles/search": {
+      "post": {
+        "description": "Lists the roles that have been directly assigned to the given teams.\n\nYou need to have a permission with action `teams.roles:read` and scope `teams:id:*`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "List roles assigned to multiple teams.",
+        "operationId": "listTeamsRoles",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RolesSearchQuery"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listTeamsRolesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/access-control/teams/{teamId}/roles": {
       "get": {
         "description": "You need to have a permission with action `teams.roles:read` and scope `teams:id:\u003cteam ID\u003e`.",
@@ -466,6 +501,41 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/users/roles/search": {
+      "post": {
+        "description": "Lists the roles that have been directly assigned to the given users. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:*`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "List roles assigned to multiple users.",
+        "operationId": "listUsersRoles",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RolesSearchQuery"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listUsersRolesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -1878,6 +1948,10 @@
       "type": "object",
       "properties": {
         "active_admins_and_editors": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "active_anonymous_devices": {
           "type": "integer",
           "format": "int64"
         },
@@ -3957,6 +4031,32 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "DeviceSearchHitDTO": {
+      "type": "object",
+      "properties": {
+        "clientIp": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAgent": {
+          "type": "string"
         }
       }
     },
@@ -6402,6 +6502,32 @@
         }
       }
     },
+    "RolesSearchQuery": {
+      "type": "object",
+      "properties": {
+        "includeHidden": {
+          "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "teamIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "userIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "SSOSettings": {
       "type": "object",
       "properties": {
@@ -6448,6 +6574,29 @@
           "type": "boolean"
         },
         "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SearchDeviceQueryResult": {
+      "type": "object",
+      "properties": {
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceSearchHitDTO"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
           "type": "integer",
           "format": "int64"
         }
@@ -6713,6 +6862,25 @@
           "type": "string",
           "format": "date-time",
           "example": "2022-03-21T14:35:33Z"
+        }
+      }
+    },
+    "SetResourcePermissionCommand": {
+      "type": "object",
+      "properties": {
+        "builtInRole": {
+          "type": "string"
+        },
+        "permission": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -7063,6 +7231,10 @@
       "properties": {
         "account": {
           "type": "string"
+        },
+        "anonymousRatio": {
+          "type": "integer",
+          "format": "int64"
         },
         "company": {
           "type": "string"
@@ -8016,6 +8188,25 @@
           "type": "string"
         }
       }
+    },
+    "setPermissionCommand": {
+      "type": "object",
+      "properties": {
+        "permission": {
+          "type": "string"
+        }
+      }
+    },
+    "setPermissionsCommand": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SetResourcePermissionCommand"
+          }
+        }
+      }
     }
   },
   "responses": {
@@ -8379,6 +8570,12 @@
         "items": {
           "$ref": "#/definitions/deviceDTO"
         }
+      }
+    },
+    "devicesSearchResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchDeviceQueryResult"
       }
     },
     "folderResponse": {
@@ -8995,12 +9192,36 @@
         }
       }
     },
+    "listTeamsRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleDTO"
+          }
+        }
+      }
+    },
     "listTokensResponse": {
       "description": "",
       "schema": {
         "type": "array",
         "items": {
           "$ref": "#/definitions/TokenDTO"
+        }
+      }
+    },
+    "listUsersRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleDTO"
+          }
         }
       }
     },

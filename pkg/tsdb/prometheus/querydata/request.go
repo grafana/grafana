@@ -130,6 +130,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 		res := s.instantQuery(traceCtx, client, q, headers)
 		dr.Error = res.Error
 		dr.Frames = res.Frames
+		dr.Status = res.Status
 	}
 
 	if q.RangeQuery {
@@ -140,6 +141,9 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 			} else {
 				dr.Error = fmt.Errorf("%v %w", dr.Error, res.Error)
 			}
+			// When both instant and range are true, we may overwrite the status code.
+			// To fix this (and other things) they should come in separate http requests.
+			dr.Status = res.Status
 		}
 		dr.Frames = append(dr.Frames, res.Frames...)
 	}
@@ -161,7 +165,8 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
-			Error: err,
+			Error:  err,
+			Status: backend.StatusBadGateway,
 		}
 	}
 
@@ -179,7 +184,8 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
-			Error: err,
+			Error:  err,
+			Status: backend.StatusBadGateway,
 		}
 	}
 

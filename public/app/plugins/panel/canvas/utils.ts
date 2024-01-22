@@ -190,27 +190,25 @@ export const calculateCoordinates = (
   sourceRect: DOMRect,
   parentRect: DOMRect,
   info: CanvasConnection,
-  target: ElementState
+  target: ElementState,
+  transformScale: number
 ) => {
   const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
   const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
 
   // Convert from connection coords to DOM coords
-  const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2;
-  const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2;
+  const x1 = (sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2) / transformScale;
+  const y1 = (sourceVerticalCenter - (info.source.y * sourceRect.height) / 2) / transformScale;
 
-  let x2;
-  let y2;
+  let x2: number;
+  let y2: number;
+  const targetRect = target.div?.getBoundingClientRect();
+  if (info.targetName && targetRect) {
+    const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
+    const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
 
-  if (info.targetName) {
-    const targetRect = target.div?.getBoundingClientRect();
-    if (targetRect) {
-      const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
-      const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
-
-      x2 = targetHorizontalCenter + (info.target.x * targetRect.width) / 2;
-      y2 = targetVerticalCenter - (info.target.y * targetRect.height) / 2;
-    }
+    x2 = targetHorizontalCenter + (info.target.x * targetRect.width) / 2;
+    y2 = targetVerticalCenter - (info.target.y * targetRect.height) / 2;
   } else {
     const parentHorizontalCenter = parentRect.width / 2;
     const parentVerticalCenter = parentRect.height / 2;
@@ -218,6 +216,8 @@ export const calculateCoordinates = (
     x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
     y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
   }
+  x2 /= transformScale;
+  y2 /= transformScale;
   return { x1, y1, x2, y2 };
 };
 
@@ -238,4 +238,27 @@ export const getConnectionStyles = (info: CanvasConnection, scene: Scene, defaul
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
   return { strokeColor, strokeWidth };
+};
+
+export const getParentBoundingClientRect = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    const transformRef = scene.transformComponentRef?.current;
+    return transformRef?.instance.contentComponent?.getBoundingClientRect();
+  }
+
+  return scene.div?.getBoundingClientRect();
+};
+
+export const getTransformInstance = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    return scene.transformComponentRef?.current?.instance;
+  }
+  return undefined;
+};
+
+export const getParent = (scene: Scene) => {
+  if (config.featureToggles.canvasPanelPanZoom) {
+    return scene.transformComponentRef?.current?.instance.contentComponent;
+  }
+  return scene.div;
 };

@@ -191,6 +191,8 @@ To filter column values, click the filter (funnel) icon next to a column title. 
 
 Click the check box next to the values that you want to display. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
 
+Click the check box above the **Ok** and **Cancel** buttons to add or remove all displayed values to/from the filter.
+
 ### Clear column filters
 
 Columns with filters applied have a blue funnel displayed next to the title.

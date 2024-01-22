@@ -28,7 +28,6 @@ import {
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -37,7 +36,6 @@ import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -127,6 +125,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       ...defaultTimePickerConfig,
       refresh_intervals,
       hidden: hideTimePicker,
+      nowDelay: timeRange.UNSAFE_nowDelay,
     },
     panels,
     annotations: {
@@ -135,10 +134,12 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     templating: {
       list: variables,
     },
+    version: state.version,
     timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart,
     tags: state.tags,
+    links: state.links,
     graphTooltip,
   };
 
@@ -230,21 +231,6 @@ function vizPanelDataToPanel(
   const dataProvider = vizPanel.state.$data;
 
   const panel: Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> = {};
-  // Dashboard datasource handling
-  if (dataProvider instanceof ShareQueryDataProvider) {
-    panel.datasource = {
-      type: 'datasource',
-      uid: SHARED_DASHBOARD_QUERY,
-    };
-    panel.targets = [
-      {
-        datasource: { ...panel.datasource },
-        refId: 'A',
-        panelId: dataProvider.state.query.panelId,
-        topic: dataProvider.state.query.topic,
-      },
-    ];
-  }
 
   // Regular queries handling
   if (dataProvider instanceof SceneQueryRunner) {
@@ -256,20 +242,6 @@ function vizPanelDataToPanel(
   // Transformations handling
   if (dataProvider instanceof SceneDataTransformer) {
     const panelData = dataProvider.state.$data;
-    if (panelData instanceof ShareQueryDataProvider) {
-      panel.datasource = {
-        type: 'datasource',
-        uid: SHARED_DASHBOARD_QUERY,
-      };
-      panel.targets = [
-        {
-          datasource: { ...panel.datasource },
-          refId: 'A',
-          panelId: panelData.state.query.panelId,
-          topic: panelData.state.query.topic,
-        },
-      ];
-    }
 
     if (panelData instanceof SceneQueryRunner) {
       panel.targets = panelData.state.queries;

@@ -1,23 +1,27 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
-import { Button, Field, IconButton, useStyles2 } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import {
+  GrafanaTheme2,
+  StandardEditorProps,
+  FieldNamePickerBaseNameMode,
+  StandardEditorsRegistryItem,
+} from '@grafana/data';
+import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
-import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
+import { ScatterSeriesEditor } from './ScatterSeriesEditor';
 import { Options, ScatterSeriesConfig, defaultFieldConfig } from './panelcfg.gen';
 
 export const ManualEditor = ({
   value,
   onChange,
   context,
-}: StandardEditorProps<ScatterSeriesConfig[], any, Options>) => {
+}: StandardEditorProps<ScatterSeriesConfig[], unknown, Options>) => {
   const [selected, setSelected] = useState(0);
   const style = useStyles2(getStyles);
 
-  const onFieldChange = (val: any | undefined, index: number, field: string) => {
+  const onFieldChange = (val: unknown | undefined, index: number, field: string) => {
     onChange(
       value.map((obj, i) => {
         if (i === index) {
@@ -32,7 +36,7 @@ export const ManualEditor = ({
     onChange([
       ...value,
       {
-        pointColor: {} as any,
+        pointColor: undefined,
         pointSize: defaultFieldConfig.pointSize,
       },
     ]);
@@ -97,77 +101,58 @@ export const ManualEditor = ({
       </div>
 
       {selected >= 0 && value[selected] && (
-        <>
-          <div key={`series/${selected}`}>
-            <Field label={'X Field'}>
-              <FieldNamePicker
-                value={value[selected].x ?? ''}
-                context={context}
-                onChange={(field) => onFieldChange(field, selected, 'x')}
-                item={{} as any}
-              />
-            </Field>
-            <Field label={'Y Field'}>
-              <FieldNamePicker
-                value={value[selected].y ?? ''}
-                context={context}
-                onChange={(field) => onFieldChange(field, selected, 'y')}
-                item={{} as any}
-              />
-            </Field>
-            <Field label={'Point color'}>
-              <ColorDimensionEditor
-                value={value[selected].pointColor!}
-                context={context}
-                onChange={(field) => onFieldChange(field, selected, 'pointColor')}
-                item={{} as any}
-              />
-            </Field>
-            <Field label={'Point size'}>
-              <ScaleDimensionEditor
-                value={value[selected].pointSize!}
-                context={context}
-                onChange={(field) => onFieldChange(field, selected, 'pointSize')}
-                item={{ settings: { min: 1, max: 100 } } as any}
-              />
-            </Field>
-          </div>
-        </>
+        <ScatterSeriesEditor
+          key={`series/${selected}`}
+          baseNameMode={FieldNamePickerBaseNameMode.ExcludeBaseNames}
+          item={{} as StandardEditorsRegistryItem}
+          context={context}
+          value={value[selected]}
+          onChange={(v) => {
+            onChange(
+              value.map((obj, i) => {
+                if (i === selected) {
+                  return v!;
+                }
+                return obj;
+              })
+            );
+          }}
+        />
       )}
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  marginBot: css`
-    margin-bottom: 20px;
-  `,
-  row: css`
-    padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.radius.default};
-    background: ${theme.colors.background.secondary};
-    min-height: ${theme.spacing(4)};
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 3px;
-    cursor: pointer;
+  marginBot: css({
+    marginBottom: '20px',
+  }),
+  row: css({
+    padding: `${theme.spacing(0.5, 1)}`,
+    borderRadius: `${theme.shape.radius.default}`,
+    background: `${theme.colors.background.secondary}`,
+    minHeight: `${theme.spacing(4)}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '3px',
+    cursor: 'pointer',
 
-    border: 1px solid ${theme.components.input.borderColor};
-    &:hover {
-      border: 1px solid ${theme.components.input.borderHover};
-    }
-  `,
-  sel: css`
-    border: 1px solid ${theme.colors.primary.border};
-    &:hover {
-      border: 1px solid ${theme.colors.primary.border};
-    }
-  `,
-  actionIcon: css`
-    color: ${theme.colors.text.secondary};
-    &:hover {
-      color: ${theme.colors.text};
-    }
-  `,
+    border: `1px solid ${theme.components.input.borderColor}`,
+    '&:hover': {
+      border: `1px solid ${theme.components.input.borderHover}`,
+    },
+  }),
+  sel: css({
+    border: `1px solid ${theme.colors.primary.border}`,
+    '&:hover': {
+      border: `1px solid ${theme.colors.primary.border}`,
+    },
+  }),
+  actionIcon: css({
+    color: `${theme.colors.text.secondary}`,
+    '&:hover': {
+      color: `${theme.colors.text}`,
+    },
+  }),
 });
