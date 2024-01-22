@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource/alt"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -19,8 +18,7 @@ var WireSet = wire.NewSet(
 	// read-only datasource abstractions
 	plugincontext.ProvideService,
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
-	//datasource.ProvideDefaultPluginConfigs,
-	alt.ProvideSQLBasedPluginConfigs, // only works for testdata now
+	datasource.ProvideDefaultPluginConfigs,
 
 	// Each must be added here *and* in the ServiceSink above
 	playlist.RegisterAPIService,
