@@ -21,9 +21,7 @@ type OrgMigration struct {
 
 	orgID int64
 
-	// Silences
-	rulesWithErrorSilenceLabels  int
-	rulesWithNoDataSilenceLabels int
+	silences *silenceHandler
 }
 
 // newOrgMigration creates a new OrgMigration for the given orgID.
@@ -34,6 +32,7 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 
 		migrationStore:    ms.migrationStore,
 		encryptionService: ms.encryptionService,
+		silences:          ms.silences,
 
 		orgID: orgID,
 	}

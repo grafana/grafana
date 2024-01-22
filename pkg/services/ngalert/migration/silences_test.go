@@ -86,7 +86,7 @@ func TestSilences(t *testing.T) {
 				silenceFileAsString := func(filename string) (io.WriteCloser, error) {
 					return sb, nil
 				}
-				service.silenceFile = silenceFileAsString
+				service.silences.createSilenceFile = silenceFileAsString
 
 				require.NoError(t, service.migrateAllOrgs(context.Background()))
 

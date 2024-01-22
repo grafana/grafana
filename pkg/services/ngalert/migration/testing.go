@@ -26,6 +26,7 @@ func NewTestMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *set
 		store:             sqlStore,
 		migrationStore:    migrationStore.NewTestMigrationStore(t, sqlStore, cfg),
 		encryptionService: fake_secrets.NewFakeSecretsService(),
+		silences:          &silenceHandler{},
 	}
 }
 

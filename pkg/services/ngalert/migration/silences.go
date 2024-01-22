@@ -14,6 +14,7 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstate "github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
@@ -21,6 +22,47 @@ import (
 
 // TimeNow makes it possible to test usage of time
 var TimeNow = time.Now
+
+// silenceHandler is a helper for managing and writing migration silences.
+type silenceHandler struct {
+	rulesWithErrorSilenceLabels  int
+	rulesWithNoDataSilenceLabels int
+	createSilenceFile            func(filename string) (io.WriteCloser, error)
+
+	dataPath string
+}
+
+// handleSilenceLabels adds labels to the alert rule if the rule requires silence labels for error/nodata keep_state.
+func (sh *silenceHandler) handleSilenceLabels(ar *models.AlertRule, parsedSettings dashAlertSettings) {
+	if parsedSettings.ExecutionErrorState == "keep_state" {
+		sh.rulesWithErrorSilenceLabels++
+		ar.Labels[models.MigratedSilenceLabelErrorKeepState] = "true"
+	}
+	if parsedSettings.NoDataState == "keep_state" {
+		sh.rulesWithNoDataSilenceLabels++
+		ar.Labels[models.MigratedSilenceLabelNodataKeepState] = "true"
+	}
+}
+
+// createSilences creates silences and writes them to a file.
+func (sh *silenceHandler) createSilences(orgID int64, log log.Logger) error {
+	var silences []*pb.MeshSilence
+	if sh.rulesWithErrorSilenceLabels > 0 {
+		log.Info("Creating silence for rules with ExecutionErrorState = keep_state", "rules", sh.rulesWithErrorSilenceLabels)
+		silences = append(silences, errorSilence())
+	}
+	if sh.rulesWithNoDataSilenceLabels > 0 {
+		log.Info("Creating silence for rules with NoDataState = keep_state", "rules", sh.rulesWithNoDataSilenceLabels)
+		silences = append(silences, noDataSilence())
+	}
+	if len(silences) > 0 {
+		log.Debug("Writing silences file", "silences", len(silences))
+		if err := sh.writeSilencesFile(orgID, silences); err != nil {
+			return fmt.Errorf("write silence file: %w", err)
+		}
+	}
+	return nil
+}
 
 // errorSilence creates a silence that matches DatasourceError alerts for rules which have a label attached when ExecutionErrorState was set to keep_state.
 func errorSilence() *pb.MeshSilence {
@@ -74,7 +116,7 @@ func noDataSilence() *pb.MeshSilence {
 	}
 }
 
-func (ms *migrationService) writeSilencesFile(orgId int64, silences []*pb.MeshSilence) error {
+func (sh *silenceHandler) writeSilencesFile(orgId int64, silences []*pb.MeshSilence) error {
 	var buf bytes.Buffer
 	for _, e := range silences {
 		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
@@ -82,7 +124,7 @@ func (ms *migrationService) writeSilencesFile(orgId int64, silences []*pb.MeshSi
 		}
 	}
 
-	f, err := ms.silenceFile(silencesFileNameForOrg(ms.cfg.DataPath, orgId))
+	f, err := sh.createSilenceFile(silencesFileNameForOrg(sh.dataPath, orgId))
 	if err != nil {
 		return err
 	}

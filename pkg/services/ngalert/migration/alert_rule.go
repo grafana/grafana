@@ -94,14 +94,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		ExecErrState:    transExecErr(l, parsedSettings.ExecutionErrorState),
 	}
 
-	if parsedSettings.ExecutionErrorState == "keep_state" {
-		om.rulesWithErrorSilenceLabels++
-		ar.Labels[ngmodels.MigratedSilenceLabelErrorKeepState] = "true"
-	}
-	if parsedSettings.NoDataState == "keep_state" {
-		om.rulesWithNoDataSilenceLabels++
-		ar.Labels[ngmodels.MigratedSilenceLabelNodataKeepState] = "true"
-	}
+	om.silences.handleSilenceLabels(ar, parsedSettings)
 
 	// We do some validation and pre-save operations early in order to track these errors as part of the migration state.
 	if err := ar.ValidateAlertRule(om.cfg.UnifiedAlerting); err != nil {
