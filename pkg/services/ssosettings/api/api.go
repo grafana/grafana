@@ -44,9 +44,9 @@ func ProvideApi(
 }
 
 // generateFNVETag computes a FNV hash-based ETag for the SSOSettings struct
-func generateFNVETag(SSOSettings *models.SSOSettings) (string, error) {
+func generateFNVETag(input any) (string, error) {
 	hasher := fnv.New64()
-	data, err := json.Marshal(SSOSettings)
+	data, err := json.Marshal(input)
 	if err != nil {
 		return "", err
 	}
@@ -76,17 +76,28 @@ func (api *Api) RegisterAPIEndpoints() {
 	})
 }
 
+// swagger:route GET /v1/sso-settings sso_settings listAllProvidersSettings
+//
+// # List all SSO Settings entries
+//
+// You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
+//
+// Responses:
+// 200: listSSOSettingsResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
 func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
 	providers, err := api.getAuthorizedList(c.Req.Context(), c.SignedInUser)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get providers", err)
+		return response.Error(http.StatusInternalServerError, "Failed to list all providers settings", err)
 	}
 
 	return response.JSON(http.StatusOK, providers)
 }
 
 func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettings, error) {
-	allProviders, err := api.SSOSettingsService.List(ctx)
+	allProviders, err := api.SSOSettingsService.ListWithRedactedSecrets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -212,8 +223,12 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 	return response.Empty(http.StatusNoContent)
 }
 
+// swagger:parameters listAllProvidersSettings
+type ListAllProvidersSettingsParams struct {
+}
+
 // swagger:parameters getProviderSettings
-type GetProviderSettingsWrapper struct {
+type GetProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
@@ -234,6 +249,12 @@ type RemoveProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
+}
+
+// swagger:response listSSOSettingsResponse
+type ListSSOSettingsResponse struct {
+	// in: body
+	Body []models.SSOSettings `json:"body"`
 }
 
 // swagger:response getSSOSettingsResponse
