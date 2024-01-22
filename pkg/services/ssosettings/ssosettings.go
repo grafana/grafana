@@ -28,7 +28,7 @@ type Service interface {
 	// GetForProviderWithRedactedSecrets returns the SSO settings for a given provider (DB or config file) with secret values redacted
 	GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error)
 	// Upsert creates or updates the SSO settings for a given provider
-	Upsert(ctx context.Context, settings models.SSOSettings) error
+	Upsert(ctx context.Context, settings *models.SSOSettings) error
 	// Delete deletes the SSO settings for a given provider (soft delete)
 	Delete(ctx context.Context, provider string) error
 	// Patch updates the specified SSO settings (key-value pairs) for a given provider
@@ -62,6 +62,6 @@ type FallbackStrategy interface {
 type Store interface {
 	Get(ctx context.Context, provider string) (*models.SSOSettings, error)
 	List(ctx context.Context) ([]*models.SSOSettings, error)
-	Upsert(ctx context.Context, settings models.SSOSettings) error
+	Upsert(ctx context.Context, settings *models.SSOSettings) error
 	Delete(ctx context.Context, provider string) error
 }
