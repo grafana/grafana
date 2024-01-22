@@ -4,19 +4,22 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
-// This is a helper function to create a new datasource API server for a group
-// This currently has no dependencies and only works for testdata.  In future iterations
-// this will include here (or elsewhere) versions that can load config from HG api or
-// the remote SQL directly
-func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
+// NewTestDataAPIServer is a helper function to create a new datasource API server for a group.
+// This currently builds its dependencies manually and only works for testdata.
+func NewTestDataAPIServer(group string) (*DataSourceAPIBuilder, error) {
+	pluginID := "grafana-testdata-datasource"
+
 	if group != "testdata.datasource.grafana.app" {
-		return nil, fmt.Errorf("only testadata is currently supported")
+		return nil, fmt.Errorf("only %s is currently supported", pluginID)
 	}
-	pluginId := "grafana-testdata-datasource"
 
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		// TODO: Add support for args?
@@ -25,21 +28,30 @@ func NewStandaloneDatasource(group string) (*DataSourceAPIBuilder, error) {
 		return nil, err
 	}
 
-	accessControl, pluginstoreService, dsService, cacheServiceImpl, err := apiBuilderServices(cfg, pluginId)
+	accessControl, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, pluginID)
 	if err != nil {
 		return nil, err
 	}
 
-	testdataPlugin, found := pluginstoreService.Plugin(context.Background(), pluginId)
-	if !found {
-		return nil, fmt.Errorf("plugin %s not found", pluginId)
+	td, exists := pluginStore.Plugin(context.Background(), pluginID)
+	if !exists {
+		return nil, fmt.Errorf("plugin %s not found", pluginID)
+	}
+
+	var testsDataQuerierFactory QuerierFactoryFunc = func(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error) {
+		return NewDefaultQuerier(ri, td.JSONData, testdatasource.ProvideService(), dsService, dsCache), nil
 	}
 
 	return NewDataSourceAPIBuilder(
-		testdataPlugin.JSONData,
-		testdatasource.ProvideService(),
-		dsService,
-		cacheServiceImpl,
+		td.JSONData,
+		NewQuerierProvider(testsDataQuerierFactory),
+		&TestDataPluginContextProvider{},
 		accessControl,
 	)
+}
+
+type TestDataPluginContextProvider struct{}
+
+func (p *TestDataPluginContextProvider) PluginContextForDataSource(_ context.Context, _, _ string) (backend.PluginContext, error) {
+	return backend.PluginContext{}, nil
 }

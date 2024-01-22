@@ -22,13 +22,17 @@ import { DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardMeta } from 'app/types';
+import { DashboardDTO, DashboardMeta } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
+import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
+import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
@@ -200,6 +204,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.state.body.setState({ isDraggable: false, isResizable: false });
       forceRenderChildren(this.state.body, true);
     }
+  };
+
+  public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
+    const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
+
+    if (!Number.isInteger(versionRsp.version)) {
+      return false;
+    }
+
+    const dashboardDTO: DashboardDTO = {
+      dashboard: new DashboardModel(version.data),
+      meta: this.state.meta,
+    };
+    const dashScene = transformSaveModelToScene(dashboardDTO);
+    const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
+    newState.version = versionRsp.version;
+
+    this._initialState = newState;
+    this.onDiscard();
+
+    return true;
   };
 
   public onSave = () => {

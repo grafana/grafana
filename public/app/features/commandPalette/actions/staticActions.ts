@@ -29,6 +29,18 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       continue;
     }
 
+    let urlOrCallback: CommandPaletteAction['url'] = url;
+    if (
+      url &&
+      (navItem.id === 'connections-add-new-connection' ||
+        navItem.id === 'standalone-plugin-page-/connections/add-new-connection')
+    ) {
+      urlOrCallback = (searchQuery: string) => {
+        const matchingKeyword = keywords?.find((keyword) => keyword.toLowerCase().includes(searchQuery.toLowerCase()));
+        return matchingKeyword ? `${url}?search=${matchingKeyword}` : url;
+      };
+    }
+
     const section = isCreateAction
       ? t('command-palette.section.actions', 'Actions')
       : t('command-palette.section.pages', 'Pages');
@@ -39,13 +51,13 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
     const action: CommandPaletteAction = {
       id: idForNavItem(navItem),
       name: text,
-      section: section,
-      url,
+      section,
+      url: urlOrCallback,
       target,
       parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
       perform: onClick,
       keywords: keywords?.join(' '),
-      priority: priority,
+      priority,
       subtitle: isCreateAction ? undefined : subtitle,
     };
 
