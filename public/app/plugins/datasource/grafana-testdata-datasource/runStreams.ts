@@ -157,6 +157,7 @@ export function runLogsStream(
       subscriber.next({
         data: [data],
         key: streamId,
+        state: LoadingState.Streaming,
       });
 
       timeoutId = setTimeout(pushNextEvent, speed);
@@ -268,6 +269,7 @@ export function runTracesStream(
       subscriber.next({
         data: [data],
         key: streamId,
+        state: LoadingState.Streaming,
       });
 
       timeoutId = setTimeout(pushNextEvent, query.speed);
