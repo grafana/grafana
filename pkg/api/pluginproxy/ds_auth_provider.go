@@ -49,7 +49,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		req.Host = routeURL.Host
 		req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
 	} else {
-		// fix https://github.com/grafana/grafana/issues/80856 when we skip URL then /{{route.Path}} shall be deleted to avoid error from HTTP severs which not allow dynamic HTTP handlers
+		// If the route URL is empty, we still need to update the request path with the proxy one.
 		req.URL.Path = proxyPath
 	}
 
