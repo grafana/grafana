@@ -21913,6 +21913,9 @@
           "403": {
             "$ref": "#/components/responses/forbiddenError"
           },
+          "409": {
+            "$ref": "#/components/responses/conflictError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -21944,6 +21947,21 @@
         "summary": "Auth tokens of the actual User.",
         "tags": [
           "signed_in_user"
+        ]
+      }
+    },
+    "/user/email/update": {
+      "get": {
+        "description": "Update the email of user given a verification code.",
+        "operationId": "updateUserEmail",
+        "responses": {
+          "302": {
+            "$ref": "#/components/responses/okResponse"
+          }
+        },
+        "summary": "Update user email.",
+        "tags": [
+          "user"
         ]
       }
     },
@@ -22616,6 +22634,9 @@
           },
           "404": {
             "$ref": "#/components/responses/notFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflictError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"

@@ -179,7 +179,7 @@ type HTTPServer struct {
 	authInfoService              login.AuthInfoService
 	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.TeamPermissionsService
-	NotificationService          *notifications.NotificationService
+	NotificationService          notifications.Service
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                folder.Service
@@ -238,7 +238,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
-	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
+	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
