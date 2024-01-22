@@ -1,6 +1,6 @@
 package definitions
 
-// swagger:route GET /api/v1/upgrade/org upgrade RouteGetOrgUpgrade
+// swagger:route GET /v1/upgrade/org upgrade RouteGetOrgUpgrade
 //
 // Get existing alerting upgrade for the current organization.
 //
@@ -10,7 +10,7 @@ package definitions
 //     Responses:
 //       200: OrgMigrationState
 
-// swagger:route POST /api/v1/upgrade/org upgrade RoutePostUpgradeOrg
+// swagger:route POST /v1/upgrade/org upgrade RoutePostUpgradeOrg
 //
 // Upgrade all legacy alerts for the current organization.
 //
@@ -20,7 +20,7 @@ package definitions
 //     Responses:
 //       200: OrgMigrationSummary
 
-// swagger:route DELETE /api/v1/upgrade/org upgrade RouteDeleteOrgUpgrade
+// swagger:route DELETE /v1/upgrade/org upgrade RouteDeleteOrgUpgrade
 //
 // Delete existing alerting upgrade for the current organization.
 //
@@ -30,7 +30,7 @@ package definitions
 //     Responses:
 //       200: Ack
 
-// swagger:route POST /api/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID} upgrade RoutePostUpgradeAlert
+// swagger:route POST /v1/upgrade/dashboards/{DashboardID}/panels/{PanelID} upgrade RoutePostUpgradeAlert
 //
 // Upgrade single legacy dashboard alert for the current organization.
 //
@@ -40,7 +40,7 @@ package definitions
 //     Responses:
 //       200: OrgMigrationSummary
 
-// swagger:route POST /api/v1/upgrade/dashboards/{DashboardID} upgrade RoutePostUpgradeDashboard
+// swagger:route POST /v1/upgrade/dashboards/{DashboardID} upgrade RoutePostUpgradeDashboard
 //
 // Upgrade all legacy dashboard alerts on a dashboard for the current organization.
 //
@@ -50,7 +50,7 @@ package definitions
 //     Responses:
 //       200: OrgMigrationSummary
 
-// swagger:route POST /api/v1/upgrade/dashboards upgrade RoutePostUpgradeAllDashboards
+// swagger:route POST /v1/upgrade/dashboards upgrade RoutePostUpgradeAllDashboards
 //
 // Upgrade all legacy dashboard alerts for the current organization.
 //
@@ -60,7 +60,7 @@ package definitions
 //     Responses:
 //       200: OrgMigrationSummary
 
-// swagger:route POST /api/v1/upgrade/channels upgrade RoutePostUpgradeAllChannels
+// swagger:route POST /v1/upgrade/channels upgrade RoutePostUpgradeAllChannels
 //
 // Upgrade all legacy notification channels for the current organization.
 //
@@ -70,7 +70,7 @@ package definitions
 //     Responses:
 //       200: OrgMigrationSummary
 
-// swagger:route POST /api/v1/upgrade/channels/{ChannelID} upgrade RoutePostUpgradeChannel
+// swagger:route POST /v1/upgrade/channels/{ChannelID} upgrade RoutePostUpgradeChannel
 //
 // Upgrade a single legacy notification channel for the current organization.
 //
