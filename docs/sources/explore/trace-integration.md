@@ -30,7 +30,7 @@ For information on how to configure queries for the data sources listed above, r
 
 You can query and search tracing data using a data source's query editor.
 
-Each data source can have it's own query editor. The query editor for the Tempo data source is slightly different than the query editor for the Jaegar data source.
+Each data source can have it's own query editor. The query editor for the Tempo data source is slightly different than the query editor for the Jaeger data source.
 
 For information on querying each data source, refer to their documentation:
 
@@ -113,7 +113,7 @@ Click the document icon to open a split view in Explore with the configured data
 This feature is currently in beta and behind the `traceToMetrics` feature toggle.
 {{% /admonition %}}
 
-You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source#trace-to-metrics) for configuration instructions.
+You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#trace-to-metrics) for configuration instructions.
 
 ### Trace to profiles
 

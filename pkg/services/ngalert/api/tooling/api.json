@@ -1,5 +1,5 @@
 {
- "basePath": "/api/v1",
+ "basePath": "/api",
  "consumes": [
   "application/json"
  ],
@@ -94,6 +94,20 @@
     }
    },
    "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
+   "type": "object"
+  },
+  "AlertPair": {
+   "properties": {
+    "alertRule": {
+     "$ref": "#/definitions/AlertRuleUpgrade"
+    },
+    "error": {
+     "type": "string"
+    },
+    "legacyAlert": {
+     "$ref": "#/definitions/LegacyAlert"
+    }
+   },
    "type": "object"
   },
   "AlertQuery": {
@@ -280,6 +294,23 @@
    },
    "type": "object"
   },
+  "AlertRuleUpgrade": {
+   "properties": {
+    "sendsTo": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "title": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "AlertingFileExport": {
    "properties": {
     "apiVersion": {
@@ -295,6 +326,12 @@
     "groups": {
      "items": {
       "$ref": "#/definitions/AlertRuleGroupExport"
+     },
+     "type": "array"
+    },
+    "muteTimes": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeIntervalExport"
      },
      "type": "array"
     },
@@ -512,6 +549,9 @@
     },
     "username": {
      "type": "string"
+    },
+    "username_file": {
+     "type": "string"
     }
    },
    "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -552,6 +592,20 @@
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object"
   },
+  "ContactPair": {
+   "properties": {
+    "contactPoint": {
+     "$ref": "#/definitions/ContactPointUpgrade"
+    },
+    "error": {
+     "type": "string"
+    },
+    "legacyChannel": {
+     "$ref": "#/definitions/LegacyChannel"
+    }
+   },
+   "type": "object"
+  },
   "ContactPointExport": {
    "properties": {
     "name": {
@@ -571,6 +625,20 @@
    "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
    "type": "object"
   },
+  "ContactPointUpgrade": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "routeMatchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "type": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "ContactPoints": {
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
@@ -582,6 +650,48 @@
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
+  },
+  "DashboardUpgrade": {
+   "properties": {
+    "dashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "dashboardName": {
+     "type": "string"
+    },
+    "dashboardUid": {
+     "type": "string"
+    },
+    "error": {
+     "type": "string"
+    },
+    "folderName": {
+     "type": "string"
+    },
+    "folderUid": {
+     "type": "string"
+    },
+    "migratedAlerts": {
+     "items": {
+      "$ref": "#/definitions/AlertPair"
+     },
+     "type": "array"
+    },
+    "newFolderName": {
+     "type": "string"
+    },
+    "newFolderUid": {
+     "type": "string"
+    },
+    "provisioned": {
+     "type": "boolean"
+    },
+    "warning": {
+     "type": "string"
+    }
+   },
+   "type": "object"
   },
   "DataLink": {
    "description": "DataLink define what",
@@ -607,6 +717,9 @@
     "Error": {
      "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
+    },
+    "ErrorSource": {
+     "$ref": "#/definitions/ErrorSource"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
@@ -813,6 +926,10 @@
    },
    "type": "object"
   },
+  "ErrorSource": {
+   "description": "ErrorSource type defines the source of the error",
+   "type": "string"
+  },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
    "type": "string"
@@ -838,6 +955,9 @@
   },
   "EvalQueriesPayload": {
    "properties": {
+    "condition": {
+     "type": "string"
+    },
     "data": {
      "items": {
       "$ref": "#/definitions/AlertQuery"
@@ -1045,6 +1165,14 @@
    "title": "FloatHistogram is similar to Histogram but uses float64 for all\ncounts. Additionally, bucket counts are absolute and not deltas.",
    "type": "object"
   },
+  "ForbiddenError": {
+   "properties": {
+    "body": {
+     "$ref": "#/definitions/PublicError"
+    }
+   },
+   "type": "object"
+  },
   "Frame": {
    "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
    "properties": {
@@ -1152,6 +1280,14 @@
    },
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
+  },
+  "GenericPublicError": {
+   "properties": {
+    "body": {
+     "$ref": "#/definitions/PublicError"
+    }
+   },
+   "type": "object"
   },
   "GettableAlertmanagers": {
    "properties": {
@@ -1403,10 +1539,6 @@
     },
     "is_paused": {
      "type": "boolean"
-    },
-    "namespace_id": {
-     "format": "int64",
-     "type": "integer"
     },
     "namespace_uid": {
      "type": "string"
@@ -1810,6 +1942,41 @@
    },
    "type": "array"
   },
+  "LegacyAlert": {
+   "properties": {
+    "dashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "name": {
+     "type": "string"
+    },
+    "panelId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "LegacyChannel": {
+   "properties": {
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "name": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "LinkTransformationConfig": {
    "properties": {
     "expression": {
@@ -1849,7 +2016,7 @@
   },
   "MatchRegexps": {
    "additionalProperties": {
-    "$ref": "#/definitions/Regexp"
+    "type": "string"
    },
    "title": "MatchRegexps represents a map of Regexp.",
    "type": "object"
@@ -1899,6 +2066,24 @@
    "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
+  "MuteTimeIntervalExport": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "MuteTimings": {
    "items": {
     "$ref": "#/definitions/MuteTimeInterval"
@@ -1944,12 +2129,58 @@
   },
   "NotificationPolicyExport": {
    "properties": {
-    "Policy": {
-     "$ref": "#/definitions/RouteExport"
+    "continue": {
+     "type": "boolean"
+    },
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
     },
     "orgId": {
      "format": "int64",
      "type": "integer"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    },
+    "routes": {
+     "items": {
+      "$ref": "#/definitions/RouteExport"
+     },
+     "type": "array"
     }
    },
    "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
@@ -2039,9 +2270,18 @@
    "title": "OAuth2 is the oauth2 client configuration.",
    "type": "object"
   },
+  "ObjectMatcher": {
+   "items": {
+    "type": "string"
+   },
+   "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+   "type": "array"
+  },
   "ObjectMatchers": {
-   "$ref": "#/definitions/Matchers",
-   "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed."
+   "items": {
+    "$ref": "#/definitions/ObjectMatcher"
+   },
+   "type": "array"
   },
   "OpsGenieConfig": {
    "properties": {
@@ -2118,6 +2358,50 @@
     },
     "username": {
      "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "OrgMigrationState": {
+   "properties": {
+    "migratedChannels": {
+     "items": {
+      "$ref": "#/definitions/ContactPair"
+     },
+     "type": "array"
+    },
+    "migratedDashboards": {
+     "items": {
+      "$ref": "#/definitions/DashboardUpgrade"
+     },
+     "type": "array"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "OrgMigrationSummary": {
+   "properties": {
+    "hasErrors": {
+     "type": "boolean"
+    },
+    "newAlerts": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "newChannels": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "newDashboards": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "removed": {
+     "type": "boolean"
     }
    },
    "type": "object"
@@ -2724,6 +3008,26 @@
    },
    "type": "object"
   },
+  "PublicError": {
+   "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+   "properties": {
+    "extra": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "message": {
+     "type": "string"
+    },
+    "messageId": {
+     "type": "string"
+    },
+    "statusCode": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
   "PushoverConfig": {
    "properties": {
     "device": {
@@ -2971,11 +3275,6 @@
     }
    },
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
-   "type": "object"
-  },
-  "Regexp": {
-   "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-   "title": "Regexp is the representation of a compiled regular expression.",
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -4124,6 +4423,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4252,7 +4552,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4362,6 +4661,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4669,7 +4969,7 @@
   "version": "1.1.0"
  },
  "paths": {
-  "/api/v1/provisioning/alert-rules": {
+  "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
     "responses": {
@@ -4724,7 +5024,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/export": {
+  "/v1/provisioning/alert-rules/export": {
    "get": {
     "operationId": "RouteGetAlertRulesExport",
     "parameters": [
@@ -4781,7 +5081,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}": {
+  "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
@@ -4790,6 +5090,11 @@
       "in": "path",
       "name": "UID",
       "required": true,
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
       "type": "string"
      }
     ],
@@ -4876,7 +5181,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}/export": {
+  "/v1/provisioning/alert-rules/{UID}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
@@ -4924,7 +5229,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points": {
+  "/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "parameters": [
@@ -4960,6 +5265,11 @@
       "schema": {
        "$ref": "#/definitions/EmbeddedContactPoint"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -4982,7 +5292,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/export": {
+  "/v1/provisioning/contact-points/export": {
    "get": {
     "operationId": "RouteGetContactpointsExport",
     "parameters": [
@@ -5034,7 +5344,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/{UID}": {
+  "/v1/provisioning/contact-points/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5050,7 +5360,7 @@
      }
     ],
     "responses": {
-     "204": {
+     "202": {
       "description": " The contact point was deleted successfully."
      }
     },
@@ -5078,6 +5388,11 @@
       "schema": {
        "$ref": "#/definitions/EmbeddedContactPoint"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5100,7 +5415,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
@@ -5139,6 +5454,11 @@
     ],
     "operationId": "RoutePutAlertRuleGroup",
     "parameters": [
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
+     },
      {
       "in": "path",
       "name": "FolderUID",
@@ -5179,7 +5499,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
@@ -5232,7 +5552,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings": {
+  "/v1/provisioning/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -5260,6 +5580,11 @@
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5282,7 +5607,46 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}": {
+  "/v1/provisioning/mute-timings/export": {
+   "get": {
+    "operationId": "RouteExportMuteTimings",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export all mute timings in provisioning format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/v1/provisioning/mute-timings/{name}": {
    "delete": {
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
@@ -5297,6 +5661,12 @@
     "responses": {
      "204": {
       "description": " The mute timing was deleted successfully."
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
      }
     },
     "summary": "Delete a mute timing.",
@@ -5350,10 +5720,15 @@
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
-     "200": {
+     "202": {
       "description": "MuteTimeInterval",
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
@@ -5372,7 +5747,53 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies": {
+  "/v1/provisioning/mute-timings/{name}/export": {
+   "get": {
+    "operationId": "RouteExportMuteTiming",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "Mute timing name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export a mute timing in provisioning format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/v1/provisioning/policies": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5419,6 +5840,11 @@
       "schema": {
        "$ref": "#/definitions/Route"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5441,7 +5867,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies/export": {
+  "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
     "responses": {
@@ -5464,7 +5890,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates": {
+  "/v1/provisioning/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -5484,7 +5910,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates/{name}": {
+  "/v1/provisioning/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "parameters": [
@@ -5552,6 +5978,11 @@
       "schema": {
        "$ref": "#/definitions/NotificationTemplateContent"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {

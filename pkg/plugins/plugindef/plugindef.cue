@@ -364,6 +364,9 @@ schemas: [{
 			reqSignedIn?: bool
 			reqRole?:     string
 
+			// RBAC action the user must have to access the route. i.e. plugin-id.projects:read
+			reqAction?: string
+
 			// For data source plugins. Route headers adds HTTP headers to the
 			// proxied request.
 			headers?: [...#Header]
@@ -410,12 +413,13 @@ schemas: [{
 			params: [string]: string
 		}
 
-		// External service registration information
-		externalServiceRegistration: #ExternalServiceRegistration
+		// Identity and Access Management information.
+		// Allows the plugin to define the permissions it requires to have on Grafana.
+		iam: #IAM
 
-		// ExternalServiceRegistration allows the service to get a service account token
+		// IAM allows the plugin to get a service account with tailored permissions and a token
 		// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
-		#ExternalServiceRegistration: {
+		#IAM: {
 			// Permissions are the permissions that the external service needs its associated service account to have.
 			permissions?: [...#Permission]
 

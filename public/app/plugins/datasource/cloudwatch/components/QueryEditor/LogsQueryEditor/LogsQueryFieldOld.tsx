@@ -28,7 +28,6 @@ export interface CloudWatchLogsQueryFieldProps
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
-  exploreId: string;
   query: CloudWatchLogsQuery;
 }
 const plugins: Array<Plugin<Editor>> = [

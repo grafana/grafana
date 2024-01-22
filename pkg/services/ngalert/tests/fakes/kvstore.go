@@ -98,5 +98,25 @@ func (fkv *FakeKVStore) Keys(ctx context.Context, orgID int64, namespace string,
 }
 
 func (fkv *FakeKVStore) GetAll(ctx context.Context, orgId int64, namespace string) (map[int64]map[string]string, error) {
-	return nil, nil
+	fkv.Mtx.Lock()
+	defer fkv.Mtx.Unlock()
+
+	all := map[int64]map[string]string{
+		orgId: make(map[string]string),
+	}
+
+	org, ok := fkv.Store[orgId]
+	if !ok {
+		return nil, nil
+	}
+
+	values, ok := org[namespace]
+	if !ok {
+		return all, nil
+	}
+
+	for k, v := range values {
+		all[orgId][k] = v
+	}
+	return all, nil
 }

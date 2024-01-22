@@ -7,6 +7,7 @@ import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { Select, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
+import { useDimensionKeys } from '../../../hooks';
 import { Dimensions, MetricStat } from '../../../types';
 import { appendTemplateVariables } from '../../../utils/utils';
 
@@ -16,7 +17,6 @@ export interface Props {
   metricStat: MetricStat;
   datasource: CloudWatchDatasource;
   filter: DimensionFilterCondition;
-  dimensionKeys: Array<SelectableValue<string>>;
   disableExpressions: boolean;
   onChange: (value: DimensionFilterCondition) => void;
   onDelete: () => void;
@@ -32,19 +32,16 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
     return acc;
   }, {});
 
-export const FilterItem = ({
-  filter,
-  metricStat: { region, namespace, metricName, dimensions, accountId },
-  datasource,
-  dimensionKeys,
-  disableExpressions,
-  onChange,
-  onDelete,
-}: Props) => {
+export const FilterItem = ({ filter, metricStat, datasource, disableExpressions, onChange, onDelete }: Props) => {
+  const { region, namespace, metricName, dimensions, accountId } = metricStat;
   const dimensionsExcludingCurrentKey = useMemo(
     () => excludeCurrentKey(dimensions ?? {}, filter.key),
     [dimensions, filter]
   );
+  const dimensionKeys = useDimensionKeys(datasource, {
+    ...metricStat,
+    dimensionFilters: dimensionsExcludingCurrentKey,
+  });
 
   const loadDimensionValues = async () => {
     if (!filter.key) {

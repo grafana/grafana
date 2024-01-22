@@ -69,15 +69,24 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       search.tags.some((tag) => {
         return tag.key;
       }) ||
+      (search.query && search.query !== '') ||
       showSpanFilterMatchesOnly
     );
-  }, [search.serviceName, search.spanName, search.from, search.to, search.tags, showSpanFilterMatchesOnly]);
+  }, [
+    search.serviceName,
+    search.spanName,
+    search.from,
+    search.to,
+    search.tags,
+    search.query,
+    showSpanFilterMatchesOnly,
+  ]);
 
   return (
     <div className={styles.container}>
       <div className={styles.controls}>
         <>
-          <div className={styles.clearButton}>
+          <div>
             <Button
               variant="destructive"
               disabled={!clearEnabled}
@@ -152,9 +161,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       justify-content: flex-end;
       margin: 5px 0 0 0;
     `,
-    clearButton: css`
-      order: 1;
-    `,
     matchesOnly: css`
       display: inline-flex;
       margin: 0 0 0 25px;
@@ -170,7 +176,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     nextPrevResult: css`
       margin-left: auto;
-      order: 2;
+      display: flex;
+      align-items: center;
     `,
   };
 };

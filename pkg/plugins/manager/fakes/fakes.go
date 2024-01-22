@@ -441,7 +441,7 @@ func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID strin
 	return f.Result != nil, nil
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.IAM) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 
@@ -573,27 +573,4 @@ func (p *FakeBackendPlugin) Kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.Running = false
-}
-
-type FakeFeatureToggles struct {
-	features map[string]bool
-}
-
-func NewFakeFeatureToggles(features ...string) *FakeFeatureToggles {
-	m := make(map[string]bool)
-	for _, f := range features {
-		m[f] = true
-	}
-
-	return &FakeFeatureToggles{
-		features: m,
-	}
-}
-
-func (f *FakeFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
-	return f.features
-}
-
-func (f *FakeFeatureToggles) IsEnabledGlobally(feature string) bool {
-	return f.features[feature]
 }

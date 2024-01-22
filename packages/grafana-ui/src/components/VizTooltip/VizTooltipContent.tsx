@@ -10,17 +10,18 @@ import { LabelValue } from './types';
 
 interface Props {
   contentLabelValue: LabelValue[];
-  customContent?: ReactElement | null;
+  customContent?: ReactElement[];
+  isPinned: boolean;
 }
 
-export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) => {
+export const VizTooltipContent = ({ contentLabelValue, customContent, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
       <div>
-        {contentLabelValue?.map((labelValue, i) => {
-          const { label, value, color, colorIndicator } = labelValue;
+        {contentLabelValue.map((labelValue, i) => {
+          const { label, value, color, colorIndicator, colorPlacement, isActive } = labelValue;
           return (
             <VizTooltipRow
               key={i}
@@ -28,13 +29,21 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
               value={value}
               color={color}
               colorIndicator={colorIndicator}
-              colorFirst={false}
+              colorPlacement={colorPlacement}
+              isActive={isActive}
               justify={'space-between'}
+              isPinned={isPinned}
             />
           );
         })}
       </div>
-      {customContent && <div className={styles.customContentPadding}>{customContent}</div>}
+      {customContent?.map((content, i) => {
+        return (
+          <div key={i} className={styles.customContentPadding}>
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 };

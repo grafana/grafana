@@ -19,7 +19,7 @@ weight: 1300
 
 # Prometheus data source
 
-Prometheus is an open-source database that uses an telemetry collector agent to scrape and store metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?][intro-to-prometheus].
+Prometheus is an open-source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?][intro-to-prometheus].
 
 Grafana provides native support for Prometheus.
 For instructions on downloading Prometheus see [Get started with Grafana and Prometheus][get-started-prometheus].
@@ -28,7 +28,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Prometheus data source, you can [configure it][configure-prometheus-data-source] so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards], use [Explore][explore], and [annotate visualizations]({{< relref "./query-editor#apply-annotations" >}}).
+Once you've added the Prometheus data source, you can [configure it][configure-prometheus-data-source] so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards], use [Explore][explore], and [annotate visualizations][annotate visualizations].
 
 The following guides will help you get started with the Prometheus data source:
 
@@ -196,4 +196,8 @@ The Prometheus data source can be configured to disable recording rules under th
 
 [set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
 [set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+
+[annotate visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate visualizations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations"
+
 {{% /docs/reference %}}

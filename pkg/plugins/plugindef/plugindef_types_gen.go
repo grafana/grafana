@@ -122,20 +122,20 @@ type Dependency struct {
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
 
-// ExternalServiceRegistration allows the service to get a service account token
-// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
-type ExternalServiceRegistration struct {
-	Impersonation *Impersonation `json:"impersonation,omitempty"`
-
-	// Permissions are the permissions that the external service needs its associated service account to have.
-	Permissions []Permission `json:"permissions,omitempty"`
-}
-
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
 type Header struct {
 	Content string `json:"content"`
 	Name    string `json:"name"`
+}
+
+// IAM allows the plugin to get a service account with tailored permissions and a token
+// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
+type IAM struct {
+	Impersonation *Impersonation `json:"impersonation,omitempty"`
+
+	// Permissions are the permissions that the external service needs its associated service account to have.
+	Permissions []Permission `json:"permissions,omitempty"`
 }
 
 // Impersonation defines model for Impersonation.
@@ -315,13 +315,13 @@ type PluginDef struct {
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
 
-	// ExternalServiceRegistration allows the service to get a service account token
-	// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
-	ExternalServiceRegistration ExternalServiceRegistration `json:"externalServiceRegistration"`
-
 	// [internal only] Excludes the plugin from listings in Grafana's UI. Only
 	// allowed for `builtIn` plugins.
 	HideFromList bool `json:"hideFromList"`
+
+	// IAM allows the plugin to get a service account with tailored permissions and a token
+	// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
+	Iam IAM `json:"iam"`
 
 	// Unique name of the plugin. If the plugin is published on
 	// grafana.com, then the plugin `id` has to follow the naming
@@ -461,7 +461,10 @@ type Route struct {
 
 	// For data source plugins. The route path that is replaced by the
 	// route URL field when proxying the call.
-	Path        *string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
+
+	// RBAC action the user must have to access the route. i.e. plugin-id.projects:read
+	ReqAction   *string `json:"reqAction,omitempty"`
 	ReqRole     *string `json:"reqRole,omitempty"`
 	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
 

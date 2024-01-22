@@ -75,6 +75,8 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 				accesscontrol.ActionAlertingRuleCreate,
 			)
 		}
+	} else if queryType == searchstore.TypeAnnotation {
+		dashboardActions = append(dashboardActions, accesscontrol.ActionAnnotationsRead)
 	} else {
 		folderActions = append(folderActions, dashboards.ActionFoldersRead)
 		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)

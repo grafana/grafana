@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -214,6 +215,40 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	return sc
 }
 
+func setupScenarioContextSamlLogout(t *testing.T, url string) *scenarioContext {
+	cfg := setting.NewCfg()
+	//seed sections and keys
+	cfg.Raw.DeleteSection("DEFAULT")
+	saml, err := cfg.Raw.NewSection("auth.saml")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("enabled", "true")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("allow_idp_initiated", "false")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("single_logout", "true")
+	assert.NoError(t, err)
+
+	ctxHdlr := getContextHandler(t, cfg)
+	sc := &scenarioContext{
+		url:     url,
+		t:       t,
+		cfg:     cfg,
+		ctxHdlr: ctxHdlr,
+	}
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
+	exists, err := fs.Exists(viewsPath)
+	require.NoError(t, err)
+	require.Truef(t, exists, "Views should be in %q", viewsPath)
+
+	sc.m = web.New()
+	sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+	sc.m.Use(ctxHdlr.Middleware)
+
+	return sc
+}
+
+// FIXME: This user should not be anonymous
 func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
 	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
@@ -223,7 +258,7 @@ func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *u
 	return &user.SignedInUser{IsAnonymous: true, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
 
-func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
+func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 	if features == nil {
 		features = featuremgmt.WithFeatures()
 	}

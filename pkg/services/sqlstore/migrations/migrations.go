@@ -111,6 +111,10 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
 
 	ssosettings.AddMigration(mg)
+
+	ualert.CreateOrgMigratedKVStoreEntries(mg)
+
+	addKVStoreMySQLValueTypeLongTextMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

@@ -20,6 +20,7 @@ export interface PublicDashboardListResponse {
   accessToken: string;
   dashboardUid: string;
   title: string;
+  slug: string;
   isEnabled: boolean;
 }
 

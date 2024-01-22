@@ -2,7 +2,7 @@
 aliases:
   - ../../provision-alerting-resources/view-provisioned-resources/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/view-provisioned-resources/
-description: Manage provisioned resources in Grafana
+description: Manage provisioned alerting resources in Grafana
 keywords:
   - grafana
   - alerting

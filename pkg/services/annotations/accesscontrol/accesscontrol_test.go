@@ -8,17 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
-)
-
-var (
-	dashScopeType = annotations.Dashboard.String()
-	orgScopeType  = annotations.Organization.String()
 )
 
 func TestIntegrationAuthorize(t *testing.T) {
@@ -27,8 +21,6 @@ func TestIntegrationAuthorize(t *testing.T) {
 	}
 
 	sql := db.InitTestDB(t)
-
-	authz := NewAuthService(sql, featuremgmt.WithFeatures())
 
 	dash1 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
@@ -55,6 +47,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 	type testCase struct {
 		name              string
 		permissions       map[string][]string
+		featureToggle     string
 		expectedResources *AccessResources
 		expectedErr       error
 	}
@@ -67,8 +60,46 @@ func TestIntegrationAuthorize(t *testing.T) {
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
 			expectedResources: &AccessResources{
-				Dashboards: map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
-				ScopeTypes: map[any]struct{}{dashScopeType: {}, orgScopeType: {}},
+				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
+				CanAccessOrgAnnotations:  true,
+				CanAccessDashAnnotations: true,
+			},
+		},
+		{
+			name: "should have no dashboards if missing annotation read permission on dashboards and FlagAnnotationPermissionUpdate is enabled",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
+				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
+			},
+			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
+			expectedResources: &AccessResources{
+				Dashboards:               nil,
+				CanAccessOrgAnnotations:  true,
+				CanAccessDashAnnotations: true,
+			},
+		},
+		{
+			name: "should have dashboard and organization scope and all dashboards if FlagAnnotationPermissionUpdate is enabled",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeDashboardsAll},
+			},
+			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
+			expectedResources: &AccessResources{
+				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
+				CanAccessOrgAnnotations:  true,
+				CanAccessDashAnnotations: true,
+			},
+		},
+		{
+			name: "should have dashboard and organization scope and all dashboards if FlagAnnotationPermissionUpdate is enabled and folder based scope is used",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeFoldersAll},
+			},
+			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
+			expectedResources: &AccessResources{
+				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
+				CanAccessOrgAnnotations:  true,
+				CanAccessDashAnnotations: true,
 			},
 		},
 		{
@@ -78,8 +109,8 @@ func TestIntegrationAuthorize(t *testing.T) {
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
 			expectedResources: &AccessResources{
-				Dashboards: nil,
-				ScopeTypes: map[any]struct{}{orgScopeType: {}},
+				Dashboards:              nil,
+				CanAccessOrgAnnotations: true,
 			},
 		},
 		{
@@ -89,8 +120,20 @@ func TestIntegrationAuthorize(t *testing.T) {
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
 			expectedResources: &AccessResources{
-				Dashboards: map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
-				ScopeTypes: map[any]struct{}{dashScopeType: {}},
+				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
+				CanAccessDashAnnotations: true,
+			},
+		},
+		{
+			name: "should have only dashboard scope and all dashboards if FlagAnnotationPermissionUpdate is enabled",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {dashboards.ScopeDashboardsAll},
+			},
+			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
+			expectedResources: &AccessResources{
+				Dashboards:               map[string]int64{dash1.UID: dash1.ID, dash2.UID: dash2.ID},
+				CanAccessOrgAnnotations:  false,
+				CanAccessDashAnnotations: true,
 			},
 		},
 		{
@@ -100,8 +143,20 @@ func TestIntegrationAuthorize(t *testing.T) {
 				dashboards.ActionDashboardsRead:     {fmt.Sprintf("dashboards:uid:%s", dash1.UID)},
 			},
 			expectedResources: &AccessResources{
-				Dashboards: map[string]int64{dash1.UID: dash1.ID},
-				ScopeTypes: map[any]struct{}{dashScopeType: {}},
+				Dashboards:               map[string]int64{dash1.UID: dash1.ID},
+				CanAccessDashAnnotations: true,
+			},
+		},
+		{
+			name: "should have only dashboard scope and only dashboard 1 if FlagAnnotationPermissionUpdate is enabled",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash1.UID)},
+			},
+			featureToggle: featuremgmt.FlagAnnotationPermissionUpdate,
+			expectedResources: &AccessResources{
+				Dashboards:               map[string]int64{dash1.UID: dash1.ID},
+				CanAccessOrgAnnotations:  false,
+				CanAccessDashAnnotations: true,
 			},
 		},
 	}
@@ -111,6 +166,8 @@ func TestIntegrationAuthorize(t *testing.T) {
 			u.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			testutil.SetupRBACPermission(t, sql, role, u)
 
+			authz := NewAuthService(sql, featuremgmt.WithFeatures(tc.featureToggle))
+
 			resources, err := authz.Authorize(context.Background(), 1, u)
 			require.NoError(t, err)
 
@@ -118,9 +175,8 @@ func TestIntegrationAuthorize(t *testing.T) {
 				require.Equal(t, tc.expectedResources.Dashboards, resources.Dashboards)
 			}
 
-			if tc.expectedResources.ScopeTypes != nil {
-				require.Equal(t, tc.expectedResources.ScopeTypes, resources.ScopeTypes)
-			}
+			require.Equal(t, tc.expectedResources.CanAccessDashAnnotations, resources.CanAccessDashAnnotations)
+			require.Equal(t, tc.expectedResources.CanAccessOrgAnnotations, resources.CanAccessOrgAnnotations)
 
 			if tc.expectedErr != nil {
 				require.Equal(t, tc.expectedErr, err)

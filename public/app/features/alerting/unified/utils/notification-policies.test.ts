@@ -1,11 +1,12 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {
-  findMatchingRoutes,
-  normalizeRoute,
-  getInheritedProperties,
+  InhertitableProperties,
   computeInheritedTree,
+  findMatchingRoutes,
+  getInheritedProperties,
   matchLabels,
+  normalizeRoute,
 } from './notification-policies';
 
 import 'core-js/stable/structured-clone';
@@ -203,6 +204,18 @@ describe('getInheritedProperties()', () => {
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_by', ['label']);
     });
+
+    // This scenario is technically impossible unless we have a bug in our code.
+    // A route cannot both specify a receiver and inherit it from its parent at the same time.
+    it('should inherit from parent instead of grandparent', () => {
+      const parent: Route = { receiver: 'parent' };
+      const parentInherited: InhertitableProperties = { receiver: 'grandparent', group_by: ['foo'] };
+      const child: Route = {};
+
+      const childInherited = getInheritedProperties(parent, child, parentInherited);
+      expect(childInherited).toHaveProperty('receiver', 'parent');
+      expect(childInherited.group_by).toEqual(['foo']);
+    });
   });
 
   describe('regular "undefined" values', () => {
@@ -293,6 +306,21 @@ describe('getInheritedProperties()', () => {
       expect(childInherited).toHaveProperty('group_wait', '1m');
       expect(childInherited).toHaveProperty('group_interval', '2m');
     });
+  });
+  it('should not inherit mute timings from parent route', () => {
+    const parent: Route = {
+      receiver: 'PARENT',
+      group_by: ['parentLabel'],
+      mute_time_intervals: ['Mon-Fri 09:00-17:00'],
+    };
+
+    const child: Route = {
+      receiver: 'CHILD',
+      group_by: ['childLabel'],
+    };
+
+    const childInherited = getInheritedProperties(parent, child);
+    expect(childInherited).not.toHaveProperty('mute_time_intervals');
   });
 });
 

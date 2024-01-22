@@ -41,6 +41,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 	}
 
 	genAlert := func(title string, namespaceUID string, dashboardUID string, mutators ...func(*ngModels.AlertRule)) *ngModels.AlertRule {
+		dashTitle := "Dashboard Title " + dashboardUID
 		a := &ngModels.AlertRule{
 			ID:        1,
 			OrgID:     1,
@@ -55,7 +56,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			},
 			NamespaceUID:    namespaceUID,
 			DashboardUID:    &dashboardUID,
-			RuleGroup:       fmt.Sprintf("Dashboard Title %s - %d", dashboardUID, 1),
+			RuleGroup:       fmt.Sprintf("%s - 1m", dashTitle),
 			IntervalSeconds: 60,
 			Version:         1,
 			PanelID:         pointer(int64(1)),
@@ -68,7 +69,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 				"__dashboardUid__": dashboardUID,
 				"__panelId__":      "1",
 			},
-			Labels:   map[string]string{},
+			Labels:   map[string]string{ngModels.MigratedUseLegacyChannelsLabel: "true"},
 			IsPaused: false,
 		}
 		if len(mutators) > 0 {
@@ -83,7 +84,6 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 		return func(a *ngModels.AlertRule) {
 			a.PanelID = pointer(id)
 			a.Annotations["__panelId__"] = fmt.Sprintf("%d", id)
-			a.RuleGroup = fmt.Sprintf("Dashboard Title %s - %d", *a.DashboardUID, id)
 		}
 	}
 
@@ -685,8 +685,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 						// Remove generated fields.
 						require.NotEqual(t, r.Labels["rule_uid"], "")
 						delete(r.Labels, "rule_uid")
-						require.NotEqual(t, r.Annotations["__alertId__"], "")
-						delete(r.Annotations, "__alertId__")
+						require.NotEqual(t, r.Annotations[ngModels.MigratedAlertIdAnnotation], "")
+						delete(r.Annotations, ngModels.MigratedAlertIdAnnotation)
 
 						folder := getDashboard(t, x, orgId, r.NamespaceUID)
 						rperms, err := service.migrationStore.GetFolderPermissions(context.Background(), getMigrationUser(orgId), folder.UID)

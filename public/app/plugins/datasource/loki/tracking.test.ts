@@ -1,12 +1,11 @@
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
-
-import { dateTime } from '@grafana/data';
+import { DashboardLoadedEvent, DataQueryRequest, dateTime } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
+import pluginJson from './plugin.json';
 import { partitionTimeRange } from './querySplitting';
-import { trackGroupedQueries, trackQuery } from './tracking';
+import { onDashboardLoadedHandler, trackGroupedQueries, trackQuery } from './tracking';
 import { LokiGroupedRequest, LokiQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -26,7 +25,7 @@ const range = {
     to: dateTime('2023-02-10T06:00:00.000Z'),
   },
 };
-const originalRequest = getQueryOptions<LokiQuery>({
+const originalRequest = {
   targets: [
     { expr: 'count_over_time({a="b"}[1m])', refId: 'A', ...baseTarget },
     { expr: '{a="b"}', refId: 'B', maxLines: 10, ...baseTarget },
@@ -34,26 +33,23 @@ const originalRequest = getQueryOptions<LokiQuery>({
   ],
   range,
   app: 'explore',
-});
+} as DataQueryRequest<LokiQuery>;
+
 const requests: LokiGroupedRequest[] = [
   {
     request: {
-      ...getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', ...baseTarget }],
-        range,
-      }),
+      targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', ...baseTarget }],
+      range,
       app: 'explore',
-    },
+    } as DataQueryRequest<LokiQuery>,
     partition: partitionTimeRange(true, range, 60000, 24 * 60 * 60 * 1000),
   },
   {
     request: {
-      ...getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{a="b"}', refId: 'B', maxLines: 10, ...baseTarget }],
-        range,
-      }),
+      targets: [{ expr: '{a="b"}', refId: 'B', maxLines: 10, ...baseTarget }],
+      range,
       app: 'explore',
-    },
+    } as DataQueryRequest<LokiQuery>,
     partition: partitionTimeRange(false, range, 60000, 24 * 60 * 60 * 1000),
   },
 ];
@@ -63,6 +59,7 @@ beforeAll(() => {
 });
 afterAll(() => {
   jest.useRealTimers();
+  jest.clearAllMocks();
 });
 beforeEach(() => {
   jest.mocked(reportInteraction).mockClear();
@@ -180,5 +177,43 @@ test('Tracks grouped queries', () => {
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
     predefined_operations_applied: 'n/a',
+  });
+});
+
+describe('onDashboardLoadedHandler', () => {
+  beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
+    jest.spyOn(console, 'error');
+  });
+  test('Reports dashboard loaded interactions', () => {
+    const event = new DashboardLoadedEvent({
+      dashboardId: 'test',
+      orgId: 1,
+      userId: 2,
+      grafanaVersion: '11',
+      queries: {
+        [pluginJson.id]: originalRequest.targets,
+      },
+    });
+    onDashboardLoadedHandler(event);
+
+    expect(reportInteraction).toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  test('Does not report or fails when the dashboard id has no queries', () => {
+    const event = new DashboardLoadedEvent({
+      dashboardId: 'test',
+      orgId: 1,
+      userId: 2,
+      grafanaVersion: '11',
+      queries: {
+        'not loki': originalRequest.targets,
+      },
+    });
+    onDashboardLoadedHandler(event);
+
+    expect(reportInteraction).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 });

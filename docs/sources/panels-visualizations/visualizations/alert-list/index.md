@@ -16,6 +16,7 @@ labels:
     - enterprise
     - oss
 title: Alert list
+description: Configure options for Grafana's alert list visualization
 weight: 100
 ---
 
@@ -23,7 +24,7 @@ weight: 100
 
 Use alert lists to display your alerts. You can configure the list to show the current state. You can read more about alerts in [Grafana Alerting overview][].
 
-{{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" >}}
+{{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" alt="An alert list visualization" >}}
 
 Customize your visualization using the following settings.
 

@@ -597,6 +597,32 @@ describe('calculateField transformer w/ timeseries', () => {
       expect(data.fields[1].values[2]).toEqual(2);
     });
   });
+  it('calculates cumulative total with undefined values', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.CumulativeFunctions,
+        cumulative: {
+          field: 'x',
+          reducer: ReducerID.sum,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, undefined, 2, 3] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(1);
+      expect(data.fields[1].values[1]).toEqual(1);
+      expect(data.fields[1].values[2]).toEqual(3);
+      expect(data.fields[1].values[3]).toEqual(6);
+    });
+  });
 
   it('calculates cumulative total with nulls', async () => {
     const cfg = {
@@ -740,6 +766,36 @@ describe('calculateField transformer w/ timeseries', () => {
       expect(data.fields[1].values[1]).toEqual(0.5);
       expect(data.fields[1].values[2]).toEqual(0.5);
       expect(data.fields[1].values[3]).toEqual(0.5);
+    });
+  });
+
+  it('calculates centered moving average with undefined values', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          windowAlignment: WindowAlignment.Centered,
+          field: 'x',
+          windowSize: 0.75,
+          windowSizeMode: WindowSizeMode.Percentage,
+          reducer: ReducerID.mean,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, undefined, 2, 7] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values[0]).toEqual(1);
+      expect(data.fields[1].values[1]).toEqual(1.5);
+      expect(data.fields[1].values[2]).toEqual(4.5);
+      expect(data.fields[1].values[3]).toEqual(4.5);
     });
   });
 

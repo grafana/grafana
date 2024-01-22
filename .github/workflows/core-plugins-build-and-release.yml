@@ -1,3 +1,5 @@
+name: Build and release core plugins
+
 on:
   workflow_dispatch:
     inputs:
@@ -6,7 +8,10 @@ on:
         required: true
         type: choice
         options:
+          - grafana-azure-monitor-datasource
           - grafana-testdata-datasource
+          - parca
+          - tempo
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
@@ -45,11 +50,11 @@ jobs:
             PLUGINS_GRAFANA_API_KEY=core-plugins-build-and-release:PLUGINS_GRAFANA_API_KEY
             PLUGINS_GCOM_TOKEN=core-plugins-build-and-release:PLUGINS_GCOM_TOKEN
       - name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v1'
+        uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
+        uses: 'google-github-actions/setup-gcloud@v2'
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -59,7 +64,12 @@ jobs:
         shell: bash
         id: get_dir
         run: |
-          dir=$(find public/app/plugins -name ${{ inputs.plugin_id }} -print -quit)
+          dir=$(dirname \
+            $(egrep -lir --include=plugin.json --exclude-dir=dist \
+              '"id": "${{ inputs.plugin_id }}"' \
+              public/app/plugins \
+            ) \
+          )
           echo "dir=${dir}" >> $GITHUB_OUTPUT
       - name: Install frontend dependencies
         shell: bash

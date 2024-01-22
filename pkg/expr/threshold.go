@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -162,4 +163,65 @@ type ThresholdConditionJSON struct {
 	Evaluator        ConditionEvalJSON  `json:"evaluator"`
 	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator"`
 	LoadedDimensions *data.Frame        `json:"loadedDimensions"`
+}
+
+// IsHysteresisExpression returns true if the raw model describes a hysteresis command:
+// - field 'type' has value "threshold",
+// - field 'conditions' is array of objects and has exactly one element
+// - field 'conditions[0].unloadEvaluator is not nil
+func IsHysteresisExpression(query map[string]any) bool {
+	c, err := getConditionForHysteresisCommand(query)
+	if err != nil {
+		return false
+	}
+	return c != nil
+}
+
+// SetLoadedDimensionsToHysteresisCommand mutates the input map and sets field "conditions[0].loadedMetrics" with the data frame created from the provided fingerprints.
+func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints Fingerprints) error {
+	condition, err := getConditionForHysteresisCommand(query)
+	if err != nil {
+		return err
+	}
+	if condition == nil {
+		return errors.New("not a hysteresis command")
+	}
+	fr := FingerprintsToFrame(fingerprints)
+	condition["loadedDimensions"] = fr
+	return nil
+}
+
+func getConditionForHysteresisCommand(query map[string]any) (map[string]any, error) {
+	t, err := GetExpressionCommandType(query)
+	if err != nil {
+		return nil, err
+	}
+	if t != TypeThreshold {
+		return nil, errors.New("not a threshold command")
+	}
+
+	c, ok := query["conditions"]
+	if !ok {
+		return nil, errors.New("invalid threshold command: expected field \"condition\"")
+	}
+	var condition map[string]any
+	switch arr := c.(type) {
+	case []any:
+		if len(arr) != 1 {
+			return nil, errors.New("invalid threshold command: field \"condition\" expected to have exactly 1 field")
+		}
+		switch m := arr[0].(type) {
+		case map[string]any:
+			condition = m
+		default:
+			return nil, errors.New("invalid threshold command: value of the first element of field \"condition\" expected to be an object")
+		}
+	default:
+		return nil, errors.New("invalid threshold command: field \"condition\" expected to be an array of objects")
+	}
+	_, ok = condition["unloadEvaluator"]
+	if !ok {
+		return nil, nil
+	}
+	return condition, nil
 }

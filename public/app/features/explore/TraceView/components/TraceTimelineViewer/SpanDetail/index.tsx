@@ -17,11 +17,12 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import React from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel, TimeZone } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
-import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
@@ -124,6 +125,8 @@ export type SpanDetailProps = {
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
+  traceDuration: number;
+  traceName: string;
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
   referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
@@ -147,6 +150,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     span,
     tagsToggle,
     traceStartTime,
+    traceDuration,
+    traceName,
     warningsToggle,
     stackTracesToggle,
     referencesToggle,
@@ -401,6 +406,8 @@ export default function SpanDetail(props: SpanDetailProps) {
               setTraceFlameGraphs={setTraceFlameGraphs}
               traceToProfilesOptions={traceToProfilesOptions}
               setRedrawListView={setRedrawListView}
+              traceDuration={traceDuration}
+              traceName={traceName}
             />
           )}
         <small className={styles.debugInfo}>

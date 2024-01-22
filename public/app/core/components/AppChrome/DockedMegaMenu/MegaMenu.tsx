@@ -30,16 +30,19 @@ export const MegaMenu = React.memo(
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
-      .map((item) => enrichWithInteractionTracking(item, state.megaMenu));
+      .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
     const activeItem = getActiveItem(navItems, location.pathname);
 
     const handleDockedMenu = () => {
-      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'open' : 'docked');
+      chrome.setMegaMenuDocked(!state.megaMenuDocked);
+      if (state.megaMenuDocked) {
+        chrome.setMegaMenuOpen(false);
+      }
 
-      // refocus on dock/undock button when changing state
+      // refocus on undock/menu open button when changing state
       setTimeout(() => {
-        document.getElementById('dock-menu-button')?.focus();
+        document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
       });
     };
 
@@ -65,7 +68,7 @@ export const MegaMenu = React.memo(
                       id="dock-menu-button"
                       className={styles.dockMenuButton}
                       tooltip={
-                        state.megaMenu === 'docked'
+                        state.megaMenuDocked
                           ? t('navigation.megamenu.undock', 'Undock menu')
                           : t('navigation.megamenu.dock', 'Dock menu')
                       }
@@ -76,7 +79,7 @@ export const MegaMenu = React.memo(
                   )}
                   <MegaMenuItem
                     link={link}
-                    onClick={state.megaMenu === 'open' ? onClose : undefined}
+                    onClick={state.megaMenuDocked ? undefined : onClose}
                     activeItem={activeItem}
                   />
                 </Stack>

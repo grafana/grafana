@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	grafanaAlertmanagerStatePath = "/grafana/state"
+	grafanaAlertmanagerStatePath = "/api/v1/grafana/state"
 )
 
 type UserGrafanaState struct {

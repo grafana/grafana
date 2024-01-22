@@ -21,6 +21,8 @@ To learn more about Grafana Enterprise, refer to [our product page](/enterprise)
 
 Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Free, Pro, and Advanced accounts. For details, refer to [the Grafana Cloud features table](/pricing/#featuresTable).
 
+To migrate to Grafana Cloud, refer to [Migrate from Grafana Enterprise to Grafana Cloud](/docs/grafana-cloud/account-management/e2c-guide/).
+
 ## Authentication
 
 Grafana Enterprise includes integrations with more ways to authenticate your users and enhanced authentication capabilities.

@@ -4,8 +4,10 @@ package accesscontrol
 type AccessResources struct {
 	// Dashboards is a map of dashboard UIDs to IDs
 	Dashboards map[string]int64
-	// ScopeTypes contains the scope types that the user has access to. At most `dashboard` and `organization`
-	ScopeTypes map[any]struct{}
+	// CanAccessDashAnnotations true if the user is allowed to access some dashboard annotations
+	CanAccessDashAnnotations bool
+	// CanAccessOrgAnnotations true if the user is allowed to access organization annotations
+	CanAccessOrgAnnotations bool
 }
 
 type dashboardProjection struct {

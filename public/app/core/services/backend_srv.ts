@@ -16,7 +16,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -94,10 +93,6 @@ export class BackendSrv implements BackendService {
   }
 
   private async initGrafanaDeviceID() {
-    if (config.buildInfo?.edition === GrafanaEdition.OpenSource) {
-      return;
-    }
-
     try {
       const fp = await FingerprintJS.load();
       const result = await fp.get();
@@ -161,8 +156,7 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    // Add device id header if not OSS build
-    if (config.buildInfo?.edition !== GrafanaEdition.OpenSource && this.deviceID) {
+    if (!!this.deviceID) {
       options.headers = options.headers ?? {};
       options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
@@ -516,16 +510,13 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
-  validateDashboard(dashboard: DashboardModel) {
-    // We want to send the dashboard as a JSON string (in the JSON body payload) so we can get accurate error line numbers back
-    const dashboardJson = JSON.stringify(dashboard, replaceJsonNulls, 2);
-
-    return this.request<ValidateDashboardResponse>({
-      method: 'POST',
-      url: `/api/dashboards/validate`,
-      data: { dashboard: dashboardJson },
-      showSuccessAlert: false,
-      showErrorAlert: false,
+  validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
+    // support for this function will be implemented in the k8s flavored api-server
+    // hidden by experimental feature flag:
+    //  config.featureToggles.showDashboardValidationWarnings
+    return Promise.resolve({
+      isValid: false,
+      message: 'dashboard validation is supported',
     });
   }
 
@@ -552,11 +543,4 @@ export const getBackendSrv = (): BackendSrv => backendSrv;
 interface ValidateDashboardResponse {
   isValid: boolean;
   message?: string;
-}
-
-function replaceJsonNulls<T extends unknown>(key: string, value: T): T | undefined {
-  if (typeof value === 'number' && !Number.isFinite(value)) {
-    return undefined;
-  }
-  return value;
 }
