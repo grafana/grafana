@@ -228,8 +228,6 @@ datasources:
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
       traceToProfiles:
         datasourceUid: 'grafana-pyroscope-datasource'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
         tags: ['job', 'instance', 'pod', 'namespace']
         profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
         customQuery: true
