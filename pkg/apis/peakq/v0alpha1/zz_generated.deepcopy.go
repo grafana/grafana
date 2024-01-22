@@ -105,6 +105,13 @@ func (in *QueryTemplateSpec) DeepCopyInto(out *QueryTemplateSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.RenderedTargets != nil {
+		in, out := &in.RenderedTargets, &out.RenderedTargets
+		*out = make([]Target, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 
@@ -126,6 +133,7 @@ func (in *QueryVariable) DeepCopyInto(out *QueryVariable) {
 		*out = make([]Position, len(*in))
 		copy(*out, *in)
 	}
+	in.ValueListDefinition.DeepCopyInto(&out.ValueListDefinition)
 	return
 }
 

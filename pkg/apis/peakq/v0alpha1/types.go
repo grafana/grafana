@@ -16,9 +16,10 @@ type QueryTemplate struct {
 }
 
 type QueryTemplateSpec struct {
-	Title     string          `json:"title,omitempty"`
-	Variables []QueryVariable `json:"vars,omitempty"`
-	Targets   []Target
+	Title           string          `json:"title"`
+	Variables       []QueryVariable `json:"vars,omitempty"`
+	Targets         []Target        `json:"targets"`
+	RenderedTargets []Target        `json:"renderedTargets"`
 }
 
 type Target struct {
@@ -28,7 +29,7 @@ type Target struct {
 	// DataTypeVersion is the version for the Dataplane type.
 	DataTypeVersion data.FrameTypeVersion `json:"dataTypeVersion,omitempty"`
 
-	Properties common.Unstructured
+	Properties common.Unstructured `json:"properties"`
 }
 
 // QueryVariable is the definition of a variable that will be interpolated
@@ -38,7 +39,8 @@ type QueryVariable struct {
 	Key string `json:"key"`
 
 	// SelectedValue is the value that will be interpolated
-	// for each position during render. This value is not stored.
+	// for each position during render. This value is not stored and
+	// only used during render.
 	SelectedValue string `json:"selectedValue"`
 
 	// DefaultValue is the value to be used when there is no selected value
@@ -48,6 +50,10 @@ type QueryVariable struct {
 	// Positions is a list of where to perform the interpolation
 	// within targets during render.
 	Positions []Position `json:"positions"`
+
+	// ValueListDefinition is the object definition used by the FE
+	// to get a list of possible values to select for render.
+	ValueListDefinition common.Unstructured `json:"valueListDefinition"`
 }
 
 // Position is where to do replacement in the targets

@@ -223,8 +223,9 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"title": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"vars": {
@@ -240,7 +241,20 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 							},
 						},
 					},
-					"Targets": {
+					"targets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target"),
+									},
+								},
+							},
+						},
+					},
+					"renderedTargets": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -254,7 +268,7 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"Targets"},
+				Required: []string{"title", "targets", "renderedTargets"},
 			},
 		},
 		Dependencies: []string{
@@ -279,7 +293,7 @@ func schema_pkg_apis_peakq_v0alpha1_QueryVariable(ref common.ReferenceCallback) 
 					},
 					"selectedValue": {
 						SchemaProps: spec.SchemaProps{
-							Description: "SelectedValue is the value that will be interpolated for each position during render. This value is not stored.",
+							Description: "SelectedValue is the value that will be interpolated for each position during render. This value is not stored and only used during render.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -307,12 +321,19 @@ func schema_pkg_apis_peakq_v0alpha1_QueryVariable(ref common.ReferenceCallback) 
 							},
 						},
 					},
+					"valueListDefinition": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ValueListDefinition is the object definition used by the FE to get a list of possible values to select for render.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+						},
+					},
 				},
-				Required: []string{"key", "selectedValue", "defaultValue", "positions"},
+				Required: []string{"key", "selectedValue", "defaultValue", "positions", "valueListDefinition"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position"},
+			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position"},
 	}
 }
 
@@ -386,14 +407,14 @@ func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.
 							},
 						},
 					},
-					"Properties": {
+					"properties": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
-				Required: []string{"Properties"},
+				Required: []string{"properties"},
 			},
 		},
 		Dependencies: []string{
