@@ -1,24 +1,51 @@
-import { getByRole, render, screen } from '@testing-library/react';
+import { getByRole, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { FormEvent } from 'react';
 import { of } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
-  DataSourcePluginMeta,
   dateTime,
   LoadingState,
   PanelData,
   getDefaultTimeRange,
   toDataFrame,
   FieldType,
+  VariableSupportType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
-import { VariableQueryEditorProps } from 'app/features/variables/types';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { QueryVariableEditorForm } from './QueryVariableForm';
+
+const defaultDatasource = mockDataSource({
+  name: 'Default Test Data Source',
+  type: 'test',
+});
+
+const promDatasource = mockDataSource({
+  name: 'Prometheus',
+  type: 'prometheus',
+});
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
+  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
+  getDataSourceSrv: () => ({
+    get: async () => ({
+      ...defaultDatasource,
+      variables: {
+        getType: () => VariableSupportType.Custom,
+        query: jest.fn(),
+        editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+      },
+    }),
+    getList: () => [defaultDatasource, promDatasource],
+    getInstanceSettings: () => ({ ...defaultDatasource }),
+  }),
+}));
 
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
@@ -34,24 +61,6 @@ const runRequestMock = jest.fn().mockReturnValue(
 
 setRunRequest(runRequestMock);
 
-const mockDsMeta = {
-  info: {
-    logos: {
-      small: `test.png`,
-    },
-  },
-} as DataSourcePluginMeta;
-const mockDatasource = new MockDataSourceApi('my-test-ds', undefined, mockDsMeta);
-const mockDatasource2 = new MockDataSourceApi('my-test-ds2', undefined, mockDsMeta);
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
-  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
-  getDataSourceSrv: () => ({
-    get: async () => mockDatasource,
-    getList: () => [mockDatasource, mockDatasource2],
-    getInstanceSettings: () => ({ uid: 'my-test-ds', type: 'test', name: 'my-test-ds', meta: mockDsMeta }),
-  }),
-}));
-
 describe('QueryVariableEditorForm', () => {
   const mockOnDataSourceChange = jest.fn();
   const mockOnQueryChange = jest.fn();
@@ -63,28 +72,14 @@ describe('QueryVariableEditorForm', () => {
   const mockOnIncludeAllChange = jest.fn();
   const mockOnAllValueChange = jest.fn();
 
-  const MockVariableQueryEditor = ({ datasource, query, onChange, templateSrv }: VariableQueryEditorProps) => (
-    <div>
-      <p>{datasource.uid}</p>
-      <p>{datasource.name}</p>
-      <p>{query}</p>
-      <p>TemplateSrv received: {!!templateSrv}</p>
-      <input data-testid="query-editor" onChange={(e) => onChange('query from input', 'query definition')} />
-    </div>
-  );
-
   const defaultProps = {
-    datasource: mockDatasource,
+    datasource: new MockDataSourceApi(promDatasource.name, undefined, promDatasource.meta),
     onDataSourceChange: mockOnDataSourceChange,
     query: 'my-query',
     onQueryChange: mockOnQueryChange,
     onLegacyQueryChange: mockOnLegacyQueryChange,
-    timeRange: {
-      from: dateTime('now-6h'),
-      to: dateTime('now'),
-      raw: { from: 'now-6h', to: 'now' },
-    },
-    VariableQueryEditor: MockVariableQueryEditor,
+    timeRange: getDefaultTimeRange(),
+    VariableQueryEditor: LegacyVariableQueryEditor,
     regex: '.*',
     onRegExChange: mockOnRegExChange,
     sort: VariableSort.alphabeticalAsc,
@@ -132,7 +127,7 @@ describe('QueryVariableEditorForm', () => {
     );
 
     expect(dataSourcePicker).toBeInTheDocument();
-    expect(dataSourcePicker).toHaveTextContent('my-test-ds');
+    expect(dataSourcePicker).toHaveTextContent('Default Test Data Source');
     expect(regexInput).toBeInTheDocument();
     expect(regexInput).toHaveValue('.*');
     expect(sortSelect).toBeInTheDocument();
@@ -147,25 +142,30 @@ describe('QueryVariableEditorForm', () => {
     expect(allValueInput).toHaveValue('custom all value');
   });
 
-  it.skip('should call onDataSourceChange when changing the datasource', async () => {
+  it('should call onDataSourceChange when changing the datasource', async () => {
     const { getByTestId } = setup();
-    const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.container).getElementsByTagName('input');
-    await userEvent.type(dataSourcePicker[0], 'my-new-ds{enter}');
-    expect(mockOnDataSourceChange).toHaveBeenCalledTimes(1);
-    expect(mockOnDataSourceChange).toHaveBeenCalledWith({
-      uid: 'my-new-ds',
-      type: 'test',
-      name: 'my-new-ds',
-      meta: mockDsMeta,
+    const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.inputV2);
+    await waitFor(async () => {
+      await userEvent.click(dataSourcePicker); // open the select
+      await userEvent.tab();
     });
+    expect(mockOnDataSourceChange).toHaveBeenCalledTimes(1);
+    expect(mockOnDataSourceChange).toHaveBeenCalledWith(defaultDatasource);
   });
 
-  it.skip('should call onQueryChange when changing the query', async () => {
+  it('should call onQueryChange when changing the query', async () => {
     const { getByTestId } = setup();
-    const queryEditor = getByTestId('query-editor');
-    await userEvent.type(queryEditor, 'my-new-query');
-    expect(mockOnQueryChange).toHaveBeenCalledTimes(1);
-    expect(mockOnQueryChange).toHaveBeenCalledWith('my-new-query');
+    const queryEditor = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+    );
+
+    await waitFor(async () => {
+      await userEvent.type(queryEditor, '-new');
+      await userEvent.tab();
+    });
+
+    expect(mockOnLegacyQueryChange).toHaveBeenCalledTimes(1);
+    expect(mockOnLegacyQueryChange).toHaveBeenCalledWith('my-query-new', expect.anything());
   });
 
   it('should call onRegExChange when changing the regex', async () => {
