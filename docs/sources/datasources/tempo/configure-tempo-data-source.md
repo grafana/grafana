@@ -230,8 +230,8 @@ datasources:
         datasourceUid: 'grafana-pyroscope-datasource'
         spanStartTimeShift: '1h'
         spanEndTimeShift: '-1h'
-        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
         tags: ['job', 'instance', 'pod', 'namespace']
+        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
         customQuery: true
         query: 'method="${__span.tags.method}"'
       serviceMap:
