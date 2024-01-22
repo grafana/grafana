@@ -199,7 +199,6 @@ This optional step uses a python script to generate the sample logs used in this
 1. Install Python3 on your local machine if needed.
 1. Copy the python script below and paste it into a new file on your local machine.
 
-
 ```
 
 #!/bin/env python3
@@ -239,7 +238,6 @@ while True:
 
 ```
 
-
 1. Give the script executable permissions.
 
 In a terminal window on linux-based systems run the command:
@@ -250,8 +248,6 @@ chmod 755 ./web-server-logs-simulator.py
 
 
 ```
-
-
 
 1. Run the script.
 
@@ -298,7 +294,6 @@ that generates the sample logs used in this tutorial to create alerts.
 1. From that directory, get a `docker-compose.yaml` file to run Grafana, Loki, and Promtail:
 
 **Bash**
-
 
 ```
 
@@ -365,7 +360,7 @@ post_average_duration_ms = 2000
 
 
 while True:
-    
+
     # Exponential distribution random value of average 1/lines_per_second.
     d = random.expovariate(requests_per_second)
     time.sleep(d)
@@ -397,7 +392,6 @@ chmod 755 ./web-server-logs-simulator.py
 
 - Use `tee` to direct the script output to the console and the specified file path. For example, if promtail is
   configured to monitor `/var/log` for `.log` files you can direct the script output to `/var/log/web_requests.log` file.
-
 
 - To avoid running the script with elevated permissions, create the log file manually and change the permissions for the output file only.
 
@@ -437,4 +431,3 @@ If you don't see the logs in Explore, check these things:
 - If the file is empty, check that you followed the steps above to create the file and change the permissions.
 - If the file exists, verify that promtail is running and check that it is configured correctly.
 - In Grafana Explore, check that the time range is only for the last 5 minutes.
-
