@@ -219,23 +219,30 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashboardFolder.ID = rand.Int63()
 				dashboardFolder.UID = util.GenerateShortUID()
 				dashboardFolder.OrgID = orgID
-				f := dashboards.FromDashboard(dashboardFolder)
 
-				_, err := service.store.Create(context.Background(), folder.CreateFolderCommand{
+				f, err := service.store.Create(context.Background(), folder.CreateFolderCommand{
 					OrgID:        orgID,
 					Title:        dashboardFolder.Title,
 					UID:          dashboardFolder.UID,
 					SignedInUser: usr,
 				})
 				require.NoError(t, err)
+				assert.Equal(t, "Folder", f.Title)
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
-				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dashboardFolder, nil)
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(dashboardFolder, nil)
-
-				folderStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
-
 				title := "TEST-Folder"
+				updatedDashboardFolder := *dashboardFolder
+				updatedDashboardFolder.Title = title
+				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&updatedDashboardFolder, nil)
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&updatedDashboardFolder, nil)
+
+				folderStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(&folder.Folder{
+					OrgID: orgID,
+					ID:    dashboardFolder.ID,
+					UID:   dashboardFolder.UID,
+					Title: title,
+				}, nil)
+
 				req := &folder.UpdateFolderCommand{
 					UID:          dashboardFolder.UID,
 					OrgID:        orgID,
@@ -245,7 +252,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				reqResult, err := service.Update(context.Background(), req)
 				require.NoError(t, err)
-				require.Equal(t, f, reqResult)
+				assert.Equal(t, title, reqResult.Title)
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
