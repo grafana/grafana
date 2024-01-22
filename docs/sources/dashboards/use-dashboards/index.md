@@ -192,7 +192,7 @@ Using a semi-relative time range, as time progresses, your dashboard will automa
 
 #### Copy and paste time range
 
-You can copy and paste time range from a dashboard to Explore and vice versa. You can also copy and paste time range from one dashboard to another.
+You can copy and paste the time range from a dashboard to **Explore** and vice versa, or from one dashboard to another.
 
 ##### Copy time range (t+c)
 
