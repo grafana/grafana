@@ -56,11 +56,10 @@ const zoneInfo = "ZONEINFO"
 
 var (
 	// App settings.
-	Env              = Dev
-	AppUrl           string
-	AppSubUrl        string
-	ServeFromSubPath bool
-	InstanceName     string
+	Env          = Dev
+	AppUrl       string
+	AppSubUrl    string
+	InstanceName string
 
 	// build
 	BuildVersion          string
@@ -1826,12 +1825,11 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	if err != nil {
 		return err
 	}
-	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
 	cfg.AppURL = AppUrl
 	cfg.AppSubURL = AppSubUrl
-	cfg.ServeFromSubPath = ServeFromSubPath
 	cfg.Protocol = HTTPScheme
+	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
