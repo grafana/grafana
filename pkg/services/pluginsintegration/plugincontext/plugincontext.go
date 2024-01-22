@@ -132,9 +132,22 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	return pCtx, nil
 }
 
+func (p *Provider) GetDataSourceInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ds, err := p.dataSourceCache.GetDatasourceByUID(ctx, uid, user, false)
+	if err != nil {
+		return nil, err
+	}
+	return adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
+}
+
 // PluginContextForDataSource will retrieve plugin context by the provided pluginID and datasource UID / K8s name.
 // This is intended to be used for datasource API server plugin requests.
-func (p *Provider) PluginContextForDataSource(ctx context.Context, pluginID, name string) (backend.PluginContext, error) {
+func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
+	pluginID := datasourceSettings.Type
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
@@ -144,11 +157,6 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, pluginID, nam
 	if err != nil {
 		return backend.PluginContext{}, err
 	}
-	ds, err := p.dataSourceCache.GetDatasourceByUID(ctx, name, user, false)
-	if err != nil {
-		return backend.PluginContext{}, err
-	}
-
 	pCtx := backend.PluginContext{
 		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
@@ -158,10 +166,6 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, pluginID, nam
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 	}
 
-	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
-	if err != nil {
-		return pCtx, err
-	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
 	settings := p.pluginEnvVars.GetConfigMap(ctx, pluginID, plugin.ExternalService)
