@@ -9,14 +9,12 @@ import { buildNavModel } from 'app/features/folders/state/navModel';
 import { store } from 'app/store/store';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
-import { EmbeddedDashboard } from '../embedding/EmbeddedDashboardScene';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
-  embedded?: EmbeddedDashboard;
   panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
