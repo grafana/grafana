@@ -134,7 +134,12 @@ export const HistogramTransformerEditor = ({
             label={histogramFieldInfo.bucketCount.name}
             tooltip={histogramFieldInfo.bucketCount.description}
           >
-            <NumberInput value={options.bucketCount} placeholder="20" onChange={onBucketCountChanged} min={0} />
+            <NumberInput
+              value={options.bucketCount}
+              placeholder="Default: 30"
+              onChange={onBucketCountChanged}
+              min={0}
+            />
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
@@ -181,7 +186,7 @@ export const HistogramTransformerEditor = ({
           <SuggestionsInput
             suggestions={variables}
             value={options.bucketCount}
-            placeholder="20"
+            placeholder="Default: 30"
             onChange={onVariableBucketCountChanged}
           />
         </InlineField>
