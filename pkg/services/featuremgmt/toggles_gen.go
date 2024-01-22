@@ -638,4 +638,8 @@ const (
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
+
+	// FlagOnPremToCloudMigrations
+	// In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.
+	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 )

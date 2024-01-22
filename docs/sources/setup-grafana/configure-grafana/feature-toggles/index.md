@@ -173,6 +173,7 @@ Experimental features might be changed or removed without prior notice.
 | `enablePluginsTracingByDefault`             | Enable plugin tracing for all external plugins                                                                                                                                                                                                                                    |
 | `newFolderPicker`                           | Enables the nested folder picker without having nested folders enabled                                                                                                                                                                                                            |
 | `jitterAlertRules`                          | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                                                                           |
+| `onPremToCloudMigrations`                   | In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.                                                                                                                                                                  |
 
 ## Development feature toggles
 
