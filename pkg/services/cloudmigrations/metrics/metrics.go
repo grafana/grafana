@@ -10,7 +10,7 @@ const (
 )
 
 var promMetrics = []prometheus.Collector{
-	prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "datasources_migrated",
