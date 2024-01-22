@@ -284,6 +284,11 @@ func isVariableInterval(interval string) bool {
 	return false
 }
 
+// This function aligns query range to step and handles the time offset.
+// It rounds start and end down to a multiple of step.
+// Prometheus caching is dependent on the range being aligned with the step.
+// Rounding to the step can significantly change the start and end of the range for larger steps, i.e. a week.
+// In rounding the range to a 1w step the range will always start on a Thursday.
 func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 	offsetNano := float64(offset * 1e9)
 	stepNano := float64(step.Nanoseconds())

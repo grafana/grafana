@@ -739,20 +739,40 @@ func queryContext(json string, timeRange backend.TimeRange, queryInterval time.D
 	}
 }
 
+// AlignTimeRange aligns query range to step and handles the time offset.
+// It rounds start and end down to a multiple of step.
+// Prometheus caching is dependent on the range being aligned with the step.
+// Rounding to the step can significantly change the start and end of the range for larger steps, i.e. a week.
+// In rounding the range to a 1w step the range will always start on a Thursday.
 func TestAlignTimeRange(t *testing.T) {
 	type args struct {
 		t      time.Time
 		step   time.Duration
 		offset int64
 	}
+
+	var monday int64 = 1704672000
+	var thursday int64 = 1704326400
+	var one_week_min_step = 604800 * time.Second
+
 	tests := []struct {
 		name string
 		args args
 		want time.Time
 	}{
-		{name: "second step", args: args{t: time.Unix(1664816826, 0), step: 10 * time.Second, offset: 0}, want: time.Unix(1664816820, 0).UTC()},
+		{
+			name: "second step",
+			args: args{t: time.Unix(1664816826, 0), step: 10 * time.Second, offset: 0},
+			want: time.Unix(1664816820, 0).UTC(),
+		},
 		{name: "millisecond step", args: args{t: time.Unix(1664816825, 5*int64(time.Millisecond)), step: 10 * time.Millisecond, offset: 0}, want: time.Unix(1664816825, 0).UTC()},
 		{name: "second step with offset", args: args{t: time.Unix(1664816825, 5*int64(time.Millisecond)), step: 2 * time.Second, offset: -3}, want: time.Unix(1664816825, 0).UTC()},
+		// we may not want this functionality in the future but if we change this we break Prometheus caching.
+		{
+			name: "1w step with range date of Monday that changes the range to a Thursday.",
+			args: args{t: time.Unix(monday, 0), step: one_week_min_step, offset: 0},
+			want: time.Unix(thursday, 0).UTC(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
