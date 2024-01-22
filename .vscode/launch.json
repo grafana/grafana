@@ -55,6 +55,60 @@
       "mode": "test",
       "program": "${workspaceFolder}/${relativeFileDirname}",
       "showLog": true
+    },
+    {
+      "name": "Run Server with MySQL backend",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "env": {
+          "GF_DATABASE_TYPE": "mysql",
+          "GF_DATABASE_HOST": "localhost:3306",
+          "GF_DATABASE_NAME": "grafana",
+          "GF_DATABASE_USER": "grafana",
+          "GF_DATABASE_PASSWORD": "password"
+      },
+      "cwd": "${workspaceFolder}",
+      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+    },
+    {
+      "name": "Run Server with Postgres backend",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "env": {
+          "GF_DATABASE_TYPE": "postgres",
+          "GF_DATABASE_HOST": "localhost:5432",
+          "GF_DATABASE_NAME": "grafana",
+          "GF_DATABASE_USER": "grafana",
+          "GF_DATABASE_PASSWORD": "password"
+      },
+      "cwd": "${workspaceFolder}",
+      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+    }, 
+    {
+      "name": "Debug Go test (MySQL)",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "env": {
+          "GRAFANA_TEST_DB": "mysql"
+      },
+      "program": "${workspaceFolder}/${relativeFileDirname}",
+      "showLog": true
+    },
+    {
+      "name": "Debug Go test (PostgreSQL)",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "env": {
+          "GRAFANA_TEST_DB": "postgres"
+      },
+      "program": "${workspaceFolder}/${relativeFileDirname}",
+      "showLog": true
     }
   ]
 }
