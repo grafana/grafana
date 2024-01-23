@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
-import { Spinner } from '@grafana/ui';
+
+import { LoadingIndicator } from './LoadingIndicator';
 
 export type Props = {
   children: ReactNode;
@@ -32,7 +33,7 @@ export const InfiniteScroll = ({
   const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
   const [upperLoading, setUpperLoading] = useState(false);
   const [lowerLoading, setLowerLoading] = useState(false);
-  const [lastScroll, setLastScroll] = useState(scrollElement?.scrollTop || 0);
+  const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
 
   useEffect(() => {
     setUpperOutOfRange(false);
@@ -56,8 +57,8 @@ export const InfiniteScroll = ({
         return;
       }
       event.stopImmediatePropagation();
-      setLastScroll(scrollElement.scrollTop);
-      const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll);
+      const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
+      lastScroll.current = scrollElement.scrollTop;
       if (scrollDirection === ScrollDirection.NoScroll) {
         return;
       } else if (scrollDirection === ScrollDirection.Top) {
@@ -110,7 +111,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [lastScroll, loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone]);
+  }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
@@ -118,11 +119,11 @@ export const InfiniteScroll = ({
 
   return (
     <>
-      {upperLoading && loadingMessage}
+      {upperLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'newer' : 'older'} />}
       {!hideTopMessage && upperOutOfRange && outOfRangeMessage}
       {children}
       {!hideBottomMessage && lowerOutOfRange && outOfRangeMessage}
-      {lowerLoading && loadingMessage}
+      {lowerLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'older' : 'newer'} />}
     </>
   );
 };
@@ -137,11 +138,6 @@ const styles = {
 const outOfRangeMessage = (
   <div className={styles.messageContainer} data-testid="end-of-range">
     End of the selected time range.
-  </div>
-);
-const loadingMessage = (
-  <div className={styles.messageContainer}>
-    <Spinner />
   </div>
 );
 
