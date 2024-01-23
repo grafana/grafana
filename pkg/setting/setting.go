@@ -89,19 +89,15 @@ type Cfg struct {
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
-	// App settings.
-	Env          string
-	AppUrl       string
-	AppSubUrl    string
-	InstanceName string
-
 	// HTTP Server Settings
 	CertFile         string
 	KeyFile          string
 	HTTPAddr         string
 	HTTPPort         string
+	Env              string
 	AppURL           string
 	AppSubURL        string
+	InstanceName     string
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
