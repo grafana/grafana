@@ -209,7 +209,7 @@ describe('LokiDatasource', () => {
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
-          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+          obfuscated_query: '{Identifier=String}',
         })
       );
     });
@@ -226,7 +226,7 @@ describe('LokiDatasource', () => {
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
-          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+          obfuscated_query: '{Identifier=String}',
         })
       );
     });
