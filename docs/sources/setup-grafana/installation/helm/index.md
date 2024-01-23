@@ -74,6 +74,59 @@ Now we have setup the Grafana Helm repository succesfully, we can start to deplo
 When you deploy Grafana Helm charts, use a separate namespace instead of relying on the default namespace. The default namespace might already have other applications running, which can lead to conflicts and other potential issues.
 When you create a new namespace in Kubernetes, you can better organize, allocate, and manage cluster resources. For more information about Namespaces, refer to [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
+1. To create a namespace, run the following command.
+   
+   ```
+   kubectl create namespace monitoring
+   ```
+   You will see an output similar to this, which means that the namespace has been successfully created:
+
+   ```
+   namespace/monitoring created
+   ```
+
+2. Search for the official grafana/grafana repository using the command:
+   
+   `helm search repo <repo-name/package-name>`
+
+   For example, the following command provides a list of the Grafana Helm Charts from which you will install the latest version of the Grafana chart.
+
+   ```
+   helm search repo grafana/grafana
+   ```
+
+3. Run the following command to deploy the Grafana Helm Chart inside your created namespace.
+   
+   ```
+   helm install my-grafana grafana/grafana --namespace monitoring
+   ```
+
+   Where:
+   - helm install: installs the chart by deploying it on the Kubernetes cluster
+   - my-grafana: the logical chart name that we had given
+   - grafana/grafana: the repository and package name to install
+   - --namespace: the Kubernetes namespace (for example, `monitoring`) where you want to deploy the chart
+
+4. To verify the deployment status, run the following command and verify that `deployed` appears in the STATUS column:
+   
+   ```
+   helm list -n monitoring
+   ```
+
+   You should see an output similar to the following:
+
+   ```
+   NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART          APP VERSION
+   my-grafana      monitoring      1               2024-01-13 23:06:42.737989554 +0000 UTC deployed        grafana-6.59.0 10.1.0   
+   ```
+
+5. To check the overall status of all the objects in the namespace, run the following command:
+   
+	```
+	kubectl get all -n monitoring
+	```
+   
+   If you encounter errors or warnings in the STATUS column, check the logs and refer to Troubleshooting.
 
 
 
