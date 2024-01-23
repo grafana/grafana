@@ -6,7 +6,8 @@ import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { useStyles2, Stack, Tooltip, Button } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
-import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
+import { LOGS_METRIC, VAR_FILTERS } from './shared';
+import { getDataSource } from './utils';
 
 export interface Props {
   trail: DataTrail;
@@ -64,10 +65,6 @@ function getMetricName(metric?: string) {
   }
 
   return metric;
-}
-
-function getDataSource(trail: DataTrail) {
-  return sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 }
 
 function getStyles(theme: GrafanaTheme2) {

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { DashboardCursorSync, GrafanaTheme2 } from '@grafana/data';
+import { DashboardCursorSync, DataLink, Field, GrafanaTheme2, mapInternalLinkToExplore } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -34,7 +35,7 @@ import {
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
 } from './shared';
-import { getTrailFor, getUrlForTrail } from './utils';
+import { getDataSource, getDataSourceName, getTrailFor, getUrlForTrail } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -114,12 +115,46 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     this.publishEvent(new OpenEmbeddedTrailEvent(), true);
   };
 
+  public getLinkToExplore = () => {
+    const metricScene = sceneGraph.getAncestor(this, MetricScene);
+    const trail = getTrailFor(this);
+    const dsValue = getDataSource(trail);
+
+    const flexItem = metricScene.state.body.state.children[0] as SceneFlexItem;
+    const autoVizPanel = flexItem.state.body as AutoVizPanel;
+    const query = autoVizPanel.state.queryDef?.queries[0];
+
+    const link: DataLink = {
+      url: '',
+      targetBlank: true,
+      title: 'test',
+
+      internal: {
+        datasourceUid: dsValue,
+        datasourceName: getDataSourceName(dsValue),
+        query: {
+          expr: query?.expr,
+        },
+      },
+    };
+
+    return mapInternalLinkToExplore({
+      link,
+      internalLink: link.internal!,
+      scopedVars: {},
+      field: {} as Field,
+      replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+    });
+  };
+
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const styles = useStyles2(getStyles);
     const trail = getTrailFor(model);
     const [isBookmarked, setBookmarked] = useState(false);
     const { actionView } = metricScene.useState();
+
+    const link = model.getLinkToExplore();
 
     const onBookmarkTrail = () => {
       getTrailStore().addBookmark(trail);
@@ -130,8 +165,10 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
       <Box paddingY={1}>
         <div className={styles.actions}>
           <Stack gap={2}>
-            <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled>
-              Explore
+            <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore">
+              <a href={link.href} target="_blank" rel="noreferrer">
+                Explore
+              </a>
             </ToolbarButton>
             <ShareTrailButton trailUrl={getUrlForTrail(trail)} />
             <ToolbarButton
