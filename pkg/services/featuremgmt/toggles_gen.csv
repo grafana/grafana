@@ -149,7 +149,7 @@ displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,fa
 alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-11-30,false,false,true,false
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,2023-12-22,false,false,false,true
-alertingPreviewUpgrade,experimental,@grafana/alerting-squad,2024-01-03,false,false,true,false
+alertingPreviewUpgrade,preview,@grafana/alerting-squad,2024-01-03,false,false,true,false
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,2024-01-09,false,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,2024-01-10,false,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,2024-01-10,false,false,false,false
