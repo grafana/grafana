@@ -104,7 +104,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 }
 
 func (st *Manager) Run(ctx context.Context) error {
-	go st.persister.Async(ctx, st.cache)
+	st.persister.Async(ctx, st.cache)
 	return nil
 }
 
