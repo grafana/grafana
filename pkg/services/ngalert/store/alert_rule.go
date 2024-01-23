@@ -667,3 +667,23 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 
 	return nil
 }
+
+// ListNotificationSettings fetches all notification settings for given organization
+func (st DBstore) ListNotificationSettings(ctx context.Context, orgID int64) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
+	var rules []ngmodels.AlertRule
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("notification_settings IS NOT NULL AND org_id = ?", orgID).Find(&rules)
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, len(rules))
+	for _, rule := range rules {
+		key := ngmodels.AlertRuleKey{
+			OrgID: orgID,
+			UID:   rule.UID,
+		}
+		result[key] = rule.NotificationSettings
+	}
+	return result, nil
+}
