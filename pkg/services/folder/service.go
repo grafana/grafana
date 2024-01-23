@@ -25,7 +25,7 @@ type Service interface {
 	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	RegisterService(service RegistryService) error
-	// GetFolders returns org folders by their UIDs.
+	// GetFolders returns org folders that are accessible by the signed in user by their UIDs.
 	// If WithFullpath is true it computes also the full path of a folder.
 	// The full path is a string that contains the titles of all parent folders separated by a slash.
 	// If a folder contains a slash in its title, it is escaped with a backslash.

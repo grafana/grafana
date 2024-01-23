@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// TODO adjuct the value
 const DEFAULT_BATCH_SIZE = 999
 
 type sqlStore struct {
@@ -366,15 +367,20 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 //	└── B/C
 //
 // The full path of C is "A/B\/C".
-func (ss *sqlStore) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error) {
 	if q.BatchSize == 0 {
 		q.BatchSize = DEFAULT_BATCH_SIZE
 	}
+
+	if len(q.ancestorUIDs) == 0 && len(q.UIDs) == 0 {
+		return nil, folder.ErrBadRequest.Errorf("one of UIDs or AncestorUIDs must be included in the query")
+	}
+
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		return batch(len(q.UIDs), int(q.BatchSize), func(start, end int) error {
-			partialFolders := make([]*folder.Folder, 0, DEFAULT_BATCH_SIZE)
-			partialIDs := q.UIDs[start:min(end, len(q.UIDs))]
+			partialFolders := make([]*folder.Folder, 0, q.BatchSize)
+			partialUIDs := q.UIDs[start:min(end, len(q.UIDs))]
 			s := strings.Builder{}
 			s.WriteString(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
 			// compute full path column if requested
@@ -383,20 +389,39 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([
 			}
 			s.WriteString(` FROM folder f0`)
 			// join the same table multiple times to compute the full path of a folder
-			if q.WithFullpath {
+			if q.WithFullpath || len(q.ancestorUIDs) > 0 {
 				s.WriteString(getFullpathJoinsSQL())
 			}
-			s.WriteString(` WHERE f0.org_id=? AND f0.uid IN (?` + strings.Repeat(", ?", len(partialIDs)-1) + `)`)
+			s.WriteString(` WHERE f0.org_id=?`)
 			args := []any{q.OrgID}
-			for _, uid := range partialIDs {
-				args = append(args, uid)
+			if len(partialUIDs) > 0 {
+				s.WriteString(` AND f0.uid IN (?` + strings.Repeat(", ?", len(partialUIDs)-1) + `)`)
+				for _, uid := range partialUIDs {
+					args = append(args, uid)
+				}
 			}
 
-			err := sess.SQL(s.String(), args...).Find(&partialFolders)
-			if err != nil {
+			if len(q.ancestorUIDs) == 0 {
+				err := sess.SQL(s.String(), args...).Find(&partialFolders)
+				if err != nil {
+					return err
+				}
+				folders = append(folders, partialFolders...)
+				return nil
+			}
+
+			// filter out folders if they are not in the subtree of the given ancestor folders
+			if err := batch(len(q.ancestorUIDs), int(q.BatchSize), func(start2, end2 int) error {
+				s2, args2 := getAncestorsSQL(ss.db.GetDialect(), q.ancestorUIDs, start2, end2, s.String(), args)
+				err := sess.SQL(s2, args2...).Find(&partialFolders)
+				if err != nil {
+					return err
+				}
+				folders = append(folders, partialFolders...)
+				return nil
+			}); err != nil {
 				return err
 			}
-			folders = append(folders, partialFolders...)
 			return nil
 		})
 	}); err != nil {
@@ -428,6 +453,27 @@ func getFullpathJoinsSQL() string {
 		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.org_id = f%d.org_id AND f%d.uid = f%d.parent_uid`, i, i, i-1, i, i-1))
 	}
 	return strings.Join(joins, "\n")
+}
+
+func getAncestorsSQL(dialect migrator.Dialect, ancestorUIDs []string, start int, end int, origSQL string, origArgs []any) (string, []any) {
+	s2 := strings.Builder{}
+	s2.WriteString(origSQL)
+	args2 := make([]any, 0, len(ancestorUIDs)*folder.MaxNestedFolderDepth)
+	args2 = append(args2, origArgs...)
+
+	partialAncestorUIDs := ancestorUIDs[start:min(end, len(ancestorUIDs))]
+	partialArgs := make([]any, 0, len(partialAncestorUIDs))
+	for _, uid := range partialAncestorUIDs {
+		partialArgs = append(partialArgs, uid)
+	}
+	s2.WriteString(` AND ( f0.uid IN (?` + strings.Repeat(", ?", len(partialAncestorUIDs)-1) + `)`)
+	args2 = append(args2, partialArgs...)
+	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+		s2.WriteString(fmt.Sprintf(` OR f%d.uid IN (?`+strings.Repeat(", ?", len(partialAncestorUIDs)-1)+`)`, i))
+		args2 = append(args2, partialArgs...)
+	}
+	s2.WriteString(` )`)
+	return s2.String(), args2
 }
 
 func batch(count, batchSize int, eachFn func(start, end int) error) error {

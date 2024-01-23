@@ -154,7 +154,9 @@ type GetFoldersQuery struct {
 	OrgID        int64
 	UIDs         []string
 	WithFullpath bool
-	BatchSize    int64
+	BatchSize    uint64
+
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
