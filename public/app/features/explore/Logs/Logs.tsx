@@ -439,6 +439,36 @@ class UnthemedLogs extends PureComponent<Props, State> {
     };
   };
 
+  getPermalinkRange(row: LogRowModel) {
+    const range = {
+      from: new Date(this.props.absoluteRange.from).toISOString(),
+      to: new Date(this.props.absoluteRange.to).toISOString(),
+    };
+    if (!config.featureToggles.logsInfiniteScrolling) {
+      return range;
+    }
+
+    // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
+    // Look for the previous sibling log, and use its timestamp
+    const allLogs = this.props.logRows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
+    const prevLog = allLogs[allLogs.indexOf(row) - 1];
+
+    if (row.timeEpochMs > this.props.absoluteRange.to && !prevLog) {
+      // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
+      // This only happens when you scroll into the future and you want to share the first log of the list
+      return {
+        from: new Date(this.props.absoluteRange.from).toISOString(),
+        // Slide 1ms otherwise it's very likely to be omitted in the results
+        to: new Date(row.timeEpochMs + 1).toISOString(),
+      };
+    }
+
+    return {
+      from: new Date(this.props.absoluteRange.from).toISOString(),
+      to: new Date(prevLog ? prevLog.timeEpochMs : this.props.absoluteRange.to).toISOString(),
+    };
+  }
+
   onPermalinkClick = async (row: LogRowModel) => {
     // this is an extra check, to be sure that we are not
     // creating permalinks for logs without an id-field.
@@ -454,10 +484,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       ...this.props.panelState,
       logs: { id: row.uid, visualisationType: this.state.visualisationType ?? getDefaultVisualisationType() },
     };
-    urlState.range = {
-      from: new Date(this.props.absoluteRange.from).toISOString(),
-      to: new Date(this.props.absoluteRange.to).toISOString(),
-    };
+    urlState.range = this.getPermalinkRange(row);
 
     // append changed urlState to baseUrl
     const serializedState = serializeStateToUrlParam(urlState);
