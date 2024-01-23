@@ -67,18 +67,26 @@ func TestGetFolders(t *testing.T) {
 	for i := 0; i < numberOfFolders; i++ {
 		respCode := 0
 		folderUID := ""
-		retryer.Retry(func() (retryer.RetrySignal, error) {
+		i := 0
+		maxRetries := 3
+		err := retryer.Retry(func() (retryer.RetrySignal, error) {
 			resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title: fmt.Sprintf("Folder %d", i),
 				UID:   fmt.Sprintf("folder-%d", i),
 			})
+			err = fmt.Errorf("error creating folder: %w", err)
 			if err != nil {
-				return retryer.FuncError, err
+				if i == maxRetries {
+					return retryer.FuncError, err
+				}
+				i++
+				return retryer.FuncFailure, nil
 			}
 			respCode = resp.Code()
 			folderUID = resp.Payload.UID
 			return retryer.FuncComplete, nil
-		}, 3, time.Millisecond*time.Duration(10), time.Second)
+		}, maxRetries, time.Millisecond*time.Duration(10), time.Second)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusOK, respCode)
 		if i == indexWithoutPermission {
