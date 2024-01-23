@@ -35,9 +35,13 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
     refetchReceivers();
     // show loading spinner for 1 second
     setLoadingContactPoints(true);
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       setLoadingContactPoints(false);
     }, LOADING_SPINNER_DURATION);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   };
 
   if (errorInContactPointStatus) {
