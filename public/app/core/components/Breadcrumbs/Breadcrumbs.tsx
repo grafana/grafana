@@ -21,7 +21,7 @@ export function Breadcrumbs({ breadcrumbs, className }: Props) {
   );
 
   return (
-    <nav aria-label={t('navigation.breadcrumbs.aria-label', 'Breadcrumbs')} className={className}>
+    <nav aria-label={t('navigation.breadcrumbs.aria-label', 'Breadcrumbs')} className={className} style={{ display: 'none' }}>
       <ol className={styles.breadcrumbs}>
         {breadcrumbs.map((breadcrumb, index) => (
           <BreadcrumbItem

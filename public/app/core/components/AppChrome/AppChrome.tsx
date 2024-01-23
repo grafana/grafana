@@ -45,7 +45,7 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const headerHeight = headerLevels * getChromeHeaderLevelHeight();
+  const headerHeight = (headerLevels - 1) * getChromeHeaderLevelHeight();
   const styles = useStyles2(getStyles, headerHeight);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
@@ -232,7 +232,9 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      background: theme.colors.background.primary,
+      // NI fork: improve appearance of topNav
+      // boxShadow: true ? undefined : shadow,
+      // background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({
