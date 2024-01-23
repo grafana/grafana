@@ -87,7 +87,7 @@ jobs:
         id: check_backend
         shell: bash
         run: |
-          if [ -d ./pkg/tsdb/${{ inputs.plugin_id }} ]; then
+          if egrep -qr --include=main.go 'datasource.Manage\("${{ inputs.plugin_id }}"' pkg/tsdb; then
             echo "has_backend=true" >> $GITHUB_OUTPUT
           else
             echo "has_backend=false" >> $GITHUB_OUTPUT
@@ -198,6 +198,8 @@ jobs:
           gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin
           gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any
       - name: Publish new plugin version on grafana.com
+        # TODO: This assumes that there are packages for all platforms
+        # which is not true for frontend only plugins
         working-directory: ${{ steps.get_dir.outputs.dir }}
         env:
           GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
