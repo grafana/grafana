@@ -127,8 +127,8 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
               <p>
                 Annotations provide a way to integrate event data into your graphs. They are visualized as vertical
                 lines and icons on all graph panels. When you hover over an annotation icon you can get event text &amp;
-                tags for the event. You can add annotation events directly from grafana by holding CTRL or CMD + click
-                on graph (or drag region). These will be stored in Grafana&apos;s annotation database.
+                tags for the event. You can add annotation events by holding CTRL or CMD + click
+                on graph (or drag region).
               </p>
             </Trans>
             <Trans i18nKey="annotations.empty-state.info-box-content-2">
