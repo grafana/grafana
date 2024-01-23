@@ -1,47 +1,33 @@
 import { isEmpty, truncate } from 'lodash';
-import React from 'react';
+import React, { useState } from 'react';
 
-import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, Button, Dropdown, LinkButton, Menu, Stack, TabContent, Text, TextLink } from '@grafana/ui';
+import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { Alert, Button, LinkButton, Stack, TabContent, Text, TextLink } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
-import { appEvents } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../../RuleViewer';
-import { AlertRuleAction, useAlertRuleAbility } from '../../../hooks/useAbilities';
 import { Annotation } from '../../../utils/constants';
-import {
-  createShareLink,
-  isLocalDevEnv,
-  isOpenSourceEdition,
-  makeDashboardLink,
-  makePanelLink,
-  makeRuleBasedSilenceLink,
-} from '../../../utils/misc';
-import * as ruleId from '../../../utils/rule-id';
+import { makeDashboardLink, makePanelLink } from '../../../utils/misc';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../../utils/rules';
 import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { AlertStateDot } from '../../AlertStateDot';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
-import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
-import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
 import { decodeGrafanaNamespace } from '../../expressions/util';
+import { RedirectToCloneRule } from '../../rules/CloneRule';
 import { Details } from '../tabs/Details';
 import { History } from '../tabs/History';
 import { InstancesList } from '../tabs/Instances';
 import { QueryResults } from '../tabs/Query';
 import { Routing } from '../tabs/Routing';
 
+import { useAlertRulePageActions } from './Actions';
 import { useDeleteModal } from './DeleteModal';
-
-type RuleViewerProps = {
-  rule: CombinedRule;
-  identifier: RuleIdentifier;
-};
+import { useAlertRule } from './RuleContext';
 
 enum ActiveTab {
   Query = 'query',
@@ -51,24 +37,20 @@ enum ActiveTab {
   Details = 'details',
 }
 
-const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
+const RuleViewer = () => {
+  const { rule } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
+
+  // this will be used to track if we are in the process of cloning a rule
+  // we want to be able to show a modal if the rule has been provisioned explain the limitations
+  // of duplicating provisioned alert rules
+  const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
+
   const [deleteModal, showDeleteModal] = useDeleteModal();
-
-  const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
-  const canEdit = editSupported && editAllowed;
-
-  const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
-  const canDelete = deleteSupported && deleteAllowed;
-
-  const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
-  const canDuplicate = duplicateSupported && duplicateAllowed;
-
-  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
-  const canSilence = silenceSupported && silenceAllowed;
-
-  const [exportSupported, exportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
-  const canExport = exportSupported && exportAllowed;
+  const actions = useAlertRulePageActions({
+    handleDuplicateRule: setDuplicateRuleIdentifier,
+    handleDelete: showDeleteModal,
+  });
 
   const promRule = rule.promRule;
 
@@ -76,20 +58,6 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-
-  /**
-   * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
-   * We should show it in development mode
-   */
-  const shouldShowDeclareIncidentButton = !isOpenSourceEdition() || isLocalDevEnv();
-  const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
-
-  const copyShareUrl = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl);
-      appEvents.emit(AppEvents.alertSuccess, ['URL copied to clipboard']);
-    }
-  };
 
   return (
     <AlertingPageWrapper
@@ -99,45 +67,7 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
       renderTitle={(title) => {
         return <Title name={title} state={isAlertType ? promRule.state : undefined} />;
       }}
-      actions={[
-        canEdit && <EditButton key="edit-action" identifier={identifier} />,
-        <Dropdown
-          key="more-actions"
-          overlay={
-            <Menu>
-              {canSilence && (
-                <Menu.Item
-                  label="Silence"
-                  icon="bell-slash"
-                  url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
-                />
-              )}
-              {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
-              {canDuplicate && <Menu.Item label="Duplicate" icon="copy" />}
-              <Menu.Divider />
-              <Menu.Item label="Copy link" icon="share-alt" onClick={copyShareUrl} />
-              {canExport && (
-                <Menu.Item
-                  label="Export"
-                  icon="download-alt"
-                  childItems={[
-                    <Menu.Item key="no-modifications" label="Without modifications" icon="file-blank" />,
-                    <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
-                  ]}
-                />
-              )}
-              {canDelete && (
-                <>
-                  <Menu.Divider />
-                  <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => showDeleteModal(rule)} />
-                </>
-              )}
-            </Menu>
-          }
-        >
-          <MoreButton size="md" />
-        </Dropdown>,
-      ]}
+      actions={actions}
       info={createMetadata(rule)}
     >
       <Stack direction="column" gap={2}>
@@ -168,23 +98,15 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
         </Stack>
       </Stack>
       {deleteModal}
+      {duplicateRuleIdentifier && (
+        <RedirectToCloneRule
+          redirectTo={true}
+          identifier={duplicateRuleIdentifier}
+          isProvisioned={isProvisioned}
+          onDismiss={() => setDuplicateRuleIdentifier(undefined)}
+        />
+      )}
     </AlertingPageWrapper>
-  );
-};
-
-interface EditButtonProps {
-  identifier: RuleIdentifier;
-}
-
-export const EditButton = ({ identifier }: EditButtonProps) => {
-  const returnTo = location.pathname + location.search;
-  const ruleIdentifier = ruleId.stringifyIdentifier(identifier);
-  const editURL = createUrl(`/alerting/${encodeURIComponent(ruleIdentifier)}/edit`, { returnTo });
-
-  return (
-    <LinkButton variant="secondary" icon="pen" href={editURL}>
-      Edit
-    </LinkButton>
   );
 };
 

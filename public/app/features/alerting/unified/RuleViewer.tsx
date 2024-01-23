@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -7,6 +7,7 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertRuleProvider } from './components/rule-viewer/v2/RuleContext';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
 
@@ -33,7 +34,10 @@ const RuleViewerV1Wrapper = (props: RuleViewerProps) => <DetailViewV1 {...props}
 
 const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
   const id = getRuleIdFromPathname(props.match.params);
-  const identifier = useMemo(() => {
+
+  // we convert the stringified ID to a rule identifier object which contains additional
+  // type and source information
+  const identifier = React.useMemo(() => {
     if (!id) {
       throw new Error('Rule ID is required');
     }
@@ -41,6 +45,7 @@ const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
     return parseRuleId(id, true);
   }, [id]);
 
+  // we then fetch the rule from the correct API endpoint(s)
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
 
   // TODO improve error handling here
@@ -61,7 +66,11 @@ const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
   }
 
   if (rule) {
-    return <DetailViewV2 rule={rule} identifier={identifier} />;
+    return (
+      <AlertRuleProvider identifier={identifier} rule={rule}>
+        <DetailViewV2 />
+      </AlertRuleProvider>
+    );
   }
 
   return null;
