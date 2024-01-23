@@ -333,7 +333,6 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 		ops,
 		cmp.Reporter(&reporter),
 		cmpopts.IgnoreFields(AlertQuery{}, "modelProps"),
-		cmpopts.IgnoreFields(NotificationSettings{}, "hash"),
 		jsonCmp,
 		cmpopts.EquateEmpty(),
 	)
