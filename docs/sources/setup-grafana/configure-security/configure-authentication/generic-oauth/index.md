@@ -330,7 +330,7 @@ This section includes examples of setting up generic OAuth2 integration.
 
 To set up generic OAuth2 authentication with Descope, follow these steps:
 
-1. Create an Descope Project [here](https://app.descope.com/gettingStarted), and go through the Getting Started Wizard to configure your authentication. You can skip step if you already have Descope project set up.
+1. Create a Descope Project [here](https://app.descope.com/gettingStarted), and go through the Getting Started Wizard to configure your authentication. You can skip step if you already have Descope project set up.
 
 1. If you wish to use a flow besides `Sign Up or In`, go to the **IdP Applications** menu in the console, and select your IdP application. Then alter the **Flow Hosting URL** query parameter `?flow=sign-up-or-in` to change which flow id you wish to use.
 
