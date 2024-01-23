@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
 import React, { ReactNode } from 'react';
+import { act } from 'react-test-renderer';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -132,8 +133,10 @@ describe('AppChrome', () => {
 
   it('should not render a skip link if the page is chromeless', async () => {
     const { context } = setup(<Page navId="child1">Children</Page>);
-    context.chrome.update({
-      chromeless: true,
+    act(() => {
+      context.chrome.update({
+        chromeless: true,
+      });
     });
     waitFor(() => {
       expect(screen.queryByRole('link', { name: 'Skip to main content' })).not.toBeInTheDocument();
