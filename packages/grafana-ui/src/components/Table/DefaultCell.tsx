@@ -55,7 +55,10 @@ export const DefaultCell = (props: TableCellProps) => {
   if (isStringValue) {
     let justifyContent = cellProps.style?.justifyContent;
     const str = value.toString();
-    if (str.startsWith('{') && str.endsWith('}') && isStringJSON(str)) {
+    if (
+      ((str.startsWith('{') && str.endsWith('}')) || (str.startsWith('[') && str.startsWith(']'))) &&
+      isStringJSON(str)
+    ) {
       return JSONViewCell(props);
     }
 
