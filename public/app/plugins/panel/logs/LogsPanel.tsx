@@ -197,9 +197,9 @@ export const LogsPanel = ({
   /**
    * Scrolls the given row into view.
    */
-  const scrollIntoView = (row: HTMLElement) => {
+  const scrollIntoView = useCallback((row: HTMLElement) => {
     row.scrollIntoView(true);
-  };
+  }, []);
 
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
