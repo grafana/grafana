@@ -117,6 +117,8 @@ type AlertmanagerAggregatedMetrics struct {
 	matchRE        *prometheus.Desc
 	match          *prometheus.Desc
 	objectMatchers *prometheus.Desc
+
+	configHash *prometheus.Desc
 }
 
 func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *AlertmanagerAggregatedMetrics {
@@ -253,6 +255,11 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 			fmt.Sprintf("%s_%s_alertmanager_config_object_matchers", Namespace, Subsystem),
 			"The total number of object_matchers",
 			nil, nil),
+
+		configHash: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_config_hash", Namespace, Subsystem),
+			"The hash of the Alertmanager configuration.",
+			[]string{"org"}, nil),
 	}
 
 	return aggregatedMetrics
@@ -296,6 +303,8 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 	out <- a.matchRE
 	out <- a.match
 	out <- a.objectMatchers
+
+	out <- a.configHash
 }
 
 func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
@@ -338,4 +347,6 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfGauges(out, a.matchRE, "alertmanager_config_match_re")
 	data.SendSumOfGauges(out, a.match, "alertmanager_config_match")
 	data.SendSumOfGauges(out, a.objectMatchers, "alertmanager_config_object_matchers")
+
+	data.SendMaxOfGaugesPerTenant(out, a.configHash, "alertmanager_config_hash")
 }

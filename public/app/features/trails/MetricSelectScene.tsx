@@ -13,7 +13,6 @@ import {
   QueryVariable,
   sceneGraph,
   VariableDependencyConfig,
-  SceneVariable,
   SceneCSSGridLayout,
   SceneCSSGridItem,
   SceneObjectRef,
@@ -50,6 +49,7 @@ const ROW_CARD_HEIGHT = '64px';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
+  private ignoreNextUpdate = false;
 
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
@@ -71,17 +71,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_METRIC_NAMES],
-    onVariableUpdatesCompleted: this._onVariableChanged.bind(this),
+    onVariableUpdateCompleted: this.onVariableUpdateCompleted.bind(this),
   });
 
-  private _onVariableChanged(changedVariables: Set<SceneVariable>, dependencyChanged: boolean): void {
-    if (dependencyChanged) {
-      this.updateMetrics();
-      this.buildLayout();
-    }
+  private onVariableUpdateCompleted(): void {
+    this.updateMetrics();
+    this.buildLayout();
   }
 
-  private ignoreNextUpdate = false;
   private _onActivate() {
     if (this.state.body.state.children.length === 0) {
       this.buildLayout();
@@ -181,7 +178,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         children.push(panel);
       } else {
         const panel = new SceneCSSGridItem({
-          $variables: getVariablesWithMetricConstant(metric.name),
+          $variables: new SceneVariableSet({
+            variables: getVariablesWithMetricConstant(metric.name),
+          }),
           body: getCardPanelFor(metric.name),
         });
         metric.itemRef = panel.getRef();
@@ -257,13 +256,15 @@ function getPreviewPanelFor(metric: string, index: number) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
   const vizPanel = autoQuery.preview
-    .vizBuilder(autoQuery.preview)
+    .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
 
   return new SceneCSSGridItem({
-    $variables: getVariablesWithMetricConstant(metric),
+    $variables: new SceneVariableSet({
+      variables: getVariablesWithMetricConstant(metric),
+    }),
     $behaviors: [hideEmptyPreviews(metric)],
     $data: new SceneQueryRunner({
       datasource: trailDS,

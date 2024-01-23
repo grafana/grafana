@@ -130,6 +130,7 @@ export interface CombinedRuleNamespace {
   rulesSource: RulesSource;
   name: string;
   groups: CombinedRuleGroup[];
+  uid?: string; //available only in grafana rules
 }
 
 export interface RuleWithLocation<T = RulerRuleDTO> {
@@ -137,6 +138,7 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   namespace: string;
   group: RulerRuleGroupDTO;
   rule: T;
+  namespace_uid?: string;
 }
 
 export interface CombinedRuleWithLocation extends CombinedRule {

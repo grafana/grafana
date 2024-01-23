@@ -263,12 +263,11 @@ const validKeys = ['refId', 'key', 'context', 'datasource'];
 export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&
-    queries.some((query: any) => {
-      const keys = Object.keys(query)
-        .filter((key) => validKeys.indexOf(key) === -1)
-        .map((k) => query[k])
-        .filter((v) => v);
-      return keys.length > 0;
+    queries.some((query) => {
+      const entries = Object.entries(query)
+        .filter(([key, _]) => validKeys.indexOf(key) === -1)
+        .filter(([_, value]) => value);
+      return entries.length > 0;
     })
   );
 }

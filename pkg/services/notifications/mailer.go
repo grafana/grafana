@@ -6,6 +6,7 @@ package notifications
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"net/mail"
@@ -34,10 +35,10 @@ func init() {
 }
 
 type Mailer interface {
-	Send(messages ...*Message) (int, error)
+	Send(ctx context.Context, messages ...*Message) (int, error)
 }
 
-func (ns *NotificationService) Send(msg *Message) (int, error) {
+func (ns *NotificationService) Send(ctx context.Context, msg *Message) (int, error) {
 	messages := []*Message{}
 
 	if msg.SingleEmail {
@@ -50,7 +51,7 @@ func (ns *NotificationService) Send(msg *Message) (int, error) {
 		}
 	}
 
-	return ns.mailer.Send(messages...)
+	return ns.mailer.Send(ctx, messages...)
 }
 
 func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Message, error) {
