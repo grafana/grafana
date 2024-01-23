@@ -5,9 +5,6 @@ import { Spinner } from '@grafana/ui';
 
 // ideally we'd use `@grafana/ui/LoadingPlaceholder`, but that
 // one has a large margin-bottom.
-
-export type Place = 'above' | 'below';
-
 type Props = {
   adjective?: string;
 };
