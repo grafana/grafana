@@ -19,7 +19,7 @@ var (
 			Name:      "datasource_request_total",
 			Help:      "A counter for outgoing requests for a data source",
 		},
-		[]string{"datasource", "datasource_type", "code", "method"},
+		[]string{"datasource", "datasource_type", "code", "method", "secure_socks_ds_proxy_enabled"},
 	)
 
 	datasourceRequestHistogram = promauto.NewHistogramVec(
@@ -37,7 +37,7 @@ var (
 			Name:      "datasource_response_size_bytes",
 			Help:      "histogram of data source response sizes returned to Grafana",
 			Buckets:   []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
-		}, []string{"datasource", "datasource_type"},
+		}, []string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
 	)
 
 	datasourceRequestsInFlight = promauto.NewGaugeVec(
@@ -46,7 +46,7 @@ var (
 			Name:      "datasource_request_in_flight",
 			Help:      "A gauge of outgoing data source requests currently being sent by Grafana",
 		},
-		[]string{"datasource", "datasource_type"},
+		[]string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
 	)
 )
 
@@ -83,21 +83,20 @@ func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
 			return next
 		}
 
-		labels := prometheus.Labels{"datasource": datasourceLabelName, "datasource_type": datasourceLabelType}
-		requestHistogramLabels := prometheus.Labels{
+		labels := prometheus.Labels{
 			"datasource":                    datasourceLabelName,
 			"datasource_type":               datasourceLabelType,
 			"secure_socks_ds_proxy_enabled": strconv.FormatBool(opts.ProxyOptions != nil && opts.ProxyOptions.Enabled),
 		}
 
-		return executeMiddlewareFunc(next, labels, requestHistogramLabels)
+		return executeMiddlewareFunc(next, labels)
 	})
 }
 
-func executeMiddleware(next http.RoundTripper, labels prometheus.Labels, requestHistogramLabels prometheus.Labels) http.RoundTripper {
+func executeMiddleware(next http.RoundTripper, labels prometheus.Labels) http.RoundTripper {
 	return sdkhttpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 		requestCounter := datasourceRequestCounter.MustCurryWith(labels)
-		requestHistogram := datasourceRequestHistogram.MustCurryWith(requestHistogramLabels)
+		requestHistogram := datasourceRequestHistogram.MustCurryWith(labels)
 		requestInFlight := datasourceRequestsInFlight.With(labels)
 		responseSizeHistogram := datasourceResponseHistogram.With(labels)
 

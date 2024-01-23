@@ -15,7 +15,7 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 		origExecuteMiddlewareFunc := executeMiddlewareFunc
 		executeMiddlewareCalled := false
 		middlewareCalled := false
-		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels, requestHistogramLabels prometheus.Labels) http.RoundTripper {
+		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
 			executeMiddlewareCalled = true
 			return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 				middlewareCalled = true
@@ -53,7 +53,7 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 		origExecuteMiddlewareFunc := executeMiddlewareFunc
 		executeMiddlewareCalled := false
 		middlewareCalled := false
-		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels, requestHistogramLabels prometheus.Labels) http.RoundTripper {
+		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
 			executeMiddlewareCalled = true
 			return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 				middlewareCalled = true
@@ -91,12 +91,10 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 		origExecuteMiddlewareFunc := executeMiddlewareFunc
 		executeMiddlewareCalled := false
 		labels := prometheus.Labels{}
-		requestHistogramLabels := prometheus.Labels{}
 		middlewareCalled := false
-		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels, requestDurationLabels prometheus.Labels) http.RoundTripper {
+		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
 			executeMiddlewareCalled = true
 			labels = datasourceLabel
-			requestHistogramLabels = requestDurationLabels
 			return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 				middlewareCalled = true
 				return next.RoundTrip(r)
@@ -150,10 +148,10 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 				require.Len(t, ctx.callChain, 1)
 				require.ElementsMatch(t, []string{"finalrt"}, ctx.callChain)
 				require.True(t, executeMiddlewareCalled)
-				require.Len(t, labels, 2)
+				require.Len(t, labels, 3)
 				require.Equal(t, "My_Data_Source_123", labels["datasource"])
 				require.Equal(t, "prometheus", labels["datasource_type"])
-				require.Equal(t, tt.expectedSecureSocksDSProxyEnabled, requestHistogramLabels["secureSocksDSProxyEnabled"])
+				require.Equal(t, tt.expectedSecureSocksDSProxyEnabled, labels["secure_socks_ds_proxy_enabled"])
 				require.True(t, middlewareCalled)
 			})
 		}
