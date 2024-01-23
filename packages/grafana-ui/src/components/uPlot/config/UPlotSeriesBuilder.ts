@@ -172,6 +172,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       return getScaleGradientFn(1, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
     }
 
+    if (gradientMode === GraphGradientMode.Hue) {
+      return getHueGradientFn(lineColor ?? FALLBACK_COLOR, 1, theme);
+    }
+
     return lineColor ?? FALLBACK_COLOR;
   }
 

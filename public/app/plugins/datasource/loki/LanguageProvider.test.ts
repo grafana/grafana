@@ -138,6 +138,17 @@ describe('Language completion provider', () => {
         start: 1546372800000,
       });
     });
+
+    it('should work if request returns undefined', async () => {
+      const datasource = setup({});
+      datasource.getTimeRangeParams = jest
+        .fn()
+        .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
+      const languageProvider = new LanguageProvider(datasource);
+      languageProvider.request = jest.fn().mockResolvedValue(undefined);
+      const series = await languageProvider.fetchSeriesLabels('stream', { timeRange: mockTimeRange });
+      expect(series).toEqual({});
+    });
   });
 
   describe('label values', () => {
@@ -320,10 +331,30 @@ describe('fetchLabels', () => {
 describe('Query imports', () => {
   const datasource = setup({});
 
-  it('returns empty queries', async () => {
-    const instance = new LanguageProvider(datasource);
-    const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
-    expect(result).toEqual({ refId: 'bar', expr: '', queryType: LokiQueryType.Range });
+  describe('importing from abstract query', () => {
+    it('returns empty queries', async () => {
+      const instance = new LanguageProvider(datasource);
+      const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
+      expect(result).toEqual({ refId: 'bar', expr: '', queryType: LokiQueryType.Range });
+    });
+
+    it('returns valid query', () => {
+      const instance = new LanguageProvider(datasource);
+      const result = instance.importFromAbstractQuery({
+        refId: 'bar',
+        labelMatchers: [
+          { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+          { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+          { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+          { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+        ],
+      });
+      expect(result).toEqual({
+        refId: 'bar',
+        expr: '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+        queryType: LokiQueryType.Range,
+      });
+    });
   });
 
   describe('exporting to abstract query', () => {
@@ -332,6 +363,42 @@ describe('Query imports', () => {
       const abstractQuery = instance.exportToAbstractQuery({
         refId: 'bar',
         expr: '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+        instant: true,
+        range: false,
+      });
+      expect(abstractQuery).toMatchObject({
+        refId: 'bar',
+        labelMatchers: [
+          { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+          { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+          { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+          { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+        ],
+      });
+    });
+
+    it('exports labels in metric query', async () => {
+      const instance = new LanguageProvider(datasource);
+      const abstractQuery = instance.exportToAbstractQuery({
+        refId: 'bar',
+        expr: 'rate({label1="value1", label2!="value2"}[5m])',
+        instant: true,
+        range: false,
+      });
+      expect(abstractQuery).toMatchObject({
+        refId: 'bar',
+        labelMatchers: [
+          { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+          { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+        ],
+      });
+    });
+
+    it('exports labels in query with multiple stream selectors', async () => {
+      const instance = new LanguageProvider(datasource);
+      const abstractQuery = instance.exportToAbstractQuery({
+        refId: 'bar',
+        expr: 'rate({label1="value1", label2!="value2"}[5m]) + rate({label3=~"value3", label4!~"value4"}[5m])',
         instant: true,
         range: false,
       });
