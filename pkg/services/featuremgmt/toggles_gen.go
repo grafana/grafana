@@ -343,10 +343,6 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
-	// FlagGrafanaAPIServer
-	// Enable Kubernetes API Server for Grafana resources
-	FlagGrafanaAPIServer = "grafanaAPIServer"
-
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
