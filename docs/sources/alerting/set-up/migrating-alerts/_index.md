@@ -59,7 +59,7 @@ When upgrading with either method, your legacy dashboard alerts and notification
 
 In **Alerts & IRM**, the **Alerting** section provides a preview of Grafana Alerting where you can review and modify your upgraded alerts before finalizing the upgrade.
 
-n the **Alerting (legacy) -> Alerting upgrade** section, you can initiate the upgrade process, automatically migrate your existing alert rules and notification channels, and view a summary of the upgrade to Grafana Alerting.
+In the **Alerting (legacy) -> Alerting upgrade** section, you can initiate the upgrade process, automatically migrate your existing alert rules and notification channels, and view a summary of the upgrade to Grafana Alerting.
 
 Finalize your upgrade by restarting Grafana with the `[unified_alerting]` section enabled in your configuration.
 
@@ -110,12 +110,13 @@ Once Grafana Alerting is enabled, you can review and adjust your upgraded alerts
 
 ### To perform the simple upgrade, complete the following steps.
 
+{{% admonition type="note" %}}
+Any errors encountered during the upgrade process will fail the upgrade and prevent Grafana from starting. If this occurs, you can [roll back to legacy alerting]({{< relref "#rolling-back-to-legacy-alerting" >}}).
+{{% /admonition %}}
+
 1. **Upgrade to Grafana Alerting**:
    - **Enable Grafana Alerting**: [Modify custom configuration file]({{< relref "#enable-grafana-alerting" >}}).
    - **Restart Grafana**: Restart Grafana for the configuration changes to take effect. Grafana will automatically migrate your existing alert rules and notification channels to the new Grafana Alerting system.
-     {{% admonition type="note" %}}
-     Any errors encountered during the upgrade process will fail the upgrade and prevent Grafana from starting. If this occurs, you can [roll back to legacy alerting]({{< relref "#rolling-back-to-legacy-alerting" >}}).
-     {{% /admonition %}}
 2. **Review and Adjust Upgraded Alerts**:
    - **Review the upgraded alerts**: Go to the `Alerting` section of the navigation panel to review the upgraded alerts.
    - **Export upgraded resources**: If you use provisioning methods to manage alert rules and notification channels, you can export the upgraded versions to generate provisioning files compatible with Grafana Alerting.
