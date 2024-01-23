@@ -22,7 +22,7 @@ func TestNewConfig(t *testing.T) {
 	section.Key("log_level").SetValue("5")
 	section.Key("etcd_servers").SetValue("http://localhost:2379")
 
-	actual := newConfig(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServer))
+	actual := newConfig(cfg, featuremgmt.WithFeatures())
 
 	expected := &config{
 		enabled:     true,
