@@ -140,7 +140,8 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 					},
 				},
 			},
-		}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), fakes.NewFakeLicensingService(),
+		}, &fakeDatasources.FakeCacheService{}, ds,
+		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), fakes.NewFakeLicensingService(),
 		&config.Cfg{})
 
 	return query.ProvideService(
