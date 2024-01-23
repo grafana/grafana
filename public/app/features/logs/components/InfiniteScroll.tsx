@@ -57,8 +57,8 @@ export const InfiniteScroll = ({
         return;
       }
       event.stopImmediatePropagation();
-      lastScroll.current = scrollElement.scrollTop;
       const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
+      lastScroll.current = scrollElement.scrollTop;
       if (scrollDirection === ScrollDirection.NoScroll) {
         return;
       } else if (scrollDirection === ScrollDirection.Top) {
