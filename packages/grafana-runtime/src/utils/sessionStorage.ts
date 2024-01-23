@@ -1,7 +1,7 @@
 export const getReturnToPrevious = () => {
   return {
-    title: window.sessionStorage['returnToPreviousTitle'],
-    href: window.sessionStorage['returnToPreviousHref'],
+    title: sessionStorage.getItem('returnToPreviousTitle') || '',
+    href: sessionStorage.getItem('returnToPreviousHref') || '',
   };
 };
 
