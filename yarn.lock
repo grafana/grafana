@@ -2924,7 +2924,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-select-event: "npm:5.5.1"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
@@ -2962,7 +2962,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
     style-loader: "npm:3.3.4"
     ts-node: "npm:10.9.2"
@@ -2997,7 +2997,7 @@ __metadata:
     lodash: "npm:4.17.21"
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.2.0"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
@@ -3048,7 +3048,7 @@ __metadata:
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.0"
     react: "npm:18.2.0"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
@@ -3103,7 +3103,7 @@ __metadata:
     react-dom: "npm:18.2.0"
     react-router: "npm:6.2.1"
     react-select-event: "npm:5.5.1"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     redux: "npm:4.2.1"
     rxjs: "npm:7.8.1"
     semver: "npm:7.5.4"
@@ -3182,7 +3182,7 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-test-renderer: "npm:18.2.0"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     regenerator-runtime: "npm:0.14.1"
     rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
@@ -3404,7 +3404,7 @@ __metadata:
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     react-virtualized-auto-sizer: "npm:1.0.21"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
@@ -3481,7 +3481,7 @@ __metadata:
     "@types/testing-library__jest-dom": "npm:5.14.9"
     jest: "npm:^29.6.4"
     react: "npm:18.2.0"
-    react-use: "npm:17.4.0"
+    react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
     ts-jest: "npm:29.1.2"
     ts-node: "npm:10.9.2"
@@ -3721,7 +3721,7 @@ __metadata:
     react-table: "npm:7.8.0"
     react-test-renderer: "npm:18.2.0"
     react-transition-group: "npm:4.4.5"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     react-window: "npm:1.8.10"
     rimraf: "npm:5.0.5"
     rollup: "npm:2.79.1"
@@ -17227,7 +17227,7 @@ __metadata:
     react-table: "npm:7.8.0"
     react-test-renderer: "npm:18.2.0"
     react-transition-group: "npm:4.4.5"
-    react-use: "npm:17.4.3"
+    react-use: "npm:17.5.0"
     react-virtual: "npm:2.10.4"
     react-virtualized-auto-sizer: "npm:1.0.21"
     react-window: "npm:1.8.10"
@@ -25289,9 +25289,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.4.3, react-use@npm:^17.4.2":
-  version: 17.4.3
-  resolution: "react-use@npm:17.4.3"
+"react-use@npm:17.5.0, react-use@npm:^17.4.2":
+  version: 17.5.0
+  resolution: "react-use@npm:17.5.0"
   dependencies:
     "@types/js-cookie": "npm:^2.2.6"
     "@xobotyi/scrollbar-width": "npm:^1.9.5"
@@ -25310,7 +25310,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 773ca6285ae4a09b5bccfd8305ff4689dac7fa5c282691d089b243561a272b40b34d4b0c6d1a7c8b0eb8ae6d3ae2791a6102bd56664bf964f425284a6652cc30
+  checksum: 5d81fe0902303d3ed7810cdd56c6cae12b08124a3d4fcbfa3924327105b81447b039ea9d6aff20aac3c13999f949000870a7a2fa29fe20ed844ac26606462fa0
   languageName: node
   linkType: hard
 
