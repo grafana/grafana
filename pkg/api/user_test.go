@@ -253,154 +253,7 @@ func TestHTTPServer_UpdateUser(t *testing.T) {
 	}, hs)
 }
 
-func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
-	t.Helper()
-
-	sqlStore := db.InitTestDB(t)
-	sqlStore.Cfg = cfg
-
-	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
-	require.NoError(t, err)
-	userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
-	require.NoError(t, err)
-
-	// Create test user
-	createUserCmd := user.CreateUserCommand{
-		Email:   "testuser@localhost",
-		Name:    "testuser",
-		Login:   "loginuser",
-		Company: "testCompany",
-		IsAdmin: true,
-	}
-	usr, err := userSvc.Create(context.Background(), &createUserCmd)
-	require.NoError(t, err)
-
-	nsMock := notifications.MockNotificationService()
-
-	hs := &HTTPServer{
-		Cfg:                 cfg,
-		SQLStore:            sqlStore,
-		userService:         userSvc,
-		tempUserService:     tempUserService,
-		NotificationService: nsMock,
-	}
-	return usr, hs, nsMock
-}
-
 func TestUser_UpdateEmail(t *testing.T) {
-	cases := []struct {
-		Name  string
-		Field user.UpdateEmailActionType
-	}{
-		{
-			Name:  "Updating Email field",
-			Field: user.EmailUpdateAction,
-		},
-		{
-			Name:  "Updating Login (username) field",
-			Field: user.LoginUpdateAction,
-		},
-	}
-
-	for _, tt := range cases {
-		t.Run(tt.Name, func(t *testing.T) {
-			t.Run("With verification disabled should update without verifying", func(t *testing.T) {
-				tests := []struct {
-					name               string
-					smtpConfigured     bool
-					verifyEmailEnabled bool
-				}{
-					{
-						name:               "SMTP not configured",
-						smtpConfigured:     false,
-						verifyEmailEnabled: true,
-					},
-					{
-						name:               "config verify_email_enabled = false",
-						smtpConfigured:     true,
-						verifyEmailEnabled: false,
-					},
-					{
-						name:               "config verify_email_enabled = false and SMTP not configured",
-						smtpConfigured:     false,
-						verifyEmailEnabled: false,
-					},
-				}
-				for _, ttt := range tests {
-					settings := setting.NewCfg()
-					settings.Smtp.Enabled = ttt.smtpConfigured
-					setting.VerifyEmailEnabled = ttt.verifyEmailEnabled
-
-					usr, hs, nsMock := setupUpdateEmailTests(t, settings)
-
-					updateUserCommand := user.UpdateUserCommand{
-						Email:  usr.Email,
-						Name:   "newName",
-						Login:  usr.Login,
-						UserID: usr.ID,
-					}
-
-					switch tt.Field {
-					case user.LoginUpdateAction:
-						updateUserCommand.Login = newEmail
-					case user.EmailUpdateAction:
-						updateUserCommand.Email = newEmail
-					}
-
-					fn := func(sc *scenarioContext) {
-						// User is internal
-						sc.authInfoService.ExpectedError = user.ErrUserNotFound
-
-						sc.fakeReqWithParams("PUT", sc.url, nil).exec()
-						assert.Equal(t, http.StatusOK, sc.resp.Code)
-
-						// Verify that no email has been sent after update
-						require.False(t, nsMock.EmailVerified)
-
-						userQuery := user.GetUserByIDQuery{ID: usr.ID}
-						updatedUsr, err := hs.userService.GetByID(context.Background(), &userQuery)
-						require.NoError(t, err)
-
-						// Verify fields have been updated
-						require.NotEqual(t, usr.Name, updatedUsr.Name)
-						require.Equal(t, updateUserCommand.Name, updatedUsr.Name)
-
-						switch tt.Field {
-						case user.LoginUpdateAction:
-							require.Equal(t, usr.Email, updatedUsr.Email)
-							require.NotEqual(t, usr.Login, updatedUsr.Login)
-							require.Equal(t, updateUserCommand.Login, updatedUsr.Login)
-						case user.EmailUpdateAction:
-							require.Equal(t, usr.Login, updatedUsr.Login)
-							require.NotEqual(t, usr.Email, updatedUsr.Email)
-							require.Equal(t, updateUserCommand.Email, updatedUsr.Email)
-						}
-
-						// Verify other fields have been kept
-						require.Equal(t, usr.Company, updatedUsr.Company)
-					}
-
-					updateUserScenario(t, updateUserContext{
-						desc:         ttt.name,
-						url:          fmt.Sprintf("/api/users/%d", usr.ID),
-						routePattern: "/api/users/:id",
-						cmd:          updateUserCommand,
-						fn:           fn,
-					}, hs)
-
-					updateSignedInUserScenario(t, updateUserContext{
-						desc:         ttt.name,
-						url:          "/api/user",
-						routePattern: "/api/user",
-						cmd:          updateUserCommand,
-						fn:           fn,
-					}, hs)
-				}
-			})
-		})
-	}
-
 	doReq := func(req *http.Request, usr *user.User) (*http.Response, error) {
 		r := webtest.RequestWithSignedInUser(
 			req,
@@ -499,7 +352,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 			hs.NotificationService = nsMock
 			hs.SecretsService = fakes.NewFakeSecretsService()
 			// User is internal
-			hs.authInfoService = &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
+			hs.authInfoService = &logintest.AuthInfoServiceFake{ExpectedError: user.ErrUserNotFound}
 		})
 
 		return server, userSvc, tempUserSvc, nsMock
@@ -516,6 +369,99 @@ func TestUser_UpdateEmail(t *testing.T) {
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
 		require.NoError(t, err)
 		return usr
+	}
+
+	disabledCases := []struct {
+		Name  string
+		Field user.UpdateEmailActionType
+	}{
+		{
+			Name:  "Updating Email field",
+			Field: user.EmailUpdateAction,
+		},
+		{
+			Name:  "Updating Login (username) field",
+			Field: user.LoginUpdateAction,
+		},
+	}
+
+	for _, tt := range disabledCases {
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Run("With verification disabled should update without verifying", func(t *testing.T) {
+				tests := []struct {
+					name               string
+					smtpConfigured     bool
+					verifyEmailEnabled bool
+				}{
+					{
+						name:               "SMTP not configured",
+						smtpConfigured:     false,
+						verifyEmailEnabled: true,
+					},
+					{
+						name:               "config verify_email_enabled = false",
+						smtpConfigured:     true,
+						verifyEmailEnabled: false,
+					},
+					{
+						name:               "config verify_email_enabled = false and SMTP not configured",
+						smtpConfigured:     false,
+						verifyEmailEnabled: false,
+					},
+				}
+				for _, ttt := range tests {
+					var body string
+					newName := "newName"
+
+					settings := setting.NewCfg()
+					settings.Smtp.Enabled = ttt.smtpConfigured
+					server, userSvc, _, nsMock := setupScenario(settings)
+
+					// Override after calling setupScenario()
+					setting.VerifyEmailEnabled = ttt.verifyEmailEnabled
+
+					originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+					// Verify that no email has been sent yet
+					require.False(t, nsMock.EmailVerified)
+
+					// Start email update
+					switch tt.Field {
+					case user.LoginUpdateAction:
+						body = fmt.Sprintf(`{"login": "%s", "name": "%s"}`, newEmail, newName)
+					case user.EmailUpdateAction:
+						body = fmt.Sprintf(`{"email": "%s", "login": "%s", "name": "%s"}`, newEmail, originalUsr.Login, newName)
+					}
+					sendUpdateReq(server, originalUsr, body)
+
+					// Verify that email has not been sent
+					require.False(t, nsMock.EmailVerified)
+
+					// Verify Email has been updated
+					userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+					updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+					require.NoError(t, err)
+
+					switch tt.Field {
+					case user.LoginUpdateAction:
+						require.Equal(t, originalUsr.Email, updatedUsr.Email)
+						require.NotEqual(t, originalUsr.Login, updatedUsr.Login)
+						require.Equal(t, newEmail, updatedUsr.Login)
+					case user.EmailUpdateAction:
+						require.Equal(t, originalUsr.Login, updatedUsr.Login)
+						require.NotEqual(t, originalUsr.Email, updatedUsr.Email)
+						require.Equal(t, newEmail, updatedUsr.Email)
+					}
+
+					// Verify name has been updated
+					require.NotEqual(t, originalUsr.Name, updatedUsr.Name)
+					require.Equal(t, newName, updatedUsr.Name)
+
+					// Fields unchanged
+					require.Equal(t, originalUsr.Company, updatedUsr.Company)
+				}
+			})
+		})
 	}
 
 	t.Run("Update Email and disregard other fields", func(t *testing.T) {
