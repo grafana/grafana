@@ -195,17 +195,24 @@ export class ElasticDatasource
    *
    * When multiple indices span the provided time range, the request is sent starting from the newest index,
    * and then going backwards until an index is found.
-   *
-   * @param url the url to query the index on, for example `/_mapping`.
    */
-
-  private requestAllIndices(url: string, range = getDefaultTimeRange()) {
+  private requestAllIndices(range = getDefaultTimeRange()) {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
     }
 
-    const indexUrlList = indexList.map((index) => index + url);
+    const url = '_mapping';
+
+    const indexUrlList = indexList.map((index) => {
+      // make sure `index` does not end with a slash
+      index = index.replace(/\/$/, '');
+      if (index === '') {
+        return url;
+      }
+
+      return `${index}/${url}`;
+    });
 
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexUrlList.length;
@@ -708,7 +715,7 @@ export class ElasticDatasource
       nested: 'nested',
       histogram: 'number',
     };
-    return this.requestAllIndices('/_mapping', range).pipe(
+    return this.requestAllIndices(range).pipe(
       map((result) => {
         const shouldAddField = (obj: any, key: string) => {
           if (this.isMetadataField(key)) {
