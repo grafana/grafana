@@ -18,7 +18,6 @@ import {
 import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
 
 import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
-import { buildLogsScene } from './ActionTabs/LogsScene';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
@@ -51,6 +50,14 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       body: state.body ?? buildGraphScene(state.metric),
       ...state,
     });
+
+    this.addActivationHandler(this._onActivate.bind(this));
+  }
+
+  private _onActivate() {
+    if (this.state.actionView === undefined) {
+      this.setActionView('overview');
+    }
   }
 
   getUrlState() {
@@ -96,7 +103,6 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 const actionViewsDefinitions: ActionViewDefinition[] = [
   { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
   { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
-  { displayName: 'Logs', value: 'logs', getScene: buildLogsScene },
   { displayName: 'Related metrics', value: 'related', getScene: buildRelatedMetricsScene },
 ];
 
@@ -118,10 +124,6 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
       getTrailStore().addBookmark(trail);
       setBookmarked(!isBookmarked);
     };
-
-    if (!actionView) {
-      metricScene.setActionView('overview');
-    }
 
     return (
       <Box paddingY={1}>
