@@ -3716,7 +3716,7 @@ __metadata:
     react-loading-skeleton: "npm:3.3.1"
     react-popper: "npm:2.3.0"
     react-router-dom: "npm:5.3.3"
-    react-select: "npm:5.7.4"
+    react-select: "npm:5.8.0"
     react-select-event: "npm:^5.1.0"
     react-table: "npm:7.8.0"
     react-test-renderer: "npm:18.2.0"
@@ -17220,7 +17220,7 @@ __metadata:
     react-responsive-carousel: "npm:^3.2.23"
     react-router-dom: "npm:5.3.3"
     react-router-dom-v5-compat: "npm:^6.10.0"
-    react-select: "npm:5.7.4"
+    react-select: "npm:5.8.0"
     react-select-event: "npm:5.5.1"
     react-simple-compat: "npm:1.2.3"
     react-split-pane: "npm:0.1.92"
@@ -25085,9 +25085,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:5.7.4":
-  version: 5.7.4
-  resolution: "react-select@npm:5.7.4"
+"react-select@npm:5.8.0":
+  version: 5.8.0
+  resolution: "react-select@npm:5.8.0"
   dependencies:
     "@babel/runtime": "npm:^7.12.0"
     "@emotion/cache": "npm:^11.4.0"
@@ -25101,7 +25101,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 4aa9dc10c9bd3308be1d4cd9793165becdc38855fcfed0b6a48804f9a4b2134e5fb89eda87c0f7386f846b98a05d530041c96ba9a2009bb0d4619b466520b6d6
+  checksum: 04d3639ea1872a9e4d9080ece1947432fc595403c0a740f671a1b7f7dd2639288cb133ec7a2b1ac20fad69fd303d696c2f924763405e0e1d93b847e54df9e966
   languageName: node
   linkType: hard
 
