@@ -318,7 +318,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, len(hits), 1)
 		hit := hits[0]
 		require.Equal(t, hit.Type, model.DashHitFolder)
-		require.Equal(t, hit.UID, savedFolder.UID)
+		require.Equal(t, hit.URL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
 		require.Equal(t, hit.FolderUID, "")
 		require.Equal(t, hit.FolderTitle, "")
 	})
