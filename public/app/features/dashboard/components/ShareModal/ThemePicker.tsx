@@ -25,7 +25,7 @@ export const ThemePicker = ({ selectedTheme = 'current', onChange, description }
   ];
 
   return (
-    <Field label={t('share-modal.theme-picker.field-name', `Theme`)} description={description}>
+    <Field label={t('share-modal.theme-picker.field-name', `Theme`)} style={{ display: 'none' }}>
       <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={onChange} />
     </Field>
   );

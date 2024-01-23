@@ -176,7 +176,9 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      background: theme.colors.background.primary,
+      // NI fork: improve appearance of topNav
+      // boxShadow: true ? undefined : shadow,
+      // background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({
