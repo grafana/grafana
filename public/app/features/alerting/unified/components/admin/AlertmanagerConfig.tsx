@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import React, { useState, useMemo } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { deleteAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 
@@ -18,15 +18,19 @@ export interface FormValues {
   configJSON: string;
 }
 
-export default function AlertmanagerConfig(): JSX.Element {
+interface Props {
+  alertmanagerName: string;
+  onDismiss: () => void;
+}
+
+export default function AlertmanagerConfig({ alertmanagerName, onDismiss }: Props): JSX.Element {
   const dispatch = useDispatch();
 
   const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);
   const { loading: isDeleting } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
-  const { selectedAlertmanager } = useAlertmanager();
 
-  const readOnly = selectedAlertmanager ? isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager) : false;
+  const readOnly = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
   const styles = useStyles2(getStyles);
 
   const [selectedAmConfig, setSelectedAmConfig] = useState<ValidAmConfigOption | undefined>();
@@ -35,11 +39,11 @@ export default function AlertmanagerConfig(): JSX.Element {
     currentData: config,
     error: loadingError,
     isLoading: isLoadingConfig,
-  } = useAlertmanagerConfig(selectedAlertmanager);
+  } = useAlertmanagerConfig(alertmanagerName);
 
   const resetConfig = () => {
-    if (selectedAlertmanager) {
-      dispatch(deleteAlertManagerConfigAction(selectedAlertmanager));
+    if (alertmanagerName) {
+      dispatch(deleteAlertManagerConfigAction(alertmanagerName));
     }
     setShowConfirmDeleteAMConfig(false);
   };
@@ -61,12 +65,12 @@ export default function AlertmanagerConfig(): JSX.Element {
   const loading = isDeleting || isLoadingConfig || isSaving;
 
   const onSubmit = (values: FormValues) => {
-    if (selectedAlertmanager && config) {
+    if (alertmanagerName && config) {
       dispatch(
         updateAlertManagerConfigAction({
           newConfig: JSON.parse(values.configJSON),
           oldConfig: config,
-          alertManagerSourceName: selectedAlertmanager,
+          alertManagerSourceName: alertmanagerName,
           successMessage: 'Alertmanager configuration updated.',
         })
       );
@@ -75,6 +79,7 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   return (
     <div className={styles.container}>
+      {/* error state */}
       {loadingError && !loading && (
         <>
           <Alert
@@ -84,7 +89,7 @@ export default function AlertmanagerConfig(): JSX.Element {
             {loadingError.message || 'Unknown error.'}
           </Alert>
 
-          {selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME && (
+          {alertmanagerName === GRAFANA_RULES_SOURCE_NAME && (
             <AlertmanagerConfigSelector
               onChange={setSelectedAmConfig}
               selectedAmConfig={selectedAmConfig}
@@ -96,30 +101,54 @@ export default function AlertmanagerConfig(): JSX.Element {
           )}
         </>
       )}
-      {isDeleting && selectedAlertmanager !== GRAFANA_RULES_SOURCE_NAME && (
+
+      {/* resetting state */}
+      {isDeleting && alertmanagerName !== GRAFANA_RULES_SOURCE_NAME && (
         <Alert severity="info" title="Resetting Alertmanager configuration">
           It might take a while...
         </Alert>
       )}
-      {selectedAlertmanager && config && (
-        <ConfigEditor
-          defaultValues={defaultValues}
-          onSubmit={(values) => onSubmit(values)}
-          readOnly={readOnly}
-          loading={loading}
-          alertManagerSourceName={selectedAlertmanager}
-          showConfirmDeleteAMConfig={showConfirmDeleteAMConfig}
-          onReset={() => setShowConfirmDeleteAMConfig(true)}
-          onConfirmReset={resetConfig}
-          onDismiss={() => setShowConfirmDeleteAMConfig(false)}
-        />
+
+      <div className={styles.content}>
+        <AutoSizer>
+          {({ height, width }) => (
+            <ConfigEditor
+              defaultValues={defaultValues}
+              onSubmit={(values) => onSubmit(values)}
+              readOnly={readOnly}
+              loading={loading}
+              height={height}
+              width={width}
+              alertManagerSourceName={alertmanagerName}
+              showConfirmDeleteAMConfig={showConfirmDeleteAMConfig}
+              onReset={() => setShowConfirmDeleteAMConfig(true)}
+              onConfirmReset={resetConfig}
+              onDismiss={() => setShowConfirmDeleteAMConfig(false)}
+            />
+          )}
+        </AutoSizer>
+      </div>
+      {!readOnly && (
+        <Stack justifyContent="flex-end">
+          <Button variant="destructive">Reset</Button>
+          <Button variant="secondary" onClick={onDismiss}>
+            Cancel
+          </Button>
+          <Button variant="primary">Save</Button>
+        </Stack>
       )}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    gap: theme.spacing(2),
+  }),
+  content: css({
+    flex: '1 1 100%',
+  }),
 });

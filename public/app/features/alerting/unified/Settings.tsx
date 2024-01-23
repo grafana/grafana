@@ -1,11 +1,9 @@
-import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, CodeEditor, Drawer, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Drawer, Stack, Text } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import AlertmanagerConfig from './components/admin/AlertmanagerConfig';
 import { ExternalAlertmanagers } from './components/admin/ExternalAlertmanagers';
 import InternalAlertmanager from './components/admin/InternalAlertmanager';
 
@@ -33,7 +31,6 @@ export default function SettingsPage() {
 
 // @TODO move to another file
 function useEditConfigurationDrawer(): [React.ReactNode, () => void, () => void] {
-  const styles = useStyles2(getStyles);
   const [open, setOpen] = useState(false);
 
   const showConfiguration = useCallback(() => {
@@ -55,50 +52,12 @@ function useEditConfigurationDrawer(): [React.ReactNode, () => void, () => void]
         onClose={dismissConfiguration}
         title="Alertmanager name here"
         subtitle="This is the Alertmanager configuration"
-        size="md"
+        size="lg"
       >
-        <div className={styles.container}>
-          <div className={styles.content}>
-            <AutoSizer disableWidth>
-              {({ height }) => (
-                <CodeEditor
-                  width="100%"
-                  height={height}
-                  language={'json'}
-                  value={'hello world'}
-                  monacoOptions={{
-                    minimap: {
-                      enabled: false,
-                    },
-                    scrollBeyondLastLine: false,
-                    lineNumbers: 'on',
-                  }}
-                />
-              )}
-            </AutoSizer>
-          </div>
-          <Stack justifyContent="flex-end">
-            <Button variant="secondary" onClick={dismissConfiguration}>
-              Cancel
-            </Button>
-            <Button variant="primary">Save</Button>
-          </Stack>
-        </div>
+        <AlertmanagerConfig alertmanagerName={'grafana'} onDismiss={dismissConfiguration} />
       </Drawer>
     );
-  }, [dismissConfiguration, open, styles.container, styles.content]);
+  }, [dismissConfiguration, open]);
 
   return [drawer, showConfiguration, dismissConfiguration];
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    gap: theme.spacing(2),
-  }),
-  content: css({
-    flex: '1 1 100%',
-  }),
-});

@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import { DataSourceSettings } from '@grafana/data';
 import { AlertManagerDataSourceJsonData, ExternalAlertmanagers } from 'app/plugins/datasource/alertmanager/types';
 
@@ -19,28 +17,24 @@ export interface ExternalAlertmanagerDataSourceWithStatus {
  */
 export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSourceWithStatus[] {
   // firstly we'll fetch the settings for all datasources and filter for "alertmanager" type
-  const [fetchDataSourceSettings, { alertmanagerDataSources }] =
-    dataSourcesApi.endpoints.getDataSourceSettings.useLazyQuery({
-      refetchOnReconnect: true,
-      refetchOnFocus: true,
-      selectFromResult: (result) => {
-        const alertmanagerDataSources = result.currentData?.filter(isAlertmanagerDataSource) ?? [];
-        return { ...result, alertmanagerDataSources };
-      },
-    });
+  const { alertmanagerDataSources } = dataSourcesApi.endpoints.getDataSourceSettings.useQuery(undefined, {
+    refetchOnReconnect: true,
+    refetchOnFocus: true,
+    selectFromResult: (result) => {
+      const alertmanagerDataSources = result.currentData?.filter(isAlertmanagerDataSource) ?? [];
+      return { ...result, alertmanagerDataSources };
+    },
+  });
 
   // we'll also fetch the configuration for which Alertmanagers we are forwarding Grafana-managed alerts too
   // @TODO use polling when we have one or more alertmanagers in pending state
-  const [fetchActiveAlertmanagers, { currentData: externalAlertmanagers }] =
-    alertmanagerApi.endpoints.getExternalAlertmanagers.useLazyQuery({
+  const { currentData: externalAlertmanagers } = alertmanagerApi.endpoints.getExternalAlertmanagers.useQuery(
+    undefined,
+    {
       refetchOnReconnect: true,
       refetchOnFocus: true,
-    });
-
-  useEffect(() => {
-    fetchDataSourceSettings();
-    fetchActiveAlertmanagers();
-  }, [fetchActiveAlertmanagers, fetchDataSourceSettings]);
+    }
+  );
 
   if (!alertmanagerDataSources) {
     return [];
@@ -68,33 +62,41 @@ function determineAlertmanagerConnectionStatus(
     return 'uninterested';
   }
 
-  const isActive =
+  const activeMatches =
     externalAlertmanagers?.activeAlertManagers.filter((am) => {
       return isAlertmanagerMatchByURL(dataSourceSettings.url, am.url);
     }) ?? [];
 
-  const isDropped =
+  const droppedMatches =
     externalAlertmanagers?.droppedAlertManagers.filter((am) => {
       return isAlertmanagerMatchByURL(dataSourceSettings.url, am.url);
     }) ?? [];
 
-  const isPending = isActive.length === 0 && isDropped.length === 0;
+  const isActive = Boolean(activeMatches.length);
+  const isDropped = Boolean(droppedMatches.length);
 
-  let status: ConnectionStatus = 'unknown';
-  if (isActive?.length === 1) {
-    status = 'active';
-  } else if (isDropped.length === 1) {
-    status = 'dropped';
-  } else if (isActive.length > 1) {
-    // Multiple Alertmanagers of the same URL may exist (e.g. with different credentials)
-    // Alertmanager response only contains URLs, so in case of duplication, we are not able
-    // to distinguish which is which, resulting in an inconclusive status.
-    status = 'inconclusive';
-  } else if (isPending) {
-    status = 'pending';
+  // the Alertmanager is being adopted (pending) if it is interested in handling alerts but not in either "active" or "dropped"
+  const isPending = !isActive && !isDropped;
+  if (isPending) {
+    return 'pending';
   }
 
-  return status;
+  // Multiple Alertmanagers of the same URL may exist (e.g. with different credentials)
+  // Alertmanager response only contains URLs, so when the URL exists in both active and dropped, we are not able
+  // to distinguish which is which, resulting in an inconclusive status.
+  const isInconclusive = isActive && isDropped;
+  if (isInconclusive) {
+    return 'inconclusive';
+  }
+
+  // if we get here, it's neither "uninterested", nor "inconclusive" nor "pending"
+  if (isActive) {
+    return 'active';
+  } else if (isDropped) {
+    return 'dropped';
+  }
+
+  return 'unknown';
 }
 
 // the vanilla Alertmanager and Mimir Alertmanager mount their API endpoints on different sub-paths

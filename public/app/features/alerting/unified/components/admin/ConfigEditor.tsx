@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, CodeEditor, ConfirmModal, Field, Form, HorizontalGroup } from '@grafana/ui';
+import { CodeEditor, ConfirmModal, Field, Form } from '@grafana/ui';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -10,6 +10,8 @@ interface ConfigEditorProps {
   defaultValues: { configJSON: string };
   readOnly: boolean;
   loading: boolean;
+  height: number;
+  width: number;
   alertManagerSourceName?: string;
   onSubmit: (values: FormValues) => void;
   showConfirmDeleteAMConfig?: boolean;
@@ -22,6 +24,8 @@ export const ConfigEditor = ({
   defaultValues,
   readOnly,
   loading,
+  height,
+  width,
   alertManagerSourceName,
   showConfirmDeleteAMConfig,
   onSubmit,
@@ -48,16 +52,18 @@ export const ConfigEditor = ({
           <>
             <Field
               disabled={loading}
-              label="Configuration"
               invalid={!!errors.configJSON}
               error={errors.configJSON?.message}
               data-testid={readOnly ? 'readonly-config' : 'config'}
             >
               <CodeEditor
                 language="json"
-                width="100%"
-                height={500}
+                width={width}
+                height={height}
                 showLineNumbers={true}
+                monacoOptions={{
+                  scrollBeyondLastLine: false,
+                }}
                 value={defaultValues.configJSON}
                 showMiniMap={false}
                 onSave={(value) => {
@@ -69,19 +75,6 @@ export const ConfigEditor = ({
                 readOnly={readOnly}
               />
             </Field>
-
-            {!readOnly && (
-              <HorizontalGroup>
-                <Button type="submit" variant="primary" disabled={loading}>
-                  Save configuration
-                </Button>
-                {onReset && (
-                  <Button type="button" disabled={loading} variant="destructive" onClick={onReset}>
-                    Reset configuration
-                  </Button>
-                )}
-              </HorizontalGroup>
-            )}
 
             {Boolean(showConfirmDeleteAMConfig) && onConfirmReset && onDismiss && (
               <ConfirmModal

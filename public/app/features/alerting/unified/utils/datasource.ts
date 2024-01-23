@@ -215,7 +215,9 @@ export function getDataSourceByName(name: string): DataSourceInstanceSettings<Da
 }
 
 export function getAlertmanagerDataSourceByName(name: string) {
-  return getAllDataSources().find(isAlertmanagerDataSourceInstance);
+  return getAllDataSources()
+    .filter(isAlertmanagerDataSourceInstance)
+    .find((source) => source.name === name);
 }
 
 export function getRulesSourceByName(name: string): RulesSource | undefined {
