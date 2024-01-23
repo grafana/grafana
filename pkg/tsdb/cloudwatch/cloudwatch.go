@@ -287,25 +287,17 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
 	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
-		var tr *http.Transport
-		var ok bool
-		if sess.Config.HTTPClient.Transport != nil {
-			tr, ok = sess.Config.HTTPClient.Transport.(*http.Transport)
-			if !ok {
-				return nil, errors.New("session http client transport is not of type http.Transport")
-			}
-		} else {
+		if sess.Config.HTTPClient.Transport == nil {
 			// following go standard library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
 			// then we use http.DefaultTransport
-			trTmp, ok := http.DefaultTransport.(*http.Transport)
+			defTransport, ok := http.DefaultTransport.(*http.Transport)
 			if !ok {
 				// this should not happen but validating just in case
 				return nil, errors.New("default http client transport is not of type http.Transport")
 			}
-			tr = trTmp.Clone()
+			sess.Config.HTTPClient.Transport = defTransport.Clone()
 		}
-
-		err = proxy.New(instance.ProxyOpts).ConfigureSecureSocksHTTPProxy(tr)
+		err = proxy.New(instance.ProxyOpts).ConfigureSecureSocksHTTPProxy(sess.Config.HTTPClient.Transport.(*http.Transport))
 		if err != nil {
 			return nil, fmt.Errorf("error configuring Secure Socks proxy for Transport: %w", err)
 		}
