@@ -2,13 +2,12 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { useStyles2, Stack, Tooltip, Button } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
 import { LOGS_METRIC, VAR_FILTERS } from './shared';
-import { getDataSource } from './utils';
+import { getDataSource, getDataSourceName } from './utils';
 
 export interface Props {
   trail: DataTrail;
