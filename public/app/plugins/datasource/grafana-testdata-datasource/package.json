@@ -16,7 +16,7 @@
     "react-use": "17.5.0",
     "rxjs": "7.8.1",
     "tslib": "2.6.2",
-    "uuid": "9.0.0"
+    "uuid": "9.0.1"
   },
   "devDependencies": {
     "@grafana/e2e-selectors": "10.4.0-pre",
@@ -28,7 +28,7 @@
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
     "@types/testing-library__jest-dom": "5.14.9",
-    "@types/uuid": "9.0.2",
+    "@types/uuid": "9.0.7",
     "ts-node": "10.9.2",
     "webpack": "5.89.0"
   },
