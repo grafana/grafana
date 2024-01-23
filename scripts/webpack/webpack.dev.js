@@ -53,6 +53,9 @@ module.exports = (env = {}) => {
       ],
     },
 
+    infrastructureLogging: { level: 'error' },
+    stats: 'minimal',
+
     // https://webpack.js.org/guides/build-performance/#output-without-path-info
     output: {
       pathinfo: false,
