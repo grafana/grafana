@@ -18,6 +18,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -161,6 +162,10 @@ func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 
 // Register additional routes with the server
 func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+	defs := dashsnap.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
+	createCmd := defs["github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardCreateCommand"].Schema
+	reateRsp := defs["github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardCreateResponse"].Schema
+
 	tags := []string{"Create and Delete (custom routes)"}
 	return &grafanaapiserver.APIRoutes{
 		Namespace: []grafanaapiserver.APIRouteHandler{
@@ -172,9 +177,45 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags: tags,
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
 							RequestBody: &spec3.RequestBody{
 								RequestBodyProps: spec3.RequestBodyProps{
-									Description: "TODO???? can we get the request+response shapes here",
+									Content: map[string]*spec3.MediaType{
+										"application/json": {
+											MediaTypeProps: spec3.MediaTypeProps{
+												Schema:  &createCmd,
+												Example: getCreateExamples(),
+											},
+										},
+									},
+								},
+							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &reateRsp,
+														},
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -186,18 +227,6 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						w.WriteHeader(500)
 						return
 					}
-					vars := mux.Vars(r)
-					info, err := request.ParseNamespace(vars["namespace"])
-					if err != nil {
-						_, _ = w.Write([]byte("expected namespace"))
-						w.WriteHeader(400)
-						return
-					}
-					if info.OrgID != user.OrgID {
-						_, _ = w.Write([]byte("org id mismatch"))
-						w.WriteHeader(401)
-						return
-					}
 					wrap := &contextmodel.ReqContext{
 						Logger: b.logger,
 						Context: &web.Context{
@@ -206,13 +235,25 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						},
 						SignedInUser: user,
 					}
+
+					vars := mux.Vars(r)
+					info, err := request.ParseNamespace(vars["namespace"])
+					if err != nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
+						return
+					}
+					if info.OrgID != user.OrgID {
+						wrap.JsonApiErr(http.StatusBadRequest,
+							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.OrgID), nil)
+						return
+					}
 					opts, err := b.options(info.Value)
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "error getting options", err)
 						return
 					}
 
-					// This also writes the response
+					// Use the existing snapshot service
 					dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, b.service)
 				},
 			},
@@ -238,12 +279,9 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						w.WriteHeader(500)
 						return
 					}
-
-					js, _ := json.Marshal(&util.DynMap{
+					_ = json.NewEncoder(w).Encode(&util.DynMap{
 						"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
 					})
-					_, _ = w.Write(js)
-					w.WriteHeader(200)
 				},
 			},
 		},
@@ -269,7 +307,12 @@ func (b *SnapshotsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			// TODO -- something more restrictive?
-			return authorizer.DecisionAllow, "", err
+			// Everyone can view dashsnaps
+			if attr.GetVerb() == "get" && attr.GetResource() == dashsnap.DashboardSnapshotResourceInfo.GroupResource().Resource {
+				return authorizer.DecisionAllow, "", err
+			}
+
+			// Fallback to the default behaviors (namespace matches org)
+			return authorizer.DecisionNoOpinion, "", err
 		})
 }
