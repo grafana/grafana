@@ -3,17 +3,17 @@ import React from 'react';
 
 import { Spinner } from '@grafana/ui';
 
-import { Place } from './types';
-
 // ideally we'd use `@grafana/ui/LoadingPlaceholder`, but that
 // one has a large margin-bottom.
 
+export type Place = 'above' | 'below';
+
 type Props = {
-  place: Place;
+  adjective?: string;
 };
 
-export const LoadingIndicator = ({ place }: Props) => {
-  const text = place === 'above' ? 'Loading newer logs...' : 'Loading older logs...';
+export const LoadingIndicator = ({ adjective = 'newer' }: Props) => {
+  const text = `Loading ${adjective} logs...`;
   return (
     <div className={loadingIndicatorStyles}>
       <div>
