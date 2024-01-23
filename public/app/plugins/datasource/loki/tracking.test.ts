@@ -157,7 +157,6 @@ test('Tracks grouped queries', () => {
     legend: undefined,
     line_limit: 10,
     obfuscated_query: '{Identifier=String}',
-
     query_type: 'logs',
     query_vector_type: undefined,
     resolution: 1,
