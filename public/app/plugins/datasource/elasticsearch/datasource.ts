@@ -217,8 +217,7 @@ export class ElasticDatasource
     }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        const path = encodeURI(indexUrlList[listLen - index - 1]).replace(/:/g, '%3A');
-        console.log('requesting', path);
+        const path = indexUrlList[listLen - index - 1];
         const requestObservable = config.featureToggles.enableElasticsearchBackendQuerying
           ? from(this.getResource(path))
           : this.legacyQueryRunner.request('GET', path);
