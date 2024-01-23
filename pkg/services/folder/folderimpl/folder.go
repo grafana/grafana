@@ -129,7 +129,6 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 	qry := NewGetFoldersQuery(q)
 	permissions := q.SignedInUser.GetPermissions()
 	folderPermissions := permissions[dashboards.ActionFoldersRead]
-	folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
 	qry.ancestorUIDs = make([]string, 0, len(folderPermissions))
 	for _, p := range folderPermissions {
 		if p == dashboards.ScopeFoldersAll {
