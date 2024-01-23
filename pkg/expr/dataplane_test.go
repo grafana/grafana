@@ -61,7 +61,8 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "test"}},
 			}},
-			&datafakes.FakeDataSourceService{}, nil, pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
+			&datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{},
+			nil, pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
 		tracer:  tracing.InitializeTracerForTest(),
 		metrics: newMetrics(nil),
 	}

@@ -234,7 +234,7 @@ export const CandlestickPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
 
   return (
     <TimeSeries
@@ -269,7 +269,11 @@ export const CandlestickPanel = ({
                 hoverMode={TooltipHoverMode.xAll}
                 queryZoom={onChangeTimeRange}
                 clientZoom={true}
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2) => {
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
+                  if (viaSync) {
+                    return null;
+                  }
+
                   if (timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();

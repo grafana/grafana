@@ -129,7 +129,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		return nil, dashboards.ErrDashboardUidTooLong
 	}
 
-	if err := validateDashboardRefreshInterval(dash); err != nil {
+	if err := validateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dash); err != nil {
 		return nil, err
 	}
 
@@ -274,8 +274,8 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 	return guard, nil
 }
 
-func validateDashboardRefreshInterval(dash *dashboards.Dashboard) error {
-	if setting.MinRefreshInterval == "" {
+func validateDashboardRefreshInterval(minRefreshInterval string, dash *dashboards.Dashboard) error {
+	if minRefreshInterval == "" {
 		return nil
 	}
 
@@ -285,16 +285,16 @@ func validateDashboardRefreshInterval(dash *dashboards.Dashboard) error {
 		return nil
 	}
 
-	minRefreshInterval, err := gtime.ParseDuration(setting.MinRefreshInterval)
+	minRefreshIntervalDur, err := gtime.ParseDuration(minRefreshInterval)
 	if err != nil {
-		return fmt.Errorf("parsing min refresh interval %q failed: %w", setting.MinRefreshInterval, err)
+		return fmt.Errorf("parsing min refresh interval %q failed: %w", minRefreshInterval, err)
 	}
 	d, err := gtime.ParseDuration(refresh)
 	if err != nil {
 		return fmt.Errorf("parsing refresh duration %q failed: %w", refresh, err)
 	}
 
-	if d < minRefreshInterval {
+	if d < minRefreshIntervalDur {
 		return dashboards.ErrDashboardRefreshIntervalTooShort
 	}
 
@@ -303,15 +303,15 @@ func validateDashboardRefreshInterval(dash *dashboards.Dashboard) error {
 
 func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO,
 	provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
-	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
+	if err := validateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dto.Dashboard); err != nil {
 		dr.log.Warn("Changing refresh interval for provisioned dashboard to minimum refresh interval", "dashboardUid",
-			dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval", setting.MinRefreshInterval)
-		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
+			dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval", dr.cfg.MinRefreshInterval)
+		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
 	}
 
 	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), false)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, dr.cfg.IsLegacyAlertingEnabled(), false)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +330,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	}
 
 	// extract/save legacy alerts only if legacy alerting is enabled
-	if setting.IsLegacyAlertingEnabled() {
+	if dr.cfg.IsLegacyAlertingEnabled() {
 		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
 		if err != nil {
 			return nil, err
@@ -364,14 +364,14 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 
 func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO,
 	allowUiUpdate bool) (*dashboards.Dashboard, error) {
-	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
+	if err := validateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dto.Dashboard); err != nil {
 		dr.log.Warn("Changing refresh interval for imported dashboard to minimum refresh interval",
 			"dashboardUid", dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title, "minRefreshInterval",
-			setting.MinRefreshInterval)
-		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
+			dr.cfg.MinRefreshInterval)
+		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
 	}
 
-	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), !allowUiUpdate)
+	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, dr.cfg.IsLegacyAlertingEnabled(), !allowUiUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +388,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	}
 
 	// extract/save legacy alerts only if legacy alerting is enabled
-	if setting.IsLegacyAlertingEnabled() {
+	if dr.cfg.IsLegacyAlertingEnabled() {
 		alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
 		if err != nil {
 			return nil, err
@@ -440,11 +440,11 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 
 func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO) (
 	*dashboards.Dashboard, error) {
-	if err := validateDashboardRefreshInterval(dto.Dashboard); err != nil {
+	if err := validateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dto.Dashboard); err != nil {
 		dr.log.Warn("Changing refresh interval for imported dashboard to minimum refresh interval",
 			"dashboardUid", dto.Dashboard.UID, "dashboardTitle", dto.Dashboard.Title,
-			"minRefreshInterval", setting.MinRefreshInterval)
-		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
+			"minRefreshInterval", dr.cfg.MinRefreshInterval)
+		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
 	}
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, true)
