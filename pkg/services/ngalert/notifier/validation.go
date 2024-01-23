@@ -1,8 +1,11 @@
 package notifier
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -12,8 +15,8 @@ type notificaitonSettingsValidator interface {
 }
 
 type NotificationSettingsValidator struct {
-	hasReceiver   func(string)bool
-	hasMuteTiming func(string)bool
+	availableReceivers   map[string]struct{}
+	availableMuteTimings map[string]struct{}
 }
 
 func NewNotificationSettingsValidator(am definitions.PostableApiAlertingConfig) NotificationSettingsValidator {
@@ -26,14 +29,23 @@ func NewNotificationSettingsValidator(am definitions.PostableApiAlertingConfig) 
 		availableReceivers[interval.Name] = struct{}{}
 	}
 	return NotificationSettingsValidator{
-		hasReceiver: func(s string) bool {
-			_, ok := availableReceivers[s]
-			return ok
-		},
-		hasMuteTiming: func(s string) bool {
-			_, ok := availableMuteTimings[s]
-			return ok
-		},
+		availableReceivers:   availableReceivers,
+		availableMuteTimings: availableMuteTimings,
+	}
+}
+
+func NewNotificationSettingsValidatorFromGettable(am definitions.GettableApiAlertingConfig) NotificationSettingsValidator {
+	availableReceivers := make(map[string]struct{}, len(am.Receivers))
+	for _, receiver := range am.Receivers {
+		availableReceivers[receiver.Name] = struct{}{}
+	}
+	availableMuteTimings := make(map[string]struct{}, len(am.MuteTimeIntervals))
+	for _, interval := range am.MuteTimeIntervals {
+		availableReceivers[interval.Name] = struct{}{}
+	}
+	return NotificationSettingsValidator{
+		availableReceivers:   availableReceivers,
+		availableMuteTimings: availableMuteTimings,
 	}
 }
 
@@ -42,22 +54,36 @@ func (n NotificationSettingsValidator) Validate(settings models.NotificationSett
 	if err := settings.Validate(); err != nil {
 		return err
 	}
-	if !n.hasReceiver(settings.Receiver) {
-		return fmt.Errorf("receiver '%s' does not exist", settings.Receiver)
+	var errs []error
+	if _, ok := n.availableReceivers[settings.Receiver]; !ok {
+		errs = append(errs, fmt.Errorf("receiver '%s' does not exist", settings.Receiver))
 	}
 	for _, interval := range settings.MuteTimeIntervals {
-		if !n.hasMuteTiming(interval) {
-			return fmt.Errorf("mute time interval '%s' does not exist", interval)
+		if _, ok := n.availableMuteTimings[interval]; !ok {
+			errs = append(errs, fmt.Errorf("mute time interval '%s' does not exist", interval))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
-
 type noValidation struct {
-
 }
 
 func (n noValidation) Validate(_ models.NotificationSettings) error {
 	return nil
+}
+
+func (moa *MultiOrgAlertmanager) Validate(ctx context.Context, settings []models.NotificationSettings, user identity.Requester) error {
+	cfg, err := moa.GetAlertmanagerConfiguration(ctx, user.GetOrgID(), false)
+	if err != nil {
+		return err
+	}
+	validator := NewNotificationSettingsValidatorFromGettable(cfg.AlertmanagerConfig)
+	var errs []error
+	for _, setting := range settings {
+		if err := validator.Validate(setting); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }
