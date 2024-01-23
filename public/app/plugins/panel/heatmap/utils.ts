@@ -603,7 +603,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
       key: eventsScope,
-      scales: [xScaleKey, yScaleKey],
+      scales: [xScaleKey, null],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (x < 0) {

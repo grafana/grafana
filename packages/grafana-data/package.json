@@ -48,7 +48,7 @@
     "lodash": "4.17.21",
     "marked": "5.1.1",
     "marked-mangle": "1.1.6",
-    "moment": "2.29.4",
+    "moment": "2.30.1",
     "moment-timezone": "0.5.44",
     "ol": "7.4.0",
     "papaparse": "5.4.1",
