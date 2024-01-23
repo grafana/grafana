@@ -1,50 +1,104 @@
-import React from 'react';
+import { css } from '@emotion/css';
+import React, { useCallback, useMemo, useState } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { Button, Stack, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, CodeEditor, Drawer, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { Spacer } from './components/Spacer';
-import DeliverySettings from './components/admin/DeliverySettings';
 import { ExternalAlertmanagers } from './components/admin/ExternalAlertmanagers';
 import InternalAlertmanager from './components/admin/InternalAlertmanager';
 
+// @todo translate subtitle – move to navtree?
+const SUBTITLE =
+  'Manage Alertmanger configurations and configure where alert instances generated from Grafana-managed alert rules are sent.';
+
 export default function SettingsPage() {
+  const [configurationDrawer, showConfiguration] = useEditConfigurationDrawer();
+
   return (
-    // @todo translate subtitle – move to navtree?
-    <AlertingPageWrapper navId="alerting-admin" subTitle="Configure alertmanagers for Grafana-managed alert rules.">
+    <AlertingPageWrapper navId="alerting-admin" subTitle={SUBTITLE}>
       <Stack direction="column" gap={3}>
-        {/* this is the built-in Alertmanager configuration where we can choose where to send alert for Grafana-managed alert rules */}
-        <DeliverySettings />
-        {/* this is where the configuration for alertmanagers is managed */}
-        <AlertmanagerConfigurations />
+        {/* internal Alertmanager */}
+        <Text variant="h5">Built-in Alertmanager</Text>
+        <InternalAlertmanager onEditConfiguration={showConfiguration} />
+        {/* external Alertmanagers (data sources) we have added to Grafana (vanilla, Mimir, Cortex) */}
+        <Text variant="h5">Other Alertmanagers</Text>
+        <ExternalAlertmanagers onEditConfiguration={showConfiguration} />
       </Stack>
+      {configurationDrawer}
     </AlertingPageWrapper>
   );
 }
 
-function AlertmanagerConfigurations() {
-  return (
-    <>
-      <Stack direction="column" gap={0.5}>
-        <Text variant="h4">Available alertmanagers which can receive Grafana-managed alerts</Text>
-        <Text color="secondary">
-          Alertmanager data sources support a configuration setting that allows you to choose to send Grafana-managed
-          alerts to that Alertmanager. Below, you can see the list of all Alertmanager data sources that have this
-          setting enabled.
-        </Text>
-      </Stack>
-      {/* this is the config part for the internal Alertmanager */}
-      <Text variant="h5">Built-in Alertmanager</Text>
-      <InternalAlertmanager />
-      {/* {/* this is the config part for the external Alertmanagers (data sources) we have added to Grafana */}
-      <Stack direction="row" alignItems="center">
-        <Text variant="h5">Data source Alertmanagers</Text>
-        <Spacer />
-        <Button icon="plus" variant="secondary">
-          Add Alertmanager
-        </Button>
-      </Stack>
-      <ExternalAlertmanagers />
-    </>
-  );
+// @TODO move to another file
+function useEditConfigurationDrawer(): [React.ReactNode, () => void, () => void] {
+  const styles = useStyles2(getStyles);
+  const [open, setOpen] = useState(false);
+
+  const showConfiguration = useCallback(() => {
+    setOpen(true);
+  }, []);
+
+  const dismissConfiguration = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  const drawer = useMemo(() => {
+    if (!open) {
+      return null;
+    }
+
+    // @todo check copy
+    return (
+      <Drawer
+        onClose={dismissConfiguration}
+        title="Alertmanager name here"
+        subtitle="This is the Alertmanager configuration"
+        size="md"
+      >
+        <div className={styles.container}>
+          <div className={styles.content}>
+            <AutoSizer disableWidth>
+              {({ height }) => (
+                <CodeEditor
+                  width="100%"
+                  height={height}
+                  language={'json'}
+                  value={'hello world'}
+                  monacoOptions={{
+                    minimap: {
+                      enabled: false,
+                    },
+                    scrollBeyondLastLine: false,
+                    lineNumbers: 'on',
+                  }}
+                />
+              )}
+            </AutoSizer>
+          </div>
+          <Stack justifyContent="flex-end">
+            <Button variant="secondary" onClick={dismissConfiguration}>
+              Cancel
+            </Button>
+            <Button variant="primary">Save</Button>
+          </Stack>
+        </div>
+      </Drawer>
+    );
+  }, [dismissConfiguration, open, styles.container, styles.content]);
+
+  return [drawer, showConfiguration, dismissConfiguration];
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    gap: theme.spacing(2),
+  }),
+  content: css({
+    flex: '1 1 100%',
+  }),
+});

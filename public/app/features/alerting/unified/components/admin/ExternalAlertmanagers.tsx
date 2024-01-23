@@ -1,24 +1,50 @@
-import { capitalize } from 'lodash';
 import React from 'react';
 
 import { Badge, Button, Card, Dropdown, Menu, Stack } from '@grafana/ui';
-import { AlertmanagerChoice, ExternalAlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
+import {
+  ExternalAlertmanagerDataSourceWithStatus,
+  useExternalDataSourceAlertmanagers,
+} from '../../hooks/useExternalAmSelector';
 import MoreButton from '../MoreButton';
 
-export const ExternalAlertmanagers = () => {
-  const dataSourceAlertmanagers = useExternalDataSourceAlertmanagers();
-  const { currentData: deliverySettings } = alertmanagerApi.endpoints.getExternalAlertmanagerConfig.useQuery();
+interface Props {
+  onEditConfiguration: () => void;
+}
 
-  const isReceiving = isReceivingOnExternalAlertmanagers(deliverySettings);
+export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
+  const dataSourceAlertmanagers = useExternalDataSourceAlertmanagers();
+  const { currentData: deliverySettings } = alertmanagerApi.endpoints.getExternalAlertmanagerConfig.useQuery(
+    undefined,
+    {
+      refetchOnReconnect: true,
+      refetchOnFocus: true,
+    }
+  );
+
+  // determine if the alertmanger is receiving alerts
+  // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
+  const isReceivingOnAlertmanager = (
+    externalDataSourceAlertmanager: ExternalAlertmanagerDataSourceWithStatus
+  ): boolean => {
+    const sendingToExternal = [AlertmanagerChoice.All, AlertmanagerChoice.External].some(
+      (choice) => deliverySettings?.alertmanagersChoice === choice
+    );
+    const wantsAlertsReceived =
+      externalDataSourceAlertmanager.dataSourceSettings.jsonData.handleGrafanaManagedAlerts === true;
+
+    return sendingToExternal && wantsAlertsReceived;
+  };
 
   return (
     <>
       {dataSourceAlertmanagers.map((alertmanager) => {
-        const { uid, name, url, jsonData } = alertmanager.dataSource;
-        const implementation = jsonData.implementation ?? 'Prometheus';
+        const { uid, name } = alertmanager.dataSourceSettings;
+        const { status } = alertmanager;
+
+        const isReceiving = isReceivingOnAlertmanager(alertmanager);
 
         return (
           <Card key={uid}>
@@ -28,19 +54,17 @@ export const ExternalAlertmanagers = () => {
             </Card.Figure>
 
             <Card.Meta>
-              {capitalize(implementation)}
-              {url}
+              {status === 'uninterested' && 'Not receiving Grafana-managed alerts'}
+              {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
+              {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
+              {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
+              {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
             </Card.Meta>
-            <Card.Description>
-              {isReceiving ? (
-                <Badge text="Receiving Grafana-managed alerts" color="green" />
-              ) : (
-                <Badge text="Not receiving Grafana-managed alerts" color="orange" />
-              )}
-            </Card.Description>
+
+            {/* we'll use the "tags" to append buttons and actions */}
             <Card.Tags>
               <Stack direction="row" gap={1}>
-                <Button icon="pen" variant="secondary" fill="outline">
+                <Button onClick={onEditConfiguration} icon="pen" variant="secondary" fill="outline">
                   Edit configuration
                 </Button>
                 <Dropdown
@@ -48,7 +72,11 @@ export const ExternalAlertmanagers = () => {
                     <Menu>
                       <Menu.Item icon="eye" label="View" />
                       <Menu.Divider />
-                      <Menu.Item icon="times" label="Remove" />
+                      {isReceiving ? (
+                        <Menu.Item icon="toggle-on" label="Disable" destructive />
+                      ) : (
+                        <Menu.Item icon="toggle-off" label="Enable" />
+                      )}
                     </Menu>
                   }
                 >
@@ -61,10 +89,4 @@ export const ExternalAlertmanagers = () => {
       })}
     </>
   );
-};
-
-// if we have either "external" or "both" configured this means the internal Alertmanager is receiving Grafana-managed alerts
-const isReceivingOnExternalAlertmanagers = (config?: ExternalAlertmanagerConfig): boolean => {
-  const INTERNAL_RECEIVING = [AlertmanagerChoice.External, AlertmanagerChoice.All];
-  return INTERNAL_RECEIVING.some((choice) => config?.alertmanagersChoice === choice);
 };
