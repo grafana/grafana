@@ -10,16 +10,23 @@ import {
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
+import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { DecoratedRevisionModel } from '../settings/VersionsEditView';
+import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+
+jest.mock('../settings/version-history/HistorySrv');
+jest.mock('../serialization/transformSaveModelToScene');
 
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
@@ -151,6 +158,52 @@ describe('DashboardScene', () => {
       expect(eventHandler).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('When a dashboard is restored', () => {
+    let scene: DashboardScene;
+
+    beforeEach(async () => {
+      scene = buildTestScene();
+      scene.onEnterEditMode();
+    });
+
+    it('should restore the dashboard to the selected version and exit edit mode', () => {
+      const newVersion = 3;
+
+      const mockScene = new DashboardScene({
+        title: 'new name',
+        uid: 'dash-1',
+        version: 4,
+      });
+
+      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
+
+      return scene.onRestore(getVersionMock()).then((res) => {
+        expect(res).toBe(true);
+
+        expect(scene.state.version).toBe(newVersion);
+        expect(scene.state.title).toBe('new name');
+        expect(scene.state.isEditing).toBe(false);
+      });
+    });
+
+    it('should return early if historySrv does not return a valid version number', () => {
+      jest
+        .mocked(historySrv.restoreDashboard)
+        .mockResolvedValueOnce({ version: null })
+        .mockResolvedValueOnce({ version: undefined })
+        .mockResolvedValueOnce({ version: Infinity })
+        .mockResolvedValueOnce({ version: NaN })
+        .mockResolvedValue({ version: '10' });
+
+      for (let i = 0; i < 5; i++) {
+        scene.onRestore(getVersionMock()).then((res) => {
+          expect(res).toBe(false);
+        });
+      }
+    });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
@@ -207,4 +260,26 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   });
 
   return scene;
+}
+
+function getVersionMock(): DecoratedRevisionModel {
+  const dash: Dashboard = {
+    title: 'new name',
+    id: 5,
+    schemaVersion: 30,
+  };
+
+  return {
+    id: 2,
+    checked: false,
+    uid: 'uid',
+    parentVersion: 1,
+    version: 2,
+    created: new Date(),
+    createdBy: 'admin',
+    message: '',
+    data: dash,
+    createdDateString: '2017-02-22 20:43:01',
+    ageString: '7 years ago',
+  };
 }

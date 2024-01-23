@@ -9,12 +9,15 @@ import {
   MutableDataFrame,
   DataFrame,
 } from '@grafana/data';
+import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
 
+import { logSeriesToLogsModel } from './logsModel';
 import {
   calculateLogsLabelStats,
   calculateStats,
   checkLogsError,
   escapeUnescapedString,
+  createLogRowsMap,
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
@@ -477,5 +480,51 @@ describe('escapeUnescapedString', () => {
   });
   it('escapes unescaped strings', () => {
     expect(escapeUnescapedString(`\\r\\n|\\n|\\t|\\r`)).toBe(`\n|\n|\t|\n`);
+  });
+});
+
+describe('findMatchingRow', () => {
+  function setup(frames: DataFrame[]) {
+    const logsModel = logSeriesToLogsModel(frames);
+    const rows = logsModel?.rows || [];
+    const findMatchingRow = createLogRowsMap();
+    for (const row of rows) {
+      expect(findMatchingRow(row)).toBeFalsy();
+    }
+    return { rows, findMatchingRow };
+  }
+
+  it('ignores rows from different queries', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    logFrameA.refId = 'A';
+    logFrameB.refId = 'B';
+    const { rows, findMatchingRow } = setup([logFrameA, logFrameB]);
+
+    for (const row of rows) {
+      const targetRow = { ...row, dataFrame: { ...logFrameA, refId: 'Z' } };
+      expect(findMatchingRow(targetRow)).toBeFalsy();
+    }
+  });
+
+  it('matches rows by rowId', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    const { rows, findMatchingRow } = setup([logFrameA, logFrameB]);
+
+    for (const row of rows) {
+      const targetRow = { ...row, entry: `${Math.random()}`, timeEpochNs: `${Math.ceil(Math.random() * 1000000)}` };
+      expect(findMatchingRow(targetRow)).toBeTruthy();
+    }
+  });
+
+  it('matches rows by entry and nanosecond time', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    logFrameA.fields[4].values = [];
+    logFrameB.fields[4].values = [];
+    const { rows, findMatchingRow } = setup([logFrameA, logFrameB]);
+
+    for (const row of rows) {
+      const targetRow = { ...row, rowId: undefined };
+      expect(findMatchingRow(targetRow)).toBeTruthy();
+    }
   });
 });

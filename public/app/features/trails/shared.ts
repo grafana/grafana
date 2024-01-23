@@ -9,7 +9,7 @@ export interface ActionViewDefinition {
   getScene: () => SceneObject;
 }
 
-export const TRAILS_ROUTE = '/data-trails/trail';
+export const TRAILS_ROUTE = '/explore/metrics/trail';
 
 export const VAR_METRIC_NAMES = 'metricNames';
 export const VAR_FILTERS = 'filters';
@@ -20,6 +20,8 @@ export const VAR_GROUP_BY = 'groupby';
 export const VAR_GROUP_BY_EXP = '${groupby}';
 export const VAR_DATASOURCE = 'ds';
 export const VAR_DATASOURCE_EXPR = '${ds}';
+export const VAR_LOGS_DATASOURCE = 'logsDs';
+export const VAR_LOGS_DATASOURCE_EXPR = '${logsDs}';
 
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';

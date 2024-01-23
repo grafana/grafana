@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestLineNotifier(t *testing.T) {
@@ -23,7 +24,7 @@ func TestLineNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewLINENotifier(model, encryptionService.GetDecryptedValue, nil)
+		_, err := NewLINENotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 	t.Run("settings should trigger incident", func(t *testing.T) {
@@ -38,7 +39,7 @@ func TestLineNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewLINENotifier(model, encryptionService.GetDecryptedValue, nil)
+		not, err := NewLINENotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 		lineNotifier := not.(*LineNotifier)
 
 		require.Nil(t, err)

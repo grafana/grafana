@@ -21,7 +21,7 @@ images = {
     "plugins_slack": "plugins/slack",
     "python": "python:3.8",
     "postgres_alpine": "postgres:12.3-alpine",
-    "mimir": "us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78",
+    "mimir": "grafana/mimir:r274-1780c50",
     "mysql5": "mysql:5.7.39",
     "mysql8": "mysql:8.0.32",
     "redis_alpine": "redis:6.2.11-alpine",

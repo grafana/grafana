@@ -53,6 +53,16 @@ func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key 
 	return nil
 }
 
+func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = []any{}
+	for _, instance := range instances {
+		f.RecordedOps = append(f.RecordedOps, instance)
+	}
+	return nil
+}
+
 type FakeRuleReader struct{}
 
 func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
