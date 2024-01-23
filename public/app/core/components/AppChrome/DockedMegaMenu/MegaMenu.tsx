@@ -60,7 +60,7 @@ export const MegaMenu = React.memo(
         </div>
         <nav className={styles.content}>
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
-            <ul className={styles.itemList}>
+            <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
                 <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="center">
                   {index === 0 && (

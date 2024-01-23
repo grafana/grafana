@@ -974,6 +974,7 @@
     "megamenu": {
       "close": "Close menu",
       "dock": "Dock menu",
+      "list-label": "Navigation",
       "undock": "Undock menu"
     },
     "toolbar": {
