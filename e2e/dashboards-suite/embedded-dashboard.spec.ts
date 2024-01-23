@@ -12,7 +12,7 @@ describe('Embedded dashboard', function () {
 
     // Verify pie charts are rendered
     cy.get(
-      `[data-viz-panel-key="panel-11"] [aria-label^="${selectors.components.Panels.Visualization.PieChart.svgSlice}"]`
+      `[data-viz-panel-key="panel-11"] [data-testid^="${selectors.components.Panels.Visualization.PieChart.svgSlice}"]`
     ).should('have.length', 5);
 
     // Verify no url sync
