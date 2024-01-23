@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 type AsyncStatePersister struct {
@@ -16,6 +17,7 @@ type AsyncStatePersister struct {
 	doNotSaveNormalState bool
 	store                InstanceStore
 	ticker               *clock.Ticker
+	metrics              *metrics.State
 }
 
 func NewAsyncStatePersister(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg) StatePersister {
@@ -24,6 +26,7 @@ func NewAsyncStatePersister(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg
 		store:                cfg.InstanceStore,
 		ticker:               ticker,
 		doNotSaveNormalState: cfg.DoNotSaveNormalState,
+		metrics:              cfg.Metrics,
 	}
 }
 
@@ -48,13 +51,16 @@ func (a *AsyncStatePersister) Async(ctx context.Context, cache *cache) {
 
 func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache) error {
 	startTime := time.Now()
-	a.log.Info("Full state sync start")
+	a.log.Debug("Full state sync start")
 	instances := cache.asInstances(a.doNotSaveNormalState)
 	if err := a.store.FullSync(ctx, instances); err != nil {
 		a.log.Error("Full state sync failed", "duration", time.Since(startTime), "instances", len(instances))
 		return err
 	}
-	a.log.Info("Full state sync done", "duration", time.Since(startTime), "instances", len(instances))
+	a.log.Debug("Full state sync done", "duration", time.Since(startTime), "instances", len(instances))
+	if a.metrics != nil {
+		a.metrics.StateFullSyncDuration.Observe(time.Since(startTime).Seconds())
+	}
 	return nil
 }
 
