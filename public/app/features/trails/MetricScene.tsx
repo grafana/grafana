@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { DashboardCursorSync, DataLink, Field, GrafanaTheme2, mapInternalLinkToExplore } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { DashboardCursorSync, GrafanaTheme2 } from '@grafana/data';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -17,6 +16,8 @@ import {
   behaviors,
 } from '@grafana/scenes';
 import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
+
+import { getExploreUrl } from '../../core/utils/explore';
 
 import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
@@ -35,7 +36,7 @@ import {
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
 } from './shared';
-import { getDataSource, getDataSourceName, getTrailFor, getUrlForTrail } from './utils';
+import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -115,35 +116,21 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     this.publishEvent(new OpenEmbeddedTrailEvent(), true);
   };
 
-  public getLinkToExplore = () => {
+  public getLinkToExplore = async () => {
     const metricScene = sceneGraph.getAncestor(this, MetricScene);
     const trail = getTrailFor(this);
     const dsValue = getDataSource(trail);
 
     const flexItem = metricScene.state.body.state.children[0] as SceneFlexItem;
     const autoVizPanel = flexItem.state.body as AutoVizPanel;
-    const query = autoVizPanel.state.queryDef?.queries[0];
+    const queries = autoVizPanel.state.queryDef?.queries || [];
+    const timeRange = sceneGraph.getTimeRange(autoVizPanel);
 
-    const link: DataLink = {
-      url: '',
-      targetBlank: true,
-      title: 'test',
-
-      internal: {
-        datasourceUid: dsValue,
-        datasourceName: getDataSourceName(dsValue),
-        query: {
-          expr: query?.expr,
-        },
-      },
-    };
-
-    return mapInternalLinkToExplore({
-      link,
-      internalLink: link.internal!,
-      scopedVars: {},
-      field: {} as Field,
-      replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+    return getExploreUrl({
+      queries,
+      dsRef: { uid: dsValue },
+      timeRange: timeRange.state.value,
+      scopedVars: { __sceneObject: { value: metricScene } },
     });
   };
 
@@ -154,7 +141,13 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     const [isBookmarked, setBookmarked] = useState(false);
     const { actionView } = metricScene.useState();
 
-    const link = model.getLinkToExplore();
+    const onExplore = () => {
+      model.getLinkToExplore().then((link) => {
+        // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
+        // if we precompute it we have to keep track of a lot of dependencies
+        window.open(link, '_blank');
+      });
+    };
 
     const onBookmarkTrail = () => {
       getTrailStore().addBookmark(trail);
@@ -165,11 +158,12 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
       <Box paddingY={1}>
         <div className={styles.actions}>
           <Stack gap={2}>
-            <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore">
-              <a href={link.href} target="_blank" rel="noreferrer">
-                Explore
-              </a>
-            </ToolbarButton>
+            <ToolbarButton
+              variant={'canvas'}
+              icon="compass"
+              tooltip="Open in explore"
+              onClick={onExplore}
+            ></ToolbarButton>
             <ShareTrailButton trailUrl={getUrlForTrail(trail)} />
             <ToolbarButton
               variant={'canvas'}
