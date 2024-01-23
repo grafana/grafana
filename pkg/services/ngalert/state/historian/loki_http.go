@@ -40,6 +40,7 @@ type LokiConfig struct {
 	TenantID          string
 	ExternalLabels    map[string]string
 	Encoder           encoder
+	LogAll            bool
 }
 
 func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig, error) {
@@ -76,6 +77,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		ExternalLabels:    cfg.ExternalLabels,
 		// Snappy-compressed protobuf is the default, same goes for Promtail.
 		Encoder: SnappyProtoEncoder{},
+		LogAll:  cfg.LogAll,
 	}, nil
 }
 
