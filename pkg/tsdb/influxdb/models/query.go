@@ -13,8 +13,11 @@ import (
 )
 
 var (
-	regexpOperatorPattern    = regexp.MustCompile(`^\/.*\/$`)
-	regexpMeasurementPattern = regexp.MustCompile(`^\/.*\/$`)
+	regexpOperatorPattern           = regexp.MustCompile(`^\/.*\/$`)
+	regexpMeasurementPattern        = regexp.MustCompile(`^\/.*\/$`)
+	regexMatcherSimple              = regexp.MustCompile(`^/(.*)/$`)
+	regexMatcherWithStartEndPattern = regexp.MustCompile(`^/\^(.*)\$/$`)
+	mustEscapeCharsMatcher          = regexp.MustCompile(`[\\^$*+?.()|[\]{}\/]`)
 )
 
 func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error) {
@@ -103,7 +106,7 @@ func (query *Query) renderTags() []string {
 				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 			}
 
-			return textValue, operator
+			return removeRegexWrappers(textValue, `'`), operator
 		}
 
 		// quote value unless regex or number
@@ -112,11 +115,11 @@ func (query *Query) renderTags() []string {
 		case "=~", "!~", "":
 			textValue = escape(tag.Value)
 		case "<", ">", ">=", "<=":
-			textValue = tag.Value
+			textValue = removeRegexWrappers(tag.Value, `'`)
 		case "Is", "Is Not":
 			textValue, tag.Operator = isOperatorTypeHandler(tag)
 		default:
-			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
+			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
 		}
 
 		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
@@ -245,6 +248,18 @@ func epochMStoInfluxTime(tr *backend.TimeRange) (string, string) {
 	return fmt.Sprintf("%dms", from), fmt.Sprintf("%dms", to)
 }
 
+func removeRegexWrappers(wrappedValue string, wrapper string) string {
+	value := wrappedValue
+	// get the value only in between /^...$/
+	matches := regexMatcherWithStartEndPattern.FindStringSubmatch(wrappedValue)
+	if len(matches) > 1 {
+		// full match. the value is like /^value$/
+		value = wrapper + matches[1] + wrapper
+	}
+
+	return value
+}
+
 func escape(unescapedValue string) string {
 	pipe := `|`
 	beginning := `/^`
@@ -253,12 +268,8 @@ func escape(unescapedValue string) string {
 	substitute := `\\$0`
 	fullMatch := false
 
-	regexMatcher := regexp.MustCompile(`^/(.*)/$`)
-	regexComplexMatcher := regexp.MustCompile(`^/\^(.*)\$/$`)
-	escapeMatcher := regexp.MustCompile(`[\\^$*+?.()|[\]{}\/]`)
-
 	// get the value only in between /^...$/
-	matches := regexComplexMatcher.FindStringSubmatch(unescapedValue)
+	matches := regexMatcherWithStartEndPattern.FindStringSubmatch(unescapedValue)
 	if len(matches) > 1 {
 		// full match. the value is like /^value$/
 		value = matches[1]
@@ -267,7 +278,7 @@ func escape(unescapedValue string) string {
 
 	if !fullMatch {
 		// get the value only in between /.../
-		matches = regexMatcher.FindStringSubmatch(unescapedValue)
+		matches = regexMatcherSimple.FindStringSubmatch(unescapedValue)
 		if len(matches) > 1 {
 			value = matches[1]
 			beginning = `/`
@@ -279,7 +290,7 @@ func escape(unescapedValue string) string {
 	parts := strings.Split(value, pipe)
 	for i, v := range parts {
 		// escape each item
-		parts[i] = escapeMatcher.ReplaceAllString(v, substitute)
+		parts[i] = mustEscapeCharsMatcher.ReplaceAllString(v, substitute)
 	}
 
 	// stitch them to each other
