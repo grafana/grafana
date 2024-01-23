@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/patrickmn/go-cache"
-	goproxy "golang.org/x/net/proxy"
 )
 
 const (
@@ -296,27 +295,20 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 				return nil, errors.New("session http client transport is not of type http.Transport")
 			}
 		} else {
-			// following go standar library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
+			// following go standard library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
 			// then we use http.DefaultTransport
 			trTmp, ok := http.DefaultTransport.(*http.Transport)
 			if !ok {
-				//this should not happen but validating just in case
+				// this should not happen but validating just in case
 				return nil, errors.New("default http client transport is not of type http.Transport")
 			}
 			tr = trTmp.Clone()
 		}
 
-		dialer, err := proxy.New(instance.ProxyOpts).NewSecureSocksProxyContextDialer()
+		err = proxy.New(instance.ProxyOpts).ConfigureSecureSocksHTTPProxy(tr)
 		if err != nil {
-			return nil, fmt.Errorf("error building Secure socks proxy dialer: %w", err)
+			return nil, fmt.Errorf("error configuring Secure Socks proxy for Transport: %w", err)
 		}
-		contextDialer, ok := dialer.(goproxy.ContextDialer)
-		if !ok {
-			return nil, err
-		}
-
-		tr.DialContext = contextDialer.DialContext
-		sess.Config.HTTPClient.Transport = tr
 	}
 	return sess, nil
 }
