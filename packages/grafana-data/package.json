@@ -52,7 +52,7 @@
     "moment-timezone": "0.5.44",
     "ol": "7.4.0",
     "papaparse": "5.4.1",
-    "react-use": "17.4.3",
+    "react-use": "17.5.0",
     "regenerator-runtime": "0.14.1",
     "rxjs": "7.8.1",
     "string-hash": "^1.1.3",
