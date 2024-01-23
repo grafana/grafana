@@ -173,7 +173,7 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string): EditorStyles => {
     }),
     placeholder: css({
       '::after': {
-        content: placeholder,
+        content: `'${placeholder}'`,
         fontFamily: theme.typography.fontFamilyMonospace,
         opacity: 0.3,
       },
