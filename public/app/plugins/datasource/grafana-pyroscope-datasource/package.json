@@ -15,13 +15,13 @@
     "prismjs": "1.29.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-use": "17.4.3",
+    "react-use": "17.5.0",
     "rxjs": "7.8.1",
     "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/plugin-configs": "10.4.0-pre",
-    "@testing-library/jest-dom": "6.2.0",
+    "@testing-library/jest-dom": "6.2.1",
     "@testing-library/react": "14.1.2",
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.11",

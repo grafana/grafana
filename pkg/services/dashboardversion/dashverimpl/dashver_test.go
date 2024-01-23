@@ -36,11 +36,13 @@ func TestDashboardVersionService(t *testing.T) {
 
 func TestDeleteExpiredVersions(t *testing.T) {
 	versionsToKeep := 5
-	setting.DashboardVersionsToKeep = versionsToKeep
+	cfg := setting.NewCfg()
+	cfg.DashboardVersionsToKeep = versionsToKeep
 
 	dashboardVersionStore := newDashboardVersionStoreFake()
 	dashboardService := dashboards.NewFakeDashboardService(t)
-	dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
+	dashboardVersionService := Service{
+		cfg: cfg, store: dashboardVersionStore, dashSvc: dashboardService}
 
 	t.Run("Don't delete anything if there are no expired versions", func(t *testing.T) {
 		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
