@@ -121,14 +121,11 @@ export const LogsPanel = ({
   );
 
   const showPermaLink = useCallback(() => {
-    if (
+    return !(
       data.request?.app !== CoreApp.Dashboard &&
       data.request?.app !== CoreApp.PanelEditor &&
       data.request?.app !== CoreApp.PanelViewer
-    ) {
-      return false;
-    }
-    return true;
+    );
   }, [data.request?.app]);
 
   const getLogRowContext = useCallback(
