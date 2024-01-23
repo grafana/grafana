@@ -13,6 +13,7 @@ import {
   CoreApp,
   DataSourceApi,
   DataQueryRequest,
+  getTimeZone,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -585,10 +586,16 @@ describe('Tempo service graph view', () => {
     setDataSourceSrv(dataSourceSrvWithPrometheus(promMock));
     const response = await lastValueFrom(
       ds.query({
-        targets: [{ queryType: 'serviceMap', serviceMapQuery: '{ foo="bar" }' }],
+        targets: [{ queryType: 'serviceMap', serviceMapQuery: '{ foo="bar" }', refId: 'foo', filters: [] }],
         range: getDefaultTimeRange(),
         app: CoreApp.Explore,
-      } as any)
+        requestId: '1',
+        interval: '60s',
+        intervalMs: 60000,
+        scopedVars: {},
+        startTime: Date.now(),
+        timezone: getTimeZone(),
+      })
     );
 
     expect(response.data).toHaveLength(2);
@@ -625,10 +632,18 @@ describe('Tempo service graph view', () => {
     setDataSourceSrv(dataSourceSrvWithPrometheus(promMock));
     const response = await lastValueFrom(
       ds.query({
-        targets: [{ queryType: 'serviceMap', serviceMapQuery: ['{ foo="bar" }', '{baz="bad"}'] }],
+        targets: [
+          { queryType: 'serviceMap', serviceMapQuery: ['{ foo="bar" }', '{baz="bad"}'], refId: 'foo', filters: [] },
+        ],
+        requestId: '1',
+        interval: '60s',
+        intervalMs: 60000,
+        scopedVars: {},
+        startTime: Date.now(),
+        timezone: getTimeZone(),
         range: getDefaultTimeRange(),
         app: CoreApp.Explore,
-      } as any)
+      })
     );
 
     expect(response.data).toHaveLength(2);
