@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import { DataSourceSettings } from '@grafana/data';
 import { AlertManagerDataSourceJsonData, ExternalAlertmanagers } from 'app/plugins/datasource/alertmanager/types';
 
@@ -19,28 +17,24 @@ export interface ExternalAlertmanagerDataSourceWithStatus {
  */
 export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSourceWithStatus[] {
   // firstly we'll fetch the settings for all datasources and filter for "alertmanager" type
-  const [fetchDataSourceSettings, { alertmanagerDataSources }] =
-    dataSourcesApi.endpoints.getDataSourceSettings.useLazyQuery({
-      refetchOnReconnect: true,
-      refetchOnFocus: true,
-      selectFromResult: (result) => {
-        const alertmanagerDataSources = result.currentData?.filter(isAlertmanagerDataSource) ?? [];
-        return { ...result, alertmanagerDataSources };
-      },
-    });
+  const { alertmanagerDataSources } = dataSourcesApi.endpoints.getDataSourceSettings.useQuery(undefined, {
+    refetchOnReconnect: true,
+    refetchOnFocus: true,
+    selectFromResult: (result) => {
+      const alertmanagerDataSources = result.currentData?.filter(isAlertmanagerDataSource) ?? [];
+      return { ...result, alertmanagerDataSources };
+    },
+  });
 
   // we'll also fetch the configuration for which Alertmanagers we are forwarding Grafana-managed alerts too
   // @TODO use polling when we have one or more alertmanagers in pending state
-  const [fetchActiveAlertmanagers, { currentData: externalAlertmanagers }] =
-    alertmanagerApi.endpoints.getExternalAlertmanagers.useLazyQuery({
+  const { currentData: externalAlertmanagers } = alertmanagerApi.endpoints.getExternalAlertmanagers.useQuery(
+    undefined,
+    {
       refetchOnReconnect: true,
       refetchOnFocus: true,
-    });
-
-  useEffect(() => {
-    fetchDataSourceSettings();
-    fetchActiveAlertmanagers();
-  }, [fetchActiveAlertmanagers, fetchDataSourceSettings]);
+    }
+  );
 
   if (!alertmanagerDataSources) {
     return [];
