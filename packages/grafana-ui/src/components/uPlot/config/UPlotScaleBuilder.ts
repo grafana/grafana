@@ -51,10 +51,10 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
             distr === ScaleDistribution.Symlog
               ? 4
               : distr === ScaleDistribution.Log
-              ? 3
-              : distr === ScaleDistribution.Ordinal
-              ? 2
-              : 1,
+                ? 3
+                : distr === ScaleDistribution.Ordinal
+                  ? 2
+                  : 1,
           log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? this.props.log ?? 2 : undefined,
           asinh: distr === ScaleDistribution.Symlog ? this.props.linearThreshold ?? 1 : undefined,
         }

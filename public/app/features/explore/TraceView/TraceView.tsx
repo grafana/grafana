@@ -261,8 +261,8 @@ function useFocusSpanLink(options: {
       })
     );
 
-  const query = useSelector(
-    (state) => state.explore.panes[options.exploreId]?.queries.find((query) => query.refId === options.refId)
+  const query = useSelector((state) =>
+    state.explore.panes[options.exploreId]?.queries.find((query) => query.refId === options.refId)
   );
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
@@ -297,22 +297,22 @@ function useFocusSpanLink(options: {
       onClickFn: sameTrace
         ? () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId)
         : options.splitOpenFn
-        ? () =>
-            options.splitOpenFn({
-              datasourceUid: options.datasource?.uid!,
-              queries: [
-                {
-                  ...query!,
-                  query: traceId,
+          ? () =>
+              options.splitOpenFn({
+                datasourceUid: options.datasource?.uid!,
+                queries: [
+                  {
+                    ...query!,
+                    query: traceId,
+                  },
+                ],
+                panelsState: {
+                  trace: {
+                    spanId,
+                  },
                 },
-              ],
-              panelsState: {
-                trace: {
-                  spanId,
-                },
-              },
-            })
-        : undefined,
+              })
+          : undefined,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
     });
   };

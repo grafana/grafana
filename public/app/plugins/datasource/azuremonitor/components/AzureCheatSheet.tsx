@@ -60,8 +60,8 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
         return a.displayName.toLowerCase() === b.displayName.toLowerCase()
           ? 0
           : a.displayName.toLowerCase() < b.displayName.toLowerCase()
-          ? -1
-          : 1;
+            ? -1
+            : 1;
       });
       const alphabetizedQueries = result.categories.reduce(
         (queriesByCategory: CheatsheetQueries, category: Category) => {

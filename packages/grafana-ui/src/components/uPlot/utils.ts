@@ -123,8 +123,8 @@ export function getStackingGroups(frame: DataFrame) {
       drawStyle === GraphDrawStyle.Bars
         ? custom.barAlignment
         : drawStyle === GraphDrawStyle.Line
-        ? custom.lineInterpolation
-        : null;
+          ? custom.lineInterpolation
+          : null;
 
     let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(
       config,

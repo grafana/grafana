@@ -289,11 +289,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     radius: pctStacked
       ? 0
       : !isStacked
-      ? barRadius
-      : (u: uPlot, seriesIdx: number) => {
-          let isTopmostSeries = seriesIdx === u.data.length - 1;
-          return isTopmostSeries ? [barRadius, 0] : [0, 0];
-        },
+        ? barRadius
+        : (u: uPlot, seriesIdx: number) => {
+            let isTopmostSeries = seriesIdx === u.data.length - 1;
+            return isTopmostSeries ? [barRadius, 0] : [0, 0];
+          },
     disp: {
       x0: {
         unit: 2,

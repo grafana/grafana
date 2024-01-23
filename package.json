@@ -192,7 +192,7 @@
     "postcss-loader": "7.3.4",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
-    "prettier": "3.0.0",
+    "prettier": "3.2.4",
     "react-refresh": "0.14.0",
     "react-select-event": "5.5.1",
     "react-simple-compat": "1.2.3",
@@ -431,7 +431,7 @@
   },
   "packageManager": "yarn@4.0.0",
   "dependenciesMeta": {
-    "prettier@3.0.0": {
+    "prettier@3.2.4": {
       "unplugged": true
     }
   }
