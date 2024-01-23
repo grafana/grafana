@@ -634,6 +634,11 @@ export function formatTraceQLResponse(
   return createTableFrameFromTraceQlQuery(data, instanceSettings);
 }
 
+/**
+ * Create data frame while adding spans for each trace into a subtable.
+ * @param data
+ * @param instanceSettings
+ */
 export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings
@@ -697,6 +702,7 @@ export function createTableFrameFromTraceQlQuery(
     ],
     meta: {
       preferredVisualisationType: 'table',
+      uniqueRowIdFields: [0],
     },
   });
 
@@ -993,6 +999,7 @@ const traceSubFrame = (
     },
   });
 
+  // TODO: this should be done in `applyFieldOverrides` instead recursively for the nested `DataFrames`
   const theme = createTheme();
   for (const field of subFrame.fields) {
     field.display = getDisplayProcessor({ field, theme });

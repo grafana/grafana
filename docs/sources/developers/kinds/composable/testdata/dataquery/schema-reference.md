@@ -97,14 +97,14 @@ title: TestDataDataQuery kind
 
 ### StreamingQuery
 
-| Property | Type    | Required | Default | Description                                     |
-|----------|---------|----------|---------|-------------------------------------------------|
-| `noise`  | integer | **Yes**  |         |                                                 |
-| `speed`  | integer | **Yes**  |         |                                                 |
-| `spread` | integer | **Yes**  |         |                                                 |
-| `type`   | string  | **Yes**  |         | Possible values are: `signal`, `logs`, `fetch`. |
-| `bands`  | integer | No       |         |                                                 |
-| `url`    | string  | No       |         |                                                 |
+| Property | Type    | Required | Default | Description                                               |
+|----------|---------|----------|---------|-----------------------------------------------------------|
+| `noise`  | integer | **Yes**  |         |                                                           |
+| `speed`  | integer | **Yes**  |         |                                                           |
+| `spread` | integer | **Yes**  |         |                                                           |
+| `type`   | string  | **Yes**  |         | Possible values are: `signal`, `logs`, `fetch`, `traces`. |
+| `bands`  | integer | No       |         |                                                           |
+| `url`    | string  | No       |         |                                                           |
 
 ### USAQuery
 
