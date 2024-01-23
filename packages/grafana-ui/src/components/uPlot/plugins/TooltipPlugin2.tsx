@@ -13,6 +13,7 @@ import { CloseButton } from './CloseButton';
 
 export const DEFAULT_TOOLTIP_WIDTH = 300;
 export const DEFAULT_TOOLTIP_HEIGHT = 600;
+export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {
@@ -41,7 +42,7 @@ interface TooltipPlugin2Props {
     dismiss: () => void,
     // selected time range (for annotation triggering)
     timeRange: TimeRange2 | null,
-    viaSync: boolean,
+    viaSync: boolean
   ) => React.ReactNode;
 
   maxWidth?: number;
@@ -156,8 +157,8 @@ export const TooltipPlugin2 = ({
     let winHeight = htmlEl.clientHeight - 16;
 
     window.addEventListener('resize', (e) => {
-      winWidth = htmlEl.clientWidth - 5;
-      winHeight = htmlEl.clientHeight - 5;
+      winWidth = htmlEl.clientWidth - 16;
+      winHeight = htmlEl.clientHeight - 16;
     });
 
     let selectedRange: TimeRange2 | null = null;
@@ -427,10 +428,13 @@ export const TooltipPlugin2 = ({
         } else {
           let { width, height } = sizeRef.current!;
 
+          width += TOOLTIP_OFFSET;
+          height += TOOLTIP_OFFSET;
+
           let clientX = u.rect.left + left;
           let clientY = u.rect.top + top;
 
-          if (offsetY) {
+          if (offsetY !== 0) {
             if (clientY + height < winHeight || clientY - height < 0) {
               offsetY = 0;
             } else if (offsetY !== -height) {
@@ -442,7 +446,7 @@ export const TooltipPlugin2 = ({
             }
           }
 
-          if (offsetX) {
+          if (offsetX !== 0) {
             if (clientX + width < winWidth || clientX - width < 0) {
               offsetX = 0;
             } else if (offsetX !== -width) {
@@ -454,13 +458,16 @@ export const TooltipPlugin2 = ({
             }
           }
 
-          const shiftX = offsetX !== 0 ? 'translateX(-100%)' : '';
-          const shiftY = offsetY !== 0 ? 'translateY(-100%)' : '';
+          const shiftX = left + (offsetX === 0 ? TOOLTIP_OFFSET : -TOOLTIP_OFFSET);
+          const shiftY = top + (offsetY === 0 ? TOOLTIP_OFFSET : -TOOLTIP_OFFSET);
+
+          const reflectX = offsetX === 0 ? '' : 'translateX(-100%)';
+          const reflectY = offsetY === 0 ? '' : 'translateY(-100%)';
 
           // TODO: to a transition only when switching sides
           // transition: transform 100ms;
 
-          transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
+          transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
         }
 
         if (_isHovering) {
