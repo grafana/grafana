@@ -633,7 +633,3 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 	}
 	return resp.SetHeader("Content-Type", "text/hcl")
 }
-
-func saveTrans(ctx context.Context) error {
-	return nil
-}
