@@ -80,11 +80,11 @@ Define a query to get the data you want to measure and a condition that needs to
 
    b. Click **Preview** to verify that the expression is successful.
 
-2. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
+1. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
 
    You can only add one recovery threshold in a query and it must be the alert condition.
 
-3. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
+1. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
 
 ## Set alert evaluation behavior
 

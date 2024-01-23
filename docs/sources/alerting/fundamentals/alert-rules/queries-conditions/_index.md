@@ -140,9 +140,9 @@ It can be tricky to create an alert rule for a noisy metric. That is, when the v
 
 For example, if you have an alert for latency with a threshold of 1000ms and the number fluctuates around 1000 (say 980 ->1010 -> 990 -> 1020, and so on) then each of those will trigger a notification.
 
-To solve this problem, you can set a (custom) recovery threshold, which basically means having two thresholds instead of one.  An alert is triggered when the first threshold is crossed and is resolved only when the second threshold is crossed.
+To solve this problem, you can set a (custom) recovery threshold, which basically means having two thresholds instead of one. An alert is triggered when the first threshold is crossed and is resolved only when the second threshold is crossed.
 
-For example,  you could set a threshold of 1000ms and a recovery threshold of 900ms. This way, an alert rule will only stop firing when it goes under 900ms and flapping is reduced.
+For example, you could set a threshold of 1000ms and a recovery threshold of 900ms. This way, an alert rule will only stop firing when it goes under 900ms and flapping is reduced.
 
 {{% docs/reference %}}
 [data-source-alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/data-source-alerting"
