@@ -1,18 +1,15 @@
 package folders
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
+	"errors"
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/go-openapi/runtime"
+	"github.com/grafana/grafana-openapi-client-go/client/folders"
+	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -20,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,37 +43,22 @@ func TestIntegrationCreateFolder(t *testing.T) {
 		Login:          "admin",
 	})
 
+	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
+
 	t.Run("create folder under root should succeed", func(t *testing.T) {
-		buf := &bytes.Buffer{}
-		err := json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+		resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 			Title: "folder",
-			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Post(u, "application/json", buf)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, http.StatusOK, resp.Code())
 
 		t.Run("create folder with same name under root should fail", func(t *testing.T) {
-			err := json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+			_, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title: "folder",
-				OrgID: orgID,
 			})
-			require.NoError(t, err)
-			u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
-			// nolint:gosec
-			resp, err = http.Post(u, "application/json", buf)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
-			require.NoError(t, err)
-			require.Equal(t, http.StatusConflict, resp.StatusCode)
-			b, err := io.ReadAll(resp.Body)
-			require.NoError(t, err)
-			require.JSONEq(t, fmt.Sprintf(`{"message":"%s"}`, dashboards.ErrFolderSameNameExists), string(b))
+			require.Error(t, err)
+			var conflict *folders.CreateFolderConflict // Change the type to a non-nil pointer
+			assert.True(t, errors.As(err, &conflict))
 		})
 	})
 }
@@ -99,152 +82,84 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 		Login:          "admin",
 	})
 
+	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
+
 	t.Run("create folder under root should succeed", func(t *testing.T) {
-		buf := &bytes.Buffer{}
-		err := json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+		resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 			Title: "folder",
-			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Post(u, "application/json", buf)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, http.StatusOK, resp.Code())
 
 		t.Run("create folder with same name under root should fail", func(t *testing.T) {
-			err := json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+			_, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title: "folder",
-				OrgID: orgID,
 			})
-			require.NoError(t, err)
-			u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
-			// nolint:gosec
-			resp, err = http.Post(u, "application/json", buf)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusConflict, resp.StatusCode)
-			b, err := io.ReadAll(resp.Body)
-			require.NoError(t, err)
-			require.JSONEq(t, fmt.Sprintf(`{"message":"%s"}`, dashboards.ErrFolderSameNameExists), string(b))
+			require.Error(t, err)
+			var conflict *folders.CreateFolderConflict // Change the type to a non-nil pointer
+			assert.True(t, errors.As(err, &conflict))
 		})
 	})
 
 	t.Run("create subfolder should succeed", func(t *testing.T) {
-		buf := &bytes.Buffer{}
-		err := json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+		resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 			Title: "parent",
-			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		parentUID := createFolder(t, grafanaListedAddr, buf)
+		require.Equal(t, http.StatusOK, resp.Code())
+		parentUID := resp.Payload.UID
 
-		buf.Reset()
-		err = json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+		resp, err = adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 			Title:     "subfolder",
-			OrgID:     orgID,
 			ParentUID: parentUID,
 		})
-		subfolderUnderParent := createFolder(t, grafanaListedAddr, buf)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.Code())
 
 		t.Run("create subfolder with same name should fail", func(t *testing.T) {
-			buf.Reset()
-			err = json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+			resp, err = adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title:     "subfolder",
-				OrgID:     orgID,
 				ParentUID: parentUID,
 			})
-			u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
-			// nolint:gosec
-			resp, err := http.Post(u, "application/json", buf)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusConflict, resp.StatusCode)
-			b, err := io.ReadAll(resp.Body)
-			require.NoError(t, err)
-			require.JSONEq(t, fmt.Sprintf(`{"message":"%s"}`, dashboards.ErrFolderSameNameExists), string(b))
+			require.Error(t, err)
+			var conflict *folders.CreateFolderConflict // Change the type to a non-nil pointer
+			assert.True(t, errors.As(err, &conflict))
 		})
 
 		t.Run("create subfolder with same name under other folder should succeed", func(t *testing.T) {
-			buf.Reset()
-			err := json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+			resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title: "other",
-				OrgID: orgID,
 			})
 			require.NoError(t, err)
-			other := createFolder(t, grafanaListedAddr, buf)
+			require.Equal(t, http.StatusOK, resp.Code())
+			other := resp.Payload.UID
 
-			buf.Reset()
-			err = json.NewEncoder(buf).Encode(folder.CreateFolderCommand{
+			resp, err = adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
 				Title:     "subfolder",
-				OrgID:     orgID,
 				ParentUID: other,
 			})
 			require.NoError(t, err)
-			u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
-			// nolint:gosec
-			resp, err := http.Post(u, "application/json", buf)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
-			require.NoError(t, err)
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-			b, err := io.ReadAll(resp.Body)
-			require.NoError(t, err)
-			var folderResp dtos.Folder
-			err = json.Unmarshal(b, &folderResp)
-			require.NoError(t, err)
-			assert.Equal(t, other, folderResp.ParentUID)
-			subfolderUnderOther := folderResp.UID
+			assert.Equal(t, http.StatusOK, resp.Code())
+			assert.Equal(t, other, resp.Payload.ParentUID)
+			subfolderUnderOther := resp.Payload.UID
 
 			t.Run("move subfolder to other folder containing folder with that name should fail", func(t *testing.T) {
-				buf.Reset()
-				err = json.NewEncoder(buf).Encode(folder.MoveFolderCommand{
-					OrgID:        orgID,
-					NewParentUID: parentUID,
+				_, err := adminClient.Folders.MoveFolder(subfolderUnderOther, &models.MoveFolderCommand{
+					ParentUID: parentUID,
 				})
-				u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/move", grafanaListedAddr, subfolderUnderOther)
-				// nolint:gosec
-				resp, err := http.Post(u, "application/json", buf)
-				t.Cleanup(func() {
-					err := resp.Body.Close()
-					require.NoError(t, err)
-				})
-				require.NoError(t, err)
-				require.Equal(t, http.StatusConflict, resp.StatusCode)
-			})
-		})
+				require.Error(t, err)
+				var apiError *runtime.APIError // Change the type to a non-nil pointer
+				assert.True(t, errors.As(err, &apiError))
+				assert.Equal(t, http.StatusConflict, apiError.Code)
 
-		t.Run("move subfolder to root should succeed", func(t *testing.T) {
-			buf.Reset()
-			err = json.NewEncoder(buf).Encode(folder.MoveFolderCommand{
-				OrgID: orgID,
 			})
-			u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/move", grafanaListedAddr, subfolderUnderParent)
-			// nolint:gosec
-			resp, err := http.Post(u, "application/json", buf)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			b, err := io.ReadAll(resp.Body)
-			require.NoError(t, err)
-			var folderResp dtos.Folder
-			err = json.Unmarshal(b, &folderResp)
-			require.NoError(t, err)
-			assert.Equal(t, "", folderResp.ParentUID)
+			t.Run("move subfolder to root should succeed", func(t *testing.T) {
+				resp, err := adminClient.Folders.MoveFolder(subfolderUnderOther, &models.MoveFolderCommand{})
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusOK, resp.Code())
+				assert.Equal(t, "", resp.Payload.ParentUID)
+			})
 		})
 	})
 }
@@ -264,22 +179,4 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u.ID
-}
-
-func createFolder(t *testing.T, grafanaListedAddr string, buf *bytes.Buffer) string {
-	u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
-	// nolint:gosec
-	resp, err := http.Post(u, "application/json", buf)
-	t.Cleanup(func() {
-		err := resp.Body.Close()
-		require.NoError(t, err)
-	})
-	require.NoError(t, err)
-	b, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var folderResp dtos.Folder
-	err = json.Unmarshal(b, &folderResp)
-	require.NoError(t, err)
-	return folderResp.UID
 }
