@@ -980,6 +980,7 @@
     "megamenu": {
       "close": "Fermer le menu",
       "dock": "Ancrer le menu",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
@@ -1229,6 +1230,12 @@
       "interval-selected": "Définir l'intervalle d'actualisation automatique",
       "turned-off": "Actualisation automatique désactivée"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {

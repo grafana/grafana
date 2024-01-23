@@ -974,6 +974,7 @@
     "megamenu": {
       "close": "Close menu",
       "dock": "Dock menu",
+      "list-label": "Navigation",
       "undock": "Undock menu"
     },
     "toolbar": {
@@ -1223,6 +1224,12 @@
       "interval-selected": "Set auto refresh interval",
       "turned-off": "Auto refresh off"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": "Back to {{title}}"
+    },
+    "dismissable-button": "Close"
   },
   "search": {
     "actions": {

@@ -809,9 +809,9 @@ services:
   - name: mysql80
     path: /var/lib/mysql
 - commands:
-  - /bin/mimir -target=backend
+  - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  image: grafana/mimir:r274-1780c50
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -1256,9 +1256,9 @@ services:
   - name: mysql80
     path: /var/lib/mysql
 - commands:
-  - /bin/mimir -target=backend
+  - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  image: grafana/mimir:r274-1780c50
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -2192,9 +2192,9 @@ services:
   - name: mysql80
     path: /var/lib/mysql
 - commands:
-  - /bin/mimir -target=backend
+  - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  image: grafana/mimir:r274-1780c50
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -3983,9 +3983,9 @@ services:
   - name: mysql80
     path: /var/lib/mysql
 - commands:
-  - /bin/mimir -target=backend
+  - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  image: grafana/mimir:r274-1780c50
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -4501,7 +4501,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir:r274-1780c50
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -4535,7 +4535,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/mimir:gotjosh-state-config-grafana-663a0ae78
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir:r274-1780c50
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
@@ -4779,6 +4779,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c960d3059e4cb4c852b4b51ce07867d9ea1ab42cb0f30f5775e9889dba71dff3
+hmac: e3ab1ec1c6d9e85f235c0d662808509453e3efa9431da4de420098d1f4e536cc
 
 ...
