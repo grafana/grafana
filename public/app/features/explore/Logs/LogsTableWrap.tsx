@@ -557,7 +557,6 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
 }
 
 function addJsonToDataFrame(logsFrames: DataFrame[]) {
-  console.time('addJsonToDataFrame');
   logsFrames.forEach((dataFrame) => {
     dataFrame.fields.forEach((field) => {
       if (field && field.values.length > 0) {
@@ -575,7 +574,6 @@ function addJsonToDataFrame(logsFrames: DataFrame[]) {
       }
     });
   });
-  console.timeEnd('addJsonToDataFrame');
 }
 
 export const getLogsTableHeight = () => {
