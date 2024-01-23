@@ -729,7 +729,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 <div>
                   <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
                     <RadioButtonGroup
-                      disabled={isFlipping}
+                      disabled={isFlipping || loading}
                       options={[
                         {
                           label: 'Newest first',
