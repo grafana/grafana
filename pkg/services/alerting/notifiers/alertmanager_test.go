@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestReplaceIllegalCharswithUnderscore(t *testing.T) {
@@ -95,7 +96,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewAlertmanagerNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewAlertmanagerNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -109,7 +110,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewAlertmanagerNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewAlertmanagerNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 			require.NoError(t, err)
@@ -128,7 +129,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewAlertmanagerNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewAlertmanagerNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 			require.NoError(t, err)
