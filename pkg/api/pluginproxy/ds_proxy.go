@@ -19,7 +19,6 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -270,7 +269,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	if proxy.features.IsEnabled(req.Context(), featuremgmt.FlagIdForwarding) && auth.IsIDForwardingEnabledForDataSource(proxy.ds) {
+	if proxy.features.IsEnabled(req.Context(), featuremgmt.FlagIdForwarding) {
 		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 	}
 }

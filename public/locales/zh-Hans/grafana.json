@@ -968,6 +968,7 @@
     "megamenu": {
       "close": "关闭菜单",
       "dock": "停靠菜单",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
@@ -1217,6 +1218,12 @@
       "interval-selected": "设置自动刷新间隔",
       "turned-off": "自动刷新关闭"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {

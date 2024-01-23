@@ -1281,6 +1281,10 @@ Name to be used as client identity for EHLO in SMTP dialog, default is `<instanc
 
 Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `empty`.
 
+### enable_tracing
+
+Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.oentelemetry.*` sections.
+
 <hr>
 
 ## [smtp.static_headers]
