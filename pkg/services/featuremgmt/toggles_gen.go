@@ -642,4 +642,8 @@ const (
 	// FlagOnPremToCloudMigrations
 	// In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagAlertingSaveStatePeriodic
+	// Writes the state periodically to the database, asynchronous to rule evaluation
+	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 )

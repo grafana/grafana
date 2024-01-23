@@ -30,7 +30,7 @@ type AlertInstanceManager interface {
 }
 
 type StatePersister interface {
-	Async(ctx context.Context, ticker *clock.Ticker, cache *cache)
+	Async(ctx context.Context, cache *cache)
 	Sync(ctx context.Context, span trace.Span, states, staleStates []StateTransition)
 }
 
@@ -101,6 +101,11 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	}
 
 	return m
+}
+
+func (st *Manager) Run(ctx context.Context) error {
+	st.persister.Async(ctx, st.cache)
+	return nil
 }
 
 func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
