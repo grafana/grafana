@@ -3702,7 +3702,7 @@ __metadata:
     rc-tooltip: "npm:6.1.3"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
-    react-calendar: "npm:4.6.0"
+    react-calendar: "npm:4.8.0"
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
     react-dom: "npm:18.2.0"
@@ -24466,15 +24466,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:4.6.0":
-  version: 4.6.0
-  resolution: "react-calendar@npm:4.6.0"
+"react-calendar@npm:4.8.0":
+  version: 4.8.0
+  resolution: "react-calendar@npm:4.8.0"
   dependencies:
     "@wojtekmaj/date-utils": "npm:^1.1.3"
     clsx: "npm:^2.0.0"
     get-user-locale: "npm:^2.2.1"
     prop-types: "npm:^15.6.0"
-    tiny-warning: "npm:^1.0.0"
+    warning: "npm:^4.0.0"
   peerDependencies:
     "@types/react": ^16.8.0 || ^17.0.0 || ^18.0.0
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -24482,7 +24482,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 3ba82d0a150616f0d35429c08cc49d0f263350db56499ef5d6a61100a7ede2b33cfbdc719a6f711cbfa9046881ee23da668368890a0df329e389902eb111460c
+  checksum: 26a58d9bbe9b1bbe1201612628d0f6bdeec0355ed3730013d066b9e87adbbee4b6f3f1c83352978c0e2f317d8d32ac31ac2cbb3c6f83833bef0ba047c5bb6907
   languageName: node
   linkType: hard
 
@@ -29611,7 +29611,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"warning@npm:^4.0.2":
+"warning@npm:^4.0.0, warning@npm:^4.0.2":
   version: 4.0.3
   resolution: "warning@npm:4.0.3"
   dependencies:
