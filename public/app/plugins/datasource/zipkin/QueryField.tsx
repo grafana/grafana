@@ -19,10 +19,10 @@ import {
   HorizontalGroup,
   Button,
 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { dispatch } from 'app/store/store';
 
+import { notifyApp } from './_importedDependencies/actions/appNotification';
+import { createErrorNotification } from './_importedDependencies/core/appNotification';
+import { dispatch } from './_importedDependencies/store';
 import { apiPrefix } from './constants';
 import { ZipkinDatasource } from './datasource';
 import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';

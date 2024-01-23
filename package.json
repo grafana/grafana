@@ -233,6 +233,7 @@
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*",
     "@grafana-plugins/parca": "workspace:*",
     "@grafana-plugins/tempo": "workspace:*",
+    "@grafana-plugins/zipkin": "workspace:*",
     "@grafana/aws-sdk": "0.3.1",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",

@@ -6,8 +6,10 @@ import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { TraceToLogsSection, TraceToMetricsSection } from '@grafana/o11y-ds-frontend';
 import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings, useStyles2, Divider, Stack } from '@grafana/ui';
-import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
-import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
+
+
+import { NodeGraphSection } from './_importedDependencies/components/NodeGraphSettings';
+import { SpanBarSection } from './_importedDependencies/components/TraceView/SpanBarSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
