@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
@@ -25,7 +26,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewWebHookNotifier(model, encryptionService.GetDecryptedValue, nil)
+		_, err = NewWebHookNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 
@@ -40,7 +41,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewWebHookNotifier(model, encryptionService.GetDecryptedValue, nil)
+		not, err := NewWebHookNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 		require.NoError(t, err)
 		webhookNotifier := not.(*WebhookNotifier)
 
