@@ -11,6 +11,7 @@ import { clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
+import { JSONViewCell } from './JSONViewCell';
 import { TableStyles } from './styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
 import { getCellOptions } from './utils';
@@ -53,6 +54,10 @@ export const DefaultCell = (props: TableCellProps) => {
 
   if (isStringValue) {
     let justifyContent = cellProps.style?.justifyContent;
+    const str = value.toString();
+    if (str.startsWith('{') && str.endsWith('}') && isStringJSON(str)) {
+      return JSONViewCell(props);
+    }
 
     if (justifyContent === 'flex-end') {
       cellProps.style = { ...cellProps.style, textAlign: 'right' };
@@ -144,4 +149,13 @@ function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, t
   }
 
   return cx(tableStyles.cellLinkForColoredCell, targetClassName);
+}
+
+export function isStringJSON(str: string): boolean {
+  let parsed;
+  try {
+    parsed = JSON.parse(str);
+  } catch (error) {}
+  // The JSON view should only be used if the parsed value is an object
+  return typeof parsed === 'object';
 }
