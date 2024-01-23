@@ -19,6 +19,20 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
     scene.scale = scale;
   };
 
+  const onSceneContainerMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    // If pan and zoom is disabled or context menu is visible, don't pan
+    if ((!scene.shouldPanZoom || scene.contextMenuVisible) && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
+    if (!scene.contextMenuVisible && !scene.isPanelEditing && e.button === 2 && !e.ctrlKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   return (
     <TransformWrapper
       doubleClick={{ mode: 'reset' }}
@@ -31,7 +45,11 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
       disabled={!config.featureToggles.canvasPanelPanZoom || !scene.shouldPanZoom}
       panning={{ allowLeftClickPan: false }}
     >
-      <TransformComponent>{sceneDiv}</TransformComponent>
+      <TransformComponent>
+        {/* The <div> element has child elements that allow for mouse events, so we need to disable the linter rule */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+        <div onMouseDown={onSceneContainerMouseDown}>{sceneDiv}</div>
+      </TransformComponent>
     </TransformWrapper>
   );
 };
