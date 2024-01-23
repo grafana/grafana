@@ -3691,6 +3691,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"]
     ],
+    "public/app/features/logs/components/LoadingIndicator.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
     "public/app/features/logs/components/LogDetailsRow.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -3762,9 +3765,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "33"],
       [0, 0, 0, "Styles should be written using objects.", "34"],
       [0, 0, 0, "Styles should be written using objects.", "35"]
-    ],
-    "public/app/features/logs/components/log-context/LoadingIndicator.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/logs/components/log-context/LogRowContextModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
