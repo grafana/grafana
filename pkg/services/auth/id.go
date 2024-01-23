@@ -21,5 +21,3 @@ type IDClaims struct {
 	jwt.Claims
 	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
 }
-
-const settingsKey = "forwardGrafanaIdToken"
