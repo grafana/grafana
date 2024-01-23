@@ -330,7 +330,7 @@
     "memoize-one": "6.0.0",
     "ml-regression-polynomial": "^3.0.0",
     "ml-regression-simple-linear": "^3.0.0",
-    "moment": "2.29.4",
+    "moment": "2.30.1",
     "moment-timezone": "0.5.44",
     "monaco-editor": "0.34.0",
     "monaco-promql": "1.7.4",
