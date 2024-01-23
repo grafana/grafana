@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
@@ -27,28 +26,24 @@ interface Props {
   filter: TraceqlFilter;
   datasource: TempoDatasource;
   updateFilter: (f: TraceqlFilter) => void;
-  deleteFilter?: (f: TraceqlFilter) => void;
   setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];
   hideScope?: boolean;
   hideTag?: boolean;
   hideValue?: boolean;
-  allowDelete?: boolean;
   query: string;
 }
 const SearchField = ({
   filter,
   datasource,
   updateFilter,
-  deleteFilter,
   isTagsLoading,
   tags,
   setError,
   hideScope,
   hideTag,
   hideValue,
-  allowDelete,
   query,
 }: Props) => {
   const styles = useStyles2(getStyles);
@@ -205,15 +200,6 @@ const SearchField = ({
           allowCustomValue={true}
           isMulti
           allowCreateWhileLoading
-        />
-      )}
-      {allowDelete && (
-        <AccessoryButton
-          variant={'secondary'}
-          icon={'times'}
-          onClick={() => deleteFilter?.(filter)}
-          tooltip={'Remove tag'}
-          aria-label={`remove tag with ID ${filter.id}`}
         />
       )}
     </HorizontalGroup>

@@ -21,8 +21,10 @@ const getStyles = () => ({
   horizontal: css`
     display: flex;
     flex-direction: row;
-    gap: 1rem;
   `,
+  addTag: css({
+    marginLeft: '10px',
+  }),
 });
 
 interface Props {
@@ -76,13 +78,22 @@ const TagsInput = ({
             updateFilter={updateFilter}
             tags={getTags(f)}
             isTagsLoading={isTagsLoading}
-            deleteFilter={deleteFilter}
-            allowDelete={true}
             hideValue={hideValues}
             query={query}
           />
-          {i === filters.length - 1 && (
-            <AccessoryButton variant={'secondary'} icon={'plus'} onClick={handleOnAdd} title={'Add tag'} />
+          {(f.tag || f.value || i > 0) && (
+            <AccessoryButton
+              variant={'secondary'}
+              icon={'times'}
+              onClick={() => deleteFilter?.(f)}
+              tooltip={'Remove tag'}
+              aria-label={`remove tag with ID ${f.id}`}
+            />
+          )}
+          {(f.tag || f.value) && i === filters.length - 1 && (
+            <span className={styles.addTag}>
+              <AccessoryButton variant={'secondary'} icon={'plus'} onClick={handleOnAdd} tooltip={'Add tag'} />
+            </span>
           )}
         </div>
       ))}
