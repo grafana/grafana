@@ -67,7 +67,7 @@ func TestGetFolders(t *testing.T) {
 	for i := 0; i < numberOfFolders; i++ {
 		respCode := 0
 		folderUID := ""
-		i := 0
+		retries := 0
 		maxRetries := 3
 		err := retryer.Retry(func() (retryer.RetrySignal, error) {
 			resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
@@ -75,10 +75,10 @@ func TestGetFolders(t *testing.T) {
 				UID:   fmt.Sprintf("folder-%d", i),
 			})
 			if err != nil {
-				if i == maxRetries {
+				if retries == maxRetries {
 					return retryer.FuncError, err
 				}
-				i++
+				retries++
 				return retryer.FuncFailure, nil
 			}
 			respCode = resp.Code()
