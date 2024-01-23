@@ -167,7 +167,7 @@ export const StateTimelinePanel = ({
   }
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
 
   return (
     <TimelineChart
@@ -207,7 +207,11 @@ export const StateTimelinePanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xOne}
                     queryZoom={onChangeTimeRange}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                      if (viaSync) {
+                        return null;
+                      }
+
                       if (timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
