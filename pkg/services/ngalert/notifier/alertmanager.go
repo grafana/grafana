@@ -331,6 +331,13 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	am.updateConfigMetrics(cfg)
+
+	// TODO(grobinson): Remove this once we've added metrics to Prometheus Alertmanager
+	inhibitRules := cfg.AlertmanagerConfig.InhibitRules
+	if len(inhibitRules) > 0 {
+		am.logger.Warn("Inhibition rules are not supported", "count", len(inhibitRules))
+	}
+
 	return true, nil
 }
 
