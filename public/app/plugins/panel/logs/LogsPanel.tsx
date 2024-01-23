@@ -120,6 +120,17 @@ export const LogsPanel = ({
     [dataSourcesMap, showLogContextToggle, data.request?.app]
   );
 
+  const showPermaLink = useCallback(() => {
+    if (
+      data.request?.app !== CoreApp.Dashboard &&
+      data.request?.app !== CoreApp.PanelEditor &&
+      data.request?.app !== CoreApp.PanelViewer
+    ) {
+      return false;
+    }
+    return true;
+  }, [data.request?.app]);
+
   const getLogRowContext = useCallback(
     async (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions): Promise<DataQueryResponse> => {
       if (!origRow.dataFrame.refId || !dataSourcesMap) {
@@ -204,7 +215,7 @@ export const LogsPanel = ({
             containerRendered={logsContainerRef.current !== null}
             scrollIntoView={scrollIntoView}
             permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
-            onPermalinkClick={onPermalinkClick}
+            onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
             logRows={logRows}
             showContextToggle={showContextToggle}
             deduplicatedRows={deduplicatedRows}
