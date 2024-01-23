@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
@@ -27,14 +28,17 @@ type QueryAPIBuilder struct {
 	log                    log.Logger
 	concurrentQueryLimit   int
 	UserFacingDefaultError string
-	runner                 QueryRunner
+
+	runner   runner.QueryRunner
+	registry runner.DataSourceRegistry
 }
 
 func NewQueryAPIBuilder() *QueryAPIBuilder {
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4, // from config?
 		log:                  log.New("query_apiserver"),
-		runner:               &dummyTestDataRunner{},
+		runner:               runner.NewDummyTestRunner(),
+		registry:             runner.NewDummyRegistry(),
 	}
 }
 
@@ -75,10 +79,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	gv := v0alpha1.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
 
-	cache, err := initRegistry()
-	if err != nil {
-		return nil, err
-	}
+	cache := runner.NewDummyRegistry()
 
 	ds := newDataSourceStorage(cache)
 	plugins := newPluginsStorage(cache)

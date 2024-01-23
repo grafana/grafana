@@ -11,6 +11,8 @@ import (
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
 var (
@@ -23,15 +25,15 @@ var (
 type dataSourceStorage struct {
 	resourceInfo   *common.ResourceInfo
 	tableConverter rest.TableConvertor
-	cache          *registry
+	registry       runner.DataSourceRegistry
 }
 
-func newDataSourceStorage(reg *registry) *dataSourceStorage {
+func newDataSourceStorage(registry runner.DataSourceRegistry) *dataSourceStorage {
 	var resourceInfo = v0alpha1.DataSourceResourceInfo
 	return &dataSourceStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
-		cache:          reg,
+		registry:       registry,
 	}
 }
 
@@ -58,7 +60,12 @@ func (s *dataSourceStorage) ConvertToTable(ctx context.Context, object runtime.O
 }
 
 func (s *dataSourceStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	datasources, err := s.cache.GetDataSources(ctx, options)
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	datasources, err := s.registry.GetDataSources(ctx, info.Value, options)
 	if err != nil {
 		return nil, err
 	}

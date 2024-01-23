@@ -61,15 +61,11 @@ func (b *QueryAPIBuilder) processRequest(ctx context.Context, req parsedQueryReq
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
 func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req groupedQueries) (*backend.QueryDataResponse, error) {
-	// convert pluginId to group+version
-	group := ""
-	apiVersion := "v0alpha" // whatever is installed
-	if req.pluginId == "testdata" || req.pluginId == "grafana-testdata-datasource" {
-		group = "testdata.datasource.grafana.app"
-	} else {
-		return nil, fmt.Errorf("only testdata supported right now")
+	gv, err := b.registry.GetDatasourceAPI(req.pluginId)
+	if err != nil {
+		return nil, err
 	}
-	return b.runner.ExecuteQueryData(ctx, group, apiVersion, req.uid, req.query)
+	return b.runner.ExecuteQueryData(ctx, gv, req.uid, req.query)
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
