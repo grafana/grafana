@@ -16,7 +16,6 @@ import {
 } from '@grafana/data';
 import {
   TraceToProfilesOptions,
-  TraceToMetricQuery,
   TraceToMetricsOptions,
   TraceToLogsOptionsV2,
   TraceToLogsTag,
