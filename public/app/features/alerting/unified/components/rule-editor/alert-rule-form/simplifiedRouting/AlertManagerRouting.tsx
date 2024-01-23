@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, CollapsableSection, IconButton, LoadingPlaceholder, Stack, TextLink, useStyles2 } from '@grafana/ui';
@@ -31,18 +31,31 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
 
   const [loadingContactPoints, setLoadingContactPoints] = useState(false);
 
+  // we need to keep track of the timeout id, so we can clear it when the user clicks the refresh button, or when the component unmounts
+  const [timeOutId, setTimeOutId] = useState<NodeJS.Timeout | null>(null);
+
   const onClickRefresh = () => {
+    // we need to clear the timeout when the user clicks the refresh button, as are creating a new timeout
+    if (timeOutId) {
+      clearTimeout(timeOutId);
+    }
     refetchReceivers();
     // show loading spinner for 1 second
     setLoadingContactPoints(true);
-    const timeoutId = setTimeout(() => {
-      setLoadingContactPoints(false);
-    }, LOADING_SPINNER_DURATION);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    setTimeOutId(
+      setTimeout(() => {
+        setLoadingContactPoints(false);
+      }, LOADING_SPINNER_DURATION)
+    );
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeOutId) {
+        clearTimeout(timeOutId);
+      }
+    };
+  }, [timeOutId]);
 
   if (errorInContactPointStatus) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
