@@ -2,16 +2,16 @@ import React from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { Drawer, LoadingPlaceholder, Stack, TextLink, ToolbarButton } from '@grafana/ui';
-import { useDispatch } from 'app/types';
 
 import { t } from '../../../../core/internationalization';
-import { alertRuleApi } from '../../../alerting/unified/api/alertRuleApi';
-import { RulesTable } from '../../../alerting/unified/components/rules/RulesTable';
-import { useCombinedRuleNamespaces } from '../../../alerting/unified/hooks/useCombinedRuleNamespaces';
-import { fetchPromAndRulerRulesAction } from '../../../alerting/unified/state/actions';
-import { Annotation } from '../../../alerting/unified/utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../alerting/unified/utils/datasource';
-import { createUrl } from '../../../alerting/unified/utils/url';
+import { useDispatch } from '../../../../types';
+import { alertRuleApi } from '../api/alertRuleApi';
+import { RulesTable } from '../components/rules/RulesTable';
+import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
+import { fetchPromAndRulerRulesAction } from '../state/actions';
+import { Annotation } from '../utils/constants';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { createUrl } from '../utils/url';
 
 interface Props {
   dashboardUid: string;

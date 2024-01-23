@@ -38,7 +38,6 @@ import {
   dynamicDashNavActions,
   registerDynamicDashNavAction,
 } from '../../../dashboard-scene/utils/registerDynamicDashNavAction';
-import { AlertRulesToolbarButton } from '../AlertRules/AlertRulesDrawer';
 
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
@@ -264,10 +263,6 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (kioskMode === KioskMode.TV) {
       return [renderTimeControls()];
-    }
-
-    if (config.unifiedAlertingEnabled) {
-      buttons.push(<AlertRulesToolbarButton dashboardUid={dashboard.uid} />);
     }
 
     if (snapshotUrl) {
