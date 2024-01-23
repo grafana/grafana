@@ -973,6 +973,29 @@ func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
 	return cfg, nil
 }
 
+// NewCfgFromBytes specialized function to create a new Cfg from bytes (INI file).
+func NewCfgFromBytes(bytes []byte) (*Cfg, error) {
+	parsedFile, err := ini.Load(bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse bytes as INI file: %w", err)
+	}
+
+	parsedFile.BlockMode = false
+
+	return NewCfgFromINIFile(parsedFile)
+}
+
+// NewCfgFromINIFile specialized function to create a new Cfg from an ini.File.
+func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
+	cfg := NewCfg()
+
+	if err := cfg.parseINIFile(iniFile); err != nil {
+		return nil, fmt.Errorf("failed to parse setting from INI file: %w", err)
+	}
+
+	return cfg, nil
+}
+
 func (cfg *Cfg) validateStaticRootPath() error {
 	if skipStaticRootValidation {
 		return nil
@@ -985,7 +1008,6 @@ func (cfg *Cfg) validateStaticRootPath() error {
 	return nil
 }
 
-// nolint:gocyclo
 func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.setHomePath(args)
 
@@ -1002,6 +1024,18 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
+	err = cfg.parseINIFile(iniFile)
+	if err != nil {
+		return err
+	}
+
+	cfg.LogConfigSources()
+
+	return nil
+}
+
+// nolint:gocyclo
+func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Raw = iniFile
 
 	cfg.BuildVersion = BuildVersion
@@ -1172,6 +1206,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 
+	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
 	if err != nil {
 		// if the proxy is misconfigured, disable it rather than crashing
@@ -1215,7 +1250,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
 	if basemapJSON != "" {
 		layer := make(map[string]any)
-		err = json.Unmarshal([]byte(basemapJSON), &layer)
+		err := json.Unmarshal([]byte(basemapJSON), &layer)
 		if err != nil {
 			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
 		} else {
@@ -1230,8 +1265,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := cfg.readLiveSettings(iniFile); err != nil {
 		return err
 	}
-
-	cfg.LogConfigSources()
 
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)

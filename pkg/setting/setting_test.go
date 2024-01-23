@@ -919,3 +919,30 @@ func TestHandleAWSSettings(t *testing.T) {
 		assert.Equal(t, 400, cfg.AWSListMetricsPageLimit)
 	})
 }
+
+const iniString = `
+app_mode = production
+
+[server]
+domain = test.com
+`
+
+func TestNewCfgFromBytes(t *testing.T) {
+	cfg, err := NewCfgFromBytes([]byte(iniString))
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	require.Equal(t, Prod, cfg.Env)
+	require.Equal(t, "test.com", cfg.Domain)
+}
+
+func TestNewCfgFromINIFile(t *testing.T) {
+	parsedFile, err := ini.Load([]byte(iniString))
+	require.NoError(t, err)
+	require.NotNil(t, parsedFile)
+
+	cfg, err := NewCfgFromINIFile(parsedFile)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	require.Equal(t, Prod, cfg.Env)
+	require.Equal(t, "test.com", cfg.Domain)
+}
