@@ -353,7 +353,7 @@ To set up generic OAuth2 authentication with Descope, follow these steps:
    scopes = openid profile email descope.claims descope.custom_claims
    auth_url = https://api.descope.com/oauth2/v1/authorize
    token_url = https://api.descope.com/oauth2/v1/token
-   api_url = "https://api.descope.com/oauth2/v1/userinfo
+   api_url = https://api.descope.com/oauth2/v1/userinfo
    use_pkce = true
    use_refresh_token = true
    ```
