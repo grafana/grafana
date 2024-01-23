@@ -28,7 +28,7 @@ var (
 			Name:      "datasource_request_duration_seconds",
 			Help:      "histogram of durations of outgoing data source requests sent from Grafana",
 			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-		}, []string{"datasource", "datasource_type", "code", "method", "secureSocksDSProxyEnabled"},
+		}, []string{"datasource", "datasource_type", "code", "method", "secure_socks_ds_proxy_enabled"},
 	)
 
 	datasourceResponseHistogram = promauto.NewHistogramVec(
@@ -85,9 +85,9 @@ func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
 
 		labels := prometheus.Labels{"datasource": datasourceLabelName, "datasource_type": datasourceLabelType}
 		requestHistogramLabels := prometheus.Labels{
-			"datasource":                datasourceLabelName,
-			"datasource_type":           datasourceLabelType,
-			"secureSocksDSProxyEnabled": strconv.FormatBool(opts.ProxyOptions != nil && opts.ProxyOptions.Enabled),
+			"datasource":                    datasourceLabelName,
+			"datasource_type":               datasourceLabelType,
+			"secure_socks_ds_proxy_enabled": strconv.FormatBool(opts.ProxyOptions != nil && opts.ProxyOptions.Enabled),
 		}
 
 		return executeMiddlewareFunc(next, labels, requestHistogramLabels)
