@@ -21,12 +21,14 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   let value = cell.value;
   let displayValue = value;
 
-  if (isString(value)) {
-    try {
-      value = JSON.parse(value);
-    } catch {} // ignore errors
-  } else {
-    displayValue = JSON.stringify(value, null, ' ');
+  if (!props.isJson) {
+    if (isString(value)) {
+      try {
+        JSON.parse(value);
+      } catch {} // ignore errors
+    } else {
+      displayValue = JSON.stringify(value, null, ' ');
+    }
   }
 
   const hasLinks = Boolean(getCellLinks(field, row)?.length);

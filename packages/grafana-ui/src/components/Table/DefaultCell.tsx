@@ -59,7 +59,7 @@ export const DefaultCell = (props: TableCellProps) => {
       ((str.startsWith('{') && str.endsWith('}')) || (str.startsWith('[') && str.startsWith(']'))) &&
       isStringJSON(str)
     ) {
-      return JSONViewCell(props);
+      return JSONViewCell({ ...props, isJson: true });
     }
 
     if (justifyContent === 'flex-end') {

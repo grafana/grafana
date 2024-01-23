@@ -44,6 +44,7 @@ export interface TableCellProps extends CellProps<any> {
   onCellFilterAdded?: TableFilterActionCallback;
   innerWidth: number;
   frame: DataFrame;
+  isJson: boolean; // the field has already been parsed as JSON
 }
 
 export type CellComponent = FC<TableCellProps>;
