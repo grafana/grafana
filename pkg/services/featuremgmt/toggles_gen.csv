@@ -135,7 +135,7 @@ dashboardSceneForViewers,experimental,@grafana/dashboards-squad,2023-11-02,false
 dashboardScene,experimental,@grafana/dashboards-squad,2023-11-13,false,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,2023-11-03,false,false,false,true
 pdfTables,preview,@grafana/sharing-squad,2023-11-06,false,false,false,false
-ssoSettingsApi,experimental,@grafana/identity-access-team,2023-11-08,true,false,false,false
+ssoSettingsApi,experimental,@grafana/identity-access-team,2023-11-08,false,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,2023-12-27,false,false,false,true
 logsInfiniteScrolling,experimental,@grafana/observability-logs,2023-11-09,false,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,2023-11-09,false,false,false,true
