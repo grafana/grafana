@@ -119,7 +119,8 @@ class K8sAPI implements DashboardSnapshotSrv {
     const headers: Record<string, string> = {};
     if (!contextSrv.isSignedIn) {
       alert('TODO... need a barer token for anonymous use case');
-      headers['Authorization'] = 'Bearer ???? anon ??? snapshots ???';
+      const token = `??? TODO, get anon token for snapshots ???`;
+      headers['Authorization'] = `Bearer ${token}`;
     }
     return lastValueFrom(
       getBackendSrv()
@@ -141,9 +142,7 @@ class K8sAPI implements DashboardSnapshotSrv {
                 canShare: false,
                 canDelete: false,
                 isFolder: false,
-                folderId: 0,
                 provisioned: false,
-                provisionedExternalId: '',
               },
             };
           })
