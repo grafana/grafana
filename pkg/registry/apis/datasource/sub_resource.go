@@ -46,7 +46,7 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.pluginContext.PluginContextForDataSource(ctx, r.builder.pluginJSON.ID, name)
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		}
 
 		path := req.URL.Path[idx+len("/resource"):]
-		err = r.builder.querier.Resource(ctx, &backend.CallResourceRequest{
+		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: pluginCtx,
 			Path:          path,
 			Method:        req.Method,
