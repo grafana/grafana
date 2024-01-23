@@ -116,7 +116,7 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			Settings:      instanceSettings,
 			HTTPClient:    httpClient,
 			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
-			//this is used to build a custom dialer when secure socks proxy is enabled
+			// this is used to build a custom dialer when secure socks proxy is enabled
 			ProxyOpts: opts.ProxyOptions,
 		}, nil
 	}
