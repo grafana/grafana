@@ -142,9 +142,9 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: container;
-    margin-bottom: ${theme.spacing(2)};
-    max-width: 900px;
-  `,
+  container: css({
+    label: 'container',
+    marginBottom: theme.spacing(2),
+    maxWidth: '900px',
+  }),
 });

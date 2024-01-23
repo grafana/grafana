@@ -151,12 +151,12 @@ function filtersToQuery(filters: AdHocVariableFilter[]): string {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  alert: css`
-    max-width: 75ch;
-    margin-top: ${theme.spacing(2)};
-  `,
-  link: css`
-    color: ${theme.colors.text.link};
-    text-decoration: underline;
-  `,
+  alert: css({
+    maxWidth: '75ch',
+    marginTop: theme.spacing(2),
+  }),
+  link: css({
+    color: theme.colors.text.link,
+    textDecoration: 'underline',
+  }),
 });
