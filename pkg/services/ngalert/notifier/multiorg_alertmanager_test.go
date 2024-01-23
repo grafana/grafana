@@ -344,9 +344,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	postable, err := Load([]byte(newConfig))
 	require.NoError(t, err)
 
-	err = mam.SaveConfig(ctx, 2, postable, func(ctx context.Context) error {
-		return am.ApplyConfig(ctx, postable)
-	})
+	err = mam.SaveAndApplyConfig(ctx, 2, am, postable)
 	require.NoError(t, err)
 
 	// Verify that the org has the new config.

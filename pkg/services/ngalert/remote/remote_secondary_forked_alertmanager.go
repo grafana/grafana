@@ -2,7 +2,6 @@ package remote
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -20,7 +19,7 @@ type configStore interface {
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
 type remoteAlertmanager interface {
 	notifier.Alertmanager
-	CompareAndSendConfiguration(context.Context, *apimodels.PostableUserConfig) error
+	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
 	CompareAndSendState(context.Context) error
 }
 
@@ -72,7 +71,7 @@ func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 
 // ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
 // We don't care about errors in the remote Alertmanager in remote secondary mode.
-func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
+func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	// Figure out if we need to sync the external Alertmanager in another goroutine.
@@ -177,18 +176,11 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
 	}
 
-	dbConfig, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
+	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
 	if err != nil {
 		fam.log.Error("Error getting latest Alertmanager configuration while stopping", "err", err)
 		return
 	}
-
-	config := &apimodels.PostableUserConfig{}
-	if err := json.Unmarshal([]byte(dbConfig.AlertmanagerConfiguration), config); err != nil {
-		fam.log.Error("Error parsing latest Alertmanager configuration while stopping", "err", err)
-		return
-	}
-
 	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
 		fam.log.Error("Error sending configuration to the remote Alertmanager while stopping", "err", err)
 	}

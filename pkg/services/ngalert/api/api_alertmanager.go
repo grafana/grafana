@@ -95,7 +95,11 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	err := srv.mam.ApplyDefaultAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID())
+	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
+	if errResp != nil {
+		return errResp
+	}
+	err := srv.mam.SaveAndApplyDefaultConfig(c.Req.Context(), c.SignedInUser.GetOrgID(), am)
 	if err != nil {
 		srv.log.Error("Failed to delete Alertmanager configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete Alertmanager configuration")

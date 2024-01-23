@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -406,7 +405,6 @@ func (ms *migrationStore) SaveAlertmanagerConfiguration(ctx context.Context, org
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(rawAmConfig),
 		ConfigurationVersion:      fmt.Sprintf("v%d", models.AlertConfigurationVersion),
-		FetchedConfigurationHash:  fmt.Sprintf("%x", md5.Sum(rawAmConfig)),
 		Default:                   false,
 		OrgID:                     orgID,
 		LastApplied:               0,

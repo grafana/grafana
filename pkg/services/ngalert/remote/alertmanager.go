@@ -3,11 +3,9 @@ package remote
 import (
 	"context"
 	"crypto/md5"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/go-openapi/strfmt"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
@@ -18,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
@@ -132,7 +131,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, metrics *metrics.
 // for "a function that gets called when the Alertmanager starts". As a result we do two things:
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
-func (am *Alertmanager) ApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.ready {
 		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and config + state update")
 		return nil
@@ -148,7 +147,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, cfg *apimodels.Postable
 
 	// Send configuration and base64-encoded state if necessary.
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
-	if err := am.CompareAndSendConfiguration(ctx, cfg); err != nil {
+	if err := am.CompareAndSendConfiguration(ctx, config); err != nil {
 		am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
 	}
 	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
@@ -180,22 +179,16 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
-func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	rawConfig, err := json.Marshal(&cfg)
-	if err != nil {
-		am.log.Error("Unable to marshal the configuration", "err", err)
-		return err
-	}
-	hash := md5.Sum(rawConfig)
-	if am.shouldSendConfig(ctx, hash) {
+func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	if am.shouldSendConfig(ctx, config) {
 		am.metrics.ConfigSyncsTotal.Inc()
 		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 			ctx,
-			string(rawConfig),
-			fmt.Sprintf("%x", hash),
-			0,
-			time.Now().UTC().Unix(),
-			false,
+			config.AlertmanagerConfiguration,
+			config.ConfigurationHash,
+			config.ID,
+			config.CreatedAt,
+			config.Default,
 		); err != nil {
 			am.metrics.ConfigSyncErrorsTotal.Inc()
 			return err
@@ -378,7 +371,7 @@ func (am *Alertmanager) CleanUp() {}
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) bool {
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *models.AlertConfiguration) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
@@ -386,7 +379,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 		return true
 	}
 
-	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != hash
+	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum([]byte(config.AlertmanagerConfiguration))
 }
 
 // shouldSendState compares the remote Alertmanager state with our local one.

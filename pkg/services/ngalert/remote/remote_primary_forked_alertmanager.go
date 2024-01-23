@@ -4,6 +4,7 @@ import (
 	"context"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
@@ -22,7 +23,7 @@ func NewRemotePrimaryForkedAlertmanager(internal, remote notifier.Alertmanager) 
 	}
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
+func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	return nil
 }
 

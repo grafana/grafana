@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"crypto/md5"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -34,7 +33,7 @@ var (
 //go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
 type Alertmanager interface {
 	// Configuration
-	ApplyConfig(context.Context, *apimodels.PostableUserConfig) error
+	ApplyConfig(context.Context, *models.AlertConfiguration) error
 	GetStatus() apimodels.GettableStatus
 
 	// Silences
@@ -63,10 +62,8 @@ type MultiOrgAlertmanager struct {
 	Crypto    Crypto
 	ProvStore provisioningStore
 
-	alertmanagersMtx              sync.RWMutex
-	alertmanagers                 map[int64]Alertmanager
-	defaultAlertmanagerConfig     func() *apimodels.PostableUserConfig
-	defaultAlertmanagerConfigHash string
+	alertmanagersMtx sync.RWMutex
+	alertmanagers    map[int64]Alertmanager
 
 	settings *setting.Cfg
 	logger   log.Logger
@@ -115,16 +112,6 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 		ns:            ns,
 		peer:          &NilPeer{},
 	}
-
-	_, err := Load([]byte(moa.settings.UnifiedAlerting.DefaultConfiguration))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse the default Alertmanager configuration: %w", err)
-	}
-	moa.defaultAlertmanagerConfig = func() *apimodels.PostableUserConfig {
-		c, _ := Load([]byte(moa.settings.UnifiedAlerting.DefaultConfiguration)) // Safe to ignore the error here since we've already parsed it.
-		return c
-	}
-	moa.defaultAlertmanagerConfigHash = fmt.Sprintf("%x", md5.Sum([]byte(moa.settings.UnifiedAlerting.DefaultConfiguration)))
 
 	if err := moa.setupClustering(cfg); err != nil {
 		return nil, err
@@ -293,21 +280,16 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
 			}
 
-			defaultConfig := moa.defaultAlertmanagerConfig()
-			if err := moa.SaveConfig(ctx, orgID, defaultConfig, func(ctx context.Context) error {
-				return alertmanager.ApplyConfig(ctx, defaultConfig)
-			}); err != nil {
+			if err := moa.SaveAndApplyDefaultConfig(ctx, orgID, alertmanager); err != nil {
 				moa.logger.Error("Failed to save and apply the default Alertmanager configuration", "org", orgID)
+				continue
 			}
+			moa.alertmanagers[orgID] = alertmanager
 			continue
 		}
 
-		config, err := Load([]byte(dbConfig.AlertmanagerConfiguration))
+		err := alertmanager.ApplyConfig(ctx, dbConfig)
 		if err != nil {
-			moa.logger.Error("Failed to parse Alertmanager configuration", "org", orgID, "error", err)
-			continue
-		}
-		if err := alertmanager.ApplyConfig(ctx, config); err != nil {
 			moa.logger.Error("Failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "error", err)
 			continue
 		}

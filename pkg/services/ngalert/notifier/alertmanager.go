@@ -167,7 +167,7 @@ func (am *alertmanager) StopAndWait() {
 }
 
 // ApplyConfig applies the configuration to the Alertmanager.
-func (am *alertmanager) ApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+func (am *alertmanager) ApplyConfig(ctx context.Context, cfg *ngmodels.AlertConfiguration) error {
 	var outerErr error
 	am.Base.WithLock(func() {
 		if err := am.applyAndMarkConfig(ctx, cfg); err != nil {
@@ -224,16 +224,22 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
-	// First, let's make sure this config is not already loaded
+func (am *alertmanager) applyConfig(config *ngmodels.AlertConfiguration) (bool, error) {
+	// Convert to PostableApiAlertingConfig, which is the format used by the GrafanaAlertmanager.
+	cfg, err := Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return false, err
+	}
 
-	// We use the PostableApiAlertingConfig as the source of truth for the configuration.
 	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
 	if err != nil {
 		return false, err
 	}
 
+	// Ensure this config is not already loaded
 	var amConfigChanged bool
+	// Note, the hash saved to the database in config.ConfigurationHash (PostableUserConfig) is different from the one
+	// used by GrafanaAlertmanager (PostableApiAlertingConfig).
 	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
 		amConfigChanged = true
 	}
@@ -271,22 +277,16 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 }
 
 // applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *alertmanager) applyAndMarkConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	rawConfig, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-
-	configChanged, err := am.applyConfig(cfg)
+func (am *alertmanager) applyAndMarkConfig(ctx context.Context, config *ngmodels.AlertConfiguration) error {
+	configChanged, err := am.applyConfig(config)
 	if err != nil {
 		return err
 	}
 
 	if configChanged {
 		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
-			OrgID: am.orgID,
-			// This should be the same hash (PostableUserConfig) that is saved to the database.
-			ConfigurationHash: fmt.Sprintf("%x", md5.Sum(rawConfig)),
+			OrgID:             am.orgID,
+			ConfigurationHash: config.ConfigurationHash,
 		}
 		return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
 	}

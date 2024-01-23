@@ -79,7 +79,7 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 
 	t.Run("SaveAlertmanagerConfigurationWithCallback calls callback", func(t *testing.T) {
 		called := false
-		callback := func() error { called = true; return nil }
+		callback := func(configuration models.AlertConfiguration) error { called = true; return nil }
 		cmd := buildSaveConfigCmd(t, "my-config", 1)
 
 		err := store.SaveAlertmanagerConfigurationWithCallback(context.Background(), &cmd, callback)
@@ -90,7 +90,7 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 
 	t.Run("SaveAlertmanagerConfigurationWithCallback rolls back if callback returns error", func(t *testing.T) {
 		_, _ = setupConfigInOrg(t, "my-config", 1, store)
-		callback := func() error { return fmt.Errorf("callback failed") }
+		callback := func(configuration models.AlertConfiguration) error { return fmt.Errorf("callback failed") }
 		cmd := buildSaveConfigCmd(t, "my-config-changed", 1)
 
 		err := store.SaveAlertmanagerConfigurationWithCallback(context.Background(), &cmd, callback)
