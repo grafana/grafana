@@ -74,7 +74,6 @@ func TestGetFolders(t *testing.T) {
 				Title: fmt.Sprintf("Folder %d", i),
 				UID:   fmt.Sprintf("folder-%d", i),
 			})
-			err = fmt.Errorf("error creating folder: %w", err)
 			if err != nil {
 				if i == maxRetries {
 					return retryer.FuncError, err
