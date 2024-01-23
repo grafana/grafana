@@ -27,7 +27,7 @@ func TestDingDingNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := newDingDingNotifier(model, encryptionService.GetDecryptedValue, nil)
+		_, err := newDingDingNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 	t.Run("settings should trigger incident", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestDingDingNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := newDingDingNotifier(model, encryptionService.GetDecryptedValue, nil)
+		not, err := newDingDingNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 		notifier := not.(*DingDingNotifier)
 
 		require.Nil(t, err)

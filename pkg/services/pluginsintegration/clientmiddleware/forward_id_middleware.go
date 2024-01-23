@@ -5,11 +5,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 const forwardIDHeaderName = "X-Grafana-Id"
@@ -33,15 +30,6 @@ func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.Plugi
 	reqCtx := contexthandler.FromContext(ctx)
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || reqCtx == nil || reqCtx.SignedInUser == nil || pCtx.DataSourceInstanceSettings == nil {
-		return nil
-	}
-
-	jsonDataBytes, err := simplejson.NewJson(pCtx.DataSourceInstanceSettings.JSONData)
-	if err != nil {
-		return err
-	}
-
-	if !auth.IsIDForwardingEnabledForDataSource(&datasources.DataSource{JsonData: jsonDataBytes}) {
 		return nil
 	}
 

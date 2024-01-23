@@ -706,10 +706,12 @@ export class PrometheusDatasource
     const expr = promQueryModeller.renderLabels(labelFilters);
 
     if (this.hasLabelsMatchAPISupport()) {
-      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr)).map((v) => ({
-        value: v,
-        text: v,
-      }));
+      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, options.timeRange)).map(
+        (v) => ({
+          value: v,
+          text: v,
+        })
+      );
     }
 
     const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());

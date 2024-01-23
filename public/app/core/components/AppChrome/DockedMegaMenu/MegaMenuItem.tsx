@@ -121,7 +121,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
                 />
               ))
           ) : (
-            <div className={styles.emptyMessage}>{link.emptyMessage}</div>
+            <div className={styles.emptyMessage} aria-live="polite">
+              {link.emptyMessage}
+            </div>
           )}
         </ul>
       )}

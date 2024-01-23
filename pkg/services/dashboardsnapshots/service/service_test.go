@@ -17,14 +17,15 @@ import (
 
 func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
-	dsStore := dashsnapdb.ProvideStore(sqlStore, setting.NewCfg())
+	cfg := setting.NewCfg()
+	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	s := ProvideService(dsStore, secretsService)
 
-	origSecret := setting.SecretKey
-	setting.SecretKey = "dashboard_snapshot_service_test"
+	origSecret := cfg.SecretKey
+	cfg.SecretKey = "dashboard_snapshot_service_test"
 	t.Cleanup(func() {
-		setting.SecretKey = origSecret
+		cfg.SecretKey = origSecret
 	})
 
 	dashboardKey := "12345"
