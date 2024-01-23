@@ -32,7 +32,7 @@ When you install Grafana using Helm, you complete the following tasks:
 2. Deploy Grafana using Helm: Involves installing Grafana into a namespace.
 3. Accessing Grafana: Provides steps to sign in to Grafana
 
-### Setting up the Grafana Helm repository.
+### Setting up the Grafana Helm repository
 
 The first step is to define the URL to the repository so that you download the correct Grafana Helm charts on your machine.
 
@@ -66,6 +66,13 @@ To set up, complete the following steps:
    ```
    helm repo update
    ```
+
+### Deploy the Grafana Helm charts
+
+Now we have setup the Grafana Helm repository succesfully, we can start to deploy it on our Kubernetes cluster.
+
+When you deploy Grafana Helm charts, use a separate namespace instead of relying on the default namespace. The default namespace might already have other applications running, which can lead to conflicts and other potential issues.
+When you create a new namespace in Kubernetes, you can better organize, allocate, and manage cluster resources. For more information about Namespaces, refer to [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
 
 
