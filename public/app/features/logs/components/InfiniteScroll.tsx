@@ -5,7 +5,6 @@ import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
-import { Spinner } from '@grafana/ui';
 
 import { LoadingIndicator } from './LoadingIndicator';
 
@@ -54,7 +53,7 @@ export const InfiniteScroll = ({
     }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMoreLogs || !rows.length || loading || upperLoading || lowerLoading) {
+      if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
       }
       event.stopImmediatePropagation();
@@ -112,7 +111,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [loadMoreLogs, loading, lowerLoading, range, rows, scrollElement, sortOrder, timeZone, upperLoading]);
+  }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
