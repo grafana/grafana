@@ -1,10 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { rest } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import 'whatwg-fetch';
-
-import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
