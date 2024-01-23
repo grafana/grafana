@@ -43,7 +43,7 @@ interface TooltipPlugin2Props {
     timeRange: TimeRange2 | null
   ) => React.ReactNode;
 
-  maxWidth?: number | 'none';
+  maxWidth?: number | string;
   maxHeight?: number;
 }
 
@@ -483,7 +483,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth: number | 'none', maxHeight: number) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth: number | string, maxHeight: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
