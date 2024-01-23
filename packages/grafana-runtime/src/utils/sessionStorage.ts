@@ -6,6 +6,6 @@ export const getReturnToPrevious = () => {
 };
 
 export const setReturnToPrevious = ({ title, href }: { title: string; href: string }) => {
-  window.sessionStorage['returnToPreviousTitle'] = title;
-  window.sessionStorage['returnToPreviousHref'] = href;
+  sessionStorage.setItem('returnToPreviousTitle', title);
+  sessionStorage.setItem('returnToPreviousHref', href);
 };
