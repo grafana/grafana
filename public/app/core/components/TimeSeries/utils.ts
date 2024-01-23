@@ -643,8 +643,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           return true;
         },
       },
-      scales: [xScaleKey, yScaleKey],
-      // match: [() => true, (a, b) => a === b],
+      scales: [xScaleKey, null],
+      // match: [() => true, () => false],
     };
   }
 

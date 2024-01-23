@@ -81,7 +81,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       "key": "__global_",
       "scales": [
         "x",
-        "__fixed/na-na/na-na/auto/linear/na/number",
+        null,
       ],
     },
   },
