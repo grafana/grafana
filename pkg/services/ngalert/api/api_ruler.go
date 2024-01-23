@@ -28,8 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-type NotificationSettingsValidator interface {
-	Validate(ctx context.Context, orgID int64, route []ngmodels.NotificationSettings) error
+type NotificationSettingsValidatorProvider interface {
+	Validator(ctx context.Context, orgID int64) (ngmodels.NotificationSettingsValidator, error)
 }
 
 type ConditionValidator interface {
@@ -38,15 +38,16 @@ type ConditionValidator interface {
 }
 
 type RulerSrv struct {
-	xactManager                   provisioning.TransactionManager
-	provenanceStore               provisioning.ProvisioningStore
-	store                         RuleStore
-	QuotaService                  quota.Service
-	log                           log.Logger
-	cfg                           *setting.UnifiedAlertingSettings
-	conditionValidator            ConditionValidator
-	authz                         RuleAccessControlService
-	notificationSettingsValidator NotificationSettingsValidator
+	xactManager        provisioning.TransactionManager
+	provenanceStore    provisioning.ProvisioningStore
+	store              RuleStore
+	QuotaService       quota.Service
+	log                log.Logger
+	cfg                *setting.UnifiedAlertingSettings
+	conditionValidator ConditionValidator
+	authz              RuleAccessControlService
+
+	notificationSettingsValidatorFactory NotificationSettingsValidatorProvider
 }
 
 var (
@@ -302,7 +303,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
-		err = validateNotifications(c.Req.Context(), groupChanges, srv.notificationSettingsValidator)
+		err = validateNotifications(c.Req.Context(), groupChanges, srv.notificationSettingsValidatorFactory)
 		if err != nil {
 			return err
 		}
@@ -533,13 +534,25 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 	return nil
 }
 
-func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, validator NotificationSettingsValidator) error {
-	var toValidate []ngmodels.NotificationSettings
+func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, provider NotificationSettingsValidatorProvider) error {
+	var validator ngmodels.NotificationSettingsValidator
+	var err error
 	for _, rule := range groupChanges.New {
 		if rule.NotificationSettings == nil {
 			continue
 		}
-		toValidate = append(toValidate, rule.NotificationSettings...)
+		if validator != nil {
+			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
+			if err != nil {
+				return err
+			}
+		}
+		for _, s := range rule.NotificationSettings {
+			err = validator.Validate(s)
+			if err != nil {
+				return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+			}
+		}
 	}
 	for _, delta := range groupChanges.Update {
 		if len(delta.New.NotificationSettings) == 0 {
@@ -550,12 +563,17 @@ func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, 
 		if len(d) == 0 {
 			continue
 		}
-		toValidate = append(toValidate, delta.New.NotificationSettings...)
-	}
-	if len(toValidate) > 0 {
-		err := validator.Validate(ctx, groupChanges.GroupKey.OrgID, toValidate)
-		if err != nil {
-			return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+		if validator != nil {
+			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
+			if err != nil {
+				return err
+			}
+		}
+		for _, s := range delta.New.NotificationSettings {
+			err = validator.Validate(s)
+			if err != nil {
+				return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+			}
 		}
 	}
 	return nil

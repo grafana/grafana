@@ -114,7 +114,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                           logger,
 			cfg:                           &api.Cfg.UnifiedAlerting,
 			authz:                         ruleAuthzService,
-			notificationSettingsValidator: notifier.NewNotificationSettingsValidationService(api.AlertingStore),
+			notificationSettingsValidatorFactory: notifier.NewNotificationSettingsValidationService(api.AlertingStore),
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
