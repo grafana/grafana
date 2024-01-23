@@ -968,6 +968,7 @@
     "megamenu": {
       "close": "关闭菜单",
       "dock": "停靠菜单",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
