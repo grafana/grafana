@@ -232,9 +232,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       expandedQuery.groupBy = query.groupBy.map((groupBy) => {
         return {
           ...groupBy,
-          params: groupBy.params?.map((param) => {
-            return this.templateSrv.replace(param.toString(), undefined, this.interpolateQueryExpr);
-          }),
+          params: groupBy.params?.map((param) => this.templateSrv.replace(param.toString(), undefined)),
         };
       });
     }
@@ -244,9 +242,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return selects.map((select) => {
           return {
             ...select,
-            params: select.params?.map((param) => {
-              return this.templateSrv.replace(param.toString(), undefined, this.interpolateQueryExpr);
-            }),
+            params: select.params?.map((param) => this.templateSrv.replace(param.toString(), undefined)),
           };
         });
       });
@@ -256,8 +252,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       expandedQuery.tags = query.tags.map((tag) => {
         return {
           ...tag,
-          key: this.templateSrv.replace(tag.key, scopedVars, this.interpolateQueryExpr),
-          value: this.templateSrv.replace(tag.value, scopedVars, 'regex'),
+          key: this.templateSrv.replace(tag.key, scopedVars),
+          value: this.templateSrv.replace(tag.value, scopedVars, 'pipe'),
         };
       });
     }
@@ -265,13 +261,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return {
       ...expandedQuery,
       adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
-      query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw influxql query text
+      query: new InfluxQueryModel(query, this.templateSrv, scopedVars).render(true), // The raw influxql query text
       rawSql: this.templateSrv.replace(query.rawSql ?? '', scopedVars, this.interpolateQueryExpr), // The raw sql query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
-      limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, this.interpolateQueryExpr),
-      measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, this.interpolateQueryExpr),
-      policy: this.templateSrv.replace(query.policy ?? '', scopedVars, this.interpolateQueryExpr),
-      slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars, this.interpolateQueryExpr),
+      limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars),
+      measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars),
+      policy: this.templateSrv.replace(query.policy ?? '', scopedVars),
+      slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars),
       tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
     };
   }
