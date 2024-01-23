@@ -337,7 +337,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		sqlStore.Cfg = settings
 
-		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
+		tempUserSvc := tempuserimpl.ProvideService(sqlStore)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, settings, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
