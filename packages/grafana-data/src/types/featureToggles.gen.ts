@@ -42,6 +42,7 @@ export interface FeatureToggles {
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
   dockedMegaMenu?: boolean;
+  returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
@@ -107,8 +108,6 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
-  traceToProfiles?: boolean;
-  tracesEmbeddedFlameGraph?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -175,4 +174,7 @@ export interface FeatureToggles {
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;
+  jitterAlertRules?: boolean;
+  jitterAlertRulesWithinGroups?: boolean;
+  onPremToCloudMigrations?: boolean;
 }
