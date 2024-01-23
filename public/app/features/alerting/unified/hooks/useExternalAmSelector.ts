@@ -62,33 +62,41 @@ function determineAlertmanagerConnectionStatus(
     return 'uninterested';
   }
 
-  const isActive =
+  const activeMatches =
     externalAlertmanagers?.activeAlertManagers.filter((am) => {
       return isAlertmanagerMatchByURL(dataSourceSettings.url, am.url);
     }) ?? [];
 
-  const isDropped =
+  const droppedMatches =
     externalAlertmanagers?.droppedAlertManagers.filter((am) => {
       return isAlertmanagerMatchByURL(dataSourceSettings.url, am.url);
     }) ?? [];
 
-  const isPending = isActive.length === 0 && isDropped.length === 0;
+  const isActive = Boolean(activeMatches.length);
+  const isDropped = Boolean(droppedMatches.length);
 
-  let status: ConnectionStatus = 'unknown';
-  if (isActive?.length === 1) {
-    status = 'active';
-  } else if (isDropped.length === 1) {
-    status = 'dropped';
-  } else if (isActive.length + isDropped.length > 1) {
-    // Multiple Alertmanagers of the same URL may exist (e.g. with different credentials)
-    // Alertmanager response only contains URLs, so in case of duplication, we are not able
-    // to distinguish which is which, resulting in an inconclusive status.
-    status = 'inconclusive';
-  } else if (isPending) {
-    status = 'pending';
+  // the Alertmanager is being adopted (pending) if it is interested in handling alerts but not in either "active" or "dropped"
+  const isPending = !isActive && !isDropped;
+  if (isPending) {
+    return 'pending';
   }
 
-  return status;
+  // Multiple Alertmanagers of the same URL may exist (e.g. with different credentials)
+  // Alertmanager response only contains URLs, so when the URL exists in both active and dropped, we are not able
+  // to distinguish which is which, resulting in an inconclusive status.
+  const isInconclusive = isActive && isDropped;
+  if (isInconclusive) {
+    return 'inconclusive';
+  }
+
+  // if we get here, it's neither "uninterested", nor "inconclusive" nor "pending"
+  if (isActive) {
+    return 'active';
+  } else if (isDropped) {
+    return 'dropped';
+  }
+
+  return 'unknown';
 }
 
 // the vanilla Alertmanager and Mimir Alertmanager mount their API endpoints on different sub-paths

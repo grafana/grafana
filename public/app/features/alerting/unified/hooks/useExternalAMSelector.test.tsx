@@ -151,7 +151,30 @@ describe('useExternalDataSourceAlertmanagers', () => {
     });
   });
 
-  it('Should have inconclusive state when there are many Alertmanagers of the same URL', async () => {
+  it('Should have inconclusive state when there are many Alertmanagers of the same URL on both active and inactive', async () => {
+    // Arrange
+    mockAlertmanagersResponse(server, {
+      data: {
+        activeAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }],
+        droppedAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }],
+      },
+    });
+
+    setupAlertmanagerDataSource(server, { url: 'http://grafana.com' });
+
+    // Act
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), {
+      wrapper: TestProvider,
+    });
+
+    await waitFor(() => {
+      // Assert
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0].status).toBe('inconclusive');
+    });
+  });
+
+  it('Should have not have inconclusive state when all Alertmanagers of the same URL are active', async () => {
     // Arrange
     mockAlertmanagersResponse(server, {
       data: {
@@ -170,7 +193,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
     await waitFor(() => {
       // Assert
       expect(result.current).toHaveLength(1);
-      expect(result.current[0].status).toBe('inconclusive');
+      expect(result.current[0].status).toBe('active');
     });
   });
 });
