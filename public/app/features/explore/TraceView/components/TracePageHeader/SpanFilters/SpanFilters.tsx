@@ -511,7 +511,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'space-between',
     }),
     addTag: css({
-      marginLeft: '10px',
+      marginLeft: theme.spacing(1),
     }),
     intervalInput: css`
       margin: 0 -4px 0 0;

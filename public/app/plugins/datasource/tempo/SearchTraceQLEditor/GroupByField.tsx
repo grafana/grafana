@@ -101,16 +101,17 @@ export const GroupByField = (props: Props) => {
                 placeholder="Select tag"
                 value={f.tag || ''}
               />
-              <AccessoryButton
-                aria-label={`Remove tag for filter ${i + 1}`}
-                icon="times"
-                onClick={() => removeFilter(f)}
-                tooltip="Remove tag"
-                variant="secondary"
-              />
-
-              {i === (query.groupBy?.length ?? 0) - 1 && (
-                <span className={styles.addFilter}>
+              {(f.tag || f.value || i > 0) && (
+                <AccessoryButton
+                  aria-label={`Remove tag for filter ${i + 1}`}
+                  icon="times"
+                  onClick={() => removeFilter(f)}
+                  tooltip="Remove tag"
+                  variant="secondary"
+                />
+              )}
+              {(f.tag || f.value) && i === (query.groupBy?.length ?? 0) - 1 && (
+                <span className={styles.addTag}>
                   <AccessoryButton
                     aria-label="Add tag"
                     icon="plus"
@@ -129,7 +130,7 @@ export const GroupByField = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addFilter: css({
-    marginLeft: theme.spacing(2),
+  addTag: css({
+    marginLeft: theme.spacing(1),
   }),
 });

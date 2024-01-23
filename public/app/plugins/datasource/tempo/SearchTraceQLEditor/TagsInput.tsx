@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { FetchError } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -12,7 +13,7 @@ import { TempoDatasource } from '../datasource';
 import SearchField from './SearchField';
 import { getFilteredTags } from './utils';
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   vertical: css`
     display: flex;
     flex-direction: column;
@@ -23,7 +24,7 @@ const getStyles = () => ({
     flex-direction: row;
   `,
   addTag: css({
-    marginLeft: '10px',
+    marginLeft: theme.spacing(1),
   }),
 });
 
