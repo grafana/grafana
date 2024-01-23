@@ -1,13 +1,14 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import {
   GrafanaTheme2,
   StandardEditorProps,
   FieldNamePickerBaseNameMode,
   StandardEditorsRegistryItem,
+  getFrameDisplayName,
 } from '@grafana/data';
-import { Button, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
 import { ScatterSeriesEditor } from './ScatterSeriesEditor';
@@ -18,7 +19,20 @@ export const ManualEditor = ({
   onChange,
   context,
 }: StandardEditorProps<ScatterSeriesConfig[], unknown, Options>) => {
+  const frameNames = useMemo(() => {
+    if (context?.data?.length) {
+      return context.data.map((f, idx) => ({
+        value: idx,
+        label: `${getFrameDisplayName(f, idx)} (index: ${idx}, rows: ${f.length})`,
+      }));
+    }
+    return [{ value: 0, label: 'First result' }];
+  }, [context.data]);
+
   const [selected, setSelected] = useState(0);
+  // TODO make data filter changes trigger value update using onChange()
+  // const [dataFilter, setDataFilter] = useState<DataFilterBySeries[]>([{ frame: 0 }]);
+  // const [currentFrame, setCurrentFrame] = useState<any>();
   const style = useStyles2(getStyles);
 
   const onFieldChange = (val: unknown | undefined, index: number, field: string) => {
@@ -101,23 +115,48 @@ export const ManualEditor = ({
       </div>
 
       {selected >= 0 && value[selected] && (
-        <ScatterSeriesEditor
-          key={`series/${selected}`}
-          baseNameMode={FieldNamePickerBaseNameMode.ExcludeBaseNames}
-          item={{} as StandardEditorsRegistryItem}
-          context={context}
-          value={value[selected]}
-          onChange={(v) => {
-            onChange(
-              value.map((obj, i) => {
-                if (i === selected) {
-                  return v!;
+        <>
+          <Field label={'Data'}>
+            <Select
+              isClearable={true}
+              options={frameNames}
+              placeholder={frameNames[0].label}
+              value={
+                frameNames.find((v) => {
+                  return v.value === value[selected].frame;
+                }) ?? null
+              }
+              onChange={(v) => {
+                if (v === null) {
+                  value[selected].frame = undefined;
+                } else {
+                  console.log(v);
+                  value[selected].frame = v?.value!;
+                  value[selected].x = undefined;
+                  value[selected].y = undefined;
                 }
-                return obj;
-              })
-            );
-          }}
-        />
+              }}
+            />
+          </Field>
+          <ScatterSeriesEditor
+            key={`series/${selected}`}
+            baseNameMode={FieldNamePickerBaseNameMode.ExcludeBaseNames}
+            item={{} as StandardEditorsRegistryItem}
+            context={context}
+            value={value[selected]}
+            onChange={(v) => {
+              onChange(
+                value.map((obj, i) => {
+                  if (i === selected) {
+                    return v!;
+                  }
+                  return obj;
+                })
+              );
+            }}
+            frameFilter={value[selected].frame ?? undefined}
+          />
+        </>
       )}
     </>
   );

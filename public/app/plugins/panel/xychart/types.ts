@@ -64,3 +64,7 @@ export interface ExtraFacets {
   colorFacetValue: number;
   sizeFacetValue: number;
 }
+
+export interface DataFilterBySeries {
+  frame: number;
+}

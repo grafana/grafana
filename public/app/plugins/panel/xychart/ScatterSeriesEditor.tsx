@@ -9,13 +9,21 @@ import { Options, ScatterSeriesConfig } from './panelcfg.gen';
 
 export interface Props extends StandardEditorProps<ScatterSeriesConfig, unknown, Options> {
   baseNameMode: FieldNamePickerBaseNameMode;
+  frameFilter?: number;
 }
 
-export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode }: Props) => {
+export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, frameFilter }: Props) => {
   const onFieldChange = (val: unknown | undefined, field: string) => {
     onChange({ ...value, [field]: val });
   };
 
+  //TODO add onDataFilterChange
+  //TODO make fieldnamepicker options dependet upon data filter select
+
+  const frame = context.data ? context.data[frameFilter ?? 0] : undefined;
+  if (frame) {
+    console.log(frame);
+  }
   return (
     <div>
       <Field label={'X Field'}>
