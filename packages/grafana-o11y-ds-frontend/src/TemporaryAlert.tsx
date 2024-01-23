@@ -12,16 +12,16 @@ export const TemporaryAlert = (props: {
   const theme = useTheme2();
 
   useEffect(() => {
-  let timer: ReturnType<typeof setTimeout>;
     if (props.visible) {
-      timer = setTimeout(() => {
+      const timer = setTimeout(() => {
         props.setVisible(false);
       }, 3000);
-      
+
       return () => {
-        clearTimeout(timer)
-      }
+        clearTimeout(timer);
+      };
     }
+    return () => {};
   }, [props]);
 
   return (
