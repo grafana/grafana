@@ -57,8 +57,9 @@ func TestIntegrationCreateFolder(t *testing.T) {
 				Title: "folder",
 			})
 			require.Error(t, err)
-			var conflict *folders.CreateFolderConflict // Change the type to a non-nil pointer
+			var conflict *folders.CreateFolderConflict
 			assert.True(t, errors.As(err, &conflict))
+			assert.Equal(t, http.StatusConflict, conflict.Code())
 		})
 	})
 }
@@ -96,8 +97,9 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 				Title: "folder",
 			})
 			require.Error(t, err)
-			var conflict *folders.CreateFolderConflict // Change the type to a non-nil pointer
+			var conflict *folders.CreateFolderConflict
 			assert.True(t, errors.As(err, &conflict))
+			assert.Equal(t, http.StatusConflict, conflict.Code())
 		})
 	})
 
@@ -122,8 +124,9 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 				ParentUID: parentUID,
 			})
 			require.Error(t, err)
-			var conflict *folders.CreateFolderConflict // Change the type to a non-nil pointer
+			var conflict *folders.CreateFolderConflict
 			assert.True(t, errors.As(err, &conflict))
+			assert.Equal(t, http.StatusConflict, conflict.Code())
 		})
 
 		t.Run("create subfolder with same name under other folder should succeed", func(t *testing.T) {
@@ -148,10 +151,9 @@ func TestIntegrationNestedFoldersOn(t *testing.T) {
 					ParentUID: parentUID,
 				})
 				require.Error(t, err)
-				var apiError *runtime.APIError // Change the type to a non-nil pointer
+				var apiError *runtime.APIError
 				assert.True(t, errors.As(err, &apiError))
 				assert.Equal(t, http.StatusConflict, apiError.Code)
-
 			})
 
 			t.Run("move subfolder to root should succeed", func(t *testing.T) {
@@ -168,7 +170,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	t.Helper()
 
 	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = 1
+	store.Cfg.AutoAssignOrgId = orgID
 
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)
 	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
