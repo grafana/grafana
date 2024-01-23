@@ -1,4 +1,6 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { lastValueFrom, map } from 'rxjs';
+
+import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
@@ -85,8 +87,7 @@ class K8sAPI implements DashboardSnapshotSrv {
   readonly url: string;
 
   constructor() {
-    const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
-    this.url = `/apis/${this.apiVersion}/namespaces/${ns}/dashsnaps`;
+    this.url = `/apis/${this.apiVersion}/namespaces/${config.namespace}/dashsnaps`;
   }
 
   async create(cmd: SnapshotCreateCommand) {
@@ -110,28 +111,44 @@ class K8sAPI implements DashboardSnapshotSrv {
   }
 
   async getSharingOptions() {
-    // TODO.. point to namespaced version
+    // TODO? point to namespaced version
     return getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options');
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {
-    const v = await getBackendSrv().get<K8sDashboardSnapshot>(this.url + '/' + uid + '/body');
-    return {
-      dashboard: v.dashboard,
-      meta: {
-        isSnapshot: true,
-        canSave: false,
-        canEdit: false,
-        canAdmin: false,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isFolder: false,
-        folderId: 0,
-        provisioned: false,
-        provisionedExternalId: '',
-      },
-    };
+    const headers: Record<string, string> = {};
+    if (!contextSrv.isSignedIn) {
+      alert('TODO... need a barer token for anonymous use case');
+      headers['Authorization'] = 'Bearer ???? anon ??? snapshots ???';
+    }
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<K8sDashboardSnapshot>({
+          url: this.url + '/' + uid + '/body',
+          method: 'GET',
+          headers: headers,
+        })
+        .pipe(
+          map((response: FetchResponse<K8sDashboardSnapshot>) => {
+            return {
+              dashboard: response.data.dashboard,
+              meta: {
+                isSnapshot: true,
+                canSave: false,
+                canEdit: false,
+                canAdmin: false,
+                canStar: false,
+                canShare: false,
+                canDelete: false,
+                isFolder: false,
+                folderId: 0,
+                provisioned: false,
+                provisionedExternalId: '',
+              },
+            };
+          })
+        )
+    );
   }
 }
 
