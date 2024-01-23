@@ -78,7 +78,7 @@ require (
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
 	github.com/mattn/go-isatty v0.0.18 // @grafana/backend-platform
-	github.com/mattn/go-sqlite3 v1.14.16 // @grafana/backend-platform
+	github.com/mattn/go-sqlite3 v1.14.19 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
