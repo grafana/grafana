@@ -33,7 +33,7 @@
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx}\"",
     "prettier:checkDocs": "prettier --check --list-different=false --log-level=warn \"docs/**/*.md\" \"*.md\" \"packages/**/*.{ts,tsx,scss,md,mdx}\"",
     "prettier:write": "prettier --list-different \"**/*.{js,ts,tsx,scss,md,mdx}\" --write",
-    "start": "yarn dev --watch",
+    "start": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js --watch",
     "start:noTsCheck": "yarn start --env noTsCheck=1",
     "start:noLint": "yarn start --env noTsCheck=1 --env noLint=1",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
@@ -66,10 +66,15 @@
         "dependsOn": [
           "grafana:themes:generate",
           "grafana:i18n:compile",
-          "@grafana-plugins/grafana-testdata-datasource:build"
+          "@grafana-plugins/grafana-testdata-datasource:build",
+          "@grafana-plugins/grafana-pyroscope-datasource:build",
+          "@grafana-plugins/grafana-azure-monitor-datasource:build",
+          "@grafana-plugins/parca:build",
+          "@grafana-plugins/tempo:build"
         ]
       }
-    }
+    },
+    "parallel": 5
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-3/",

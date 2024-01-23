@@ -23,6 +23,5 @@
   },
   "affected": {
     "defaultBase": "main"
-  },
-  "parallel": 5
+  }
 }

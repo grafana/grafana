@@ -32,7 +32,14 @@ module.exports = (env = {}) => {
 
     // If we enabled watch option via CLI
     watchOptions: {
-      ignored: /node_modules/,
+      ignored: [
+        '/node_modules/',
+        'public/app/plugins/datasource/azuremonitor',
+        'public/app/plugins/datasource/grafana-pyroscope-datasource',
+        'public/app/plugins/datasource/grafana-testdata-datasource',
+        'public/app/plugins/datasource/parca',
+        'public/app/plugins/datasource/tempo',
+      ],
     },
 
     module: {

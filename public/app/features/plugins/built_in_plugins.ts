@@ -29,14 +29,8 @@ const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
 const cloudMonitoringPlugin = async () =>
   await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
-const azureMonitorPlugin = async () =>
-  await import(/* webpackChunkName: "azureMonitorPlugin" */ '@grafana-plugins/grafana-azure-monitor-datasource/module');
-const tempoPlugin = async () => await import(/* webpackChunkName: "tempoPlugin" */ '@grafana-plugins/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
-const pyroscopePlugin = async () =>
-  await import(/* webpackChunkName: "pyroscopePlugin" */ '@grafana-plugins/grafana-pyroscope-datasource/module');
-const parcaPlugin = async () => await import(/* webpackChunkName: "parcaPlugin" */ '@grafana-plugins/parca/module');
 
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
@@ -94,11 +88,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/mssql': mssqlPlugin,
   'core:plugin/prometheus': prometheusPlugin,
   'core:plugin/cloud-monitoring': cloudMonitoringPlugin,
-  'core:plugin/azuremonitor': azureMonitorPlugin,
-  'core:plugin/tempo': tempoPlugin,
   'core:plugin/alertmanager': alertmanagerPlugin,
-  'core:plugin/grafana-pyroscope-datasource': pyroscopePlugin,
-  'core:plugin/parca': parcaPlugin,
   // panels
   'core:plugin/text': textPanel,
   'core:plugin/timeseries': timeseriesPanel,
