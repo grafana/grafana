@@ -715,15 +715,6 @@ var (
 			Created:      time.Date(2023, time.August, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "grafanaAPIServer",
-			Description:     "Enable Kubernetes API Server for Grafana resources",
-			Stage:           FeatureStageGeneralAvailability,
-			Expression:      "true", // enabled by default
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Created:         time.Date(2023, time.July, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server",
 			Stage:           FeatureStageExperimental,
