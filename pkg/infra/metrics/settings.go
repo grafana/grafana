@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/graphitebridge"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (im *InternalMetricsService) readSettings() error {
@@ -48,7 +47,7 @@ func (im *InternalMetricsService) parseGraphiteSettings() error {
 		ErrorHandling:   graphitebridge.ContinueOnError,
 	}
 
-	safeInstanceName := strings.ReplaceAll(setting.InstanceName, ".", "_")
+	safeInstanceName := strings.ReplaceAll(im.Cfg.InstanceName, ".", "_")
 	prefix := graphiteSection.Key("prefix").Value()
 
 	if prefix == "" {

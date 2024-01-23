@@ -159,12 +159,8 @@ func (sc *SmtpClient) createDialer() (*gomail.Dialer, error) {
 	d := gomail.NewDialer(host, iPort, sc.cfg.User, sc.cfg.Password)
 	d.TLSConfig = tlsconfig
 	d.StartTLSPolicy = getStartTLSPolicy(sc.cfg.StartTLSPolicy)
+	d.LocalName = sc.cfg.EhloIdentity
 
-	if sc.cfg.EhloIdentity != "" {
-		d.LocalName = sc.cfg.EhloIdentity
-	} else {
-		d.LocalName = setting.InstanceName
-	}
 	return d, nil
 }
 

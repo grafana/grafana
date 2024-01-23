@@ -47,7 +47,7 @@ func init() {
 
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+func NewVictoropsNotifier(_ *setting.Cfg, model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
 	url := model.Settings.Get("url").MustString()
 	if url == "" {

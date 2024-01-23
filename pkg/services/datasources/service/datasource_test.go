@@ -608,7 +608,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
+		cfg.SecretKey = "password"
 
 		sjson := simplejson.New()
 		sjson.Set("tlsAuthWithCACert", true)
@@ -659,7 +659,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
+		cfg.SecretKey = "password"
 
 		sjson := simplejson.New()
 		sjson.Set("tlsAuth", true)
@@ -706,7 +706,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		setting.SecretKey = "password"
+		cfg.SecretKey = "password"
 
 		sjson := simplejson.New()
 		sjson.Set("tlsAuthWithCACert", true)
@@ -968,10 +968,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		origSigV4Enabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = true
+		origSigV4Enabled := cfg.SigV4AuthEnabled
+		cfg.SigV4AuthEnabled = true
 		t.Cleanup(func() {
-			setting.SigV4AuthEnabled = origSigV4Enabled
+			cfg.SigV4AuthEnabled = origSigV4Enabled
 		})
 
 		sjson, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))

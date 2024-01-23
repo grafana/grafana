@@ -245,7 +245,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, *sqlstore.SQLSto
 	ac := acimpl.ProvideAccessControl(cfg)
 	acService := &actest.FakeService{}
 	service, err := New(
-		ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
+		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc,
 	)
 	require.NoError(t, err)

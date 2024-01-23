@@ -69,7 +69,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	dashboardCache := make(map[int64]*string)
 	for _, item := range items {
 		if item.Email != "" {
-			item.AvatarURL = dtos.GetGravatarUrl(item.Email)
+			item.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, item.Email)
 		}
 
 		if item.DashboardID != 0 {
@@ -485,7 +485,7 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 	}
 
 	if annotation.Email != "" {
-		annotation.AvatarURL = dtos.GetGravatarUrl(annotation.Email)
+		annotation.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, annotation.Email)
 	}
 
 	return response.JSON(200, annotation)

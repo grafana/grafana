@@ -72,9 +72,9 @@ func init() {
 }
 
 // NewSensuGoNotifier is the constructor for the Sensu Go Notifier.
-func NewSensuGoNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+func NewSensuGoNotifier(cfg *setting.Cfg, model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
-	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString(), setting.SecretKey)
+	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString(), cfg.SecretKey)
 
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find URL property in settings"}

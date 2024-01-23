@@ -125,7 +125,7 @@ func ProvideService(
 	}
 
 	// Development dashboards
-	if settings.AddDevEnv && setting.Env != setting.Prod {
+	if settings.AddDevEnv && cfg.Env != setting.Prod {
 		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
 		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
 			s := newDiskStorage(RootStorageMeta{

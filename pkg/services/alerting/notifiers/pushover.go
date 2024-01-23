@@ -193,9 +193,9 @@ func init() {
 }
 
 // NewPushoverNotifier is the constructor for the Pushover Notifier
-func NewPushoverNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
-	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString(), setting.SecretKey)
-	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString(), setting.SecretKey)
+func NewPushoverNotifier(cfg *setting.Cfg, model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString(), cfg.SecretKey)
+	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString(), cfg.SecretKey)
 	device := model.Settings.Get("device").MustString()
 	alertingPriority, err := strconv.Atoi(model.Settings.Get("priority").MustString("0")) // default Normal
 	if err != nil {

@@ -52,7 +52,7 @@ func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 	}
 
 	// Save a template version in config
-	if changed && setting.Env != setting.Prod {
+	if changed && cfg.Env != setting.Prod {
 		return g, g.save()
 	}
 	return g, nil

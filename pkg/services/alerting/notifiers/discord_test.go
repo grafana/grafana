@@ -24,7 +24,7 @@ func TestDiscordNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := newDiscordNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := newDiscordNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -43,7 +43,7 @@ func TestDiscordNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := newDiscordNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := newDiscordNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			discordNotifier := not.(*DiscordNotifier)
 
 			require.Nil(t, err)

@@ -216,7 +216,7 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client
 		return nil, nil
 	}
 
-	if setting.Env == setting.Dev {
+	if s.cfg.Env == setting.Dev {
 		s.log.Debug("Received id_token", "raw_json", string(rawJSON))
 	}
 

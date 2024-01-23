@@ -554,7 +554,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		opts.ProxyOptions = proxyOpts
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && setting.SigV4AuthEnabled {
+	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && s.cfg.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
 			Service:       awsServiceNamespace(ds.Type, ds.JsonData),
 			Region:        ds.JsonData.Get("sigV4Region").MustString(),

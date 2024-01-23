@@ -39,7 +39,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewVictoropsNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -56,7 +56,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewVictoropsNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			victoropsNotifier := not.(*VictoropsNotifier)
 
 			require.Nil(t, err)
@@ -80,7 +80,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewVictoropsNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			require.Nil(t, err)
 
 			victoropsNotifier := not.(*VictoropsNotifier)
@@ -128,7 +128,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewVictoropsNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			require.Nil(t, err)
 
 			victoropsNotifier := not.(*VictoropsNotifier)

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,7 +14,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -80,7 +78,7 @@ func getUsageStats(t *testing.T, server *web.Mux) (*stats.SystemStats, *httptest
 
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *UsageStats) *web.Mux {
 	server := web.New()
-	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	server.UseMiddleware(web.Renderer("views", "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
 	service.RouteRegister.Register(server)
 	return server

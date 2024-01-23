@@ -118,17 +118,17 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should return validation error if alert data is invalid", func(t *testing.T) {
-				origAlertingEnabledSet := setting.AlertingEnabled != nil
+				origAlertingEnabledSet := service.cfg.AlertingEnabled != nil
 				origAlertingEnabledVal := false
 				if origAlertingEnabledSet {
-					origAlertingEnabledVal = *setting.AlertingEnabled
+					origAlertingEnabledVal = *(service.cfg.AlertingEnabled)
 				}
-				setting.AlertingEnabled = util.Pointer(true)
+				service.cfg.AlertingEnabled = util.Pointer(true)
 				t.Cleanup(func() {
 					if !origAlertingEnabledSet {
-						setting.AlertingEnabled = nil
+						service.cfg.AlertingEnabled = nil
 					} else {
-						setting.AlertingEnabled = &origAlertingEnabledVal
+						service.cfg.AlertingEnabled = &origAlertingEnabledVal
 					}
 				})
 
@@ -163,9 +163,9 @@ func TestDashboardService(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
 
-				oldRefreshInterval := setting.MinRefreshInterval
-				setting.MinRefreshInterval = "5m"
-				defer func() { setting.MinRefreshInterval = oldRefreshInterval }()
+				oldRefreshInterval := service.cfg.MinRefreshInterval
+				service.cfg.MinRefreshInterval = "5m"
+				defer func() { service.cfg.MinRefreshInterval = oldRefreshInterval }()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)

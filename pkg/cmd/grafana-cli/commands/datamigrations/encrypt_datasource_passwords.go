@@ -27,14 +27,14 @@ var (
 
 // EncryptDatasourcePasswords migrates unencrypted secrets on datasources
 // to the secureJson Column.
-func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore db.DB) error {
+func EncryptDatasourcePasswords(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
 	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
-		passwordsUpdated, err := migrateColumn(session, "password")
+		passwordsUpdated, err := migrateColumn(cfg, session, "password")
 		if err != nil {
 			return err
 		}
 
-		basicAuthUpdated, err := migrateColumn(session, "basic_auth_password")
+		basicAuthUpdated, err := migrateColumn(cfg, session, "basic_auth_password")
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore db.DB) error {
 	})
 }
 
-func migrateColumn(session *db.Session, column string) (int, error) {
+func migrateColumn(cfg *setting.Cfg, session *db.Session, column string) (int, error) {
 	var rows []map[string][]byte
 
 	session.Cols("id", column, "secure_json_data")
@@ -74,18 +74,18 @@ func migrateColumn(session *db.Session, column string) (int, error) {
 		return 0, fmt.Errorf("failed to select column: %s: %w", column, err)
 	}
 
-	rowsUpdated, err := updateRows(session, rows, column)
+	rowsUpdated, err := updateRows(cfg, session, rows, column)
 	if err != nil {
 		return rowsUpdated, fmt.Errorf("failed to update column: %s: %w", column, err)
 	}
 	return rowsUpdated, err
 }
 
-func updateRows(session *db.Session, rows []map[string][]byte, passwordFieldName string) (int, error) {
+func updateRows(cfg *setting.Cfg, session *db.Session, rows []map[string][]byte, passwordFieldName string) (int, error) {
 	var rowsUpdated int
 
 	for _, row := range rows {
-		newSecureJSONData, err := getUpdatedSecureJSONData(row, passwordFieldName)
+		newSecureJSONData, err := getUpdatedSecureJSONData(cfg.SecretKey, row, passwordFieldName)
 		if err != nil {
 			return 0, err
 		}
@@ -111,8 +111,8 @@ func updateRows(session *db.Session, rows []map[string][]byte, passwordFieldName
 	return rowsUpdated, nil
 }
 
-func getUpdatedSecureJSONData(row map[string][]byte, passwordFieldName string) (map[string]any, error) {
-	encryptedPassword, err := util.Encrypt(row[passwordFieldName], setting.SecretKey)
+func getUpdatedSecureJSONData(secretKey string, row map[string][]byte, passwordFieldName string) (map[string]any, error) {
+	encryptedPassword, err := util.Encrypt(row[passwordFieldName], secretKey)
 	if err != nil {
 		return nil, err
 	}

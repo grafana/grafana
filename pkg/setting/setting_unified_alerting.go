@@ -170,20 +170,20 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
 			legacyAlerting := false
-			AlertingEnabled = &legacyAlerting
+			cfg.AlertingEnabled = &legacyAlerting
 			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// if legacy alerting has not been configured then enable unified alerting
-		if AlertingEnabled == nil {
+		if cfg.AlertingEnabled == nil {
 			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// enable unified alerting and disable legacy alerting
 		legacyAlerting := false
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 		unifiedAlerting := true
 		return &unifiedAlerting, nil
 	}
@@ -192,18 +192,18 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	if err != nil {
 		// the value for unified alerting is invalid so disable all alerting
 		legacyAlerting := false
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
 
 	// If both legacy and unified alerting are enabled then return an error
-	if AlertingEnabled != nil && *AlertingEnabled && unifiedAlerting {
+	if cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled) && unifiedAlerting {
 		return nil, errors.New("legacy and unified alerting cannot both be enabled at the same time, please disable one of them and restart Grafana")
 	}
 
-	if AlertingEnabled == nil {
+	if cfg.AlertingEnabled == nil {
 		legacyAlerting := !unifiedAlerting
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 	}
 
 	return &unifiedAlerting, nil

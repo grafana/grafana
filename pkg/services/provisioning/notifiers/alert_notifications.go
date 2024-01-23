@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Manager interface {
@@ -26,8 +27,8 @@ type Manager interface {
 }
 
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, alertingService Manager, orgService org.Service, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
-	dc := newNotificationProvisioner(orgService, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
+func Provision(ctx context.Context, cfg *setting.Cfg, configDirectory string, alertingService Manager, orgService org.Service, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
+	dc := newNotificationProvisioner(cfg, orgService, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
 
@@ -39,11 +40,12 @@ type NotificationProvisioner struct {
 	orgService      org.Service
 }
 
-func newNotificationProvisioner(orgService org.Service, alertingManager Manager, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(cfg *setting.Cfg, orgService org.Service, alertingManager Manager, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log:             log,
 		alertingManager: alertingManager,
 		cfgProvider: &configReader{
+			cfg:                 cfg,
 			encryptionService:   encryptionService,
 			notificationService: notifiationService,
 			log:                 log,

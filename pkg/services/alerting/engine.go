@@ -57,7 +57,7 @@ type AlertEngine struct {
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
 func (e *AlertEngine) IsDisabled() bool {
-	return setting.AlertingEnabled == nil || !*setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.UnifiedAlerting.IsEnabled()
+	return e.Cfg.AlertingEnabled == nil || !*(e.Cfg.AlertingEnabled) || !e.Cfg.ExecuteAlerts || e.Cfg.UnifiedAlerting.IsEnabled()
 }
 
 // ProvideAlertEngine returns a new AlertEngine.
@@ -80,11 +80,11 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator validations
 		annotationsRepo:    annotationsRepo,
 	}
 	e.execQueue = make(chan *Job, 1000)
-	e.scheduler = newScheduler()
+	e.scheduler = newScheduler(cfg)
 	e.evalHandler = NewEvalHandler(e.DataService)
 	e.ruleReader = newRuleReader(store)
 	e.log = log.New("alerting.engine")
-	e.resultHandler = newResultHandler(e.RenderService, store, notificationService, encryptionService.GetDecryptedValue)
+	e.resultHandler = newResultHandler(cfg, e.RenderService, store, notificationService, encryptionService.GetDecryptedValue)
 
 	e.registerUsageMetrics()
 
@@ -153,7 +153,7 @@ func (e *AlertEngine) processJobWithRetry(grafanaCtx context.Context, job *Job) 
 		}
 	}()
 
-	cancelChan := make(chan context.CancelFunc, setting.AlertingMaxAttempts*2)
+	cancelChan := make(chan context.CancelFunc, e.Cfg.AlertingMaxAttempts*2)
 	attemptChan := make(chan int, 1)
 
 	// Initialize with first attemptID=1
@@ -197,7 +197,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		}
 	}()
 
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
 	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.AlertStore, e.dashboardService, e.datasourceService, e.annotationsRepo)
@@ -228,7 +228,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 			span.SetStatus(codes.Error, "alerting execution attempt failed")
 			span.RecordError(evalContext.Error)
 
-			if attemptID < setting.AlertingMaxAttempts {
+			if attemptID < e.Cfg.AlertingMaxAttempts {
 				span.End()
 				e.log.Debug("Job Execution attempt triggered retry", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 				attemptChan <- (attemptID + 1)
@@ -237,7 +237,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		}
 
 		// create new context with timeout for notifications
-		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), setting.AlertingNotificationTimeout)
+		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), e.Cfg.AlertingNotificationTimeout)
 		cancelChan <- resultHandleCancelFn
 
 		// override the context used for evaluation with a new context for notifications.

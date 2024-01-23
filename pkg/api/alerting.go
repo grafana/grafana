@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -522,7 +521,7 @@ func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *alert
 		return err
 	}
 
-	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, setting.SecretKey)
+	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, hs.Cfg.SecretKey)
 	if err != nil {
 		return err
 	}
@@ -551,7 +550,7 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 		return err
 	}
 
-	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, setting.SecretKey)
+	secureSettings, err := hs.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, hs.Cfg.SecretKey)
 	if err != nil {
 		return err
 	}
