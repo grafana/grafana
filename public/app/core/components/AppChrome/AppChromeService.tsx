@@ -70,7 +70,6 @@ export class AppChromeService {
     const newState: AppChromeState = {
       ...current,
       returnToPrevious: {
-        ...current.returnToPrevious,
         href: returnToPrevious.href,
         title: returnToPrevious.title,
       },
