@@ -77,6 +77,18 @@ describe('DashboardScenePageStateManager', () => {
       expect(dash2!.state.$timeRange?.state.from).toEqual('now-10m');
     });
 
+    it('should not initialize url sync for embedded dashboards', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+      locationService.partial({ from: 'now-5m', to: 'now' });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'fake-dash', isEmbedded: true });
+      const dash = loader.state.dashboard;
+
+      expect(dash!.state.$timeRange?.state.from).toEqual('now-6h');
+    });
+
     describe('caching', () => {
       it('should cache the dashboard DTO', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
@@ -98,15 +110,15 @@ describe('DashboardScenePageStateManager', () => {
 
         expect(loader.getFromCache('fake-dash')).toBeNull();
 
-        await loader.fetchDashboard('fake-dash');
+        await loader.fetchDashboard({ uid: 'fake-dash' });
         expect(loadDashSpy).toHaveBeenCalledTimes(1);
 
         advanceBy(DASHBOARD_CACHE_TTL / 2);
-        await loader.fetchDashboard('fake-dash');
+        await loader.fetchDashboard({ uid: 'fake-dash' });
         expect(loadDashSpy).toHaveBeenCalledTimes(1);
 
         advanceBy(DASHBOARD_CACHE_TTL / 2 + 1);
-        await loader.fetchDashboard('fake-dash');
+        await loader.fetchDashboard({ uid: 'fake-dash' });
         expect(loadDashSpy).toHaveBeenCalledTimes(2);
       });
     });

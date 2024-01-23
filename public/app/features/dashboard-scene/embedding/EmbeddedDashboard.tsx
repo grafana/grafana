@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
+import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
@@ -38,15 +39,24 @@ interface RendererProps extends EmbeddedDashboardProps {
   model: DashboardScene;
 }
 
-function EmbeddedDashboardRenderer({ model, uid }: RendererProps) {
+function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: RendererProps) {
   const [isActive, setIsActive] = useState(false);
   const { controls, body } = model.useState();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     setIsActive(true);
+
+    if (initialState) {
+      const searchParms = new URLSearchParams(initialState);
+      sceneUtils.syncStateFromSearchParams(model, searchParms);
+    }
+
     return model.activate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model]);
+
+  useSubscribeToEmbeddedUrlState(onStateChange, model);
 
   if (!isActive) {
     return null;
@@ -66,6 +76,29 @@ function EmbeddedDashboardRenderer({ model, uid }: RendererProps) {
       </div>
     </div>
   );
+}
+
+function useSubscribeToEmbeddedUrlState(onStateChange: ((state: string) => void) | undefined, model: DashboardScene) {
+  useEffect(() => {
+    if (!onStateChange) {
+      return;
+    }
+
+    let lastState = '';
+    const sub = model.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
+      if (evt.payload.changedObject.urlSync) {
+        const state = sceneUtils.getUrlState(model);
+        const stateAsString = urlUtil.renderUrl('', state);
+
+        if (lastState !== stateAsString) {
+          lastState = stateAsString;
+          onStateChange(stateAsString);
+        }
+      }
+    });
+
+    return () => sub.unsubscribe();
+  }, [model, onStateChange]);
 }
 
 function getStyles(theme: GrafanaTheme2) {
