@@ -57,7 +57,7 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
-	AlertingStore        AlertingStore
+	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -114,7 +114,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                           logger,
 			cfg:                           &api.Cfg.UnifiedAlerting,
 			authz:                         ruleAuthzService,
-			notificationSettingsValidator: api.MultiOrgAlertmanager,
+			notificationSettingsValidator: notifier.NewNotificationSettingsValidationService(api.AlertingStore),
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(

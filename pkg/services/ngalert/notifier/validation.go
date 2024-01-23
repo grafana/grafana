@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type notificaitonSettingsValidator interface {
@@ -20,21 +21,6 @@ type NotificationSettingsValidator struct {
 }
 
 func NewNotificationSettingsValidator(am definitions.PostableApiAlertingConfig) NotificationSettingsValidator {
-	availableReceivers := make(map[string]struct{}, len(am.Receivers))
-	for _, receiver := range am.Receivers {
-		availableReceivers[receiver.Name] = struct{}{}
-	}
-	availableMuteTimings := make(map[string]struct{}, len(am.MuteTimeIntervals))
-	for _, interval := range am.MuteTimeIntervals {
-		availableReceivers[interval.Name] = struct{}{}
-	}
-	return NotificationSettingsValidator{
-		availableReceivers:   availableReceivers,
-		availableMuteTimings: availableMuteTimings,
-	}
-}
-
-func NewNotificationSettingsValidatorFromGettable(am definitions.GettableApiAlertingConfig) NotificationSettingsValidator {
 	availableReceivers := make(map[string]struct{}, len(am.Receivers))
 	for _, receiver := range am.Receivers {
 		availableReceivers[receiver.Name] = struct{}{}
@@ -73,12 +59,27 @@ func (n noValidation) Validate(_ models.NotificationSettings) error {
 	return nil
 }
 
-func (moa *MultiOrgAlertmanager) Validate(ctx context.Context, settings []models.NotificationSettings, user identity.Requester) error {
-	cfg, err := moa.GetAlertmanagerConfiguration(ctx, user.GetOrgID(), false)
+type NotificationSettingsValidationService struct {
+	store store.AlertingStore
+}
+
+func NewNotificationSettingsValidationService(store store.AlertingStore) *NotificationSettingsValidationService {
+	return &NotificationSettingsValidationService{
+		store: store,
+	}
+}
+
+func (v *NotificationSettingsValidationService) Validate(ctx context.Context, orgID int64, settings []models.NotificationSettings) error {
+	rawCfg, err := v.store.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
 		return err
 	}
-	validator := NewNotificationSettingsValidatorFromGettable(cfg.AlertmanagerConfig)
+	cfg, err := Load([]byte(rawCfg.AlertmanagerConfiguration))
+	if err != nil {
+		return err
+	}
+	log.New("ngalert.notifier.validator").FromContext(ctx).Debug("Validating notification settings against Alertmanager configuration", "hash", rawCfg.ConfigurationHash)
+	validator := NewNotificationSettingsValidator(cfg.AlertmanagerConfig)
 	var errs []error
 	for _, setting := range settings {
 		if err := validator.Validate(setting); err != nil {

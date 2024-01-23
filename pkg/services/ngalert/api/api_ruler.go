@@ -29,7 +29,7 @@ import (
 )
 
 type NotificationSettingsValidator interface {
-	Validate(ctx context.Context, route []ngmodels.NotificationSettings, user identity.Requester) error
+	Validate(ctx context.Context, orgID int64, route []ngmodels.NotificationSettings) error
 }
 
 type ConditionValidator interface {
@@ -302,7 +302,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
-		err = validateNotifications(c.Req.Context(), groupChanges, srv.notificationSettingsValidator, c.SignedInUser)
+		err = validateNotifications(c.Req.Context(), groupChanges, srv.notificationSettingsValidator)
 		if err != nil {
 			return err
 		}
@@ -533,7 +533,7 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 	return nil
 }
 
-func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, validator NotificationSettingsValidator, user identity.Requester) error {
+func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, validator NotificationSettingsValidator) error {
 	var toValidate []ngmodels.NotificationSettings
 	for _, rule := range groupChanges.New {
 		if rule.NotificationSettings == nil {
@@ -553,7 +553,7 @@ func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, 
 		toValidate = append(toValidate, delta.New.NotificationSettings...)
 	}
 	if len(toValidate) > 0 {
-		err := validator.Validate(ctx, toValidate, user)
+		err := validator.Validate(ctx, groupChanges.GroupKey.OrgID, toValidate)
 		if err != nil {
 			return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
 		}
