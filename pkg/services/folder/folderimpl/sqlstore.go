@@ -476,6 +476,13 @@ func getAncestorsSQL(dialect migrator.Dialect, ancestorUIDs []string, start int,
 }
 
 func batch(count, batchSize int, eachFn func(start, end int) error) error {
+	if count == 0 {
+		if err := eachFn(0, 0); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	for i := 0; i < count; {
 		end := i + batchSize
 		if end > count {
