@@ -38,33 +38,6 @@ interface LogsPermalinkUrlState {
   };
 }
 
-async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
-  // this is an extra check, to be sure that we are not
-  // creating permalinks for logs without an id-field.
-  // normally it should never happen, because we do not
-  // display the permalink button in such cases.
-  if (row.rowId === undefined || !row.dataFrame.refId) {
-    return;
-  }
-
-  // get panel state, add log-row-id
-  const panelState = {
-    logs: { id: row.uid },
-  };
-
-  // Grab the current dashboard URL
-  const currentURL = new URL(window.location.href);
-
-  // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
-  currentURL.searchParams.set('panelState', JSON.stringify(panelState));
-  currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
-  currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
-
-  await createAndCopyShortLink(currentURL.toString());
-
-  return Promise.resolve();
-}
-
 export const LogsPanel = ({
   data,
   timeZone,
@@ -292,4 +265,31 @@ function getLogsPanelState(): LogsPermalinkUrlState | undefined {
   }
 
   return undefined;
+}
+
+async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
+  // this is an extra check, to be sure that we are not
+  // creating permalinks for logs without an id-field.
+  // normally it should never happen, because we do not
+  // display the permalink button in such cases.
+  if (row.rowId === undefined || !row.dataFrame.refId) {
+    return;
+  }
+
+  // get panel state, add log-row-id
+  const panelState = {
+    logs: { id: row.uid },
+  };
+
+  // Grab the current dashboard URL
+  const currentURL = new URL(window.location.href);
+
+  // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
+  currentURL.searchParams.set('panelState', JSON.stringify(panelState));
+  currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
+  currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
+
+  await createAndCopyShortLink(currentURL.toString());
+
+  return Promise.resolve();
 }
