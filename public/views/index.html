@@ -203,14 +203,16 @@
     </style>
 
     <div class="preloader">
-      <div class="preloader__enter">
+      <!-- <div class="preloader__enter">
         <div class="preloader__bounce">
           <div class="preloader__logo" aria-live="polite" role="status" aria-label="Loading Grafana"></div>
         </div>
       </div>
-      <div class="preloader__text preloader__text--fail">
+     <div class="preloader__text">Loading Grafana</div> -->
+     <div class="preloader__text preloader__text--fail">
         <main>
-          <h1>If you're seeing this Grafana has failed to load its application files</h1>
+          <h1>The dashboard application failed to load.</h1>
+          <!--
           <ol class="preloader__error-list">
             <li>This could be caused by your reverse proxy settings.</li>
             <li>If you host grafana under a subpath make sure your <code>grafana.ini</code> <code>root_url</code> setting
@@ -223,6 +225,7 @@
                 supported browsers </a
               >.</li>
           </ol>
+          -->
         </main>
       </div>
       <script nonce="[[.Nonce]]">

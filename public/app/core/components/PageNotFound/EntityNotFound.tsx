@@ -21,10 +21,10 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
       <EmptyState message={`${entity} not found`} variant="not-found">
         <Trans i18nKey="entity-not-found.description">
           We&apos;re looking but can&apos;t seem to find this {{ lowerCaseEntity }}. Try returning{' '}
-          <TextLink href="/">home</TextLink> or seeking help on the{' '}
+          <TextLink href="/">home</TextLink>{/* or seeking help on the{' '}
           <TextLink href="https://community.grafana.com" external>
             community site.
-          </TextLink>
+          </TextLink>*/}
         </Trans>
       </EmptyState>
     </div>
