@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Store interface {
@@ -52,7 +53,7 @@ type Store interface {
 	DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error
 }
 
-func New(
+func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
@@ -89,7 +90,7 @@ func New(
 		userService: userService,
 	}
 
-	s.api = newApi(ac, router, s)
+	s.api = newApi(cfg, ac, router, s)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestTelegramNotifier(t *testing.T) {
@@ -28,7 +29,7 @@ func TestTelegramNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewTelegramNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewTelegramNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -46,7 +47,7 @@ func TestTelegramNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewTelegramNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewTelegramNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			telegramNotifier := not.(*TelegramNotifier)
 
 			require.Nil(t, err)
