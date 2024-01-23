@@ -14,6 +14,7 @@ import {
   LogRowModel,
   LogsSortOrder,
   PanelProps,
+  TimeRange,
   toUtc,
   urlUtil,
 } from '@grafana/data';
@@ -35,6 +36,33 @@ interface LogsPermalinkUrlState {
   logs?: {
     id?: string;
   };
+}
+
+async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
+  // this is an extra check, to be sure that we are not
+  // creating permalinks for logs without an id-field.
+  // normally it should never happen, because we do not
+  // display the permalink button in such cases.
+  if (row.rowId === undefined || !row.dataFrame.refId) {
+    return;
+  }
+
+  // get panel state, add log-row-id
+  const panelState = {
+    logs: { id: row.uid },
+  };
+
+  // Grab the current dashboard URL
+  const currentURL = new URL(window.location.href);
+
+  // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
+  currentURL.searchParams.set('panelState', JSON.stringify(panelState));
+  currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
+  currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
+
+  await createAndCopyShortLink(currentURL.toString());
+
+  return Promise.resolve();
 }
 
 export const LogsPanel = ({
@@ -61,25 +89,6 @@ export const LogsPanel = ({
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
   const timeRange = data.timeRange;
-  const urlParams = urlUtil.getUrlSearchParams();
-  const panelStateEncoded = urlParams?.panelState;
-  const getLogsPanelState = (): LogsPermalinkUrlState | undefined => {
-    if (
-      panelStateEncoded &&
-      Array.isArray(panelStateEncoded) &&
-      panelStateEncoded?.length > 0 &&
-      typeof panelStateEncoded[0] === 'string'
-    ) {
-      try {
-        return JSON.parse(panelStateEncoded[0]);
-      } catch (e) {
-        console.error('error parsing logsPanelState', e);
-      }
-    }
-
-    return undefined;
-  };
-
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
 
   const { eventBus } = usePanelContext();
@@ -114,30 +123,7 @@ export const LogsPanel = ({
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
-      // this is an extra check, to be sure that we are not
-      // creating permalinks for logs without an id-field.
-      // normally it should never happen, because we do not
-      // display the permalink button in such cases.
-      if (row.rowId === undefined || !row.dataFrame.refId) {
-        return;
-      }
-
-      // get panel state, add log-row-id
-      const panelState = {
-        logs: { id: row.uid },
-      };
-
-      // Grab the current dashboard URL
-      const currentURL = new URL(window.location.href);
-
-      // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
-      currentURL.searchParams.set('panelState', JSON.stringify(panelState));
-      currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
-      currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
-
-      await createAndCopyShortLink(currentURL.toString());
-
-      return Promise.resolve();
+      return await copyDashboardUrl(row, timeRange);
     },
     [timeRange]
   );
@@ -288,3 +274,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
   }),
 });
+
+function getLogsPanelState(): LogsPermalinkUrlState | undefined {
+  const urlParams = urlUtil.getUrlSearchParams();
+  const panelStateEncoded = urlParams?.panelState;
+  if (
+    panelStateEncoded &&
+    Array.isArray(panelStateEncoded) &&
+    panelStateEncoded?.length > 0 &&
+    typeof panelStateEncoded[0] === 'string'
+  ) {
+    try {
+      return JSON.parse(panelStateEncoded[0]);
+    } catch (e) {
+      console.error('error parsing logsPanelState', e);
+    }
+  }
+
+  return undefined;
+}
