@@ -14,15 +14,15 @@ import SearchField from './SearchField';
 import { getFilteredTags } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  vertical: css`
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  `,
-  horizontal: css`
-    display: flex;
-    flex-direction: row;
-  `,
+  vertical: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+  }),
+  horizontal: css({
+    display: 'flex',
+    flexDirection: 'row',
+  }),
   addTag: css({
     marginLeft: theme.spacing(1),
   }),

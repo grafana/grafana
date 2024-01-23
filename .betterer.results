@@ -5686,10 +5686,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/tempo/SearchTraceQLEditor/DurationInput.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/plugins/datasource/tempo/SearchTraceQLEditor/TagsInput.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
     "public/app/plugins/datasource/tempo/SearchTraceQLEditor/TraceQLSearch.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
