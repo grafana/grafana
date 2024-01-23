@@ -1,5 +1,4 @@
 import { faro, LogContext, LogLevel } from '@grafana/faro-web-sdk';
-import { attachDebugger, createLogger } from '@grafana/ui';
 
 import { config } from '../config';
 
@@ -59,33 +58,21 @@ export function logError(err: Error, contexts?: LogContext) {
   }
 }
 
-const debuggingLogger = createLogger('monitoring');
-
 /**
- * Creates a scoped logger for frontend monitoring. Provided source is included in the config.
+ * Wrapper for logX functions.
+ * Creates a logger for frontend monitoring which contains provided "source" and context as defaults when calling logX()
  */
 export function createMonitoringLogger(source: string, defaultContext?: LogContext) {
-  attachDebugger(`monitoring.${source}`, undefined, debuggingLogger);
   const createFullContext = (contexts?: LogContext) => ({
     source: source,
     ...defaultContext,
     ...contexts,
   });
 
-  const forwardMessage = (fn: typeof logInfo, level: LogLevel, message: string, contexts?: LogContext) => {
-    const ctx = createFullContext(contexts);
-    fn(message, ctx);
-    debuggingLogger.logger(source, false, level, message, ctx);
-  };
-
   return {
-    logDebug: (message: string, contexts?: LogContext) => forwardMessage(logDebug, LogLevel.DEBUG, message, contexts),
-    logInfo: (message: string, contexts?: LogContext) => forwardMessage(logDebug, LogLevel.INFO, message, contexts),
-    logWarning: (message: string, contexts?: LogContext) => forwardMessage(logDebug, LogLevel.WARN, message, contexts),
-    logError: (error: Error, contexts?: LogContext) => {
-      const ctx = createFullContext(contexts);
-      logError(error, ctx);
-      debuggingLogger.logger(source, false, LogLevel.ERROR, error, ctx);
-    },
+    logDebug: (message: string, contexts?: LogContext) => logDebug(message, createFullContext(contexts)),
+    logInfo: (message: string, contexts?: LogContext) => logInfo(message, createFullContext(contexts)),
+    logWarning: (message: string, contexts?: LogContext) => logWarning(message, createFullContext(contexts)),
+    logError: (error: Error, contexts?: LogContext) => logError(error, createFullContext(contexts)),
   };
 }
