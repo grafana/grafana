@@ -606,7 +606,7 @@ apiVersion: 1
 # List of templates to import or update
 templates:
   # <int> organization ID, default = 1
-  - orgID: 1
+  - orgId: 1
     # <string, required> name of the template, must be unique
     name: my_first_template
     # <string, required> content of the the template
