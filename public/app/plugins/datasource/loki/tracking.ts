@@ -177,7 +177,6 @@ export function trackQuery(
       has_error: response.error !== undefined,
       legend: query.legendFormat,
       line_limit: query.maxLines,
-      parsed_query: parseToNodeNamesArray(query.expr).join(','),
       obfuscated_query: obfuscate(query.expr),
       query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
       query_vector_type: query.queryType,
