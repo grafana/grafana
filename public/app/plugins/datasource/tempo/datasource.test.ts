@@ -22,6 +22,7 @@ import {
   setDataSourceSrv,
   TemplateSrv,
   DataSourceSrv,
+  BackendSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, DataQuery, TableCellDisplayMode } from '@grafana/schema';
 
@@ -668,7 +669,7 @@ describe('Tempo service graph view', () => {
   });
 
   it('should build expr correctly', () => {
-    let targets = { targets: [{ queryType: 'serviceMap' }] } as any;
+    let targets = { targets: [{ queryType: 'serviceMap' }] } as DataQueryRequest<TempoQuery>;
     let builtQuery = buildExpr(
       { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
       '',
@@ -701,7 +702,9 @@ describe('Tempo service graph view', () => {
       'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",span_name=~"HTTP Client"}[$__range])) by (le))'
     );
 
-    targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="app",service="app"}' }] } as any;
+    targets = {
+      targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="app",service="app"}' }],
+    } as DataQueryRequest<TempoQuery>;
     builtQuery = buildExpr(
       { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
       '',
@@ -711,7 +714,9 @@ describe('Tempo service graph view', () => {
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range])) by (span_name))'
     );
 
-    targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="app",service="app"}' }] } as any;
+    targets = {
+      targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="app",service="app"}' }],
+    } as DataQueryRequest<TempoQuery>;
     builtQuery = buildExpr(
       { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))', params: [] },
       '',
@@ -721,7 +726,9 @@ describe('Tempo service graph view', () => {
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range])) by (span_name))'
     );
 
-    targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: ['{foo="app"}', '{bar="app"}'] }] } as any;
+    targets = {
+      targets: [{ queryType: 'serviceMap', serviceMapQuery: ['{foo="app"}', '{bar="app"}'] }],
+    } as DataQueryRequest<TempoQuery>;
     builtQuery = buildExpr(
       { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
       '',
@@ -731,7 +738,9 @@ describe('Tempo service graph view', () => {
       'topk(5, sum(rate(traces_spanmetrics_calls_total{foo="app"}[$__range])) by (span_name) OR sum(rate(traces_spanmetrics_calls_total{bar="app"}[$__range])) by (span_name))'
     );
 
-    targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="${app}",service="$app"}' }] } as any;
+    targets = {
+      targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="${app}",service="$app"}' }],
+    } as DataQueryRequest<TempoQuery>;
     builtQuery = buildExpr(
       { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
       '',
@@ -1168,7 +1177,7 @@ function setupBackendSrv(frame: DataFrame) {
         })
       );
     },
-  } as any);
+  } as unknown as BackendSrv);
 }
 
 export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
