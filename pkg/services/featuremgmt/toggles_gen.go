@@ -367,14 +367,6 @@ const (
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
 
-	// FlagTraceToProfiles
-	// Enables linking between traces and profiles
-	FlagTraceToProfiles = "traceToProfiles"
-
-	// FlagTracesEmbeddedFlameGraph
-	// Enables embedding a flame graph in traces
-	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
-
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -646,4 +638,8 @@ const (
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
+
+	// FlagOnPremToCloudMigrations
+	// In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.
+	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 )

@@ -117,8 +117,6 @@ You can navigate from a span in a trace view directly to metrics relevant for th
 
 ### Trace to profiles
 
-{{< docs/experimental product="Trace to profiles" featureFlag="traceToProfiles" >}}
-
 Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
 Refer to the [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source#trace-to-profiles) for configuration instructions.
 
