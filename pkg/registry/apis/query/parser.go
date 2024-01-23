@@ -35,12 +35,30 @@ func (d *groupedQueries) key() string {
 	return fmt.Sprintf("%s/%s", d.pluginId, d.uid)
 }
 
-func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
+func ParseDataSourceQueries(raw v0alpha1.GenericQueryRequest) ([]backend.DataQuery, error) {
+	parsed, err := parseQueryRequest(raw)
+	if err != nil {
+		return nil, err
+	}
+	if len(parsed.Expressions) > 0 {
+		return nil, fmt.Errorf("found expressions in query requests")
+	}
+	switch len(parsed.Requests) {
+	case 1:
+		return parsed.Requests[0].query, nil
+	case 0:
+		return []backend.DataQuery{}, nil
+	}
+	return nil, fmt.Errorf("found multiple datasource references")
+}
+
+func parseQueryRequest(raw v0alpha1.GenericQueryRequest) (parsedQueryRequest, error) {
 	mixed := make(map[string]*groupedQueries)
 	parsed := parsedQueryRequest{}
 	byRefID := make(map[string]*v0alpha1.GenericDataQuery)
 
 	var err error
+
 	tr := legacydata.NewDataTimeRange(raw.From, raw.To)
 	backendTr := backend.TimeRange{
 		From: tr.GetFromAsTimeUTC(),
@@ -67,6 +85,16 @@ func ParseQueryRequest(raw v0alpha1.QueryRequest) (parsedQueryRequest, error) {
 			MaxDataPoints: q.MaxDataPoints,
 			TimeRange:     backendTr,
 		}
+
+		// Set an explicit time range for the query
+		if q.TimeRange != nil {
+			tr = legacydata.NewDataTimeRange(q.TimeRange.From, q.TimeRange.To)
+			dq.TimeRange = backend.TimeRange{
+				From: tr.GetFromAsTimeUTC(),
+				To:   tr.GetToAsTimeUTC(),
+			}
+		}
+
 		dq.JSON, err = json.Marshal(q)
 		if err != nil {
 			return parsed, err

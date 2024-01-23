@@ -3,7 +3,6 @@ package datasource
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"time"
 
@@ -12,7 +11,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type subQueryREST struct {
@@ -64,40 +64,11 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, erro
 		return []backend.DataQuery{dq}, err
 	}
 
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
+	reqDTO := v0alpha1.GenericQueryRequest{}
+	if err := web.Bind(req, &reqDTO); err != nil {
 		return nil, err
 	}
-
-	// Convert query request to backend query request
-	// TODO... we should likely accept []Queries directly
-	qr := v0alpha1.QueryRequest{}
-	err = json.Unmarshal(body, &qr)
-	if err != nil {
-		return nil, err
-	}
-	tr := legacydata.NewDataTimeRange(qr.From, qr.To)
-	backendTr := backend.TimeRange{
-		From: tr.MustGetFrom(),
-		To:   tr.MustGetTo(),
-	}
-
-	bdq := []backend.DataQuery{}
-	for _, q := range qr.Queries {
-		dq := backend.DataQuery{
-			RefID:         q.RefID,
-			QueryType:     q.QueryType,
-			MaxDataPoints: q.MaxDataPoints,
-			Interval:      time.Duration(q.IntervalMS),
-			TimeRange:     backendTr,
-		}
-		dq.JSON, err = json.Marshal(q)
-		if err != nil {
-			return nil, err
-		}
-		bdq = append(bdq, dq)
-	}
-	return bdq, err
+	return query.ParseDataSourceQueries(reqDTO)
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {

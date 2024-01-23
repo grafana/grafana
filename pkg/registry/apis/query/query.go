@@ -15,13 +15,13 @@ import (
 )
 
 func (b *QueryAPIBuilder) handleQuery(w http.ResponseWriter, r *http.Request) {
-	reqDTO := v0alpha1.QueryRequest{}
+	reqDTO := v0alpha1.GenericQueryRequest{}
 	if err := web.Bind(r, &reqDTO); err != nil {
 		_, _ = w.Write([]byte("unable to bind query: " + err.Error()))
 		return
 	}
 
-	parsed, err := ParseQueryRequest(reqDTO)
+	parsed, err := parseQueryRequest(reqDTO)
 	if err != nil {
 		_, _ = w.Write([]byte("invalid query: " + err.Error()))
 		return
