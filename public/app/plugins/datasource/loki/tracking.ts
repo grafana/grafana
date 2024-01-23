@@ -10,7 +10,7 @@ import {
   REF_ID_STARTER_LOG_VOLUME,
 } from './datasource';
 import pluginJson from './plugin.json';
-import { getNormalizedLokiQuery, isLogsQuery, obfuscate, parseToNodeNamesArray } from './queryUtils';
+import { getNormalizedLokiQuery, isLogsQuery, obfuscate } from './queryUtils';
 import { variableRegex } from './querybuilder/parsingUtils';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 
@@ -177,7 +177,6 @@ export function trackQuery(
       has_error: response.error !== undefined,
       legend: query.legendFormat,
       line_limit: query.maxLines,
-      parsed_query: parseToNodeNamesArray(query.expr).join(','),
       obfuscated_query: obfuscate(query.expr),
       query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
       query_vector_type: query.queryType,
