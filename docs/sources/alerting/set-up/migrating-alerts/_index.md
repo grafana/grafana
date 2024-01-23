@@ -180,9 +180,8 @@ There are some differences between Grafana Alerting and legacy dashboard alerts,
 
 1. `NoData` and `Error` settings are upgraded as is to the corresponding settings in Grafana Alerting, except in two situations:
 
-   3.1. As there is no `Keep Last State` option in Grafana Alerting, this option becomes either [`NoData` or `Error`](/docs/sources/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling). If using the `Simple Upgrade Method` Grafana automatically creates a 1 year silence for each alert rule with this configuration. If the alert evaluation returns no data or fails (error or timeout), then it creates a [special alert](/docs/sources/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error), which will be silenced by the silence created during the upgrade.
-
-   3.2. Due to lack of validation, legacy alert rules imported via JSON or provisioned along with dashboards can contain arbitrary values for [`NoData` or `Error`](/docs/sources/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling). In this situation, Grafana will use the default setting: `NoData` for No data, and `Error` for Error.
+   - As there is no `Keep Last State` option in Grafana Alerting, this option becomes either [`NoData` or `Error`](/docs/sources/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling). If using the `Simple Upgrade Method` Grafana automatically creates a 1 year silence for each alert rule with this configuration. If the alert evaluation returns no data or fails (error or timeout), then it creates a [special alert](/docs/sources/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error), which will be silenced by the silence created during the upgrade.
+   - Due to lack of validation, legacy alert rules imported via JSON or provisioned along with dashboards can contain arbitrary values for [`NoData` or `Error`](/docs/sources/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling). In this situation, Grafana will use the default setting: `NoData` for No data, and `Error` for Error.
 
 1. Notification channels are upgraded to an Alertmanager configuration with the appropriate routes and receivers.
 
