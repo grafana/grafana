@@ -369,7 +369,7 @@ The maximum number of connections in the idle connection pool.
 
 ### max_open_conn
 
-The maximum number of open connections to the database.
+The maximum number of open connections to the database. For MYSQL, configure this setting on both Grafana and the database. For more information, refer to [`sysvar_max_connections`](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_max_connections).
 
 ### conn_max_lifetime
 
