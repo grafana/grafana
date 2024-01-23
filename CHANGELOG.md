@@ -1,3 +1,10 @@
+<!-- 10.3.1 START -->
+
+# 10.3.1 (2024-01-22)
+
+To resolve a technical issue within the Grafana release package management process, we are releasing both Grafana 10.3.0 and Grafana 10.3.1 simultaneously. The 10.3.1 release contains no breaking or functional changes from 10.3.0. Please refer to the [What’s New](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v10-3/) post for Grafana 10.3.0 for details on new features and changes in this release.
+
+<!-- 10.3.1 END -->
 <!-- 10.3.0 START -->
 
 # 10.3.0 (2024-01-22)
