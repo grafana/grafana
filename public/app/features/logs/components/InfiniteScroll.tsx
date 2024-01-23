@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Spinner } from '@grafana/ui';
+
+import { LoadingIndicator } from './LoadingIndicator';
 
 export type Props = {
   children: ReactNode;
@@ -52,7 +54,7 @@ export const InfiniteScroll = ({
     }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
+      if (!scrollElement || !loadMoreLogs || !rows.length || loading || upperLoading || lowerLoading) {
         return;
       }
       event.stopImmediatePropagation();
@@ -110,7 +112,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone]);
+  }, [loadMoreLogs, loading, lowerLoading, range, rows, scrollElement, sortOrder, timeZone, upperLoading]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
@@ -118,11 +120,11 @@ export const InfiniteScroll = ({
 
   return (
     <>
-      {upperLoading && loadingMessage}
+      {upperLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'newer' : 'older'} />}
       {!hideTopMessage && upperOutOfRange && outOfRangeMessage}
       {children}
       {!hideBottomMessage && lowerOutOfRange && outOfRangeMessage}
-      {lowerLoading && loadingMessage}
+      {lowerLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'older' : 'newer'} />}
     </>
   );
 };
@@ -137,11 +139,6 @@ const styles = {
 const outOfRangeMessage = (
   <div className={styles.messageContainer} data-testid="end-of-range">
     End of the selected time range.
-  </div>
-);
-const loadingMessage = (
-  <div className={styles.messageContainer}>
-    <Spinner />
   </div>
 );
 
