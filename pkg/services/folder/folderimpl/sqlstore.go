@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// TODO adjuct the value
 const DEFAULT_BATCH_SIZE = 999
 
 type sqlStore struct {
