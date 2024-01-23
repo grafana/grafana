@@ -85,6 +85,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                                                         |
 | `pdfTables`                            | Enables generating table data as PDF in reporting                                                                                                                                            |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
+| `alertingPreviewUpgrade`               | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                            |
 
 ## Experimental feature toggles
 
