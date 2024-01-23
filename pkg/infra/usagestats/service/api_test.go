@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -79,7 +78,7 @@ func getUsageStats(t *testing.T, server *web.Mux) (*stats.SystemStats, *httptest
 
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *UsageStats) *web.Mux {
 	server := web.New()
-	server.UseMiddleware(web.Renderer(path.Join("", "views"), "[[", "]]"))
+	server.UseMiddleware(web.Renderer("views", "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
 	service.RouteRegister.Register(server)
 	return server

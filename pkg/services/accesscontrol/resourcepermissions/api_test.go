@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"strconv"
 	"strings"
 	"testing"
@@ -431,7 +430,7 @@ func TestApi_setUserPermission(t *testing.T) {
 
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
-	server.UseMiddleware(web.Renderer(path.Join("", "views"), "[[", "]]"))
+	server.UseMiddleware(web.Renderer("views", "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
 	service.api.router.Register(server)
 	return server
