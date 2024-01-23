@@ -1355,5 +1355,12 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Created:     time.Date(2024, time.January, 22, 3, 30, 00, 00, time.UTC),
 		},
+		{
+			Name:        "newPDFRendering",
+			Description: "New implementation for the dashboard to PDF rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Created:     time.Date(2024, time.January, 23, 9, 51, 00, 00, time.UTC),
+		},
 	}
 )

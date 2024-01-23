@@ -642,4 +642,8 @@ const (
 	// FlagOnPremToCloudMigrations
 	// In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagNewPDFRendering
+	// New implementation for the dashboard to PDF rendering
+	FlagNewPDFRendering = "newPDFRendering"
 )

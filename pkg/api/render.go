@@ -59,7 +59,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		hs.log.Error("Failed to parse user id", "err", errID)
 	}
 
-	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
+	result, err := hs.RenderService.Render(c.Req.Context(), rendering.RenderPNG, rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout: time.Duration(timeout) * time.Second,
 		},

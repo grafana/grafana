@@ -20,6 +20,7 @@ type RenderType string
 const (
 	RenderCSV RenderType = "csv"
 	RenderPNG RenderType = "png"
+	RenderPDF RenderType = "pdf"
 )
 
 type TimeoutOpts struct {
@@ -93,7 +94,7 @@ type RenderCSVResult struct {
 	FileName string
 }
 
-type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)
+type renderFunc func(ctx context.Context, renderType RenderType, renderKey string, options Opts) (*RenderResult, error)
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
 type sanitizeFunc func(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 
@@ -121,7 +122,7 @@ type CapabilitySupportRequestResult struct {
 type Service interface {
 	IsAvailable(ctx context.Context) bool
 	Version() string
-	Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error)
+	Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
 	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)

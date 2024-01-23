@@ -166,6 +166,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: 0,
       minWidth: 0,
       overflow: 'auto',
+      '@media print': {
+        overflow: 'visible',
+      },
     }),
     skipLink: css({
       position: 'absolute',
