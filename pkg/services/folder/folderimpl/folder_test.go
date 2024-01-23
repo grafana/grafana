@@ -1414,31 +1414,31 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		})
 
 		// create folder sctructure like this:
-		// withPermissionsfolder-0
-		// └──withPermissionsfolder-1
-		// 	└──withPermissionsfolder-2
-		// withoutPermissionsfolder-0
-		//  └──withoutPermissionsfolder-1
-		// 	 └──withoutPermissionsfolder-2
-		ancestorUIDsFolderWithPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withPermissions", createCmd)
-		ancestorUIDsFolderWithoutPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withoutPermissions", createCmd)
+		// tree1-folder-0
+		// └──tree1-folder-1
+		// 	└──tree1-folder-2
+		// tree2-folder-0
+		//  └──tree2-folder-1
+		// 	 └──tree2-folder-2
+		tree1UIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "tree1-", createCmd)
+		tree2UIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "tree2-", createCmd)
 
 		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = []string{
-			// Add permission to withPermissionsfolder-0
-			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorUIDsFolderWithPermissions[0]),
-			// Add permission to the subfolder of folder with permission (withPermissionsfolder-0) to check deduplication
-			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorUIDsFolderWithPermissions[1]),
-			// Add permission to the subfolder of folder without permission (withoutPermissionsfolder-1)
-			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorUIDsFolderWithoutPermissions[1]),
+			// Add permission to tree1-folder-0
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(tree1UIDs[0]),
+			// Add permission to the subfolder of folder with permission (tree1-folder-1) to check deduplication
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(tree1UIDs[1]),
+			// Add permission to the subfolder of folder without permission (tree2-folder-1)
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(tree2UIDs[1]),
 		}
 
 		t.Cleanup(func() {
 			guardian.New = origNewGuardian
-			for _, uid := range ancestorUIDsFolderWithPermissions {
+			for _, uid := range tree1UIDs {
 				err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
 				assert.NoError(t, err)
 			}
-			for _, uid := range ancestorUIDsFolderWithoutPermissions {
+			for _, uid := range tree2UIDs {
 				err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
 				assert.NoError(t, err)
 			}
@@ -1456,52 +1456,52 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 					SignedInUser: &signedInUser,
 				},
 				want: []string{
-					ancestorUIDsFolderWithPermissions[0],
-					ancestorUIDsFolderWithPermissions[1],
-					ancestorUIDsFolderWithPermissions[2],
-					ancestorUIDsFolderWithoutPermissions[1],
-					ancestorUIDsFolderWithoutPermissions[2],
+					tree1UIDs[0],
+					tree1UIDs[1],
+					tree1UIDs[2],
+					tree2UIDs[1],
+					tree2UIDs[2],
 				},
 			},
 			{
 				name: "Should get specific org folders visible to the user",
 				cmd: folder.GetFoldersQuery{
 					OrgID:        orgID,
-					UIDs:         []string{ancestorUIDsFolderWithPermissions[0], ancestorUIDsFolderWithoutPermissions[0], ancestorUIDsFolderWithoutPermissions[1]},
+					UIDs:         []string{tree1UIDs[0], tree2UIDs[0], tree2UIDs[1]},
 					SignedInUser: &signedInUser,
 				},
 				want: []string{
-					ancestorUIDsFolderWithPermissions[0],
-					ancestorUIDsFolderWithoutPermissions[1],
+					tree1UIDs[0],
+					tree2UIDs[1],
 				},
 			},
 			{
-				name: "Should get specific org folders visible to the user",
+				name: "Should get specific org folders visible to the user with fullpath",
 				cmd: folder.GetFoldersQuery{
 					OrgID:        orgID,
-					UIDs:         []string{ancestorUIDsFolderWithPermissions[0], ancestorUIDsFolderWithoutPermissions[0], ancestorUIDsFolderWithoutPermissions[1]},
+					UIDs:         []string{tree1UIDs[0], tree2UIDs[0], tree2UIDs[1]},
 					WithFullpath: true,
 					SignedInUser: &signedInUser,
 				},
 				want: []string{
-					ancestorUIDsFolderWithPermissions[0],
-					ancestorUIDsFolderWithoutPermissions[1],
+					tree1UIDs[0],
+					tree2UIDs[1],
 				},
 			},
 			{
 				name: "Should get all org folders visible to the user with admin permissions",
 				cmd: folder.GetFoldersQuery{
 					OrgID:        orgID,
-					UIDs:         []string{ancestorUIDsFolderWithPermissions[0], ancestorUIDsFolderWithPermissions[1], ancestorUIDsFolderWithPermissions[2], ancestorUIDsFolderWithoutPermissions[0], ancestorUIDsFolderWithoutPermissions[1], ancestorUIDsFolderWithoutPermissions[2]},
+					UIDs:         []string{tree1UIDs[0], tree1UIDs[1], tree1UIDs[2], tree2UIDs[0], tree2UIDs[1], tree2UIDs[2]},
 					SignedInUser: &signedInAdminUser,
 				},
 				want: []string{
-					ancestorUIDsFolderWithPermissions[0],
-					ancestorUIDsFolderWithPermissions[1],
-					ancestorUIDsFolderWithPermissions[2],
-					ancestorUIDsFolderWithoutPermissions[0],
-					ancestorUIDsFolderWithoutPermissions[1],
-					ancestorUIDsFolderWithoutPermissions[2],
+					tree1UIDs[0],
+					tree1UIDs[1],
+					tree1UIDs[2],
+					tree2UIDs[0],
+					tree2UIDs[1],
+					tree2UIDs[2],
 				},
 			},
 		}
