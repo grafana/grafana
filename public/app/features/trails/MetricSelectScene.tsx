@@ -115,7 +115,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       return;
     }
 
-    const searchRegex = createSearchRegExp(this.state.searchQuery || '');
+    const searchRegex = createSearchRegExp(this.state.searchQuery);
     const metricNames = variable.state.options;
     const sortedMetricNames =
       trail.state.metric !== undefined ? sortRelatedMetrics(metricNames, trail.state.metric) : metricNames;
@@ -127,7 +127,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
       const metricName = String(metric.value);
 
-      if (!searchRegex || !searchRegex.test(metricName)) {
+      if (searchRegex && !searchRegex.test(metricName)) {
         continue;
       }
 
@@ -324,7 +324,10 @@ function getStyles(theme: GrafanaTheme2) {
 // Consider any sequence of characters not permitted for metric names as a sepratator
 const splitSeparator = /[^a-z0-9_:]+/;
 
-function createSearchRegExp(spaceSeparatedMetricNames: string) {
+function createSearchRegExp(spaceSeparatedMetricNames?: string) {
+  if (!spaceSeparatedMetricNames) {
+    return null;
+  }
   const searchParts = spaceSeparatedMetricNames
     ?.toLowerCase()
     .split(splitSeparator)
