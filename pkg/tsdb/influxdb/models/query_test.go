@@ -303,5 +303,23 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			require.Equal(t, query.renderMeasurement(), ` FROM "policy"./apa/`)
 		})
+
+		t.Run("can render regexp tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/etc/hosts|/etc/hostname`, Key: "key"}}}
+
+			require.Equal(t, `"key" =~ /^\\/etc\\/hosts|\\/etc\\/hostname$/`, strings.Join(query.renderTags(), ""))
+		})
+
+		t.Run("can render regexp tags 2", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/^/etc/hosts$/`, Key: "key"}}}
+
+			require.Equal(t, `"key" =~ /^\\/etc\\/hosts$/`, strings.Join(query.renderTags(), ""))
+		})
+
+		t.Run("can render regexp tags 3", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/etc/hosts`, Key: "key"}}}
+
+			require.Equal(t, `"key" =~ /^\\/etc\\/hosts$/`, strings.Join(query.renderTags(), ""))
+		})
 	})
 }

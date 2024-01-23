@@ -109,8 +109,8 @@ func (query *Query) renderTags() []string {
 		// quote value unless regex or number
 		var textValue string
 		switch tag.Operator {
-		case "=~", "!~":
-			textValue = tag.Value
+		case "=~", "!~", "":
+			textValue = escape(tag.Value)
 		case "<", ">", ">=", "<=":
 			textValue = tag.Value
 		case "Is", "Is Not":
@@ -243,4 +243,49 @@ func epochMStoInfluxTime(tr *backend.TimeRange) (string, string) {
 	to := tr.To.UnixNano() / int64(time.Millisecond)
 
 	return fmt.Sprintf("%dms", from), fmt.Sprintf("%dms", to)
+}
+
+func escape(unescapedValue string) string {
+	pipe := `|`
+	beginning := `/^`
+	ending := `$/`
+	value := unescapedValue
+	substitute := `\\$0`
+	fullMatch := false
+
+	regexMatcher := regexp.MustCompile(`^/(.*)/$`)
+	regexComplexMatcher := regexp.MustCompile(`^/\^(.*)\$/$`)
+	escapeMatcher := regexp.MustCompile(`[\\^$*+?.()|[\]{}\/]`)
+
+	// get the value only in between /^...$/
+	matches := regexComplexMatcher.FindStringSubmatch(unescapedValue)
+	if len(matches) > 1 {
+		// full match. the value is like /^value$/
+		value = matches[1]
+		fullMatch = true
+	}
+
+	if !fullMatch {
+		// get the value only in between /.../
+		matches = regexMatcher.FindStringSubmatch(unescapedValue)
+		if len(matches) > 1 {
+			value = matches[1]
+			beginning = `/`
+			ending = `/`
+		}
+	}
+
+	// split them with pipe |
+	parts := strings.Split(value, pipe)
+	for i, v := range parts {
+		// escape each item
+		parts[i] = escapeMatcher.ReplaceAllString(v, substitute)
+	}
+
+	// stitch them to each other
+	escaped := make([]byte, 0, 64)
+	escaped = append(escaped, beginning...)
+	escaped = append(escaped, strings.Join(parts, pipe)...)
+	escaped = append(escaped, ending...)
+	return string(escaped)
 }
