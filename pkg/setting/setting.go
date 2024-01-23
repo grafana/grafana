@@ -287,7 +287,8 @@ type Cfg struct {
 	ExtendedJWTExpectAudience string
 
 	// SSO Settings Auth
-	SSOSettingsReloadInterval time.Duration
+	SSOSettingsReloadInterval        time.Duration
+	SSOSettingsConfigurableProviders map[string]bool
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -1628,7 +1629,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")
 	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)
+	providers := ssoSettings.Key("configurable_providers").String()
 
+	cfg.SSOSettingsConfigurableProviders = make(map[string]bool)
+	for _, provider := range util.SplitString(providers) {
+		cfg.SSOSettingsConfigurableProviders[provider] = true
+	}
 	return nil
 }
 

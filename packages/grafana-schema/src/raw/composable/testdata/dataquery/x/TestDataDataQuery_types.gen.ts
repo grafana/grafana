@@ -50,7 +50,7 @@ export interface StreamingQuery {
   noise: number;
   speed: number;
   spread: number;
-  type: ('signal' | 'logs' | 'fetch');
+  type: ('signal' | 'logs' | 'fetch' | 'traces');
   url?: string;
 }
 
