@@ -344,7 +344,7 @@ To set up generic OAuth2 authentication with Descope, follow these steps:
    [auth.generic_oauth]
    enabled = true
    allow_sign_up = true
-   auto_login = true
+   auto_login = false
    team_ids =
    allowed_organizations =
    name = Descope
