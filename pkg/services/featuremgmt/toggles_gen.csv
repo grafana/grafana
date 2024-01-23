@@ -158,3 +158,4 @@ newFolderPicker,experimental,@grafana/grafana-frontend-platform,2024-01-12,false
 jitterAlertRules,experimental,@grafana/alerting-squad,2024-01-17,false,false,true,false
 jitterAlertRulesWithinGroups,experimental,@grafana/alerting-squad,2024-01-17,false,false,true,false
 onPremToCloudMigrations,experimental,@grafana/grafana-operator-experience-squad,2024-01-22,false,false,false,false
+alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,2024-01-22,false,false,false,false

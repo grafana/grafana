@@ -177,4 +177,5 @@ export interface FeatureToggles {
   jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
+  alertingSaveStatePeriodic?: boolean;
 }
