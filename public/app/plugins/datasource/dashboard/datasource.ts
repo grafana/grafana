@@ -59,6 +59,10 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     }
 
     return defer(() => {
+      if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
+        sourceDataProvider?.setContainerWidth(500);
+      }
+
       const cleanUp = sourceDataProvider!.activate();
 
       return sourceDataProvider!.getResultsStream!().pipe(
