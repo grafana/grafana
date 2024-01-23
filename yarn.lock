@@ -2993,7 +2993,7 @@ __metadata:
     "@types/node": "npm:20.11.5"
     "@types/react": "npm:18.2.48"
     "@types/testing-library__jest-dom": "npm:5.14.9"
-    "@types/uuid": "npm:9.0.2"
+    "@types/uuid": "npm:9.0.7"
     lodash: "npm:4.17.21"
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.2.0"
@@ -3001,7 +3001,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
-    uuid: "npm:9.0.0"
+    uuid: "npm:9.0.1"
     webpack: "npm:5.89.0"
   peerDependencies:
     "@grafana/runtime": "*"
