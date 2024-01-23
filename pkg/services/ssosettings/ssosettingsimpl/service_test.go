@@ -1033,7 +1033,7 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 		env.store.ExpectedError = nil
 
 		err := env.service.Delete(context.Background(), provider)
-		require.ErrorIs(t, err, ssosettings.ErrInvalidProvider)
+		require.ErrorIs(t, err, ssosettings.ErrNotConfigurable)
 	})
 
 	t.Run("store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
