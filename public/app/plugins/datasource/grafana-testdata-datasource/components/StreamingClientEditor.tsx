@@ -35,8 +35,8 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
     streamType === 'signal'
       ? streamingClientFields
       : ['logs', 'traces'].includes(streamType)
-      ? [streamingClientFields[0]] // speed
-      : [];
+        ? [streamingClientFields[0]] // speed
+        : [];
 
   return (
     <InlineFieldRow>
