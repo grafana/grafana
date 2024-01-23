@@ -205,7 +205,7 @@ interface StateBadgeProps {
 }
 
 // TODO move to separate component
-const StateBadge = ({ state, health }: StateBadgeProps) => {
+const StateBadge = ({ state }: StateBadgeProps) => {
   let stateLabel: string;
   let textColor: 'success' | 'error' | 'warning' | 'info';
 
@@ -224,20 +224,9 @@ const StateBadge = ({ state, health }: StateBadgeProps) => {
       break;
   }
 
-  switch (health) {
-    case 'error':
-      textColor = 'error';
-      stateLabel = 'Error';
-      break;
-    case 'nodata':
-      textColor = 'info';
-      stateLabel = 'Insufficient data';
-      break;
-  }
-
   return (
     <Stack direction="row" gap={0.5}>
-      <AlertStateDot size="md" state={state} health={health} />
+      <AlertStateDot size="md" state={state} />
       <Text variant="bodySmall" color={textColor}>
         {stateLabel}
       </Text>
