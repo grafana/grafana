@@ -101,7 +101,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 			return nil, err
 		}
 	case q.Title != nil:
-		dashFolder, err = s.getFolderByTitle(ctx, q.OrgID, *q.Title)
+		dashFolder, err = s.getFolderByTitle(ctx, q.OrgID, *q.Title, q.ParentUID)
 		if err != nil {
 			return nil, err
 		}
@@ -374,8 +374,8 @@ func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (
 	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
 }
 
-func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title)
+func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string, folderUID *string) (*folder.Folder, error) {
+	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title, folderUID)
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
