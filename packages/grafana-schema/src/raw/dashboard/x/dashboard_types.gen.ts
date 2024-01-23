@@ -126,6 +126,10 @@ export interface VariableModel {
    */
   allFormat?: string;
   /**
+   * Custom all value
+   */
+  allValue?: string;
+  /**
    * Shows current selected variable text/value on the dashboard
    */
   current?: VariableOption;
@@ -146,6 +150,10 @@ export interface VariableModel {
    */
   id: string;
   /**
+   * Whether all value option is available or not
+   */
+  includeAll?: boolean;
+  /**
    * Optional display name
    */
   label?: string;
@@ -165,11 +173,23 @@ export interface VariableModel {
    * Query used to fetch values for a variable
    */
   query?: (string | Record<string, unknown>);
+  /**
+   * Options to config when to refresh a variable
+   */
   refresh?: VariableRefresh;
+  /**
+   * Optional field, if you want to extract part of a series name or metric node segment.
+   * Named capture groups can be used to separate the display text and value.
+   */
+  regex?: string;
   /**
    * Whether the variable value should be managed by URL query params or not
    */
   skipUrlSync: boolean;
+  /**
+   * Options sort order
+   */
+  sort?: VariableSort;
   /**
    * Type of variable
    */
@@ -178,6 +198,7 @@ export interface VariableModel {
 
 export const defaultVariableModel: Partial<VariableModel> = {
   id: '00000000-0000-0000-0000-000000000000',
+  includeAll: false,
   multi: false,
   options: [],
   skipUrlSync: false,
