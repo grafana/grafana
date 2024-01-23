@@ -980,7 +980,7 @@
     "megamenu": {
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
-      "listLevel1": "",
+      "list-label": "",
       "undock": "Desanclar el menú"
     },
     "toolbar": {
