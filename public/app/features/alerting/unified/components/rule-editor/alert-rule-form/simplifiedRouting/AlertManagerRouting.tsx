@@ -169,7 +169,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
   }),
   loading: css({
-    'pointer-events': 'none',
+    pointerEvents: 'none',
     animation: 'rotation 2s infinite linear',
     '@keyframes rotation': {
       from: {
