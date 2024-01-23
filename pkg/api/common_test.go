@@ -234,6 +234,10 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	return sc
 }
 
+func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
+	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+}
+
 type fakeRenderService struct {
 	rendering.Service
 }
