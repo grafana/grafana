@@ -290,6 +290,20 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   /**
+   * Fetch labels using the best endpoint that datasource supports.
+   * This is cached by its args but also by the global timeRange currently selected as they can change over requested time.
+   * @param name
+   * @param withName
+   */
+  fetchLabelsWithMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    if (this.datasource.hasLabelsMatchAPISupport()) {
+      return this.fetchSeriesLabelsMatch(name, withName);
+    } else {
+      return this.fetchSeriesLabels(name, withName);
+    }
+  };
+
+  /**
    * Fetch labels for a series using /series endpoint. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name

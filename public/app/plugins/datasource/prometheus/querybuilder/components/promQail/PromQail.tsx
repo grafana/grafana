@@ -54,12 +54,7 @@ export const PromQail = (props: PromQailProps) => {
 
   useEffect(() => {
     const fetchLabels = async () => {
-      let labelsIndex: Record<string, string[]>;
-      if (datasource.hasLabelsMatchAPISupport()) {
-        labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
-      } else {
-        labelsIndex = await datasource.languageProvider.fetchSeriesLabels(query.metric);
-      }
+      let labelsIndex: Record<string, string[]> = await datasource.languageProvider.fetchLabelsWithMatch(query.metric);
       setLabelNames(Object.keys(labelsIndex));
     };
     fetchLabels();

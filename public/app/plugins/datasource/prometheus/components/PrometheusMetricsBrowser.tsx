@@ -415,7 +415,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
+      const possibleLabels = await languageProvider.fetchLabelsWithMatch(selector, true);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         if (lastFacetted) {

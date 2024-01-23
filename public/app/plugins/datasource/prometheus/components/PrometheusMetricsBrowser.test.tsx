@@ -114,7 +114,7 @@ describe('PrometheusMetricsBrowser', () => {
         }
         return [];
       },
-      fetchSeriesLabels: (selector: string) => {
+      fetchLabelsWithMatch: (selector: string) => {
         switch (selector) {
           case '{label1="value1-1"}':
             return { label1: ['value1-1'], label2: ['value2-1'], label3: ['value3-1'] };

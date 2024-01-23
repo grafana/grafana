@@ -106,19 +106,11 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       const labelToConsider = [{ label: '__name__', op: '=', value: metric }];
       const expr = promQueryModeller.renderLabels(labelToConsider);
 
-      if (datasource.hasLabelsMatchAPISupport()) {
-        datasource.languageProvider.fetchSeriesLabelsMatch(expr).then((labelsIndex: Record<string, string[]>) => {
-          const labelNames = Object.keys(labelsIndex);
-          const names = labelNames.map((value) => ({ label: value, value: value }));
-          setLabelOptions([...variables, ...names]);
-        });
-      } else {
-        datasource.languageProvider.fetchSeriesLabels(expr).then((labelsIndex: Record<string, string[]>) => {
-          const labelNames = Object.keys(labelsIndex);
-          const names = labelNames.map((value) => ({ label: value, value: value }));
-          setLabelOptions([...variables, ...names]);
-        });
-      }
+      datasource.languageProvider.fetchLabelsWithMatch(expr).then((labelsIndex: Record<string, string[]>) => {
+        const labelNames = Object.keys(labelsIndex);
+        const names = labelNames.map((value) => ({ label: value, value: value }));
+        setLabelOptions([...variables, ...names]);
+      });
     }
   }, [datasource, qryType, metric]);
 
