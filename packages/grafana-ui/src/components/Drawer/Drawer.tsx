@@ -61,7 +61,7 @@ export function Drawer({
   size = 'md',
   tabs,
 }: Props) {
-  const [drawerWidth, onMouseDown] = useResizebleDrawer();
+  const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
   const styles = useStyles2(getStyles);
   const sizeStyles = useStyles2(getSizeStyles, size, drawerWidth ?? width);
@@ -116,7 +116,7 @@ export function Drawer({
           ref={overlayRef}
         >
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-          <div className={styles.resizer} onMouseDown={onMouseDown} />
+          <div className={styles.resizer} onMouseDown={onMouseDown} onTouchStart={onTouchStart} />
           {typeof title === 'string' && (
             <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
               <div className={styles.actions}>
@@ -149,13 +149,20 @@ export function Drawer({
   );
 }
 
-function useResizebleDrawer(): [string | undefined, React.EventHandler<React.MouseEvent>] {
+function useResizebleDrawer(): [
+  string | undefined,
+  React.EventHandler<React.MouseEvent>,
+  React.EventHandler<React.TouchEvent>,
+] {
   const [drawerWidth, setDrawerWidth] = useState<string | undefined>(undefined);
 
   const onMouseMove = useCallback((e: MouseEvent) => {
-    let offsetRight = document.body.offsetWidth - (e.clientX - document.body.offsetLeft);
-    let widthPercent = Math.min((offsetRight / document.body.clientWidth) * 100, 98).toFixed(2);
-    setDrawerWidth(`${widthPercent}vw`);
+    setDrawerWidth(getCustomDrawerWidth(e.clientX));
+  }, []);
+
+  const onTouchMove = useCallback((e: TouchEvent) => {
+    const touch = e.touches[0];
+    setDrawerWidth(getCustomDrawerWidth(touch.clientX));
   }, []);
 
   const onMouseUp = useCallback(
@@ -166,6 +173,14 @@ function useResizebleDrawer(): [string | undefined, React.EventHandler<React.Mou
     [onMouseMove]
   );
 
+  const onTouchEnd = useCallback(
+    (e: TouchEvent) => {
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+    },
+    [onTouchMove]
+  );
+
   function onMouseDown(e: React.MouseEvent<HTMLDivElement>) {
     e.stopPropagation();
     e.preventDefault();
@@ -174,7 +189,21 @@ function useResizebleDrawer(): [string | undefined, React.EventHandler<React.Mou
     document.addEventListener('mouseup', onMouseUp);
   }
 
-  return [drawerWidth, onMouseDown];
+  function onTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    e.preventDefault();
+    // we will only add listeners when needed, and remove them afterward
+    document.addEventListener('touchmove', onTouchMove);
+    document.addEventListener('touchend', onTouchEnd);
+  }
+
+  return [drawerWidth, onMouseDown, onTouchStart];
+}
+
+function getCustomDrawerWidth(clientX: number) {
+  let offsetRight = document.body.offsetWidth - (clientX - document.body.offsetLeft);
+  let widthPercent = Math.min((offsetRight / document.body.clientWidth) * 100, 98).toFixed(2);
+  return `${widthPercent}vw`;
 }
 
 function useBodyClassWhileOpen() {
