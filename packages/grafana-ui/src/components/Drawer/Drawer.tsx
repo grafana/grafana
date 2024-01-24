@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -150,15 +149,13 @@ export function Drawer({
   );
 }
 
-function useResizebleDrawer(): [number | undefined, React.EventHandler<React.MouseEvent>] {
-  const [drawerWidth, setDrawerWidth] = useState<number | undefined>(undefined);
+function useResizebleDrawer(): [string | undefined, React.EventHandler<React.MouseEvent>] {
+  const [drawerWidth, setDrawerWidth] = useState<string | undefined>(undefined);
 
   const onMouseMove = useCallback((e: MouseEvent) => {
     let offsetRight = document.body.offsetWidth - (e.clientX - document.body.offsetLeft);
-    let minWidth = 256;
-    if (offsetRight > minWidth) {
-      setDrawerWidth(offsetRight);
-    }
+    let widthPercent = ((offsetRight / document.body.clientWidth) * 100).toFixed(2);
+    setDrawerWidth(`${widthPercent}vw`);
   }, []);
 
   const onMouseUp = useCallback(
@@ -321,7 +318,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: theme.zIndex.modal,
 
       '&::after': {
-        background: theme.colors.emphasize(theme.colors.background.secondary, 0.2),
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.15),
         content: '""',
         position: 'absolute',
         left: '50%',
