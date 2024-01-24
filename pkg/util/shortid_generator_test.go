@@ -49,7 +49,7 @@ func TestRandomUIDs(t *testing.T) {
 			t.Fatalf("created invalid name: %v", validation)
 		}
 
-		// fmt.Println(v)
+		//	fmt.Println(v)
 	}
 	// t.FailNow()
 }

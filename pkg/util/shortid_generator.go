@@ -73,7 +73,7 @@ func GenerateShortUID() string {
 
 	return string(hexLetters[uidrand.Intn(len(hexLetters))]) + // start with a letter
 		node.Generate().Base36() +
-		string(hexLetters[uidrand.Intn(len(hexLetters))])
+		string(hexLetters[uidrand.Intn(len(hexLetters))]) // a bit more entropy
 }
 
 // ValidateUID checks the format and length of the string and returns error if it does not pass the condition
