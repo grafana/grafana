@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
-import { HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { LinkButton, useStyles2 } from '@grafana/ui';
+import { VizTooltipRow } from '@grafana/ui/src/components/VizTooltip/VizTooltipRow';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
 import { DisplayValue } from './DataHoverView';
@@ -26,12 +27,17 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar' }:
         {time && <span className={styles.time}>{renderValue(time.valueString)}</span>}
       </div>
       <div className={styles.exemplarContent}>
-        {displayValues.map((displayValue, i) => (
-          <HorizontalGroup key={i} justify={'space-between'} align={'center'} spacing={'md'}>
-            <div className={styles.label}>{displayValue.name}</div>
-            <div className={styles.value}>{renderValue(displayValue.valueString)}</div>
-          </HorizontalGroup>
-        ))}
+        {displayValues.map((displayValue, i) => {
+          return (
+            <VizTooltipRow
+              key={i}
+              label={displayValue.name}
+              value={renderValue(displayValue.valueString)}
+              justify={'space-between'}
+              isPinned={false}
+            />
+          );
+        })}
       </div>
       {links && (
         <div className={styles.exemplarFooter}>
@@ -51,12 +57,13 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
     exemplarWrapper: css({
       display: 'flex',
       flexDirection: 'column',
+      flex: 1,
+      gap: 4,
       whiteSpace: 'pre',
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
-      userSelect: 'text',
     }),
     exemplarHeader: css({
       display: 'flex',
@@ -83,6 +90,10 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
       flex: 1,
       borderTop: `1px solid ${theme.colors.border.medium}`,
       padding: theme.spacing(1),
+
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      whiteSpace: 'nowrap',
     }),
     linkButton: css({
       width: 'fit-content',

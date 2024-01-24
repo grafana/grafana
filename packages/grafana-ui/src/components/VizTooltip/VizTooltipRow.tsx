@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -10,7 +10,8 @@ import { Tooltip } from '../Tooltip';
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { ColorPlacement, LabelValue } from './types';
 
-interface Props extends LabelValue {
+interface Props extends Omit<LabelValue, 'value'> {
+  value: string | number | null | ReactNode;
   justify?: string;
   isActive?: boolean; // for series list
   marginRight?: string;
