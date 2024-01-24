@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
 
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -196,6 +196,14 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	defer func(t time.Time) {
+		parent := q.UID
+		if q.UID != folder.SharedWithMeFolderUID {
+			parent = "folder"
+		}
+		s.metrics.foldersGetChildrenRequestsDuration.WithLabelValues(parent).Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
