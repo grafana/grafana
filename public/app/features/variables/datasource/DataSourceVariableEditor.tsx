@@ -70,6 +70,14 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     this.props.changeVariableMultiValue(toKeyedVariableIdentifier(this.props.variable), event.currentTarget.checked);
   };
 
+  onIncludeAllChanged = (event: FormEvent<HTMLInputElement>) => {
+    this.onSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked });
+  };
+
+  onAllValueChanged = (event: FormEvent<HTMLInputElement>) => {
+    this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value });
+  };
+
   getSelectedDataSourceTypeValue = (): string => {
     const { extended } = this.props;
 
@@ -103,12 +111,8 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
         onChange={this.onDataSourceTypeChanged}
         onRegExBlur={this.onRegExBlur}
         onMultiChange={this.onMultiChanged}
-        onIncludeAllChange={(event) =>
-          this.onSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked })
-        }
-        onAllValueChange={(event) =>
-          this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
-        }
+        onIncludeAllChange={this.onIncludeAllChanged}
+        onAllValueChange={this.onAllValueChanged}
       />
     );
   }
