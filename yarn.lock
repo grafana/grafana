@@ -3327,27 +3327,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.7.5":
-  version: 1.7.5
-  resolution: "@grafana/experimental@npm:1.7.5"
-  dependencies:
-    "@types/uuid": "npm:^8.3.3"
-    react-use: "npm:^17.4.2"
-    semver: "npm:^7.5.4"
-    uuid: "npm:^8.3.2"
-  peerDependencies:
-    "@emotion/css": 11.1.3
-    "@grafana/data": ^10.0.0
-    "@grafana/runtime": ^10.0.0
-    "@grafana/ui": ^10.0.0
-    react: 17.0.2
-    react-dom: 17.0.2
-    react-select: ^5.2.1
-    rxjs: 7.8.0
-  checksum: 33f5e739bbc1646ea00c00b419c35a0b02abbfc35b0fa42d61f05a78a1929567388e4132093a029f88783264e739baeb8bcb53a68bcf1152f055a20be3b87e24
-  languageName: node
-  linkType: hard
-
 "@grafana/experimental@npm:1.7.6":
   version: 1.7.6
   resolution: "@grafana/experimental@npm:1.7.6"
@@ -9002,17 +8981,6 @@ __metadata:
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
   checksum: 7a752e6c5e76139f258bc14827d2c574bb76d6e7eb1b240f24f79b269153cb88668c34ba7078d3de99ec1973b7022e1f788e71117bd52a287f382d24bb80be40
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:18.2.15":
-  version: 18.2.15
-  resolution: "@types/react@npm:18.2.15"
-  dependencies:
-    "@types/prop-types": "npm:*"
-    "@types/scheduler": "npm:*"
-    csstype: "npm:^3.0.2"
-  checksum: 282f3f86f94983ef1af1d66cb552b78131cf3650d29c3080e08a4de8f81489e5b6111c635ad59acf6984ce72281dfcf95004514985b84b5af35898d10414e84f
   languageName: node
   linkType: hard
 
