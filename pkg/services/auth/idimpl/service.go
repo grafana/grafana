@@ -25,7 +25,7 @@ import (
 const (
 	cachePrefix = "id-token"
 	tokenTTL    = 10 * time.Minute
-	cacheLeeway  = 30 * time.Second
+	cacheLeeway = 30 * time.Second
 )
 
 var _ auth.IDService = (*Service)(nil)
@@ -116,7 +116,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		}
 
 		expires := time.Until(extracted.Expiry.Time())
-		if err := s.cache.Set(ctx, cacheKey, []byte(token), expires-cacheLeway); err != nil {
+		if err := s.cache.Set(ctx, cacheKey, []byte(token), expires-cacheLeeway); err != nil {
 			s.logger.FromContext(ctx).Error("Failed to add id token to cache", "error", err)
 		}
 
