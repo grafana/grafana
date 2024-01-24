@@ -1,6 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
 
 import { e2e } from '../utils';
+import { fromBaseUrl } from '../utils/support/url';
 
 describe('Embedded dashboard', function () {
   beforeEach(() => {
@@ -8,7 +9,7 @@ describe('Embedded dashboard', function () {
   });
 
   it('open test page', function () {
-    cy.visit('/dashboards/embedding-test');
+    cy.visit(fromBaseUrl('/dashboards/embedding-test'));
 
     // Verify pie charts are rendered
     cy.get(
