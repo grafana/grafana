@@ -77,6 +77,19 @@ func (s *SearchOptions) Wildcards() []string {
 	return s.wildcards
 }
 
+func (s *SearchOptions) ResolveUserLogin(ctx context.Context, userSvc user.Service) error {
+	if s.UserLogin == "" {
+		return nil
+	}
+	// Resolve userLogin -> userID
+	dbUsr, err := userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: s.UserLogin})
+	if err != nil {
+		return err
+	}
+	s.UserID = dbUsr.ID
+	return nil
+}
+
 type SyncUserRolesCommand struct {
 	UserID int64
 	// name of roles the user should have

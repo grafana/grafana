@@ -247,17 +247,23 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
-	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
-	defer timer.ObserveDuration()
-
-	// Resolve userLogin -> userID
 	if options.UserLogin != "" {
-		dbUsr, err := s.userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: options.UserLogin})
+		// Resolve userLogin -> userID
+		options.ResolveUserLogin(ctx, s.userSvc)
+		options.UserLogin = ""
+	}
+	if options.UserID > 0 {
+		// Reroute to the user specific implementation of search permissions
+		// because it leverages the user permission cache.
+		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
 		if err != nil {
 			return nil, err
 		}
-		options.UserID = dbUsr.ID
+		return map[int64][]accesscontrol.Permission{options.UserID: userPerms}, nil
 	}
+
+	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
+	defer timer.ObserveDuration()
 
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
@@ -269,12 +275,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
-	var userFilter []int64
-	if options.UserID > 0 {
-		userFilter = append(userFilter, options.UserID)
-	}
-
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, userFilter, usr.GetOrgID())
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
@@ -345,8 +346,13 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	if searchOptions.UserLogin != "" {
+		// Resolve userLogin -> userID
+		searchOptions.ResolveUserLogin(ctx, s.userSvc)
+	}
+
 	if searchOptions.UserID == 0 {
-		return nil, fmt.Errorf("expected user ID to be specified")
+		return nil, fmt.Errorf("expected user ID or login to be specified")
 	}
 
 	if permissions, success := s.searchUserPermissionsFromCache(orgID, searchOptions); success {
