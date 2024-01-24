@@ -138,6 +138,12 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
         body: new PanelOptionsPane(vizPanelMgr),
         width: '100%',
       }),
+      primaryPaneStyles: {
+        minWidth: '0',
+      },
+      secondaryPaneStyles: {
+        minWidth: '0',
+      },
     }),
   });
 }
