@@ -56,11 +56,11 @@ func TestService_SignIdentity(t *testing.T) {
 		SignIDTokenFn: func(_ context.Context, claims *auth.IDClaims) (string, error) {
 			key := []byte("key")
 			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)
+			require.NoError(t, err)
 
 			token, err := jwt.Signed(s).Claims(claims).CompactSerialize()
-			if err != nil {
-				return "", err
-			}
+			require.NoError(t, err)
+
 			return token, nil
 		},
 	}
