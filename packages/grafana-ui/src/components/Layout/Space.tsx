@@ -1,11 +1,9 @@
-import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
+import { ThemeSpacingTokens } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-
-import { getResponsiveStyle, ResponsiveProp } from './utils/responsiveness';
+import { Box } from './Box/Box';
+import { ResponsiveProp } from './utils/responsiveness';
 
 export interface SpaceProps {
   /**
@@ -23,30 +21,6 @@ export interface SpaceProps {
   layout?: 'block' | 'inline';
 }
 
-export const Space = (props: SpaceProps) => {
-  const styles = useStyles2(getStyles, props);
-  return <span className={cx(styles.wrapper)} />;
+export const Space = ({ v = 0, h = 0, layout }: SpaceProps) => {
+  return <Box paddingRight={h} paddingBottom={v} display={layout === 'inline' ? 'inline-block' : 'block'} />;
 };
-
-Space.defaultProps = {
-  v: 0,
-  h: 0,
-  layout: 'block',
-};
-
-const getStyles = (theme: GrafanaTheme2, props: SpaceProps) => ({
-  wrapper: css([
-    getResponsiveStyle(theme, props.h, (val) => ({
-      paddingRight: theme.spacing(val),
-    })),
-    getResponsiveStyle(theme, props.v, (val) => ({
-      paddingBottom: theme.spacing(val),
-    })),
-    props.layout === 'inline' && {
-      display: 'inline-block',
-    },
-    props.layout === 'block' && {
-      display: 'block',
-    },
-  ]),
-});
