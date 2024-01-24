@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2 } from '@grafana/ui';
+import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2, Stack } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { getQueryParamValue } from 'app/core/utils/query';
 import { FolderState, useDispatch } from 'app/types';
@@ -87,7 +86,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
           />
         </Stack>
 
-        <Stack gap={1}>
+        <Stack direction="column" gap={1}>
           {pageItems.map((currentRule) => (
             <Card
               key={currentRule.name}
@@ -141,8 +140,8 @@ function useAlertsFolderViewParams() {
     sortParam === SortOrder.Ascending
       ? SortOrder.Ascending
       : sortParam === SortOrder.Descending
-      ? SortOrder.Descending
-      : undefined
+        ? SortOrder.Descending
+        : undefined
   );
 
   useDebounce(

@@ -38,8 +38,22 @@ export default function AdminFeatureTogglesPage() {
     );
   };
 
+  const subTitle = (
+    <div>
+      View and edit feature toggles. Read more about feature toggles at{' '}
+      <a
+        className="external-link"
+        target="_new"
+        href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/"
+      >
+        grafana.com
+      </a>
+      .
+    </div>
+  );
+
   return (
-    <Page navId="feature-toggles">
+    <Page navId="feature-toggles" subTitle={subTitle}>
       <Page.Contents>
         <>
           {isError && getErrorMessage()}

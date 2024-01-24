@@ -16,7 +16,7 @@ const EditMessageTemplate = ({ match }: Props) => {
 
   const name = match?.params.name;
   if (!name) {
-    return <EntityNotFound entity="Message template" />;
+    return <EntityNotFound entity="Notification template" />;
   }
 
   if (isLoading && !data) {
@@ -25,7 +25,7 @@ const EditMessageTemplate = ({ match }: Props) => {
 
   if (error) {
     return (
-      <Alert severity="error" title="Failed to fetch message template">
+      <Alert severity="error" title="Failed to fetch notification template">
         {String(error)}
       </Alert>
     );

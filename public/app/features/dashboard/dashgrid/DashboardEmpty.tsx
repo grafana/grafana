@@ -3,12 +3,12 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { config, locationService } from '@grafana/runtime';
+import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onImportDashboard } from 'app/features/dashboard/utils/dashboard';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -24,11 +24,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   return (
-    <Flex alignItems="center" justifyContent="center">
+    <Stack alignItems="center" justifyContent="center">
       <div className={styles.wrapper}>
-        <Flex alignItems="stretch" justifyContent="center" gap={4} direction="column">
+        <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
           <Box borderColor="strong" borderStyle="dashed" padding={4}>
-            <Flex direction="column" alignItems="center" gap={2}>
+            <Stack direction="column" alignItems="center" gap={2}>
               <Text element="h1" textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-visualization-header">
                   Start your new dashboard by adding a visualization
@@ -48,7 +48,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
                 onClick={() => {
                   const id = onCreateNewPanel(dashboard, initialDatasource);
-                  reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
+                  DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
+
                   locationService.partial({ editPanel: id, firstPanel: true });
                   dispatch(setInitialDatasource(undefined));
                 }}
@@ -56,12 +57,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               >
                 <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
               </Button>
-            </Flex>
+            </Stack>
           </Box>
-          <Flex direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
+          <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             {config.featureToggles.vizAndWidgetSplit && (
-              <Box borderColor="strong" borderStyle="dashed" padding={3} grow={1}>
-                <Flex direction="column" alignItems="center" gap={1}>
+              <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+                <Stack direction="column" alignItems="center" gap={1}>
                   <Text element="h3" textAlignment="center" weight="medium">
                     <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
                   </Text>
@@ -75,18 +76,18 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                     fill="outline"
                     data-testid={selectors.pages.AddDashboard.itemButton('Create new widget button')}
                     onClick={() => {
-                      reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_widget' });
+                      DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_widget' });
                       locationService.partial({ addWidget: true });
                     }}
                     disabled={!canCreate}
                   >
                     <Trans i18nKey="dashboard.empty.add-widget-button">Add widget</Trans>
                   </Button>
-                </Flex>
+                </Stack>
               </Box>
             )}
-            <Box borderColor="strong" borderStyle="dashed" padding={3} grow={1}>
-              <Flex direction="column" alignItems="center" gap={1}>
+            <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+              <Stack direction="column" alignItems="center" gap={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.add-library-panel-header">Import panel</Trans>
                 </Text>
@@ -102,17 +103,17 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
                   onClick={() => {
-                    reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
+                    DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
                     onAddLibraryPanel(dashboard);
                   }}
                   disabled={!canCreate}
                 >
                   <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
                 </Button>
-              </Flex>
+              </Stack>
             </Box>
-            <Box borderColor="strong" borderStyle="dashed" padding={3} grow={1}>
-              <Flex direction="column" alignItems="center" gap={1}>
+            <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+              <Stack direction="column" alignItems="center" gap={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.import-a-dashboard-header">Import a dashboard</Trans>
                 </Text>
@@ -129,19 +130,19 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Import dashboard button')}
                   onClick={() => {
-                    reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_dashboard' });
+                    DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
                     onImportDashboard();
                   }}
                   disabled={!canCreate}
                 >
                   <Trans i18nKey="dashboard.empty.import-dashboard-button">Import dashboard</Trans>
                 </Button>
-              </Flex>
+              </Stack>
             </Box>
-          </Flex>
-        </Flex>
+          </Stack>
+        </Stack>
       </div>
-    </Flex>
+    </Stack>
   );
 };
 

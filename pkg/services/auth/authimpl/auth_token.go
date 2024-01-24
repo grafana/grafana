@@ -66,7 +66,7 @@ type UserAuthTokenService struct {
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
-	token, hashedToken, err := generateAndHashToken()
+	token, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 	userAuthToken.UnhashedToken = token
 
 	ctxLogger := s.log.FromContext(ctx)
-	ctxLogger.Debug("User auth token created", "tokenId", userAuthToken.Id, "userId", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
+	ctxLogger.Debug("User auth token created", "tokenID", userAuthToken.Id, "userID", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
 
 	var userToken auth.UserToken
 	err = userAuthToken.toUserToken(&userToken)
@@ -112,7 +112,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 }
 
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
-	hashedToken := hashToken(unhashedToken)
+	hashedToken := hashToken(s.cfg.SecretKey, unhashedToken)
 	var model userAuthToken
 	var exists bool
 	var err error
@@ -135,7 +135,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	ctxLogger := s.log.FromContext(ctx)
 
 	if model.RevokedAt > 0 {
-		ctxLogger.Debug("User token has been revoked", "user ID", model.UserId, "token ID", model.Id)
+		ctxLogger.Debug("User token has been revoked", "userID", model.UserId, "tokenID", model.Id, "revokedAt", model.RevokedAt)
 		return nil, &auth.TokenRevokedError{
 			UserID:  model.UserId,
 			TokenID: model.Id,
@@ -143,7 +143,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	}
 
 	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
-		ctxLogger.Debug("User token has expired", "user ID", model.UserId, "token ID", model.Id)
+		ctxLogger.Debug("User token has expired", "userID", model.UserId, "tokenID", model.Id, "createdAt", model.CreatedAt, "rotatedAt", model.RotatedAt)
 		return nil, &auth.TokenExpiredError{
 			UserID:  model.UserId,
 			TokenID: model.Id,
@@ -171,9 +171,9 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		}
 
 		if affectedRows == 0 {
-			ctxLogger.Debug("Prev seen token unchanged", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			ctxLogger.Debug("Prev seen token unchanged", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		} else {
-			ctxLogger.Debug("Prev seen token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			ctxLogger.Debug("Prev seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		}
 	}
 
@@ -197,9 +197,9 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		}
 
 		if affectedRows == 0 {
-			ctxLogger.Debug("Seen wrong token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			ctxLogger.Debug("Seen wrong token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		} else {
-			ctxLogger.Debug("Seen token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			ctxLogger.Debug("Seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		}
 	}
 
@@ -221,6 +221,7 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		if err != nil {
 			return nil, err
 		}
+		s.log.FromContext(ctx).Debug("Rotating token", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
 
 		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
 
@@ -248,7 +249,7 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 		clientIPStr = clientIP.String()
 	}
 
-	newToken, hashedToken, err := generateAndHashToken()
+	newToken, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +328,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 		}
 
 		ctxLogger := s.log.FromContext(ctx)
-		ctxLogger.Debug("Token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
+		ctxLogger.Debug("Token needs rotation", "tokenID", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
 
 		clientIPStr := clientIP.String()
 		if len(clientIP) == 0 {
@@ -337,7 +338,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 		if err != nil {
 			return nil, err
 		}
-		hashedToken := hashToken(newToken)
+		hashedToken := hashToken(s.cfg.SecretKey, newToken)
 
 		// very important that auth_token_seen is set after the prev_auth_token = case when ... for mysql to function correctly
 		sql := `
@@ -370,7 +371,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 		}
 
 		if affected > 0 {
-			ctxLogger.Debug("Auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
+			ctxLogger.Debug("Auth token rotated", "affected", affected, "tokenID", model.Id, "userID", model.UserId)
 			model.UnhashedToken = newToken
 			var result auth.UserToken
 			if err := model.toUserToken(&result); err != nil {
@@ -426,11 +427,11 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *auth.User
 	ctxLogger := s.log.FromContext(ctx)
 
 	if rowsAffected == 0 {
-		ctxLogger.Debug("User auth token not found/revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
+		ctxLogger.Debug("User auth token not found/revoked", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
 		return auth.ErrUserTokenNotFound
 	}
 
-	ctxLogger.Debug("User auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "soft", soft)
+	ctxLogger.Debug("User auth token revoked", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "soft", soft)
 
 	return nil
 }
@@ -448,7 +449,7 @@ func (s *UserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userId i
 			return err
 		}
 
-		s.log.FromContext(ctx).Debug("All user tokens for user revoked", "userId", userId, "count", affected)
+		s.log.FromContext(ctx).Debug("All user tokens for user revoked", "userID", userId, "count", affected)
 
 		return err
 	})
@@ -564,7 +565,7 @@ func (s *UserAuthTokenService) DeleteUserRevokedTokens(ctx context.Context, user
 			return err
 		}
 
-		s.log.FromContext(ctx).Debug("Deleted user revoked tokens", "userId", userID, "count", rows)
+		s.log.FromContext(ctx).Debug("Deleted user revoked tokens", "userID", userID, "count", rows)
 		return err
 	})
 }
@@ -626,18 +627,18 @@ func createToken() (string, error) {
 	return token, nil
 }
 
-func hashToken(token string) string {
-	hashBytes := sha256.Sum256([]byte(token + setting.SecretKey))
+func hashToken(secretKey string, token string) string {
+	hashBytes := sha256.Sum256([]byte(token + secretKey))
 	return hex.EncodeToString(hashBytes[:])
 }
 
-func generateAndHashToken() (string, string, error) {
+func generateAndHashToken(secretKey string) (string, string, error) {
 	token, err := createToken()
 	if err != nil {
 		return "", "", err
 	}
 
-	return token, hashToken(token), nil
+	return token, hashToken(secretKey, token), nil
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {

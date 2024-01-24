@@ -51,7 +51,7 @@ function renderPanel(name: string, overrides?: Partial<PanelChromeProps>) {
 
   return (
     <PanelChrome {...props}>
-      {(innerWidth, innerHeight) => {
+      {(innerWidth: number, innerHeight: number) => {
         return <div style={{ width: innerWidth, height: innerHeight, ...contentStyle }}>{name}</div>;
       }}
     </PanelChrome>
@@ -75,7 +75,7 @@ function renderCollapsiblePanel(name: string, overrides?: Partial<PanelChromePro
 
     return (
       <PanelChrome {...props} collapsed={collapsed} onToggleCollapse={toggleCollapsed}>
-        {(innerWidth, innerHeight) => {
+        {(innerWidth: number, innerHeight: number) => {
           return <div style={{ width: innerWidth, height: innerHeight, ...contentStyle }}>{name}</div>;
         }}
       </PanelChrome>

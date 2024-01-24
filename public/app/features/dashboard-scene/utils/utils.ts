@@ -164,6 +164,7 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
+
   if (root instanceof DashboardScene) {
     return root;
   }
@@ -181,4 +182,8 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   }
 
   return null;
+}
+
+export function isPanelClone(key: string) {
+  return key.includes('clone');
 }

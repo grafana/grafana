@@ -3,8 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Button, useStyles2, withErrorBoundary, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
@@ -25,7 +24,7 @@ import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
-import { getAllRulesSourceNames } from './utils/datasource';
+import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -78,6 +77,9 @@ const RuleList = withErrorBoundary(
       return noRules && state.dispatched;
     });
 
+    const grafanaRules = useUnifiedAlertingSelector((state) => state.rulerRules[GRAFANA_RULES_SOURCE_NAME]?.result);
+    const hasGrafanaRules = Object.keys(grafanaRules ?? {}).length > 0;
+
     const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
@@ -106,7 +108,7 @@ const RuleList = withErrorBoundary(
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
-      <AlertingPageWrapper pageId="alert-list" isLoading={false}>
+      <AlertingPageWrapper navId="alert-list" isLoading={false}>
         <RuleListErrors />
         <RulesFilter onFilterCleared={onFilterCleared} />
         {!hasNoAlertRulesCreatedYet && (
@@ -127,7 +129,7 @@ const RuleList = withErrorBoundary(
                 <RuleStats namespaces={filteredNamespaces} />
               </div>
               <Stack direction="row" gap={0.5}>
-                <MoreActionsRuleButtons />
+                <MoreActionsRuleButtons enableExport={hasGrafanaRules} />
               </Stack>
             </div>
           </>

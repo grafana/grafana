@@ -23,6 +23,8 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import {
   VizLegendOptions,
   AxisPlacement,
@@ -40,8 +42,6 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
@@ -693,19 +693,19 @@ export function fmtDuration(milliSeconds: number): string {
     yr > 0
       ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
       : mo > 0
-      ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
-      : wk > 0
-      ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
-      : d > 0
-      ? d + 'd ' + (h > 0 ? h + 'h ' : '')
-      : h > 0
-      ? h + 'h ' + (m > 0 ? m + 'm ' : '')
-      : m > 0
-      ? m + 'm ' + (s > 0 ? s + 's ' : '')
-      : s > 0
-      ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
-      : ms > 0
-      ? ms + 'ms '
-      : '0'
+        ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+        : wk > 0
+          ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
+          : d > 0
+            ? d + 'd ' + (h > 0 ? h + 'h ' : '')
+            : h > 0
+              ? h + 'h ' + (m > 0 ? m + 'm ' : '')
+              : m > 0
+                ? m + 'm ' + (s > 0 ? s + 's ' : '')
+                : s > 0
+                  ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
+                  : ms > 0
+                    ? ms + 'ms '
+                    : '0'
   ).trim();
 }

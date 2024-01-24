@@ -1,11 +1,17 @@
+import { locationUtil } from '@grafana/data';
+import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { buildNavModel } from 'app/features/folders/state/navModel';
+import { store } from 'app/store/store';
+import { DashboardDTO, DashboardRoutes } from 'app/types';
 
-import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { getVizPanelKeyForPanelId, findVizPanelByKey } from '../utils/utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
@@ -14,8 +20,79 @@ export interface DashboardScenePageState {
   loadError?: string;
 }
 
+export const DASHBOARD_CACHE_TTL = 2000;
+
+interface DashboardCacheEntry {
+  dashboard: DashboardDTO;
+  ts: number;
+}
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
   private cache: Record<string, DashboardScene> = {};
+  // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
+  private dashboardCache: Map<string, DashboardCacheEntry> = new Map();
+
+  // To eventualy replace the fetchDashboard function from Dashboard redux state management.
+  // For now it's a simplistic version to support Home and Normal dashboard routes.
+  public async fetchDashboard(uid: string) {
+    const cachedDashboard = this.getFromCache(uid);
+
+    if (cachedDashboard) {
+      return cachedDashboard;
+    }
+
+    let rsp: DashboardDTO | undefined;
+
+    try {
+      if (uid === DashboardRoutes.Home) {
+        rsp = await getBackendSrv().get('/api/dashboards/home');
+
+        // If user specified a custom home dashboard redirect to that
+        if (rsp?.redirectUri) {
+          const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+          locationService.replace(newUrl);
+          return null;
+        }
+
+        if (rsp?.meta) {
+          rsp.meta.canSave = false;
+          rsp.meta.canShare = false;
+          rsp.meta.canStar = false;
+        }
+      } else {
+        rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+      }
+
+      if (rsp) {
+        if (rsp.meta.url) {
+          const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
+          const currentPath = locationService.getLocation().pathname;
+          if (dashboardUrl !== currentPath) {
+            // Spread current location to persist search params used for navigation
+            locationService.replace({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            });
+            console.log('not correct url correcting', dashboardUrl, currentPath);
+          }
+        }
+
+        // Populate nav model in global store according to the folder
+        await this.initNavModel(rsp);
+
+        this.dashboardCache.set(uid, { dashboard: rsp, ts: Date.now() });
+      }
+    } catch (e) {
+      // Ignore cancelled errors
+      if (isFetchError(e) && e.cancelled) {
+        return null;
+      }
+
+      console.error(e);
+      throw e;
+    }
+
+    return rsp;
+  }
 
   public async loadDashboard(uid: string) {
     try {
@@ -23,25 +100,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       dashboard.startUrlSync();
 
       this.setState({ dashboard: dashboard, isLoading: false });
-    } catch (err) {
-      this.setState({ isLoading: false, loadError: String(err) });
-    }
-  }
-
-  public async loadPanelEdit(uid: string, panelId: string) {
-    try {
-      const dashboard = await this.loadScene(uid);
-      const panel = findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(parseInt(panelId, 10)));
-
-      if (!panel) {
-        this.setState({ isLoading: false, loadError: 'Panel not found' });
-        return;
-      }
-
-      const panelEditor = buildPanelEditScene(dashboard, panel);
-      panelEditor.startUrlSync();
-
-      this.setState({ isLoading: false, panelEditor });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
@@ -55,10 +113,11 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     this.setState({ isLoading: true });
 
-    const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+    const rsp = await this.fetchDashboard(uid);
 
-    if (rsp.dashboard) {
+    if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
+
       this.cache[uid] = scene;
       return scene;
     }
@@ -66,9 +125,41 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     throw new Error('Dashboard not found');
   }
 
+  public getFromCache(uid: string) {
+    const cachedDashboard = this.dashboardCache.get(uid);
+
+    if (cachedDashboard && !this.hasExpired(cachedDashboard)) {
+      return cachedDashboard.dashboard;
+    }
+
+    return null;
+  }
+
+  private hasExpired(entry: DashboardCacheEntry) {
+    return Date.now() - entry.ts > DASHBOARD_CACHE_TTL;
+  }
+
+  private async initNavModel(dashboard: DashboardDTO) {
+    // only the folder API has information about ancestors
+    // get parent folder (if it exists) and put it in the store
+    // this will be used to populate the full breadcrumb trail
+    if (dashboard.meta.folderUid) {
+      try {
+        const folder = await backendSrv.getFolderByUid(dashboard.meta.folderUid);
+        store.dispatch(updateNavIndex(buildNavModel(folder)));
+      } catch (err) {
+        console.warn('Error fetching parent folder', dashboard.meta.folderUid, 'for dashboard', err);
+      }
+    }
+  }
+
   public clearState() {
     getDashboardSrv().setCurrent(undefined);
     this.setState({ dashboard: undefined, loadError: undefined, isLoading: false, panelEditor: undefined });
+  }
+
+  public setDashboardCache(uid: string, dashboard: DashboardDTO) {
+    this.dashboardCache.set(uid, { dashboard, ts: Date.now() });
   }
 }
 

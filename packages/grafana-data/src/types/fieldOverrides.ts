@@ -46,8 +46,7 @@ export interface SystemConfigOverrideRule extends ConfigOverrideRule {
  */
 export function isSystemOverrideWithRef<T extends SystemConfigOverrideRule>(ref: string) {
   return (override: ConfigOverrideRule): override is T => {
-    const overrideAs = override as T;
-    return overrideAs.__systemRef === ref;
+    return '__systemRef' in override && override.__systemRef === ref;
   };
 }
 
@@ -58,7 +57,7 @@ export function isSystemOverrideWithRef<T extends SystemConfigOverrideRule>(ref:
  * @internal
  */
 export const isSystemOverride = (override: ConfigOverrideRule): override is SystemConfigOverrideRule => {
-  return typeof (override as SystemConfigOverrideRule)?.__systemRef === 'string';
+  return '__systemRef' in override && typeof override.__systemRef === 'string';
 };
 
 export interface FieldConfigSource<TOptions = any> {
@@ -69,22 +68,16 @@ export interface FieldConfigSource<TOptions = any> {
   overrides: ConfigOverrideRule[];
 }
 
-export interface FieldOverrideContext extends StandardEditorContext<any, any> {
+export interface FieldOverrideContext extends StandardEditorContext<any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
 }
-export interface FieldConfigEditorProps<TValue, TSettings extends {}>
-  extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
-  item: FieldConfigPropertyItem<any, TValue, TSettings>; // The property info
-  value: TValue;
-  context: FieldOverrideContext;
-  onChange: (value?: TValue) => void;
-}
 
-export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<StandardEditorProps<TValue>, 'item'> {
-  item: FieldConfigPropertyItem<TValue, TSettings>;
-  context: FieldOverrideContext;
-}
+/** @deprecated Use StandardEditorProps instead */
+export type FieldConfigEditorProps<TValue, TSettings extends {}> = StandardEditorProps<TValue, TSettings>;
+
+/** @deprecated Use StandardEditorProps instead */
+export type FieldOverrideEditorProps<TValue, TSettings extends {}> = StandardEditorProps<TValue, TSettings>;
 
 export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any>
   extends OptionEditorConfig<TOptions, TSettings, TValue> {
@@ -102,9 +95,9 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
 }
 
 export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>
-  extends OptionsEditorItem<TOptions, TSettings, FieldConfigEditorProps<TValue, TSettings>, TValue> {
+  extends OptionsEditorItem<TOptions, TSettings, StandardEditorProps<TValue, TSettings>, TValue> {
   // An editor that can be filled in with context info (template variables etc)
-  override: ComponentType<FieldOverrideEditorProps<TValue, TSettings>>;
+  override: ComponentType<StandardEditorProps<TValue, TSettings>>;
 
   /** true for plugin field config properties */
   isCustom?: boolean;

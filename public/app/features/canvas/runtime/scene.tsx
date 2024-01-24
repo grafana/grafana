@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
-import React, { CSSProperties } from 'react';
+import React, { createRef, CSSProperties, RefObject } from 'react';
+import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -30,11 +31,13 @@ import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
+import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
+import { SceneTransformWrapper } from './SceneTransformWrapper';
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
@@ -57,6 +60,7 @@ export class Scene {
 
   width = 0;
   height = 0;
+  scale = 1;
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
@@ -66,9 +70,22 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
+  shouldPanZoom?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
+  contextMenuVisible?: boolean;
+  contextMenuOnVisibilityChange = (visible: boolean) => {
+    this.contextMenuVisible = visible;
+    const transformInstance = getTransformInstance(this);
+    if (transformInstance) {
+      if (visible) {
+        transformInstance.setup.disabled = true;
+      } else {
+        transformInstance.setup.disabled = false;
+      }
+    }
+  };
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
@@ -84,15 +101,17 @@ export class Scene {
   subscription: Subscription;
 
   targetsToSelect = new Set<HTMLDivElement>();
+  transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
 
   constructor(
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
     showAdvancedTypes: boolean,
+    panZoom: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -103,6 +122,7 @@ export class Scene {
 
     this.panel = panel;
     this.connections = new Connections(this);
+    this.transformComponentRef = createRef();
   }
 
   getNextElementName = (isFrame = false) => {
@@ -124,7 +144,7 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean) {
+  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean, panZoom: boolean) {
     this.root = new RootElement(
       cfg ?? {
         type: 'frame',
@@ -136,6 +156,7 @@ export class Scene {
 
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
+    this.shouldPanZoom = panZoom;
 
     setTimeout(() => {
       if (this.div) {
@@ -369,7 +390,7 @@ export class Scene {
 
     this.selecto = new Selecto({
       container: this.div,
-      rootContainer: this.div,
+      rootContainer: getParent(this),
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
       selectFromInside: false,
@@ -439,7 +460,9 @@ export class Scene {
         e.events.forEach((event) => {
           const targetedElement = this.findElementByTarget(event.target);
           if (targetedElement) {
-            targetedElement.setPlacementFromConstraint();
+            if (targetedElement) {
+              targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+            }
           }
         });
 
@@ -449,7 +472,7 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
         }
 
         this.moved.next(Date.now());
@@ -465,13 +488,13 @@ export class Scene {
             vertical: VerticalConstraint.Top,
             horizontal: HorizontalConstraint.Left,
           };
-          targetedElement.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
         }
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement.applyResize(event);
+          targetedElement.applyResize(event, this.scale);
 
           if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
             this.moveableActionCallback(true);
@@ -507,7 +530,7 @@ export class Scene {
             targetedElement.tempConstraint = undefined;
           }
 
-          targetedElement.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
         }
       });
 
@@ -642,17 +665,20 @@ export class Scene {
   };
 
   render() {
-    const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
-    return (
+    const sceneDiv = (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.connections.render()}
         {this.root.render()}
-        {canShowContextMenu && (
+        {this.isEditingEnabled && (
           <Portal>
-            <CanvasContextMenu scene={this} panel={this.panel} />
+            <CanvasContextMenu
+              scene={this}
+              panel={this.panel}
+              onVisibilityChange={this.contextMenuOnVisibilityChange}
+            />
           </Portal>
         )}
         {canShowElementTooltip && (
@@ -661,6 +687,12 @@ export class Scene {
           </Portal>
         )}
       </div>
+    );
+
+    return config.featureToggles.canvasPanelPanZoom ? (
+      <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper>
+    ) : (
+      sceneDiv
     );
   }
 }

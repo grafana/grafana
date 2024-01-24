@@ -6,11 +6,12 @@ import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { trackDashboardSharingActionPerType } from 'app/features/dashboard/components/ShareModal/analytics';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { SceneShareTabState } from './types';
 
@@ -39,12 +40,6 @@ const getExpireOptions = () => {
   ];
 };
 
-type SnapshotSharingOptions = {
-  externalEnabled: boolean;
-  externalSnapshotName: string;
-  externalSnapshotURL: string;
-  snapshotEnabled: boolean;
-};
 export interface ShareSnapshotTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -55,6 +50,7 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
 }
 
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
+  public tabId = shareDashboardType.snapshot;
   static Component = ShareSnapshoTabRenderer;
 
   public constructor(state: ShareSnapshotTabState) {
@@ -70,9 +66,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
   }
 
   private _onActivate() {
-    getBackendSrv()
-      .get('/api/snapshot/shared-options')
-      .then((shareOptions: SnapshotSharingOptions) => {
+    getDashboardSnapshotSrv()
+      .getSharingOptions()
+      .then((shareOptions) => {
         if (this.isActive) {
           this.setState({
             snapshotSharingOptions: shareOptions,
@@ -128,7 +124,11 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
       const results: { deleteUrl: string; url: string } = await getBackendSrv().post(SNAPSHOTS_API_ENDPOINT, cmdData);
       return results;
     } finally {
-      trackDashboardSharingActionPerType(external ? 'publish_snapshot' : 'local_snapshot', shareDashboardType.snapshot);
+      if (external) {
+        DashboardInteractions.publishSnapshotClicked({ expires: cmdData.expires });
+      } else {
+        DashboardInteractions.publishSnapshotLocalClicked({ expires: cmdData.expires });
+      }
     }
   };
 }

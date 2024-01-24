@@ -37,6 +37,7 @@ import {
   ToggleFilterAction,
   DataSourceGetTagValuesOptions,
   AdHocVariableFilter,
+  DataSourceWithQueryModificationSupport,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
@@ -63,7 +64,13 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
-import { addAddHocFilter, addFilterToQuery, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
+import {
+  addAddHocFilter,
+  addFilterToQuery,
+  addStringFilterToQuery,
+  queryHasFilter,
+  removeFilterFromQuery,
+} from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -101,7 +108,8 @@ export class ElasticDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
     DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
-    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchQuery>
+    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchQuery>,
+    DataSourceWithQueryModificationSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
@@ -134,7 +142,7 @@ export class ElasticDatasource
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
     this.isProxyAccess = instanceSettings.access === 'proxy';
-    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    const settingsData = instanceSettings.jsonData || {};
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
@@ -187,17 +195,24 @@ export class ElasticDatasource
    *
    * When multiple indices span the provided time range, the request is sent starting from the newest index,
    * and then going backwards until an index is found.
-   *
-   * @param url the url to query the index on, for example `/_mapping`.
    */
-
-  private requestAllIndices(url: string, range = getDefaultTimeRange()): Observable<any> {
+  private requestAllIndices(range = getDefaultTimeRange()) {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
     }
 
-    const indexUrlList = indexList.map((index) => index + url);
+    const url = '_mapping';
+
+    const indexUrlList = indexList.map((index) => {
+      // make sure `index` does not end with a slash
+      index = index.replace(/\/$/, '');
+      if (index === '') {
+        return url;
+      }
+
+      return `${index}/${url}`;
+    });
 
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexUrlList.length;
@@ -501,10 +516,6 @@ export class ElasticDatasource
     return text;
   }
 
-  showContextToggle(): boolean {
-    return true;
-  }
-
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
     const { enableElasticsearchBackendQuerying } = config.featureToggles;
     if (enableElasticsearchBackendQuerying) {
@@ -704,7 +715,7 @@ export class ElasticDatasource
       nested: 'nested',
       histogram: 'number',
     };
-    return this.requestAllIndices('/_mapping', range).pipe(
+    return this.requestAllIndices(range).pipe(
       map((result) => {
         const shouldAddField = (obj: any, key: string) => {
           if (this.isMetadataField(key)) {
@@ -947,9 +958,21 @@ export class ElasticDatasource
         expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
         break;
       }
+      case 'ADD_STRING_FILTER': {
+        expression = addStringFilterToQuery(expression, action.options.value);
+        break;
+      }
+      case 'ADD_STRING_FILTER_OUT': {
+        expression = addStringFilterToQuery(expression, action.options.value, false);
+        break;
+      }
     }
 
     return { ...query, query: expression };
+  }
+
+  getSupportedQueryModifications() {
+    return ['ADD_FILTER', 'ADD_FILTER_OUT', 'ADD_STRING_FILTER', 'ADD_STRING_FILTER_OUT'];
   }
 
   addAdHocFilters(query: string, adhocFilters?: AdHocVariableFilter[]) {

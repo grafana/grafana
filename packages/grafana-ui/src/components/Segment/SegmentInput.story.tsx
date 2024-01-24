@@ -8,7 +8,7 @@ import { SegmentInputProps } from './SegmentInput';
 
 const SegmentFrame = ({ children }: React.PropsWithChildren) => (
   <>
-    <SegmentSection label="Segment Name">{children}</SegmentSection>
+    <SegmentSection label="Segment">{children}</SegmentSection>
   </>
 );
 

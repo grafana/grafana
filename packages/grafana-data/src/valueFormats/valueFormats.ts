@@ -43,6 +43,7 @@ export interface ValueFormatterIndex {
 // Globals & formats cache
 let categories: ValueFormatCategory[] = [];
 const index: ValueFormatterIndex = {};
+const indexScalable: ValueFormatterIndex = {};
 let hasBuiltIndex = false;
 
 export function toFixed(value: number, decimals?: DecimalCount): string {
@@ -102,8 +103,25 @@ function getDecimalsForValue(value: number): number {
 export function toFixedScaled(value: number, decimals: DecimalCount, ext?: string): FormattedValue {
   return {
     text: toFixed(value, decimals),
-    suffix: ext,
+    suffix: appendPluralIf(ext, Math.abs(value) > 1),
   };
+}
+
+function appendPluralIf(ext: string | undefined, condition: boolean): string | undefined {
+  if (!condition) {
+    return ext;
+  }
+
+  switch (ext) {
+    case ' min':
+    case ' hour':
+    case ' day':
+    case ' week':
+    case ' year':
+      return `${ext}s`;
+    default:
+      return ext;
+  }
 }
 
 export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
@@ -182,6 +200,7 @@ export function stringFormater(value: number): FormattedValue {
 
 function buildFormats() {
   categories = getCategories();
+  const nonScalableCategories = getCategories(false);
 
   for (const cat of categories) {
     for (const format of cat.formats) {
@@ -189,18 +208,28 @@ function buildFormats() {
     }
   }
 
+  for (const cat of nonScalableCategories) {
+    for (const format of cat.formats) {
+      indexScalable[format.id] = format.fn;
+    }
+  }
+
   // Resolve units pointing to old IDs
   [{ from: 'farenheit', to: 'fahrenheit' }].forEach((alias) => {
-    const f = index[alias.to];
-    if (f) {
-      index[alias.from] = f;
+    const f0 = index[alias.to];
+    if (f0) {
+      index[alias.from] = f0;
+    }
+    const f1 = indexScalable[alias.to];
+    if (f1) {
+      indexScalable[alias.from] = f1;
     }
   });
 
   hasBuiltIndex = true;
 }
 
-export function getValueFormat(id?: string | null): ValueFormatter {
+export function getValueFormat(id?: string | null, scalable = true): ValueFormatter {
   if (!id) {
     return toFixedUnit('');
   }
@@ -209,7 +238,7 @@ export function getValueFormat(id?: string | null): ValueFormatter {
     buildFormats();
   }
 
-  const fmt = index[id];
+  const fmt = scalable ? index[id] : indexScalable[id];
 
   if (!fmt && id) {
     let idx = id.indexOf(':');
@@ -261,11 +290,14 @@ export function getValueFormat(id?: string | null): ValueFormatter {
   return fmt;
 }
 
-export function getValueFormatterIndex(): ValueFormatterIndex {
+export function getValueFormatterIndex(scalable = true): ValueFormatterIndex {
   if (!hasBuiltIndex) {
     buildFormats();
   }
 
+  if (scalable) {
+    return indexScalable;
+  }
   return index;
 }
 

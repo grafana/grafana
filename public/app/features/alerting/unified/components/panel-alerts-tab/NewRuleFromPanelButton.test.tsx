@@ -39,7 +39,7 @@ describe('Analytics', () => {
     });
     render(<NewRuleFromPanelButton panel={panel} dashboard={dashboard} />);
 
-    const button = screen.getByText('Create alert rule from this panel');
+    const button = screen.getByText('New alert rule');
 
     button.addEventListener('click', (event) => event.preventDefault(), false);
 

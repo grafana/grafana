@@ -9,7 +9,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  DataSourceRef,
   MetricFindValue,
   ScopedVars,
   CoreApp,
@@ -57,7 +56,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
-    /* 
+    /*
       The `settingsData.database` will be defined if a default database has been defined in either
       1) the ConfigurationEditor.tsx, OR 2) the provisioning config file, either under `jsondata.database`, or simply `database`.
     */
@@ -117,10 +116,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return !query.hide;
   }
 
-  applyTemplateVariables(
-    target: SQLQuery,
-    scopedVars: ScopedVars
-  ): Record<string, string | DataSourceRef | SQLQuery['format']> {
+  applyTemplateVariables(target: SQLQuery, scopedVars: ScopedVars) {
     return {
       refId: target.refId,
       datasource: this.getRef(),
@@ -167,7 +163,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     // No need to check for database change/update issues if the datasource is being used in Explore.
     if (request.app !== CoreApp.Explore) {
       /*
-        If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a 
+        If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a
         database OTHER than the preconfigured one, return a database issue - since those databases are no longer available.
         The user will need to update their queries to use the preconfigured database.
       */
@@ -217,7 +213,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   // NOTE: this always runs with the `@grafana/data/getDefaultTimeRange` time range
-  async runSql<T>(query: string, options?: RunSQLOptions) {
+  async runSql<T extends object>(query: string, options?: RunSQLOptions) {
     const range = getDefaultTimeRange();
     const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, range);
     return new DataFrameView<T>(frame);

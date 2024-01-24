@@ -4,16 +4,17 @@ import React from 'react';
 import { DisplayValue, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 
-import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { CollapseConfig, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
   totalTicks: number;
   position?: { x: number; y: number };
   item?: LevelItem;
+  collapseConfig?: CollapseConfig;
 };
 
-const FlameGraphTooltip = ({ data, item, totalTicks, position }: Props) => {
+const FlameGraphTooltip = ({ data, item, totalTicks, position, collapseConfig }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!(item && position)) {
@@ -56,7 +57,17 @@ const FlameGraphTooltip = ({ data, item, totalTicks, position }: Props) => {
     <Portal>
       <VizTooltipContainer className={styles.tooltipContainer} position={position} offset={{ x: 15, y: 0 }}>
         <div className={styles.tooltipContent}>
-          <p className={styles.tooltipName}>{data.getLabel(item.itemIndexes[0])}</p>
+          <p className={styles.tooltipName}>
+            {data.getLabel(item.itemIndexes[0])}
+            {collapseConfig && collapseConfig.collapsed ? (
+              <span>
+                <br />
+                and {collapseConfig.items.length} similar items
+              </span>
+            ) : (
+              ''
+            )}
+          </p>
           {content}
         </div>
       </VizTooltipContainer>

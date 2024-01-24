@@ -26,7 +26,7 @@ interface RoleMenuGroupsSectionProps {
   selectedOptions: Role[];
   onRoleChange: (option: Role) => void;
   onClearSubMenu: (group: string) => void;
-  showOnLeftSubMenu: boolean;
+  showOnLeftSubMenu?: boolean;
 }
 
 export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGroupsSectionProps>(

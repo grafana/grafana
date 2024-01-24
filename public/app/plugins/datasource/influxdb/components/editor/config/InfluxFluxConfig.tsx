@@ -11,7 +11,7 @@ import { InlineField, InlineFieldRow, Input, SecretInput } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
-const WIDTH_SHORT = 20;
+import { WIDTH_SHORT } from './constants';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions, InfluxSecureJsonData>;
 

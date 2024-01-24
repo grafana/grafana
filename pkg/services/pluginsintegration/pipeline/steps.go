@@ -39,9 +39,8 @@ func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry auth.Extern
 
 // Register registers the external service with the external service registry, if the feature is enabled.
 func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if p.ExternalServiceRegistration != nil &&
-		(r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
-		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, plugindef.Type(p.Type), p.ExternalServiceRegistration)
+	if p.IAM != nil {
+		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, plugindef.Type(p.Type), p.IAM)
 		if err != nil {
 			r.log.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
 			return nil, err
@@ -176,7 +175,7 @@ func NewAsExternalStep(cfg *config.Cfg) *AsExternal {
 
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if c.cfg.Features == nil || !c.cfg.Features.IsEnabled(featuremgmt.FlagExternalCorePlugins) {
+	if c.cfg.Features == nil || !c.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) {
 		return bundles, nil
 	}
 

@@ -16,8 +16,6 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { SortOrder } from '@grafana/schema';
 import {
   GraphGradientMode,
-  GraphNG,
-  GraphNGProps,
   measureText,
   PlotLegend,
   Portal,
@@ -31,9 +29,9 @@ import {
   VizLegend,
   VizTooltipContainer,
 } from '@grafana/ui';
-import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { GraphNG, GraphNGProps, PropDiffFn } from 'app/core/components/GraphNG/GraphNG';
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 

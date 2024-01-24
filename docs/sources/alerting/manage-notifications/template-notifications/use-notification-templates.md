@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/use-notification-templates/
-description: Use notification templates in contact points
+description: Use notification templates in contact points to customize your notifications
 keywords:
   - grafana
   - alerting

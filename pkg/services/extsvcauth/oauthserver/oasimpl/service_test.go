@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/ory/fosite/storage"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -405,6 +405,51 @@ func assertArrayInMap[K comparable, V string](t *testing.T, m1 map[K][]V, m2 map
 	for k, v := range m1 {
 		require.Contains(t, m2, k)
 		require.ElementsMatch(t, v, m2[k])
+	}
+}
+
+func TestOAuth2ServiceImpl_RemoveExternalService(t *testing.T) {
+	const serviceName = "my-ext-service"
+	const clientID = "RANDOMID"
+
+	dummyClient := &oauthserver.OAuthExternalService{
+		Name:             serviceName,
+		ClientID:         clientID,
+		ServiceAccountID: 1,
+	}
+
+	testCases := []struct {
+		name string
+		init func(*TestEnv)
+	}{
+		{
+			name: "should do nothing on not found",
+			init: func(env *TestEnv) {
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, serviceName).Return(nil, oauthserver.ErrClientNotFoundFn(serviceName))
+			},
+		},
+		{
+			name: "should remove the external service and its associated service account",
+			init: func(env *TestEnv) {
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, serviceName).Return(dummyClient, nil)
+				env.OAuthStore.On("DeleteExternalService", mock.Anything, clientID).Return(nil)
+				env.SAService.On("RemoveExtSvcAccount", mock.Anything, oauthserver.TmpOrgID, serviceName).Return(nil)
+			},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			env := setupTestEnv(t)
+			if tt.init != nil {
+				tt.init(env)
+			}
+
+			err := env.S.RemoveExternalService(context.Background(), serviceName)
+			require.NoError(t, err)
+
+			env.OAuthStore.AssertExpectations(t)
+			env.SAService.AssertExpectations(t)
+		})
 	}
 }
 

@@ -27,6 +27,7 @@ export const Basic: StoryFn<typeof ButtonSelect> = (args) => {
   return (
     <div style={{ marginLeft: '100px', position: 'relative', display: 'inline-block' }}>
       <ButtonSelect
+        variant="canvas"
         {...args}
         onChange={(value) => {
           action('onChange fired')(value);

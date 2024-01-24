@@ -6,7 +6,7 @@ aliases:
   - ../../visualizations/table/
   - ../../visualizations/table/filter-table-columns/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
-description: Learn about table panel visualization features.
+description: Configure options for Grafana's table visualization
 keywords:
   - grafana
   - dashboard
@@ -191,6 +191,8 @@ To filter column values, click the filter (funnel) icon next to a column title. 
 
 Click the check box next to the values that you want to display. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
 
+Click the check box above the **Ok** and **Cancel** buttons to add or remove all displayed values to/from the filter.
+
 ### Clear column filters
 
 Columns with filters applied have a blue funnel displayed next to the title.
@@ -215,8 +217,8 @@ The system applies the calculation to all numeric fields if you do not select a 
 If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and enable **Count rows**.
 
 {{% docs/reference %}}
-[calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
-[calculations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
 
 [time series to table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
 [time series to table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"

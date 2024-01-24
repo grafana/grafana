@@ -8,12 +8,17 @@ import { Alert } from 'app/types/unified-alerting';
 import { CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
-import { GroupedRules, UnifiedAlertListOptions } from '../types';
+import { UnifiedAlertListOptions } from '../types';
 import { filterAlerts } from '../util';
 
 type Props = {
   rules: CombinedRuleWithLocation[];
   options: UnifiedAlertListOptions;
+};
+
+type RuleWithAlerts = {
+  rule?: CombinedRuleWithLocation;
+  alerts: Alert[];
 };
 
 export const UNGROUPED_KEY = '__ungrouped__';
@@ -22,8 +27,8 @@ const GroupedModeView = ({ rules, options }: Props) => {
   const styles = useStyles2(getStyles);
   const groupBy = options.groupBy;
 
-  const groupedRules = useMemo<GroupedRules>(() => {
-    const groupedRules = new Map<string, Alert[]>();
+  const groupedRules = useMemo<Map<string, RuleWithAlerts>>(() => {
+    const groupedRules = new Map<string, RuleWithAlerts>();
 
     const hasInstancesWithMatchingLabels = (rule: CombinedRuleWithLocation) =>
       groupBy ? alertHasEveryLabelForCombinedRules(rule, groupBy) : true;
@@ -35,33 +40,36 @@ const GroupedModeView = ({ rules, options }: Props) => {
       (alertingRule?.alerts ?? []).forEach((alert) => {
         const mapKey = hasInstancesMatching ? createMapKey(groupBy, alert.labels) : UNGROUPED_KEY;
 
-        const existingAlerts = groupedRules.get(mapKey) ?? [];
-        groupedRules.set(mapKey, [...existingAlerts, alert]);
+        const existingAlerts = groupedRules.get(mapKey)?.alerts ?? [];
+        groupedRules.set(mapKey, { rule, alerts: [...existingAlerts, alert] });
       });
     });
 
     // move the "UNGROUPED" key to the last item in the Map, items are shown in insertion order
-    const ungrouped = groupedRules.get(UNGROUPED_KEY) ?? [];
+    const ungrouped = groupedRules.get(UNGROUPED_KEY)?.alerts ?? [];
     groupedRules.delete(UNGROUPED_KEY);
-    groupedRules.set(UNGROUPED_KEY, ungrouped);
+    groupedRules.set(UNGROUPED_KEY, { alerts: ungrouped });
 
     // Remove groups having no instances
     // This is different from filtering Rules without instances that we do in UnifiedAlertList
-    const filteredGroupedRules = Array.from(groupedRules.entries()).reduce((acc, [groupKey, groupAlerts]) => {
-      const filteredAlerts = filterAlerts(options, groupAlerts);
-      if (filteredAlerts.length > 0) {
-        acc.set(groupKey, filteredAlerts);
-      }
+    const filteredGroupedRules = Array.from(groupedRules.entries()).reduce(
+      (acc, [groupKey, { rule, alerts: groupAlerts }]) => {
+        const filteredAlerts = filterAlerts(options, groupAlerts);
+        if (filteredAlerts.length > 0) {
+          acc.set(groupKey, { rule, alerts: filteredAlerts });
+        }
 
-      return acc;
-    }, new Map<string, Alert[]>());
+        return acc;
+      },
+      new Map<string, RuleWithAlerts>()
+    );
 
     return filteredGroupedRules;
   }, [groupBy, rules, options]);
 
   return (
     <>
-      {Array.from(groupedRules).map(([key, alerts]) => (
+      {Array.from(groupedRules).map(([key, { rule, alerts }]) => (
         <li className={styles.alertRuleItem} key={key} data-testid={key}>
           <div>
             <div className={styles.customGroupDetails}>
@@ -71,7 +79,7 @@ const GroupedModeView = ({ rules, options }: Props) => {
                 {key === UNGROUPED_KEY && 'No grouping'}
               </div>
             </div>
-            <AlertInstances alerts={alerts} options={options} />
+            <AlertInstances rule={rule} alerts={alerts} options={options} />
           </div>
         </li>
       ))}

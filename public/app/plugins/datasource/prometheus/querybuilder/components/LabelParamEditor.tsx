@@ -4,7 +4,7 @@ import { DataSourceApi, SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { promQueryModeller } from '../PromQueryModeller';
-import { getOperationParamId } from '../shared/operationUtils';
+import { getOperationParamId } from '../operationUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
@@ -51,7 +51,7 @@ async function loadGroupByLabels(query: PromVisualQuery, datasource: DataSourceA
   }
 
   const expr = promQueryModeller.renderLabels(labels);
-  const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+  const result = await datasource.languageProvider.fetchLabelsWithMatch(expr);
 
   return Object.keys(result).map((x) => ({
     label: x,

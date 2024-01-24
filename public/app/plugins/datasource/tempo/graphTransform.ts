@@ -10,8 +10,7 @@ import {
   FieldType,
   toDataFrame,
 } from '@grafana/data';
-
-import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
+import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '@grafana/o11y-ds-frontend';
 
 /**
  * Row in a trace dataFrame
@@ -249,7 +248,7 @@ function createServiceMapDataFrames() {
  * @param responses
  */
 function getMetricFrames(responses: DataQueryResponse[]): Record<string, DataFrameView> {
-  return responses[0].data.reduce<Record<string, DataFrameView>>((acc, frameDTO) => {
+  return (responses[0]?.data || []).reduce<Record<string, DataFrameView>>((acc, frameDTO) => {
     const frame = toDataFrame(frameDTO);
     acc[frame.refId ?? 'A'] = new DataFrameView(frame);
     return acc;
@@ -308,7 +307,7 @@ function collectMetricData(
   }
 
   // The name of the value column is in this format
-  // TODO figure out if it can be changed
+  // Improvement: figure out if it can be changed
   const valueName = `Value #${metric}`;
 
   for (let i = 0; i < frame.length; i++) {

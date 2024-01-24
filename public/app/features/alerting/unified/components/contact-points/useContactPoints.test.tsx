@@ -4,14 +4,19 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { AccessControlAction } from 'app/types';
 
+import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
 import { useContactPointsWithStatus } from './useContactPoints';
 
+const server = setupMswServer();
+
 describe('useContactPoints', () => {
-  setupGrafanaManagedServer();
+  beforeEach(() => {
+    setupGrafanaManagedServer(server);
+  });
 
   beforeAll(() => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);

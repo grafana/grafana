@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { DataQuery, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
@@ -205,7 +206,6 @@ describe('Explore: Query History', () => {
     await waitForExplore();
     await openQueryHistory();
     await assertQueryHistory(['{"expr":"query #1"}'], 'left');
-
     await commentQueryHistory(0, 'test comment');
     await assertQueryHistoryComment(['test comment'], 'left');
   });

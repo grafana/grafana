@@ -1,3 +1,5 @@
+name: Build and release core plugins
+
 on:
   workflow_dispatch:
     inputs:
@@ -6,7 +8,10 @@ on:
         required: true
         type: choice
         options:
+          - grafana-azure-monitor-datasource
           - grafana-testdata-datasource
+          - parca
+          - tempo
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
@@ -16,6 +21,11 @@ env:
   GRABPL_VERSION: 3.0.44
   GCP_BUCKET: integration-artifacts # Dev: plugins-community-staging
   GCOM_API: https://grafana.com # Dev: https://grafana-dev.com
+
+# These permissions are needed to assume roles from Github's OIDC.
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   build-and-publish:
@@ -27,18 +37,26 @@ jobs:
       version: ${{ steps.build_frontend.outputs.version }}
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Verify inputs
         run: |
           if [ -z ${{ inputs.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
-      - name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v1'
+      - id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          credentials_json: '${{ secrets.PLUGINS_GOOGLE_CREDENTIALS }}'
+          # Secrets placed in the ci/repo/grafana/<repo>/<path> path in Vault
+          repo_secrets: |
+            PLUGINS_GOOGLE_CREDENTIALS=core-plugins-build-and-release:PLUGINS_GOOGLE_CREDENTIALS
+            PLUGINS_GRAFANA_API_KEY=core-plugins-build-and-release:PLUGINS_GRAFANA_API_KEY
+            PLUGINS_GCOM_TOKEN=core-plugins-build-and-release:PLUGINS_GCOM_TOKEN
+      - name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
+        uses: 'google-github-actions/setup-gcloud@v2'
       - name: Setup nodejs environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: yarn
@@ -46,7 +64,12 @@ jobs:
         shell: bash
         id: get_dir
         run: |
-          dir=$(find public/app/plugins -name ${{ inputs.plugin_id }} -print -quit)
+          dir=$(dirname \
+            $(egrep -lir --include=plugin.json --exclude-dir=dist \
+              '"id": "${{ inputs.plugin_id }}"' \
+              public/app/plugins \
+            ) \
+          )
           echo "dir=${dir}" >> $GITHUB_OUTPUT
       - name: Install frontend dependencies
         shell: bash
@@ -64,7 +87,7 @@ jobs:
         id: check_backend
         shell: bash
         run: |
-          if [ -d ./pkg/tsdb/${{ inputs.plugin_id }} ]; then
+          if egrep -qr --include=main.go 'datasource.Manage\("${{ inputs.plugin_id }}"' pkg/tsdb; then
             echo "has_backend=true" >> $GITHUB_OUTPUT
           else
             echo "has_backend=false" >> $GITHUB_OUTPUT
@@ -140,11 +163,11 @@ jobs:
           mkdir -p ci/jobs/package
           bin/grabpl plugin package
         env:
-          GRAFANA_API_KEY: ${{ secrets.PLUGINS_GRAFANA_API_KEY }}
+          GRAFANA_API_KEY: ${{ env.PLUGINS_GRAFANA_API_KEY }}
           PLUGIN_SIGNATURE_TYPE: grafana
       - name: Check existing release
         env:
-          GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
+          GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
           VERSION: ${{ steps.build_frontend.outputs.version }}  
         run: |
           api_res=$(curl -X 'GET' -H "Authorization: Bearer $GCOM_TOKEN" \
@@ -175,9 +198,11 @@ jobs:
           gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin
           gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any
       - name: Publish new plugin version on grafana.com
+        # TODO: This assumes that there are packages for all platforms
+        # which is not true for frontend only plugins
         working-directory: ${{ steps.get_dir.outputs.dir }}
         env:
-          GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
+          GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
           VERSION: ${{ steps.build_frontend.outputs.version }}  
         run: |
           echo "Publish new plugin version on grafana.com:"

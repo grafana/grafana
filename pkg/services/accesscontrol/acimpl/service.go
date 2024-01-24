@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -22,8 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,8 +36,13 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
+var SharedWithMeFolderPermission = accesscontrol.Permission{
+	Action: dashboards.ActionFoldersRead,
+	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
+}
+
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
+	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
@@ -43,7 +50,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 		return nil, err
 	}
 
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSplitScopes) {
+	if features.IsEnabledGlobally(featuremgmt.FlagSplitScopes) {
 		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
 		// This will be removed once we've:
 		// 1) removed the feature toggle and
@@ -56,7 +63,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
 		cfg:      cfg,
 		store:    store,
@@ -87,7 +94,7 @@ type Service struct {
 	cache         *localcache.CacheService
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
-	features      *featuremgmt.FeatureManager
+	features      featuremgmt.FeatureToggles
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -116,16 +123,13 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		}
 	}
 
-	namespace, identifier := user.GetNamespacedID()
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, SharedWithMeFolderPermission)
+	}
 
-	var userID int64
-	switch namespace {
-	case authn.NamespaceUser, authn.NamespaceServiceAccount:
-		var err error
-		userID, err = strconv.ParseInt(identifier, 10, 64)
-		if err != nil {
-			return nil, err
-		}
+	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	if err != nil {
+		return nil, err
 	}
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
@@ -147,11 +151,13 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	if !options.ReloadCache {
 		permissions, ok := s.cache.Get(key)
 		if ok {
+			metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 			s.log.Debug("Using cached permissions", "key", key)
 			return permissions.([]accesscontrol.Permission), nil
 		}
 	}
 
+	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 	s.log.Debug("Fetch permissions from store", "key", key)
 	permissions, err := s.getUserPermissions(ctx, user, options)
 	if err != nil {
@@ -213,9 +219,9 @@ func permissionCacheKey(user identity.Requester) string {
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []plugins.RoleRegistration) error {
+func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
 	// Protect behind feature toggle
-	if !s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
 		return nil
 	}
 
@@ -239,11 +245,14 @@ func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, user identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
+	defer timer.ObserveDuration()
+
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
 	for role, basicRole := range s.roles {
 		for i := range basicRole.Permissions {
-			if PermissionMatchesSearchOptions(basicRole.Permissions[i], options) {
+			if PermissionMatchesSearchOptions(basicRole.Permissions[i], &options) {
 				basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
 			}
 		}
@@ -345,7 +354,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	for _, builtin := range roles {
 		if basicRole, ok := s.roles[builtin]; ok {
 			for _, permission := range basicRole.Permissions {
-				if PermissionMatchesSearchOptions(permission, searchOptions) {
+				if PermissionMatchesSearchOptions(permission, &searchOptions) {
 					permissions = append(permissions, permission)
 				}
 			}
@@ -378,7 +387,7 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 	s.log.Debug("Using cached permissions", "key", key)
 	filteredPermissions := make([]accesscontrol.Permission, 0)
 	for _, permission := range permissions.([]accesscontrol.Permission) {
-		if PermissionMatchesSearchOptions(permission, searchOptions) {
+		if PermissionMatchesSearchOptions(permission, &searchOptions) {
 			filteredPermissions = append(filteredPermissions, permission)
 		}
 	}
@@ -386,9 +395,13 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 	return filteredPermissions, true
 }
 
-func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions accesscontrol.SearchOptions) bool {
-	if searchOptions.Scope != "" && permission.Scope != searchOptions.Scope {
-		return false
+func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions *accesscontrol.SearchOptions) bool {
+	if searchOptions.Scope != "" {
+		// Permissions including the scope should also match
+		scopes := append(searchOptions.Wildcards(), searchOptions.Scope)
+		if !slices.Contains[[]string, string](scopes, permission.Scope) {
+			return false
+		}
 	}
 	if searchOptions.Action != "" {
 		return permission.Action == searchOptions.Action
@@ -397,7 +410,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	if !(s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
+	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -410,7 +423,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	if !(s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
+	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -418,4 +431,8 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	slug := slugify.Slugify(externalServiceID)
 
 	return s.store.DeleteExternalServiceRole(ctx, slug)
+}
+
+func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
+	return nil
 }

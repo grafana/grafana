@@ -15,6 +15,8 @@ weight: 400
 
 This topic guides you through installing Grafana via the official Docker images. Specifically, it covers running Grafana via the Docker command line interface (CLI) and docker-compose.
 
+{{< youtube id="FlDfcMbSLXs" start="703">}}
+
 Grafana Docker images come in two editions:
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise`
@@ -115,10 +117,10 @@ docker run -d -p 3000:3000 --name=grafana \
 Grafana supports specifying custom configuration settings using [environment variables]({{< relref "../../../setup-grafana/configure-grafana#override-configuration-with-environment-variables" >}}).
 
 ```bash
-# enabling public dashboard feature
+# enable debug logs
 
 docker run -d -p 3000:3000 --name=grafana \
-  -e "GF_FEATURE_TOGGLES_ENABLE=publicDashboards" \
+  -e "GF_LOG_LEVEL=debug" \
   grafana/grafana-enterprise
 ```
 

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { DataFrame, FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame } from '@grafana/data';
 
-import { TableContainer } from './TableContainer';
+import { TableContainerWithTheme } from './TableContainer';
 
 function getTables(): HTMLElement[] {
   return screen.getAllByRole('table');
@@ -57,10 +57,10 @@ const defaultProps = {
   timeZone: InternalTimeZones.utc,
 };
 
-describe('TableContainer', () => {
+describe('TableContainerWithTheme', () => {
   describe('With one main frame', () => {
     it('should render component', () => {
-      render(<TableContainer {...defaultProps} />);
+      render(<TableContainerWithTheme {...defaultProps} />);
       const tables = getTables();
       expect(tables.length).toBe(1);
       expect(tables[0]).toBeInTheDocument();
@@ -82,12 +82,12 @@ describe('TableContainer', () => {
           length: 0,
         },
       ];
-      render(<TableContainer {...defaultProps} tableResult={emptyFrames} />);
+      render(<TableContainerWithTheme {...defaultProps} tableResult={emptyFrames} />);
       expect(screen.getByText('0 series returned')).toBeInTheDocument();
     });
 
     it('should update time when timezone changes', () => {
-      const { rerender } = render(<TableContainer {...defaultProps} />);
+      const { rerender } = render(<TableContainerWithTheme {...defaultProps} />);
       const rowsBeforeChange = within(getTables()[0]).getAllByRole('row');
       expect(getRowsData(rowsBeforeChange)).toEqual([
         { time: '2021-01-01 00:00:00', text: 'test_string_1' },
@@ -96,7 +96,7 @@ describe('TableContainer', () => {
         { time: '2021-01-01 02:00:00', text: 'test_string_4' },
       ]);
 
-      rerender(<TableContainer {...defaultProps} timeZone="cest" />);
+      rerender(<TableContainerWithTheme {...defaultProps} timeZone="cest" />);
       const rowsAfterChange = within(getTables()[0]).getAllByRole('row');
       expect(getRowsData(rowsAfterChange)).toEqual([
         { time: '2020-12-31 19:00:00', text: 'test_string_1' },
@@ -105,12 +105,20 @@ describe('TableContainer', () => {
         { time: '2020-12-31 21:00:00', text: 'test_string_4' },
       ]);
     });
+
+    it('should render table title with Prometheus query', () => {
+      const dataFrames = [{ ...dataFrame, name: 'metric{label="value"}' }];
+      const tableProps = { ...defaultProps, tableResult: dataFrames };
+      render(<TableContainerWithTheme {...tableProps} />);
+      expect(screen.getByText('Table - metric{label="value"}')).toBeInTheDocument();
+    });
   });
+
   describe('With multiple main frames', () => {
     it('should render multiple tables for multiple frames', () => {
       const dataFrames = [dataFrame, dataFrame];
       const multiDefaultProps = { ...defaultProps, tableResult: dataFrames };
-      render(<TableContainer {...multiDefaultProps} />);
+      render(<TableContainerWithTheme {...multiDefaultProps} />);
       const tables = getTables();
       expect(tables.length).toBe(2);
       expect(tables[0]).toBeInTheDocument();

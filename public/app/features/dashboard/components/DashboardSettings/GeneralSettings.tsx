@@ -222,7 +222,7 @@ export function GeneralSettingsUnconnected({
           </Field>
         </CollapsableSection>
 
-        <Box marginTop={3}>{dashboard.meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
+        <Box marginTop={3}>{dashboard.meta.canDelete && <DeleteDashboardButton />}</Box>
       </div>
     </Page>
   );

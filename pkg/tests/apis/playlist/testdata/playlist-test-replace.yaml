@@ -1,0 +1,10 @@
+apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+metadata:
+  name: test
+spec:
+  title: Test playlist (replaced from k8s; 22m; 1 items; PUT)
+  interval: 22m
+  items:
+  - type: dashboard_by_tag
+    value: panel-tests

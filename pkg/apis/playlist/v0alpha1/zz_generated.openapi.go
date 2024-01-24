@@ -14,7 +14,7 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Item":         schema_pkg_apis_playlist_v0alpha1_Item(ref),
 		"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Playlist":     schema_pkg_apis_playlist_v0alpha1_Playlist(ref),

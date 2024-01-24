@@ -70,6 +70,33 @@ describe('OrganizeFields Transformer', () => {
         ]);
       });
     });
+
+    it('should order and filter (inclusion) according to config', async () => {
+      const cfg: DataTransformerConfig<OrganizeFieldsTransformerOptions> = {
+        id: DataTransformerID.organize,
+        options: {
+          excludeByName: {},
+          indexByName: {},
+          includeByName: {
+            time: true,
+          },
+          renameByName: {},
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const organized = data[0];
+        expect(organized.fields).toEqual([
+          {
+            config: {},
+            name: 'time',
+            type: FieldType.time,
+            values: [3000, 4000, 5000, 6000],
+          },
+        ]);
+      });
+    });
   });
 
   describe('when inconsistent data is received', () => {

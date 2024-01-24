@@ -308,8 +308,8 @@ const Nodes = memo(function Nodes(props: NodesProps) {
             !props.hoveringIds || props.hoveringIds.length === 0
               ? 'default'
               : props.hoveringIds?.includes(n.id)
-              ? 'active'
-              : 'inactive'
+                ? 'active'
+                : 'inactive'
           }
         />
       ))}

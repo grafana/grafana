@@ -56,16 +56,7 @@ lineage: schemas: [{
 			}
 
 			// Configuration of the time picker shown at the top of a dashboard.
-			timepicker?: {
-				// Whether timepicker is visible or not.
-				hidden: bool | *false
-				// Interval options available in the refresh picker dropdown.
-				refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-				// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
-				collapse: bool | *false
-				// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-				time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
-			}
+			timepicker?: #TimePickerConfig
 
 			// The month that the fiscal year starts on.  0 = January, 11 = December
 			fiscalYearStartMonth?: uint8 & <12 | *0
@@ -89,7 +80,7 @@ lineage: schemas: [{
 			version?: uint32
 
 			// List of dashboard panels
-			panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)]
+			panels?: [...(#Panel | #RowPanel)]
 
 			// Configured template variables
 			templating?: {
@@ -208,9 +199,17 @@ lineage: schemas: [{
 			multi?: bool | *false
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
+			// Options to config when to refresh a variable
 			refresh?: #VariableRefresh
 			// Options sort order
 			sort?: #VariableSort
+			// Whether all value option is available or not
+			includeAll?: bool | *false
+			// Custom all value
+			allValue?: string
+			// Optional field, if you want to extract part of a series name or metric node segment.
+			// Named capture groups can be used to separate the display text and value.
+			regex?: string
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
@@ -243,7 +242,9 @@ lineage: schemas: [{
 		// `4`: Numerical DESC
 		// `5`: Alphabetical Case Insensitive ASC
 		// `6`: Alphabetical Case Insensitive DESC
-		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc")
+		// `7`: Natural ASC
+		// `8`: Natural DESC
+		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc|naturalAsc|naturalDesc")
 
 		// Ref to a DataSource instance
 		#DataSourceRef: {
@@ -265,7 +266,7 @@ lineage: schemas: [{
 			// Tooltip to display when the user hovers their mouse over it
 			tooltip: string
 			// Link URL. Only required/valid if the type is link
-			url: string
+			url?: string
 			// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
@@ -445,9 +446,24 @@ lineage: schemas: [{
 			disabled?: bool
 			// Optional frame matcher. When missing it will be applied to all results
 			filter?: #MatcherConfig
+			// Where to pull DataFrames from as input to transformation
+			topic?: "series" | "annotations" | "alertStates" // replaced with common.DataTopic
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
 			options: _
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		// Time picker configuration
+		// It defines the default config for the time picker and the refresh picker for the specific dashboard.
+		#TimePickerConfig: {
+			// Whether timepicker is visible or not.
+			hidden: bool | *false
+			// Interval options available in the refresh picker dropdown.
+			refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+			// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+			time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+			// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+			nowDelay?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		// 0 for no shared crosshair or tooltip (default).
@@ -711,31 +727,11 @@ lineage: schemas: [{
 			id: uint32
 
 			// List of panels in the row
-			panels: [...(#Panel | #GraphPanel | #HeatmapPanel)]
+			panels: [...#Panel]
 
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
-
-		// Support for legacy graph panel.
-		// @deprecated this a deprecated panel type
-		#GraphPanel: {
-			type: "graph"
-			// @deprecated this is part of deprecated graph panel
-			legend?: {
-				show:      bool | *true
-				sort?:     string
-				sortDesc?: bool
-			}
-			...
-		} @cuetsy(kind="interface")
-
-		// Support for legacy heatmap panel.
-		// @deprecated this a deprecated panel type
-		#HeatmapPanel: {
-			type: "heatmap"
-			...
-		} @cuetsy(kind="interface")
 	}
 },
 ]

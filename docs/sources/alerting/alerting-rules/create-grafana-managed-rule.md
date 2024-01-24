@@ -2,7 +2,7 @@
 aliases:
   - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
-description: Configure Grafana-managed alert rules
+description: Configure Grafana-managed alert rules to create alerts that can act on data from any of our supported data sources
 keywords:
   - grafana
   - alerting
@@ -26,9 +26,17 @@ Grafana-managed rules are the most flexible alert rule type. They allow you to c
 
 Multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
 
-**Note:**
+{{% admonition type="note" %}}
+For Grafana Cloud, there are limits on how many Grafana-managed alert rules you can create. These are as follows:
+
+- Free: 100 alert rules
+- Paid: 2000 alert rules
+  {{% /admonition %}}
 
 Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
+
+If you delete an alerting resource created in the UI, you can no longer retrieve it.
+To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
 Watch this video to learn more about creating alert rules: {{< vimeo 720001934 >}}
 
@@ -84,7 +92,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    If you are creating a new evaluation group, specify the interval for the group.
 
-   All rules within the same group are evaluated sequentially over the same time interval.
+   All rules within the same group are evaluated concurrently over the same time interval.
 
 1. Enter a pending period.
 
@@ -202,7 +210,7 @@ Create alerts from any panel type. This means you can reuse the queries in the p
 
 1. Navigate to a dashboard in the **Dashboards** section.
 2. In the top right corner of the panel, click on the three dots (ellipses).
-3. From the dropdown menu, select **More...** and then choose **Create alert**.
+3. From the dropdown menu, select **More...** and then choose **New alert rule**.
 
 This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
 

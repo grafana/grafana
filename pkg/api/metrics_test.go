@@ -77,8 +77,8 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 					},
 				},
 			},
-		}, &fakeDatasources.FakeDataSourceService{}, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-			secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
+		}, &fakeDatasources.FakeCacheService{}, &fakeDatasources.FakeDataSourceService{},
+			pluginSettings.ProvideService(dbtest.NewFakeDB(), secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -124,6 +124,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 				},
 			},
 		},
+		&fakeDatasources.FakeCacheService{},
 		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	qds := query.ProvideService(
@@ -162,7 +163,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		var resObj secretsErrorResponseBody
 		err = json.Unmarshal(buf.Bytes(), &resObj)
 		require.NoError(t, err)
-		require.Equal(t, "unknown error", resObj.Error)
+		require.Equal(t, "", resObj.Error)
 		require.Contains(t, resObj.Message, "Secrets Plugin error:")
 	})
 }
@@ -264,12 +265,12 @@ func TestDataSourceQueryError(t *testing.T) {
 		{
 			request:        reqDatasourceByUidNotFound,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
+			expectedBody:   `{"message":"Data source not found","traceID":""}`,
 		},
 		{
 			request:        reqDatasourceByIdNotFound,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
+			expectedBody:   `{"message":"Data source not found","traceID":""}`,
 		},
 	}
 
@@ -300,7 +301,8 @@ func TestDataSourceQueryError(t *testing.T) {
 					plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},
 					},
-						ds, pluginSettings.ProvideService(dbtest.NewFakeDB(),
+						&fakeDatasources.FakeCacheService{}, ds,
+						pluginSettings.ProvideService(dbtest.NewFakeDB(),
 							secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
 				)
 				hs.QuotaService = quotatest.New(false, nil)

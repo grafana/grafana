@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/
-description: Learn about the different alert rule types
+description: Learn about the different alert rule types that Grafana Alerting supports
 keywords:
   - grafana
   - alerting

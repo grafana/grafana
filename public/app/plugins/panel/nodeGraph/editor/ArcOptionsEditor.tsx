@@ -47,7 +47,6 @@ export const ArcOptionsEditor = ({ value, onChange, context, item }: ArcOptionsE
                 },
                 id: `arc-field-${i}`,
                 name: `arc-field-${i}`,
-                editor: () => null,
               }}
             />
             <ColorPicker

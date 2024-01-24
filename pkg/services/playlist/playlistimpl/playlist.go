@@ -68,6 +68,7 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 		}
 	}
 	return &playlist.PlaylistDTO{
+		Id:        v.Id,
 		Uid:       v.UID,
 		Name:      v.Name,
 		Interval:  v.Interval,
@@ -88,4 +89,10 @@ func (s *Service) Delete(ctx context.Context, cmd *playlist.DeletePlaylistComman
 	ctx, span := s.tracer.Start(ctx, "playlists.Delete")
 	defer span.End()
 	return s.store.Delete(ctx, cmd)
+}
+
+func (s *Service) List(ctx context.Context, orgId int64) ([]playlist.PlaylistDTO, error) {
+	ctx, span := s.tracer.Start(ctx, "playlists.List")
+	defer span.End()
+	return s.store.ListAll(ctx, orgId)
 }

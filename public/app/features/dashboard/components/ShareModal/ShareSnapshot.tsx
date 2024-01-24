@@ -6,12 +6,12 @@ import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinn
 import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { VariableRefresh } from '../../../variables/types';
+import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
-import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
-import { shareDashboardType } from './utils';
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -74,10 +74,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   }
 
   async getSnaphotShareOptions() {
-    const shareOptions = await getBackendSrv().get('/api/snapshot/shared-options');
+    const shareOptions = await getDashboardSnapshotSrv().getSharingOptions();
     this.setState({
-      sharingButtonText: shareOptions['externalSnapshotName'],
-      externalEnabled: shareOptions['externalEnabled'],
+      sharingButtonText: shareOptions.externalSnapshotName,
+      externalEnabled: shareOptions.externalEnabled,
     });
   }
 
@@ -96,7 +96,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   };
 
   saveSnapshot = async (dashboard: DashboardModel, external?: boolean) => {
-    const { snapshotExpires } = this.state;
+    const { snapshotExpires, timeoutSeconds } = this.state;
     const dash = this.dashboard.getSaveModelCloneOld();
 
     this.scrubDashboard(dash);
@@ -116,7 +116,17 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         step: 2,
       });
     } finally {
-      trackDashboardSharingActionPerType(external ? 'publish_snapshot' : 'local_snapshot', shareDashboardType.snapshot);
+      if (external) {
+        DashboardInteractions.publishSnapshotClicked({
+          expires: snapshotExpires,
+          timeout: timeoutSeconds,
+        });
+      } else {
+        DashboardInteractions.publishSnapshotLocalClicked({
+          expires: snapshotExpires,
+          timeout: timeoutSeconds,
+        });
+      }
       this.setState({ isLoading: false });
     }
   };

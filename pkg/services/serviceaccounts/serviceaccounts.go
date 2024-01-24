@@ -41,6 +41,8 @@ type ExtSvcAccountsService interface {
 	EnableExtSvcAccount(ctx context.Context, cmd *EnableExtSvcAccountCmd) error
 	// ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
 	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
+	// RemoveExtSvcAccount removes the external service account associated with an external service
+	RemoveExtSvcAccount(ctx context.Context, orgID int64, extSvcSlug string) error
 	// RetrieveExtSvcAccount fetches an external service account by ID
 	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
 }

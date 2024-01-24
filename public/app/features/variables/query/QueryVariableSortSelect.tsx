@@ -3,7 +3,7 @@ import React, { PropsWithChildren, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { VariableSelectField } from '../editor/VariableSelectField';
+import { VariableSelectField } from '../../dashboard-scene/settings/variables/components/VariableSelectField';
 import { VariableSort } from '../types';
 
 interface Props {
@@ -19,6 +19,8 @@ const SORT_OPTIONS = [
   { label: 'Numerical (desc)', value: VariableSort.numericalDesc },
   { label: 'Alphabetical (case-insensitive, asc)', value: VariableSort.alphabeticalCaseInsensitiveAsc },
   { label: 'Alphabetical (case-insensitive, desc)', value: VariableSort.alphabeticalCaseInsensitiveDesc },
+  { label: 'Natural (asc)', value: VariableSort.naturalAsc },
+  { label: 'Natural (desc)', value: VariableSort.naturalDesc },
 ];
 
 export function QueryVariableSortSelect({ onChange, sort }: PropsWithChildren<Props>) {

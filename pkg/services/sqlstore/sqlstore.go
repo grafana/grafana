@@ -23,7 +23,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
@@ -42,9 +41,8 @@ import (
 type ContextSessionKey struct{}
 
 type SQLStore struct {
-	Cfg          *setting.Cfg
-	sqlxsession  *session.SessionDB
-	CacheService *localcache.CacheService
+	Cfg         *setting.Cfg
+	sqlxsession *session.SessionDB
 
 	bus                          bus.Bus
 	dbCfg                        DatabaseConfig
@@ -58,16 +56,17 @@ type SQLStore struct {
 	recursiveQueriesMu           sync.Mutex
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, cacheService, nil, migrations, bus, tracer)
+	s, err := newSQLStore(cfg, nil, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
 
+	// nolint:staticcheck
 	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
 		return nil, err
 	}
@@ -96,11 +95,10 @@ func ProvideServiceForTests(cfg *setting.Cfg, migrations registry.DatabaseMigrat
 	return initTestDB(cfg, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
-func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
+func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
-		CacheService:                cacheService,
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
 		migrations:                  migrations,
@@ -306,12 +304,9 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
+		// nolint:staticcheck
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
-		}
-
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
-			cnnstr += "&parseTime=true"
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
@@ -583,7 +578,7 @@ type InitTestDBOpt struct {
 
 var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagPanelTitleSearch,
-	featuremgmt.FlagEntityStore,
+	featuremgmt.FlagUnifiedStorage,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -638,6 +633,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 
 		// set test db config
 		cfg := setting.NewCfg()
+		// nolint:staticcheck
 		cfg.IsFeatureToggleEnabled = func(key string) bool {
 			for _, enabledFeature := range features {
 				if enabledFeature == key {
@@ -704,7 +700,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
+		testSQLStore, err = newSQLStore(cfg, engine, migration, bus, tracer, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -732,6 +728,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		return testSQLStore, nil
 	}
 
+	// nolint:staticcheck
 	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
 		for _, enabledFeature := range features {
 			if enabledFeature == key {

@@ -175,6 +175,16 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
           placeholder: '1h',
         }
       ),
+      option(
+        'ttl',
+        'TTL',
+        'The number of seconds before a message expires and is deleted automatically. Examples: 10s, 5m30s, 8h.',
+        {
+          // allow 30s, 4m30s, etc
+          validationRule: '^(\\d+[s|m|h])+$|^$',
+          element: 'input',
+        }
+      ),
       httpConfigOption,
     ],
   },

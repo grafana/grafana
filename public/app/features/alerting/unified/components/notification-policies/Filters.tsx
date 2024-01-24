@@ -3,8 +3,7 @@ import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Field, Icon, Input, Label as LabelElement, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label as LabelElement, Select, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';

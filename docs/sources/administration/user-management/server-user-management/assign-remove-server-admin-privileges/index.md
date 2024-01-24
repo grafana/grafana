@@ -27,7 +27,7 @@ Server administrators are "super-admins" with full permissions to create, read, 
 **To assign or remove Grafana administrator privileges**:
 
 1. Sign in to Grafana as a server administrator.
-1. Click **Administration** in the left-side menu, and then **Users**.
+1. Click **Administration** in the left-side menu, **Users and access**, and then **Users**.
 1. Click a user.
 1. In the Permissions section, next to Grafana Admin, click **Change**.
 1. Click **Yes** or **No**, depending on whether or not you want this user to have the Grafana server administrator role.

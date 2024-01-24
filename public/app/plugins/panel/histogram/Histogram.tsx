@@ -100,8 +100,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: isOrdinalX
       ? ScaleDistribution.Ordinal
       : useLogScale
-      ? ScaleDistribution.Log
-      : ScaleDistribution.Linear,
+        ? ScaleDistribution.Log
+        : ScaleDistribution.Linear,
     log: 2,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -157,8 +157,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     incrs: isOrdinalX ? [1] : useLogScale ? undefined : histogramBucketSizes,
     splits: useLogScale || isOrdinalX ? undefined : xSplits,
     values: isOrdinalX
-      ? (u: uPlot, splits: any[]) => splits
-      : (u: uPlot, splits: any[]) => {
+      ? (u, splits) => splits
+      : (u, splits) => {
           const tickLabels = splits.map(xAxisFormatter);
 
           const maxWidth = tickLabels.reduce(
@@ -287,7 +287,9 @@ export class Histogram extends React.Component<HistogramProps, State> {
   }
 
   prepState(props: HistogramProps, withConfig = true) {
-    let state: State = null as any;
+    let state: State = {
+      alignedData: [],
+    };
 
     const { alignedFrame } = props;
     if (alignedFrame) {

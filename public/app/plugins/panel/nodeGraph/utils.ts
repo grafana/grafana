@@ -272,8 +272,8 @@ function computableField(field?: Field) {
  * @param edgeFields
  */
 function normalizeStatsForNodes(nodesMap: { [id: string]: NodeDatumFromEdge }, edgeFields: EdgeFields): NodeDatum[] {
-  const secondaryStatValues: any[] = [];
-  const mainStatValues: any[] = [];
+  const secondaryStatValues: Array<number | undefined> = [];
+  const mainStatValues: Array<number | undefined> = [];
   const secondaryStatField = computableField(edgeFields.secondaryStat)
     ? {
         ...edgeFields.secondaryStat!,
@@ -391,7 +391,7 @@ function makeNode(index: number) {
 }
 
 function nodesFrame() {
-  const fields: any = {
+  const fields = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: [],
       type: FieldType.string,
@@ -415,17 +415,17 @@ function nodesFrame() {
     [NodeGraphDataFrameFieldNames.arc + 'success']: {
       values: [],
       type: FieldType.number,
-      config: { color: { fixedColor: 'green' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'green' } },
     },
     [NodeGraphDataFrameFieldNames.arc + 'errors']: {
       values: [],
       type: FieldType.number,
-      config: { color: { fixedColor: 'red' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
     },
     [NodeGraphDataFrameFieldNames.color]: {
       values: [],
       type: FieldType.number,
-      config: { color: { mode: 'continuous-GrYlRd' } },
+      config: { color: { mode: FieldColorModeId.ContinuousGrYlRd } },
     },
     [NodeGraphDataFrameFieldNames.icon]: {
       values: [],
@@ -439,8 +439,8 @@ function nodesFrame() {
 
   return new MutableDataFrame({
     name: 'nodes',
-    fields: Object.keys(fields).map((key) => ({
-      ...fields[key],
+    fields: Object.entries(fields).map(([key, value]) => ({
+      ...value,
       name: key,
     })),
   });
@@ -461,7 +461,7 @@ export function makeEdgesDataFrame(
 }
 
 function edgesFrame() {
-  const fields: any = {
+  const fields = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: [],
       type: FieldType.string,
@@ -486,8 +486,8 @@ function edgesFrame() {
 
   return new MutableDataFrame({
     name: 'edges',
-    fields: Object.keys(fields).map((key) => ({
-      ...fields[key],
+    fields: Object.entries(fields).map(([key, value]) => ({
+      ...value,
       name: key,
     })),
   });

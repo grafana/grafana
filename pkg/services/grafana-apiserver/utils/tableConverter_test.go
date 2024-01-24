@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 func TestTableConverter(t *testing.T) {
@@ -23,7 +23,7 @@ func TestTableConverter(t *testing.T) {
 			{Name: "Dummy", Type: "string", Format: "string", Description: "Something here"},
 			{Name: "Created At", Type: "date"},
 		},
-		func(obj runtime.Object) ([]interface{}, error) {
+		func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*metav1.APIGroup)
 			if !ok {
 				return nil, fmt.Errorf("expected status")
@@ -94,4 +94,31 @@ func TestTableConverter(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, table)
 	require.Equal(t, "the resource y.x does not support being converted to a Table", err.Error())
+
+	// Default table converter
+	// Convert a single table
+	converter = utils.NewDefaultTableConverter(schema.GroupResource{Group: "x", Resource: "y"})
+	table, err = converter.ConvertToTable(context.Background(), &metav1.APIGroup{
+		Name: "hello",
+	}, nil)
+	require.NoError(t, err)
+	out, err = json.MarshalIndent(table.Rows, "", "  ")
+	require.NoError(t, err)
+	//fmt.Printf("%s", string(out))
+	require.JSONEq(t, `[
+		{
+		  "cells": [
+			"hello",
+			""
+		  ],
+		  "object": {
+			"name": "hello",
+			"versions": null,
+			"preferredVersion": {
+			  "groupVersion": "",
+			  "version": ""
+			}
+		  }
+		}
+	  ]`, string(out))
 }

@@ -30,22 +30,10 @@ type AzRoute struct {
 	Headers map[string]string
 }
 
-type AzureSettings struct {
-	AzureMonitorSettings
-	AzureClientSettings
-}
-
 type AzureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
-}
-
-type AzureClientSettings struct {
-	AzureAuthType string
-	CloudName     string
-	TenantId      string
-	ClientId      string
 }
 
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud

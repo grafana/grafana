@@ -3,6 +3,7 @@ package modules
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
@@ -92,7 +93,7 @@ func (m *service) Run(ctx context.Context) error {
 	listener := newServiceListener(m.log, m)
 	m.serviceManager.AddListener(listener)
 
-	m.log.Debug("Starting module service manager")
+	m.log.Debug("Starting module service manager", "targets", strings.Join(m.targets, ","))
 	// wait until a service fails or stop signal was received
 	err = m.serviceManager.StartAsync(ctx)
 	if err != nil {
@@ -135,7 +136,7 @@ func (m *service) RegisterModule(name string, fn initFn) {
 }
 
 // RegisterInvisibleModule registers an invisible module with the dskit module manager.
-// Invisible modules are not visible to the user, and are intendent to be used as dependencies.
+// Invisible modules are not visible to the user, and are intended to be used as dependencies.
 func (m *service) RegisterInvisibleModule(name string, fn initFn) {
 	m.moduleManager.RegisterModule(name, fn, modules.UserInvisibleModule)
 }
