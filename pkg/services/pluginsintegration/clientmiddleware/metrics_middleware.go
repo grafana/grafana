@@ -90,7 +90,7 @@ func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 
 // pluginTarget returns the value for the "target" Prometheus label for the given plugin ID.
 func (m *MetricsMiddleware) pluginTarget(ctx context.Context, pluginID string) (string, error) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID, "")
 	if !exists {
 		return "", plugins.ErrPluginNotRegistered
 	}

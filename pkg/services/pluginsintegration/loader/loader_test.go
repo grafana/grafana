@@ -1665,7 +1665,7 @@ func verifyState(t *testing.T, ps []*plugins.Plugin, reg registry.Service,
 	t.Helper()
 
 	for _, p := range ps {
-		regP, exists := reg.Plugin(context.Background(), p.ID)
+		regP, exists := reg.Plugin(context.Background(), p.ID, "")
 		require.True(t, exists)
 		if !cmp.Equal(p, regP, compareOpts...) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, regP, compareOpts...))

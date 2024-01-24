@@ -169,7 +169,7 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 
 // plugin finds a plugin with `pluginID` from the store
 func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID, "")
 	if !exists {
 		return nil, false
 	}
