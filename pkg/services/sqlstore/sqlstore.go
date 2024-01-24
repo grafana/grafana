@@ -568,27 +568,3 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 
 	return testSQLStore, nil
 }
-
-func IsTestDbMySQL() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.MySQL
-	}
-
-	return false
-}
-
-func IsTestDbPostgres() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.Postgres
-	}
-
-	return false
-}
-
-func IsTestDBMSSQL() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.MSSQL
-	}
-
-	return false
-}
