@@ -668,7 +668,8 @@ var (
 		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 			Created:      time.Date(2023, time.July, 12, 12, 0, 0, 0, time.UTC),

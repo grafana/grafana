@@ -77,7 +77,7 @@ recordedQueriesMulti,GA,@grafana/observability-metrics,2023-06-14,false,false,fa
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,2023-06-26,false,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,2023-06-27,false,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,2023-07-05,false,false,false,true
-logsExploreTableVisualisation,experimental,@grafana/observability-logs,2023-07-12,false,false,false,true
+logsExploreTableVisualisation,GA,@grafana/observability-logs,2023-07-12,false,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,2023-07-06,false,false,false,false
 transformationsRedesign,GA,@grafana/observability-metrics,2023-07-12,false,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,2023-07-13,false,false,false,false
