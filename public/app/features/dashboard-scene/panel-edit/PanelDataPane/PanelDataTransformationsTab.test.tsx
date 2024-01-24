@@ -15,6 +15,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
+import { DashboardDataDTO } from 'app/types';
 
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
@@ -183,7 +184,7 @@ describe('PanelDataTransformationsTab', () => {
 });
 
 const setupVizPanelManger = (panelId: string) => {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard as any, meta: {} });
+  const scene = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const vizPanelManager = new VizPanelManager(panel.clone());
