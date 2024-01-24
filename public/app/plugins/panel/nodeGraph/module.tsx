@@ -47,7 +47,7 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel).setPanel
     },
   });
   builder.addNestedOptions({
-    category: ['Node names'],
+    category: ['Node field name overrides'],
     path: 'nodeNameOverrides',
     build: (builder) => {
       builder.addCustomEditor({
@@ -126,7 +126,7 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel).setPanel
     },
   });
   builder.addNestedOptions({
-    category: ['Edge names'],
+    category: ['Edge field names overrides'],
     path: 'edgeNameOverrides',
     build: (builder) => {
       builder.addCustomEditor({
