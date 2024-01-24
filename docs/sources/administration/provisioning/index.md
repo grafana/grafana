@@ -420,7 +420,7 @@ To provision dashboards to the root level, store them in the root of your `path`
 {{% /admonition %}}
 
 {{< admonition type="note" >}}
-This feature doesn't currently allow you to create nested folder structures where you have folders within folders.
+This feature doesn't currently allow you to create nested folder structures, that is, where you have folders within folders.
 {{< /admonition >}}
 
 ## Alerting

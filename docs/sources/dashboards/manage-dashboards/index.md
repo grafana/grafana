@@ -58,8 +58,8 @@ As of Grafana 10.2, there is no longer a special **General** folder. Dashboards 
 
 ### Shared with me
 
-The **Shared with me** section displays folders and dashboards that are directly shared with a user which would otherwise not be visible in the standard dashboards tree.
-This is usually because the user doesn't have access to one or more of the parent folders.
+The **Shared with me** section displays folders and dashboards that are directly shared with you that wouldn't otherwise be visible in the standard dashboards list.
+This is because you don't have access to one or more of the parent folders.
 
 ## Create a dashboard folder
 
