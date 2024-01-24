@@ -58,7 +58,8 @@ As of Grafana 10.2, there is no longer a special **General** folder. Dashboards 
 
 ### Shared with me
 
-The 'Shared with me' section displays folders and dashboards that are directly shared with a user which would otherwise not be visible in the standard dashboards tree. This is usually because the user doesn't have access to one or more of the parent folders.
+The **Shared with me** section displays folders and dashboards that are directly shared with a user which would otherwise not be visible in the standard dashboards tree.
+This is usually because the user doesn't have access to one or more of the parent folders.
 
 ## Create a dashboard folder
 
@@ -72,16 +73,16 @@ Folders help you organize and group dashboards, which is useful when you have ma
 1. On the **Dashboards** page, click **New** and select **New folder** in the drop-down.
 1. Enter a unique name and click **Create**.
 
-When you save a dashboard, you can optionally select a folder for the dashboard to be saved in.
+When you save a dashboard, you can optionally select a folder to save the dashboard in.
 
-**You can also create a folder within an existing folder:**
+You can also create a folder within an existing folder:
 
 1. Click **Dashboards** in the main menu.
 1. On the **Dashboards** page, click an existing folder name to navigate to that folder.
 1. On the folder's page, click **New** and select **New folder** in the drop-down.
 1. Enter a unique name and click **Create**.
 
-You can nest folders up to 4 levels deep.
+You can nest folders up to four levels deep.
 
 {{% admonition type="note" %}}
 Alerts can't be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, don't use slashes in the folder name.
