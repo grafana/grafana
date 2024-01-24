@@ -347,7 +347,7 @@ func buildResponse(responses []json.RawMessage, encoding string) ([]byte, error)
 }
 
 func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (*http.Client, int, error) {
-	backend.Logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+	s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	newPath, err := getTarget(req.URL.Path)
 	if err != nil {

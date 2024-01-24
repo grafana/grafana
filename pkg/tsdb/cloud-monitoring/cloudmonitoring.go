@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -63,6 +64,7 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	s := &Service{
 		httpClientProvider: *httpClientProvider,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(*httpClientProvider)),
+		logger:             backend.NewLoggerWith("logger", "tsdb.cloudmonitoring"),
 
 		gceDefaultProjectGetter: utils.GCEDefaultProject,
 	}
@@ -102,7 +104,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			s.logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -121,6 +123,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 type Service struct {
 	httpClientProvider httpclient.Provider
 	im                 instancemgmt.InstanceManager
+	logger             log.Logger
 
 	resourceHandler backend.CallResourceHandler
 
