@@ -106,7 +106,7 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 
 ### Create custom roles using provisioning
 
-[File-based provisioning]({{< relref "./rbac-grafana-provisioning/" >}}) is one method you can use to create custom roles.
+[File-based provisioning]({{< relref "./rbac-grafana-provisioning" >}}) is one method you can use to create custom roles.
 
 1. Open the YAML configuration file and locate the `roles` section.
 
