@@ -125,8 +125,57 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
 	```
 	kubectl get all -n monitoring
 	```
-   
+
    If you encounter errors or warnings in the STATUS column, check the logs and refer to Troubleshooting.
+
+### Accessing Grafana
+
+This section describes the steps you must complete to access Grafana via web browser.
+
+First, run the following `helm status` command:
+
+```
+helm status my-grafana -n monitoring
+```
+
+This command will give you the complete status of the release information such as last deployment time, namespace (where it is deployed), release status, additional notes provided by the chart etc.
+
+Within the additonal release notes, it provides the following 2 key information i.e.
+1. How to decode the login password for the admin account
+2. Expose service to the web browser
+   
+#### Decoding the admin account password
+
+Run the command as follows (it should be the same command you saw when you executed the `helm status` command):
+
+```
+kubectl get secret --namespace monitoring my-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+```
+
+It will give you a decoded `base64` string output which is the password for the admin account (note it down by saving it into a file).
+
+#### Access Grafana via the Kubernetes service in a local web browser
+
+1. Follow the instructions as described in the above helm status command, which provides complete instructions on accessing the Grafana server on port `3000`.
+
+   ```
+   # first run the below command export a shell variable named POD_NAME that will save the complete name of the pod which got deployed
+
+   export POD_NAME=$(kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=my-grafana" -o jsonpath="{.items[0].metadata.name}")
+
+   # then run the port forwarding command to direct the grafana pod to listen to port 3000
+
+   kubectl --namespace monitoring port-forward $POD_NAME 3000
+   ```
+
+For more information about port-forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
+
+2. Navigate to `127.0.0.1:3000` in your browser.
+3. The Grafana sign-in page appears.
+4. To sign in, enter `admin` for the username.
+5. For the password paste it which you have saved to a file after decoding it earlier.
+
+
 
 
 
