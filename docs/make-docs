@@ -717,7 +717,7 @@ case "${image}" in
                 "${DOCS_IMAGE}" \
                 "--minAlertLevel=${VALE_MINALERTLEVEL}" \
                 '--glob=*.md' \
-                --output=line \
+                --output=/etc/vale/rdjsonl.tmpl \
                 /hugo/content/docs | sed "s#$(proj_dst "${proj}")#sources#"
     ;;
   *)
