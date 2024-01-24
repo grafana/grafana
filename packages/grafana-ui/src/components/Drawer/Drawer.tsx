@@ -154,7 +154,7 @@ function useResizebleDrawer(): [string | undefined, React.EventHandler<React.Mou
 
   const onMouseMove = useCallback((e: MouseEvent) => {
     let offsetRight = document.body.offsetWidth - (e.clientX - document.body.offsetLeft);
-    let widthPercent = ((offsetRight / document.body.clientWidth) * 100).toFixed(2);
+    let widthPercent = Math.min((offsetRight / document.body.clientWidth) * 100, 98).toFixed(2);
     setDrawerWidth(`${widthPercent}vw`);
   }, []);
 
