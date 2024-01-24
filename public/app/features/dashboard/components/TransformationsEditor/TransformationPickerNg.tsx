@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
+import React, { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
 
 import {
   DataFrame,
@@ -43,7 +43,6 @@ interface TransformationPickerNgProps {
 export function TransformationPickerNg(props: TransformationPickerNgProps) {
   const styles = useStyles2(getTransformationPickerStyles);
   const {
-    noTransforms,
     suffix,
     setState,
     xforms,
@@ -56,6 +55,12 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
     data,
   } = props;
 
+  // Use a callback ref to call "click" on the search input
+  // This will focus it when it's opened
+  const searchInputRef = useCallback((input: HTMLInputElement) => {
+    input?.click();
+  }, []);
+
   return (
     <Drawer size="md" onClose={() => setState({ showPicker: false })} title="Add another transformation">
       <div className={styles.searchWrapper}>
@@ -63,11 +68,11 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           data-testid={selectors.components.Transforms.searchInput}
           className={styles.searchInput}
           value={search ?? ''}
-          autoFocus={!noTransforms}
           placeholder="Search for transformation"
           onChange={onSearchChange}
           onKeyDown={onSearchKeyDown}
           suffix={suffix}
+          ref={searchInputRef}
         />
         <div className={styles.showImages}>
           <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
