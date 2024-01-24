@@ -647,13 +647,21 @@ export const findConnectedNodesForNode = (nodes: NodeDatum[], edges: EdgeDatum[]
   return [];
 };
 
-export const getGraphFrame = (frames: DataFrame[]) => {
+export const getGraphFrame = (frames: DataFrame[], nodesFrameName?: string, edgesFrameName?: string) => {
   return frames.reduce<GraphFrame>(
     (acc, frame) => {
+      if (nodesFrameName && frame.name === nodesFrameName) {
+        acc.nodes.push(frame);
+        return acc;
+      }
+      if (edgesFrameName && frame.name === edgesFrameName) {
+        acc.edges.push(frame);
+        return acc;
+      }
       const sourceField = frame.fields.filter((f) => f.name === 'source');
       if (frame.name === 'edges' || sourceField.length) {
         acc.edges.push(frame);
-      } else {
+      } else if (frame.name === 'nodes' && sourceField.length === 0) {
         acc.nodes.push(frame);
       }
       return acc;

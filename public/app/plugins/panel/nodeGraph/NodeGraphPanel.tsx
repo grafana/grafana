@@ -25,6 +25,8 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
       <NodeGraph
         edgeNameOverrides={options.edgeNameOverrides}
         nodeNameOverrides={options.nodeNameOverrides}
+        edgesFrameName={options.edges?.frameName}
+        nodesFrameName={options.nodes?.frameName}
         dataFrames={memoizedGetNodeGraphDataFrames(data.series, options)}
         getLinks={getLinks}
       />

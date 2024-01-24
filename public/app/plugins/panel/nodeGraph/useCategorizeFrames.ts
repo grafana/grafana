@@ -9,8 +9,8 @@ import { getGraphFrame } from './utils';
  * Right now we do not have any metadata for it so we just check preferredVisualisationType and then column names.
  * TODO: maybe we could use column labels to have a better way to do this
  */
-export function useCategorizeFrames(series: DataFrame[]) {
+export function useCategorizeFrames(series: DataFrame[], nodesFrameName?: string, edgesFrameName?: string) {
   return useMemo(() => {
-    return getGraphFrame(series);
-  }, [series]);
+    return getGraphFrame(series, nodesFrameName, edgesFrameName);
+  }, [series, nodesFrameName, edgesFrameName]);
 }

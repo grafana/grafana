@@ -56,6 +56,7 @@ export interface Options {
      * Unit for the secondary stat to override what ever is set in the data frame.
      */
     secondaryStatUnit?: string;
+    frameName?: string;
   };
   nodeNameOverrides?: NodeNameOverrides;
   nodes?: {
@@ -71,5 +72,6 @@ export interface Options {
      * Define which fields are shown as part of the node arc (colored circle around the node).
      */
     arcs?: Array<ArcOption>;
+    frameName?: string;
   };
 }

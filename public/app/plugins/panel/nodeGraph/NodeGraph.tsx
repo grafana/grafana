@@ -112,12 +112,26 @@ interface Props {
   dataFrames: DataFrame[];
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[];
   nodeLimit?: number;
+  edgesFrameName?: string;
+  nodesFrameName?: string;
   nodeNameOverrides?: NodeNameOverrides;
   edgeNameOverrides?: EdgeNameOverrides;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit, nodeNameOverrides, edgeNameOverrides }: Props) {
+export function NodeGraph({
+  getLinks,
+  dataFrames,
+  nodeLimit,
+  nodeNameOverrides,
+  edgeNameOverrides,
+  nodesFrameName,
+  edgesFrameName,
+}: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
-  const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
+  const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(
+    dataFrames,
+    nodesFrameName,
+    edgesFrameName
+  );
 
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
@@ -308,8 +322,8 @@ const Nodes = memo(function Nodes(props: NodesProps) {
             !props.hoveringIds || props.hoveringIds.length === 0
               ? 'default'
               : props.hoveringIds?.includes(n.id)
-                ? 'active'
-                : 'inactive'
+              ? 'active'
+              : 'inactive'
           }
         />
       ))}
