@@ -17,9 +17,7 @@ interface APIQuery {
   limit?: number;
   page?: number;
   type?: DashboardSearchItemType;
-  // DashboardIds []int64
   dashboardUID?: string[];
-  folderIds?: number[];
   folderUIDs?: string[];
   sort?: string;
   starred?: boolean;
@@ -27,7 +25,7 @@ interface APIQuery {
 
 // Internal object to hold folderId
 interface LocationInfoEXT extends LocationInfo {
-  folderId?: number;
+  folderUid?: string;
 }
 
 export class SQLSearcher implements GrafanaSearcher {
@@ -36,7 +34,6 @@ export class SQLSearcher implements GrafanaSearcher {
       kind: 'folder',
       name: 'General',
       url: '/dashboards',
-      folderId: 0,
     },
   }; // share location info with everyone
 
@@ -182,14 +179,14 @@ export class SQLSearcher implements GrafanaSearcher {
           kind: 'folder',
           name: hit.folderTitle,
           url: hit.folderUrl!,
-          folderId: hit.folderId,
+          folderUid: hit.folderUid,
         };
       } else if (k === 'folder') {
         this.locationInfo[hit.uid] = {
           kind: k,
           name: hit.title!,
           url: hit.url,
-          folderId: hit.id,
+          folderUid: hit.folderUid,
         };
       }
     }
