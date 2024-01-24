@@ -36,10 +36,13 @@ export const InfiniteScroll = ({
   const [lowerLoading, setLowerLoading] = useState(false);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
   const [onEdge, setOnEdge] = useState(true);
-  const debouncedOnEdge = useMemo(() => debounce(() => { 
-    setOnEdge(true);
-    console.log('bouncy bouncy') 
-  }, 300), []);
+  const debouncedOnEdge = useMemo(
+    () =>
+      debounce(() => {
+        setOnEdge(true);
+      }, 300),
+    []
+  );
 
   useEffect(() => {
     setUpperOutOfRange(false);
@@ -65,7 +68,10 @@ export const InfiniteScroll = ({
       event.stopImmediatePropagation();
 
       // Give the user a chance to reach the top or bottom before triggering infinite scrolling requests
-      const onScrollingEdge = isOnEdge(lastScroll.current, scrollElement, onEdge, debouncedOnEdge, () => { setOnEdge(false); debouncedOnEdge.cancel(); });
+      const onScrollingEdge = isOnEdge(lastScroll.current, scrollElement, onEdge, debouncedOnEdge, () => {
+        setOnEdge(false);
+        debouncedOnEdge.cancel();
+      });
       if (!onScrollingEdge) {
         lastScroll.current = scrollElement.scrollTop;
         return;
@@ -238,10 +244,20 @@ function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
   return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
 }
 
-function isOnEdge(lastScroll: number, scrollElement: HTMLDivElement, currentlyOnEdge: boolean, onEdgeCallback: () => void, notOnEdgeCallback: () => void) {
+function isOnEdge(
+  lastScroll: number,
+  scrollElement: HTMLDivElement,
+  currentlyOnEdge: boolean,
+  onEdgeCallback: () => void,
+  notOnEdgeCallback: () => void
+) {
   const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
   // Sometimes, when the scroll reaches the end, it can be 1 less the scroll height, hence `Math.abs(scrollHeight - scrollElement.scrollTop) <= 1`
-  if (lastScroll === scrollElement.scrollTop && (scrollElement.scrollTop === 0 || Math.abs(scrollHeight - scrollElement.scrollTop) <= 1)) {
+  console.log(currentlyOnEdge);
+  if (
+    lastScroll === scrollElement.scrollTop &&
+    (scrollElement.scrollTop === 0 || Math.abs(scrollHeight - scrollElement.scrollTop) <= 1)
+  ) {
     if (currentlyOnEdge) {
       return true;
     }
