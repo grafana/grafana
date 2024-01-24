@@ -16,7 +16,10 @@ export function TableCellInspectModal({ value, onDismiss, mode }: TableCellInspe
   if (isString(value)) {
     try {
       value = JSON.parse(value);
-    } catch {} // ignore errors
+      mode = 'code';
+    } catch {
+      mode = 'text';
+    } // ignore errors
   } else {
     displayValue = JSON.stringify(value, null, ' ');
   }
