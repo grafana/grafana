@@ -249,7 +249,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	if options.UserLogin != "" {
 		// Resolve userLogin -> userID
-		options.ResolveUserLogin(ctx, s.userSvc)
+		if err := options.ResolveUserLogin(ctx, s.userSvc); err != nil {
+			return nil, err
+		}
 		options.UserLogin = ""
 	}
 	if options.UserID > 0 {
@@ -348,7 +350,9 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 
 	if searchOptions.UserLogin != "" {
 		// Resolve userLogin -> userID
-		searchOptions.ResolveUserLogin(ctx, s.userSvc)
+		if err := searchOptions.ResolveUserLogin(ctx, s.userSvc); err != nil {
+			return nil, err
+		}
 	}
 
 	if searchOptions.UserID == 0 {
