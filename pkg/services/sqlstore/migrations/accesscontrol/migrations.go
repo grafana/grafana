@@ -187,7 +187,7 @@ func AddMigration(mg *migrator.Migrator) {
 		Cols: []string{"identifier"},
 	}))
 
-	mg.AddMigration("add permission scope action index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
-		Cols: []string{"scope", "action"},
+	mg.AddMigration("add permission action scope role_id index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Cols: []string{"action", "scope", "role_id"},
 	}))
 }
