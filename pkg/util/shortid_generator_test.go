@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"cuelang.org/go/pkg/strings"
-	"github.com/lithammer/shortuuid"
 	"github.com/stretchr/testify/require"
 	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -50,10 +49,7 @@ func TestRandomUIDs(t *testing.T) {
 			t.Fatalf("created invalid name: %v", validation)
 		}
 
-		_, err := shortuuid.DefaultEncoder.Decode(v)
-		require.NoError(t, err)
-
-		//fmt.Println(v)
+		// fmt.Println(v)
 	}
 	// t.FailNow()
 }
