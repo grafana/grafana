@@ -598,7 +598,6 @@ def verify_i18n_step():
                 exit 1
             fi
             '''.format(uncommited_error_message),
-            "yarn run i18n:compile",
         ],
     }
 
