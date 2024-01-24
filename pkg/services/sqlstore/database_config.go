@@ -17,8 +17,6 @@ import (
 )
 
 type DatabaseConfig struct {
-	Cfg *setting.Cfg
-
 	Type                        string
 	Host                        string
 	Name                        string
@@ -45,15 +43,6 @@ type DatabaseConfig struct {
 	QueryRetries int
 	// SQLite only
 	TransactionRetries int
-
-	// MySQL only. By default "custom"
-	MySQLTLSConfigKey string
-
-	// DatabaseInstrumentQueries is used to decide if database queries
-	// should be instrumented with metrics, logs and traces.
-	// This needs to be on the global object since its used in the
-	// sqlstore package and HTTP middlewares.
-	InstrumentQueries bool
 }
 
 func NewDatabaseConfig(cfg *setting.Cfg) (*DatabaseConfig, error) {
@@ -61,11 +50,7 @@ func NewDatabaseConfig(cfg *setting.Cfg) (*DatabaseConfig, error) {
 		return nil, errors.New("cfg cannot be nil")
 	}
 
-	dbCfg := &DatabaseConfig{
-		Cfg:               cfg,
-		MySQLTLSConfigKey: "custom",
-		InstrumentQueries: cfg.DatabaseInstrumentQueries,
-	}
+	dbCfg := &DatabaseConfig{}
 	if err := dbCfg.readConfig(cfg); err != nil {
 		return nil, err
 	}
@@ -157,7 +142,7 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg) error {
 			if err != nil {
 				return err
 			}
-			if err := mysql.RegisterTLSConfig(dbCfg.MySQLTLSConfigKey, tlsCert); err != nil {
+			if err := mysql.RegisterTLSConfig("custom", tlsCert); err != nil {
 				return err
 			}
 
