@@ -35,7 +35,6 @@ import { createLokiDatasource } from './__mocks__/datasource';
 import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { runSplitQuery } from './querySplitting';
-import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => {
@@ -209,7 +208,7 @@ describe('LokiDatasource', () => {
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
-          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+          obfuscated_query: '{Identifier=String}',
         })
       );
     });
@@ -226,7 +225,7 @@ describe('LokiDatasource', () => {
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
-          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+          obfuscated_query: '{Identifier=String}',
         })
       );
     });

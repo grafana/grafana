@@ -41,6 +41,9 @@ func (cfg *Cfg) readSmtpSettings() error {
 	cfg.Smtp.FromAddress = sec.Key("from_address").String()
 	cfg.Smtp.FromName = sec.Key("from_name").String()
 	cfg.Smtp.EhloIdentity = sec.Key("ehlo_identity").String()
+	if cfg.Smtp.EhloIdentity == "" {
+		cfg.Smtp.EhloIdentity = cfg.InstanceName
+	}
 	cfg.Smtp.StartTLSPolicy = sec.Key("startTLS_policy").String()
 	cfg.Smtp.SkipVerify = sec.Key("skip_verify").MustBool(false)
 
