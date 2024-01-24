@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/dskit/concurrency"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -357,7 +358,7 @@ func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuer
 		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
-	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
+	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
 	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 	return availableNonRootFolders, nil
 }
@@ -394,9 +395,23 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 	return nonRootFolders, nil
 }
 
-func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder) []*folder.Folder {
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder, orgID int64) []*folder.Folder {
 	allFolders := append(folders, rootFolders...)
 	foldersDedup := make([]*folder.Folder, 0)
+
+	uids := make([]string, 0)
+	for _, f := range folders {
+		uids = append(uids, f.UID)
+	}
+	batchFolders, err := s.GetFolders(ctx, folder.GetFoldersQuery{UIDs: uids, OrgID: orgID, BatchSize: 100, WithFullpath: true})
+	if err != nil {
+		s.log.Error("failed to fetch folders in a batch", "error", err)
+		return foldersDedup
+	}
+	if len(batchFolders) > 0 {
+		s.log.Debug("Batch folders", "folder", batchFolders[0])
+	}
+
 	for _, f := range folders {
 		isSubfolder := slices.ContainsFunc(allFolders, func(folder *folder.Folder) bool {
 			return f.ParentUID == folder.UID
