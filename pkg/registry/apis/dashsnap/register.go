@@ -22,6 +22,7 @@ import (
 
 	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -43,39 +44,44 @@ type SnapshotsAPIBuilder struct {
 	service    dashboardsnapshots.Service
 	namespacer request.NamespaceMapper
 	options    sharingOptionsGetter
-	gv         schema.GroupVersion
+	exporter   *dashExporter
 	logger     log.Logger
 }
 
 func NewSnapshotsAPIBuilder(
 	p dashboardsnapshots.Service,
 	cfg *setting.Cfg,
+	exporter *dashExporter,
 ) *SnapshotsAPIBuilder {
 	return &SnapshotsAPIBuilder{
 		service:    p,
 		options:    newSharingOptionsGetter(cfg),
 		namespacer: request.GetNamespaceMapper(cfg),
-		gv:         resourceInfo.GroupVersion(),
+		exporter:   exporter,
 		logger:     log.New("snapshots::RawHandlers"),
 	}
 }
 
 func RegisterAPIService(
-	p dashboardsnapshots.Service,
+	service dashboardsnapshots.Service,
 	apiregistration grafanaapiserver.APIRegistrar,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	sql db.DB,
 ) *SnapshotsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewSnapshotsAPIBuilder(p, cfg)
+	builder := NewSnapshotsAPIBuilder(service, cfg, &dashExporter{
+		service: service,
+		sql:     sql,
+	})
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.gv
+	return resourceInfo.GroupVersion()
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -91,13 +97,14 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 }
 
 func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	addKnownTypes(scheme, b.gv)
+	gv := resourceInfo.GroupVersion()
+	addKnownTypes(scheme, gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
 	addKnownTypes(scheme, schema.GroupVersion{
-		Group:   b.gv.Group,
+		Group:   gv.Group,
 		Version: runtime.APIVersionInternal,
 	})
 
@@ -105,8 +112,8 @@ func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// if err := playlist.RegisterConversions(scheme); err != nil {
 	//   return err
 	// }
-	metav1.AddToGroupVersion(scheme, b.gv)
-	return scheme.SetVersionPriority(b.gv)
+	metav1.AddToGroupVersion(scheme, gv)
+	return scheme.SetVersionPriority(gv)
 }
 
 func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
@@ -168,7 +175,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	createRsp := defs["github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardCreateResponse"].Schema
 
 	tags := []string{"Create and Delete (custom routes)"}
-	return &grafanaapiserver.APIRoutes{
+	routes := &grafanaapiserver.APIRoutes{
 		Namespace: []grafanaapiserver.APIRouteHandler{
 			{
 				Path: "dashsnaps/create",
@@ -298,6 +305,12 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 			},
 		},
 	}
+
+	// Add an experimental exporter
+	if b.exporter != nil {
+		routes.Root = append(routes.Root, b.exporter.getAPIRouteHandler())
+	}
+	return routes
 }
 
 func (b *SnapshotsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
