@@ -638,10 +638,18 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         next(data) {
           const exploreState = getState().explore.panes[exploreId];
           if (data.logsResult !== null && data.state === LoadingState.Done) {
+            console.log('data', data);
+            console.log('state', exploreState);
+            console.log('event', {
+              datasourceType: datasourceInstance.type ?? 'N/A',
+              visualisationType:
+                exploreState?.panelsState?.logs?.visualisationType ?? store.get(visualisationTypeKey) ?? 'N/A',
+              length: data.logsResult.rows.length,
+            });
             reportInteraction('grafana_explore_logs_result_displayed', {
               datasourceType: datasourceInstance.type,
               visualisationType:
-                exploreState?.panelsState?.logs?.visualisationType ?? store.get(visualisationTypeKey) ?? 'N/A',
+                exploreState?.panelsState?.logs?.visualisationType ?? store.get(visualisationTypeKey) ?? 'logs',
               length: data.logsResult.rows.length,
             });
           }
