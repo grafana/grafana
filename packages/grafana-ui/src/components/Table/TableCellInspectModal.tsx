@@ -14,6 +14,7 @@ interface TableCellInspectModalProps {
 export function TableCellInspectModal({ value, onDismiss, mode }: TableCellInspectModalProps) {
   let displayValue = value;
   if (isString(value)) {
+    // Exclude numeric strings like '123' from being displayed in code/JSON mode
     if (value[0] === '{' || value[0] === '[' || mode === 'code') {
       try {
         value = JSON.parse(value);
