@@ -70,19 +70,14 @@ Folders help you organize and group dashboards, which is useful when you have ma
 **To create a dashboard folder:**
 
 1. Click **Dashboards** in the main menu.
-1. On the **Dashboards** page, click **New** and select **New folder** in the drop-down.
+1. Do one of the following:
+   - On the **Dashboards** page, click **New** and select **New folder** in the drop-down.
+   - Click an existing folder and on the folder’s page, click **New** and select **New folder** in the drop-down.
 1. Enter a unique name and click **Create**.
+
+When you nest folders, you can do so up to four levels deep.
 
 When you save a dashboard, you can optionally select a folder to save the dashboard in.
-
-You can also create a folder within an existing folder:
-
-1. Click **Dashboards** in the main menu.
-1. On the **Dashboards** page, click an existing folder name to navigate to that folder.
-1. On the folder's page, click **New** and select **New folder** in the drop-down.
-1. Enter a unique name and click **Create**.
-
-You can nest folders up to four levels deep.
 
 {{% admonition type="note" %}}
 Alerts can't be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, don't use slashes in the folder name.
