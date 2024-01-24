@@ -55,7 +55,7 @@ export interface FolderRequestOptions {
 
 const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
 
-interface InspectorStream {
+export interface InspectorStream {
   response: FetchResponse | FetchError;
   requestId?: string;
 }
