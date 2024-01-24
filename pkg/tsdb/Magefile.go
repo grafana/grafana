@@ -35,7 +35,7 @@ func fileHasString(path string, s string) bool {
 }
 
 func findPluginJSONDir(pluginID string) (string, error) {
-	pluginJSONMatches, err := find(filepath.Join("../../public/app/plugins/datasource"), "plugin.json")
+	pluginJSONMatches, err := filepath.Glob("../../public/app/plugins/datasource/*/plugin.json")
 	if err != nil {
 		return "", err
 	}
@@ -46,11 +46,6 @@ func findPluginJSONDir(pluginID string) (string, error) {
 	for _, pluginJSONMatch := range pluginJSONMatches {
 		if !fileHasString(pluginJSONMatch, fmt.Sprintf(`"id": "%s"`, pluginID)) {
 			continue
-		}
-		// Ignore dist folder
-		if filepath.Base(filepath.Dir(pluginJSONMatch)) != "dist" {
-			pluginJSONPath = pluginJSONMatch
-			break
 		}
 	}
 	pluginJSONPath, err = filepath.Abs(pluginJSONPath)
