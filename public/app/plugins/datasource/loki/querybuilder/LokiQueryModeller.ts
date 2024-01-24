@@ -27,11 +27,11 @@ export class LokiQueryModeller extends QueryModellerBase {
     for (const operation of operations) {
       const def = this.operationsRegistry.getIfExists(operation.id);
       if (!def) {
-        throw new Error(`Could not find operation ${operation.id} in the registry`);
+        console.error(`Could not find operation ${operation.id} in the registry`);
+        continue;
       }
       queryString = def.renderer(operation, def, queryString);
     }
-
     return queryString;
   }
 
