@@ -47,7 +47,7 @@
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
-    "rollup-plugin-node-externals": "^5.0.0"
+    "rollup-plugin-node-externals": "^6.0.0"
   },
   "dependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
