@@ -131,8 +131,8 @@ By default, the last expression added is used as the alert condition.
 ## Recovery threshold
 
 {{% admonition type="note" %}}
-   The recovery threshold feature is currently only available in OSS.
-   {{% /admonition %}}
+The recovery threshold feature is currently only available in OSS.
+{{% /admonition %}}
 
 To reduce the noise of flapping alerts, you can set a recovery threshold different to the alert threshold.
 

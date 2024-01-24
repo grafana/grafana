@@ -81,8 +81,8 @@ Define a query to get the data you want to measure and a condition that needs to
    b. Click **Preview** to verify that the expression is successful.
 
 {{% admonition type="note" %}}
-   The recovery threshold feature is currently only available in OSS.
-   {{% /admonition %}}
+The recovery threshold feature is currently only available in OSS.
+{{% /admonition %}}
 
 1. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
 
