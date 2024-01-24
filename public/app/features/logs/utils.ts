@@ -297,3 +297,15 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
 export function targetIsElement(target: EventTarget | null): target is Element {
   return target instanceof Element;
 }
+
+export function createLogRowsMap() {
+  const logRowsSet = new Set();
+  return function (target: LogRowModel): boolean {
+    let id = `${target.dataFrame.refId}_${target.rowId ? target.rowId : `${target.timeEpochNs}_${target.entry}`}`;
+    if (logRowsSet.has(id)) {
+      return true;
+    }
+    logRowsSet.add(id);
+    return false;
+  };
+}

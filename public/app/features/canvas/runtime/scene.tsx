@@ -665,34 +665,14 @@ export class Scene {
   };
 
   render() {
-    const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (
-      // TODO: Address this eslint error
-      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-      <div
-        key={this.revId}
-        className={this.styles.wrap}
-        style={this.style}
-        ref={this.setRef}
-        onMouseDown={(e) => {
-          // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
-          if ((!this.shouldPanZoom || this.contextMenuVisible) && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
-          if (!this.contextMenuVisible && e.button === 2 && !e.ctrlKey) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        }}
-      >
+      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.connections.render()}
         {this.root.render()}
-        {canShowContextMenu && (
+        {this.isEditingEnabled && (
           <Portal>
             <CanvasContextMenu
               scene={this}

@@ -4,20 +4,23 @@ import (
 	"os"
 	"path"
 
-	"github.com/grafana/grafana/pkg/aggregator"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog/v2"
-
 	"github.com/spf13/cobra"
+	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/notfoundhandler"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/component-base/cli"
+	"k8s.io/klog/v2"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
+
+	"github.com/grafana/grafana/pkg/aggregator"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 const (
-	aggregatorDataPath              = "data/grafana-aggregator"
+	aggregatorDataPath              = "data"
 	defaultAggregatorEtcdPathPrefix = "/registry/grafana.aggregator"
 )
 
@@ -32,7 +35,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 		Example: "grafana apiserver example.grafana.app",
 		RunE: func(c *cobra.Command, args []string) error {
 			// Load each group from the args
-			if err := o.LoadAPIGroupBuilders(args[1:]); err != nil {
+			if err := o.loadAPIGroupBuilders(args[1:]); err != nil {
 				return err
 			}
 
@@ -56,7 +59,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 	// Register standard k8s flags with the command line
 	o.RecommendedOptions = options.NewRecommendedOptions(
 		defaultEtcdPathPrefix,
-		Codecs.LegacyCodec(), // the codec is passed to etcd and not used
+		grafanaapiserver.Codecs.LegacyCodec(), // the codec is passed to etcd and not used
 	)
 	o.RecommendedOptions.AddFlags(cmd.Flags())
 
@@ -72,8 +75,23 @@ func RunCLI() int {
 	return cli.Run(cmd)
 }
 
-func newCommandStartAggregator(o *aggregator.AggregatorServerOptions) *cobra.Command {
+func newCommandStartAggregator() *cobra.Command {
 	devAcknowledgementNotice := "The aggregator command is in heavy development. The entire setup is subject to change without notice"
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic("could not determine current directory")
+	}
+
+	extraConfig := &aggregator.ExtraConfig{
+		DataPath: path.Join(cwd, aggregatorDataPath),
+	}
+
+	// Register standard k8s flags with the command line
+	recommendedOptions := options.NewRecommendedOptions(
+		defaultAggregatorEtcdPathPrefix,
+		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
+	)
 
 	cmd := &cobra.Command{
 		Use:   "aggregator",
@@ -82,9 +100,20 @@ func newCommandStartAggregator(o *aggregator.AggregatorServerOptions) *cobra.Com
 			devAcknowledgementNotice,
 		Example: "grafana aggregator",
 		RunE: func(c *cobra.Command, args []string) error {
-			return run(o)
+			serverOptions, err := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr, recommendedOptions, extraConfig)
+			serverOptions.Config.Complete()
+
+			if err != nil {
+				klog.Errorf("Could not create aggregator server options: %s", err)
+				os.Exit(1)
+			}
+
+			return run(serverOptions)
 		},
 	}
+
+	recommendedOptions.AddFlags(cmd.Flags())
+	extraConfig.AddFlags(cmd.Flags())
 
 	return cmd
 }
@@ -95,47 +124,33 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 		return err
 	}
 
-	serverOptions.RecommendedOptions.SecureServing.BindPort = 8443
-	delegationTarget := genericapiserver.NewEmptyDelegate()
-
-	config, err := serverOptions.CreateAggregatorConfig()
+	notFoundHandler := notfoundhandler.New(serverOptions.Config.SharedConfig.Serializer, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
+	apiExtensionsServer, err := serverOptions.Config.ApiExtensionsComplete.New(genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
 	if err != nil {
-		klog.Errorf("Error creating aggregator config: %s", err)
 		return err
 	}
 
-	aggregator, err := serverOptions.CreateAggregatorServer(config, delegationTarget)
+	aggregator, err := serverOptions.CreateAggregatorServer(apiExtensionsServer.GenericAPIServer, apiExtensionsServer.Informers)
 	if err != nil {
 		klog.Errorf("Error creating aggregator server: %s", err)
 		return err
 	}
 
 	// Install the API Group+version
-	for _, b := range serverOptions.Builders {
-		g, err := b.GetAPIGroupInfo(Scheme, Codecs, config.GenericConfig.RESTOptionsGetter)
-		if err != nil {
-			klog.Errorf("Error getting group info for prerequisite API group: %s", err)
-			return err
-		}
-		if g == nil || len(g.PrioritizedVersions) < 1 {
-			continue
-		}
-		err = aggregator.GenericAPIServer.InstallAPIGroup(g)
-		if err != nil {
-			klog.Errorf("Error installing prerequisite API groups for aggregator: %s", err)
-			return err
-		}
+	err = grafanaapiserver.InstallAPIs(aggregator.GenericAPIServer, serverOptions.Config.Aggregator.GenericConfig.RESTOptionsGetter, serverOptions.Builders)
+	if err != nil {
+		klog.Errorf("Error installing apis: %s", err)
+		return err
 	}
 
 	if err := clientcmd.WriteToFile(
 		utils.FormatKubeConfig(aggregator.GenericAPIServer.LoopbackClientConfig),
-		path.Join(aggregatorDataPath, "aggregator.kubeconfig"),
+		path.Join(aggregatorDataPath, "grafana-aggregator", "aggregator.kubeconfig"),
 	); err != nil {
 		klog.Errorf("Error persisting aggregator.kubeconfig: %s", err)
 		return err
 	}
 
-	// Finish the config (a noop for now)
 	prepared, err := aggregator.PrepareRun()
 	if err != nil {
 		return err
@@ -149,16 +164,7 @@ func run(serverOptions *aggregator.AggregatorServerOptions) error {
 }
 
 func RunCobraWrapper() int {
-	serverOptions := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr)
-	// Register standard k8s flags with the command line
-	serverOptions.RecommendedOptions = options.NewRecommendedOptions(
-		defaultAggregatorEtcdPathPrefix,
-		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
-	)
-
-	cmd := newCommandStartAggregator(serverOptions)
-
-	serverOptions.AddFlags(cmd.Flags())
+	cmd := newCommandStartAggregator()
 
 	return cli.Run(cmd)
 }

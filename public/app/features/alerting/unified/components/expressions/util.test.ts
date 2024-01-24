@@ -1,6 +1,17 @@
 import { DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { getSeriesName, formatLabels, getSeriesValue, isEmptySeries, getSeriesLabels } from './util';
+import { mockDataSource } from '../../mocks';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+
+import {
+  decodeGrafanaNamespace,
+  formatLabels,
+  getSeriesLabels,
+  getSeriesName,
+  getSeriesValue,
+  isEmptySeries,
+} from './util';
 
 const EMPTY_FRAME: DataFrame = toDataFrame([]);
 const NAMED_FRAME: DataFrame = {
@@ -31,6 +42,103 @@ describe('formatLabels', () => {
 
   it('should work with multiple labels', () => {
     expect(formatLabels({ foo: 'bar', baz: 'qux' })).toBe('foo=bar, baz=qux');
+  });
+});
+
+describe('decodeGrafanaNamespace', () => {
+  it('should work for regular Grafana namespaces', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: `my_rule_namespace`,
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('my_rule_namespace');
+  });
+
+  it('should work for Grafana namespaces in nested folders format', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: `["parentUID","my_rule_namespace"]`,
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('my_rule_namespace');
+  });
+
+  it('should default to name if format is invalid: invalid JSON', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: `["parentUID"`,
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe(`["parentUID"`);
+  });
+
+  it('should default to name if format is invalid: empty array', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: `[]`,
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe(`[]`);
+  });
+
+  it('grab folder name if format is long array', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: `["parentUID","my_rule_namespace","another_part"]`,
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('another_part');
+  });
+
+  it('should not change output for cloud namespaces', () => {
+    const cloudNamespace: CombinedRuleNamespace = {
+      name: `["parentUID","my_rule_namespace"]`,
+      rulesSource: mockDataSource(),
+      groups: [
+        {
+          name: 'Prom group',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(decodeGrafanaNamespace(cloudNamespace)).toBe(`["parentUID","my_rule_namespace"]`);
   });
 });
 

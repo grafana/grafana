@@ -223,12 +223,13 @@ jobs:
 
         # Comment on the PR
         - name: Comment on PR
+          if: steps.levitate-run.outputs.exit_code == 1
           uses: marocchino/sticky-pull-request-comment@v2
           with:
             header: levitate-breaking-change-comment
             number: ${{ github.event.pull_request.number }}
             message: |
-              ⚠️ &nbsp;&nbsp;**Possible breaking changes (md version)*** &nbsp;&nbsp ⚠️
+              ⚠️ &nbsp;&nbsp;**Possible breaking changes (md version)**&nbsp;&nbsp; ⚠️
 
               ${{ steps.levitate-markdown.outputs.levitate_markdown }}
 
