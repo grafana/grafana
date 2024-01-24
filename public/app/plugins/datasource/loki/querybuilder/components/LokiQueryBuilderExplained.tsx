@@ -31,7 +31,6 @@ export const LokiQueryBuilderExplained = React.memo<Props>(({ query }) => {
         queryModeller={lokiQueryModeller}
         query={visQuery}
         language={lang}
-        innerQueryPlaceholder="<expr>"
       />
     </Stack>
   );

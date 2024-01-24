@@ -6,12 +6,12 @@ import {
   VisualQueryBinary,
 } from '@grafana/experimental';
 
-import { getOperationDefinitions } from './operations';
+import { operationDefinitions } from './operations';
 import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType, LokiVisualQueryOperationCategory } from './types';
 
 export class LokiQueryModeller extends QueryModellerBase {
   constructor() {
-    super(getOperationDefinitions);
+    super(operationDefinitions, '<expr>');
 
     this.setOperationCategories([
       LokiVisualQueryOperationCategory.Aggregations,

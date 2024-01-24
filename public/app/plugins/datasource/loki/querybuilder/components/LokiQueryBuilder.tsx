@@ -127,6 +127,7 @@ export const LokiQueryBuilder = React.memo<Props>(
             labelsFilters={query.labels}
             onChange={onChangeLabels}
             labelFilterRequired={labelFilterRequired}
+            multiValueSeparator="|"
           />
         </EditorRow>
         {showExplain && (
@@ -148,7 +149,6 @@ export const LokiQueryBuilder = React.memo<Props>(
             isConflictingOperation={(operation: QueryBuilderOperation, otherOperations: QueryBuilderOperation[]) =>
               operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, otherOperations)
             }
-            innerQueryPlaceholder="<expr>"
           />
           <QueryBuilderHints<LokiVisualQuery, LokiQuery>
             datasource={datasource}
@@ -173,7 +173,6 @@ export const LokiQueryBuilder = React.memo<Props>(
             onMouseLeave={() => {
               setHighlightedOp(undefined);
             }}
-            innerQueryPlaceholder="<expr>"
           />
         )}
         {query.binaryQueries && query.binaryQueries.length > 0 && (

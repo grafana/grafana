@@ -2,7 +2,6 @@ import { capitalize } from 'lodash';
 import pluralize from 'pluralize';
 
 import {
-  LabelParamEditor,
   QueryBuilderOperation,
   QueryBuilderOperationDefinition,
   QueryBuilderOperationParamDef,
@@ -14,6 +13,7 @@ import {
 import { escapeLabelValueInExactSelector } from '../languageUtils';
 import { FUNCTIONS } from '../syntax';
 
+import { LabelParamEditor } from './components/LabelParamEditor';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function createRangeOperation(

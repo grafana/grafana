@@ -15,7 +15,7 @@ import {
 } from './operationUtils';
 import { LokiOperationId, LokiOperationOrder, lokiOperators, LokiVisualQueryOperationCategory } from './types';
 
-export function getOperationDefinitions(): QueryBuilderOperationDefinition[] {
+function getOperationDefinitions(): QueryBuilderOperationDefinition[] {
   const aggregations = [
     LokiOperationId.Sum,
     LokiOperationId.Min,
@@ -581,14 +581,14 @@ Example: \`\`error_level=\`level\` \`\`
 }
 
 // Keeping a local copy as an optimization measure.
-const definitions = getOperationDefinitions();
+export const operationDefinitions = getOperationDefinitions();
 
 /**
  * Given an operator, return the corresponding explain.
  * For usage within the Query Editor.
  */
 export function explainOperator(id: LokiOperationId | string): string {
-  const definition = definitions.find((operation) => operation.id === id);
+  const definition = operationDefinitions.find((operation) => operation.id === id);
 
   const explain = definition?.explainHandler?.({ id: '', params: ['<value>'] }) || '';
 
@@ -597,7 +597,7 @@ export function explainOperator(id: LokiOperationId | string): string {
 }
 
 export function getDefinitionById(id: string): QueryBuilderOperationDefinition | undefined {
-  return definitions.find((x) => x.id === id);
+  return operationDefinitions.find((x) => x.id === id);
 }
 
 export function checkParamsAreValid(
