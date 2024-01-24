@@ -14,12 +14,16 @@ interface TableCellInspectModalProps {
 export function TableCellInspectModal({ value, onDismiss, mode }: TableCellInspectModalProps) {
   let displayValue = value;
   if (isString(value)) {
-    try {
-      value = JSON.parse(value);
-      mode = 'code';
-    } catch {
+    if (value[0] === '{' || value[0] === '[' || mode === 'code') {
+      try {
+        value = JSON.parse(value);
+        mode = 'code';
+      } catch {
+        mode = 'text';
+      } // ignore errors
+    } else {
       mode = 'text';
-    } // ignore errors
+    }
   } else {
     displayValue = JSON.stringify(value, null, ' ');
   }
