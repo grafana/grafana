@@ -7,6 +7,9 @@ export interface FieldArrayProps extends UseFieldArrayProps {
   children: (api: FieldArrayApi) => JSX.Element;
 }
 
+/**
+ * @deprecated use the `useFieldArray` hook from react-hook-form instead
+ */
 export const FieldArray: FC<FieldArrayProps> = ({ name, control, children, ...rest }) => {
   const { fields, append, prepend, remove, swap, move, insert } = useFieldArray({
     control,
