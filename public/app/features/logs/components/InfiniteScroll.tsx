@@ -39,7 +39,7 @@ export const InfiniteScroll = ({
   const debouncedOnEdge = useMemo(() => debounce(() => { 
     setOnEdge(true);
     console.log('bouncy bouncy') 
-  }, 250), []);
+  }, 300), []);
 
   useEffect(() => {
     setUpperOutOfRange(false);
@@ -64,12 +64,16 @@ export const InfiniteScroll = ({
       }
       event.stopImmediatePropagation();
 
-      const onScrollingEdge = isOnEdge(lastScroll.current, scrollElement, debouncedOnEdge, () => { setOnEdge(false); debouncedOnEdge.cancel(); });
-      lastScroll.current = scrollElement.scrollTop;
-      return;
+      // Give the user a chance to reach the top or bottom before triggering infinite scrolling requests
+      const onScrollingEdge = isOnEdge(lastScroll.current, scrollElement, onEdge, debouncedOnEdge, () => { setOnEdge(false); debouncedOnEdge.cancel(); });
+      if (!onScrollingEdge) {
+        lastScroll.current = scrollElement.scrollTop;
+        return;
+      }
 
       const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
       lastScroll.current = scrollElement.scrollTop;
+
       if (scrollDirection === ScrollDirection.NoScroll) {
         return;
       } else if (scrollDirection === ScrollDirection.Top) {
@@ -122,7 +126,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone]);
+  }, [debouncedOnEdge, loadMoreLogs, loading, onEdge, range, rows, scrollElement, sortOrder, timeZone]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
@@ -234,12 +238,16 @@ function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
   return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
 }
 
-function isOnEdge(lastScroll: number, scrollElement: HTMLDivElement, onEdgeCallback: () => void, notOnEdgeCallback: () => void) {
+function isOnEdge(lastScroll: number, scrollElement: HTMLDivElement, currentlyOnEdge: boolean, onEdgeCallback: () => void, notOnEdgeCallback: () => void) {
   const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
-  console.log(lastScroll, scrollElement.scrollTop, scrollHeight)
+  // Sometimes, when the scroll reaches the end, it can be 1 less the scroll height, hence `Math.abs(scrollHeight - scrollElement.scrollTop) <= 1`
   if (lastScroll === scrollElement.scrollTop && (scrollElement.scrollTop === 0 || Math.abs(scrollHeight - scrollElement.scrollTop) <= 1)) {
+    if (currentlyOnEdge) {
+      return true;
+    }
     onEdgeCallback();
   } else {
     notOnEdgeCallback();
   }
+  return false;
 }
