@@ -22,6 +22,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   horizontal: css({
     display: 'flex',
     flexDirection: 'row',
+    gap: theme.spacing(1),
   }),
   addTag: css({
     marginLeft: theme.spacing(1),

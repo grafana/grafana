@@ -258,7 +258,7 @@ func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, qu
 }
 
 func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *events.SignUpStarted) error {
-	if !setting.VerifyEmailEnabled {
+	if !ns.Cfg.VerifyEmailEnabled {
 		return nil
 	}
 

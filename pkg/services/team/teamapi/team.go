@@ -182,7 +182,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 
 	teamIDs := map[string]bool{}
 	for _, team := range queryResult.Teams {
-		team.AvatarURL = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+		team.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, team.Email, team.Name)
 		teamIDs[strconv.FormatInt(team.ID, 10)] = true
 	}
 
@@ -234,7 +234,7 @@ func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 	// Add accesscontrol metadata
 	queryResult.AccessControl = tapi.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "teams:id:", strconv.FormatInt(queryResult.ID, 10))
 
-	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(queryResult.Email, queryResult.Name)
+	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, queryResult.Email, queryResult.Name)
 	return response.JSON(http.StatusOK, &queryResult)
 }
 
