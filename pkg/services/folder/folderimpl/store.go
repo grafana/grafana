@@ -36,4 +36,7 @@ type store interface {
 
 	// GetFolders returns folders with given uids
 	GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error)
+
+	// GetDescendants returns all descendants of a folder
+	GetDescendants(ctx context.Context, orgID int64, anchestor_uid string) ([]*folder.Folder, error)
 }

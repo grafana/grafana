@@ -60,3 +60,7 @@ func (f *fakeStore) GetHeight(ctx context.Context, folderUID string, orgID int64
 func (f *fakeStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }
+
+func (f *fakeStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
+	return f.ExpectedFolders, f.ExpectedError
+}

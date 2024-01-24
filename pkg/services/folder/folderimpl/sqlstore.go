@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"strings"
 	"time"
@@ -365,4 +366,45 @@ func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) 
 	}
 
 	return folders, nil
+}
+
+func (ss *sqlStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
+	var folders []*folder.Folder
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		s := strings.Builder{}
+		args := make([]any, 0, 1+folder.MaxNestedFolderDepth)
+		args = append(args, orgID)
+		s.WriteString(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
+		s.WriteString(` FROM folder f0`)
+		s.WriteString(getFullpathJoinsSQL())
+		s.WriteString(` WHERE f0.org_id=?`)
+		s.WriteString(` AND (`)
+		for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+			if i > 1 {
+				s.WriteString(` OR `)
+			}
+			s.WriteString(fmt.Sprintf(`f%d.uid=?`, i))
+			args = append(args, ancestor_uid)
+		}
+		s.WriteString(`)`)
+		return sess.SQL(s.String(), args...).Find(&folders)
+	}); err != nil {
+		return nil, err
+	}
+
+	// Add URLs
+	for i, f := range folders {
+		folders[i] = f.WithURL()
+	}
+
+	return folders, nil
+}
+
+// getFullpathJoinsSQL returns a SQL fragment that joins the same table multiple times to get the full path of a folder.
+func getFullpathJoinsSQL() string {
+	joins := make([]string, 0, folder.MaxNestedFolderDepth)
+	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.org_id = f%d.org_id AND f%d.uid = f%d.parent_uid`, i, i, i-1, i, i-1))
+	}
+	return strings.Join(joins, "\n")
 }
