@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -19,14 +20,16 @@ func NewTestMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *set
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
-	return &migrationService{
-		lock:              serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
-		log:               &logtest.Fake{},
-		cfg:               cfg,
-		store:             sqlStore,
-		migrationStore:    migrationStore.NewTestMigrationStore(t, sqlStore, cfg),
-		encryptionService: fake_secrets.NewFakeSecretsService(),
-	}
+
+	svc, err := ProvideService(
+		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		cfg,
+		sqlStore,
+		migrationStore.NewTestMigrationStore(t, sqlStore, cfg),
+		fake_secrets.NewFakeSecretsService(),
+	)
+	require.NoError(t, err)
+	return svc.(*migrationService)
 }
 
 func NewFakeMigrationService(t testing.TB) *fakeMigrationService {

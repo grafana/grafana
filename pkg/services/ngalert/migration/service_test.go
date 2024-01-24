@@ -1617,7 +1617,6 @@ func compareRules(t *testing.T, x *xorm.Engine, orgId int64, expectedRules []*mo
 		}),
 		cmpopts.IgnoreUnexported(models.AlertRule{}, models.AlertQuery{}),
 		cmpopts.IgnoreFields(models.AlertRule{}, "Updated", "UID", "ID", "Version"),
-		cmpopts.IgnoreMapEntries(func(k string, v string) bool { return k == "rule_uid" }),
 	}
 	if !cmp.Equal(expectedRules, rules, cOpt...) {
 		t.Errorf("Unexpected Rule: %v", cmp.Diff(expectedRules, rules, cOpt...))
@@ -1708,7 +1707,6 @@ func compareState(t *testing.T, x *xorm.Engine, service *migrationService, orgId
 			cmpopts.SortSlices(func(a, b *definitions.DashboardUpgrade) bool { return a.DashboardID < b.DashboardID }),
 			cmpopts.SortSlices(func(a, b *definitions.AlertPair) bool { return a.LegacyAlert.ID < b.LegacyAlert.ID }),
 			cmpopts.SortSlices(func(a, b *definitions.ContactPair) bool { return a.LegacyChannel.ID < b.LegacyChannel.ID }),
-			cmpopts.IgnoreMapEntries(func(k string, v string) bool { return k == "rule_uid" }),
 			cmpopts.IgnoreUnexported(labels.Matcher{}),
 			cmpopts.EquateEmpty(),
 		}
@@ -1880,7 +1878,6 @@ func (h *serviceHelper) genAlertPairs(f *dashboards.Dashboard, d *dashboards.Das
 			},
 			Labels: map[string]string{
 				models.MigratedUseLegacyChannelsLabel: "true",
-				"rule_uid":                            uid,
 			},
 			IsPaused: false,
 		}
