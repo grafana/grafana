@@ -71,7 +71,7 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 
 // GET /api/access-control/users/permissions/search
 func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
-	userIDString := c.Query("userID")
+	userIDString := c.Query("userId")
 	userID, err := strconv.ParseInt(userIDString, 10, 64)
 	if err != nil {
 		response.Error(http.StatusBadRequest, "user ID is invalid", err)
@@ -89,7 +89,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
 	}
 	if (searchOptions.UserLogin != "") && (searchOptions.UserID > 0) {
-		return response.JSON(http.StatusBadRequest, "'userID' and 'userLogin' are mutually exclusive")
+		return response.JSON(http.StatusBadRequest, "'userId' and 'userLogin' are mutually exclusive")
 	}
 	if searchOptions.UserID <= 0 && searchOptions.UserLogin == "" &&
 		searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
