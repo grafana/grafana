@@ -2967,13 +2967,8 @@ __metadata:
     style-loader: "npm:3.3.4"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
-<<<<<<< HEAD
     typescript: "npm:5.3.3"
-    webpack: "npm:5.89.0"
-=======
-    typescript: "npm:5.2.2"
     webpack: "npm:5.90.0"
->>>>>>> main
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
