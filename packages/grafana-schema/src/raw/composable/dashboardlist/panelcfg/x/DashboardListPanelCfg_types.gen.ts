@@ -14,6 +14,8 @@ export const pluginVersion = "10.4.0-pre";
 export interface Options {
   /**
    * folderId is deprecated, and migrated to folderUid on panel init
+   * 
+   * @deprecated
    */
   folderId?: number;
   folderUID?: string;
