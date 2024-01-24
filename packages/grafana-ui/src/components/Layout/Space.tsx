@@ -15,7 +15,7 @@ export interface SpaceProps {
    */
   h?: ResponsiveProp<ThemeSpacingTokens>;
   /**
-   * The layout of the space. If set `inline`, the space will behave like an inline-block element,
+   * The layout of the space. If set to `inline`, the component will behave like an inline-block element,
    * otherwise it will behave like a block element.
    */
   layout?: 'block' | 'inline';

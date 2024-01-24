@@ -1,6 +1,7 @@
 import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
+import { Box } from './Box/Box';
 import { Space } from './Space';
 import mdx from './Space.mdx';
 
@@ -19,10 +20,16 @@ export default meta;
 export const Horizontal: StoryFn<typeof Space> = (args) => {
   return (
     <div style={{ display: 'flex' }}>
-      <div>Item without space</div>
-      <div>Item with right space</div>
+      <Box borderStyle={'solid'} padding={1}>
+        Box without space
+      </Box>
+      <Box borderStyle={'solid'} padding={1}>
+        Box with space on the right
+      </Box>
       <Space {...args} />
-      <div>Item without space</div>
+      <Box borderStyle={'solid'} padding={1}>
+        Box without space
+      </Box>
     </div>
   );
 };
@@ -36,10 +43,16 @@ Horizontal.args = {
 export const Vertical: StoryFn<typeof Space> = (args) => {
   return (
     <div>
-      <div>Item without space</div>
-      <div>Item with bottom space</div>
+      <Box borderStyle={'solid'} padding={1}>
+        Box without space
+      </Box>
+      <Box borderStyle={'solid'} padding={1}>
+        Box with bottom space
+      </Box>
       <Space {...args} />
-      <div>Item without space</div>
+      <Box borderStyle={'solid'} padding={1}>
+        Box without space
+      </Box>
     </div>
   );
 };
