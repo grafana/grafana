@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -240,8 +241,8 @@ func TestContactPointService(t *testing.T) {
 		_, err = sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		fake := sut.configStore.store.(*fakeAMConfigStore)
-		intercepted := fake.lastSaveCommand
+		fake := sut.configStore.store.(*fakes.FakeAlertmanagerConfigStore)
+		intercepted := fake.LastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
 	})
 }
@@ -344,8 +345,8 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 	require.NoError(t, err)
 
 	return &ContactPointService{
-		configStore:       &alertmanagerConfigStoreImpl{store: newFakeAMConfigStore(string(raw))},
-		provenanceStore:   NewFakeProvisioningStore(),
+		configStore:       &alertmanagerConfigStoreImpl{store: fakes.NewFakeAlertmanagerConfigStore(string(raw))},
+		provenanceStore:   fakes.NewFakeProvisioningStore(),
 		xact:              newNopTransactionManager(),
 		encryptionService: secretService,
 		log:               log.NewNopLogger(),

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -153,8 +154,8 @@ func TestNotificationPolicyService(t *testing.T) {
 		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		fake := sut.GetAMConfigStore().(*fakeAMConfigStore)
-		intercepted := fake.lastSaveCommand
+		fake := sut.GetAMConfigStore().(*fakes.FakeAlertmanagerConfigStore)
+		intercepted := fake.LastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
 	})
 
@@ -216,8 +217,8 @@ func TestNotificationPolicyService(t *testing.T) {
 
 func createNotificationPolicyServiceSut() *NotificationPolicyService {
 	return &NotificationPolicyService{
-		configStore:     &alertmanagerConfigStoreImpl{store: newFakeAMConfigStore(defaultAlertmanagerConfigJSON)},
-		provenanceStore: NewFakeProvisioningStore(),
+		configStore:     &alertmanagerConfigStoreImpl{store: fakes.NewFakeAlertmanagerConfigStore(defaultAlertmanagerConfigJSON)},
+		provenanceStore: fakes.NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
 		settings: setting.UnifiedAlertingSettings{
