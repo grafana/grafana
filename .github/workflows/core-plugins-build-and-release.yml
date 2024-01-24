@@ -193,10 +193,10 @@ jobs:
         run: |
           echo "Publish release to Google Cloud Storage:"
           touch ci/packages/windows ci/packages/darwin ci/packages/linux ci/packages/any
-          gsutil -m cp -r ci/packages/*windows* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/windows
-          gsutil -m cp -r ci/packages/*linux* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux 
-          gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin
-          gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any
+          echo gsutil -m cp -r ci/packages/*windows* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/windows
+          echo gsutil -m cp -r ci/packages/*linux* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux 
+          echo gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin
+          echo gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any
       - name: Publish new plugin version on grafana.com
         # TODO: This assumes that there are packages for all platforms
         # which is not true for frontend only plugins
@@ -207,7 +207,7 @@ jobs:
         run: |
           echo "Publish new plugin version on grafana.com:"
           echo "Plugin version: ${VERSION}"
-          result=`curl -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json" ${{ env.GCOM_API}}/api/plugins -d "{
+          result=`echo -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json" ${{ env.GCOM_API}}/api/plugins -d "{
             \"url\": \"https://github.com/grafana/grafana/tree/main/${{ steps.get_dir.outputs.dir }}\",
             \"download\": {
               \"linux-amd64\": {
