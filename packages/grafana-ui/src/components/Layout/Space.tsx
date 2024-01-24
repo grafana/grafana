@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+
+import { useStyles2 } from '../../themes';
 
 export interface SpaceProps {
   v?: number;
