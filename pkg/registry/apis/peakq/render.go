@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 )
 
@@ -36,28 +35,35 @@ func (r *renderREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	obj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	template, ok := obj.(*peakq.QueryTemplate)
-	if !ok {
-		return nil, fmt.Errorf("expected query template")
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		var template *peakq.QueryTemplate
+		if req.Method == http.MethodGet {
+			obj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			var ok bool
+			template, ok = obj.(*peakq.QueryTemplate)
+			if !ok {
+				responder.Error(fmt.Errorf("expected query template"))
+				return
+			}
+		}
+
+		if req.Method == http.MethodPost {
+			// Somehow my template?
+			responder.Error(fmt.Errorf("no post yet"))
+			return
+		}
+
+		rT, err := Render(template.Spec, nil)
+		if err != nil {
+			responder.Error(fmt.Errorf("failed to render: %w", err))
+		}
+
 		out := &peakq.RenderedQuery{
-			Targets: []peakq.Target{
-				{
-					Properties: common.Unstructured{
-						Object: map[string]any{
-							"hello":  "world",
-							"TODO":   "read the value and render it",
-							"RENDER": template.Name,
-						},
-					},
-				},
-			},
+			Targets: rT,
 		}
 		responder.Object(http.StatusOK, out)
 	}), nil
@@ -65,6 +71,7 @@ func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Obje
 
 func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) ([]peakq.Target, error) {
 	// Note: The following is super stupid, will only work with one var, no sanity checking etc
+	// selectedValues is for GET
 	targets := qt.DeepCopy().Targets
 	for _, qVar := range qt.Variables {
 		var offSet int64

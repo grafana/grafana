@@ -1,6 +1,8 @@
 package peakq
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -79,4 +81,6 @@ func TestRender(t *testing.T) {
 	rT, err := Render(basicTemplateWithSelectedValue, nil)
 	require.NoError(t, err)
 	require.Equal(t, "up + up + 42", rT[0].Properties.Object["expr"])
+	b, _ := json.MarshalIndent(basicTemplateRenderedTargets, "", " ")
+	fmt.Println(string(b))
 }
