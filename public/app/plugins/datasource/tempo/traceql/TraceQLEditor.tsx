@@ -11,7 +11,7 @@ import { dispatch } from '../_importedDependencies/store';
 import { TempoDatasource } from '../datasource';
 
 import { CompletionProvider, CompletionType } from './autocomplete';
-import { getErrorNodes, setErrorMarkers } from './errorHighlighting';
+import { getErrorNodes, setMarkers } from './highlighting';
 import { languageDefinition } from './traceql';
 
 interface Props {
@@ -71,7 +71,7 @@ export function TraceQLEditor(props: Props) {
         const model = editor.getModel();
         if (model) {
           const errorNodes = getErrorNodes(model.getValue());
-          setErrorMarkers(monaco, model, errorNodes);
+          setMarkers(monaco, model, errorNodes);
         }
 
         // Register callback for query changes
@@ -90,7 +90,7 @@ export function TraceQLEditor(props: Props) {
 
           // Immediately updates the squiggles, in case the user fixed an error,
           // excluding the error around the cursor position
-          setErrorMarkers(
+          setMarkers(
             monaco,
             model,
             errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
@@ -98,7 +98,7 @@ export function TraceQLEditor(props: Props) {
 
           // Later on, show all errors
           errorTimeoutId.current = window.setTimeout(() => {
-            setErrorMarkers(monaco, model, errorNodes);
+            setMarkers(monaco, model, errorNodes);
           }, 500);
         });
       }}
