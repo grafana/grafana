@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
 
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -23,6 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -56,7 +58,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	r prometheus.Registerer,
 ) folder.Service {
-	store := ProvideStore(db, cfg, features)
+	store := ProvideStore(db, cfg)
 	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
@@ -70,11 +72,53 @@ func ProvideService(
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(r),
 	}
+	srv.DBMigration(db)
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 	return srv
+}
+
+func (s *Service) DBMigration(db db.DB) {
+	s.log.Debug("syncing dashboard and folder tables started")
+
+	ctx := context.Background()
+	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		if db.GetDialect().DriverName() == migrator.SQLite {
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
+				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
+			`)
+		} else if db.GetDialect().DriverName() == migrator.Postgres {
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
+				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
+			`)
+		} else {
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
+				ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
+			`)
+		}
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(`
+			DELETE FROM folder WHERE NOT EXISTS
+				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
+		`)
+		return err
+	})
+	if err != nil {
+		s.log.Error("DB migration on folder service start failed.", "err", err)
+	}
+
+	s.log.Debug("syncing dashboard and folder tables finished")
 }
 
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
@@ -152,6 +196,14 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	defer func(t time.Time) {
+		parent := q.UID
+		if q.UID != folder.SharedWithMeFolderUID {
+			parent = "folder"
+		}
+		s.metrics.foldersGetChildrenRequestsDuration.WithLabelValues(parent).Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -457,7 +509,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// well, but for now we take the UID from the newly created folder.
 			UID:         dash.UID,
 			OrgID:       cmd.OrgID,
-			Title:       cmd.Title,
+			Title:       dashFolder.Title,
 			Description: cmd.Description,
 			ParentUID:   cmd.ParentUID,
 		}
@@ -498,7 +550,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		if foldr, err = s.store.Update(ctx, folder.UpdateFolderCommand{
 			UID:            cmd.UID,
 			OrgID:          cmd.OrgID,
-			NewTitle:       cmd.NewTitle,
+			NewTitle:       &dashFolder.Title,
 			NewDescription: cmd.NewDescription,
 			SignedInUser:   user,
 		}); err != nil {
