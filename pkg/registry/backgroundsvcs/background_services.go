@@ -59,7 +59,7 @@ func ProvideBackgroundServiceRegistry(
 	keyRetriever *dynamic.KeyRetriever, dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	grafanaAPIServer grafanaapiserver.Service,
 	anon *anonimpl.AnonDeviceService,
-	ssoSettings *ssosettingsimpl.SSOSettingsService,
+	ssoSettings *ssosettingsimpl.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
