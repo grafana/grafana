@@ -1322,14 +1322,10 @@ func (cfg *Cfg) handleAWSConfig() {
 			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
 		}
 	}
-	// Also set environment variables that can be used by core plugins
 	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
-	err := os.Setenv(awsds.GrafanaListMetricsPageLimit, strconv.Itoa(cfg.AWSListMetricsPageLimit))
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaListMetricsPageLimit), err)
-	}
 
-	err = os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
+	// Also set environment variables that can be used by core plugins
+	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AssumeRoleEnabledEnvVarKeyName), err)
 	}
@@ -1343,6 +1339,11 @@ func (cfg *Cfg) handleAWSConfig() {
 	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
+	}
+
+	err = os.Setenv(awsds.GrafanaListMetricsPageLimit, strconv.Itoa(cfg.AWSListMetricsPageLimit))
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaListMetricsPageLimit), err)
 	}
 
 	cfg.AWSForwardSettingsPlugins = util.SplitString(awsPluginSec.Key("forward_settings_to_plugins").String())

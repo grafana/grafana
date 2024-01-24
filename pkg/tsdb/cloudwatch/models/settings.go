@@ -46,7 +46,7 @@ func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstan
 
 	instance.AccessKey = config.DecryptedSecureJSONData["accessKey"]
 	instance.SecretKey = config.DecryptedSecureJSONData["secretKey"]
-	instance.GrafanaSettings = awsds.ReadSettings(ctx)
+	instance.GrafanaSettings = awsds.ReadAuthSettings(ctx)
 
 	return instance, nil
 }
