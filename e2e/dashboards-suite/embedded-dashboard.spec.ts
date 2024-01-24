@@ -19,6 +19,6 @@ describe('Embedded dashboard', function () {
     // Verify no url sync
     e2e.components.TimePicker.openButton().click();
     cy.get('label:contains("Last 1 hour")').click();
-    cy.url().should('eq', 'http://localhost:3001/dashboards/embedding-test');
+    cy.url().should('eq', fromBaseUrl('/dashboards/embedding-test'));
   });
 });
