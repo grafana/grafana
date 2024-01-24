@@ -25,7 +25,7 @@ import (
 const (
 	cachePrefix = "id-token"
 	tokenTTL    = 1 * time.Hour
-	cacheTTL    = 58 * time.Minute
+	cacheLeway  = 30 * time.Second
 )
 
 var _ auth.IDService = (*Service)(nil)
@@ -101,7 +101,22 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			return "", err
 		}
 
-		if err := s.cache.Set(ctx, cacheKey, []byte(token), cacheTTL); err != nil {
+		parsed, err := jwt.ParseSigned(token)
+		if err != nil {
+			s.metrics.failedTokenSigningCounter.Inc()
+			return "", err
+		}
+
+		extracted := auth.IDClaims{}
+		// We don't need to verify the signature here, we are only intrested in checking
+		// when the token expires.
+		if err := parsed.UnsafeClaimsWithoutVerification(&extracted); err != nil {
+			s.metrics.failedTokenSigningCounter.Inc()
+			return "", err
+		}
+
+		expires := time.Until(extracted.Expiry.Time())
+		if err := s.cache.Set(ctx, cacheKey, []byte(token), expires-cacheLeway); err != nil {
 			s.logger.FromContext(ctx).Error("Failed to add id token to cache", "error", err)
 		}
 
