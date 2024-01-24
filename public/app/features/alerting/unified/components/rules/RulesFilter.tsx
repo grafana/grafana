@@ -175,7 +175,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
             {/* DashboardPicker doesn't do that itself when value is undefined */}
             <DashboardPicker
               inputId="filters-dashboard-picker"
-              key={filterState.dashboardUid ? 'dashboard-not-defined' : 'dashboard-defined'}
+              key={filterState.dashboardUid ? 'dashboard-defined' : 'dashboard-not-defined'}
               value={filterState.dashboardUid}
               onChange={(value) => handleDashboardChange(value?.uid)}
               isClearable

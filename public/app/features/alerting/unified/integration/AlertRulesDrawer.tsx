@@ -49,7 +49,7 @@ function DrawerSubtitle({ dashboardUid }: { dashboardUid: string }) {
     <Stack gap={2}>
       <div>{t('dashboard.toolbar.alert-rules.subtitle', 'Alert rules related to this dashboard')}</div>
       <TextLink href={createUrl(`/alerting/list/?${searchParams.toString()}`)}>
-        {t('dashboard.toolbar.alert-rules.redirect-link', 'View in Alerting')}
+        {t('dashboard.toolbar.alert-rules.redirect-link', 'List in Grafana Alerting')}
       </TextLink>
     </Stack>
   );
