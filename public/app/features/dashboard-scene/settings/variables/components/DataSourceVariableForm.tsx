@@ -8,7 +8,7 @@ import { VariableLegend } from './VariableLegend';
 import { VariableSelectField } from './VariableSelectField';
 import { VariableTextField } from './VariableTextField';
 
-interface DataSourceVariableEditorProps {
+interface DataSourceVariableFormProps {
   query: string;
   regex: string;
   multi: boolean;
@@ -36,7 +36,7 @@ export function DataSourceVariableForm({
   onMultiChange,
   onIncludeAllChange,
   onAllValueChange,
-}: DataSourceVariableEditorProps) {
+}: DataSourceVariableFormProps) {
   const typeValue = optionTypes.find((o) => o.value === query) ?? optionTypes[0];
 
   return (

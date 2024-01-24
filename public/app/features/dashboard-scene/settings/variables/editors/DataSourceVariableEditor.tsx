@@ -12,12 +12,9 @@ interface DataSourceVariableEditorProps {
 }
 
 export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVariableEditorProps) {
-  // use DataSourceVariableForm component
   const { pluginId, regex, isMulti, allValue, includeAll } = variable.useState();
 
-  // get all datasource configured in Grafana based on pluginId
-  //
-  const optionTypes = getOptionDataSourceTypes(pluginId);
+  const optionTypes = getOptionDataSourceTypes();
 
   const onChangeType = (option: SelectableValue) => {
     variable.setState({

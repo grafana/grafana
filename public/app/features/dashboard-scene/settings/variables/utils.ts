@@ -1,6 +1,7 @@
 import { chain } from 'lodash';
 
 import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -13,7 +14,6 @@ import {
   MultiValueVariable,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
@@ -144,8 +144,8 @@ export function getDefinition(model: SceneVariable): string {
   return definition;
 }
 
-export function getOptionDataSourceTypes(pluginId: string) {
-  const datasources = getDatasourceSrv().getList({ metrics: true, variables: true });
+export function getOptionDataSourceTypes() {
+  const datasources = getDataSourceSrv().getList({ metrics: true, variables: true });
 
   const optionTypes = chain(datasources)
     .uniqBy('meta.id')
