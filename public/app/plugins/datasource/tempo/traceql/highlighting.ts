@@ -7,12 +7,16 @@ import {
   ComparisonOp,
   FieldExpression,
   FieldOp,
+  Identifier,
   IntrinsicField,
   Or,
+  Parent,
   parser,
   Pipe,
+  Resource,
   ScalarExpression,
   ScalarFilter,
+  Span,
   SpansetFilter,
   SpansetPipelineExpression,
 } from '@grafana/lezer-traceql';
@@ -108,40 +112,89 @@ export const getErrorNodes = (query: string): SyntaxNode[] => {
  * Use red markers (squiggles) to highlight syntax errors in queries.
  *
  */
-export const setErrorMarkers = (
+export const setMarkers = (
   monaco: typeof monacoTypes,
   model: monacoTypes.editor.ITextModel,
   errorNodes: SyntaxNode[]
 ) => {
+  const markers = [
+    ...getErrorMarkers(monaco.MarkerSeverity.Error, model, errorNodes),
+    ...getWarningMarkers(monaco.MarkerSeverity.Warning, model),
+  ];
   monaco.editor.setModelMarkers(
     model,
     'owner', // default value
-    errorNodes.map((errorNode) => {
-      let startLine = 0;
-      let endLine = 0;
-      let start = errorNode.from;
-      let end = errorNode.to;
-
-      while (start > 0) {
-        startLine++;
-        start -= model.getLineLength(startLine) + 1; // new lines don't count for getLineLength() but they still count as a character for the parser
-      }
-      while (end > 0) {
-        endLine++;
-        end -= model.getLineLength(endLine) + 1;
-      }
-
-      return {
-        message: computeErrorMessage(errorNode),
-        severity: monaco.MarkerSeverity.Error,
-
-        startLineNumber: startLine,
-        endLineNumber: endLine,
-
-        // `+ 2` because of the above computations
-        startColumn: start + model.getLineLength(startLine) + 2,
-        endColumn: end + model.getLineLength(endLine) + 2,
-      };
-    })
+    markers
   );
+};
+
+export const getErrorMarkers = (severity: number, model: monacoTypes.editor.ITextModel, errorNodes: SyntaxNode[]) => {
+  return errorNodes.map((errorNode) => {
+    const message = computeErrorMessage(errorNode);
+    return getMarker(severity, message, model, errorNode.from, errorNode.to);
+  });
+};
+
+export const getWarningMarkers = (severity: number, model: monacoTypes.editor.ITextModel) => {
+  let markers = [];
+
+  // Check if there are issues that should result in a warning marker
+  const text = model.getValue();
+  const tree = parser.parse(text);
+  const indexOfDot = text.indexOf('.');
+  if (indexOfDot > -1) {
+    const cur = tree.cursorAt(0);
+    do {
+      const { node } = cur;
+      if (node.type.id === Identifier) {
+        // Make sure prevSibling is using the proper scope
+        if (
+          node.prevSibling?.type.id !== Parent &&
+          node.prevSibling?.type.id !== Resource &&
+          node.prevSibling?.type.id !== Span
+        ) {
+          const from = node.prevSibling ? node.prevSibling.from : node.from - 1;
+          const to = node.prevSibling ? node.prevSibling.to : node.from - 1;
+          const message = 'Add resource or span scope to attribute to improve query performance.';
+          markers.push(getMarker(severity, message, model, from, to));
+        }
+      }
+    } while (cur.next());
+  }
+
+  return markers;
+};
+
+export const getMarker = (
+  severity: number,
+  message: string,
+  model: monacoTypes.editor.ITextModel,
+  from: number,
+  to: number
+) => {
+  let startLine = 0;
+  let endLine = 0;
+  let start = from;
+  let end = to;
+
+  while (start > 0) {
+    startLine++;
+    start -= model.getLineLength(startLine) + 1; // new lines don't count for getLineLength() but they still count as a character for the parser
+  }
+  while (end > 0) {
+    endLine++;
+    end -= model.getLineLength(endLine) + 1;
+  }
+
+  return {
+    message,
+    severity,
+
+    startLineNumber: startLine,
+    endLineNumber: endLine,
+
+    // `+ 2` because of the above computations
+    startColumn: start + model.getLineLength(startLine) + 2,
+    endColumn: end + model.getLineLength(endLine) + 2,
+  };
 };
