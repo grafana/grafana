@@ -20,7 +20,7 @@ type fakePluginContextProvider struct {
 
 var _ pluginContextProvider = &fakePluginContextProvider{}
 
-func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error) {
+func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user identity.Requester, orgID int64, service string) (backend.PluginContext, error) {
 	f.recordings = append(f.recordings, struct {
 		method string
 		params []any
@@ -42,10 +42,11 @@ func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user
 		User:                       u,
 		AppInstanceSettings:        f.result[pluginID],
 		DataSourceInstanceSettings: nil,
+		FromService:                service,
 	}, nil
 }
 
-func (f *fakePluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
+func (f *fakePluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource, service string) (backend.PluginContext, error) {
 	f.recordings = append(f.recordings, struct {
 		method string
 		params []any
@@ -59,7 +60,7 @@ func (f *fakePluginContextProvider) GetWithDataSource(ctx context.Context, plugi
 	if user != nil {
 		orgId = user.GetOrgID()
 	}
-	r, err := f.Get(ctx, pluginID, user, orgId)
+	r, err := f.Get(ctx, pluginID, user, orgId, service)
 	if ds != nil {
 		r.DataSourceInstanceSettings = &backend.DataSourceInstanceSettings{
 			ID:   ds.ID,

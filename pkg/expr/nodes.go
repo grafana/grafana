@@ -223,7 +223,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 			defer span.End()
 			firstNode := nodeGroup[0]
-			pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
+			pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource, "expr")
 			if err != nil {
 				for _, dn := range nodeGroup {
 					vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
@@ -309,7 +309,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 	defer span.End()
 
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
+	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource, "expr")
 	if err != nil {
 		return mathexp.Results{}, err
 	}

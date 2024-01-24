@@ -68,8 +68,8 @@ type Service struct {
 }
 
 type pluginContextProvider interface {
-	Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error)
-	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
+	Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64, service string) (backend.PluginContext, error)
+	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource, service string) (backend.PluginContext, error)
 }
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,

@@ -62,7 +62,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	timeRange := m.TimeRange.AbsoluteTime(now)
 
 	// get the plugin configuration that will be used by client (auth, host, etc)
-	pCtx, err := s.pCtxProvider.Get(ctx, mlPluginID, m.request.User, m.request.OrgId)
+	pCtx, err := s.pCtxProvider.Get(ctx, mlPluginID, m.request.User, m.request.OrgId, "expr")
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			return result, errMLPluginDoesNotExist

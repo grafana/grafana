@@ -60,7 +60,7 @@ type Provider struct {
 // This is intended to be used for app plugin requests.
 // PluginContext.AppInstanceSettings will be resolved and appended to the returned context.
 // Note: identity.Requester can be nil.
-func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error) {
+func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64, service string) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
@@ -69,6 +69,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 	pCtx := backend.PluginContext{
 		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
+		FromService:   service,
 	}
 	if user != nil && !user.IsNil() {
 		pCtx.OrgID = user.GetOrgID()
@@ -99,7 +100,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 // This is intended to be used for datasource plugin requests.
 // PluginContext.DataSourceInstanceSettings will be resolved and appended to the returned context.
 // Note: identity.Requester can be nil.
-func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
+func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource, service string) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
@@ -108,6 +109,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	pCtx := backend.PluginContext{
 		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
+		FromService:   service,
 	}
 	if user != nil && !user.IsNil() {
 		pCtx.OrgID = user.GetOrgID()

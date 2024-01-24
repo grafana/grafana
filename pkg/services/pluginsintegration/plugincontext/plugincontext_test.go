@@ -56,10 +56,11 @@ func TestGet(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Run("Get", func(t *testing.T) {
-				pCtx, err := pcp.Get(context.Background(), tc.input, identity, identity.OrgID)
+				pCtx, err := pcp.Get(context.Background(), tc.input, identity, identity.OrgID, "test")
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
 				require.NotNil(t, pCtx.GrafanaConfig)
+				require.Equal(t, "test", pCtx.FromService)
 			})
 
 			t.Run("GetWithDataSource", func(t *testing.T) {
@@ -69,10 +70,11 @@ func TestGet(t *testing.T) {
 					Name:     "test",
 					Type:     pluginID,
 					JsonData: simplejson.New(),
-				})
+				}, "test")
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
 				require.NotNil(t, pCtx.GrafanaConfig)
+				require.Equal(t, "test", pCtx.FromService)
 			})
 		})
 	}
