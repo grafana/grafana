@@ -434,46 +434,20 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 	})
 }
 
-// GetUserVisibleNamespaces returns the folders that are visible to the user and have at least one alert in it
+// GetUserVisibleNamespaces returns the folders that are visible to the user
 func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
-	namespaceMap := make(map[string]*folder.Folder)
-
-	searchQuery := dashboards.FindPersistedDashboardsQuery{
-		OrgId:        orgID,
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+		OrgID:        orgID,
+		WithFullpath: true,
 		SignedInUser: user,
-		Type:         searchstore.TypeAlertFolder,
-		Limit:        -1,
-		Permission:   dashboardaccess.PERMISSION_VIEW,
-		Sort:         model.SortOption{},
-		Filters: []any{
-			searchstore.FolderWithAlertsFilter{},
-		},
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	var page int64 = 1
-	for {
-		query := searchQuery
-		query.Page = page
-		proj, err := st.DashboardService.FindDashboards(ctx, &query)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(proj) == 0 {
-			break
-		}
-
-		for _, hit := range proj {
-			if !hit.IsFolder {
-				continue
-			}
-			namespaceMap[hit.UID] = &folder.Folder{
-				UID:       hit.UID,
-				Title:     hit.Title,
-				ParentUID: hit.FolderUID,
-			}
-		}
-		page += 1
+	namespaceMap := make(map[string]*folder.Folder)
+	for _, f := range folders {
+		namespaceMap[f.UID] = f
 	}
 	return namespaceMap, nil
 }
