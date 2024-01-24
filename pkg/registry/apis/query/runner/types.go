@@ -25,7 +25,7 @@ type QueryRunner interface {
 }
 
 type DataSourceRegistry interface {
-	// Get the group and prefered version for a plugin
+	// Get the group and preferred version for a plugin
 	GetDatasourceAPI(pluginId string) (schema.GroupVersion, error)
 
 	// Get the list of available datasource plugins

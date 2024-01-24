@@ -16,8 +16,8 @@ type DataSource struct {
 	// The display name
 	Title string `json:"title"`
 
-	// The plugin type ID
-	PluginID string `json:"string"`
+	// API Group
+	Group string `json:"group"`
 
 	// Health check (run periodically after requests?)
 	Health *HealthCheck `json:"health,omitempty"`
@@ -55,11 +55,17 @@ type DataSourcePlugin struct {
 	// Describe the plugin
 	Description string `json:"description"`
 
-	// The apiserver group+version
+	// The plugin type ID
+	PluginID string `json:"string"`
+
+	// The group + preferred version
 	GroupVersion string `json:"groupVersion"`
 
+	// Possible alternative plugin IDs
+	AliasIDs []string `json:"aliasIDs,omitempty"`
+
 	// Supported operations of this plugin type
-	Capabilities []string `json:"capabilities"`
+	Capabilities []string `json:"capabilities,omitempty"`
 
 	// SVG icon for this plugin
 	IconURL string `json:"icon"`
