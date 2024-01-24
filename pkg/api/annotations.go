@@ -69,7 +69,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	dashboardCache := make(map[int64]*string)
 	for _, item := range items {
 		if item.Email != "" {
-			item.AvatarURL = dtos.GetGravatarUrl(item.Email)
+			item.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, item.Email)
 		}
 
 		if item.DashboardID != 0 {
@@ -485,7 +485,7 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 	}
 
 	if annotation.Email != "" {
-		annotation.AvatarURL = dtos.GetGravatarUrl(annotation.Email)
+		annotation.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, annotation.Email)
 	}
 
 	return response.JSON(200, annotation)
@@ -600,7 +600,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 // where <type> is the type of annotation with id <id>.
 // If annotationPermissionUpdate feature toggle is enabled, dashboard annotation scope will be resolved to the corresponding
 // dashboard and folder scopes (eg, "dashboards:uid:<annotation_dashboard_uid>", "folders:uid:<parent_folder_uid>" etc).
-func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features *featuremgmt.FeatureManager, dashSvc dashboards.DashboardService, folderSvc folder.Service) (string, accesscontrol.ScopeAttributeResolver) {
+func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, folderSvc folder.Service) (string, accesscontrol.ScopeAttributeResolver) {
 	prefix := accesscontrol.ScopeAnnotationsProvider.GetResourceScope("")
 	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		scopeParts := strings.Split(initialScope, ":")

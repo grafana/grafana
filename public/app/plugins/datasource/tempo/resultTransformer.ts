@@ -23,9 +23,8 @@ import {
   Field,
   DataLinkConfigOrigin,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
@@ -512,40 +511,38 @@ export function transformTrace(
   }
 
   // Get profiles links
-  if (config.featureToggles.traceToProfiles) {
-    const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
-    const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
-    let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-    if (traceToProfilesOptions?.datasourceUid) {
-      profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
-    }
+  const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
+  const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
+  let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+  if (traceToProfilesOptions?.datasourceUid) {
+    profilesDataSourceSettings = getDataSourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+  }
 
-    if (traceToProfilesOptions && profilesDataSourceSettings) {
-      const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
-      const dataLink: DataLink = {
-        title: RelatedProfilesTitle,
-        url: '',
-        internal: {
-          datasourceUid: profilesDataSourceSettings.uid,
-          datasourceName: profilesDataSourceSettings.name,
-          query: {
-            labelSelector: customQuery ? customQuery : '{${__tags}}',
-            groupBy: [],
-            profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
-            queryType: 'profile',
-            spanSelector: ['${__span.tags["pyroscope.profile.id"]}'],
-            refId: 'profile',
-          },
+  if (traceToProfilesOptions && profilesDataSourceSettings) {
+    const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
+    const dataLink: DataLink = {
+      title: RelatedProfilesTitle,
+      url: '',
+      internal: {
+        datasourceUid: profilesDataSourceSettings.uid,
+        datasourceName: profilesDataSourceSettings.name,
+        query: {
+          labelSelector: customQuery ? customQuery : '{${__tags}}',
+          groupBy: [],
+          profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
+          queryType: 'profile',
+          spanSelector: ['${__span.tags["pyroscope.profile.id"]}'],
+          refId: 'profile',
         },
-        origin: DataLinkConfigOrigin.Datasource,
-      };
+      },
+      origin: DataLinkConfigOrigin.Datasource,
+    };
 
-      frame.fields.forEach((field: Field) => {
-        if (field.name === 'tags') {
-          field.config.links = [dataLink];
-        }
-      });
-    }
+    frame.fields.forEach((field: Field) => {
+      if (field.name === 'tags') {
+        field.config.links = [dataLink];
+      }
+    });
   }
 
   let data = [...response.data];
@@ -637,6 +634,11 @@ export function formatTraceQLResponse(
   return createTableFrameFromTraceQlQuery(data, instanceSettings);
 }
 
+/**
+ * Create data frame while adding spans for each trace into a subtable.
+ * @param data
+ * @param instanceSettings
+ */
 export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings
@@ -700,6 +702,7 @@ export function createTableFrameFromTraceQlQuery(
     ],
     meta: {
       preferredVisualisationType: 'table',
+      uniqueRowIdFields: [0],
     },
   });
 
@@ -734,11 +737,36 @@ export function createTableFrameFromTraceQlQuery(
 }
 
 export function createTableFrameFromTraceQlQueryAsSpans(
-  data: TraceSearchMetadata[],
+  data: TraceSearchMetadata[] | undefined,
   instanceSettings: DataSourceInstanceSettings
 ): DataFrame[] {
   const spanDynamicAttrs: Record<string, FieldDTO> = {};
   let hasNameAttribute = false;
+
+  data?.forEach((trace) =>
+    getSpanSets(trace).forEach((ss) => {
+      ss.attributes?.forEach((attr) => {
+        spanDynamicAttrs[attr.key] = {
+          name: attr.key,
+          type: FieldType.string,
+          config: { displayNameFromDS: attr.key },
+        };
+      });
+      ss.spans.forEach((span) => {
+        if (span.name) {
+          hasNameAttribute = true;
+        }
+        span.attributes?.forEach((attr) => {
+          spanDynamicAttrs[attr.key] = {
+            name: attr.key,
+            type: FieldType.string,
+            config: { displayNameFromDS: attr.key },
+          };
+        });
+      });
+    })
+  );
+
   const frame = new MutableDataFrame({
     name: 'Spans',
     refId: 'traces',
@@ -830,40 +858,9 @@ export function createTableFrameFromTraceQlQueryAsSpans(
     },
   });
 
-  // According to the parameter type, `data` should never be undefined of null, but the old code had
-  // entries such as `!data` or `data?`, so we keep this check just for safety
-  if (data === undefined || data === null) {
-    console.error(`Unexpected ${data} value for \`data\``);
+  if (!data || !data.length) {
     return [frame];
   }
-
-  if (!data.length) {
-    return [frame];
-  }
-
-  data.forEach((trace) =>
-    getSpanSets(trace).forEach((ss) => {
-      ss.attributes?.forEach((attr) => {
-        spanDynamicAttrs[attr.key] = {
-          name: attr.key,
-          type: FieldType.string,
-          config: { displayNameFromDS: attr.key },
-        };
-      });
-      ss.spans.forEach((span) => {
-        if (span.name) {
-          hasNameAttribute = true;
-        }
-        span.attributes?.forEach((attr) => {
-          spanDynamicAttrs[attr.key] = {
-            name: attr.key,
-            type: FieldType.string,
-            config: { displayNameFromDS: attr.key },
-          };
-        });
-      });
-    })
-  );
 
   data
     // Show the most recent traces
@@ -1002,6 +999,7 @@ const traceSubFrame = (
     },
   });
 
+  // TODO: this should be done in `applyFieldOverrides` instead recursively for the nested `DataFrames`
   const theme = createTheme();
   for (const field of subFrame.fields) {
     field.display = getDisplayProcessor({ field, theme });

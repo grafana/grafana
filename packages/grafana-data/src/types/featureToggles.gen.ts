@@ -42,6 +42,7 @@ export interface FeatureToggles {
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
   dockedMegaMenu?: boolean;
+  returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
@@ -78,7 +79,6 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
-  useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
@@ -102,14 +102,11 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
-  grafanaAPIServer?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
-  traceToProfiles?: boolean;
-  tracesEmbeddedFlameGraph?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -144,7 +141,6 @@ export interface FeatureToggles {
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
-  costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -171,4 +167,14 @@ export interface FeatureToggles {
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
+  kubernetesFeatureToggles?: boolean;
+  alertingPreviewUpgrade?: boolean;
+  enablePluginsTracingByDefault?: boolean;
+  cloudRBACRoles?: boolean;
+  alertingQueryOptimization?: boolean;
+  newFolderPicker?: boolean;
+  jitterAlertRules?: boolean;
+  jitterAlertRulesWithinGroups?: boolean;
+  onPremToCloudMigrations?: boolean;
+  alertingSaveStatePeriodic?: boolean;
 }

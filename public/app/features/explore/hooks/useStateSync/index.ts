@@ -1,7 +1,7 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv } from '@grafana/data';
+import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv, isTruthy } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -374,21 +374,38 @@ async function getPaneDatasource(
     } catch (_) {}
   }
 
-  // TODO: if queries have multiple datasources we should return mixed datasource
-  // Else we try to find a datasource in the queries, returning the first one that exists
-  const queriesWithDS = queries.filter((q) => q.datasource);
-  for (const query of queriesWithDS) {
-    try {
-      return await getDatasourceSrv().get(query.datasource);
-    } catch (_) {}
-  }
+  // Else we try to find a datasource in the queries
+  const queriesDatasources = [
+    ...new Set(
+      queries
+        .map((q) => q.datasource)
+        .filter(isTruthy)
+        .map((ds) => (typeof ds === 'string' ? ds : ds.uid))
+    ),
+  ];
 
-  // If none of the queries specify a avalid datasource, we use the last used one
-  const lastUsedDSUID = getLastUsedDatasourceUID(orgId);
+  try {
+    if (queriesDatasources.length >= 1) {
+      const datasources = (await Promise.allSettled(queriesDatasources.map((ds) => getDatasourceSrv().get(ds)))).filter(
+        isFulfilled
+      );
 
+      // if queries have multiple (valid) datasources, we return the mixed datasource
+      if (datasources.length > 1) {
+        return await getDatasourceSrv().get(MIXED_DATASOURCE_NAME);
+      }
+
+      // otherwise we return the first datasource.
+      if (datasources.length === 1) {
+        return await getDatasourceSrv().get(queriesDatasources[0]);
+      }
+    }
+  } catch (_) {}
+
+  // If none of the queries specify a valid datasource, we use the last used one
   return (
     getDatasourceSrv()
-      .get(lastUsedDSUID)
+      .get(getLastUsedDatasourceUID(orgId))
       // Or the default one
       .catch(() => getDatasourceSrv().get())
       .catch(() => undefined)

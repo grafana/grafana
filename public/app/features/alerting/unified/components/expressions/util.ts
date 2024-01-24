@@ -1,4 +1,7 @@
 import { DataFrame, Labels, roundDecimals } from '@grafana/data';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+
+import { isCloudRulesSource } from '../../utils/datasource';
 
 /**
  * ⚠️ `frame.fields` could be an empty array ⚠️
@@ -37,10 +40,29 @@ const formatLabels = (labels: Labels): string => {
     .join(', ');
 };
 
+/**
+ * After https://github.com/grafana/grafana/pull/74600,
+ * Grafana folder names will be returned from the API as a combination of the folder name and parent UID in a format of JSON array,
+ * where first element is parent UID and the second element is Title.
+ */
+const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): string => {
+  const namespaceName = namespace.name;
+
+  if (isCloudRulesSource(namespace.rulesSource)) {
+    return namespaceName;
+  }
+
+  try {
+    return JSON.parse(namespaceName).at(-1) ?? namespaceName;
+  } catch {
+    return namespaceName;
+  }
+};
+
 const isEmptySeries = (series: DataFrame[]): boolean => {
   const isEmpty = series.every((serie) => serie.fields.every((field) => field.values.every((value) => value == null)));
 
   return isEmpty;
 };
 
-export { getSeriesName, getSeriesValue, getSeriesLabels, formatLabels, isEmptySeries };
+export { decodeGrafanaNamespace, formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries };

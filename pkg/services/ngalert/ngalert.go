@@ -185,6 +185,9 @@ func (ng *AlertNG) init() error {
 
 		case remoteSecondary:
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
+			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
+
 			// This function will be used by the MOA to create new Alertmanagers.
 			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
@@ -195,7 +198,7 @@ func (ng *AlertNG) init() error {
 					}
 
 					// Create remote Alertmanager.
-					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore)
+					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -263,6 +266,7 @@ func (ng *AlertNG) init() error {
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
 		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		JitterEvaluations:    schedule.JitterStrategyFrom(ng.FeatureToggles),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
@@ -287,12 +291,18 @@ func (ng *AlertNG) init() error {
 		Clock:                          clk,
 		Historian:                      history,
 		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
-		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
+		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
-	stateManager := state.NewManager(cfg)
+	logger := log.New("ngalert.state.manager.persist")
+	statePersister := state.NewSyncStatePersisiter(logger, cfg)
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+		ticker := clock.New().Ticker(ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval)
+		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
+	}
+	stateManager := state.NewManager(cfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -339,6 +349,7 @@ func (ng *AlertNG) init() error {
 		Historian:            history,
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
+		UpgradeService:       ng.upgradeService,
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
@@ -373,7 +384,16 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 
 // shouldRun determines if AlertNG should init or run anything more than just the migration.
 func (ng *AlertNG) shouldRun() bool {
-	return ng.Cfg.UnifiedAlerting.IsEnabled()
+	if ng.Cfg.UnifiedAlerting.IsEnabled() {
+		return true
+	}
+
+	// Feature flag will preview UA alongside legacy, so that UA routes are registered but the scheduler remains disabled.
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
+		return true
+	}
+
+	return false
 }
 
 // Run starts the scheduler and Alertmanager.
@@ -392,7 +412,8 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.AlertsRouter.Run(subCtx)
 	})
 
-	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
+	// We explicitly check that UA is enabled here in case FlagAlertingPreviewUpgrade is enabled but UA is disabled.
+	if ng.Cfg.UnifiedAlerting.ExecuteAlerts && ng.Cfg.UnifiedAlerting.IsEnabled() {
 		// Only Warm() the state manager if we are actually executing alerts.
 		// Doing so when we are not executing alerts is wasteful and could lead
 		// to misleading rule status queries, as the status returned will be
@@ -406,6 +427,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
+		})
+		children.Go(func() error {
+			return ng.stateManager.Run(subCtx)
 		})
 	}
 	return children.Wait()
@@ -529,7 +553,7 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	}
 }
 
-func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore) (*remote.Alertmanager, error) {
+func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
 	externalAMCfg := remote.AlertmanagerConfig{
 		OrgID:             orgID,
 		URL:               amCfg.URL,
@@ -538,5 +562,5 @@ func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSetti
 	}
 	// We won't be handling files on disk, we can pass an empty string as workingDirPath.
 	stateStore := notifier.NewFileStore(orgID, kvstore, "")
-	return remote.NewAlertmanager(externalAMCfg, stateStore)
+	return remote.NewAlertmanager(externalAMCfg, stateStore, m)
 }

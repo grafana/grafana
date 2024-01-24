@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type resultHandler interface {
@@ -24,11 +25,11 @@ type defaultResultHandler struct {
 	log      log.Logger
 }
 
-func newResultHandler(renderService rendering.Service, sqlStore AlertStore, notificationService *notifications.NotificationService, decryptFn GetDecryptedValueFn) *defaultResultHandler {
+func newResultHandler(cfg *setting.Cfg, renderService rendering.Service, sqlStore AlertStore, notificationService *notifications.NotificationService, decryptFn GetDecryptedValueFn) *defaultResultHandler {
 	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
 		sqlStore: sqlStore,
-		notifier: newNotificationService(renderService, sqlStore, notificationService, decryptFn),
+		notifier: newNotificationService(cfg, renderService, sqlStore, notificationService, decryptFn),
 	}
 }
 

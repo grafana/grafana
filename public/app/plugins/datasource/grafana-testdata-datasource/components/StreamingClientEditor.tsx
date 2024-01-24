@@ -16,6 +16,7 @@ const types = [
   { value: 'signal', label: 'Signal' },
   { value: 'logs', label: 'Logs' },
   { value: 'fetch', label: 'Fetch' },
+  { value: 'traces', label: 'Traces' },
 ];
 
 export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
@@ -29,29 +30,42 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
     onChange({ target: { name, value: Number(value) } });
   };
 
+  const streamType = query?.stream?.type || 'signal';
+  const fields =
+    streamType === 'signal'
+      ? streamingClientFields
+      : ['logs', 'traces'].includes(streamType)
+        ? [streamingClientFields[0]] // speed
+        : [];
+
   return (
     <InlineFieldRow>
       <InlineField label="Type" labelWidth={14}>
-        <Select width={32} onChange={onSelectChange} defaultValue={types[0]} options={types} />
+        <Select
+          width={32}
+          onChange={onSelectChange}
+          defaultValue={types[0]}
+          options={types}
+          value={query?.stream?.type}
+        />
       </InlineField>
-      {query?.stream?.type === 'signal' &&
-        streamingClientFields.map(({ label, id, min, step, placeholder }) => {
-          return (
-            <InlineField label={label} labelWidth={14} key={id}>
-              <Input
-                width={32}
-                type="number"
-                id={`stream.${id}-${query.refId}`}
-                name={id}
-                min={min}
-                step={step}
-                value={query.stream?.[id]}
-                placeholder={placeholder}
-                onChange={onInputChange}
-              />
-            </InlineField>
-          );
-        })}
+      {fields.map(({ label, id, min, step, placeholder }) => {
+        return (
+          <InlineField label={label} labelWidth={14} key={id}>
+            <Input
+              width={32}
+              type="number"
+              id={`stream.${id}-${query.refId}`}
+              name={id}
+              min={min}
+              step={step}
+              value={query.stream?.[id]}
+              placeholder={placeholder}
+              onChange={onInputChange}
+            />
+          </InlineField>
+        );
+      })}
 
       {query?.stream?.type === 'fetch' && (
         <InlineField label="URL" labelWidth={14} grow>

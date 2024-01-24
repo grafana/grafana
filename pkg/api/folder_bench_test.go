@@ -95,7 +95,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		desc        string
 		url         string
 		expectedLen int
-		features    *featuremgmt.FeatureManager
+		features    featuremgmt.FeatureToggles
 	}{
 		{
 			desc:        "impl=default nested_folders=on get root folders",
@@ -423,7 +423,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 }
 
-func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureManager) *web.Macaron {
+func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureToggles) *web.Macaron {
 	b.Helper()
 
 	m := web.New()
@@ -451,11 +451,12 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	ac := acimpl.ProvideAccessControl(sc.cfg)
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, nil)
 
+	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(

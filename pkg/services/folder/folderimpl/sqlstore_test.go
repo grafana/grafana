@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -29,7 +28,7 @@ func TestIntegrationCreate(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -70,8 +69,7 @@ func TestIntegrationCreate(t *testing.T) {
 
 		assert.Equal(t, folderTitle, f.Title)
 		assert.Equal(t, folderDsc, f.Description)
-		// nolint:staticcheck
-		assert.NotEmpty(t, f.ID)
+		assert.NotEmpty(t, f.UID)
 		assert.Equal(t, uid, f.UID)
 		assert.Empty(t, f.ParentUID)
 		assert.NotEmpty(t, f.URL)
@@ -98,8 +96,7 @@ func TestIntegrationCreate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "parent", parent.Title)
-		// nolint:staticcheck
-		require.NotEmpty(t, parent.ID)
+		require.NotEmpty(t, parent.UID)
 		assert.Equal(t, parentUID, parent.UID)
 		assert.NotEmpty(t, parent.URL)
 
@@ -125,8 +122,7 @@ func TestIntegrationCreate(t *testing.T) {
 
 		assert.Equal(t, folderTitle, f.Title)
 		assert.Equal(t, folderDsc, f.Description)
-		// nolint:staticcheck
-		assert.NotEmpty(t, f.ID)
+		assert.NotEmpty(t, f.UID)
 		assert.Equal(t, uid, f.UID)
 		assert.Equal(t, parentUID, f.ParentUID)
 		assert.NotEmpty(t, f.URL)
@@ -152,7 +148,7 @@ func TestIntegrationDelete(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -199,7 +195,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -374,7 +370,7 @@ func TestIntegrationGet(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -404,8 +400,6 @@ func TestIntegrationGet(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		// nolint:staticcheck
-		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
@@ -422,8 +416,6 @@ func TestIntegrationGet(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		// nolint:staticcheck
-		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
@@ -436,11 +428,10 @@ func TestIntegrationGet(t *testing.T) {
 
 	t.Run("get folder by title should succeed", func(t *testing.T) {
 		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
-			ID: &f.ID, // nolint:staticcheck
+			UID:   &f.UID,
+			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		// nolint:staticcheck
-		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
@@ -458,7 +449,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -526,7 +517,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -706,7 +697,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -739,7 +730,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	foldersNum := 10
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -777,8 +768,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 			})
 			assert.NotEqual(t, -1, folderInResponseIdx)
 			rf := ff[folderInResponseIdx]
-			// nolint:staticcheck
-			assert.Equal(t, f.ID, rf.ID)
+			assert.Equal(t, f.UID, rf.UID)
 			assert.Equal(t, f.OrgID, rf.OrgID)
 			assert.Equal(t, f.Title, rf.Title)
 			assert.Equal(t, f.Description, rf.Description)
@@ -822,8 +812,6 @@ func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 		f, err := store.Create(context.Background(), cmd)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
-		// nolint:staticcheck
-		require.NotEmpty(t, f.ID)
 		require.NotEmpty(t, f.UID)
 
 		parents, err := store.GetParents(context.Background(), folder.GetParentsQuery{

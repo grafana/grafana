@@ -122,14 +122,18 @@ export function Drawer({
                   variant="secondary"
                   onClick={onClose}
                   data-testid={selectors.components.Drawer.General.close}
-                  tooltip={t(`drawer.close`, 'Close Drawer')}
+                  tooltip={t(`grafana-ui.drawer.close`, 'Close')}
                 />
               </div>
               <div className={styles.titleWrapper}>
                 <Text element="h3" {...titleProps}>
                   {title}
                 </Text>
-                {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+                {subtitle && (
+                  <div className={styles.subtitle} data-testid={selectors.components.Drawer.General.subtitle}>
+                    {subtitle}
+                  </div>
+                )}
                 {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>
             </div>

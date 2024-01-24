@@ -26,6 +26,23 @@ func (s SettingsSource) MarshalJSON() ([]byte, error) {
 	}
 }
 
+func (s *SettingsSource) UnmarshalJSON(data []byte) error {
+	var source string
+	if err := json.Unmarshal(data, &source); err != nil {
+		return err
+	}
+
+	switch source {
+	case "database":
+		*s = DB
+	case "system":
+		*s = System
+	default:
+		return fmt.Errorf("unknown source: %s", source)
+	}
+	return nil
+}
+
 type SSOSettings struct {
 	ID        string         `xorm:"id pk" json:"id"`
 	Provider  string         `xorm:"provider" json:"provider"`
