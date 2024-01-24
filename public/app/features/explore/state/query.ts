@@ -760,7 +760,8 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       mergeMap(([data, correlations]) => {
         // For query splitting, otherwise duplicates results
         if (data.state !== LoadingState.Done) {
-          return of(queryResponse);
+          // While loading, return the previous response and override state, otherwise it's set to Done
+          return of({ ...queryResponse, state: LoadingState.Loading });
         }
         return decorateData(
           combinePanelData(queryResponse, data),

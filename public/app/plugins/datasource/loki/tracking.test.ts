@@ -79,8 +79,6 @@ test('Tracks queries', () => {
     legend: undefined,
     line_limit: undefined,
     obfuscated_query: 'count_over_time({Identifier=String}[1m])',
-    parsed_query:
-      'LogQL,Expr,MetricExpr,RangeAggregationExpr,RangeOp,CountOverTime,LogRangeExpr,Selector,Matchers,Matcher,Identifier,Eq,String,Range,Duration',
     query_type: 'metric',
     query_vector_type: undefined,
     resolution: 1,
@@ -107,8 +105,6 @@ test('Tracks predefined operations', () => {
     legend: undefined,
     line_limit: undefined,
     obfuscated_query: 'count_over_time({Identifier=String}[1m])',
-    parsed_query:
-      'LogQL,Expr,MetricExpr,RangeAggregationExpr,RangeOp,CountOverTime,LogRangeExpr,Selector,Matchers,Matcher,Identifier,Eq,String,Range,Duration',
     query_type: 'metric',
     query_vector_type: undefined,
     resolution: 1,
@@ -135,8 +131,6 @@ test('Tracks grouped queries', () => {
     legend: undefined,
     line_limit: undefined,
     obfuscated_query: 'count_over_time({Identifier=String}[1m])',
-    parsed_query:
-      'LogQL,Expr,MetricExpr,RangeAggregationExpr,RangeOp,CountOverTime,LogRangeExpr,Selector,Matchers,Matcher,Identifier,Eq,String,Range,Duration',
     query_type: 'metric',
     query_vector_type: undefined,
     resolution: 1,
@@ -163,7 +157,6 @@ test('Tracks grouped queries', () => {
     legend: undefined,
     line_limit: 10,
     obfuscated_query: '{Identifier=String}',
-    parsed_query: 'LogQL,Expr,LogExpr,Selector,Matchers,Matcher,Identifier,Eq,String',
     query_type: 'logs',
     query_vector_type: undefined,
     resolution: 1,
