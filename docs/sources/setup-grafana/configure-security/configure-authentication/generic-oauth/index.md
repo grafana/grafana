@@ -339,7 +339,7 @@ To set up generic OAuth2 authentication with Descope, follow these steps:
 1. Update the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the **Settings** tab:
 
    {{% admonition type="note" %}}
-    You can get your Client ID (Descope Project ID) under [Project Settings](https://app.descope.com/settings/project). Your Client Secret (Descope Access Key) can be generated under [Access Keys](https://app.descope.com/accesskeys).
+   You can get your Client ID (Descope Project ID) under [Project Settings](https://app.descope.com/settings/project). Your Client Secret (Descope Access Key) can be generated under [Access Keys](https://app.descope.com/accesskeys).
    {{% /admonition %}}
 
    ```bash
