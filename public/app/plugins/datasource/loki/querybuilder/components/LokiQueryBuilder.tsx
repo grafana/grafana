@@ -128,7 +128,6 @@ export const LokiQueryBuilder = React.memo<Props>(
             labelsFilters={query.labels}
             onChange={onChangeLabels}
             labelFilterRequired={labelFilterRequired}
-            // multiValueSeparator="|"
           />
         </EditorRow>
         {showExplain && (
