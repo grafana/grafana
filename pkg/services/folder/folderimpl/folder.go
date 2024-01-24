@@ -418,8 +418,8 @@ func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (
 	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
 }
 
-func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string, folderUID *string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title, folderUID)
+func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string, parentUID *string) (*folder.Folder, error) {
+	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title, parentUID)
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
