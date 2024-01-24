@@ -95,7 +95,7 @@ const instance2SettingsMock = {
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
   get: jest.fn(),
-  getObject: jest.fn(),
+  getObject: jest.fn((_a, b) => b),
   setObject: jest.fn(),
 }));
 
