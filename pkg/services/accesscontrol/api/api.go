@@ -91,7 +91,8 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	if (searchOptions.UserLogin != "") && (searchOptions.UserID > 0) {
 		return response.JSON(http.StatusBadRequest, "'userID' and 'userLogin' are mutually exclusive")
 	}
-	if searchOptions.UserLogin == "" && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
+	if searchOptions.UserID <= 0 && searchOptions.UserLogin == "" &&
+		searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 
