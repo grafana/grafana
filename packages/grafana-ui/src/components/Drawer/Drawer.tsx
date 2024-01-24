@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useClick } from '@floating-ui/react';
+
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -38,7 +38,6 @@ export interface Props {
    * sm = width 25vw & min-width 384px
    * md = width 50vw & min-width 568px
    * lg = width 75vw & min-width 744px
-   * xl = width 85vw & min-width 744px
    **/
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
@@ -66,6 +65,8 @@ export function Drawer({
   const [drawerWidth, onMouseDown] = useResizebleDrawer();
 
   const styles = useStyles2(getStyles);
+  const sizeStyles = useStyles2(getSizeStyles, size, drawerWidth ?? width);
+
   const overlayRef = React.useRef(null);
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
@@ -80,8 +81,7 @@ export function Drawer({
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
 
-  // Apply size styles (unless deprecated width prop is used)
-  const rootClass = cx(styles.drawer, !width && styles.sizes[size], drawerWidth && overrideWidth(drawerWidth));
+  const rootClass = cx(styles.drawer, sizeStyles);
   const content = <div className={styles.content}>{children}</div>;
 
   return (
@@ -89,11 +89,10 @@ export function Drawer({
       open={true}
       onClose={onClose}
       placement="right"
-      // Important to set this to empty string so that the width can be controlled by the css
-      width={width ?? ''}
       getContainer={'.main-view'}
       className={styles.drawerContent}
       rootClassName={rootClass}
+      width={''}
       motion={{
         motionAppear: true,
         motionName: styles.drawerMotion,
@@ -181,14 +180,6 @@ function useResizebleDrawer(): [number | undefined, React.EventHandler<React.Mou
   return [drawerWidth, onMouseDown];
 }
 
-function overrideWidth(width: number) {
-  return css({
-    '.rc-drawer-content-wrapper': {
-      width: `${width}px !important`,
-    },
-  });
-}
-
 function useBodyClassWhileOpen() {
   useEffect(() => {
     if (!document.body) {
@@ -213,51 +204,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: '100%',
       position: 'relative',
     }),
-    resizer: css({
-      width: 8,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      position: 'absolute',
-      cursor: 'col-resize',
-      zIndex: theme.zIndex.modal,
-
-      '&::after': {
-        background: theme.components.panel.borderColor,
-        content: '""',
-        position: 'absolute',
-        left: '50%',
-        top: '50%',
-        transition: '0.2s background ease-in-out',
-        transform: 'translate(-50%, -50%)',
-        borderRadius: theme.shape.radius.default,
-        height: '200px',
-        width: '4px',
-      },
-
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        transition: '0.2s border-color ease-in-out',
-        borderRight: '2px solid transparent',
-        height: '100%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-      },
-
-      '&:hover': {
-        '&::before': {
-          borderColor: theme.colors.primary.border,
-        },
-      },
-    }),
     drawer: css({
       '.main-view &': {
-        top: 81,
+        top: 80,
       },
 
       '.main-view--search-bar-hidden &': {
-        top: 41,
+        top: 40,
       },
 
       '.main-view--chrome-hidden &': {
@@ -266,47 +219,13 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
-
-        [theme.breakpoints.down('sm')]: {
-          width: `calc(100% - ${theme.spacing(2)}) !important`,
-          minWidth: '0 !important',
-        },
       },
     }),
-    sizes: {
-      sm: css({
-        '.rc-drawer-content-wrapper': {
-          label: 'drawer-sm',
-          width: '25vw',
-          minWidth: theme.spacing(48),
-        },
-      }),
-      md: css({
-        '.rc-drawer-content-wrapper': {
-          label: 'drawer-md',
-          width: '50vw',
-          minWidth: theme.spacing(60),
-        },
-      }),
-      lg: css({
-        '.rc-drawer-content-wrapper': {
-          label: 'drawer-lg',
-          width: '85vw',
-          minWidth: theme.spacing(93),
-
-          [theme.breakpoints.down('md')]: {
-            width: `calc(100% - ${theme.spacing(2)}) !important`,
-            minWidth: 0,
-          },
-        },
-      }),
-    },
     drawerContent: css({
       backgroundColor: `${theme.colors.background.primary} !important`,
       display: 'flex',
+      overflow: 'unset',
       flexDirection: 'column',
-      overflow: 'hidden',
-      zIndex: theme.zIndex.dropdown,
     }),
     drawerMotion: css({
       '&-appear': {
@@ -337,11 +256,11 @@ const getStyles = (theme: GrafanaTheme2) => {
         right: 0,
 
         '.main-view &': {
-          top: 81,
+          top: 80,
         },
 
         '.main-view--search-bar-hidden &': {
-          top: 41,
+          top: 40,
         },
 
         '.main-view--chrome-hidden &': {
@@ -392,5 +311,72 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingLeft: theme.spacing(2),
       margin: theme.spacing(1, -1, -3, -3),
     }),
+    resizer: css({
+      width: 8,
+      top: 0,
+      left: -4,
+      bottom: 0,
+      position: 'absolute',
+      cursor: 'col-resize',
+      zIndex: theme.zIndex.modal,
+
+      '&::after': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.2),
+        content: '""',
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        transition: '0.2s background ease-in-out',
+        transform: 'translate(-50%, -50%)',
+        borderRadius: theme.shape.radius.default,
+        height: '200px',
+        width: '4px',
+      },
+
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        transition: '0.2s border-color ease-in-out',
+        borderRight: '2px solid transparent',
+        height: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+      },
+
+      '&:hover': {
+        '&::before': {
+          borderColor: theme.colors.primary.border,
+        },
+
+        '&::after': {
+          background: theme.colors.primary.border,
+        },
+      },
+    }),
   };
 };
+
+const drawerSizes = {
+  sm: { width: '25vw', minWidth: 384 },
+  md: { width: '50vw', minWidth: 568 },
+  lg: { width: '75vw', minWidth: 744 },
+};
+
+function getSizeStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg', overrideWidth: number | string | undefined) {
+  let width = overrideWidth ?? drawerSizes[size].width;
+  let minWidth = drawerSizes[size].minWidth;
+
+  return css({
+    '.rc-drawer-content-wrapper': {
+      label: `drawer-content-wrapper-${size}`,
+      width: width,
+      minWidth: minWidth,
+      overflow: 'unset',
+
+      [theme.breakpoints.down('md')]: {
+        width: `calc(100% - ${theme.spacing(2)}) !important`,
+        minWidth: 0,
+      },
+    },
+  });
+}
