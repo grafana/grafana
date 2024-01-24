@@ -8,7 +8,6 @@
 package v0alpha1
 
 import (
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -105,13 +104,6 @@ func (in *QueryTemplateSpec) DeepCopyInto(out *QueryTemplateSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.RenderedTargets != nil {
-		in, out := &in.RenderedTargets, &out.RenderedTargets
-		*out = make([]Target, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
 	return
 }
 
@@ -153,7 +145,7 @@ func (in *RenderedQuery) DeepCopyInto(out *RenderedQuery) {
 	out.TypeMeta = in.TypeMeta
 	if in.Targets != nil {
 		in, out := &in.Targets, &out.Targets
-		*out = make([]commonv0alpha1.Unstructured, len(*in))
+		*out = make([]Target, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

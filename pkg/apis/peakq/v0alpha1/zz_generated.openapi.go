@@ -254,21 +254,8 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 							},
 						},
 					},
-					"renderedTargets": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target"),
-									},
-								},
-							},
-						},
-					},
 				},
-				Required: []string{"title", "targets", "renderedTargets"},
+				Required: []string{"title", "targets"},
 			},
 		},
 		Dependencies: []string{
@@ -365,7 +352,7 @@ func schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref common.ReferenceCallback) 
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target"),
 									},
 								},
 							},
@@ -375,7 +362,7 @@ func schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"},
+			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target"},
 	}
 }
 

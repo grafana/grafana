@@ -16,10 +16,9 @@ type QueryTemplate struct {
 }
 
 type QueryTemplateSpec struct {
-	Title           string          `json:"title"`
-	Variables       []QueryVariable `json:"vars,omitempty"`
-	Targets         []Target        `json:"targets"`
-	RenderedTargets []Target        `json:"renderedTargets"`
+	Title     string          `json:"title"`
+	Variables []QueryVariable `json:"vars,omitempty"`
+	Targets   []Target        `json:"targets"`
 }
 
 type Target struct {
@@ -88,5 +87,5 @@ type QueryTemplateList struct {
 type RenderedQuery struct {
 	metav1.TypeMeta `json:",inline"`
 
-	Targets []common.Unstructured `json:"targets,omitempty"`
+	Targets []Target `json:"targets,omitempty"`
 }

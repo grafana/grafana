@@ -46,12 +46,16 @@ func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Obje
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		out := &peakq.RenderedQuery{
-			Targets: []common.Unstructured{
-				{Object: map[string]any{
-					"hello":  "world",
-					"TODO":   "read the value and render it",
-					"RENDER": template.Name,
-				}},
+			Targets: []peakq.Target{
+				{
+					Properties: common.Unstructured{
+						Object: map[string]any{
+							"hello":  "world",
+							"TODO":   "read the value and render it",
+							"RENDER": template.Name,
+						},
+					},
+				},
 			},
 		}
 		responder.Object(http.StatusOK, out)
