@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, CollapsableSection, IconButton, LoadingPlaceholder, Stack, TextLink, useStyles2 } from '@grafana/ui';
@@ -24,13 +24,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const {
-    isLoading,
-    error: errorInContactPointStatus,
-    contactPoints,
-    refetchReceivers,
-    isFetchingRefetchReceivers,
-  } = useContactPointsWithStatus();
+  const { isLoading, error: errorInContactPointStatus, contactPoints, refetchReceivers } = useContactPointsWithStatus();
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
@@ -40,42 +34,15 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   // We will show the loading spinner for 1 second, and if the fetching takes more than 1 second, we will show the loading spinner until the fetching is done.
 
   const [loadingContactPoints, setLoadingContactPoints] = useState(false);
-  // we need to keep track of the timeout id, so we can clear it when the user clicks the refresh button, or when the component unmounts
-  const [timeOutId, setTimeOutId] = useState<NodeJS.Timeout | null>(null);
-  const [fetchingTakesMoreThan1Second, setFetchingTakesMoreThan1Second] = useState(false);
+  // we need to keep track if the fetching takes more than 1 second, so we can show the loading spinner until the fetching is done
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const onClickRefresh = () => {
-    // we need to clear the timeout when the user clicks the refresh button, as are creating a new timeout
-    if (timeOutId) {
-      clearTimeout(timeOutId);
-    }
-    refetchReceivers();
-    // show loading spinner for 1 second
     setLoadingContactPoints(true);
-    setTimeOutId(
-      setTimeout(() => {
-        !isFetchingRefetchReceivers && setLoadingContactPoints(false);
-        isFetchingRefetchReceivers && setFetchingTakesMoreThan1Second(true);
-      }, LOADING_SPINNER_DURATION)
-    );
-  };
-
-  // if fetching is done, and we have a timeout id, means we are still showing the loading spinner, so we need to stop it
-  useEffect(() => {
-    if (!isFetchingRefetchReceivers && fetchingTakesMoreThan1Second) {
+    Promise.all([refetchReceivers(), sleep(LOADING_SPINNER_DURATION)]).finally(() => {
       setLoadingContactPoints(false);
-      setFetchingTakesMoreThan1Second(false);
-    }
-  }, [isFetchingRefetchReceivers, fetchingTakesMoreThan1Second]);
-
-  // if the component unmounts, we need to clear the timeout
-  useEffect(() => {
-    return () => {
-      if (timeOutId) {
-        clearTimeout(timeOutId);
-      }
-    };
-  }, [timeOutId]);
+    });
+  };
 
   if (errorInContactPointStatus) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
