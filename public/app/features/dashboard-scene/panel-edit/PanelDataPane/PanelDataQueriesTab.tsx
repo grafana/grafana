@@ -18,8 +18,7 @@ import { QueryGroupOptions } from 'app/types';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { VizPanelManager } from '../VizPanelManager';
 
-import { PanelDataPane } from './PanelDataPane';
-import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
+import { PanelDataPaneTabState, PanelDataPaneTab, TabId } from './types';
 
 interface PanelDataQueriesTabState extends PanelDataPaneTabState {
   datasource?: DataSourceApi;
@@ -27,16 +26,12 @@ interface PanelDataQueriesTabState extends PanelDataPaneTabState {
 }
 export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabState> implements PanelDataPaneTab {
   static Component = PanelDataQueriesTabRendered;
-  tabId = 'queries';
+  tabId = TabId.Queries;
   icon: IconName = 'database';
   private _panelManager: VizPanelManager;
 
   getTabLabel() {
     return 'Queries';
-  }
-
-  getItemsCount() {
-    return this.getQueries().length;
   }
 
   constructor(panelManager: VizPanelManager) {
@@ -102,9 +97,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     this._panelManager.changeQueries(queries);
 
     // this so a rerender is triggered and counter for the tab is updated
-    if (this._parent instanceof PanelDataPane) {
-      this._parent?.setState({ tab: 'queries' });
-    }
+    // if (this._parent instanceof PanelDataPane) {
+    //   this._parent?.setState({ tab: 'queries' });
+    // }
   };
 
   onRunQueries = () => {

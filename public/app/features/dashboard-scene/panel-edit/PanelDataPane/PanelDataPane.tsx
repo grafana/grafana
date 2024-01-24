@@ -19,11 +19,11 @@ import { VizPanelManager } from '../VizPanelManager';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { PanelDataPaneTab } from './types';
+import { PanelDataPaneTab, TabId } from './types';
 
 export interface PanelDataPaneState extends SceneObjectState {
   tabs?: PanelDataPaneTab[];
-  tab?: string;
+  tab?: TabId;
 }
 
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
@@ -44,13 +44,13 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       return;
     }
     if (typeof values.tab === 'string') {
-      this.setState({ tab: values.tab });
+      this.setState({ tab: values.tab as TabId });
     }
   }
 
   constructor(panelMgr: VizPanelManager) {
     super({
-      tab: 'queries',
+      tab: TabId.Queries,
     });
 
     this.panelManager = panelMgr;
@@ -134,14 +134,25 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
+  const { queries } = model.panelManager.queryRunner.useState();
+  // const { transformations } = model.panelManager.dataTransformer.useState();
   const styles = useStyles2(getStyles);
-
+  let counter = 0;
   if (!tabs) {
     return;
   }
 
   const currentTab = tabs.find((t) => t.tabId === tab);
 
+  if (currentTab?.tabId === TabId.Queries) {
+    counter = queries.length;
+  } else if (currentTab?.tabId === TabId.Transformations) {
+    // TODO
+    // counter = transformations.length;
+  } else if (currentTab?.tabId === TabId.Alert) {
+    // TODO
+    // counter = alerts.length;
+  }
   return (
     <>
       <TabsBar hideBorder={true} className={styles.tabsBar}>
@@ -151,7 +162,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
               key={`${t.getTabLabel()}-${index}`}
               label={t.getTabLabel()}
               icon={t.icon}
-              counter={t.getItemsCount?.()}
+              counter={counter}
               active={t.tabId === tab}
               onChangeTab={() => model.onChangeTab(t)}
             />
