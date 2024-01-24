@@ -289,12 +289,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (variable.multi) {
       if (typeof value === 'string') {
-        if (isNaN(Number(value))) {
-          // It is not a number so escape the value
-          return escapeRegex(value);
-        } else {
-          return value;
-        }
+        return escapeRegex(value);
       }
 
       return value.map((v) => escapeRegex(v)).join('|');
@@ -335,7 +330,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       ).then(this.toMetricFindValue);
     }
 
-    const interpolated = this.templateSrv.replace(query, options?.scopedVars, this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(
+      query,
+      options?.scopedVars,
+      (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+        this.interpolateQueryExpr(value, variable, query)
+    );
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
