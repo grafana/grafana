@@ -161,7 +161,6 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplate(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -378,21 +377,6 @@ func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.
 							Description: "DataType is the returned Dataplane type from the query.",
 							Type:        []string{"string"},
 							Format:      "",
-						},
-					},
-					"dataTypeVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DataTypeVersion is the version for the Dataplane type.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int32",
-									},
-								},
-							},
 						},
 					},
 					"properties": {

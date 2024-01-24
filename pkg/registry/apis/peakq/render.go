@@ -60,6 +60,7 @@ func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Obje
 		rT, err := Render(template.Spec, nil)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to render: %w", err))
+			return
 		}
 
 		out := &peakq.RenderedQuery{

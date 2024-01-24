@@ -36,8 +36,8 @@ var basicTemplateWithSelectedValue = peakq.QueryTemplateSpec{
 	},
 	Targets: []peakq.Target{
 		{
-			DataType:        data.FrameTypeUnknown,
-			DataTypeVersion: data.FrameTypeVersion{0, 0},
+			DataType: data.FrameTypeUnknown,
+			//DataTypeVersion: data.FrameTypeVersion{0, 0},
 			Properties: common.Unstructured{
 				Object: map[string]any{
 					"refId": "A", // TODO: Set when Where?
@@ -58,8 +58,8 @@ var basicTemplateWithSelectedValue = peakq.QueryTemplateSpec{
 
 var basicTemplateRenderedTargets = []peakq.Target{
 	{
-		DataType:        data.FrameTypeUnknown,
-		DataTypeVersion: data.FrameTypeVersion{0, 0},
+		DataType: data.FrameTypeUnknown,
+		//DataTypeVersion: data.FrameTypeVersion{0, 0},
 		Properties: common.Unstructured{
 			Object: map[string]any{
 				"refId": "A", // TODO: Set when Where?
@@ -81,6 +81,6 @@ func TestRender(t *testing.T) {
 	rT, err := Render(basicTemplateWithSelectedValue, nil)
 	require.NoError(t, err)
 	require.Equal(t, "up + up + 42", rT[0].Properties.Object["expr"])
-	b, _ := json.MarshalIndent(basicTemplateRenderedTargets, "", " ")
+	b, _ := json.MarshalIndent(basicTemplateWithSelectedValue, "", " ")
 	fmt.Println(string(b))
 }

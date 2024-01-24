@@ -26,7 +26,7 @@ type Target struct {
 	DataType data.FrameType `json:"dataType,omitempty"`
 
 	// DataTypeVersion is the version for the Dataplane type.
-	DataTypeVersion data.FrameTypeVersion `json:"dataTypeVersion,omitempty"`
+	// DataTypeVersion data.FrameTypeVersion `json:"dataTypeVersion,omitempty"`
 
 	Properties common.Unstructured `json:"properties"`
 }
