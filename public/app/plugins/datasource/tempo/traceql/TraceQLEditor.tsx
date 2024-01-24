@@ -243,17 +243,17 @@ interface EditorStyles {
 
 const getStyles = (theme: GrafanaTheme2, placeholder: string): EditorStyles => {
   return {
-    queryField: css`
-      border-radius: ${theme.shape.radius.default};
-      border: 1px solid ${theme.components.input.borderColor};
-      flex: 1;
-    `,
-    placeholder: css`
-      ::after {
-        content: '${placeholder}';
-        font-family: ${theme.typography.fontFamilyMonospace};
-        opacity: 0.3;
-      }
-    `,
+    queryField: css({
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.components.input.borderColor}`,
+      flex: 1,
+    }),
+    placeholder: css({
+      '::after': {
+        content: `'${placeholder}'`,
+        fontFamily: theme.typography.fontFamilyMonospace,
+        opacity: 0.3,
+      },
+    }),
   };
 };

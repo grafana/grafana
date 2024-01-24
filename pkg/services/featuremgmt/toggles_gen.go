@@ -343,10 +343,6 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
-	// FlagGrafanaAPIServer
-	// Enable Kubernetes API Server for Grafana resources
-	FlagGrafanaAPIServer = "grafanaAPIServer"
-
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
@@ -642,4 +638,8 @@ const (
 	// FlagOnPremToCloudMigrations
 	// In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagAlertingSaveStatePeriodic
+	// Writes the state periodically to the database, asynchronous to rule evaluation
+	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 )
