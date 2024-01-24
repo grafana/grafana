@@ -439,7 +439,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                         value={tag.value}
                       />
                     </span>
-                    {(tag.key || tag.value || i > 0) && (
+                    {(tag.key || tag.value || search.tags.length > 1) && (
                       <AccessoryButton
                         aria-label="Remove tag"
                         variant="secondary"

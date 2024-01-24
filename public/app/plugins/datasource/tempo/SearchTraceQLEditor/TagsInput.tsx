@@ -83,7 +83,7 @@ const TagsInput = ({
             hideValue={hideValues}
             query={query}
           />
-          {(f.tag || f.value || i > 0) && (
+          {(f.tag || f.value || filters.length > 1) && (
             <AccessoryButton
               aria-label={`Remove tag with ID ${f.id}`}
               variant={'secondary'}
