@@ -663,7 +663,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
-	provStore := provisioning.NewFakeProvisioningStore()
+	provStore := ngfakes.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
 	kvStore := ngfakes.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())

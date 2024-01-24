@@ -2,9 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"crypto/md5"
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,8 +28,8 @@ const defaultAlertmanagerConfigJSON = `
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
+				"uid": "UID1",
+				"name": "grafana-default-email",
 				"type": "email",
 				"disableResolveMessage": false,
 				"settings": {
@@ -41,9 +38,9 @@ const defaultAlertmanagerConfigJSON = `
 				"secureFields": {}
 			}]
 		}, {
-			"name": "a new receiver",
+			"name": "slack receiver",
 			"grafana_managed_receiver_configs": [{
-				"uid": "",
+				"uid": "UID2",
 				"name": "slack receiver",
 				"type": "slack",
 				"disableResolveMessage": false,
@@ -54,88 +51,6 @@ const defaultAlertmanagerConfigJSON = `
 	}
 }
 `
-
-type fakeAMConfigStore struct {
-	config          models.AlertConfiguration
-	lastSaveCommand *models.SaveAlertmanagerConfigurationCmd
-}
-
-func newFakeAMConfigStore(config string) *fakeAMConfigStore {
-	return &fakeAMConfigStore{
-		config: models.AlertConfiguration{
-			AlertmanagerConfiguration: config,
-			ConfigurationVersion:      "v1",
-			Default:                   true,
-			OrgID:                     1,
-		},
-		lastSaveCommand: nil,
-	}
-}
-
-func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
-	result := &f.config
-	result.OrgID = orgID
-	result.ConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte(f.config.AlertmanagerConfiguration)))
-	return result, nil
-}
-
-func (f *fakeAMConfigStore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	f.config = models.AlertConfiguration{
-		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
-		ConfigurationVersion:      cmd.ConfigurationVersion,
-		Default:                   cmd.Default,
-		OrgID:                     cmd.OrgID,
-	}
-	f.lastSaveCommand = cmd
-	return nil
-}
-
-type fakeProvisioningStore struct {
-	records map[int64]map[string]models.Provenance
-}
-
-func NewFakeProvisioningStore() *fakeProvisioningStore {
-	return &fakeProvisioningStore{
-		records: map[int64]map[string]models.Provenance{},
-	}
-}
-
-func (f *fakeProvisioningStore) GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error) {
-	if val, ok := f.records[org]; ok {
-		if prov, ok := val[o.ResourceID()+o.ResourceType()]; ok {
-			return prov, nil
-		}
-	}
-	return models.ProvenanceNone, nil
-}
-
-func (f *fakeProvisioningStore) GetProvenances(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error) {
-	results := make(map[string]models.Provenance)
-	if val, ok := f.records[orgID]; ok {
-		for k, v := range val {
-			if strings.HasSuffix(k, resourceType) {
-				results[strings.TrimSuffix(k, resourceType)] = v
-			}
-		}
-	}
-	return results, nil
-}
-
-func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error {
-	if _, ok := f.records[org]; !ok {
-		f.records[org] = map[string]models.Provenance{}
-	}
-	_ = f.DeleteProvenance(ctx, o, org) // delete old entries first
-	f.records[org][o.ResourceID()+o.ResourceType()] = p
-	return nil
-}
-
-func (f *fakeProvisioningStore) DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error {
-	if val, ok := f.records[org]; ok {
-		delete(val, o.ResourceID()+o.ResourceType())
-	}
-	return nil
-}
 
 type NopTransactionManager struct{}
 
