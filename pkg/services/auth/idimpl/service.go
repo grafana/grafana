@@ -24,7 +24,7 @@ import (
 
 const (
 	cachePrefix = "id-token"
-	tokenTTL    = 1 * time.Hour
+	tokenTTL    = 10 * time.Minute
 	cacheLeway  = 30 * time.Second
 )
 
