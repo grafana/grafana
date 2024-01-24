@@ -84,7 +84,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
   const data = field.values;
-  if (data.length < 1) {
+  if (data && data.length < 1) {
     const calcs: FieldCalcs = { ...field.state.calcs };
     for (const reducer of queue) {
       calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
@@ -271,32 +271,40 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   },
 ]);
 
-export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  const calcs: FieldCalcs = {
-    sum: 0,
-    max: -Number.MAX_VALUE,
-    min: Number.MAX_VALUE,
-    logmin: Number.MAX_VALUE,
-    mean: null,
-    last: null,
-    first: null,
-    lastNotNull: null,
-    firstNotNull: null,
-    count: 0,
-    nonNullCount: 0,
-    allIsNull: true,
-    allIsZero: true,
-    range: null,
-    diff: null,
-    delta: 0,
-    step: Number.MAX_VALUE,
-    diffperc: 0,
+// Used for test cases
+export const defaultCalcs: FieldCalcs = {
+  sum: 0,
+  max: -Number.MAX_VALUE,
+  min: Number.MAX_VALUE,
+  logmin: Number.MAX_VALUE,
+  mean: null,
+  last: null,
+  first: null,
+  lastNotNull: null,
+  firstNotNull: null,
+  count: 0,
+  nonNullCount: 0,
+  allIsNull: true,
+  allIsZero: true,
+  range: null,
+  diff: null,
+  delta: 0,
+  step: Number.MAX_VALUE,
+  diffperc: 0,
 
-    // Just used for calculations -- not exposed as a stat
-    previousDeltaUp: true,
-  };
+  // Just used for calculations -- not exposed as a stat
+  previousDeltaUp: true,
+};
+
+export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const calcs: FieldCalcs = { ...defaultCalcs };
 
   const data = field.values;
+
+  // early return for undefined / empty series
+  if (!data) {
+    return calcs;
+  }
 
   const isNumberField = field.type === FieldType.number || field.type === FieldType.time;
 
