@@ -102,7 +102,6 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
-  grafanaAPIServer?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
@@ -177,4 +176,5 @@ export interface FeatureToggles {
   jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
+  alertingSaveStatePeriodic?: boolean;
 }

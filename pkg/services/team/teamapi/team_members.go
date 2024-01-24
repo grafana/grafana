@@ -47,7 +47,7 @@ func (tapi *TeamAPI) getTeamMembers(c *contextmodel.ReqContext) response.Respons
 			continue
 		}
 
-		member.AvatarURL = dtos.GetGravatarUrl(member.Email)
+		member.AvatarURL = dtos.GetGravatarUrl(tapi.cfg, member.Email)
 		member.Labels = []string{}
 
 		if tapi.license.FeatureEnabled("teamgroupsync") && member.External {

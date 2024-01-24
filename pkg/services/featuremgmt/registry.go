@@ -715,15 +715,6 @@ var (
 			Created:      time.Date(2023, time.August, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "grafanaAPIServer",
-			Description:     "Enable Kubernetes API Server for Grafana resources",
-			Stage:           FeatureStageGeneralAvailability,
-			Expression:      "true", // enabled by default
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Created:         time.Date(2023, time.July, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server",
 			Stage:           FeatureStageExperimental,
@@ -1147,13 +1138,12 @@ var (
 			Created:      time.Date(2023, time.November, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "ssoSettingsApi",
-			Description:     "Enables the SSO settings API",
-			RequiresDevMode: true,
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           identityAccessTeam,
-			Created:         time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
+			Name:         "ssoSettingsApi",
+			Description:  "Enables the SSO settings API",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Created:      time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "canvasPanelPanZoom",
@@ -1284,9 +1274,8 @@ var (
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
 		},
@@ -1354,6 +1343,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Created:     time.Date(2024, time.January, 22, 3, 30, 00, 00, time.UTC),
+		},
+		{
+			Name:         "alertingSaveStatePeriodic",
+			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+			Created:      time.Date(2024, time.January, 22, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

@@ -336,6 +336,16 @@ func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
 			expectedServiceCall: true,
 			expectedStatusCode:  http.StatusInternalServerError,
 		},
+		{
+			desc:                "fails with not found error when the provider is not configurable",
+			key:                 "grafana_com",
+			action:              "settings:read",
+			scope:               "settings:*",
+			expectedResult:      nil,
+			expectedError:       ssosettings.ErrNotConfigurable,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusNotFound,
+		},
 	}
 
 	for _, tt := range tests {
