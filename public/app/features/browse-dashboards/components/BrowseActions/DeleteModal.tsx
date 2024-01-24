@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { Alert, ConfirmModal, Text, Space, Box } from '@grafana/ui';
+import { Alert, ConfirmModal, Text, Space } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
