@@ -62,6 +62,14 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 	}
 	dbPerms := make([]UserRBACPermission, 0)
 	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		if options.UserLogin != "" {
+			id, err := s.getUserID(sess, options.UserLogin)
+			if err != nil {
+				return err
+			}
+			options.UserID = id
+		}
+
 		// Find permissions
 		q := `
 		SELECT
@@ -237,4 +245,16 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 		return nil
 	})
 	return err
+}
+
+func (s *AccessControlStore) getUserID(sess *db.Session, login string) (int64, error) {
+	id := int64(0)
+	has, err := sess.SQL(`SELECT id FROM  `+s.sql.GetDialect().Quote("user")+` AS u WHERE u.login = ?`, login).Get(&id)
+	if err != nil {
+		return 0, err
+	}
+	if !has {
+		return 0, accesscontrol.ErrUserNotFound
+	}
+	return id, nil
 }

@@ -72,14 +72,18 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 // GET /api/access-control/users/permissions
 func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{
+		UserLogin:    c.Query("userLogin"),
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
 		Scope:        c.Query("scope"),
 	}
 
 	// Validate inputs
-	if (searchOptions.ActionPrefix != "") == (searchOptions.Action != "") {
-		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
+	if (searchOptions.ActionPrefix != "") && (searchOptions.Action != "") {
+		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
+	}
+	if searchOptions.UserLogin == "" && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
+		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 
 	// Compute metadata

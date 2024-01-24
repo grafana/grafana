@@ -13,6 +13,7 @@ var (
 	ErrResolverNotFound       = errors.New("no resolver found")
 	ErrPluginIDRequired       = errors.New("plugin ID is required")
 	ErrRoleNotFound           = errors.New("role not found")
+	ErrUserNotFound           = errors.New("user not found")
 )
 
 type ErrorInvalidRole struct{}
