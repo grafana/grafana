@@ -32,6 +32,7 @@ export function SaveDashboardForm({ dashboard, saveModel, hasChanges, options, o
 
   const onSave = () => {
     onSaveDashboard(dashboard, saveModel, options);
+    dashboard.closeModal();
   };
 
   const onCancel = () => {

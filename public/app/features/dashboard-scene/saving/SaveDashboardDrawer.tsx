@@ -42,7 +42,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const tabs = (
       <TabsBar>
         <Tab label={'Details'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
-        {diffCount && (
+        {diffCount > 0 && (
           <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={diffCount} />
         )}
       </TabsBar>

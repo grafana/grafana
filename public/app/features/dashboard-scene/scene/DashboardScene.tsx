@@ -233,6 +233,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onSave = () => {
+    if (!this.state.isEditing) {
+      return;
+    }
+
     this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
   };
 

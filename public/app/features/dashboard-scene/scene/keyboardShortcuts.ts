@@ -110,6 +110,11 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: scene.onOpenSettings,
   });
 
+  keybindings.addBinding({
+    key: 'mod+s',
+    onTrigger: scene.onSave,
+  });
+
   // toggle all panel legends (TODO)
   // delete panel (TODO when we work on editing)
   // toggle all exemplars (TODO)
