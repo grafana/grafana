@@ -53,6 +53,7 @@ func GenerateShortUID() string {
 	defer mtx.Unlock()
 
 	if node == nil {
+		// ignoring the error happens when input outside 0-1023
 		node, _ = snowflake.NewNode(rand.Int63n(1024))
 	}
 
@@ -67,8 +68,9 @@ func GenerateShortUID() string {
 		}
 		uuid := uid.String()
 		if rune(uuid[0]) < rune('a') {
-			return string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
+			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 		}
+		return uuid
 	}
 
 	return string(hexLetters[uidrand.Intn(len(hexLetters))]) + // start with a letter
