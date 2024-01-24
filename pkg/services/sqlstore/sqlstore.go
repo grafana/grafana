@@ -160,18 +160,6 @@ func (ss *SQLStore) Reset() error {
 	return ss.ensureMainOrgAndAdminUser(false)
 }
 
-// TestReset resets database state. If default org and user creation is enabled,
-// it will be ensured they exist in the database. TestReset() is more permissive
-// than Reset in that it will create the user and org whether or not there are
-// already users in the database.
-func (ss *SQLStore) TestReset() error {
-	if ss.skipEnsureDefaultOrgAndUser {
-		return nil
-	}
-
-	return ss.ensureMainOrgAndAdminUser(true)
-}
-
 // Quote quotes the value in the used SQL dialect
 func (ss *SQLStore) Quote(value string) string {
 	return ss.engine.Quote(value)
