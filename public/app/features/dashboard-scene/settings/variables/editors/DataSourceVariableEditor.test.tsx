@@ -1,6 +1,6 @@
 // add unit test for the DataSourceVariableEditor component
 
-import { render, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
