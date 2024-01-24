@@ -90,15 +90,12 @@ export const InfiniteScroll = ({
     }
 
     function scrollTop() {
-      if (!canScrollTop(getVisibleRange(rows), range, timeZone, sortOrder)) {
+      const newRange = canScrollTop(getVisibleRange(rows), range, timeZone, sortOrder);
+      if (!newRange) {
         setUpperOutOfRange(true);
         return;
       }
       setUpperOutOfRange(false);
-      const newRange =
-        sortOrder === LogsSortOrder.Descending
-          ? getNextRange(getVisibleRange(rows), range, timeZone)
-          : getPrevRange(getVisibleRange(rows), range);
       loadMoreLogs?.(newRange);
       setUpperLoading(true);
       reportInteraction('grafana_logs_infinite_scrolling', {
@@ -108,15 +105,12 @@ export const InfiniteScroll = ({
     }
 
     function scrollBottom() {
-      if (!canScrollBottom(getVisibleRange(rows), range, timeZone, sortOrder)) {
+      const newRange = canScrollBottom(getVisibleRange(rows), range, timeZone, sortOrder);
+      if (!newRange) {
         setLowerOutOfRange(true);
         return;
       }
       setLowerOutOfRange(false);
-      const newRange =
-        sortOrder === LogsSortOrder.Descending
-          ? getPrevRange(getVisibleRange(rows), range)
-          : getNextRange(getVisibleRange(rows), range, timeZone);
       loadMoreLogs?.(newRange);
       setLowerLoading(true);
       reportInteraction('grafana_logs_infinite_scrolling', {
@@ -181,9 +175,8 @@ function shouldLoadMore(event: Event | WheelEvent, element: HTMLDivElement, last
     scrollDirection === ScrollDirection.Top
       ? element.scrollTop
       : element.scrollHeight - element.scrollTop - element.clientHeight;
-  const coef = 1;
 
-  return diff <= coef ? scrollDirection : ScrollDirection.NoScroll;
+  return diff <= 1 ? scrollDirection : ScrollDirection.NoScroll;
 }
 
 function getVisibleRange(rows: LogRowModel[]) {
@@ -216,13 +209,16 @@ function canScrollTop(
   currentRange: TimeRange,
   timeZone: TimeZone,
   sortOrder: LogsSortOrder
-) {
+): AbsoluteTimeRange | false {
   if (sortOrder === LogsSortOrder.Descending) {
     // When requesting new logs, update the current range if using relative time ranges.
     currentRange = updateCurrentRange(currentRange, timeZone);
-    return currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
+    const canScroll = currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
+    return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : false;
   }
-  return Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
+
+  const canScroll = Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
+  return canScroll ? getPrevRange(visibleRange, currentRange) : false;
 }
 
 function canScrollBottom(
@@ -230,13 +226,15 @@ function canScrollBottom(
   currentRange: TimeRange,
   timeZone: TimeZone,
   sortOrder: LogsSortOrder
-) {
+): AbsoluteTimeRange | false {
   if (sortOrder === LogsSortOrder.Descending) {
-    return Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
+    const canScroll = Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
+    return canScroll ? getPrevRange(visibleRange, currentRange) : false;
   }
   // When requesting new logs, update the current range if using relative time ranges.
   currentRange = updateCurrentRange(currentRange, timeZone);
-  return currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
+  const canScroll = currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
+  return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : false;
 }
 
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
@@ -253,7 +251,6 @@ function isOnEdge(
 ) {
   const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
   // Sometimes, when the scroll reaches the end, it can be 1 less the scroll height, hence `Math.abs(scrollHeight - scrollElement.scrollTop) <= 1`
-  console.log(currentlyOnEdge);
   if (
     lastScroll === scrollElement.scrollTop &&
     (scrollElement.scrollTop === 0 || Math.abs(scrollHeight - scrollElement.scrollTop) <= 1)
