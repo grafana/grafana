@@ -13,19 +13,26 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
+
+import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
+import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
+import { findVizPanelByKey } from '../../utils/utils';
+import { VizPanelManager } from '../VizPanelManager';
+import { testDashboard } from '../testfiles/testDashboard';
 
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 
 function createModelMock(
   panelData: PanelData,
   transformations?: DataTransformerConfig[],
-  changeTransformationsMock?: Function
+  onChangeTransformationsMock?: Function
 ) {
   return {
     getDataTransformer: () => new SceneDataTransformer({ data: panelData, transformations: transformations || [] }),
     getQueryRunner: () => new SceneQueryRunner({ queries: [], data: panelData }),
-    changeTransformations: changeTransformationsMock,
+    onChangeTransformations: onChangeTransformationsMock,
   } as unknown as PanelDataTransformationsTab;
 }
 
@@ -42,6 +49,15 @@ const mockData = {
     }),
   ],
 };
+
+describe('PanelDataTransformationsModel', () => {
+  it('can change transformations', () => {
+    const vizPanelManager = setupVizPanelManger('panel-1');
+    const model = new PanelDataTransformationsTab(vizPanelManager);
+    model.onChangeTransformations([{ id: 'calculateField', options: {} }]);
+    expect(model.getDataTransformer().state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
+  });
+});
 
 describe('PanelDataTransformationsTab', () => {
   standardTransformersRegistry.setInit(getStandardTransformers);
@@ -74,8 +90,8 @@ describe('PanelDataTransformationsTab', () => {
   });
 
   it('adds a transformation when a transformation is clicked in the drawer and there are no previous transformations', async () => {
-    const changeTransformation = jest.fn();
-    const modelMock = createModelMock(mockData, [], changeTransformation);
+    const onChangeTransformation = jest.fn();
+    const modelMock = createModelMock(mockData, [], onChangeTransformation);
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
     await act(async () => {
@@ -88,11 +104,11 @@ describe('PanelDataTransformationsTab', () => {
 
     await userEvent.click(button!);
 
-    expect(changeTransformation).toHaveBeenCalledWith([{ id: 'calculateField', options: {} }]);
+    expect(onChangeTransformation).toHaveBeenCalledWith([{ id: 'calculateField', options: {} }]);
   });
 
   it('adds a transformation when a transformation is clicked in the drawer and there are transformations', async () => {
-    const changeTransformation = jest.fn();
+    const onChangeTransformation = jest.fn();
     const modelMock = createModelMock(
       mockData,
       [
@@ -101,7 +117,7 @@ describe('PanelDataTransformationsTab', () => {
           options: {},
         },
       ],
-      changeTransformation
+      onChangeTransformation
     );
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
@@ -115,14 +131,14 @@ describe('PanelDataTransformationsTab', () => {
 
     await userEvent.click(button!);
 
-    expect(changeTransformation).toHaveBeenCalledWith([
+    expect(onChangeTransformation).toHaveBeenCalledWith([
       { id: 'calculateField', options: {} },
       { id: 'calculateField', options: {} },
     ]);
   });
 
   it('deletes all transformations', async () => {
-    const changeTransformation = jest.fn();
+    const onChangeTransformation = jest.fn();
     const modelMock = createModelMock(
       mockData,
       [
@@ -131,7 +147,7 @@ describe('PanelDataTransformationsTab', () => {
           options: {},
         },
       ],
-      changeTransformation
+      onChangeTransformation
     );
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const removeButton = await screen.findByTestId(selectors.components.Transforms.removeAllTransformationsButton);
@@ -143,7 +159,7 @@ describe('PanelDataTransformationsTab', () => {
       await userEvent.click(confirmButton);
     });
 
-    expect(changeTransformation).toHaveBeenCalledWith([]);
+    expect(onChangeTransformation).toHaveBeenCalledWith([]);
   });
 
   it('can filter transformations in the drawer', async () => {
@@ -165,3 +181,16 @@ describe('PanelDataTransformationsTab', () => {
     expect(reduce).toBeNull();
   });
 });
+
+const setupVizPanelManger = (panelId: string) => {
+  const scene = transformSaveModelToScene({ dashboard: testDashboard as any, meta: {} });
+  const panel = findVizPanelByKey(scene, panelId)!;
+
+  const vizPanelManager = new VizPanelManager(panel.clone());
+
+  // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
+  // @ts-expect-error
+  getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
+
+  return vizPanelManager;
+};

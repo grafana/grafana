@@ -30,7 +30,7 @@ export class PanelDataTransformationsTab
   }
 
   getItemsCount() {
-    return this.getDataTransformer().state.transformations.length;
+    return this._panelManager.dataTransformer.state.transformations.length;
   }
 
   constructor(panelManager: VizPanelManager) {
@@ -39,22 +39,16 @@ export class PanelDataTransformationsTab
     this._panelManager = panelManager;
   }
 
-  public getDataTransformer(): SceneDataTransformer {
-    const provider = this._panelManager.state.panel.state.$data;
-    if (!provider || !(provider instanceof SceneDataTransformer)) {
-      throw new Error('Could not find SceneDataTransformer for panel');
-    }
-    return provider;
-  }
-
   public getQueryRunner(): SceneQueryRunner {
     return this._panelManager.queryRunner;
   }
 
-  public changeTransformations(transformations: DataTransformerConfig[]) {
-    const dataProvider = this.getDataTransformer();
-    dataProvider.setState({ transformations });
-    dataProvider.reprocessTransformations();
+  public getDataTransformer(): SceneDataTransformer {
+    return this._panelManager.dataTransformer;
+  }
+
+  public onChangeTransformations(transformations: DataTransformerConfig[]) {
+    this._panelManager.changeTransformations(transformations);
   }
 }
 
@@ -82,7 +76,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         if (selected.value === undefined) {
           return;
         }
-        model.changeTransformations([...transformations, { id: selected.value, options: {} }]);
+        model.onChangeTransformations([...transformations, { id: selected.value, options: {} }]);
         closeDrawer();
       }}
       isOpen={drawerOpen}
@@ -127,7 +121,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         body="By deleting all transformations, you will go back to the main selection screen."
         confirmText="Delete all"
         onConfirm={() => {
-          model.changeTransformations([]);
+          model.onChangeTransformations([]);
           setConfirmModalOpen(false);
         }}
         onDismiss={() => setConfirmModalOpen(false)}
@@ -159,7 +153,7 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
     const update = Array.from(transformationEditorRows);
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
-    model.changeTransformations(update.map((t) => t.transformation));
+    model.onChangeTransformations(update.map((t) => t.transformation));
   };
 
   return (
@@ -172,12 +166,12 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
                 onChange={(index, transformation) => {
                   const newTransformations = transformations.slice();
                   newTransformations[index] = transformation;
-                  model.changeTransformations(newTransformations);
+                  model.onChangeTransformations(newTransformations);
                 }}
                 onRemove={(index) => {
                   const newTransformations = transformations.slice();
                   newTransformations.splice(index, 1);
-                  model.changeTransformations(newTransformations);
+                  model.onChangeTransformations(newTransformations);
                 }}
                 configs={transformationEditorRows}
                 data={data}
