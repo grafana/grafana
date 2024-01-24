@@ -122,16 +122,14 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	})
 
 	cfg.LoginCookieName = loginCookieName
-	setting.SecretKey = "login_testing"
-
 	cfg.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
 	encryptedError, err := hs.SecretsService.Encrypt(context.Background(), []byte(oauthError.Error()), secrets.WithoutScope())
 	require.NoError(t, err)
 	expCookiePath := "/"
-	if len(setting.AppSubUrl) > 0 {
-		expCookiePath = setting.AppSubUrl
+	if len(cfg.AppSubURL) > 0 {
+		expCookiePath = cfg.AppSubURL
 	}
 	cookie := http.Cookie{
 		Name:     loginErrorCookieName,

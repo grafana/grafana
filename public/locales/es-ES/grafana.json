@@ -81,6 +81,7 @@
     "folder-picker": {
       "accessible-label": "Seleccionar carpeta: {{ label }} seleccionada actualmente",
       "button-label": "Seleccionar carpeta",
+      "clear-selection": "",
       "empty-message": "No se ha encontrado ninguna carpeta",
       "error-title": "Error al cargar las carpetas",
       "search-placeholder": "Buscar carpetas",
@@ -980,6 +981,7 @@
     "megamenu": {
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
+      "list-label": "",
       "undock": "Desanclar el menú"
     },
     "toolbar": {
@@ -1229,6 +1231,12 @@
       "interval-selected": "Establecer intervalo de actualización automática",
       "turned-off": "Actualización automática desactivada"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {
