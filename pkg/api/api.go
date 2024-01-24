@@ -221,7 +221,15 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 	}
 
-	r.Get("/admin/authentication/", authorize(ssoutils.EvalAuthenticationSettings(hs.Cfg)), hs.Index)
+	adminAuthPageEvaluator := func() ac.Evaluator {
+		authnSettingsEval := ssoutils.EvalAuthenticationSettings(hs.Cfg)
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+			return ac.EvalAny(authnSettingsEval, ssoutils.OauthSettingsEvaluator(hs.Cfg))
+		}
+		return authnSettingsEval
+	}
+
+	r.Get("/admin/authentication/", authorize(adminAuthPageEvaluator()), hs.Index)
 	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
 		providerParam := ac.Parameter("provider")

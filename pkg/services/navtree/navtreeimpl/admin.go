@@ -17,7 +17,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
-	authConfigUIAvailable := s.license.FeatureEnabled("saml") || s.cfg.LDAPAuthEnabled || s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)
+	authConfigUIAvailable := s.license.FeatureEnabled("saml") || s.cfg.LDAPAuthEnabled
 
 	// FIXME: If plugin admin is disabled or externally managed, server admins still need to access the page, this is why
 	// while we don't have a permissions for listing plugins the legacy check has to stay as a default
@@ -81,7 +81,8 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) {
+	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
+		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Authentication",
 			Id:       "authentication",
