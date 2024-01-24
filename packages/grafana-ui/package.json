@@ -183,7 +183,7 @@
     "storybook-dark-mode": "3.0.1",
     "style-loader": "3.3.4",
     "typescript": "5.2.2",
-    "webpack": "5.89.0"
+    "webpack": "5.90.0"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",
