@@ -24,15 +24,25 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const { isLoading, error: errorInContactPointStatus, contactPoints, refetchReceivers } = useContactPointsWithStatus();
+  const {
+    isLoading,
+    error: errorInContactPointStatus,
+    contactPoints,
+    refetchReceivers,
+    isFetchingRefetchReceivers,
+  } = useContactPointsWithStatus();
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
 
-  const [loadingContactPoints, setLoadingContactPoints] = useState(false);
+  // We need to provide a fake loading state for the contact points, because it might be that the response is so fast that the loading spinner is not shown,
+  // and the user might think that the contact points are not fetched.
+  // We will show the loading spinner for 1 second, and if the fetching takes more than 1 second, we will show the loading spinner until the fetching is done.
 
+  const [loadingContactPoints, setLoadingContactPoints] = useState(false);
   // we need to keep track of the timeout id, so we can clear it when the user clicks the refresh button, or when the component unmounts
   const [timeOutId, setTimeOutId] = useState<NodeJS.Timeout | null>(null);
+  const [fetchingTakesMoreThan1Second, setFetchingTakesMoreThan1Second] = useState(false);
 
   const onClickRefresh = () => {
     // we need to clear the timeout when the user clicks the refresh button, as are creating a new timeout
@@ -44,11 +54,21 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
     setLoadingContactPoints(true);
     setTimeOutId(
       setTimeout(() => {
-        setLoadingContactPoints(false);
+        !isFetchingRefetchReceivers && setLoadingContactPoints(false);
+        isFetchingRefetchReceivers && setFetchingTakesMoreThan1Second(true);
       }, LOADING_SPINNER_DURATION)
     );
   };
 
+  // if fetching is done, and we have a timeout id, means we are still showing the loading spinner, so we need to stop it
+  useEffect(() => {
+    if (!isFetchingRefetchReceivers && fetchingTakesMoreThan1Second) {
+      setLoadingContactPoints(false);
+      setFetchingTakesMoreThan1Second(false);
+    }
+  }, [isFetchingRefetchReceivers, fetchingTakesMoreThan1Second]);
+
+  // if the component unmounts, we need to clear the timeout
   useEffect(() => {
     return () => {
       if (timeOutId) {

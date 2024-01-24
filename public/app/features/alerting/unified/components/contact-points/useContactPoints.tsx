@@ -98,6 +98,7 @@ export function useContactPointsWithStatus() {
     isLoading,
     contactPoints,
     refetchReceivers: fetchAlertmanagerConfiguration.refetch,
+    isFetchingRefetchReceivers: fetchAlertmanagerConfiguration.isFetching,
   };
 }
 
