@@ -326,6 +326,40 @@ Payload:
 
 This section includes examples of setting up generic OAuth2 integration.
 
+### Set up OAuth2 with Descope
+
+To set up generic OAuth2 authentication with Descope, follow these steps:
+
+1. Create a Descope Project [here](https://app.descope.com/gettingStarted), and go through the Getting Started Wizard to configure your authentication. You can skip step if you already have Descope project set up.
+
+1. If you wish to use a flow besides `Sign Up or In`, go to the **IdP Applications** menu in the console, and select your IdP application. Then alter the **Flow Hosting URL** query parameter `?flow=sign-up-or-in` to change which flow id you wish to use.
+
+1. Click **Save**.
+
+1. Update the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the **Settings** tab:
+
+   {{% admonition type="note" %}}
+   You can get your Client ID (Descope Project ID) under [Project Settings](https://app.descope.com/settings/project). Your Client Secret (Descope Access Key) can be generated under [Access Keys](https://app.descope.com/accesskeys).
+   {{% /admonition %}}
+
+   ```bash
+   [auth.generic_oauth]
+   enabled = true
+   allow_sign_up = true
+   auto_login = false
+   team_ids =
+   allowed_organizations =
+   name = Descope
+   client_id = <Descope Project ID>
+   client_secret = <Descope Access Key>
+   scopes = openid profile email descope.claims descope.custom_claims
+   auth_url = https://api.descope.com/oauth2/v1/authorize
+   token_url = https://api.descope.com/oauth2/v1/token
+   api_url = https://api.descope.com/oauth2/v1/userinfo
+   use_pkce = true
+   use_refresh_token = true
+   ```
+
 ### Set up OAuth2 with Auth0
 
 To set up generic OAuth2 authentication with Auth0, follow these steps:
