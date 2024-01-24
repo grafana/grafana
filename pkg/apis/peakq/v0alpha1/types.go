@@ -67,7 +67,7 @@ type Position struct {
 
 	// Start is the byte offset within TargetKey's property of the variable.
 	// It is the start location for replacements).
-	Start int64 `json:"start"`
+	Start int64 `json:"start"` // TODO: byte, rune?
 
 	// End is the byte offset of the end of the variable.
 	End int64 `json:"end"`

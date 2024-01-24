@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -60,4 +61,32 @@ func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Obje
 		}
 		responder.Object(http.StatusOK, out)
 	}), nil
+}
+
+func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) ([]peakq.Target, error) {
+	// Note: The following is super stupid, will only work with one var, no sanity checking etc
+	targets := qt.DeepCopy().Targets
+	for _, qVar := range qt.Variables {
+		var offSet int64
+		for _, pos := range qVar.Positions {
+			// TODO: track offset after replacement
+			s, f, err := unstructured.NestedString(targets[pos.TargetIdx].Properties.Object, pos.TargetKey)
+			if err != nil {
+				return nil, err
+			}
+			if !f {
+				return nil, fmt.Errorf("property %q not found targetIdx %v", pos.TargetKey, pos.TargetIdx)
+			}
+
+			// I think breaks with utf...something...?
+			s = s[:pos.Start+offSet] + qVar.SelectedValue + s[pos.End+offSet:]
+			offSet = int64(len(qVar.SelectedValue)) - pos.End - pos.Start
+
+			err = unstructured.SetNestedField(targets[pos.TargetIdx].Properties.Object, s, pos.TargetKey)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return targets, nil
 }

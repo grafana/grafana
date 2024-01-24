@@ -161,6 +161,7 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplate(ref common.ReferenceCallback) 
 						},
 					},
 				},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
