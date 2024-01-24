@@ -70,23 +70,25 @@ It uses regular expressions (regex) to detect where it's inside a spanset and pr
 
 To create a query using autocomplete, follow these steps:
 
-1. Use the steps above to access the query editor and begin your query.
+1. From the menu, choose **Explore**, select the desired Tempo data source, and navigate to the **TraceQL** tab.
 
 1. Enter your query. As you type your query, autocomplete suggestions appear as a drop-down. Each letter you enter refines the autocomplete options to match.
 
 1. Use your mouse or arrow keys to select any option you wish. When the desired option is highlighted, press Tab on your keyboard to add the selection to your query.
 
-1. Once your query is complete, select **Run query** to perform the query.
+1. Once your query is complete, select **Run query**.
 
 ## View query results
 
 Query results for both the editor and the builder are returned in a table. Selecting the Trace ID or Span ID provides more detailed information.
 
+Selecting the trace ID from the returned results opens a trace diagram. Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram (the highlighted blue line).
+
+In the trace diagram, the bold text on the left side of each span indicates the service name, for example `mythical-requester: requester`, and it is hidden when subsequent spans have the same service name (nested spans).
+Each service has a color assigned to it, which is visible to the left of the name and timeline in the graph.
+Spans with the same color belong to the same service. The grey text to the right of the service name indicates the span name.
+
 ![Query editor showing span results](/static/img/docs/tempo/screenshot-traceql-query-editor-results-v10.png)
-
-Selecting the trace ID from the returned results opens a trace diagram. Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram (above, the highlighted blue line).
-
-In the trace diagram, the bold text on the left side of each span indicates the service name, for example `mythical-requester: requester`, and it is hidden when subsequent spans have the same service name (nested spans). Each service has a color assigned to it, which is visible to the left of the name and timeline in the graph. Spans with the same color belong to the same service. The grey text to the right of the service name indicates the span name.
 
 ### Streaming results
 
