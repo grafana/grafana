@@ -47,7 +47,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `cloudWatchLogsMonacoEditor`         | Enables the Monaco editor for CloudWatch Logs queries                                                                                                                                                                        | Yes                |
 | `recordedQueriesMulti`               | Enables writing multiple items from a single query within Recorded Queries                                                                                                                                                   | Yes                |
 | `transformationsRedesign`            | Enables the transformations redesign                                                                                                                                                                                         | Yes                |
-| `grafanaAPIServer`                   | Enable Kubernetes API Server for Grafana resources                                                                                                                                                                           | Yes                |
 | `awsAsyncQueryCaching`               | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                                                                                           | Yes                |
 | `splitScopes`                        | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                                                         | Yes                |
 | `prometheusConfigOverhaulAuth`       | Update the Prometheus configuration page with the new auth component                                                                                                                                                         | Yes                |
@@ -88,6 +87,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `pdfTables`                            | Enables generating table data as PDF in reporting                                                                                                                                            |
 | `canvasPanelPanZoom`                   | Allow pan and zoom in canvas panel                                                                                                                                                           |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
+| `alertingPreviewUpgrade`               | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                            |
 
 ## Experimental feature toggles
 
