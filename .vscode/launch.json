@@ -19,7 +19,17 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["apiserver", "testdata.datasource.grafana.app"]
+      "args": ["apiserver", "--secure-port=8443", "testdata.datasource.grafana.app"]
+    },
+    {
+      "name": "Run API Server (aggregator)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "env": {},
+      "cwd": "${workspaceFolder}",
+      "args": ["aggregator", "--secure-port", "8443"]
     },
     {
       "name": "Attach to Chrome",

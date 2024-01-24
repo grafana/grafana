@@ -9,7 +9,6 @@ import {
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
@@ -165,10 +164,6 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
-
-  if (root instanceof PanelEditor) {
-    return root.state.dashboardRef.resolve();
-  }
 
   if (root instanceof DashboardScene) {
     return root;
