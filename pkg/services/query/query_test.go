@@ -476,7 +476,7 @@ func setup(t *testing.T) *testContext {
 				{JSONData: plugins.JSONData{ID: "testdata"}},
 				{JSONData: plugins.JSONData{ID: "mysql"}},
 			},
-		}, fakeDatasourceService,
+		}, &fakeDatasources.FakeCacheService{}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,

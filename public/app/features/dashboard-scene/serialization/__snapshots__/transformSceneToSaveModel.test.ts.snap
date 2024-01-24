@@ -263,6 +263,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   "timezone": "",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
+  "version": 1,
   "weekStart": "",
 }
 `;
@@ -335,7 +336,20 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "fiscalYearStartMonth": 1,
   "graphTooltip": 0,
   "id": 1351,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Link 1",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": "",
+    },
+  ],
   "panels": [
     {
       "datasource": {
@@ -580,6 +594,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "timezone": "America/New_York",
   "title": "My custom title",
   "uid": "nP8rcffGkasd",
+  "version": 2,
   "weekStart": "monday",
 }
 `;
@@ -902,6 +917,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   "timezone": "America/New_York",
   "title": "Dashboard to load1",
   "uid": "nP8rcffGkasd",
+  "version": 2,
   "weekStart": "saturday",
 }
 `;

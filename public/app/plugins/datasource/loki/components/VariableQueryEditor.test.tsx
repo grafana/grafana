@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { select } from 'react-select-event';
 
 import { TemplateSrv } from '@grafana/runtime';
 
-import { createLokiDatasource } from '../mocks';
+import { createLokiDatasource } from '../__mocks__/datasource';
 import { LokiVariableQueryType } from '../types';
 
 import { LokiVariableQueryEditor, Props } from './VariableQueryEditor';
@@ -34,8 +34,7 @@ describe('LokiVariableQueryEditor', () => {
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
-
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label names');
+    await select(screen.getByLabelText('Query type'), 'Label names', { container: document.body });
 
     expect(onChange).toHaveBeenCalledWith({
       type: LokiVariableQueryType.LabelNames,
@@ -51,8 +50,8 @@ describe('LokiVariableQueryEditor', () => {
 
     expect(onChange).not.toHaveBeenCalled();
 
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
+    await waitFor(() => select(screen.getByLabelText('Query type'), 'Label values', { container: document.body }));
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
     await userEvent.type(screen.getByLabelText('Stream selector'), 'stream');
 
     await waitFor(() => expect(screen.getByDisplayValue('stream')).toBeInTheDocument());
@@ -72,8 +71,8 @@ describe('LokiVariableQueryEditor', () => {
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
+    await waitFor(() => select(screen.getByLabelText('Query type'), 'Label values', { container: document.body }));
 
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
     await userEvent.type(screen.getByLabelText('Label'), 'sol{enter}');
     await userEvent.type(screen.getByLabelText('Stream selector'), 'stream');
 
@@ -120,9 +119,8 @@ describe('LokiVariableQueryEditor', () => {
 
   test('Label options are not lost when selecting one', async () => {
     const { rerender } = render(<LokiVariableQueryEditor {...props} onChange={() => {}} />);
-
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
+    await waitFor(() => select(screen.getByLabelText('Query type'), 'Label values', { container: document.body }));
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
 
     const updatedQuery = {
       refId: 'test',
@@ -131,8 +129,8 @@ describe('LokiVariableQueryEditor', () => {
     };
     rerender(<LokiVariableQueryEditor {...props} query={updatedQuery} onChange={() => {}} />);
 
-    await selectOptionInTest(screen.getByLabelText('Label'), 'moon');
-    await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
+    await select(screen.getByLabelText('Label'), 'moon', { container: document.body });
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
     await screen.findByText('luna');
   });
 });

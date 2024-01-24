@@ -1,6 +1,5 @@
 import { of } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import {
   AbstractLabelOperator,
@@ -18,6 +17,7 @@ import {
   toDataFrame,
   TimeRange,
   ToggleFilterAction,
+  DataQueryRequest,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -31,8 +31,9 @@ import {
 } from '@grafana/runtime';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
+import { createLokiDatasource } from './__mocks__/datasource';
+import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
-import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { runSplitQuery } from './querySplitting';
 import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
@@ -121,6 +122,17 @@ const mockTimeRange = {
   raw: { from: dateTime(0), to: dateTime(1) },
 };
 
+const baseRequestOptions = {
+  requestId: '',
+  interval: '',
+  intervalMs: 1,
+  range: mockTimeRange,
+  scopedVars: {},
+  timezone: '',
+  app: '',
+  startTime: 1,
+};
+
 interface AdHocFilter {
   condition: string;
   key: string;
@@ -159,10 +171,11 @@ describe('LokiDatasource', () => {
       // and applyTemplateVariables is a convenient place to do that.
       const spy = jest.spyOn(ds, 'applyTemplateVariables');
 
-      const options = getQueryOptions<LokiQuery>({
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets: [{ expr: '{a="b"}', refId: 'B', maxLines: queryMaxLines }],
         app: app ?? CoreApp.Dashboard,
-      });
+      };
 
       const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
       setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
@@ -1238,36 +1251,40 @@ describe('LokiDatasource', () => {
     });
 
     it('creates provider for logs query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets: [{ expr: '{label="value"}', refId: 'A', queryType: LokiQueryType.Range }],
-      });
+      };
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
     it('does not create provider for metrics query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets: [{ expr: 'rate({label="value"}[1m])', refId: 'A' }],
-      });
+      };
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
 
     it('creates provider if at least one query is a logs query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets: [
           { expr: 'rate({label="value"}[1m])', queryType: LokiQueryType.Range, refId: 'A' },
           { expr: '{label="value"}', queryType: LokiQueryType.Range, refId: 'B' },
         ],
-      });
+      };
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
     it('does not create provider if there is only an instant logs query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets: [{ expr: '{label="value"', refId: 'A', queryType: LokiQueryType.Instant }],
-      });
+      };
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
@@ -1280,28 +1297,31 @@ describe('LokiDatasource', () => {
     });
 
     it('creates provider for metrics query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets: [{ expr: 'rate({label="value"}[5m])', refId: 'A' }],
-      });
+      };
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
 
     it('does not create provider for log query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets: [{ expr: '{label="value"}', refId: 'A' }],
-      });
+      };
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
     });
 
     it('creates provider if at least one query is a metric query', () => {
-      const options = getQueryOptions<LokiQuery>({
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets: [
           { expr: 'rate({label="value"}[1m])', refId: 'A' },
           { expr: '{label="value"}', refId: 'B' },
         ],
-      });
+      };
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
@@ -1550,10 +1570,11 @@ describe('LokiDatasource', () => {
       ],
     ])('supports query splitting when the requirements are met', async (targets: LokiQuery[]) => {
       const ds = createLokiDatasource(templateSrvStub);
-      const query = getQueryOptions<LokiQuery>({
+      const query: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
         targets,
         app: CoreApp.Dashboard,
-      });
+      };
 
       await expect(ds.query(query)).toEmitValuesWith(() => {
         expect(runSplitQuery).toHaveBeenCalled();

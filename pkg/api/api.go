@@ -47,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 var plog = log.New("api")
@@ -108,7 +107,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
-	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagStorage) {
 		r.Get("/admin/storage", reqSignedIn, hs.Index)
 		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
@@ -224,6 +222,11 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	r.Get("/admin/authentication/", authorize(evalAuthenticationSettings()), hs.Index)
+	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+		providerParam := ac.Parameter("provider")
+		r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
+	}
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -416,6 +419,8 @@ func (hs *HTTPServer) registerRoutes() {
 		}
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
+		apiRoute.Get("/frontend/assets", hs.GetFrontendAssets)
+
 		apiRoute.Any("/datasources/proxy/:id/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 		apiRoute.Any("/datasources/proxy/:id", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
@@ -512,15 +517,14 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
 		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
-		var notifiersAuthHandler web.Handler
-		if hs.Cfg.UnifiedAlerting.IsEnabled() {
-			notifiersAuthHandler = reqSignedIn
-		} else {
-			notifiersAuthHandler = reqEditorRole
-		}
+		// Unified Alerting
+		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
+			hs.GetAlertNotifiers()),
+		)
 
-		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
-			hs.GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
+		// Legacy
+		apiRoute.Get("/alert-notifiers-legacy", reqEditorRole, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
+			hs.GetLegacyAlertNotifiers()),
 		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {

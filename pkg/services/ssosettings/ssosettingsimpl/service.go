@@ -2,9 +2,11 @@ package ssosettingsimpl
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -23,7 +25,7 @@ import (
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
 type SSOSettingsService struct {
-	log     log.Logger
+	logger  log.Logger
 	cfg     *setting.Cfg
 	store   ssosettings.Store
 	ac      ac.AccessControl
@@ -34,7 +36,7 @@ type SSOSettingsService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
-	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager,
+	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service) *SSOSettingsService {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
@@ -44,7 +46,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	store := database.ProvideStore(sqlStore)
 
 	svc := &SSOSettingsService{
-		log:          log.New("ssosettings.service"),
+		logger:       log.New("ssosettings.service"),
 		cfg:          cfg,
 		store:        store,
 		ac:           ac,
@@ -64,22 +66,38 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
 func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	storeSettings, err := s.store.Get(ctx, provider)
+	dbSettings, err := s.store.Get(ctx, provider)
+	if err != nil && !errors.Is(err, ssosettings.ErrNotFound) {
+		return nil, err
+	}
 
-	if errors.Is(err, ssosettings.ErrNotFound) {
-		settings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+	if dbSettings != nil {
+		// Settings are coming from the database thus secrets are encrypted
+		dbSettings.Settings, err = s.decryptSecrets(ctx, dbSettings.Settings)
 		if err != nil {
 			return nil, err
 		}
-
-		return settings, nil
 	}
 
+	systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 	if err != nil {
 		return nil, err
 	}
 
-	storeSettings.Source = models.DB
+	return s.mergeSSOSettings(dbSettings, systemSettings), nil
+}
+
+func (s *SSOSettingsService) GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	storeSettings, err := s.GetForProvider(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range storeSettings.Settings {
+		if strVal, ok := v.(string); ok {
+			storeSettings.Settings[k] = setting.RedactedValue(k, strVal)
+		}
+	}
 
 	return storeSettings, nil
 }
@@ -93,33 +111,80 @@ func (s *SSOSettingsService) List(ctx context.Context) ([]*models.SSOSettings, e
 	}
 
 	for _, provider := range ssosettings.AllOAuthProviders {
-		settings := getSettingsByProvider(provider, storedSettings)
-		if len(settings) == 0 {
-			// If there is no data in the DB then we need to load the settings using the fallback strategy
-			fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+		dbSettings := getSettingByProvider(provider, storedSettings)
+		if dbSettings != nil {
+			// Settings are coming from the database thus secrets are encrypted
+			dbSettings.Settings, err = s.decryptSecrets(ctx, dbSettings.Settings)
 			if err != nil {
 				return nil, err
 			}
-
-			settings = append(settings, fallbackSettings)
 		}
-		result = append(result, settings...)
+		fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, s.mergeSSOSettings(dbSettings, fallbackSettings))
 	}
 
 	return result, nil
 }
 
-func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
-	var err error
-	// TODO: also check whether the provider is configurable
-	// Get the connector for the provider (from the reloadables) and call Validate
+func (s *SSOSettingsService) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error) {
+	storeSettings, err := s.List(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
+	for _, storeSetting := range storeSettings {
+		for k, v := range storeSetting.Settings {
+			if strVal, ok := v.(string); ok {
+				storeSetting.Settings[k] = setting.RedactedValue(k, strVal)
+			}
+		}
+	}
+
+	return storeSettings, nil
+}
+
+func (s *SSOSettingsService) Upsert(ctx context.Context, settings models.SSOSettings) error {
+	if !isProviderConfigurable(settings.Provider) {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s is not configurable", settings.Provider)
+	}
+
+	social, ok := s.reloadables[settings.Provider]
+	if !ok {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
+	}
+
+	err := social.Validate(ctx, settings)
 	if err != nil {
 		return err
 	}
 
-	return s.store.Upsert(ctx, settings)
+	storedSettings, err := s.GetForProvider(ctx, settings.Provider)
+	if err != nil {
+		return err
+	}
+
+	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings, storedSettings.Settings)
+	if err != nil {
+		return err
+	}
+
+	err = s.store.Upsert(ctx, settings)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err = social.Reload(context.Background(), settings)
+		if err != nil {
+			s.logger.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
+		}
+	}()
+
+	return nil
 }
 
 func (s *SSOSettingsService) Patch(ctx context.Context, provider string, data map[string]any) error {
@@ -146,7 +211,7 @@ func (s *SSOSettingsService) RegisterFallbackStrategy(providerRegex string, stra
 }
 
 func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	loadStrategy, ok := s.getFallBackstrategyFor(provider)
+	loadStrategy, ok := s.getFallbackStrategyFor(provider)
 	if !ok {
 		return nil, errors.New("no fallback strategy found for provider: " + provider)
 	}
@@ -163,17 +228,16 @@ func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Conte
 	}, nil
 }
 
-func getSettingsByProvider(provider string, settings []*models.SSOSettings) []*models.SSOSettings {
-	result := make([]*models.SSOSettings, 0)
+func getSettingByProvider(provider string, settings []*models.SSOSettings) *models.SSOSettings {
 	for _, item := range settings {
 		if item.Provider == provider {
-			result = append(result, item)
+			return item
 		}
 	}
-	return result
+	return nil
 }
 
-func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
+func (s *SSOSettingsService) getFallbackStrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
 	for _, strategy := range s.fbStrategies {
 		if strategy.IsMatch(provider) {
 			return strategy, true
@@ -182,32 +246,155 @@ func (s *SSOSettingsService) getFallBackstrategyFor(provider string) (ssosetting
 	return nil, false
 }
 
-func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
-	secretFieldPatterns := []string{"secret"}
-
-	isSecret := func(field string) bool {
-		for _, v := range secretFieldPatterns {
-			if strings.Contains(strings.ToLower(field), strings.ToLower(v)) {
-				return true
-			}
-		}
-		return false
-	}
-
+func (s *SSOSettingsService) encryptSecrets(ctx context.Context, settings, storedSettings map[string]any) (map[string]any, error) {
+	result := make(map[string]any)
 	for k, v := range settings {
 		if isSecret(k) {
 			strValue, ok := v.(string)
 			if !ok {
-				return settings, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
+				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
+			}
+
+			if !isNewSecretValue(strValue) {
+				strValue = storedSettings[k].(string)
 			}
 
 			encryptedSecret, err := s.secrets.Encrypt(ctx, []byte(strValue), secrets.WithoutScope())
 			if err != nil {
-				return settings, err
+				return result, err
 			}
-			settings[k] = string(encryptedSecret)
+			result[k] = base64.RawStdEncoding.EncodeToString(encryptedSecret)
+		} else {
+			result[k] = v
 		}
 	}
 
+	return result, nil
+}
+
+func (s *SSOSettingsService) Run(ctx context.Context) error {
+	interval := s.cfg.SSOSettingsReloadInterval
+	if interval == 0 {
+		return nil
+	}
+
+	ticker := time.NewTicker(interval)
+
+	// start a background process for reloading the SSO settings for all providers at a fixed interval
+	// it is useful for high availability setups running multiple Grafana instances
+	for {
+		select {
+		case <-ticker.C:
+			s.doReload(ctx)
+
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
+func (s *SSOSettingsService) doReload(ctx context.Context) {
+	s.logger.Debug("reloading SSO Settings for all providers")
+
+	settingsList, err := s.List(ctx)
+	if err != nil {
+		s.logger.Error("failed to fetch SSO Settings for all providers", "err", err)
+		return
+	}
+
+	for provider, connector := range s.reloadables {
+		setting := getSettingByProvider(provider, settingsList)
+
+		err = connector.Reload(ctx, *setting)
+		if err != nil {
+			s.logger.Error("failed to reload SSO Settings", "provider", provider, "err", err)
+			continue
+		}
+	}
+}
+
+// mergeSSOSettings merges the settings from the database with the system settings
+// Required because it is possible that the user has configured some of the settings (current Advanced OAuth settings)
+// and the rest of the settings are loaded from the system settings
+func (s *SSOSettingsService) mergeSSOSettings(dbSettings, systemSettings *models.SSOSettings) *models.SSOSettings {
+	if dbSettings == nil {
+		s.logger.Debug("No SSO Settings found in the database, using system settings")
+		return systemSettings
+	}
+
+	s.logger.Debug("Merging SSO Settings", "dbSettings", dbSettings.Settings, "systemSettings", systemSettings.Settings)
+
+	finalSettings := mergeSettings(dbSettings.Settings, systemSettings.Settings)
+
+	dbSettings.Settings = finalSettings
+
+	return dbSettings
+}
+
+func (s *SSOSettingsService) decryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
+	for k, v := range settings {
+		if isSecret(k) && v != "" {
+			strValue, ok := v.(string)
+			if !ok {
+				s.logger.Error("Failed to parse secret value, it is not a string", "key", k)
+				return nil, fmt.Errorf("secret value is not a string")
+			}
+
+			decoded, err := base64.RawStdEncoding.DecodeString(strValue)
+			if err != nil {
+				s.logger.Error("Failed to decode secret string", "err", err, "value")
+				return nil, err
+			}
+
+			decrypted, err := s.secrets.Decrypt(ctx, decoded)
+			if err != nil {
+				s.logger.Error("Failed to decrypt secret", "err", err)
+				return nil, err
+			}
+
+			settings[k] = string(decrypted)
+		}
+	}
 	return settings, nil
+}
+
+func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
+	settings := make(map[string]any)
+
+	for k, v := range storedSettings {
+		settings[k] = v
+	}
+
+	for k, v := range systemSettings {
+		if _, ok := settings[k]; !ok {
+			settings[k] = v
+		}
+	}
+
+	return settings
+}
+
+func isSecret(fieldName string) bool {
+	secretFieldPatterns := []string{"secret"}
+
+	for _, v := range secretFieldPatterns {
+		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+			return true
+		}
+	}
+	return false
+}
+
+func isProviderConfigurable(provider string) bool {
+	for _, configurable := range ssosettings.ConfigurableOAuthProviders {
+		if provider == configurable {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isNewSecretValue(value string) bool {
+	return value != setting.RedactedPassword
 }

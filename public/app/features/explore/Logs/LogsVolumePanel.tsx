@@ -7,11 +7,11 @@ import {
   DataQueryResponse,
   LoadingState,
   SplitOpen,
-  TimeZone,
   EventBus,
   GrafanaTheme2,
   DataFrame,
 } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
 import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
@@ -68,6 +68,9 @@ export function LogsVolumePanel(props: Props) {
   return (
     <div style={{ height }} className={styles.contentContainer}>
       <ExploreGraph
+        vizLegendOverrides={{
+          calcs: ['sum'],
+        }}
         graphStyle="lines"
         loadingState={logsVolumeData.state ?? LoadingState.Done}
         data={logsVolumeData.data}

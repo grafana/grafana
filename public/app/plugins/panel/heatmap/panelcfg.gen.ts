@@ -126,10 +126,12 @@ export interface FilterValueRange {
  * Controls tooltip options
  */
 export interface HeatmapTooltip {
+  maxHeight?: number;
+  maxWidth?: number;
   /**
-   * Controls if the tooltip is shown
+   * Controls how the tooltip is shown
    */
-  show: boolean;
+  mode: ui.TooltipDisplayMode;
   /**
    * Controls if the tooltip shows a color scale in header
    */
@@ -263,7 +265,7 @@ export const defaultOptions: Partial<Options> = {
   },
   showValue: ui.VisibilityMode.Auto,
   tooltip: {
-    show: true,
+    mode: ui.TooltipDisplayMode.Single,
     yHistogram: false,
     showColorScale: false,
   },

@@ -42,6 +42,7 @@ export interface FeatureToggles {
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
   dockedMegaMenu?: boolean;
+  returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
@@ -78,7 +79,6 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
-  useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
@@ -144,7 +144,6 @@ export interface FeatureToggles {
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
-  costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   addFieldFromCalculationStatFunctions?: boolean;
@@ -158,6 +157,7 @@ export interface FeatureToggles {
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
+  canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
@@ -170,4 +170,12 @@ export interface FeatureToggles {
   displayAnonymousStats?: boolean;
   alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
+  kubernetesFeatureToggles?: boolean;
+  alertingPreviewUpgrade?: boolean;
+  enablePluginsTracingByDefault?: boolean;
+  cloudRBACRoles?: boolean;
+  alertingQueryOptimization?: boolean;
+  newFolderPicker?: boolean;
+  jitterAlertRules?: boolean;
+  jitterAlertRulesWithinGroups?: boolean;
 }

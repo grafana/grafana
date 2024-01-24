@@ -144,6 +144,10 @@ describe('getLineFilterRenderer', () => {
     id: '__line_contains_case_insensitive',
     params: ['ERrOR'],
   };
+  const MOCK_MODEL_BACKTICKS = {
+    id: '__line_contains',
+    params: ['`error`'],
+  };
 
   const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
 
@@ -157,6 +161,11 @@ describe('getLineFilterRenderer', () => {
   it('lineFilterRenderer returns the correct query for line contains', () => {
     const lineFilterRenderer = getLineFilterRenderer('!~');
     expect(lineFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ `error`');
+  });
+
+  it('lineFilterRenderer returns the correct query for line contains, containing backticks', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~');
+    expect(lineFilterRenderer(MOCK_MODEL_BACKTICKS, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ "`error`"');
   });
 
   it('lineFilterRenderer returns the correct query for line contains case insensitive', () => {
