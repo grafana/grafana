@@ -26,8 +26,16 @@ func find(dir string, name string) ([]string, error) {
 	return files, err
 }
 
-func findPluginJSONDir(pluginDir string) (string, error) {
-	pluginJSONMatches, err := find(filepath.Join("../../public/app/plugins/datasource", pluginDir), "plugin.json")
+func fileHasString(path string, s string) bool {
+	f, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(f), s)
+}
+
+func findPluginJSONDir(pluginID string) (string, error) {
+	pluginJSONMatches, err := filepath.Glob("../../public/app/plugins/datasource/*/plugin.json")
 	if err != nil {
 		return "", err
 	}
@@ -36,9 +44,8 @@ func findPluginJSONDir(pluginDir string) (string, error) {
 	}
 	pluginJSONPath := ""
 	for _, pluginJSONMatch := range pluginJSONMatches {
-		// Ignore dist folder
-		if filepath.Base(filepath.Dir(pluginJSONMatch)) != "dist" {
-			pluginJSONPath = pluginJSONMatch
+		if !fileHasString(pluginJSONMatch, fmt.Sprintf(`"id": "%s"`, pluginID)) {
+			continue
 		}
 	}
 	pluginJSONPath, err = filepath.Abs(pluginJSONPath)
@@ -48,15 +55,25 @@ func findPluginJSONDir(pluginDir string) (string, error) {
 	return filepath.Dir(pluginJSONPath), nil
 }
 
-func findRootDir(pluginDir string) (string, error) {
-	matches, err := find(pluginDir, "main.go")
+func findRootDir(pluginID string) (string, error) {
+	matches, err := find(".", "main.go")
 	if err != nil {
 		return "", err
 	}
 	if len(matches) == 0 {
 		return "", fmt.Errorf("Could not find main.go")
 	}
-	absolutePath, err := filepath.Abs(matches[0])
+	pluginDir := ""
+	for _, match := range matches {
+		if fileHasString(match, fmt.Sprintf(`datasource.Manage("%s"`, pluginID)) {
+			pluginDir = filepath.Dir(match)
+			break
+		}
+	}
+	if pluginDir == "" {
+		return "", nil
+	}
+	absolutePath, err := filepath.Abs(pluginDir)
 	if err != nil {
 		return "", err
 	}
@@ -76,44 +93,15 @@ func buildPlugin(rootDir, pluginJSONDir string) {
 	build.BuildAll()
 }
 
-func BuildPlugin(pluginDir string) error {
-	rootDir, err := findRootDir(pluginDir)
+func BuildPlugin(pluginID string) error {
+	rootDir, err := findRootDir(pluginID)
 	if err != nil {
 		return err
 	}
-	pluginJSONDir, err := findPluginJSONDir(pluginDir)
+	pluginJSONDir, err := findPluginJSONDir(pluginID)
 	if err != nil {
 		return err
 	}
 	buildPlugin(rootDir, pluginJSONDir)
 	return nil
 }
-
-func BuildAllPlugins() error {
-	// Plugins need to have a main.go file
-	matches, err := find(".", "main.go")
-	if err != nil {
-		return err
-	}
-	for _, match := range matches {
-		// Get the directory name of the plugin
-		parts := strings.Split(filepath.ToSlash(match), "/")
-		if len(parts) == 0 {
-			continue
-		}
-		pluginDir := parts[0]
-		rootDir, err := findRootDir(pluginDir)
-		if err != nil {
-			return err
-		}
-		pluginJSONDir, err := findPluginJSONDir(pluginDir)
-		if err != nil {
-			return err
-		}
-		buildPlugin(rootDir, pluginJSONDir)
-	}
-	return nil
-}
-
-// Default configures the default target.
-var Default = BuildAllPlugins
