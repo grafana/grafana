@@ -13,14 +13,16 @@ import (
 )
 
 type AlertNotificationService struct {
+	cfg                 *setting.Cfg
 	SQLStore            AlertNotificationStore
 	EncryptionService   encryption.Internal
 	NotificationService *notifications.NotificationService
 }
 
-func ProvideService(store db.DB, encryptionService encryption.Internal,
+func ProvideService(cfg *setting.Cfg, store db.DB, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService) *AlertNotificationService {
 	s := &AlertNotificationService{
+		cfg:                 cfg,
 		SQLStore:            &sqlStore{db: store},
 		EncryptionService:   encryptionService,
 		NotificationService: notificationService,
@@ -38,7 +40,7 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 		return nil, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 	}
 
-	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
+	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, s.cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +63,7 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 		return nil, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 	}
 
-	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
+	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, s.cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +142,7 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 
 		if res.SecureSettings != nil {
 			var err error
-			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, setting.SecretKey)
+			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, res.SecureSettings, s.cfg.SecretKey)
 			if err != nil {
 				return nil, err
 			}
@@ -152,12 +154,12 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 	}
 
 	var err error
-	model.SecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, secureSettingsMap, setting.SecretKey)
+	model.SecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, secureSettingsMap, s.cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
 
-	notifier, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue, s.NotificationService)
+	notifier, err := InitNotifier(s.cfg, model, s.EncryptionService.GetDecryptedValue, s.NotificationService)
 	if err != nil {
 		logger.Error("Failed to create notifier", "error", err.Error())
 		return nil, err
