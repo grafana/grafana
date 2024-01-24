@@ -96,7 +96,7 @@
   "devDependencies": {
     "@emotion/eslint-plugin": "11.11.0",
     "@grafana/e2e": "10.2.0",
-    "@grafana/e2e-selectors": "10.2.0",
+    "@grafana/e2e-selectors": "workspace:*",
     "@grafana/eslint-config": "6.0.1",
     "@grafana/tsconfig": "1.3.0-rc1",
     "@rollup/plugin-commonjs": "25.0.2",
