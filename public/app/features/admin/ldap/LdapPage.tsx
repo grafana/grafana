@@ -138,7 +138,7 @@ export class LdapPage extends PureComponent<Props, State> {
                     {userError.body}
                   </Alert>
                 )}
-                {ldapUser && <LdapUserInfo ldapUser={ldapUser} showAttributeMapping={true} />}
+                {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
               </section>
             )}
           </Stack>

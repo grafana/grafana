@@ -5,10 +5,9 @@ import { LdapUserInfo } from 'app/types';
 
 interface Props {
   info: LdapUserInfo;
-  showAttributeMapping?: boolean;
 }
 
-export const LdapUserMappingInfo = ({ info, showAttributeMapping }: Props) => {
+export const LdapUserMappingInfo = ({ info }: Props) => {
   const columns = useMemo(
     () => [
       {
@@ -22,10 +21,9 @@ export const LdapUserMappingInfo = ({ info, showAttributeMapping }: Props) => {
       {
         id: 'cfgAttrValue',
         header: 'LDAP attribute',
-        visible: () => !!showAttributeMapping,
       },
     ],
-    [showAttributeMapping]
+    []
   );
 
   const rows = useMemo(

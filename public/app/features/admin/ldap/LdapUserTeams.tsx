@@ -5,18 +5,14 @@ import { LdapTeam } from 'app/types';
 
 interface Props {
   teams: LdapTeam[];
-  showAttributeMapping?: boolean;
 }
 
-export const LdapUserTeams = ({ teams, showAttributeMapping }: Props) => {
-  const items = showAttributeMapping ? teams : teams.filter((item) => item.teamName);
-
+export const LdapUserTeams = ({ teams }: Props) => {
   const columns = useMemo<Array<Column<LdapTeam>>>(
     () => [
       {
         id: 'groupDN',
         header: 'LDAP Group',
-        visible: () => !!showAttributeMapping,
       },
       {
         id: 'orgName',
@@ -37,8 +33,8 @@ export const LdapUserTeams = ({ teams, showAttributeMapping }: Props) => {
         }: CellProps<LdapTeam, void>) => (teamName && orgName ? teamName : ''),
       },
     ],
-    [showAttributeMapping]
+    []
   );
 
-  return <InteractiveTable data={items} columns={columns} getRowId={(row) => row.teamName} />;
+  return <InteractiveTable data={teams} columns={columns} getRowId={(row) => row.teamName} />;
 };

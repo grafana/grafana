@@ -5,21 +5,16 @@ import { LdapRole } from 'app/types';
 
 interface Props {
   groups: LdapRole[];
-  showAttributeMapping?: boolean;
 }
 
-export const LdapUserGroups = ({ groups, showAttributeMapping }: Props) => {
-  const items = useMemo(
-    () => (showAttributeMapping ? groups : groups.filter((item) => item.orgRole)),
-    [groups, showAttributeMapping]
-  );
+export const LdapUserGroups = ({ groups }: Props) => {
+  const items = useMemo(() => groups, [groups]);
 
   const columns = useMemo<Array<Column<LdapRole>>>(
     () => [
       {
         id: 'groupDN',
         header: 'LDAP Group',
-        visible: () => !!showAttributeMapping,
       },
       {
         id: 'orgName',
@@ -41,7 +36,7 @@ export const LdapUserGroups = ({ groups, showAttributeMapping }: Props) => {
           ),
       },
     ],
-    [showAttributeMapping]
+    []
   );
 
   return (
