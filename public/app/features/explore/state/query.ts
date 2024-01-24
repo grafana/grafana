@@ -34,7 +34,6 @@ import {
   getTimeRange,
   hasNonEmptyQuery,
   stopQueryState,
-  updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
@@ -66,7 +65,7 @@ import {
 
 import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';
-import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
 import {
@@ -485,10 +484,6 @@ async function handleHistory(
   queries: DataQuery[],
   exploreId: string
 ) {
-  const datasourceId = datasource.meta.id;
-  const nextHistory = updateHistory(history, datasourceId, queries);
-  dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-
   dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
 
   // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently

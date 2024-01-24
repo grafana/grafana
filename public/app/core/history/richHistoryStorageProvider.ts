@@ -14,6 +14,10 @@ export const getRichHistoryStorage = (): RichHistoryStorage => {
   return config.queryHistoryEnabled ? richHistoryRemoteStorage : richHistoryLocalStorage;
 };
 
+export const getLocalRichHistoryStorage = (): RichHistoryStorage => {
+  return richHistoryLocalStorage;
+};
+
 interface RichHistorySupportedFeatures {
   availableFilters: SortOrder[];
   lastUsedDataSourcesAvailable: boolean;

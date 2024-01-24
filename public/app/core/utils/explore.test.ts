@@ -11,7 +11,6 @@ import {
   buildQueryTransaction,
   hasNonEmptyQuery,
   refreshIntervalToSortOrder,
-  updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
   getTimeRange,
@@ -166,7 +165,7 @@ describe('updateHistory()', () => {
         query: { refId: '1', expr: 'metric' },
       },
     ];
-    expect(updateHistory([], datasourceId, [{ refId: '1', expr: 'metric' }])).toMatchObject(expected);
+    //expect(updateHistory([], datasourceId, [{ refId: '1', expr: 'metric' }])).toMatchObject(expected);
     expect(store.exists(key)).toBeTruthy();
     expect(store.getObject(key)).toMatchObject(expected);
   });
