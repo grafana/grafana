@@ -2,12 +2,9 @@ package sqlstash
 
 import (
 	"context"
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -19,43 +16,79 @@ import (
 func TestCreate(t *testing.T) {
 	s := setUpTestServer(t)
 
-	t.Run("create an entry", func(t *testing.T) {
-		createdAt := metav1.Now()
-		createdAtStr := createdAt.UTC().Format(time.RFC3339)
+	t.Run("entity with only Key and CreatedBy", func(t *testing.T) {
+		key := "/playlist.grafana.app/playlists/default/set-minimum-uid"
 
-		updatedAt := createdAt.Add(time.Hour)
-		updatedAtStr := updatedAt.UTC().Format(time.RFC3339)
-
-		resp, err := s.Create(context.Background(), &entity.CreateEntityRequest{
+		req := entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:             "/playlist.grafana.app/playlists/default/test-uid",
-				GroupVersion:    "v0alpha1",
-				Name:            "test-uid",
-				Title:           "test-name",
-				Guid:            "test-guid",
-				Folder:          "test-folder",
-				CreatedBy:       "test-created-by-tania",
-				CreatedAt:       createdAt.UnixMilli(),
-				UpdatedAt:       updatedAt.UnixMilli(),
-				UpdatedBy:       "test-updated-by",
-				Slug:            "test-slug",
-				Origin:          &entity.EntityOriginInfo{},
-				Labels:          map[string]string{"label1": "value1", "label2": "value2"},
-				Meta:            []byte(fmt.Sprintf(`{"metadata":{"name":"test-name","uid":"test-uid","resourceVersion":"1","creationTimestamp":%q,"labels":{"label1":"value1","label2":"value2"},"annotations":{"grafana.app/createdBy":"test-created-by","grafana.app/folder":"test-folder","grafana.app/slug":"test-slug","grafana.app/updatedTimestamp":%q,"grafana.app/updatedBy":"test-updated-by"}}}`, createdAtStr, updatedAtStr)),
-				Body:            []byte(fmt.Sprintf(`{"kind":"Playlist","apiVersion":"playlist.grafana.app/v0alpha1","metadata":{"name":"test-name","uid":"test-uid","resourceVersion":"1","creationTimestamp":%q,"labels":{"label1":"value1","label2":"value2"},"annotations":{"grafana.app/createdBy":"test-created-by","grafana.app/folder":"test-folder","grafana.app/slug":"test-slug","grafana.app/updatedBy":"test-updated-by","grafana.app/updatedTimestamp":%q}},"spec":{"title":"A playlist","interval":"5m","items":[{"type":"dashboard_by_tag","value":"panel-tests"},{"type":"dashboard_by_uid","value":"vmie2cmWz"}]}}`, createdAtStr, updatedAtStr)),
-				ResourceVersion: 1,
+				Key:       key,
+				CreatedBy: "set-minimum-creator",
 			},
-		})
+		}
+
+		resp, err := s.Create(context.Background(), &req)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-	})
+		require.Equal(t, entity.CreateEntityResponse_CREATED, resp.Status)
+		require.Nil(t, resp.Error)
+		// #TODO check that everything that needs to be set is set
+		// #TODO switch expected and actual
+		// require.Equal(t, req.Entity.Name, resp.Entity.Name) // everything from guid through name, key, etag, oriigin
+		require.Equal(t, resp.Entity.Subresource, "")
+		require.Equal(t, resp.Entity.GroupVersion, "")
+		require.Equal(t, resp.Entity.Folder, "")
+		// require.Nil(t, resp.Entity.Meta)
+		// require.Equal(t, resp.Entity.Body, "")
+		// require.Equal(t, resp.Entity.Status, "")
+		require.Equal(t, resp.Entity.Title, "")
+		require.Equal(t, resp.Entity.Size, int64(0))
+		require.Equal(t, resp.Entity.CreatedAt, int64(0))
+		require.Equal(t, resp.Entity.CreatedBy, "")
+		require.Equal(t, resp.Entity.UpdatedAt, int64(0))
+		require.Equal(t, resp.Entity.UpdatedBy, "")
+		require.Equal(t, resp.Entity.Description, "")
+		require.Equal(t, resp.Entity.Slug, "")
+		require.Equal(t, resp.Entity.Message, "")
+		// require.Equal(t, resp.Entity.Labels, "")
+		// require.Equal(t, resp.Entity.Fields, "")
+		// require.Equal(t, resp.Entity.Errors, "")
 
-	t.Run("read an entry", func(t *testing.T) {
 		read, err := s.Read(context.Background(), &entity.ReadEntityRequest{
-			Key: "/playlist.grafana.app/playlists/default/test-uid",
+			Key: key,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, read)
+	})
+
+	t.Run("entity with no CreatedBy", func(t *testing.T) {
+		key := "/playlist.grafana.app/playlists/default/set-minimum"
+
+		req := entity.CreateEntityRequest{
+			Entity: &entity.Entity{
+				Key: key,
+			},
+		}
+
+		resp, err := s.Create(context.Background(), &req)
+		require.Error(t, err)
+		require.Nil(t, resp)
+	})
+
+	t.Run("entity with no Key", func(t *testing.T) {
+		req := entity.CreateEntityRequest{
+			Entity: &entity.Entity{
+				CreatedBy: "entity-creator",
+			},
+		}
+
+		resp, err := s.Create(context.Background(), &req)
+		// #TODO figure out what error to check for exactly
+		require.Error(t, err)
+		// --
+		// // #TODO figure out what to check for the next three requires
+		require.NotNil(t, resp)
+		require.Equal(t, entity.CreateEntityResponse_ERROR, resp.Status)
+		require.Nil(t, resp.Error)
 	})
 }
 
