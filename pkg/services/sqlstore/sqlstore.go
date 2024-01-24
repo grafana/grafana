@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -34,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // ContextSessionKey is used as key to save values in `context.Context`
@@ -45,7 +41,7 @@ type SQLStore struct {
 	sqlxsession *session.SessionDB
 
 	bus                          bus.Bus
-	dbCfg                        DatabaseConfig
+	dbCfg                        *DatabaseConfig
 	engine                       *xorm.Engine
 	log                          log.Logger
 	Dialect                      migrator.Dialect
@@ -160,18 +156,6 @@ func (ss *SQLStore) Reset() error {
 	return ss.ensureMainOrgAndAdminUser(false)
 }
 
-// TestReset resets database state. If default org and user creation is enabled,
-// it will be ensured they exist in the database. TestReset() is more permissive
-// than Reset in that it will create the user and org whether or not there are
-// already users in the database.
-func (ss *SQLStore) TestReset() error {
-	if ss.skipEnsureDefaultOrgAndUser {
-		return nil
-	}
-
-	return ss.ensureMainOrgAndAdminUser(true)
-}
-
 // Quote quotes the value in the used SQL dialect
 func (ss *SQLStore) Quote(value string) string {
 	return ss.engine.Quote(value)
@@ -248,110 +232,6 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 	return err
 }
 
-func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
-	if ss.dbCfg.UrlQueryParams == nil {
-		return ""
-	}
-
-	var sb strings.Builder
-	for key, values := range ss.dbCfg.UrlQueryParams {
-		for _, value := range values {
-			sb.WriteRune(sep)
-			sb.WriteString(key)
-			sb.WriteRune('=')
-			sb.WriteString(value)
-		}
-	}
-	return sb.String()
-}
-
-func (ss *SQLStore) buildConnectionString() (string, error) {
-	if err := ss.readConfig(); err != nil {
-		return "", err
-	}
-
-	cnnstr := ss.dbCfg.ConnectionString
-
-	// special case used by integration tests
-	if cnnstr != "" {
-		return cnnstr, nil
-	}
-
-	switch ss.dbCfg.Type {
-	case migrator.MySQL:
-		protocol := "tcp"
-		if strings.HasPrefix(ss.dbCfg.Host, "/") {
-			protocol = "unix"
-		}
-
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
-			ss.dbCfg.User, ss.dbCfg.Pwd, protocol, ss.dbCfg.Host, ss.dbCfg.Name)
-
-		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "skip-verify" {
-			tlsCert, err := makeCert(ss.dbCfg)
-			if err != nil {
-				return "", err
-			}
-			if err := mysql.RegisterTLSConfig("custom", tlsCert); err != nil {
-				return "", err
-			}
-
-			cnnstr += "&tls=custom"
-		}
-
-		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
-			val := url.QueryEscape(fmt.Sprintf("'%s'", isolation))
-			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
-		}
-
-		// nolint:staticcheck
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) {
-			cnnstr += "&sql_mode='ANSI_QUOTES'"
-		}
-
-		cnnstr += ss.buildExtraConnectionString('&')
-	case migrator.Postgres:
-		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
-		if err != nil {
-			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
-		}
-
-		args := []any{ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
-			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath}
-		for i, arg := range args {
-			if arg == "" {
-				args[i] = "''"
-			}
-		}
-		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", args...)
-		if ss.dbCfg.Pwd != "" {
-			cnnstr += fmt.Sprintf(" password=%s", ss.dbCfg.Pwd)
-		}
-
-		cnnstr += ss.buildExtraConnectionString(' ')
-	case migrator.SQLite:
-		// special case for tests
-		if !filepath.IsAbs(ss.dbCfg.Path) {
-			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
-		}
-		if err := os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm); err != nil {
-			return "", err
-		}
-
-		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
-
-		if ss.dbCfg.WALEnabled {
-			cnnstr += "&_journal_mode=WAL"
-		}
-
-		cnnstr += ss.buildExtraConnectionString('&')
-	default:
-		return "", fmt.Errorf("unknown database type: %s", ss.dbCfg.Type)
-	}
-
-	return cnnstr, nil
-}
-
 // initEngine initializes ss.engine.
 func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	if ss.engine != nil {
@@ -359,18 +239,20 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return nil
 	}
 
-	connectionString, err := ss.buildConnectionString()
+	dbCfg, err := NewDatabaseConfig(ss.Cfg)
 	if err != nil {
 		return err
 	}
+
+	ss.dbCfg = dbCfg
 
 	if ss.Cfg.DatabaseInstrumentQueries {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
 	ss.log.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
-	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") &&
-		!strings.HasPrefix(connectionString, "file::memory:") {
+	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(ss.dbCfg.ConnectionString, "file:") &&
+		!strings.HasPrefix(ss.dbCfg.ConnectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
 		if err != nil {
 			return fmt.Errorf("can't check for existence of %q: %w", ss.dbCfg.Path, err)
@@ -400,14 +282,14 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 	if engine == nil {
 		var err error
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
 		if err != nil {
 			return err
 		}
 		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system var for transaction isolation.
 		// If not, create a new engine with a compatible connection string.
 		if ss.dbCfg.Type == migrator.MySQL {
-			engine, err = ss.ensureTransactionIsolationCompatibility(engine, connectionString)
+			engine, err = ss.ensureTransactionIsolationCompatibility(engine, ss.dbCfg.ConnectionString)
 			if err != nil {
 				return err
 			}
@@ -457,62 +339,6 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 	}
 
 	return engine, nil
-}
-
-// readConfig initializes the SQLStore from its configuration.
-func (ss *SQLStore) readConfig() error {
-	sec := ss.Cfg.Raw.Section("database")
-
-	cfgURL := sec.Key("url").String()
-	if len(cfgURL) != 0 {
-		dbURL, err := url.Parse(cfgURL)
-		if err != nil {
-			return err
-		}
-		ss.dbCfg.Type = dbURL.Scheme
-		ss.dbCfg.Host = dbURL.Host
-
-		pathSplit := strings.Split(dbURL.Path, "/")
-		if len(pathSplit) > 1 {
-			ss.dbCfg.Name = pathSplit[1]
-		}
-
-		userInfo := dbURL.User
-		if userInfo != nil {
-			ss.dbCfg.User = userInfo.Username()
-			ss.dbCfg.Pwd, _ = userInfo.Password()
-		}
-
-		ss.dbCfg.UrlQueryParams = dbURL.Query()
-	} else {
-		ss.dbCfg.Type = sec.Key("type").String()
-		ss.dbCfg.Host = sec.Key("host").String()
-		ss.dbCfg.Name = sec.Key("name").String()
-		ss.dbCfg.User = sec.Key("user").String()
-		ss.dbCfg.ConnectionString = sec.Key("connection_string").String()
-		ss.dbCfg.Pwd = sec.Key("password").String()
-	}
-
-	ss.dbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
-	ss.dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
-	ss.dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
-
-	ss.dbCfg.SslMode = sec.Key("ssl_mode").String()
-	ss.dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
-	ss.dbCfg.ClientKeyPath = sec.Key("client_key_path").String()
-	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
-	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
-	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
-	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
-
-	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
-	ss.dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
-	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
-	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
-
-	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
-	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
-	return nil
 }
 
 func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
@@ -746,56 +572,4 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 	}
 
 	return testSQLStore, nil
-}
-
-func IsTestDbMySQL() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.MySQL
-	}
-
-	return false
-}
-
-func IsTestDbPostgres() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.Postgres
-	}
-
-	return false
-}
-
-func IsTestDBMSSQL() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.MSSQL
-	}
-
-	return false
-}
-
-type DatabaseConfig struct {
-	Type                        string
-	Host                        string
-	Name                        string
-	User                        string
-	Pwd                         string
-	Path                        string
-	SslMode                     string
-	CaCertPath                  string
-	ClientKeyPath               string
-	ClientCertPath              string
-	ServerCertName              string
-	ConnectionString            string
-	IsolationLevel              string
-	MaxOpenConn                 int
-	MaxIdleConn                 int
-	ConnMaxLifetime             int
-	CacheMode                   string
-	WALEnabled                  bool
-	UrlQueryParams              map[string][]string
-	SkipMigrations              bool
-	MigrationLockAttemptTimeout int
-	// SQLite only
-	QueryRetries int
-	// SQLite only
-	TransactionRetries int
 }
