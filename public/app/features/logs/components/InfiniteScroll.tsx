@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { debounce } from 'lodash';
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
@@ -34,6 +35,11 @@ export const InfiniteScroll = ({
   const [upperLoading, setUpperLoading] = useState(false);
   const [lowerLoading, setLowerLoading] = useState(false);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
+  const [onEdge, setOnEdge] = useState(true);
+  const debouncedOnEdge = useMemo(() => debounce(() => { 
+    setOnEdge(true);
+    console.log('bouncy bouncy') 
+  }, 250), []);
 
   useEffect(() => {
     setUpperOutOfRange(false);
@@ -57,6 +63,11 @@ export const InfiniteScroll = ({
         return;
       }
       event.stopImmediatePropagation();
+
+      const onScrollingEdge = isOnEdge(lastScroll.current, scrollElement, debouncedOnEdge, () => { setOnEdge(false); debouncedOnEdge.cancel(); });
+      lastScroll.current = scrollElement.scrollTop;
+      return;
+
       const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
       lastScroll.current = scrollElement.scrollTop;
       if (scrollDirection === ScrollDirection.NoScroll) {
@@ -221,4 +232,14 @@ function canScrollBottom(
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
 function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
   return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
+}
+
+function isOnEdge(lastScroll: number, scrollElement: HTMLDivElement, onEdgeCallback: () => void, notOnEdgeCallback: () => void) {
+  const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
+  console.log(lastScroll, scrollElement.scrollTop, scrollHeight)
+  if (lastScroll === scrollElement.scrollTop && (scrollElement.scrollTop === 0 || Math.abs(scrollHeight - scrollElement.scrollTop) <= 1)) {
+    onEdgeCallback();
+  } else {
+    notOnEdgeCallback();
+  }
 }
