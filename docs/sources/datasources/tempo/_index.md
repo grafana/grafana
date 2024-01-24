@@ -20,11 +20,11 @@ weight: 1400
 
 # Tempo data source
 
-Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
+Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](configure-tempo-data-source#provision-the-data-source) with Grafana's provisioning system.
 
 Once you've added the data source, you can [configure it]({{< relref "./configure-tempo-data-source/" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
