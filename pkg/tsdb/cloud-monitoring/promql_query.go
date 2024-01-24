@@ -12,9 +12,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/grafana/grafana/pkg/util/converter"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryDataRequest,

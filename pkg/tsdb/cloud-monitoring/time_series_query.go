@@ -8,8 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	gcmTime "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/time"
 )
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
@@ -17,7 +16,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *ba
 	// If not set, the default behavior is to set an automatic value
 	if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod != "disabled" {
 		if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod == "auto" || *timeSeriesQuery.parameters.GraphPeriod == "" {
-			intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
+			intervalCalculator := gcmTime.NewCalculator(gcmTime.CalculatorOptions{})
 			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
 			timeSeriesQuery.parameters.GraphPeriod = &interval.Text
 		}

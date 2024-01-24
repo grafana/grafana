@@ -16,15 +16,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	gcmTime "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/time"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 func addInterval(period string, field *data.Field) error {
 	period = strings.TrimPrefix(period, "+")
-	p, err := intervalv2.ParseIntervalStringToTimeDuration(period)
+	p, err := gcmTime.ParseIntervalStringToTimeDuration(period)
 	if err != nil {
 		return err
 	}
