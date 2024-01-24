@@ -143,6 +143,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
     },
   ],
   "error": undefined,
+  "isFetchingRefetchReceivers": false,
   "isLoading": false,
   "refetchReceivers": [Function],
 }
