@@ -65,8 +65,7 @@ func ProvideService(
 		migrationStore:    migrationStore,
 		encryptionService: encryptionService,
 		silences: &silenceHandler{
-			dataPath:          cfg.DataPath,
-			createSilenceFile: openReplace,
+			persistSilences: migrationStore.SetSilences,
 		},
 	}, nil
 }
@@ -493,7 +492,7 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 			return err
 		}
 
-		err = ms.silences.createSilences(o.ID, om.log)
+		err = ms.silences.createSilences(ctx, o.ID, om.log)
 		if err != nil {
 			return fmt.Errorf("create silences for org %d: %w", o.ID, err)
 		}
