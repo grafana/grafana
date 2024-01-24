@@ -330,6 +330,37 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	return states
 }
 
+// asInstances returns the whole content of the cache as a slice of AlertInstance.
+func (c *cache) asInstances(skipNormalState bool) []ngModels.AlertInstance {
+	var states []ngModels.AlertInstance
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	for _, orgStates := range c.states {
+		for _, v1 := range orgStates {
+			for _, v2 := range v1.states {
+				if skipNormalState && IsNormalStateWithNoReason(v2) {
+					continue
+				}
+				key, err := v2.GetAlertInstanceKey()
+				if err != nil {
+					continue
+				}
+				states = append(states, ngModels.AlertInstance{
+					AlertInstanceKey:  key,
+					Labels:            ngModels.InstanceLabels(v2.Labels),
+					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
+					CurrentReason:     v2.StateReason,
+					LastEvalTime:      v2.LastEvaluationTime,
+					CurrentStateSince: v2.StartsAt,
+					CurrentStateEnd:   v2.EndsAt,
+					ResultFingerprint: v2.ResultFingerprint.String(),
+				})
+			}
+		}
+	}
+	return states
+}
+
 // if duplicate labels exist, keep the value from the first set
 func mergeLabels(a, b data.Labels) data.Labels {
 	newLbs := make(data.Labels, len(a)+len(b))

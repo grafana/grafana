@@ -53,9 +53,8 @@ type userData struct {
 }
 
 func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
-	config := createOAuthConfig(info, cfg, social.GitlabProviderName)
 	provider := &SocialGitlab{
-		SocialBase: newSocialBase(social.GitlabProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase: newSocialBase(social.GitlabProviderName, info, features, cfg),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -76,7 +75,19 @@ func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
-	// add specific validation rules for Gitlab
+	return nil
+}
+
+func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.SocialBase = newSocialBase(social.GitlabProviderName, newInfo, s.features, s.cfg)
 
 	return nil
 }
@@ -244,7 +255,7 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 		idData.Role = role
 	}
 
-	if setting.Env == setting.Dev {
+	if s.cfg.Env == setting.Dev {
 		s.log.Debug("Resolved ID", "data", fmt.Sprintf("%+v", idData))
 	}
 

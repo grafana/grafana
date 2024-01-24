@@ -118,7 +118,7 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
 
 	err := srv.TryTokenRefresh(ctx, usr)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: 1}
@@ -178,6 +178,8 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 
 	usr := &login.UserAuth{
 		AuthModule:        "oauth_generic_oauth",
+		UserId:            1,
+		AuthId:            "test",
 		OAuthAccessToken:  token.AccessToken,
 		OAuthRefreshToken: token.RefreshToken,
 		OAuthExpiry:       token.Expiry,
@@ -190,7 +192,7 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 
 	err := srv.TryTokenRefresh(ctx, usr)
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: 1}

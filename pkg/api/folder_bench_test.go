@@ -451,11 +451,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	ac := acimpl.ProvideAccessControl(sc.cfg)
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, nil)
 
+	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(

@@ -288,7 +288,11 @@ export function getAppRoutes(): RouteDescriptor[] {
           : () => <Redirect to="/admin" />,
     },
     {
-      path: '/admin/authentication/advanced/:provider',
+      path: '/admin/authentication/ldap',
+      component: LdapPage,
+    },
+    {
+      path: '/admin/authentication/:provider',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component: config.featureToggles.ssoSettingsApi
         ? SafeDynamicImport(
@@ -354,10 +358,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
-    },
-    {
-      path: '/admin/authentication/ldap',
-      component: LdapPage,
     },
     // LOGIN / SIGNUP
     {

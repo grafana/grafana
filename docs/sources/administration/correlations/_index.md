@@ -30,11 +30,6 @@ Explore visualizations that currently support showing links based on correlation
 
 You can configure correlations using [provisioning]({{< relref "../provisioning" >}}), the **Administration > Plugins and data > Correlations** page in Grafana or directly in [Explore]({{< relref "../../explore/correlations-editor-in-explore" >}}).
 
-{{% admonition type="note" %}}
-Correlations are available in Grafana 10.0+ as an opt-in beta feature.
-Modify the Grafana [configuration file]({{< relref "../../setup-grafana/configure-grafana#configuration-file-location" >}}) to enable the `correlations` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}) to use it.
-{{% /admonition %}}
-
 ## Example of how links work in Explore once set up
 
 {{< figure src="/static/img/docs/correlations/correlations-in-explore-10-0.gif" alt="Demonstration of following a correlation link in Grafana Explore" caption="Correlations links in Explore" >}}

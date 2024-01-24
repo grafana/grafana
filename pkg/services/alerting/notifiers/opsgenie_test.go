@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestOpsGenieNotifier(t *testing.T) {
@@ -32,7 +33,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewOpsGenieNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -49,7 +50,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewOpsGenieNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			opsgenieNotifier := not.(*OpsGenieNotifier)
 
 			require.Nil(t, err)
@@ -73,7 +74,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewOpsGenieNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(alerting.ValidationError{}))
 			require.True(t, strings.HasSuffix(err.Error(), "Invalid value for sendTagsAs: \"not_a_valid_value\""))
@@ -97,7 +98,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			notificationService := notifications.MockNotificationService()
-			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
+			notifier, notifierErr := NewOpsGenieNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -146,7 +147,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			notificationService := notifications.MockNotificationService()
-			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
+			notifier, notifierErr := NewOpsGenieNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -195,7 +196,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			notificationService := notifications.MockNotificationService()
-			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
+			notifier, notifierErr := NewOpsGenieNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 

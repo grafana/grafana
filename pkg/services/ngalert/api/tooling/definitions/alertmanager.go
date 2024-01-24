@@ -1273,13 +1273,22 @@ type PostableGrafanaReceivers struct {
 
 type EncryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
+// ObjectMatcher is a matcher that can be used to filter alerts.
+// swagger:model ObjectMatcher
+type ObjectMatcherAPIModel [3]string
+
+// ObjectMatchers is a list of matchers that can be used to filter alerts.
+// swagger:model ObjectMatchers
+type ObjectMatchersAPIModel []ObjectMatcherAPIModel
+
+// swagger:ignore
 // ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects
 // that have already been parsed.
 type ObjectMatchers labels.Matchers
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for Matchers.
 func (m *ObjectMatchers) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var rawMatchers [][3]string
+	var rawMatchers ObjectMatchersAPIModel
 	if err := unmarshal(&rawMatchers); err != nil {
 		return err
 	}
@@ -1326,7 +1335,7 @@ func (m *ObjectMatchers) UnmarshalYAML(unmarshal func(interface{}) error) error 
 
 // UnmarshalJSON implements the json.Unmarshaler interface for Matchers.
 func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
-	var rawMatchers [][3]string
+	var rawMatchers ObjectMatchersAPIModel
 	if err := json.Unmarshal(data, &rawMatchers); err != nil {
 		return err
 	}
@@ -1360,9 +1369,9 @@ func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
 
 // MarshalYAML implements the yaml.Marshaler interface for Matchers.
 func (m ObjectMatchers) MarshalYAML() (interface{}, error) {
-	result := make([][3]string, len(m))
+	result := make(ObjectMatchersAPIModel, len(m))
 	for i, matcher := range m {
-		result[i] = [3]string{matcher.Name, matcher.Type.String(), matcher.Value}
+		result[i] = ObjectMatcherAPIModel{matcher.Name, matcher.Type.String(), matcher.Value}
 	}
 	return result, nil
 }
@@ -1372,9 +1381,9 @@ func (m ObjectMatchers) MarshalJSON() ([]byte, error) {
 	if len(m) == 0 {
 		return nil, nil
 	}
-	result := make([][3]string, len(m))
+	result := make(ObjectMatchersAPIModel, len(m))
 	for i, matcher := range m {
-		result[i] = [3]string{matcher.Name, matcher.Type.String(), matcher.Value}
+		result[i] = ObjectMatcherAPIModel{matcher.Name, matcher.Type.String(), matcher.Value}
 	}
 	return json.Marshal(result)
 }

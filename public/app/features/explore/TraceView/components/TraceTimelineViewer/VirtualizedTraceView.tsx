@@ -19,10 +19,10 @@ import * as React from 'react';
 import { RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';

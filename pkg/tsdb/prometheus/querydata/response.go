@@ -32,6 +32,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
 		Dataplane: s.enableDataplane,
 	})
+	r.Status = backend.Status(res.StatusCode)
 
 	// Add frame to attach metadata
 	if len(r.Frames) == 0 && !q.ExemplarQuery {
