@@ -107,6 +107,7 @@ export const GroupByField = (props: Props) => {
                   icon="times"
                   onClick={() => removeFilter(f)}
                   tooltip="Remove tag"
+                  title={`Remove tag for filter ${i + 1}`}
                   variant="secondary"
                 />
               )}

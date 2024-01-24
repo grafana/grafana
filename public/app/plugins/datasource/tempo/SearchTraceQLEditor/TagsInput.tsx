@@ -84,16 +84,22 @@ const TagsInput = ({
           />
           {(f.tag || f.value || i > 0) && (
             <AccessoryButton
+              aria-label={`Remove tag with ID ${f.id}`}
               variant={'secondary'}
               icon={'times'}
               onClick={() => deleteFilter?.(f)}
               tooltip={'Remove tag'}
-              aria-label={`remove tag with ID ${f.id}`}
             />
           )}
           {(f.tag || f.value) && i === filters.length - 1 && (
             <span className={styles.addTag}>
-              <AccessoryButton variant={'secondary'} icon={'plus'} onClick={handleOnAdd} tooltip={'Add tag'} />
+              <AccessoryButton
+                aria-label="Add tag"
+                variant={'secondary'}
+                icon={'plus'}
+                onClick={handleOnAdd}
+                tooltip={'Add tag'}
+              />
             </span>
           )}
         </div>
