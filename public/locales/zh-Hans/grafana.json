@@ -71,6 +71,7 @@
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
+      "clear-selection": "",
       "empty-message": "未找到文件夹",
       "error-title": "加载文件夹时出错",
       "search-placeholder": "搜索文件夹",

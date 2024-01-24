@@ -81,6 +81,7 @@
     "folder-picker": {
       "accessible-label": "Sélectionnez un dossier : {{ label }} est sélectionné actuellement",
       "button-label": "Sélectionner un dossier",
+      "clear-selection": "",
       "empty-message": "Aucun dossier trouvé",
       "error-title": "Impossible de charger les dossiers",
       "search-placeholder": "Rechercher dans les dossiers",

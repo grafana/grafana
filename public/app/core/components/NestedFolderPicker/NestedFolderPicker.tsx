@@ -42,7 +42,10 @@ export interface NestedFolderPickerProps {
   excludeUIDs?: string[];
 
   /* Callback for when the user selects a folder */
-  onChange?: (folderUID: string, folderName: string) => void;
+  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
+
+  /* Whether the picker should be clearable */
+  clearable?: boolean;
 }
 
 const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
@@ -64,6 +67,7 @@ export function NestedFolderPicker({
   value,
   invalid,
   showRootFolder = true,
+  clearable = false,
   excludeUIDs,
   onChange,
 }: NestedFolderPickerProps) {
@@ -154,6 +158,17 @@ export function NestedFolderPicker({
         onChange(item.uid, item.title);
       }
       setOverlayOpen(false);
+    },
+    [onChange]
+  );
+
+  const handleClearSelection = useCallback(
+    (event: React.MouseEvent<SVGElement> | React.KeyboardEvent<SVGElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (onChange) {
+        onChange(undefined, undefined);
+      }
     },
     [onChange]
   );
@@ -259,6 +274,7 @@ export function NestedFolderPicker({
     return (
       <Trigger
         label={label}
+        handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
         isLoading={selectedFolder.isLoading}
         autoFocus={autoFocusButton}
