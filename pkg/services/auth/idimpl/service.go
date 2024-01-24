@@ -25,7 +25,7 @@ import (
 const (
 	cachePrefix = "id-token"
 	tokenTTL    = 10 * time.Minute
-	cacheLeway  = 30 * time.Second
+	cacheLeeway  = 30 * time.Second
 )
 
 var _ auth.IDService = (*Service)(nil)
