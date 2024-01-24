@@ -884,7 +884,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}
-	if *q.UID == "" {
+	if q.UID == nil || *q.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
 	if q.OrgID < 1 {
@@ -894,13 +894,17 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 	result := []string{*q.UID}
 	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		subfolders, err := s.getNestedFolders(ctx, q.OrgID, *q.UID)
+		descendantFolders, err := s.store.GetDescendants(ctx, q.OrgID, *q.UID)
+		descendantFolderUIDs := make([]string, 0, len(descendantFolders))
 		if err != nil {
-			logger.Error("failed to get subfolders", "error", err)
+			logger.Error("failed to get descendant folders", "error", err)
 			return nil, err
 		}
-		result = append(result, subfolders...)
-		countsMap[entity.StandardKindFolder] = int64(len(subfolders))
+		for _, f := range descendantFolders {
+			result = append(result, f.UID)
+			descendantFolderUIDs = append(descendantFolderUIDs, f.UID)
+		}
+		countsMap[entity.StandardKindFolder] = int64(len(descendantFolderUIDs))
 	}
 
 	for _, v := range s.registry {
@@ -914,24 +918,6 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 		}
 	}
 	return countsMap, nil
-}
-
-func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string) ([]string, error) {
-	result := []string{}
-	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, f := range folders {
-		result = append(result, f.UID)
-		subfolders, err := s.getNestedFolders(ctx, f.OrgID, f.UID)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, subfolders...)
-	}
-	return result, nil
 }
 
 // buildSaveDashboardCommand is a simplified version on DashboardServiceImpl.buildSaveDashboardCommand
