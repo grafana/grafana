@@ -27,8 +27,8 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
-import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
@@ -166,13 +166,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: true, isResizable: true });
-      forceRenderChildren(this.state.body, true);
-    }
-
+    this.propagateEditModeChange();
     this.startTrackingChanges();
   };
+
+  public onSaveCompleted() {
+    this.setState({ isDirty: false, isEditing: false });
+    this.propagateEditModeChange();
+    this.stopTrackingChanges();
+  }
+
+  private propagateEditModeChange() {
+    if (this.state.body instanceof SceneGridLayout) {
+      this.state.body.setState({ isDraggable: this.state.isEditing, isResizable: this.state.isEditing });
+      forceRenderChildren(this.state.body, true);
+    }
+  }
 
   public onDiscard = () => {
     // No need to listen to changes anymore
@@ -198,12 +207,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
     this.startUrlSync();
-
     // Disable grid dragging
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: false, isResizable: false });
-      forceRenderChildren(this.state.body, true);
-    }
+    this.propagateEditModeChange();
   };
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
