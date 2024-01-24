@@ -1,4 +1,3 @@
-import { merge } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
@@ -93,56 +92,48 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           const valuesByGroupKey = groupValuesByKey(frame, groupByFields);
           
           // Add the grouped fields to the resulting fields of the transformation
-          const groupedFields: Field[] = createGroupedFields(groupByFields, valuesByGroupKey);
-
-          
-          console.log(groupedFields);
-          // const aggregatedFields: Field[] = [];
-          const aggregatedFields = calculateFieldAggregations(frame, valuesByGroupKey, options);
-          console.log(groupedFields, aggregatedFields);
-
-          const allFields = merge(groupedFields, aggregatedFields);
+          const fields: Field[] = createGroupedFields(groupByFields, valuesByGroupKey);
 
           // Then for each calculations configured, compute and add a new field (column)
-          // for (const field of frame.fields) {
-          //   if (!shouldCalculateField(field, options)) {
-          //     continue;
-          //   }
+          for (const field of frame.fields) {
+            if (!shouldCalculateField(field, options)) {
+              continue;
+            }
 
-          //   const fieldName = getFieldDisplayName(field);
-          //   const aggregations = options.fields[fieldName].aggregations;
-          //   const valuesByAggregation: Record<string, unknown[]> = {};
+            const fieldName = getFieldDisplayName(field);
+            const aggregations = options.fields[fieldName].aggregations;
+            const valuesByAggregation: Record<string, unknown[]> = {};
 
-          //   valuesByGroupKey.forEach((value) => {
-          //     const fieldWithValuesForGroup = value[fieldName];
-          //     const results = reduceField({
-          //       field: fieldWithValuesForGroup,
-          //       reducers: aggregations,
-          //     });
+            valuesByGroupKey.forEach((value) => {
+              const fieldWithValuesForGroup = value[fieldName];
+              const results = reduceField({
+                field: fieldWithValuesForGroup,
+                reducers: aggregations,
+              });
 
-          //     for (const aggregation of aggregations) {
-          //       if (!Array.isArray(valuesByAggregation[aggregation])) {
-          //         valuesByAggregation[aggregation] = [];
-          //       }
-          //       valuesByAggregation[aggregation].push(results[aggregation]);
-          //     }
-          //   });
+              for (const aggregation of aggregations) {
+                if (!Array.isArray(valuesByAggregation[aggregation])) {
+                  valuesByAggregation[aggregation] = [];
+                }
+                valuesByAggregation[aggregation].push(results[aggregation]);
+              }
+            });
 
-          //   for (const aggregation of aggregations) {
-          //     const aggregationField: Field = {
-          //       name: `${fieldName} (${aggregation})`,
-          //       values: valuesByAggregation[aggregation] ?? [],
-          //       type: FieldType.other,
-          //       config: {},
-          //     };
+            for (const aggregation of aggregations) {
+              const aggregationField: Field = {
+                name: `${fieldName} (${aggregation})`,
+                values: valuesByAggregation[aggregation] ?? [],
+                type: FieldType.other,
+                config: {},
+              };
 
-          //     aggregationField.type = detectFieldType(aggregation, field, aggregationField);
-          //     fields.push(aggregationField);
-          //   }
-          // }
+              aggregationField.type = detectFieldType(aggregation, field, aggregationField);
+              fields.push(aggregationField);
+            }
+          }
 
           processed.push({
-            fields: allFields,
+            fields,
             length: valuesByGroupKey.size,
           });
         }
@@ -217,7 +208,7 @@ export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
 
 
 export function createGroupedFields(groupByFields: Field[], valuesByGroupKey: Map<string, FieldMap>) {
-  const groupedFields: Field[] = [];
+  const fields: Field[] = [];
 
   for (const field of groupByFields) {
     const values: any[] = [];
@@ -227,7 +218,7 @@ export function createGroupedFields(groupByFields: Field[], valuesByGroupKey: Ma
       values.push(value[fieldName].values[0]);
     });
 
-    groupedFields.push({
+    fields.push({
       name: field.name,
       type: field.type,
       config: {
@@ -237,51 +228,5 @@ export function createGroupedFields(groupByFields: Field[], valuesByGroupKey: Ma
     });
   }
 
-  return groupedFields;
-}
-
-export function calculateFieldAggregations(frame: DataFrame, valuesByGroupKey: Map<string, FieldMap>, options: GroupByTransformerOptions) {
-  const fieldAggregations: Field[] = [];
-
-  for (const field of frame.fields) {
-    if (!shouldCalculateField(field, options)) {
-      continue;
-    }
-
-    const fieldName = getFieldDisplayName(field);
-    const aggregations = options.fields[fieldName].aggregations;
-    const valuesByAggregation: Record<string, unknown[]> = {};
-
-    valuesByGroupKey.forEach((value) => {
-      const fieldWithValuesForGroup = value[fieldName];
-      const results = reduceField({
-        field: fieldWithValuesForGroup,
-        reducers: aggregations,
-      });
-
-      for (const aggregation of aggregations) {
-        if (!Array.isArray(valuesByAggregation[aggregation])) {
-          valuesByAggregation[aggregation] = [];
-        }
-        valuesByAggregation[aggregation].push(results[aggregation]);
-      }
-    });
-
-    console.log(valuesByAggregation);
-
-    for (const aggregation of aggregations) {
-      const aggregationField = {
-        name: `${fieldName} (${aggregation})`,
-        values: [],
-        type: FieldType.other,
-        config: {},
-      };
-
-      // aggregationField.type = detectFieldType(aggregation, field, aggregationField);
-      fieldAggregations.push(aggregationField);
-    }
-  }
-
-
-  return fieldAggregations;
+  return fields;
 }
