@@ -15,6 +15,9 @@ interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElemen
   maxWidth?: number | 'none';
 }
 
+/**
+ * @deprecated use the `useForm` hook from react-hook-form instead
+ */
 export function Form<T extends FieldValues>({
   defaultValues,
   onSubmit,
