@@ -74,7 +74,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	userIDString := c.Query("userId")
 	userID, err := strconv.ParseInt(userIDString, 10, 64)
 	if err != nil {
-		response.Error(http.StatusBadRequest, "user ID is invalid", err)
+		return response.Error(http.StatusBadRequest, "user ID is invalid", err)
 	}
 	searchOptions := ac.SearchOptions{
 		UserLogin:    c.Query("userLogin"),
@@ -115,7 +115,7 @@ func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) r
 	userIDString := web.Params(c.Req)[":userID"]
 	userID, err := strconv.ParseInt(userIDString, 10, 64)
 	if err != nil {
-		response.Error(http.StatusBadRequest, "user ID is invalid", err)
+		return response.Error(http.StatusBadRequest, "user ID is invalid", err)
 	}
 
 	searchOptions := ac.SearchOptions{
