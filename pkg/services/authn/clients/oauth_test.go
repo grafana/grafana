@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -46,16 +47,22 @@ func TestOAuth_Authenticate(t *testing.T) {
 		{
 			desc:        "should return error when missing state cookie",
 			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
-			oauthCfg:    &social.OAuthInfo{},
+			oauthCfg:    &social.OAuthInfo{Enabled: true},
 			expectedErr: errOAuthMissingState,
 		},
 		{
 			desc:             "should return error when state cookie is present but don't have a value",
 			req:              &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
-			oauthCfg:         &social.OAuthInfo{},
+			oauthCfg:         &social.OAuthInfo{Enabled: true},
 			addStateCookie:   true,
 			stateCookieValue: "",
 			expectedErr:      errOAuthMissingState,
+		},
+		{
+			desc:        "should return error when the client is not enabled",
+			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
+			oauthCfg:    &social.OAuthInfo{Enabled: false},
+			expectedErr: errOAuthClientDisabled,
 		},
 		{
 			desc: "should return error when state from ipd does not match stored state",
@@ -64,7 +71,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-other-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			expectedErr:      errOAuthInvalidState,
@@ -76,7 +83,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			expectedErr:      errOAuthMissingPKCE,
@@ -88,7 +95,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
@@ -103,7 +110,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
@@ -119,7 +126,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
@@ -157,7 +164,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				URL:    mustParseURL("http://grafana.com/?state=some-state"),
 			},
 			},
-			oauthCfg:              &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:              &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			allowInsecureTakeover: true,
 			addStateCookie:        true,
 			stateCookieValue:      "some-state",
@@ -211,12 +218,18 @@ func TestOAuth_Authenticate(t *testing.T) {
 				tt.req.HTTPRequest.AddCookie(&http.Cookie{Name: oauthPKCECookieName, Value: tt.pkceCookieValue})
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, tt.oauthCfg, fakeConnector{
-				ExpectedUserInfo:        tt.userInfo,
-				ExpectedToken:           &oauth2.Token{},
-				ExpectedIsSignupAllowed: true,
-				ExpectedIsEmailAllowed:  tt.isEmailAllowed,
-			}, nil, nil)
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+				ExpectedConnector: fakeConnector{
+					ExpectedUserInfo:        tt.userInfo,
+					ExpectedToken:           &oauth2.Token{},
+					ExpectedIsSignupAllowed: true,
+					ExpectedIsEmailAllowed:  tt.isEmailAllowed,
+				},
+			}
+
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc)
+
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
 
@@ -256,20 +269,26 @@ func TestOAuth_RedirectURL(t *testing.T) {
 	tests := []testCase{
 		{
 			desc:              "should generate redirect url and state",
-			oauthCfg:          &social.OAuthInfo{},
+			oauthCfg:          &social.OAuthInfo{Enabled: true},
 			authCodeUrlCalled: true,
 		},
 		{
 			desc:              "should generate redirect url with hosted domain option if configured",
-			oauthCfg:          &social.OAuthInfo{HostedDomain: "grafana.com"},
+			oauthCfg:          &social.OAuthInfo{HostedDomain: "grafana.com", Enabled: true},
 			numCallOptions:    1,
 			authCodeUrlCalled: true,
 		},
 		{
 			desc:              "should generate redirect url with pkce if configured",
-			oauthCfg:          &social.OAuthInfo{UsePKCE: true},
+			oauthCfg:          &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			numCallOptions:    1,
 			authCodeUrlCalled: true,
+		},
+		{
+			desc:              "should return error if the client is not enabled",
+			oauthCfg:          &social.OAuthInfo{Enabled: false},
+			authCodeUrlCalled: false,
+			expectedErr:       errOAuthClientDisabled,
 		},
 	}
 
@@ -279,13 +298,18 @@ func TestOAuth_RedirectURL(t *testing.T) {
 				authCodeUrlCalled = false
 			)
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), setting.NewCfg(), tt.oauthCfg, mockConnector{
-				AuthCodeURLFunc: func(state string, opts ...oauth2.AuthCodeOption) string {
-					authCodeUrlCalled = true
-					require.Len(t, opts, tt.numCallOptions)
-					return ""
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+				ExpectedConnector: mockConnector{
+					AuthCodeURLFunc: func(state string, opts ...oauth2.AuthCodeOption) string {
+						authCodeUrlCalled = true
+						require.Len(t, opts, tt.numCallOptions)
+						return ""
+					},
 				},
-			}, nil, nil)
+			}
+
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), setting.NewCfg(), nil, fakeSocialSvc)
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -322,11 +346,16 @@ func TestOAuth_Logout(t *testing.T) {
 			oauthCfg: &social.OAuthInfo{},
 		},
 		{
+			desc:     "should not return redirect url when client is not enabled",
+			cfg:      &setting.Cfg{},
+			oauthCfg: &social.OAuthInfo{Enabled: false},
+		},
+		{
 			desc: "should return redirect url for globably configured redirect url",
 			cfg: &setting.Cfg{
 				SignoutRedirectUrl: "http://idp.com/logout",
 			},
-			oauthCfg:    &social.OAuthInfo{},
+			oauthCfg:    &social.OAuthInfo{Enabled: true},
 			expectedURL: "http://idp.com/logout",
 			expectedOK:  true,
 		},
@@ -334,6 +363,7 @@ func TestOAuth_Logout(t *testing.T) {
 			desc: "should return redirect url for client configured redirect url",
 			cfg:  &setting.Cfg{},
 			oauthCfg: &social.OAuthInfo{
+				Enabled:            true,
 				SignoutRedirectUrl: "http://idp.com/logout",
 			},
 			expectedURL: "http://idp.com/logout",
@@ -345,6 +375,7 @@ func TestOAuth_Logout(t *testing.T) {
 				SignoutRedirectUrl: "http://idp.com/logout",
 			},
 			oauthCfg: &social.OAuthInfo{
+				Enabled:            true,
 				SignoutRedirectUrl: "http://idp-2.com/logout",
 			},
 			expectedURL: "http://idp-2.com/logout",
@@ -354,6 +385,7 @@ func TestOAuth_Logout(t *testing.T) {
 			desc: "should add id token hint if oicd logout is configured and token is valid",
 			cfg:  &setting.Cfg{},
 			oauthCfg: &social.OAuthInfo{
+				Enabled:            true,
 				SignoutRedirectUrl: "http://idp.com/logout?post_logout_redirect_uri=http%3A%3A%2F%2Ftest.com%2Flogin",
 			},
 			expectedURL:           "http://idp.com/logout",
@@ -387,7 +419,10 @@ func TestOAuth_Logout(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, tt.oauthCfg, mockConnector{}, nil, mockService)
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+			}
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc)
 
 			redirect, ok := c.Logout(context.Background(), &authn.Identity{}, &login.UserAuth{})
 

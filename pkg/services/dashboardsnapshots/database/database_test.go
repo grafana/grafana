@@ -23,12 +23,13 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlstore := db.InitTestDB(t)
-	dashStore := ProvideStore(sqlstore, setting.NewCfg())
+	cfg := setting.NewCfg()
+	dashStore := ProvideStore(sqlstore, cfg)
 
-	origSecret := setting.SecretKey
-	setting.SecretKey = "dashboard_snapshot_testing"
+	origSecret := cfg.SecretKey
+	cfg.SecretKey = "dashboard_snapshot_testing"
 	t.Cleanup(func() {
-		setting.SecretKey = origSecret
+		cfg.SecretKey = origSecret
 	})
 	secretsService := fakes.NewFakeSecretsService()
 	dashboard := simplejson.NewFromAny(map[string]any{"hello": "mupp"})

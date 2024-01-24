@@ -205,7 +205,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 			Error:       err,
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(resp.StatusCode),
 		}
-		lp = append(lp, "status", "error", "error", err)
+		lp = append(lp, "status", "error", "error", err, "statusSource", res.ErrorSource)
 		api.log.Error("Error received from Loki", lp...)
 		return &res, nil
 	} else {
