@@ -36,21 +36,15 @@ func TestContactPointService(t *testing.T) {
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 
-		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Len(t, cps, 2)
+		require.Equal(t, "grafana-default-email", cps[0].Name)
+		require.Equal(t, "slack receiver", cps[1].Name)
 	})
 
 	t.Run("service filters contact points by name", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		newCp := createTestContactPoint()
-		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
-		require.NoError(t, err)
 
-		q := ContactPointQuery{
-			OrgID: 1,
-			Name:  "slack receiver",
-		}
-		cps, err := sut.GetContactPoints(context.Background(), q, nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "slack receiver"), nil)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
@@ -66,9 +60,9 @@ func TestContactPointService(t *testing.T) {
 
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
-		require.Len(t, cps, 2)
-		require.Equal(t, "test-contact-point", cps[1].Name)
-		require.Equal(t, "slack", cps[1].Type)
+		require.Len(t, cps, 3)
+		require.Equal(t, "test-contact-point", cps[2].Name)
+		require.Equal(t, "slack", cps[2].Type)
 	})
 
 	t.Run("it's possible to use a custom uid", func(t *testing.T) {
@@ -80,10 +74,10 @@ func TestContactPointService(t *testing.T) {
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
 		require.NoError(t, err)
-		require.Len(t, cps, 2)
-		require.Equal(t, customUID, cps[1].UID)
+		require.Len(t, cps, 1)
+		require.Equal(t, customUID, cps[0].UID)
 	})
 
 	t.Run("it's not possible to use invalid UID", func(t *testing.T) {
@@ -216,19 +210,19 @@ func TestContactPointService(t *testing.T) {
 				newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, test.from)
 				require.NoError(t, err)
 
-				cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+				cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
 				require.NoError(t, err)
-				require.Equal(t, newCp.UID, cps[1].UID)
-				require.Equal(t, test.from, models.Provenance(cps[1].Provenance))
+				require.Equal(t, newCp.UID, cps[0].UID)
+				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
 
 				err = sut.UpdateContactPoint(context.Background(), 1, newCp, test.to)
 				if test.errNil {
 					require.NoError(t, err)
 
-					cps, err = sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+					cps, err = sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), nil)
 					require.NoError(t, err)
-					require.Equal(t, newCp.UID, cps[1].UID)
-					require.Equal(t, test.to, models.Provenance(cps[1].Provenance))
+					require.Equal(t, newCp.UID, cps[0].UID)
+					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
 				} else {
 					require.Error(t, err, fmt.Sprintf("cannot change provenance from '%s' to '%s'", test.from, test.to))
 				}
@@ -262,9 +256,9 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 
-		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
-		require.Equal(t, definitions.RedactedValue, cps[0].Settings.Get("url").MustString())
+		require.Len(t, cps, 2)
+		require.Equal(t, "slack receiver", cps[1].Name)
+		require.Equal(t, definitions.RedactedValue, cps[1].Settings.Get("url").MustString())
 	})
 	t.Run("GetContactPoints errors when Decrypt = true and user does not have permissions", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
@@ -289,7 +283,8 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		sut.ac = ac
 
-		q := cpsQuery(1)
+		expectedName := "slack receiver"
+		q := cpsQueryWithName(1, expectedName)
 		q.Decrypt = true
 		cps, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: {
@@ -299,7 +294,7 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Equal(t, expectedName, cps[0].Name)
 		require.Equal(t, "secure url", cps[0].Settings.Get("url").MustString())
 	})
 }
@@ -370,6 +365,13 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 func cpsQuery(orgID int64) ContactPointQuery {
 	return ContactPointQuery{
 		OrgID: orgID,
+	}
+}
+
+func cpsQueryWithName(orgID int64, name string) ContactPointQuery {
+	return ContactPointQuery{
+		OrgID: orgID,
+		Name:  name,
 	}
 }
 

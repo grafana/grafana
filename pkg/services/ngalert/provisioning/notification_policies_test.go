@@ -44,7 +44,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			Return(nil)
 		newRoute := createTestRoutingTree()
 		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver:          "a new receiver",
+			Receiver:          "slack receiver",
 			MuteTimeIntervals: []string{"not-existing"},
 		})
 
@@ -70,7 +70,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			Return(nil)
 		newRoute := createTestRoutingTree()
 		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver:          "a new receiver",
+			Receiver:          "slack receiver",
 			MuteTimeIntervals: []string{"existing"},
 		})
 
@@ -88,7 +88,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 		updated, err := sut.GetPolicyTree(context.Background(), 1)
 		require.NoError(t, err)
-		require.Equal(t, "a new receiver", updated.Receiver)
+		require.Equal(t, "slack receiver", updated.Receiver)
 	})
 
 	t.Run("not existing receiver reference will error", func(t *testing.T) {
@@ -186,12 +186,12 @@ func TestNotificationPolicyService(t *testing.T) {
 		sut.configStore.store = &MockAMConfigStore{}
 		cfg := createTestAlertingConfig()
 		cfg.AlertmanagerConfig.Route = &definitions.Route{
-			Receiver: "a new receiver",
+			Receiver: "slack receiver",
 		}
 		cfg.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
 			{
 				Receiver: config.Receiver{
-					Name: "a new receiver",
+					Name: "slack receiver",
 				},
 			},
 			// No default receiver! Only our custom one.
@@ -228,7 +228,7 @@ func createNotificationPolicyServiceSut() *NotificationPolicyService {
 
 func createTestRoutingTree() definitions.Route {
 	return definitions.Route{
-		Receiver: "a new receiver",
+		Receiver: "slack receiver",
 	}
 }
 
@@ -238,7 +238,7 @@ func createTestAlertingConfig() *definitions.PostableUserConfig {
 		&definitions.PostableApiReceiver{
 			Receiver: config.Receiver{
 				// default one from createTestRoutingTree()
-				Name: "a new receiver",
+				Name: "slack receiver",
 			},
 		})
 	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,

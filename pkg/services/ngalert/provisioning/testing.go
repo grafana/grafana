@@ -31,8 +31,8 @@ const defaultAlertmanagerConfigJSON = `
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
+				"uid": "UID1",
+				"name": "grafana-default-email",
 				"type": "email",
 				"disableResolveMessage": false,
 				"settings": {
@@ -41,9 +41,9 @@ const defaultAlertmanagerConfigJSON = `
 				"secureFields": {}
 			}]
 		}, {
-			"name": "a new receiver",
+			"name": "slack receiver",
 			"grafana_managed_receiver_configs": [{
-				"uid": "",
+				"uid": "UID2",
 				"name": "slack receiver",
 				"type": "slack",
 				"disableResolveMessage": false,
