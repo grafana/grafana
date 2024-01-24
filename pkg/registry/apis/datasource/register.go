@@ -36,7 +36,7 @@ type DataSourceAPIBuilder struct {
 
 	pluginJSON      plugins.JSONData
 	client          plugins.Client // will only ever be called with the same pluginid!
-	pluginsConfig   PluginConfigProvider
+	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
 }
@@ -45,7 +45,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiRegistrar grafanaapiserver.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
-	pluginConfigs PluginConfigProvider,
+	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
@@ -69,7 +69,7 @@ func RegisterAPIService(
 
 		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
 			pluginClient,
-			pluginConfigs,
+			datasources,
 			contextProvider,
 			accessControl,
 		)
@@ -84,7 +84,7 @@ func RegisterAPIService(
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
 	client plugins.Client,
-	pluginsConfig PluginConfigProvider,
+	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
 	ri, err := resourceFromPluginID(plugin.ID)
@@ -96,7 +96,7 @@ func NewDataSourceAPIBuilder(
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
 		client:                 client,
-		pluginsConfig:          pluginsConfig,
+		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
 	}, nil
@@ -155,7 +155,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
 		pluginID:     b.pluginJSON.ID,
-		configs:      b.pluginsConfig,
+		datasources:  b.datasources,
 		resourceInfo: conn,
 		tableConverter: utils.NewTableConverter(
 			conn.GroupResource(),
@@ -199,7 +199,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
-	instance, err := b.pluginsConfig.GetDataSourceInstanceSettings(ctx, b.pluginJSON.ID, uid)
+	instance, err := b.datasources.GetInstanceSettings(ctx, b.pluginJSON.ID, uid)
 	if err != nil {
 		return backend.PluginContext{}, err
 	}

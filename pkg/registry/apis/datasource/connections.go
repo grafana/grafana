@@ -23,7 +23,7 @@ type connectionAccess struct {
 	pluginID       string
 	resourceInfo   common.ResourceInfo
 	tableConverter rest.TableConvertor
-	configs        PluginConfigProvider
+	datasources    PluginDatasourceProvider
 }
 
 func (s *connectionAccess) New() runtime.Object {
@@ -53,9 +53,9 @@ func (s *connectionAccess) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.configs.GetDataSource(ctx, s.pluginID, name)
+	return s.datasources.Get(ctx, s.pluginID, name)
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.configs.ListDatasources(ctx, s.pluginID)
+	return s.datasources.List(ctx, s.pluginID)
 }
