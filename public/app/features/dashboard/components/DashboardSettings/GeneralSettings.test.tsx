@@ -35,7 +35,7 @@ const setupTestContext = (options: Partial<Props>) => {
         timezone: 'utc',
       },
       {
-        folderId: 1,
+        folderUid: 'abc',
         folderTitle: 'test',
       }
     ),
