@@ -214,7 +214,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return {
           ...query,
           datasource: this.getRef(),
-          query: this.templateSrv.replace(query.query ?? '', scopedVars, this.interpolateQueryExpr), // The raw query text
+          query: this.templateSrv.replace(
+            query.query ?? '',
+            scopedVars,
+            (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+              this.interpolateQueryExpr(value, variable, query.query)
+          ), // The raw query text
         };
       }
 
@@ -282,23 +287,34 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
+  // this should only be used for rawQueries.
   interpolateQueryExpr(value: string | string[] = [], variable: Partial<CustomFormatterVariable>, query?: string) {
+    // If there is no query just return the value directly
     if (!query) {
       return value;
     }
 
+    // If template variable is a multi-value variable
+    // we always want to deal with special chars.
     if (variable.multi) {
       if (typeof value === 'string') {
         return escapeRegex(value);
       }
 
+      // If the value is a string array first escape them then join them with pipe
       return value.map((v) => escapeRegex(v)).join('|');
     }
 
+    // If the variable is not a multi-value variable
+    // we want to see how it's been used. If it is used in a regex expression
+    // we escape it. Otherwise, we return it directly.
+    // regex below checks if the variable inside /^...$/ (^ and $ is optional)
+    // i.e. /^$myVar$/ or /$myVar/
     const regex = new RegExp(`\\/(?:\\^)?\\$${variable.name}(?:\\$)?\\/`, 'gm');
     if (regex.test(query)) {
       return escapeRegex(value.toString());
     }
+
     return value;
   }
 
@@ -681,7 +697,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         datasource: this.getRef(),
-        query: this.templateSrv.replace(annotation.query, undefined, this.interpolateQueryExpr),
+        query: this.templateSrv.replace(
+          annotation.query,
+          undefined,
+          (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+            this.interpolateQueryExpr(value, variable, annotation.query)
+        ),
         rawQuery: true,
       };
 
@@ -709,7 +730,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.range.raw, timezone: options.timezone });
     let query = annotation.query.replace('$timeFilter', timeFilter);
-    query = this.templateSrv.replace(query, undefined, this.interpolateQueryExpr);
+    query = this.templateSrv.replace(
+      query,
+      undefined,
+      (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+        this.interpolateQueryExpr(value, variable, query)
+    );
 
     return lastValueFrom(this._seriesQuery(query, options)).then((data) => {
       if (!data || !data.results || !data.results[0]) {
