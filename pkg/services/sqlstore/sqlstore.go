@@ -160,11 +160,6 @@ func (ss *SQLStore) Reset() error {
 	return ss.ensureMainOrgAndAdminUser(false)
 }
 
-// Quote quotes the value in the used SQL dialect
-func (ss *SQLStore) Quote(value string) string {
-	return ss.engine.Quote(value)
-}
-
 // GetDialect return the dialect
 func (ss *SQLStore) GetDialect() migrator.Dialect {
 	return ss.Dialect
