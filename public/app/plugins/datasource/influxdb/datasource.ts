@@ -261,8 +261,18 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return {
       ...expandedQuery,
       adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
-      query: new InfluxQueryModel(query, this.templateSrv, scopedVars).render(true), // The raw influxql query text
-      rawSql: this.templateSrv.replace(query.rawSql ?? '', scopedVars, this.interpolateQueryExpr), // The raw sql query text
+      query: this.templateSrv.replace(
+        query.query ?? '',
+        scopedVars,
+        (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+          this.interpolateQueryExpr(value, variable, query.query)
+      ), // The raw sql query text
+      rawSql: this.templateSrv.replace(
+        query.rawSql ?? '',
+        scopedVars,
+        (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+          this.interpolateQueryExpr(value, variable, query.rawSql)
+      ), // The raw sql query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars),
       measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars),
@@ -272,23 +282,29 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
-  interpolateQueryExpr(value: string | string[] = [], variable: Partial<CustomFormatterVariable>) {
-    // if no multi or include all do not regexEscape
-    if (!variable.multi && !variable.includeAll) {
-      return influxRegularEscape(value);
+  interpolateQueryExpr(value: string | string[] = [], variable: Partial<CustomFormatterVariable>, query?: string) {
+    if (!query) {
+      return value;
     }
 
-    if (typeof value === 'string') {
-      return influxSpecialRegexEscape(value);
+    if (variable.multi) {
+      if (typeof value === 'string') {
+        if (isNaN(Number(value))) {
+          // It is not a number so escape the value
+          return escapeRegex(value);
+        } else {
+          return value;
+        }
+      }
+
+      return value.map((v) => escapeRegex(v)).join('|');
     }
 
-    const escapedValues = value.map((val) => influxSpecialRegexEscape(val));
-
-    if (escapedValues.length === 1) {
-      return escapedValues[0];
+    const regex = new RegExp(`\\/(?:\\^)?\\$${variable.name}(?:\\$)?\\/`, 'gm');
+    if (regex.test(query)) {
+      return escapeRegex(value.toString());
     }
-
-    return escapedValues.join('|');
+    return value;
   }
 
   async runMetadataQuery(target: InfluxQuery): Promise<MetricFindValue[]> {
@@ -776,24 +792,4 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     fields,
     length: values.length,
   };
-}
-
-export function influxRegularEscape(value: string | string[]) {
-  if (typeof value === 'string') {
-    // Check the value is a number. If not run to escape special characters
-    if (isNaN(parseFloat(value))) {
-      return escapeRegex(value);
-    }
-  }
-
-  return value;
-}
-
-export function influxSpecialRegexEscape(value: string | string[]) {
-  if (typeof value !== 'string') {
-    return value;
-  }
-  value = value.replace(/\\/g, '\\\\\\\\');
-  value = value.replace(/[$^*{}\[\]\'+?.()|]/g, '$&');
-  return value;
 }
