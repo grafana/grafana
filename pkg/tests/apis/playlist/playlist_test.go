@@ -33,11 +33,9 @@ func TestPlaylist(t *testing.T) {
 
 	t.Run("default setup", func(t *testing.T) {
 		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: true, // do not start extra port 6443
-			DisableAnonymous:  true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServer,
-			},
+			AppModeProduction:    true, // do not start extra port 6443
+			DisableAnonymous:     true,
+			EnableFeatureToggles: []string{},
 		}))
 
 		// The accepted verbs will change when dual write is enabled
@@ -76,7 +74,6 @@ func TestPlaylist(t *testing.T) {
 			AppModeProduction: true, // do not start extra port 6443
 			DisableAnonymous:  true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServer,
 				featuremgmt.FlagKubernetesPlaylists, // <<< The change we are testing!
 			},
 		}))
@@ -88,7 +85,6 @@ func TestPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServer,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		}))
@@ -101,7 +97,6 @@ func TestPlaylist(t *testing.T) {
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagUnifiedStorage,
-				featuremgmt.FlagGrafanaAPIServer,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		}))
@@ -116,7 +111,6 @@ func TestPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServer,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		})

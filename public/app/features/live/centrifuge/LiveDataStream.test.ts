@@ -898,8 +898,8 @@ describe('LiveDataStream', () => {
             return isStreamingResponseData(data, StreamingResponseDataType.FullFrame)
               ? fieldsOf(data)
               : isStreamingResponseData(data, StreamingResponseDataType.NewValuesSameSchema)
-              ? data.values
-              : response;
+                ? data.values
+                : response;
           })
         )
       ).toEqual({

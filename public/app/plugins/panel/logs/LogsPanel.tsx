@@ -1,33 +1,42 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  PanelProps,
-  Field,
-  Labels,
-  GrafanaTheme2,
-  LogsSortOrder,
-  LogRowModel,
+  CoreApp,
   DataHoverClearEvent,
   DataHoverEvent,
-  CoreApp,
   DataQueryResponse,
-  LogRowContextOptions,
+  Field,
+  GrafanaTheme2,
   hasLogsContextSupport,
+  Labels,
+  LogRowContextOptions,
+  LogRowModel,
+  LogsSortOrder,
+  PanelProps,
+  TimeRange,
+  toUtc,
+  urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
+import { CustomScrollbar, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
+import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
-import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from '../../../features/logs/logsModel';
+import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
 import { Options } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
 interface LogsPanelProps extends PanelProps<Options> {}
+interface LogsPermalinkUrlState {
+  logs?: {
+    id?: string;
+  };
+}
 
 export const LogsPanel = ({
   data,
@@ -52,7 +61,7 @@ export const LogsPanel = ({
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
-
+  const timeRange = data.timeRange;
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
 
   const { eventBus } = usePanelContext();
@@ -85,6 +94,13 @@ export const LogsPanel = ({
     setCloseCallback(onClose);
   }, []);
 
+  const onPermalinkClick = useCallback(
+    async (row: LogRowModel) => {
+      return await copyDashboardUrl(row, timeRange);
+    },
+    [timeRange]
+  );
+
   const showContextToggle = useCallback(
     (row: LogRowModel): boolean => {
       if (
@@ -103,6 +119,14 @@ export const LogsPanel = ({
     },
     [dataSourcesMap, showLogContextToggle, data.request?.app]
   );
+
+  const showPermaLink = useCallback(() => {
+    return !(
+      data.request?.app !== CoreApp.Dashboard &&
+      data.request?.app !== CoreApp.PanelEditor &&
+      data.request?.app !== CoreApp.PanelViewer
+    );
+  }, [data.request?.app]);
 
   const getLogRowContext = useCallback(
     async (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions): Promise<DataQueryResponse> => {
@@ -151,6 +175,13 @@ export const LogsPanel = ({
     [data]
   );
 
+  /**
+   * Scrolls the given row into view.
+   */
+  const scrollIntoView = useCallback((row: HTMLElement) => {
+    row.scrollIntoView(true);
+  }, []);
+
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
@@ -178,6 +209,10 @@ export const LogsPanel = ({
         <div className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
+            containerRendered={logsContainerRef.current !== null}
+            scrollIntoView={scrollIntoView}
+            permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
+            onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
             logRows={logRows}
             showContextToggle={showContextToggle}
             deduplicatedRows={deduplicatedRows}
@@ -220,3 +255,49 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
   }),
 });
+
+function getLogsPanelState(): LogsPermalinkUrlState | undefined {
+  const urlParams = urlUtil.getUrlSearchParams();
+  const panelStateEncoded = urlParams?.panelState;
+  if (
+    panelStateEncoded &&
+    Array.isArray(panelStateEncoded) &&
+    panelStateEncoded?.length > 0 &&
+    typeof panelStateEncoded[0] === 'string'
+  ) {
+    try {
+      return JSON.parse(panelStateEncoded[0]);
+    } catch (e) {
+      console.error('error parsing logsPanelState', e);
+    }
+  }
+
+  return undefined;
+}
+
+async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
+  // this is an extra check, to be sure that we are not
+  // creating permalinks for logs without an id-field.
+  // normally it should never happen, because we do not
+  // display the permalink button in such cases.
+  if (row.rowId === undefined || !row.dataFrame.refId) {
+    return;
+  }
+
+  // get panel state, add log-row-id
+  const panelState = {
+    logs: { id: row.uid },
+  };
+
+  // Grab the current dashboard URL
+  const currentURL = new URL(window.location.href);
+
+  // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
+  currentURL.searchParams.set('panelState', JSON.stringify(panelState));
+  currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
+  currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
+
+  await createAndCopyShortLink(currentURL.toString());
+
+  return Promise.resolve();
+}
