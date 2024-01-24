@@ -20,7 +20,7 @@ type FakeQueryService struct {
 }
 
 // QueryData provides a mock function with given fields: ctx, _a1, skipDSCache, reqDTO
-func (_m *FakeQueryService) QueryData(ctx context.Context, _a1 identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (_m *FakeQueryService) QueryData(ctx context.Context, _a1 identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, service string) (*backend.QueryDataResponse, error) {
 	ret := _m.Called(ctx, _a1, skipDSCache, reqDTO)
 
 	var r0 *backend.QueryDataResponse

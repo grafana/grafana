@@ -61,7 +61,7 @@ func ProvideService(
 //go:generate mockery --name Service --structname FakeQueryService --inpackage --filename query_service_mock.go
 type Service interface {
 	Run(ctx context.Context) error
-	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, service string) (*backend.QueryDataResponse, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -85,7 +85,7 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 }
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, service string) (*backend.QueryDataResponse, error) {
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
 	if err != nil {
@@ -98,10 +98,10 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 	// If there is only one datasource, query it and return
 	if len(parsedReq.parsedQueries) == 1 {
-		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
+		return s.handleQuerySingleDatasource(ctx, user, parsedReq, service)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
+	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries, service)
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers
@@ -111,7 +111,7 @@ type splitResponse struct {
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery, service string) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(s.concurrentQueryLimit) // prevent too many concurrent requests
 	rchan := make(chan splitResponse, len(queriesbyDs))
@@ -145,7 +145,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 			defer recoveryFn(subDTO.Queries)
 
 			ctxCopy := contexthandler.CopyWithReqContext(ctx)
-			subResp, err := s.QueryData(ctxCopy, user, skipDSCache, subDTO)
+			subResp, err := s.QueryData(ctxCopy, user, skipDSCache, subDTO, service)
 			if err == nil {
 				reqCtx, header := contexthandler.FromContext(ctxCopy), http.Header{}
 				if reqCtx != nil {
@@ -239,7 +239,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 }
 
 // handleQuerySingleDatasource handles one or more queries to a single datasource
-func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest, service string) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.URL, nil); err != nil {
@@ -253,7 +253,7 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		}
 	}
 
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
+	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds, service)
 	if err != nil {
 		return nil, err
 	}

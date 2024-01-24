@@ -139,7 +139,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
-	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq)
+	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq, "publicdashboards")
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {

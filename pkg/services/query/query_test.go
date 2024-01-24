@@ -307,7 +307,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		}
 		ctx := ctxkey.Set(context.Background(), reqCtx)
 
-		_, err = tc.queryService.QueryData(ctx, tc.signedInUser, true, reqDTO)
+		_, err = tc.queryService.QueryData(ctx, tc.signedInUser, true, reqDTO, "query")
 		require.NoError(t, err)
 
 		// response headers should be merged
@@ -360,7 +360,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		}
 
 		// without query parameter
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO, "query")
 		require.NoError(t, err)
 
 		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
@@ -377,7 +377,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
 
 		// with query parameter
-		_, err = tc.queryService.QueryData(httpreq.Context(), tc.signedInUser, true, reqDTO)
+		_, err = tc.queryService.QueryData(httpreq.Context(), tc.signedInUser, true, reqDTO, "query")
 		require.NoError(t, err)
 	})
 
@@ -413,7 +413,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			Debug:   false,
 		}
 
-		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO, "query")
 
 		require.NoError(t, err)
 		require.Error(t, res.Responses["B"].Error)
@@ -442,7 +442,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			Debug:   false,
 		}
 
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO, "query")
 
 		require.NoError(t, err)
 	})
