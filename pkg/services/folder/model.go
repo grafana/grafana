@@ -41,12 +41,14 @@ type Folder struct {
 
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
-	Version   int
-	URL       string
-	UpdatedBy int64
-	CreatedBy int64
-	HasACL    bool
-	Fullpath  string `xorm:"fullpath"`
+	Version      int
+	URL          string
+	UpdatedBy    int64
+	CreatedBy    int64
+	HasACL       bool
+	Fullpath     string `xorm:"fullpath"`
+	FullpathUIDs string `xorm:"fullpathuid"`
+	ParentUIDs   []string
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}

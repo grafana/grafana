@@ -385,6 +385,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			// compute full path column if requested
 			if q.WithFullpath {
 				s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect())))
+				s.WriteString(fmt.Sprintf(`, %s AS fullpathuid`, getParentsUIDsSQL(ss.db.GetDialect())))
 			}
 			s.WriteString(` FROM folder f0`)
 			// join the same table multiple times to compute the full path of a folder
@@ -441,6 +442,15 @@ func getFullpathSQL(dialect migrator.Dialect) string {
 	concatCols = append(concatCols, "COALESCE(REPLACE(f0.title, '/', '\\/'), '')")
 	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
 		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.title, '/', '\\/'), '')", i), "'/'"}, concatCols...)
+	}
+	return dialect.Concat(concatCols...)
+}
+
+func getParentsUIDsSQL(dialect migrator.Dialect) string {
+	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
+	concatCols = append(concatCols, "COALESCE(REPLACE(f0.uid, '/', '\\/'), '')")
+	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.uid, '/', '\\/'), '')", i), "'/'"}, concatCols...)
 	}
 	return dialect.Concat(concatCols...)
 }
