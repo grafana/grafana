@@ -1,5 +1,6 @@
 import { DataQuery, DataSourceRef } from '@grafana/data';
 
+// @deprecated use the `getNextRefId` function from grafana/data instead
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
     const refId = getRefId(num);
