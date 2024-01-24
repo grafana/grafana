@@ -201,10 +201,10 @@ func (s *sqlStore) ListAll(ctx context.Context, orgId int64) ([]playlist.Playlis
 	var itemValue string
 
 	rows, err := db.Query(ctx, `SELECT playlist.id,playlist_item.type,playlist_item.value
-		FROM playlist_item
+		FROM playlist_item 
 		JOIN playlist ON playlist_item.playlist_id = playlist.id
 		WHERE playlist.org_id = ?
-		ORDER BY playlist_id asc, `+s.db.GetDialect().Quote("order")+` asc`, orgId)
+		ORDER BY playlist_id asc, `+s.db.Quote("order")+` asc`, orgId)
 	if err != nil {
 		return nil, err
 	}
