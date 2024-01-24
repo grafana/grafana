@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -57,6 +58,7 @@ func TestUsageMetrics(t *testing.T) {
 				cfg,
 				database.ProvideService(db.InitTestDB(t)),
 				localcache.ProvideService(),
+				usertest.NewUserServiceFake(),
 				featuremgmt.WithFeatures(),
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])

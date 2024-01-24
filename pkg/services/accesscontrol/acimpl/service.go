@@ -42,8 +42,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 }
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
+	accessControl accesscontrol.AccessControl, userSvc user.Service, features featuremgmt.FeatureToggles) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(db), cache, userSvc, features)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -63,14 +63,15 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, userSvc user.Service, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
-		cfg:      cfg,
-		store:    store,
-		log:      log.New("accesscontrol.service"),
 		cache:    cache,
-		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		cfg:      cfg,
 		features: features,
+		log:      log.New("accesscontrol.service"),
+		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		store:    store,
+		userSvc:  userSvc,
 	}
 
 	return s
@@ -88,13 +89,14 @@ type store interface {
 
 // Service is the service implementing role based access control.
 type Service struct {
-	log           log.Logger
-	cfg           *setting.Cfg
-	store         store
 	cache         *localcache.CacheService
+	cfg           *setting.Cfg
+	features      featuremgmt.FeatureToggles
+	log           log.Logger
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
-	features      featuremgmt.FeatureToggles
+	store         store
+	userSvc       user.Service
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -243,10 +245,19 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 }
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
-func (s *Service) SearchUsersPermissions(ctx context.Context, user identity.Requester,
+func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
 	defer timer.ObserveDuration()
+
+	// Resolve userLogin -> userID
+	if options.UserLogin != "" {
+		dbUsr, err := s.userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: options.UserLogin})
+		if err != nil {
+			return nil, err
+		}
+		options.UserID = dbUsr.ID
+	}
 
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
@@ -258,20 +269,25 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user identity.Requ
 		}
 	}
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, user.GetOrgID())
+	var userFilter []int64
+	if options.UserID > 0 {
+		userFilter = append(userFilter, options.UserID)
+	}
+
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, userFilter, usr.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
 	// Get managed permissions (DB)
-	usersPermissions, err := s.store.SearchUsersPermissions(ctx, user.GetOrgID(), options)
+	usersPermissions, err := s.store.SearchUsersPermissions(ctx, usr.GetOrgID(), options)
 	if err != nil {
 		return nil, err
 	}
 
 	// helper to filter out permissions the signed in users cannot see
 	canView := func() func(userID int64) bool {
-		siuPermissions := user.GetPermissions()
+		siuPermissions := usr.GetPermissions()
 		if len(siuPermissions) == 0 {
 			return func(_ int64) bool { return false }
 		}
