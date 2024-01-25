@@ -21,7 +21,7 @@ weight: 1150
 
 # Grafana Pyroscope data source
 
-Formerly Phlare data source, now Grafana Pyroscope, a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
+Formerly Phlare, now Grafana Pyroscope, a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
 
 ## Configure the Grafana Pyroscope data source
 

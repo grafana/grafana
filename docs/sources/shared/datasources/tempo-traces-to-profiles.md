@@ -54,7 +54,7 @@ To use a simple configuration, follow these steps:
 To use a custom query with the configuration, follow these steps:
 
 1. Select a Pyroscope data source from the **Data source** drop-down.
-1. Optional: Choose any tags that to use in the query. If left blank, the default values of `service.name` and `service.namespace` are used.
+1. Optional: Choose any tags to use in the query. If left blank, the default values of `service.name` and `service.namespace` are used.
 
    These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source and only includes the tags that were present in the span omitting those that weren’t present. You can optionally configure a new name for the tag. This is useful in cases where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name` in such a case. If you don’t map any tags here, you can still use any tag in the query like this `method="${__span.tags.method}"`.
 
