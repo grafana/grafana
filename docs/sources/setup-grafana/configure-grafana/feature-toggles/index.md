@@ -58,6 +58,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `displayAnonymousStats`              | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
+| `jitterAlertRules`                   | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                      |                    |
 
 ## Preview feature toggles
 
@@ -172,7 +173,6 @@ Experimental features might be changed or removed without prior notice.
 | `kubernetesFeatureToggles`                  | Use the kubernetes API for feature toggle management in the frontend                                                                                                                                                                                                              |
 | `enablePluginsTracingByDefault`             | Enable plugin tracing for all external plugins                                                                                                                                                                                                                                    |
 | `newFolderPicker`                           | Enables the nested folder picker without having nested folders enabled                                                                                                                                                                                                            |
-| `jitterAlertRules`                          | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                                                                           |
 | `onPremToCloudMigrations`                   | In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.                                                                                                                                                                  |
 
 ## Development feature toggles
