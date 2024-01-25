@@ -524,13 +524,27 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	}
 
 	uid := uuid.NewString()
-	title := "folder-title"
-	createFolder(t, store, uid, title, 1, "")
+	parentUid := uuid.NewString()
+	title := "folder/title"
+	parentTitle := "parent-title"
+	createFolder(t, store, parentUid, parentTitle, 1, "")
+	createFolder(t, store, uid, title, 1, parentUid)
 
 	actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
 	require.NoError(t, err)
 	require.Equal(t, title, actual.Title)
 	require.Equal(t, uid, actual.UID)
+	require.Equal(t, "parent-title/folder\\/title", actual.Fullpath)
+
+	t.Run("error when user does not have permissions", func(t *testing.T) {
+		someUser := &user.SignedInUser{
+			UserID:  2,
+			OrgID:   1,
+			OrgRole: org.RoleViewer,
+		}
+		_, err = store.GetNamespaceByUID(context.Background(), uid, 1, someUser)
+		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+	})
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {

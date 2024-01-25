@@ -454,12 +454,14 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &uid, SignedInUser: user})
+	f, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{OrgID: orgID, UIDs: []string{uid}, WithFullpath: true, SignedInUser: user})
 	if err != nil {
 		return nil, err
 	}
-
-	return folder, nil
+	if len(f) == 0 {
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+	return f[0], nil
 }
 
 func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
