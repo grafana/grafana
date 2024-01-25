@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
+import { AlertSeverity, TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
@@ -22,11 +22,10 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const [alertVisible, setAlertVisible] = useState(false);
   const [alertText, setAlertText] = useState('');
 
   const { onChange, onRunQuery, placeholder } = props;
-  const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertVisible, setAlertText);
+  const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
   // work around the problem that `onEditorDidMount` is called once
@@ -105,7 +104,7 @@ export function TraceQLEditor(props: Props) {
           });
         }}
       />
-      <TemporaryAlert setVisible={setAlertVisible} severity="error" text={alertText} visible={alertVisible} />
+      <TemporaryAlert severity={AlertSeverity.Error} text={alertText} />
     </>
   );
 }
@@ -183,11 +182,7 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
  * @param setAlertVisible setter to show/hide the alert
  * @param setAlertVisible setter for alert's text
  */
-function useAutocomplete(
-  datasource: TempoDatasource,
-  setAlertVisible: (visible: boolean) => void,
-  setAlertText: (text: string) => void
-) {
+function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: string) => void) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
   // values here but there is additional setup needed for the provider later on. We could run the getSeries() in the
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
@@ -203,13 +198,12 @@ function useAutocomplete(
       } catch (error) {
         if (error instanceof Error) {
           console.error(error);
-          setAlertVisible(true);
           setAlertText(error.message);
         }
       }
     };
     fetchTags();
-  }, [datasource, setAlertVisible, setAlertText]);
+  }, [datasource, setAlertText]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {
