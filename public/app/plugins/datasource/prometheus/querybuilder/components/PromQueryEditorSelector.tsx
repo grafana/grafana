@@ -3,9 +3,9 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorHeader, EditorRows, FlexItem, Space } from '@grafana/experimental';
+import { EditorHeader, EditorRows, FlexItem } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, Space } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQueryFormat } from '../../dataquery.gen';
@@ -123,7 +123,9 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         >
           Kick start your query
         </Button>
-        <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
+        <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
+          <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
+        </div>
         <FlexItem grow={1} />
         {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
           <Button
@@ -136,7 +138,9 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             Run queries
           </Button>
         )}
-        <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
+        <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.editorToggle}>
+          <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
+        </div>
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>

@@ -24,6 +24,8 @@ type Service struct {
 const remoteCachePrefix = "authinfo-"
 const remoteCacheTTL = 60 * time.Hour
 
+var errMissingParameters = errors.New("user ID and auth ID must be set")
+
 func ProvideService(authInfoStore login.Store,
 	remoteCache remotecache.CacheStorage,
 	secretService secrets.Service) *Service {
@@ -116,37 +118,39 @@ func generateCacheKey(query *login.GetAuthInfoQuery) string {
 }
 
 func (s *Service) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
+	if cmd.UserId == 0 || cmd.AuthId == "" {
+		return errMissingParameters
+	}
+
 	err := s.authInfoStore.UpdateAuthInfo(ctx, cmd)
 	if err != nil {
 		return err
 	}
 
-	err = s.remoteCache.Delete(ctx, generateCacheKey(&login.GetAuthInfoQuery{
-		UserId:     cmd.UserId,
+	s.deleteUserAuthInfoInCache(ctx, &login.GetAuthInfoQuery{
 		AuthModule: cmd.AuthModule,
 		AuthId:     cmd.AuthId,
-	}))
-	if err != nil {
-		s.logger.Error("failed to delete auth info from cache", "error", err)
-	}
+		UserId:     cmd.UserId,
+	})
 
 	return nil
 }
 
 func (s *Service) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
+	if cmd.UserId == 0 || cmd.AuthId == "" {
+		return errMissingParameters
+	}
+
 	err := s.authInfoStore.SetAuthInfo(ctx, cmd)
 	if err != nil {
 		return err
 	}
 
-	err = s.remoteCache.Delete(ctx, generateCacheKey(&login.GetAuthInfoQuery{
-		UserId:     cmd.UserId,
+	s.deleteUserAuthInfoInCache(ctx, &login.GetAuthInfoQuery{
 		AuthModule: cmd.AuthModule,
 		AuthId:     cmd.AuthId,
-	}))
-	if err != nil {
-		s.logger.Error("failed to delete auth info from cache", "error", err)
-	}
+		UserId:     cmd.UserId,
+	})
 
 	return nil
 }
@@ -165,4 +169,31 @@ func (s *Service) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	}
 
 	return nil
+}
+
+func (s *Service) deleteUserAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery) {
+	err := s.remoteCache.Delete(ctx, generateCacheKey(&login.GetAuthInfoQuery{
+		AuthModule: query.AuthModule,
+		AuthId:     query.AuthId,
+	}))
+	if err != nil {
+		s.logger.Warn("failed to delete auth info from cache", "error", err)
+	}
+
+	errN := s.remoteCache.Delete(ctx, generateCacheKey(
+		&login.GetAuthInfoQuery{
+			UserId: query.UserId,
+		}))
+	if errN != nil {
+		s.logger.Warn("failed to delete user auth info from cache", "error", errN)
+	}
+
+	errA := s.remoteCache.Delete(ctx, generateCacheKey(
+		&login.GetAuthInfoQuery{
+			UserId:     query.UserId,
+			AuthModule: query.AuthModule,
+		}))
+	if errA != nil {
+		s.logger.Warn("failed to delete user module auth info from cache", "error", errA)
+	}
 }
