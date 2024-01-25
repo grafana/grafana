@@ -141,11 +141,6 @@ build-js: ## Build frontend assets.
 	yarn run build
 	yarn run plugins:build-bundled
 
-build-plugins-go: ## Build decoupled plugins
-	@echo "build plugins"
-	@cd pkg/tsdb; \
-	mage -v
-
 PLUGIN_ID ?=
 
 build-plugin-go: ## Build decoupled plugins
@@ -261,7 +256,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:1.21.5 \
+	--build-arg GO_IMAGE=golang:1.21.6 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
