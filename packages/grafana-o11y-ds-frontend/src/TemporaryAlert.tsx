@@ -39,16 +39,13 @@ export const TemporaryAlert = (props: { severity: AlertSeverity; text: string })
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (visible) {
-      const timer = setTimeout(() => {
-        setVisible(false);
-      }, timeoutMap[props.severity]);
+    const timer = setTimeout(() => {
+      setVisible(false);
+    }, timeoutMap[props.severity]);
 
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-    return () => {};
+    return () => {
+      clearTimeout(timer);
+    };
   }, [props.severity, visible]);
 
   useEffect(() => {
@@ -57,5 +54,5 @@ export const TemporaryAlert = (props: { severity: AlertSeverity; text: string })
     }
   }, [props.text]);
 
-  return <>{visible && <Alert className={style} elevated={true} title={props.text} severity={props.severity} />}</>;
+  return <Alert className={style} elevated={true} title={props.text} severity={props.severity} />;
 };

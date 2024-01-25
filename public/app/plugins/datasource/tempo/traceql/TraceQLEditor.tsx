@@ -104,7 +104,7 @@ export function TraceQLEditor(props: Props) {
           });
         }}
       />
-      <TemporaryAlert severity={AlertSeverity.Error} text={alertText} />
+      {alertText && <TemporaryAlert severity={AlertSeverity.Error} text={alertText} />}
     </>
   );
 }
