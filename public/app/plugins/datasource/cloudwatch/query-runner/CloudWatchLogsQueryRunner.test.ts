@@ -87,8 +87,9 @@ describe('CloudWatchLogsQueryRunner', () => {
     it('should stop querying when timed out', async () => {
       const { runner, queryMock } = setupMockedLogsQueryRunner();
       const fakeFrames = genMockFrames(20);
-      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
-        .value!;
+      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find(
+        (stat) => stat.displayName === 'Records scanned'
+      )!.value!;
       for (let i = 1; i < 4; i++) {
         fakeFrames[i].meta!.stats = [
           {
@@ -98,8 +99,9 @@ describe('CloudWatchLogsQueryRunner', () => {
         ];
       }
 
-      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
-        .value!;
+      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find(
+        (stat) => stat.displayName === 'Records scanned'
+      )!.value!;
       for (let i = 10; i < fakeFrames.length; i++) {
         fakeFrames[i].meta!.stats = [
           {

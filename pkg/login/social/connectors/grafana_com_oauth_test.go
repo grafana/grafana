@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -195,11 +196,12 @@ func TestSocialGrafanaCom_Reload(t *testing.T) {
 	const GrafanaComURL = "http://localhost:3000"
 
 	testCases := []struct {
-		name         string
-		info         *social.OAuthInfo
-		settings     ssoModels.SSOSettings
-		expectError  bool
-		expectedInfo *social.OAuthInfo
+		name           string
+		info           *social.OAuthInfo
+		settings       ssoModels.SSOSettings
+		expectError    bool
+		expectedInfo   *social.OAuthInfo
+		expectedConfig *oauth2.Config
 	}{
 		{
 			name: "SSO provider successfully updated",
@@ -219,6 +221,19 @@ func TestSocialGrafanaCom_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				Name:         "a-new-name",
+				AuthUrl:      GrafanaComURL + "/oauth2/authorize",
+				TokenUrl:     GrafanaComURL + "/api/oauth2/token",
+				AuthStyle:    "inheader",
+			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Endpoint: oauth2.Endpoint{
+					AuthURL:   GrafanaComURL + "/oauth2/authorize",
+					TokenURL:  GrafanaComURL + "/api/oauth2/token",
+					AuthStyle: oauth2.AuthStyleInHeader,
+				},
+				RedirectURL: "/login/grafana_com",
 			},
 		},
 		{
@@ -243,6 +258,16 @@ func TestSocialGrafanaCom_Reload(t *testing.T) {
 				TokenUrl:  GrafanaComURL + "/api/oauth2/token",
 				AuthStyle: "inheader",
 			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "client-id",
+				ClientSecret: "client-secret",
+				Endpoint: oauth2.Endpoint{
+					AuthURL:   GrafanaComURL + "/oauth2/authorize",
+					TokenURL:  GrafanaComURL + "/api/oauth2/token",
+					AuthStyle: oauth2.AuthStyleInHeader,
+				},
+				RedirectURL: "/login/grafana_com",
+			},
 		},
 	}
 
@@ -256,10 +281,68 @@ func TestSocialGrafanaCom_Reload(t *testing.T) {
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+				return
 			}
+
+			require.NoError(t, err)
+
 			require.EqualValues(t, tc.expectedInfo, s.info)
+			require.EqualValues(t, tc.expectedConfig, s.Config)
+		})
+	}
+}
+
+func TestSocialGrafanaCom_Reload_ExtraFields(t *testing.T) {
+	const GrafanaComURL = "http://localhost:3000"
+
+	testCases := []struct {
+		name                         string
+		settings                     ssoModels.SSOSettings
+		info                         *social.OAuthInfo
+		expectError                  bool
+		expectedInfo                 *social.OAuthInfo
+		expectedAllowedOrganizations []string
+	}{
+		{
+			name: "successfully reloads the allowed organizations when they are set in the settings",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				Extra: map[string]string{
+					"allowed_organizations": "previous",
+				},
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"allowed_organizations": "uuid-1234,uuid-5678",
+				},
+			},
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Name:         "a-new-name",
+				AuthUrl:      GrafanaComURL + "/oauth2/authorize",
+				TokenUrl:     GrafanaComURL + "/api/oauth2/token",
+				AuthStyle:    "inheader",
+				Extra: map[string]string{
+					"allowed_organizations": "uuid-1234,uuid-5678",
+				},
+			},
+			expectedAllowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &setting.Cfg{
+				GrafanaComURL: GrafanaComURL,
+			}
+			s := NewGrafanaComProvider(tc.info, cfg, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Reload(context.Background(), tc.settings)
+			require.NoError(t, err)
+
+			require.EqualValues(t, tc.expectedAllowedOrganizations, s.allowedOrganizations)
 		})
 	}
 }

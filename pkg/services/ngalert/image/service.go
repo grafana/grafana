@@ -93,12 +93,12 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 	if cfg.UnifiedAlerting.Screenshots.Capture {
 		cache = NewInmemCacheService(screenshotCacheTTL, r)
 		limiter = screenshot.NewTokenRateLimiter(cfg.UnifiedAlerting.Screenshots.MaxConcurrentScreenshots)
-		screenshots = screenshot.NewHeadlessScreenshotService(ds, rs, r)
+		screenshots = screenshot.NewHeadlessScreenshotService(cfg, ds, rs, r)
 		screenshotTimeout = cfg.UnifiedAlerting.Screenshots.CaptureTimeout
 
 		// Image uploading is an optional feature
 		if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
-			m, err := imguploader.NewImageUploader()
+			m, err := imguploader.NewImageUploader(cfg)
 			if err != nil {
 				return nil, fmt.Errorf("failed to initialize uploading screenshot service: %w", err)
 			}

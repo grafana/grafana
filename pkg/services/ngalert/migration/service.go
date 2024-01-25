@@ -47,6 +47,7 @@ type migrationService struct {
 	migrationStore migrationStore.Store
 
 	encryptionService secrets.Service
+	silences          *silenceHandler
 }
 
 func ProvideService(
@@ -63,6 +64,10 @@ func ProvideService(
 		store:             store,
 		migrationStore:    migrationStore,
 		encryptionService: encryptionService,
+		silences: &silenceHandler{
+			dataPath:          cfg.DataPath,
+			createSilenceFile: openReplace,
+		},
 	}, nil
 }
 
@@ -486,11 +491,9 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 			return err
 		}
 
-		if len(om.silences) > 0 {
-			om.log.Debug("Writing silences file", "silences", len(om.silences))
-			if err := writeSilencesFile(ms.cfg.DataPath, o.ID, om.silences); err != nil {
-				return fmt.Errorf("write silence file for org %d: %w", o.ID, err)
-			}
+		err = ms.silences.createSilences(o.ID, om.log)
+		if err != nil {
+			return fmt.Errorf("create silences for org %d: %w", o.ID, err)
 		}
 
 		err = ms.migrationStore.SetMigrated(ctx, o.ID, true)

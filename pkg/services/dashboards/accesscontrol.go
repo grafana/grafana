@@ -49,7 +49,9 @@ func NewFolderNameScopeResolver(folderDB folder.FolderStore, folderSvc folder.Se
 		if len(nsName) == 0 {
 			return nil, ac.ErrInvalidScope
 		}
-		folder, err := folderDB.GetFolderByTitle(ctx, orgID, nsName)
+		// this will fetch only root folders
+		// this is legacy code so most probably it is not used
+		folder, err := folderDB.GetFolderByTitle(ctx, orgID, nsName, nil)
 		if err != nil {
 			return nil, err
 		}

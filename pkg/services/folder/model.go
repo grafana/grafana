@@ -13,6 +13,7 @@ import (
 var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
 var ErrBadRequest = errutil.BadRequest("folder.bad-request")
 var ErrDatabaseError = errutil.Internal("folder.database-error")
+var ErrConflict = errutil.Conflict("folder.conflict")
 var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
@@ -41,11 +42,13 @@ type Folder struct {
 
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
-	Version   int
-	URL       string
-	UpdatedBy int64
-	CreatedBy int64
-	HasACL    bool
+	Version      int
+	URL          string
+	UpdatedBy    int64
+	CreatedBy    int64
+	HasACL       bool
+	Fullpath     string `xorm:"fullpath"`
+	FullpathUIDs string `xorm:"fullpath_uids"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -142,9 +145,20 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID    *int64
-	Title *string
-	OrgID int64
+	ID        *int64
+	Title     *string
+	ParentUID *string
+	OrgID     int64
+
+	SignedInUser identity.Requester `json:"-"`
+}
+
+type GetFoldersQuery struct {
+	OrgID            int64
+	UIDs             []string
+	WithFullpath     bool
+	WithFullpathUIDs bool
+	BatchSize        uint64
 
 	SignedInUser identity.Requester `json:"-"`
 }

@@ -11,7 +11,9 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-export const DEFAULT_TOOLTIP_WIDTH = 280;
+export const DEFAULT_TOOLTIP_WIDTH = 300;
+export const DEFAULT_TOOLTIP_HEIGHT = 600;
+export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {
@@ -39,8 +41,12 @@ interface TooltipPlugin2Props {
     isPinned: boolean,
     dismiss: () => void,
     // selected time range (for annotation triggering)
-    timeRange: TimeRange2 | null
+    timeRange: TimeRange2 | null,
+    viaSync: boolean
   ) => React.ReactNode;
+
+  maxWidth?: number | string;
+  maxHeight?: number;
 }
 
 interface TooltipContainerState {
@@ -91,7 +97,15 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({
+  config,
+  hoverMode,
+  render,
+  clientZoom = false,
+  queryZoom,
+  maxWidth,
+  maxHeight,
+}: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
@@ -101,7 +115,9 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  const styles = useStyles2(getStyles);
+  maxWidth = isPinned ? 'none' : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
+  maxHeight ??= DEFAULT_TOOLTIP_HEIGHT;
+  const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -141,13 +157,14 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
     let winHeight = htmlEl.clientHeight - 16;
 
     window.addEventListener('resize', (e) => {
-      winWidth = htmlEl.clientWidth - 5;
-      winHeight = htmlEl.clientHeight - 5;
+      winWidth = htmlEl.clientWidth - 16;
+      winHeight = htmlEl.clientHeight - 16;
     });
 
     let selectedRange: TimeRange2 | null = null;
     let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
     let closestSeriesIdx: number | null = null;
+    let viaSync = false;
 
     let pendingRender = false;
     let pendingPinned = false;
@@ -203,7 +220,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
         isHovering: _isHovering,
         contents:
           _isHovering || selectedRange != null
-            ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange)
+            ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange, viaSync)
             : null,
         dismiss,
       };
@@ -211,6 +228,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
       setState(state);
 
       selectedRange = null;
+      viaSync = false;
     };
 
     const dismiss = () => {
@@ -396,45 +414,61 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
 
     // fires on mousemoves
     config.addHook('setCursor', (u) => {
-      let { left = -10, top = -10 } = u.cursor;
+      let { left = -10, top = -10, event } = u.cursor;
 
       if (left >= 0 || top >= 0) {
-        let { width, height } = sizeRef.current!;
+        viaSync = event == null;
 
-        let clientX = u.rect.left + left;
-        let clientY = u.rect.top + top;
+        let transform = '';
 
-        if (offsetY) {
-          if (clientY + height < winHeight || clientY - height < 0) {
-            offsetY = 0;
-          } else if (offsetY !== -height) {
-            offsetY = -height;
-          }
+        // this means it's a synthetic event from uPlot's sync
+        if (viaSync) {
+          // TODO: smarter positioning here to avoid viewport clipping?
+          transform = `translateX(${left}px) translateY(${u.rect.height / 2}px) translateY(-50%)`;
         } else {
-          if (clientY + height > winHeight && clientY - height >= 0) {
-            offsetY = -height;
+          let { width, height } = sizeRef.current!;
+
+          width += TOOLTIP_OFFSET;
+          height += TOOLTIP_OFFSET;
+
+          let clientX = u.rect.left + left;
+          let clientY = u.rect.top + top;
+
+          if (offsetY !== 0) {
+            if (clientY + height < winHeight || clientY - height < 0) {
+              offsetY = 0;
+            } else if (offsetY !== -height) {
+              offsetY = -height;
+            }
+          } else {
+            if (clientY + height > winHeight && clientY - height >= 0) {
+              offsetY = -height;
+            }
           }
+
+          if (offsetX !== 0) {
+            if (clientX + width < winWidth || clientX - width < 0) {
+              offsetX = 0;
+            } else if (offsetX !== -width) {
+              offsetX = -width;
+            }
+          } else {
+            if (clientX + width > winWidth && clientX - width >= 0) {
+              offsetX = -width;
+            }
+          }
+
+          const shiftX = left + (offsetX === 0 ? TOOLTIP_OFFSET : -TOOLTIP_OFFSET);
+          const shiftY = top + (offsetY === 0 ? TOOLTIP_OFFSET : -TOOLTIP_OFFSET);
+
+          const reflectX = offsetX === 0 ? '' : 'translateX(-100%)';
+          const reflectY = offsetY === 0 ? '' : 'translateY(-100%)';
+
+          // TODO: to a transition only when switching sides
+          // transition: transform 100ms;
+
+          transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
         }
-
-        if (offsetX) {
-          if (clientX + width < winWidth || clientX - width < 0) {
-            offsetX = 0;
-          } else if (offsetX !== -width) {
-            offsetX = -width;
-          }
-        } else {
-          if (clientX + width > winWidth && clientX - width >= 0) {
-            offsetX = -width;
-          }
-        }
-
-        const shiftX = offsetX !== 0 ? 'translateX(-100%)' : '';
-        const shiftY = offsetY !== 0 ? 'translateY(-100%)' : '';
-
-        // TODO: to a transition only when switching sides
-        // transition: transform 100ms;
-
-        const transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
 
         if (_isHovering) {
           if (domRef.current != null) {
@@ -469,7 +503,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth: number | string, maxHeight: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -481,6 +515,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
+    maxWidth: maxWidth,
+    maxHeight: maxHeight,
+    overflowY: 'auto',
   }),
   pinned: css({
     boxShadow: theme.shadows.z3,
