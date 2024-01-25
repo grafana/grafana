@@ -1848,7 +1848,10 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/UsersPermissions"
+              "additionalProperties": {
+                "$ref": "#/components/schemas/PermissionsByAction"
+              },
+              "type": "object"
             }
           }
         },
@@ -7779,6 +7782,14 @@
         "format": "int64",
         "type": "integer"
       },
+      "PermissionsByAction": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Scopes"
+        },
+        "description": "example: {\"teams.read\": [\"teams:id:1\", \"teams:id:2\"]}",
+        "title": "Permissions with scopes grouped by action",
+        "type": "object"
+      },
       "Playlist": {
         "description": "Playlist model",
         "properties": {
@@ -9838,6 +9849,14 @@
         },
         "type": "object"
       },
+      "Scopes": {
+        "description": "example: [\"teams:id:1\", \"teams:id:2\"]",
+        "items": {
+          "type": "string"
+        },
+        "title": "List of scopes",
+        "type": "array"
+      },
       "SearchDeviceQueryResult": {
         "properties": {
           "devices": {
@@ -11836,7 +11855,6 @@
         "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
         "type": "object"
       },
-      "UsersPermissions": {},
       "ValidationError": {
         "properties": {
           "msg": {
