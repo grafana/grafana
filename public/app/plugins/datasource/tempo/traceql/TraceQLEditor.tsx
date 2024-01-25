@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AlertSeverity, TemporaryAlert } from '@grafana/o11y-ds-frontend';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
@@ -104,7 +104,7 @@ export function TraceQLEditor(props: Props) {
           });
         }}
       />
-      {alertText && <TemporaryAlert severity={AlertSeverity.Error} text={alertText} />}
+      {alertText && <TemporaryAlert severity={'error'} text={alertText} />}
     </>
   );
 }

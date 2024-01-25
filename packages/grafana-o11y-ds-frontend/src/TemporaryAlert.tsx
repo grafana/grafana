@@ -2,14 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, useTheme2 } from '@grafana/ui';
-
-export enum AlertSeverity {
-  Error = 'error',
-  Info = 'info',
-  Success = 'success',
-  Warning = 'warning',
-}
+import { Alert, AlertVariant, useTheme2 } from '@grafana/ui';
 
 enum AlertTimeout {
   Error = 7000,
@@ -28,13 +21,13 @@ const getStyle = (theme: GrafanaTheme2) => {
 };
 
 const timeoutMap = {
-  [AlertSeverity.Error]: AlertTimeout.Error,
-  [AlertSeverity.Info]: AlertTimeout.Info,
-  [AlertSeverity.Success]: AlertTimeout.Success,
-  [AlertSeverity.Warning]: AlertTimeout.Warning,
+  ['error']: AlertTimeout.Error,
+  ['info']: AlertTimeout.Info,
+  ['success']: AlertTimeout.Success,
+  ['warning']: AlertTimeout.Warning,
 };
 
-export const TemporaryAlert = (props: { severity: AlertSeverity; text: string }) => {
+export const TemporaryAlert = (props: { severity: AlertVariant; text: string }) => {
   const style = getStyle(useTheme2());
   const [visible, setVisible] = useState(false);
 
