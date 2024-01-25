@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,10 +33,9 @@ func NewHostedGrafanaACHeaderMiddleware(cfg *setting.Cfg) plugins.ClientMiddlewa
 }
 
 type HostedGrafanaACHeaderMiddleware struct {
-	next   plugins.Client
-	keySvc signingkeys.Service
-	log    log.Logger
-	cfg    *setting.Cfg
+	next plugins.Client
+	log  log.Logger
+	cfg  *setting.Cfg
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) {
