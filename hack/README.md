@@ -26,4 +26,3 @@ UPDATE_API_KNOWN_VIOLATIONS=true ./hack/update-codegen.sh
 
 Note that the script deletes existing openapi go code and regenerates in place so that you will temporary see
 deleted files in your `git status`. After a successful run, you should see them restored.
-a
