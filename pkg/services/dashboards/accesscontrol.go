@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -212,6 +213,9 @@ func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, fold
 	})
 
 	if err != nil {
+		if errors.Is(err, folder.ErrFolderNotFound) {
+			return nil, err
+		}
 		return nil, ac.ErrInternal.Errorf("could not retrieve folder parents: %w", err)
 	}
 
