@@ -122,7 +122,7 @@ awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,2023-10-12,fa
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,2023-10-12,false,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,2023-10-13,true,false,false,false
 pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,2023-10-17,false,false,false,false
-managedPluginsInstall,experimental,@grafana/plugins-platform-backend,2023-10-18,false,false,false,false
+managedPluginsInstall,preview,@grafana/plugins-platform-backend,2023-10-18,false,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,2023-10-19,false,false,false,true
 addFieldFromCalculationStatFunctions,preview,@grafana/grafana-bi-squad,2023-11-03,false,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,2023-10-30,false,false,false,false
