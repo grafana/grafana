@@ -17,11 +17,14 @@ import {
 } from '@grafana/scenes';
 import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2 } from '@grafana/ui';
 
+import { getExploreUrl } from '../../core/utils/explore';
+
 import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
+import { ShareTrailButton } from './ShareTrailButton';
 import { getTrailStore } from './TrailStore/TrailStore';
 import {
   ActionViewDefinition,
@@ -33,7 +36,7 @@ import {
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
 } from './shared';
-import { getTrailFor } from './utils';
+import { getDataSource, getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -113,6 +116,32 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     this.publishEvent(new OpenEmbeddedTrailEvent(), true);
   };
 
+  public getLinkToExplore = async () => {
+    const metricScene = sceneGraph.getAncestor(this, MetricScene);
+    const trail = getTrailFor(this);
+    const dsValue = getDataSource(trail);
+
+    const flexItem = metricScene.state.body.state.children[0] as SceneFlexItem;
+    const autoVizPanel = flexItem.state.body as AutoVizPanel;
+    const queries = autoVizPanel.state.queryDef?.queries || [];
+    const timeRange = sceneGraph.getTimeRange(autoVizPanel);
+
+    return getExploreUrl({
+      queries,
+      dsRef: { uid: dsValue },
+      timeRange: timeRange.state.value,
+      scopedVars: { __sceneObject: { value: metricScene } },
+    });
+  };
+
+  public openExploreLink = async () => {
+    this.getLinkToExplore().then((link) => {
+      // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
+      // if we precompute it we have to keep track of a lot of dependencies
+      window.open(link, '_blank');
+    });
+  };
+
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const styles = useStyles2(getStyles);
@@ -129,11 +158,13 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
       <Box paddingY={1}>
         <div className={styles.actions}>
           <Stack gap={2}>
-            <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled>
-              Explore
-            </ToolbarButton>
-            <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
-            <ToolbarButton variant={'canvas'} icon="share-alt" tooltip="Copy url (todo)" disabled />
+            <ToolbarButton
+              variant={'canvas'}
+              icon="compass"
+              tooltip="Open in explore"
+              onClick={model.openExploreLink}
+            ></ToolbarButton>
+            <ShareTrailButton trail={trail} />
             <ToolbarButton
               variant={'canvas'}
               icon={

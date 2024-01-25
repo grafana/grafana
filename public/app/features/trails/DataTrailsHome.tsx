@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { Redirect } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
@@ -10,7 +11,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
+import { getDatasourceForNewTrail, getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {}
 
@@ -42,6 +43,13 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
       getTrailStore().removeBookmark(index);
       setLastDelete(Date.now()); // trigger re-render
     };
+
+    // If there are no recent trails, don't show home page and create a new trail
+    if (!getTrailStore().recent.length) {
+      const trail = newMetricsTrail(getDatasourceForNewTrail());
+      getTrailStore().setRecentTrail(trail);
+      return <Redirect to={getUrlForTrail(trail)} />;
+    }
 
     return (
       <div className={styles.container}>
