@@ -343,10 +343,6 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
-	// FlagGrafanaAPIServer
-	// Enable Kubernetes API Server for Grafana resources
-	FlagGrafanaAPIServer = "grafanaAPIServer"
-
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
@@ -366,14 +362,6 @@ const (
 	// FlagSplitScopes
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
-
-	// FlagTraceToProfiles
-	// Enables linking between traces and profiles
-	FlagTraceToProfiles = "traceToProfiles"
-
-	// FlagTracesEmbeddedFlameGraph
-	// Enables embedding a flame graph in traces
-	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
 
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
@@ -646,4 +634,12 @@ const (
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
+
+	// FlagOnPremToCloudMigrations
+	// In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.
+	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagAlertingSaveStatePeriodic
+	// Writes the state periodically to the database, asynchronous to rule evaluation
+	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 )

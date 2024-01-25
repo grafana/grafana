@@ -208,12 +208,12 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 				Id:        element.CreatedBy,
 				Name:      signedInUser.GetLogin(),
-				AvatarUrl: dtos.GetGravatarUrl(signedInUser.GetEmail()),
+				AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
 			},
 			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 				Id:        element.UpdatedBy,
 				Name:      signedInUser.GetLogin(),
-				AvatarUrl: dtos.GetGravatarUrl(signedInUser.GetEmail()),
+				AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
 			},
 		},
 	}
@@ -335,12 +335,12 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.CreatedBy,
 					Name:      libraryElement.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(libraryElement.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, libraryElement.CreatedByEmail),
 				},
 				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      libraryElement.UpdatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(libraryElement.UpdatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, libraryElement.UpdatedByEmail),
 				},
 			},
 		}
@@ -457,12 +457,12 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.CreatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
 					},
 					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.UpdatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
 					},
 				},
 			})
@@ -630,12 +630,12 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        elementInDB.CreatedBy,
 					Name:      elementInDB.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(elementInDB.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, elementInDB.CreatedByEmail),
 				},
 				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      signedInUser.GetLogin(),
-					AvatarUrl: dtos.GetGravatarUrl(signedInUser.GetEmail()),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
 				},
 			},
 		}
@@ -683,7 +683,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        connection.CreatedBy,
 					Name:      connection.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(connection.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, connection.CreatedByEmail),
 				},
 			})
 		}
@@ -732,12 +732,12 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.CreatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
 					},
 					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.UpdatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
 					},
 				},
 			}
