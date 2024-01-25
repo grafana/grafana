@@ -1,18 +1,9 @@
 #!/usr/bin/env bash
 
-# Copyright 2017 The Kubernetes Authors.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: AGPL-3.0-only
+# Provenance-includes-location: https://github.com/kubernetes/sample-apiserver/blob/master/hack/update-codegen.sh
+# Provenance-includes-license: Apache-2.0
+# Provenance-includes-copyright: The Kubernetes Authors.
 
 set -o errexit
 set -o nounset
@@ -22,6 +13,7 @@ SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo $GOPATH/pkg/mod/k8s.io/code-generator@v0.29.1)}
 
 OUTDIR="${HOME}/go/src"
+OPENAPI_VIOLATION_EXCEPTIONS_FILENAME="zz_generated.openapi_violation_exceptions.list"
 
 source "${CODEGEN_PKG}/kube_codegen.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/openapi-codegen.sh"
@@ -42,10 +34,17 @@ for api_pkg in $(ls ./pkg/apis); do
     grafana::codegen::gen_openapi \
       --input-pkg-single github.com/grafana/grafana/pkg/apis/${api_pkg}/${pkg_version} \
       --output-base "${OUTDIR}" \
-      --report-filename "openapi_violation_exceptions.list" \
+      --report-filename "${OPENAPI_VIOLATION_EXCEPTIONS_FILENAME}" \
       ${update_report:+"${update_report}"} \
       --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
   done
+
+  violations_file="${OUTDIR}/github.com/grafana/grafana/pkg/apis/${api_pkg}/${pkg_version}/${OPENAPI_VIOLATION_EXCEPTIONS_FILENAME}"
+  # delete violation exceptions file, if empty
+  if ! grep -q . "${violations_file}"; then
+      echo "Deleting ${violations_file} since it is empty"
+      rm ${violations_file}
+  fi
 done
 
 kube::codegen::gen_client \
