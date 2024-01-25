@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService, setReturnToPrevious } from '@grafana/runtime';
+import { locationService, clearReturnToPrevious } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
@@ -18,12 +18,12 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const handleOnClick = () => {
-    setReturnToPrevious({ title: '', href: '' });
-    locationService.push(href);
+    clearReturnToPrevious();
+    href && locationService.push(href);
   };
   const handleOnDismiss = () => {
-    setReturnToPrevious({ title: '', href: '' });
-    chrome.update({ returnToPrevious: { title: '', href: '' } });
+    clearReturnToPrevious();
+    chrome.update({ returnToPrevious: undefined });
   };
 
   return (
