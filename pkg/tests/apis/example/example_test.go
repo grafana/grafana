@@ -20,10 +20,9 @@ func TestExampleApp(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // do not start extra port 6443
+		AppModeProduction: false, // required for experimental APIs
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
 	})

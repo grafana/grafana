@@ -127,6 +127,10 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  */
 export interface VariableModel {
   /**
+   * Custom all value
+   */
+  allValue?: string;
+  /**
    * Shows current selected variable text/value on the dashboard
    */
   current?: VariableOption;
@@ -142,6 +146,10 @@ export interface VariableModel {
    * Visibility configuration for the variable
    */
   hide?: VariableHide;
+  /**
+   * Whether all value option is available or not
+   */
+  includeAll?: boolean;
   /**
    * Optional display name
    */
@@ -162,7 +170,15 @@ export interface VariableModel {
    * Query used to fetch values for a variable
    */
   query?: (string | Record<string, unknown>);
+  /**
+   * Options to config when to refresh a variable
+   */
   refresh?: VariableRefresh;
+  /**
+   * Optional field, if you want to extract part of a series name or metric node segment.
+   * Named capture groups can be used to separate the display text and value.
+   */
+  regex?: string;
   /**
    * Whether the variable value should be managed by URL query params or not
    */
@@ -178,6 +194,7 @@ export interface VariableModel {
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
+  includeAll: false,
   multi: false,
   options: [],
   skipUrlSync: false,
@@ -623,6 +640,10 @@ export interface DataTransformerConfig {
    * Valid options depend on the transformer id
    */
   options: unknown;
+  /**
+   * Where to pull DataFrames from as input to transformation
+   */
+  topic?: ('series' | 'annotations' | 'alertStates'); // replaced with common.DataTopic
 }
 
 /**
@@ -634,6 +655,10 @@ export interface TimePickerConfig {
    * Whether timepicker is visible or not.
    */
   hidden: boolean;
+  /**
+   * Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+   */
+  nowDelay?: string;
   /**
    * Interval options available in the refresh picker dropdown.
    */

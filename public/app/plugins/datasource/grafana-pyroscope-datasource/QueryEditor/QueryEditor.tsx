@@ -1,6 +1,6 @@
 import deepEqual from 'fast-deep-equal';
 import { debounce } from 'lodash';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
@@ -27,8 +27,10 @@ export function QueryEditor(props: Props) {
     onRunQuery();
   }
 
-  const profileTypes = useProfileTypes(datasource);
-  const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
+  const onLabelSelectorChange = useLabelSelector(query, onChange);
+
+  const profileTypes = useProfileTypes(datasource, range);
+  const { labels, getLabelValues } = useLabels(range, datasource, query);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
   let cascader = <LoadingPlaceholder text={'Loading'} />;
@@ -108,12 +110,7 @@ function defaultProfileType(profileTypes: ProfileTypeMessage[]): string {
   return profileTypes[0]?.id || '';
 }
 
-function useLabels(
-  range: TimeRange | undefined,
-  datasource: PyroscopeDataSource,
-  query: Query,
-  onChange: (value: Query) => void
-) {
+function useLabels(range: TimeRange | undefined, datasource: PyroscopeDataSource, query: Query) {
   // Round to nearest 5 seconds. If the range is something like last 1h then every render the range values change slightly
   // and what ever has range as dependency is rerun. So this effectively debounces the queries.
   const unpreciseRange = {
@@ -155,15 +152,25 @@ function useLabels(
   // Create a function with range and query already baked in, so we don't have to send those everywhere
   const getLabelValues = useCallback(
     (label: string) => {
-      let labelSelector = createSelector(query.labelSelector, query.profileTypeId, label);
+      const labelSelector = createSelector(query.labelSelector, query.profileTypeId, label);
       return datasource.getLabelValues(labelSelector, label, unpreciseRange.from, unpreciseRange.to);
     },
     [datasource, query.labelSelector, query.profileTypeId, unpreciseRange.to, unpreciseRange.from]
   );
 
+  return { labels, getLabelValues };
+}
+
+function useLabelSelector(query: Query, onChange: (value: Query) => void) {
+  // Need to reference the query as otherwise when the label selector is changed, only the initial value
+  // of the query is passed into the LabelsEditor (onChange) which renders the CodeEditor for monaco.
+  // The above needs to have a ref to the query so it can get the latest value.
+  const queryRef = useRef(query);
+  queryRef.current = query;
+
   const onChangeDebounced = debounce((value: string) => {
     if (onChange) {
-      onChange({ ...query, labelSelector: value });
+      onChange({ ...queryRef.current, labelSelector: value });
     }
   }, 200);
 
@@ -174,5 +181,5 @@ function useLabels(
     [onChangeDebounced]
   );
 
-  return { labels, getLabelValues, onLabelSelectorChange };
+  return onLabelSelectorChange;
 }

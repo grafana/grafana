@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type TeamPermissionsService struct {
@@ -43,7 +45,7 @@ var (
 )
 
 func ProvideTeamPermissions(
-	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*TeamPermissionsService, error) {
@@ -101,7 +103,7 @@ func ProvideTeamPermissions(
 		},
 	}
 
-	srv, err := resourcepermissions.New(options, features, router, license, ac, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +119,7 @@ var DashboardEditActions = append(DashboardViewActions, []string{dashboards.Acti
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
 func ProvideDashboardPermissions(
-	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*DashboardPermissionsService, error) {
@@ -150,6 +152,7 @@ func ProvideDashboardPermissions(
 			if err != nil {
 				return nil, err
 			}
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
 			// nolint:staticcheck
 			if dashboard.FolderID > 0 {
 				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
@@ -183,7 +186,7 @@ func ProvideDashboardPermissions(
 		RoleGroup:      "Dashboards",
 	}
 
-	srv, err := resourcepermissions.New(options, features, router, license, ac, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +212,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
 func ProvideFolderPermissions(
-	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
@@ -247,7 +250,7 @@ func ProvideFolderPermissions(
 		WriterRoleName: "Folder permission writer",
 		RoleGroup:      "Folders",
 	}
-	srv, err := resourcepermissions.New(options, features, router, license, accesscontrol, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +286,6 @@ func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID 
 }
 
 func (e DatasourcePermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
-	// TODO: implement
 	return nil
 }
 
@@ -310,7 +312,7 @@ type ServiceAccountPermissionsService struct {
 }
 
 func ProvideServiceAccountPermissions(
-	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*ServiceAccountPermissionsService, error) {
@@ -339,7 +341,7 @@ func ProvideServiceAccountPermissions(
 		RoleGroup:      "Service accounts",
 	}
 
-	srv, err := resourcepermissions.New(options, features, router, license, ac, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}

@@ -25,40 +25,20 @@ enum RoutingOptions {
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const { watch, setValue } = useFormContext<RuleFormValues>();
+  const { watch } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
-  const [type, labels, queries, condition, folder, alertName, manualRouting] = watch([
-    'type',
-    'labels',
-    'queries',
-    'condition',
-    'folder',
-    'name',
-    'manualRouting',
-  ]);
+  const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
-
-  const shouldRenderPreview = type === RuleFormType.grafana;
-
-  const routingOptions = [
-    { label: 'Manually select contact point', value: RoutingOptions.ContactPoint },
-    { label: 'Auto-select contact point', value: RoutingOptions.NotificationPolicy },
-  ];
-
-  const onRoutingOptionChange = (option: RoutingOptions) => {
-    setValue('manualRouting', option === RoutingOptions.ContactPoint);
-  };
-
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
-
+  const shouldRenderpreview = type === RuleFormType.grafana;
   const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
 
   return (
     <RuleEditorSection
-      stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
-      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Labels and notifications'}
+      stepNo={4}
+      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
       description={
         <Stack direction="row" gap={0.5} alignItems="baseline">
           {type === RuleFormType.cloudRecording ? (
@@ -79,72 +59,91 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       <LabelsField dataSourceName={dataSourceName} />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">Configure notifications</Text>
+          <Text element="h5">Notifications</Text>
           <Text variant="bodySmall" color="secondary">
             Select who should receive a notification when an alert rule fires.
           </Text>
         </div>
       )}
-      <RuleEditorSectionBody />
+      {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
+        <ManualAndAutomaticRouting alertUid={alertUid} />
+      ) : // when simplified routing is not enabled, render the notification preview as we did before
+      shouldRenderpreview ? (
+        <AutomaticRooting alertUid={alertUid} />
+      ) : null}
     </RuleEditorSection>
   );
-
-  /**
-   * This component is used to render the section body of the NotificationsStep, depending on the routing option selected.
-   * If simplified routing is not enabled, it will render the NotificationPreview component.
-   * If simplified routing is enabled, it will render the switch between the manual routing and the notification policy routing.
-   *
-   */
-  function RuleEditorSectionBody() {
-    if (!shouldAllowSimplifiedRouting) {
-      return (
-        <>
-          {shouldRenderPreview && (
-            <NotificationPreview
-              alertQueries={queries}
-              customLabels={labels}
-              condition={condition}
-              folder={folder}
-              alertName={alertName}
-              alertUid={alertUid}
-            />
-          )}
-        </>
-      );
-    }
-    return (
-      <Stack direction="column">
-        <Stack direction="column">
-          <RadioButtonGroup
-            options={routingOptions}
-            value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
-            onChange={onRoutingOptionChange}
-            className={styles.routingOptions}
-          />
-        </Stack>
-
-        <RoutingOptionDescription manualRouting={manualRouting} />
-
-        {manualRouting ? (
-          <div className={styles.simplifiedRouting}>
-            <SimplifiedRouting />
-          </div>
-        ) : (
-          shouldRenderPreview && (
-            <NotificationPreview
-              alertQueries={queries}
-              customLabels={labels}
-              condition={condition}
-              folder={folder}
-              alertName={alertName}
-              alertUid={alertUid}
-            />
-          )
-        )}
-      </Stack>
-    );
-  }
 };
+
+/**
+ * Preconditions:
+ * - simplified routing is enabled
+ * - the alert rule is a grafana rule
+ *
+ * This component will render the switch between the select contact point routing and the notification policy routing.
+ * It also renders the section body of the NotificationsStep, depending on the routing option selected.
+ * If select contact point routing is selected, it will render the SimplifiedRouting component.
+ * If notification policy routing is selected, it will render the AutomaticRouting component.
+ *
+ */
+function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
+  const { watch, setValue } = useFormContext<RuleFormValues>();
+  const styles = useStyles2(getStyles);
+
+  const [manualRouting] = watch(['manualRouting']);
+
+  const routingOptions = [
+    { label: 'Select contact point', value: RoutingOptions.ContactPoint },
+    { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
+  ];
+
+  const onRoutingOptionChange = (option: RoutingOptions) => {
+    setValue('manualRouting', option === RoutingOptions.ContactPoint);
+  };
+
+  return (
+    <Stack direction="column">
+      <Stack direction="column">
+        <RadioButtonGroup
+          options={routingOptions}
+          value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
+          onChange={onRoutingOptionChange}
+          className={styles.routingOptions}
+        />
+      </Stack>
+
+      <RoutingOptionDescription manualRouting={manualRouting} />
+
+      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
+    </Stack>
+  );
+}
+
+interface AutomaticRootingProps {
+  alertUid?: string;
+}
+
+function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
+  const { watch } = useFormContext<RuleFormValues>();
+  const [labels, queries, condition, folder, alertName] = watch([
+    'labels',
+    'queries',
+    'condition',
+    'folder',
+    'name',
+    'manualRouting',
+  ]);
+  return (
+    <NotificationPreview
+      alertQueries={queries}
+      customLabels={labels}
+      condition={condition}
+      folder={folder}
+      alertName={alertName}
+      alertUid={alertUid}
+    />
+  );
+}
 
 // Auxiliar components to build the texts and descriptions in the NotificationsStep
 function NeedHelpInfoForNotificationPolicy() {
@@ -230,7 +229,7 @@ export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDes
       <Text variant="bodySmall" color="secondary">
         {manualRouting
           ? 'Notifications for firing alerts are routed to a selected contact point.'
-          : 'Notifications for firing alerts are routed to contact points based on matching labels.'}
+          : 'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
     </div>
@@ -241,11 +240,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   routingOptions: css({
     marginTop: theme.spacing(2),
     width: 'fit-content',
-  }),
-  simplifiedRouting: css({
-    display: 'flex',
-    flexDirection: 'column',
-    marginTop: theme.spacing(2),
   }),
   configureNotifications: css({
     display: 'flex',

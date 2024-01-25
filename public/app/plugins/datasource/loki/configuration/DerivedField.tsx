@@ -3,8 +3,8 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
 import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Select, Switch } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DerivedFieldConfig } from '../types';
 

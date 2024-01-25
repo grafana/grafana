@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -56,7 +56,7 @@ const (
 
 var logger = log.New("tsdb.cloudwatch")
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
 	logger.Debug("Initializing")
 
 	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
@@ -88,7 +88,7 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 	return e
 }
 
-func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		instanceSettings, err := models.LoadCloudWatchSettings(settings)
 		if err != nil {

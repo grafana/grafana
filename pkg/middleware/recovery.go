@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -104,7 +105,7 @@ func function(pc uintptr) []byte {
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 // While Martini is in development mode, Recovery will also output the panic as HTML.
-func Recovery(cfg *setting.Cfg) web.Middleware {
+func Recovery(cfg *setting.Cfg, license licensing.Licensing) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			c := web.FromContext(req.Context())
@@ -137,7 +138,7 @@ func Recovery(cfg *setting.Cfg) web.Middleware {
 						return
 					}
 
-					assets, _ := webassets.GetWebAssets(cfg)
+					assets, _ := webassets.GetWebAssets(req.Context(), cfg, license)
 					if assets == nil {
 						assets = &dtos.EntryPointAssets{JSFiles: []dtos.EntryPointAsset{}}
 					}
@@ -146,12 +147,12 @@ func Recovery(cfg *setting.Cfg) web.Middleware {
 						Title     string
 						AppTitle  string
 						AppSubUrl string
-						Theme     string
+						ThemeType string
 						ErrorMsg  string
 						Assets    *dtos.EntryPointAssets
 					}{"Server Error", "Grafana", cfg.AppSubURL, cfg.DefaultTheme, "", assets}
 
-					if setting.Env == setting.Dev {
+					if cfg.Env == setting.Dev {
 						if err, ok := r.(error); ok {
 							data.Title = err.Error()
 						}

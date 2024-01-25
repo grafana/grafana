@@ -8,111 +8,100 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	// ContactLabel is a private label created during migration and used in notification policies.
-	// It stores a string array of all contact point names an alert rule should send to.
-	// It was created as a means to simplify post-migration notification policies.
-	ContactLabel = "__contacts__"
-)
+func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string) (data.Labels, data.Labels) {
+	tags := alert.GetTagsFromSettings()
+	lbls := make(data.Labels, len(tags)+1)
 
-func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[string]string, map[string]string) {
-	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
-	lbls := make(map[string]string, len(tagsMap))
-
-	for k, v := range tagsMap {
-		lbls[k] = simplejson.NewFromAny(v).MustString()
+	for _, t := range tags {
+		lbls[t.Key] = t.Value
 	}
 
-	annotations := make(map[string]string, 3)
+	// Add a label for routing
+	lbls[ngmodels.MigratedUseLegacyChannelsLabel] = "true"
+
+	annotations := make(data.Labels, 4)
 	annotations[ngmodels.DashboardUIDAnnotation] = dashboardUID
-	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelID)
-	annotations["__alertId__"] = fmt.Sprintf("%v", da.ID)
+	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", alert.PanelID)
+	annotations[ngmodels.MigratedAlertIdAnnotation] = fmt.Sprintf("%v", alert.ID)
+
+	message := MigrateTmpl(l.New("field", "message"), alert.Message)
+	annotations[ngmodels.MigratedMessageAnnotation] = message
 
 	return lbls, annotations
 }
 
-// MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
-func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
+// migrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
+func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *legacymodels.Alert, dashboard *dashboards.Dashboard) (*ngmodels.AlertRule, error) {
 	l.Debug("Migrating alert rule to Unified Alerting")
-	cond, err := transConditions(ctx, l, da, om.migrationStore)
+	rawSettings, err := json.Marshal(alert.Settings)
+	if err != nil {
+		return nil, fmt.Errorf("get settings: %w", err)
+	}
+	var parsedSettings dashAlertSettings
+	err = json.Unmarshal(rawSettings, &parsedSettings)
+	if err != nil {
+		return nil, fmt.Errorf("parse settings: %w", err)
+	}
+	cond, err := transConditions(ctx, l, parsedSettings, alert.OrgID, om.migrationStore)
 	if err != nil {
 		return nil, fmt.Errorf("transform conditions: %w", err)
 	}
 
-	lbls, annotations := addMigrationInfo(da, info.DashboardUID)
-
-	message := MigrateTmpl(l.New("field", "message"), da.Message)
-	annotations["message"] = message
+	lbls, annotations := addLabelsAndAnnotations(l, alert, dashboard.UID)
 
 	data, err := migrateAlertRuleQueries(l, cond.Data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
+		return nil, fmt.Errorf("queries: %w", err)
 	}
 
 	isPaused := false
-	if da.State == "paused" {
+	if alert.State == "paused" {
 		isPaused = true
 	}
 
-	// Here we ensure that the alert rule title is unique within the folder.
-	titleDeduplicator := om.titleDeduplicatorForFolder(info.NewFolderUID)
-	name, err := titleDeduplicator.Deduplicate(da.Name)
-	if err != nil {
-		return nil, err
-	}
-	if name != da.Name {
-		l.Info(fmt.Sprintf("Alert rule title modified to be unique within the folder and fit within the maximum length of %d", store.AlertDefinitionMaxTitleLength), "old", da.Name, "new", name)
-	}
-
-	dashUID := info.DashboardUID
+	dashUID := dashboard.UID
 	ar := &ngmodels.AlertRule{
-		OrgID:           da.OrgID,
-		Title:           name,
+		OrgID:           alert.OrgID,
+		Title:           alert.Name, // Title will be deduplicated on persist.
 		UID:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            data,
-		IntervalSeconds: ruleAdjustInterval(da.Frequency),
+		IntervalSeconds: ruleAdjustInterval(alert.Frequency),
 		Version:         1,
-		NamespaceUID:    info.NewFolderUID,
+		NamespaceUID:    "", // The folder for this alert is determined later.
 		DashboardUID:    &dashUID,
-		PanelID:         &da.PanelID,
-		RuleGroup:       groupName(ruleAdjustInterval(da.Frequency), info.DashboardName),
-		For:             da.For,
+		PanelID:         &alert.PanelID,
+		RuleGroup:       groupName(ruleAdjustInterval(alert.Frequency), dashboard.Title),
+		For:             alert.For,
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
 		Labels:          lbls,
 		RuleGroupIndex:  1, // Every rule is in its own group.
 		IsPaused:        isPaused,
-		NoDataState:     transNoData(l, da.ParsedSettings.NoDataState),
-		ExecErrState:    transExecErr(l, da.ParsedSettings.ExecutionErrorState),
+		NoDataState:     transNoData(l, parsedSettings.NoDataState),
+		ExecErrState:    transExecErr(l, parsedSettings.ExecutionErrorState),
 	}
 
-	// Label for routing and silences.
-	n, v := getLabelForSilenceMatching(ar.UID)
-	ar.Labels[n] = v
+	om.silences.handleSilenceLabels(ar, parsedSettings)
 
-	if da.ParsedSettings.ExecutionErrorState == string(legacymodels.ExecutionErrorKeepState) {
-		if err := om.addErrorSilence(ar); err != nil {
-			om.log.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
-		}
+	// We do some validation and pre-save operations early in order to track these errors as part of the migration state.
+	if err := ar.ValidateAlertRule(om.cfg.UnifiedAlerting); err != nil {
+		return nil, err
 	}
-
-	if da.ParsedSettings.NoDataState == string(legacymodels.NoDataKeepState) {
-		if err := om.addNoDataSilence(ar); err != nil {
-			om.log.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
-		}
+	if err := ar.PreSave(time.Now); err != nil {
+		return nil, err
 	}
 
 	return ar, nil
@@ -220,7 +209,7 @@ func isPrometheusQuery(queryData map[string]json.RawMessage) (bool, error) {
 		Type string `json:"type"`
 	}
 	if err := json.Unmarshal(ds, &datasource); err != nil {
-		return false, fmt.Errorf("failed to parse datasource '%s': %w", string(ds), err)
+		return false, fmt.Errorf("parse datasource '%s': %w", string(ds), err)
 	}
 	if datasource.Type == "" {
 		return false, fmt.Errorf("missing type field '%s'", string(ds))
@@ -275,23 +264,6 @@ func truncate(daName string, length int) string {
 		return daName[:length]
 	}
 	return daName
-}
-
-func extractChannelIDs(d *migrationStore.DashAlert) (channelUids []migrationStore.UidOrID) {
-	// Extracting channel UID/ID.
-	for _, ui := range d.ParsedSettings.Notifications {
-		if ui.UID != "" {
-			channelUids = append(channelUids, ui.UID)
-			continue
-		}
-		// In certain circumstances, id is used instead of uid.
-		// We add this if there was no uid.
-		if ui.ID > 0 {
-			channelUids = append(channelUids, ui.ID)
-		}
-	}
-
-	return channelUids
 }
 
 // groupName constructs a group name from the dashboard title and the interval. It truncates the dashboard title

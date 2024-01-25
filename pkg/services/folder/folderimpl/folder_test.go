@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -69,7 +70,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
 		db := sqlstore.InitTestDB(t)
-		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
+		nestedFolderStore := ProvideStore(db, db.Cfg)
 
 		folderStore := foldertest.NewFakeFolderStore(t)
 
@@ -106,36 +107,20 @@ func TestIntegrationFolderService(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 
-			folderId := rand.Int63()
 			folderUID := util.GenerateShortUID()
 
 			f := folder.NewFolder("Folder", "")
-			// nolint:staticcheck
-			f.ID = folderId
 			f.UID = folderUID
 
-			folderStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(f, nil)
 			folderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(f, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &folderId, // nolint:staticcheck
+					UID:          &folderUID,
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
-			})
-
-			var zeroInt int64 = 0
-			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
-				foldr, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &zeroInt, // nolint:staticcheck
-					OrgID:        orgID,
-					SignedInUser: usr,
-				})
-				require.NoError(t, err)
-				// nolint:staticcheck
-				require.Equal(t, foldr, &folder.Folder{ID: 0, Title: "General"})
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
@@ -176,7 +161,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				newFolder := folder.NewFolder("Folder", "")
 				newFolder.UID = folderUID
 
-				folderStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
 				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
@@ -236,23 +220,30 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashboardFolder.ID = rand.Int63()
 				dashboardFolder.UID = util.GenerateShortUID()
 				dashboardFolder.OrgID = orgID
-				f := dashboards.FromDashboard(dashboardFolder)
 
-				_, err := service.store.Create(context.Background(), folder.CreateFolderCommand{
+				f, err := service.store.Create(context.Background(), folder.CreateFolderCommand{
 					OrgID:        orgID,
 					Title:        dashboardFolder.Title,
 					UID:          dashboardFolder.UID,
 					SignedInUser: usr,
 				})
 				require.NoError(t, err)
+				assert.Equal(t, "Folder", f.Title)
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
-				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dashboardFolder, nil)
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(dashboardFolder, nil)
-
-				folderStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
-
 				title := "TEST-Folder"
+				updatedDashboardFolder := *dashboardFolder
+				updatedDashboardFolder.Title = title
+				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&updatedDashboardFolder, nil)
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&updatedDashboardFolder, nil)
+
+				folderStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(&folder.Folder{
+					OrgID: orgID,
+					ID:    dashboardFolder.ID,
+					UID:   dashboardFolder.UID,
+					Title: title,
+				}, nil)
+
 				req := &folder.UpdateFolderCommand{
 					UID:          dashboardFolder.UID,
 					OrgID:        orgID,
@@ -262,13 +253,11 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				reqResult, err := service.Update(context.Background(), req)
 				require.NoError(t, err)
-				require.Equal(t, f, reqResult)
+				assert.Equal(t, title, reqResult.Title)
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
 				f := folder.NewFolder(util.GenerateShortUID(), "")
-				// nolint:staticcheck
-				f.ID = rand.Int63()
 				f.UID = util.GenerateShortUID()
 				folderStore.On("GetFolders", mock.Anything, orgID, []string{f.UID}).Return(map[string]*folder.Folder{f.UID: f}, nil)
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
@@ -287,8 +276,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
-				// nolint:staticcheck
-				require.Equal(t, f.ID, actualCmd.ID)
 				require.Equal(t, orgID, actualCmd.OrgID)
 				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
 			})
@@ -301,20 +288,6 @@ func TestIntegrationFolderService(t *testing.T) {
 		t.Run("Given user has permission to view", func(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
-
-			t.Run("When get folder by id should return folder", func(t *testing.T) {
-				expected := folder.NewFolder(util.GenerateShortUID(), "")
-				// nolint:staticcheck
-				expected.ID = rand.Int63()
-
-				// nolint:staticcheck
-				folderStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
-
-				// nolint:staticcheck
-				actual, err := service.getFolderByID(context.Background(), expected.ID, orgID)
-				require.Equal(t, expected, actual)
-				require.NoError(t, err)
-			})
 
 			t.Run("When get folder by uid should return folder", func(t *testing.T) {
 				expected := folder.NewFolder(util.GenerateShortUID(), "")
@@ -330,9 +303,9 @@ func TestIntegrationFolderService(t *testing.T) {
 			t.Run("When get folder by title should return folder", func(t *testing.T) {
 				expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
 
-				folderStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
+				folderStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title, mock.Anything).Return(expected, nil)
 
-				actual, err := service.getFolderByTitle(context.Background(), orgID, expected.Title)
+				actual, err := service.getFolderByTitle(context.Background(), orgID, expected.Title, nil)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -378,7 +351,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db), quotaService)
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
+	nestedFolderStore := ProvideStore(db, db.Cfg)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(cfg)
@@ -448,11 +421,11 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOn)
 			require.NoError(t, err)
 
-			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOn", createCmd)
+			ancestors := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOn", createCmd)
 
-			parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+			parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestors[0].UID)
 			require.NoError(t, err)
-			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
+			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestors[1].UID)
 			require.NoError(t, err)
 			// nolint:staticcheck
 			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, parent.UID, "prod")
@@ -473,7 +446,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 
 			countCmd := folder.GetDescendantCountsQuery{
-				UID:          &ancestorUIDs[0],
+				UID:          &ancestors[0].UID,
 				OrgID:        orgID,
 				SignedInUser: &signedInUser,
 			}
@@ -486,8 +459,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
-				for _, uid := range ancestorUIDs {
-					err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
+				for _, ancestor := range ancestors {
+					err := serviceWithFlagOn.store.Delete(context.Background(), ancestor.UID, orgID)
 					assert.NoError(t, err)
 				}
 			})
@@ -496,7 +469,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
 			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
 			require.NoError(t, err)
-			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+			nestedFolderStore := ProvideStore(db, db.Cfg)
 
 			serviceWithFlagOff := &Service{
 				cfg:                  cfg,
@@ -530,11 +503,11 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOff)
 			require.NoError(t, err)
 
-			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOff", createCmd)
+			ancestors := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOff", createCmd)
 
-			parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+			parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestors[0].UID)
 			require.NoError(t, err)
-			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
+			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestors[1].UID)
 			require.NoError(t, err)
 			// nolint:staticcheck
 			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, parent.UID, "prod")
@@ -553,7 +526,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 
 			countCmd := folder.GetDescendantCountsQuery{
-				UID:          &ancestorUIDs[0],
+				UID:          &ancestors[0].UID,
 				OrgID:        orgID,
 				SignedInUser: &signedInUser,
 			}
@@ -566,8 +539,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
-				for _, uid := range ancestorUIDs {
-					err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
+				for _, ancestor := range ancestors {
+					err := serviceWithFlagOn.store.Delete(context.Background(), ancestor.UID, orgID)
 					assert.NoError(t, err)
 				}
 			})
@@ -589,7 +562,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 		testCases := []struct {
 			service           *Service
-			featuresFlag      *featuremgmt.FeatureManager
+			featuresFlag      featuremgmt.FeatureToggles
 			prefix            string
 			depth             int
 			forceDelete       bool
@@ -659,7 +632,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, tc.featuresFlag, tagimpl.ProvideService(db), quotaService)
 				require.NoError(t, err)
-				nestedFolderStore := ProvideStore(db, db.Cfg, tc.featuresFlag)
+				nestedFolderStore := ProvideStore(db, db.Cfg)
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 
@@ -668,9 +641,9 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac)
 				require.NoError(t, err)
 
-				ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, tc.depth, tc.prefix, createCmd)
+				ancestors := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, tc.depth, tc.prefix, createCmd)
 
-				parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+				parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestors[0].UID)
 				require.NoError(t, err)
 				_ = createRule(t, alertStore, parent.UID, "parent alert")
 
@@ -679,7 +652,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 					subPanel  model.LibraryElementDTO
 				)
 				if tc.depth > 1 {
-					subfolder, err = serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
+					subfolder, err = serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestors[1].UID)
 					require.NoError(t, err)
 					_ = createRule(t, alertStore, subfolder.UID, "sub alert")
 					// nolint:staticcheck
@@ -693,7 +666,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				require.NoError(t, err)
 
 				deleteCmd := folder.DeleteFolderCommand{
-					UID:              ancestorUIDs[0],
+					UID:              ancestors[0].UID,
 					OrgID:            orgID,
 					SignedInUser:     &signedInUser,
 					ForceDeleteRules: tc.forceDelete,
@@ -702,12 +675,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				err = tc.service.Delete(context.Background(), &deleteCmd)
 				require.ErrorIs(t, err, tc.deletionErr)
 
-				for i, uid := range ancestorUIDs {
+				for i, ancestor := range ancestors {
 					// dashboard table
-					_, err := tc.service.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
+					_, err := tc.service.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestor.UID)
 					require.ErrorIs(t, err, tc.dashboardErr)
 					// folder table
-					_, err = tc.service.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+					_, err = tc.service.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestors[i].UID, OrgID: orgID})
 					require.ErrorIs(t, err, tc.folderErr)
 				}
 
@@ -766,6 +739,70 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, res.UID)
 		require.NotEmpty(t, res.ParentUID)
+	})
+}
+
+func TestFolderServiceDualWrite(t *testing.T) {
+	g := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+	t.Cleanup(func() {
+		guardian.New = g
+	})
+
+	db := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
+	nestedFolderStore := ProvideStore(db, cfg)
+
+	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db), &quotatest.FakeQuotaService{})
+	require.NoError(t, err)
+
+	dashboardFolderStore := ProvideDashboardFolderStore(db)
+
+	folderService := &Service{
+		cfg:                  setting.NewCfg(),
+		store:                nestedFolderStore,
+		db:                   sqlstore.InitTestDB(t),
+		dashboardStore:       dashStore,
+		dashboardFolderStore: dashboardFolderStore,
+		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		log:                  log.New("test-folder-service"),
+		accessControl:        acimpl.ProvideAccessControl(cfg),
+		metrics:              newFoldersMetrics(nil),
+		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+	}
+
+	t.Run("When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables", func(t *testing.T) {
+		f, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{SignedInUser: usr, OrgID: orgID, Title: "  my folder  "})
+		require.NoError(t, err)
+
+		assert.Equal(t, "my folder", f.Title)
+
+		dashFolder, err := dashboardFolderStore.GetFolderByUID(context.Background(), orgID, f.UID)
+		require.NoError(t, err)
+
+		nestedFolder, err := nestedFolderStore.Get(context.Background(), folder.GetFolderQuery{UID: &f.UID, OrgID: orgID})
+		require.NoError(t, err)
+
+		assert.Equal(t, dashFolder.Title, nestedFolder.Title)
+	})
+
+	t.Run("When updating a folder it should trim leading and trailing spaces in both dashboard and folder tables", func(t *testing.T) {
+		f, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{SignedInUser: usr, OrgID: orgID, Title: "my folder 2"})
+		require.NoError(t, err)
+
+		f, err = folderService.Update(context.Background(), &folder.UpdateFolderCommand{SignedInUser: usr, OrgID: orgID, UID: f.UID, NewTitle: util.Pointer("  my updated folder 2 "), Version: f.Version})
+		require.NoError(t, err)
+
+		assert.Equal(t, "my updated folder 2", f.Title)
+
+		dashFolder, err := dashboardFolderStore.GetFolderByUID(context.Background(), orgID, f.UID)
+		require.NoError(t, err)
+
+		nestedFolder, err := nestedFolderStore.Get(context.Background(), folder.GetFolderQuery{UID: &f.UID, OrgID: orgID})
+		require.NoError(t, err)
+
+		assert.Equal(t, dashFolder.Title, nestedFolder.Title)
 	})
 }
 
@@ -1233,7 +1270,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db), quotaService)
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
+	nestedFolderStore := ProvideStore(db, db.Cfg)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(cfg)
@@ -1291,12 +1328,12 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 			CanViewValue: true,
 		})
 
-		ancestorUIDsFolderWithPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withPermissions", createCmd)
-		ancestorUIDsFolderWithoutPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withoutPermissions", createCmd)
+		ancestorFoldersWithPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withPermissions", createCmd)
+		ancestorFoldersWithoutPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withoutPermissions", createCmd)
 
-		parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDsFolderWithoutPermissions[0])
+		parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorFoldersWithoutPermissions[0].UID)
 		require.NoError(t, err)
-		subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDsFolderWithoutPermissions[1])
+		subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorFoldersWithoutPermissions[1].UID)
 		require.NoError(t, err)
 		// nolint:staticcheck
 		dash1 := insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, parent.UID, "prod")
@@ -1307,19 +1344,19 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 			CanSaveValue: true,
 			CanViewValue: true,
 			CanViewUIDs: []string{
-				ancestorUIDsFolderWithPermissions[0],
-				ancestorUIDsFolderWithPermissions[1],
-				ancestorUIDsFolderWithoutPermissions[1],
+				ancestorFoldersWithPermissions[0].UID,
+				ancestorFoldersWithPermissions[1].UID,
+				ancestorFoldersWithoutPermissions[1].UID,
 				dash1.UID,
 				dash2.UID,
 			},
 		})
 		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = []string{
-			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorUIDsFolderWithPermissions[0]),
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorFoldersWithPermissions[0].UID),
 			// Add permission to the subfolder of folder with permission (to check deduplication)
-			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorUIDsFolderWithPermissions[1]),
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorFoldersWithPermissions[1].UID),
 			// Add permission to the subfolder of folder without permission
-			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorUIDsFolderWithoutPermissions[1]),
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorFoldersWithoutPermissions[1].UID),
 		}
 		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = []string{
 			dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash1.UID),
@@ -1340,8 +1377,8 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Len(t, sharedFolders, 1)
-		require.Contains(t, sharedFoldersUIDs, ancestorUIDsFolderWithoutPermissions[1])
-		require.NotContains(t, sharedFoldersUIDs, ancestorUIDsFolderWithPermissions[1])
+		require.Contains(t, sharedFoldersUIDs, ancestorFoldersWithoutPermissions[1].UID)
+		require.NotContains(t, sharedFoldersUIDs, ancestorFoldersWithPermissions[1].UID)
 
 		sharedDashboards, err := dashboardService.GetDashboardsSharedWithUser(context.Background(), &signedInUser)
 		sharedDashboardsUIDs := make([]string, 0)
@@ -1356,28 +1393,244 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 
 		t.Cleanup(func() {
 			guardian.New = origNewGuardian
-			for _, uid := range ancestorUIDsFolderWithPermissions {
-				err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
+			for _, ancestor := range ancestorFoldersWithPermissions {
+				err := serviceWithFlagOn.store.Delete(context.Background(), ancestor.UID, orgID)
 				assert.NoError(t, err)
 			}
 		})
 		t.Cleanup(func() {
 			guardian.New = origNewGuardian
-			for _, uid := range ancestorUIDsFolderWithoutPermissions {
-				err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
+			for _, ancestor := range ancestorFoldersWithoutPermissions {
+				err := serviceWithFlagOn.store.Delete(context.Background(), ancestor.UID, orgID)
 				assert.NoError(t, err)
 			}
 		})
 	})
+
+	t.Run("Should get org folders visible", func(t *testing.T) {
+		depth := 3
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+			CanSaveValue: true,
+			CanViewValue: true,
+		})
+
+		// create folder sctructure like this:
+		// tree1-folder-0
+		// └──tree1-folder-1
+		// 	└──tree1-folder-2
+		// tree2-folder-0
+		//  └──tree2-folder-1
+		// 	 └──tree2-folder-2
+		tree1 := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "tree1-", createCmd)
+		tree2 := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "tree2-", createCmd)
+
+		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = []string{
+			// Add permission to tree1-folder-0
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(tree1[0].UID),
+			// Add permission to the subfolder of folder with permission (tree1-folder-1) to check deduplication
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(tree1[1].UID),
+			// Add permission to the subfolder of folder without permission (tree2-folder-1)
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(tree2[1].UID),
+		}
+
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+			for _, f := range tree1 {
+				err := serviceWithFlagOn.store.Delete(context.Background(), f.UID, orgID)
+				assert.NoError(t, err)
+			}
+			for _, f := range tree2 {
+				err := serviceWithFlagOn.store.Delete(context.Background(), f.UID, orgID)
+				assert.NoError(t, err)
+			}
+		})
+
+		testCases := []struct {
+			name     string
+			cmd      folder.GetFoldersQuery
+			expected []*folder.Folder
+		}{
+			{
+				name: "Should get all org folders visible to the user",
+				cmd: folder.GetFoldersQuery{
+					OrgID:        orgID,
+					SignedInUser: &signedInUser,
+				},
+				expected: []*folder.Folder{
+					{
+						UID: tree1[0].UID,
+					},
+					{
+						UID: tree1[1].UID,
+					},
+					{
+						UID: tree1[2].UID,
+					},
+					{
+						UID: tree2[1].UID,
+					},
+					{
+						UID: tree2[2].UID,
+					},
+				},
+			},
+			{
+				name: "Should get all org folders visible to the user with fullpath",
+				cmd: folder.GetFoldersQuery{
+					OrgID:        orgID,
+					WithFullpath: true,
+					SignedInUser: &signedInUser,
+				},
+				expected: []*folder.Folder{
+					{
+						UID:      tree1[0].UID,
+						Fullpath: "tree1-folder-0",
+					},
+					{
+						UID:      tree1[1].UID,
+						Fullpath: "tree1-folder-0/tree1-folder-1",
+					},
+					{
+						UID:      tree1[2].UID,
+						Fullpath: "tree1-folder-0/tree1-folder-1/tree1-folder-2",
+					},
+					{
+						UID:      tree2[1].UID,
+						Fullpath: "tree2-folder-0/tree2-folder-1",
+					},
+					{
+						UID:      tree2[2].UID,
+						Fullpath: "tree2-folder-0/tree2-folder-1/tree2-folder-2",
+					},
+				},
+			},
+			{
+				name: "Should get all org folders visible to the user with fullpath UIDs",
+				cmd: folder.GetFoldersQuery{
+					OrgID:            orgID,
+					WithFullpathUIDs: true,
+					SignedInUser:     &signedInUser,
+				},
+				expected: []*folder.Folder{
+					{
+						UID:          tree1[0].UID,
+						FullpathUIDs: strings.Join([]string{tree1[0].UID}, "/"),
+					},
+					{
+						UID:          tree1[1].UID,
+						FullpathUIDs: strings.Join([]string{tree1[0].UID, tree1[1].UID}, "/"),
+					},
+					{
+						UID:          tree1[2].UID,
+						FullpathUIDs: strings.Join([]string{tree1[0].UID, tree1[1].UID, tree1[2].UID}, "/"),
+					},
+					{
+						UID:          tree2[1].UID,
+						FullpathUIDs: strings.Join([]string{tree2[0].UID, tree2[1].UID}, "/"),
+					},
+					{
+						UID:          tree2[2].UID,
+						FullpathUIDs: strings.Join([]string{tree2[0].UID, tree2[1].UID, tree2[2].UID}, "/"),
+					},
+				},
+			},
+			{
+				name: "Should get specific org folders visible to the user",
+				cmd: folder.GetFoldersQuery{
+					OrgID:        orgID,
+					UIDs:         []string{tree1[0].UID, tree2[0].UID, tree2[1].UID},
+					SignedInUser: &signedInUser,
+				},
+				expected: []*folder.Folder{
+					{
+						UID: tree1[0].UID,
+					},
+					{
+						UID: tree2[1].UID,
+					},
+				},
+			},
+			{
+				name: "Should get all org folders visible to the user with admin permissions",
+				cmd: folder.GetFoldersQuery{
+					OrgID:        orgID,
+					SignedInUser: &signedInAdminUser,
+				},
+				expected: []*folder.Folder{
+					{
+						UID:          tree1[0].UID,
+						Fullpath:     "tree1-folder-0",
+						FullpathUIDs: strings.Join([]string{tree1[0].UID}, "/"),
+					},
+					{
+						UID:          tree1[1].UID,
+						Fullpath:     "tree1-folder-0/tree1-folder-1",
+						FullpathUIDs: strings.Join([]string{tree1[0].UID, tree1[1].UID}, "/"),
+					},
+					{
+						UID:      tree1[2].UID,
+						Fullpath: "tree1-folder-0/tree1-folder-1/tree1-folder-2",
+					},
+					{
+						UID:          tree2[0].UID,
+						Fullpath:     "tree2-folder-0",
+						FullpathUIDs: strings.Join([]string{tree2[0].UID}, "/"),
+					},
+					{
+						UID:          tree2[1].UID,
+						Fullpath:     "tree2-folder-0/tree2-folder-1",
+						FullpathUIDs: strings.Join([]string{tree2[0].UID, tree2[1].UID}, "/"),
+					},
+					{
+						UID:          tree2[2].UID,
+						Fullpath:     "tree2-folder-0/tree2-folder-1/tree2-folder-2",
+						FullpathUIDs: strings.Join([]string{tree2[0].UID, tree2[1].UID, tree2[2].UID}, "/"),
+					},
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				actualFolders, err := serviceWithFlagOn.GetFolders(context.Background(), tc.cmd)
+				require.NoError(t, err)
+
+				require.NoError(t, err)
+				require.Len(t, actualFolders, len(tc.expected))
+
+				for _, expected := range tc.expected {
+					var actualFolder *folder.Folder
+					for _, f := range actualFolders {
+						if f.UID == expected.UID {
+							actualFolder = f
+							break
+						}
+					}
+					if actualFolder == nil {
+						t.Fatalf("expected folder with UID %s not found", expected.UID)
+					}
+					if tc.cmd.WithFullpath {
+						require.Equal(t, expected.Fullpath, actualFolder.Fullpath)
+					} else {
+						require.Empty(t, actualFolder.Fullpath)
+					}
+
+					if tc.cmd.WithFullpathUIDs {
+						require.Equal(t, expected.FullpathUIDs, actualFolder.FullpathUIDs)
+					} else {
+						require.Empty(t, actualFolder.FullpathUIDs)
+					}
+				}
+			})
+		}
+	})
 }
 
-func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
+func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
 	t.Helper()
 
-	ancestorUIDs := []string{}
-	if cmd.ParentUID != "" {
-		ancestorUIDs = append(ancestorUIDs, cmd.ParentUID)
-	}
+	folders := make([]*folder.Folder, 0, depth)
 	for i := 0; i < depth; i++ {
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
 		cmd.Title = title
@@ -1386,27 +1639,14 @@ func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth
 		f, err := service.Create(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
-		// nolint:staticcheck
-		require.NotEmpty(t, f.ID)
 		require.NotEmpty(t, f.UID)
 
-		parents, err := store.GetParents(context.Background(), folder.GetParentsQuery{
-			UID:   f.UID,
-			OrgID: cmd.OrgID,
-		})
-		require.NoError(t, err)
-		parentUIDs := []string{}
-		for _, p := range parents {
-			parentUIDs = append(parentUIDs, p.UID)
-		}
-		require.Equal(t, ancestorUIDs, parentUIDs)
-
-		ancestorUIDs = append(ancestorUIDs, f.UID)
+		folders = append(folders, f)
 
 		cmd.ParentUID = f.UID
 	}
 
-	return ancestorUIDs
+	return folders
 }
 
 func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder.FolderStore, nestedFolderStore store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, db db.DB) folder.Service {

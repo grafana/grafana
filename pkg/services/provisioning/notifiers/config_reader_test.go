@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -46,7 +47,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			sqlStore = db.InitTestDB(t)
 			orgService, _ = orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 			nm := &notifications.NotificationService{}
-			ns = alerting.ProvideService(sqlStore, encryptionService, nm)
+			ns = alerting.ProvideService(sqlStore.Cfg, sqlStore, encryptionService, nm)
 
 			for i := 1; i < 5; i++ {
 				orgCommand := org.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
@@ -71,6 +72,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			setup()
 			t.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{
+				cfg:               setting.NewCfg(),
 				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
@@ -150,7 +152,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				setup()
 				fakeAlertNotification := &fakeAlertNotification{}
 				fakeAlertNotification.ExpectedAlertNotification = &models.AlertNotification{OrgID: 1}
-				dc := newNotificationProvisioner(orgService, fakeAlertNotification, encryptionService, nil, logger)
+				dc := newNotificationProvisioner(setting.NewCfg(), orgService, fakeAlertNotification, encryptionService, nil, logger)
 
 				err := dc.applyChanges(context.Background(), twoNotificationsConfig)
 				if err != nil {
@@ -176,7 +178,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				require.Equal(t, len(results), 1)
 
 				t.Run("should update one notification", func(t *testing.T) {
-					dc := newNotificationProvisioner(orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
+					dc := newNotificationProvisioner(setting.NewCfg(), orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
 					err = dc.applyChanges(context.Background(), twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -186,7 +188,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 			t.Run("Two notifications with is_default", func(t *testing.T) {
 				setup()
-				dc := newNotificationProvisioner(orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
+				dc := newNotificationProvisioner(setting.NewCfg(), orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
 				err := dc.applyChanges(context.Background(), doubleNotificationsConfig)
 				t.Run("should both be inserted", func(t *testing.T) {
 					require.NoError(t, err)
@@ -221,7 +223,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				require.Equal(t, len(res), 2)
 
 				t.Run("should have two new notifications", func(t *testing.T) {
-					dc := newNotificationProvisioner(orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
+					dc := newNotificationProvisioner(setting.NewCfg(), orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
 					err := dc.applyChanges(context.Background(), twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -242,7 +244,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			_, err := ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 			require.NoError(t, err)
 
-			dc := newNotificationProvisioner(orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
+			dc := newNotificationProvisioner(setting.NewCfg(), orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
 			err = dc.applyChanges(context.Background(), correctPropertiesWithOrgName)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
@@ -251,7 +253,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Config doesn't contain required field", func(t *testing.T) {
 			setup()
-			dc := newNotificationProvisioner(orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
+			dc := newNotificationProvisioner(setting.NewCfg(), orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
 			err := dc.applyChanges(context.Background(), noRequiredFields)
 			require.NotNil(t, err)
 
@@ -265,7 +267,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		t.Run("Empty yaml file", func(t *testing.T) {
 			t.Run("should have not changed repo", func(t *testing.T) {
 				setup()
-				dc := newNotificationProvisioner(orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
+				dc := newNotificationProvisioner(setting.NewCfg(), orgService, &fakeAlertNotification{}, encryptionService, nil, logger)
 				err := dc.applyChanges(context.Background(), emptyFile)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
@@ -279,6 +281,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Broken yaml should return error", func(t *testing.T) {
 			reader := &configReader{
+				cfg:               setting.NewCfg(),
 				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
@@ -290,6 +293,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Skip invalid directory", func(t *testing.T) {
 			cfgProvider := &configReader{
+				cfg:               setting.NewCfg(),
 				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
@@ -304,6 +308,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Unknown notifier should return error", func(t *testing.T) {
 			cfgProvider := &configReader{
+				cfg:               setting.NewCfg(),
 				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
@@ -315,6 +320,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Read incorrect properties", func(t *testing.T) {
 			cfgProvider := &configReader{
+				cfg:               setting.NewCfg(),
 				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),

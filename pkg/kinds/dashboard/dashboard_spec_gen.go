@@ -26,6 +26,13 @@ const (
 	LinkTypeLink       LinkType = "link"
 )
 
+// Defines values for DataTransformerConfigTopic.
+const (
+	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
+	DataTransformerConfigTopicAnnotations DataTransformerConfigTopic = "annotations"
+	DataTransformerConfigTopicSeries      DataTransformerConfigTopic = "series"
+)
+
 // Defines values for FieldColorModeId.
 const (
 	FieldColorModeIdContinuousBlPu       FieldColorModeId = "continuous-BlPu"
@@ -294,7 +301,13 @@ type DataTransformerConfig struct {
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	Options any `json:"options"`
+
+	// Where to pull DataFrames from as input to transformation
+	Topic *DataTransformerConfigTopic `json:"topic,omitempty"`
 }
+
+// Where to pull DataFrames from as input to transformation
+type DataTransformerConfigTopic string
 
 // DynamicConfigValue defines model for DynamicConfigValue.
 type DynamicConfigValue struct {
@@ -845,6 +858,9 @@ type TimePickerConfig struct {
 	// Whether timepicker is visible or not.
 	Hidden bool `json:"hidden"`
 
+	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+	NowDelay *string `json:"nowDelay,omitempty"`
+
 	// Interval options available in the refresh picker dropdown.
 	RefreshIntervals []string `json:"refresh_intervals"`
 
@@ -884,6 +900,9 @@ type VariableHide int
 
 // A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 type VariableModel struct {
+	// Custom all value
+	AllValue *string `json:"allValue,omitempty"`
+
 	// Option to be selected in a variable.
 	Current *VariableOption `json:"current,omitempty"`
 
@@ -896,6 +915,9 @@ type VariableModel struct {
 	// Determine if the variable shows on dashboard
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 	Hide *VariableHide `json:"hide,omitempty"`
+
+	// Whether all value option is available or not
+	IncludeAll *bool `json:"includeAll,omitempty"`
 
 	// Optional display name
 	Label *string `json:"label,omitempty"`
@@ -917,6 +939,10 @@ type VariableModel struct {
 	// `1`: Queries the data source every time the dashboard loads.
 	// `2`: Queries the data source when the dashboard time range changes.
 	Refresh *VariableRefresh `json:"refresh,omitempty"`
+
+	// Optional field, if you want to extract part of a series name or metric node segment.
+	// Named capture groups can be used to separate the display text and value.
+	Regex *string `json:"regex,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
 	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`
