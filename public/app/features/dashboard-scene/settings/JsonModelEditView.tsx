@@ -10,6 +10,7 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -69,6 +70,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
         <div className={styles.wrapper}>
           <Trans i18nKey="dashboard-settings.json-editor.subtitle">
             The JSON model below is the data structure that defines the dashboard. This includes dashboard settings,
