@@ -1046,7 +1046,7 @@ var (
 		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
 			Created:         time.Date(2023, time.October, 18, 12, 0, 0, 0, time.UTC),
