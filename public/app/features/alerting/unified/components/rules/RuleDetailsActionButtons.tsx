@@ -4,7 +4,7 @@ import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, useReturnToPrevious } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -16,7 +16,6 @@ import {
   Menu,
   useStyles2,
 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
@@ -55,7 +54,8 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
-  const { chrome } = useGrafana();
+
+  const setReturnToPrevious = useReturnToPrevious();
 
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
   const [redirectToClone, setRedirectToClone] = useState<
@@ -145,8 +145,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             icon="apps"
             href={`d/${encodeURIComponent(dashboardUID)}`}
             onClick={() => {
-              //TODO find a way to make this available to plugins
-              chrome.setReturnToPrevious({ title: rule.name, href: locationService.getLocation().pathname });
+              setReturnToPrevious({ title: rule.name, href: locationService.getLocation().pathname });
             }}
           >
             Go to dashboard

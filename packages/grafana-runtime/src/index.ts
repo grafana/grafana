@@ -55,5 +55,11 @@ export {
   createDataSourcePluginEventProperties,
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
-export { getReturnToPrevious, setReturnToPrevious, clearReturnToPrevious } from './utils/sessionStorage';
+export {
+  getReturnToPrevious,
+  setReturnToPrevious,
+  clearReturnToPrevious,
+  setReturnToPreviousHook,
+  useReturnToPrevious,
+} from './utils/returnToPrevious';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
