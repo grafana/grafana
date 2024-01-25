@@ -254,7 +254,7 @@ func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
 	apiFolderIDMethods := []string{GetAlerts, GetDashboard, RestoreDashboardVersion, GetFolderByID, GetFolderDescendantCounts, SearchFolders, GetFolderPermissionList, UpdateFolderPermissions, GetFolderACL, Search, GetDashboardACL, NewToFolderDTO, GetFolders}
-	serviceFolderIDMethods := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search, DashboardImport}
+	folderIDServices := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search, DashboardImport}
 
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
@@ -502,7 +502,7 @@ func init() {
 		Name:      "folder_id_service_count",
 		Help:      "counter for folder id usage in service package",
 		Namespace: ExporterName,
-	}, []string{"method"}, map[string][]string{"method": serviceFolderIDMethods})
+	}, []string{"service"}, map[string][]string{"service": folderIDServices})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
