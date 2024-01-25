@@ -175,10 +175,55 @@ For more information about port-forwarding, refer to [Use Port Forwarding to Acc
 4. To sign in, enter `admin` for the username.
 5. For the password paste it which you have saved to a file after decoding it earlier.
 
-# Customizing Grafana default Configuraiton settings
+# Customizing Grafana default configuraiton
 
 Helm is a popular package manager for Kubernetes. It bundles Kubernetes resource manifests in a way that they may be re-used across different environments. These manifests are written in a templating language, allowing us to provide configuration values (via `values.yaml` file, or in-line using helm, to replace the placeholders in the manifest where these configurations should reside.
 
 The `values.yaml` file allows you to customize the chart's configuration by specifying values for various parameters such as image versions, resource limits, service configurations, etc.
 
 By modifying the values in the `values.yaml` file, you can tailor the deployment of a Helm chart to your specific requirements by using the helm install or upgrade commands. For more information about configuring Helm, refer to [Values Files](https://helm.sh/docs/chart_template_guide/values_files/).
+
+## Download the values.yaml file
+
+In order to make any configuration changes, download the `values.yaml` file from the Grafana Helm Charts repository:
+https://github.com/grafana/helm-charts/edit/main/charts/grafana/values.yaml
+
+> **Note:** Depending on your use case requirements, you can use a single YAML file that contains your configuration changes or you can create multiple YAML files.
+
+### Enable persistent storage **(recommended)**
+
+By default, persistent storage is disabled, which means that Grafana uses ephemeral storage, and all data will be stored within the container's file system. This data will be lost if the container is stopped, restarted, or if the container crashes.
+
+It is highly recommended that you enable persistent storage in Grafana Helm charts if you want to ensure that your data persists and is not lost in case of container restarts or failures.
+
+Enabling persistent storage in Grafana Helm charts ensures a reliable solution for running Grafana in production environments.
+
+To enable the persistent storage in the Grafana Helm charts, complete the following steps:
+
+1. Open the `values.yaml` file in your favorite editor.
+
+2. Edit the values and under the section of persistence, change the enable flag from false to true
+   
+   ```yaml
+   .......
+   ............
+   ......
+   persistence:
+   type: pvc
+   enabled: true
+   # storageClassName: default
+   .......
+   ............
+   ......
+   ```
+3. Run the following helm upgrade command by specifying the values.yaml file to make the changes take effect:
+   
+   ```
+   helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
+   ```
+
+After that, the PVC will be enabled and able to store all of your data e.g. Dashboards, Data sources, etc.
+
+
+
+
