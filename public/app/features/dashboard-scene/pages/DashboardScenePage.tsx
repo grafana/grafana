@@ -18,9 +18,9 @@ export function DashboardScenePage({ match, route }: Props) {
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Home) {
-      stateManager.loadDashboard(route.routeName);
+      stateManager.loadDashboard({ uid: route.routeName });
     } else {
-      stateManager.loadDashboard(match.params.uid!);
+      stateManager.loadDashboard({ uid: match.params.uid! });
     }
 
     return () => {

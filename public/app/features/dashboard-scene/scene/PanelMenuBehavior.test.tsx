@@ -468,10 +468,28 @@ describe('panelMenuBehavior', () => {
         ])
       );
     });
+
+    it('should only contain explore when embedded', async () => {
+      const { menu, panel } = await buildTestScene({ isEmbedded: true });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBe(1);
+      expect(menu.state.items?.[0].text).toBe('Explore');
+    });
   });
 });
 
-interface SceneOptions {}
+interface SceneOptions {
+  isEmbedded?: boolean;
+}
 
 async function buildTestScene(options: SceneOptions) {
   const menu = new VizPanelMenu({
@@ -503,6 +521,7 @@ async function buildTestScene(options: SceneOptions) {
     }),
     meta: {
       canEdit: true,
+      isEmbedded: options.isEmbedded ?? false,
     },
     body: new SceneGridLayout({
       children: [

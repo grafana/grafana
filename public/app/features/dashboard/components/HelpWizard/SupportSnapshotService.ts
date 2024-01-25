@@ -82,7 +82,7 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
 
     if (!panel.isAngularPlugin()) {
       try {
-        const oldModel = new DashboardModel(snapshot);
+        const oldModel = new DashboardModel(snapshot, { isEmbedded: true });
         const dash = createDashboardSceneFromDashboardModel(oldModel);
         scene = dash.state.body; // skip the wrappers
       } catch (ex) {

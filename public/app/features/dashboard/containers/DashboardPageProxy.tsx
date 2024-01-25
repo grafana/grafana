@@ -38,7 +38,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       return null;
     }
 
-    return stateManager.fetchDashboard(dashToFetch);
+    return stateManager.fetchDashboard({ uid: dashToFetch });
   }, [props.match.params.uid, props.route.routeName]);
 
   if (!config.featureToggles.dashboardSceneForViewers) {
