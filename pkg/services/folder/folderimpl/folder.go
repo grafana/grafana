@@ -366,33 +366,7 @@ func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuer
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 
-	uids := make([]string, 0)
-	for _, f := range availableNonRootFolders {
-		uids = append(uids, f.UID)
-	}
-	batchFolders, err := s.GetFolders(ctx, folder.GetFoldersQuery{
-		UIDs:         uids,
-		OrgID:        q.OrgID,
-		BatchSize:    100,
-		WithFullpath: true,
-		SignedInUser: q.SignedInUser,
-	})
-	if err != nil {
-		s.log.Error("failed to fetch folders in a batch", "error", err)
-		return nil, err
-	}
-	for _, f := range batchFolders {
-		parents := make([]string, 0)
-		parentUIDs := strings.Split(f.FullpathUIDs, "/")
-		for _, p := range parentUIDs {
-			if p != "" && p != f.UID {
-				parents = append(parents, p)
-			}
-		}
-		f.ParentUIDs = parents
-	}
-
-	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, batchFolders, rootFolders, q.OrgID)
+	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
 	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 	return availableNonRootFolders, nil
 }
@@ -415,7 +389,12 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 		return nonRootFolders, nil
 	}
 
-	dashFolders, err := s.store.GetFolders(ctx, NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: folderUids}))
+	dashFolders, err := s.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:         folderUids,
+		OrgID:        orgID,
+		SignedInUser: user,
+		WithFullpath: true,
+	})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
 	}

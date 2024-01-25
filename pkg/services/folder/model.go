@@ -47,7 +47,7 @@ type Folder struct {
 	CreatedBy    int64
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
-	FullpathUIDs string `xorm:"fullpathuid"`
+	FullpathUIDs string `xorm:"fullpath_uid"`
 	ParentUIDs   []string
 }
 

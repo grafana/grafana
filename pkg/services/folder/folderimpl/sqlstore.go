@@ -385,7 +385,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			// compute full path column if requested
 			if q.WithFullpath {
 				s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect())))
-				s.WriteString(fmt.Sprintf(`, %s AS fullpathuid`, getParentsUIDsSQL(ss.db.GetDialect())))
+				s.WriteString(fmt.Sprintf(`, %s AS fullpath_uid`, getParentsUIDsSQL(ss.db.GetDialect())))
 			}
 			s.WriteString(` FROM folder f0`)
 			// join the same table multiple times to compute the full path of a folder
@@ -428,10 +428,22 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 		return nil, err
 	}
 
-	// Add URLs
 	for i, f := range folders {
+		// Add URLs
 		f.Fullpath = strings.TrimLeft(f.Fullpath, "/")
 		folders[i] = f.WithURL()
+
+		// Add parent UIDs
+		if q.WithFullpath {
+			parents := make([]string, 0)
+			parentUIDs := strings.Split(f.FullpathUIDs, "/")
+			for _, p := range parentUIDs {
+				if p != "" && p != f.UID {
+					parents = append(parents, p)
+				}
+			}
+			f.ParentUIDs = parents
+		}
 	}
 
 	return folders, nil
