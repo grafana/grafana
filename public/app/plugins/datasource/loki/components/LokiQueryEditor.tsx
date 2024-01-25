@@ -8,14 +8,12 @@ import {
   EditorHeader,
   EditorRows,
   FlexItem,
-  Space,
-  Stack,
   QueryEditorModeToggle,
   QueryHeaderSwitch,
   QueryEditorMode,
 } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';

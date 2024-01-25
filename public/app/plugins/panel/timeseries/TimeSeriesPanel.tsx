@@ -170,7 +170,7 @@ export const TimeSeriesPanel = ({
                 annotations={data.annotations ?? []}
                 config={uplotConfig}
                 timeZone={timeZone}
-                newRange={newAnnotationRange}
+                newRange={enableAnnotationCreation ? newAnnotationRange : null}
                 setNewRange={setNewAnnotationRange}
               />
             ) : (
