@@ -197,19 +197,17 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
         newVersion={newInfo?.version}
         isNewLatest={isNewLatest}
       />
-      {
-        isLoading ? (
-          <VersionsHistorySpinner msg="Fetching changes&hellip;" />
-        ) : (
-          <VersionHistoryComparison
-            newInfo={newInfo!}
-            baseInfo={baseInfo!}
-            isNewLatest={isNewLatest!}
-            diffData={model.diffData}
-            onRestore={dashboard.onRestore}
-          />
-        )
-      }
+      {isLoading ? (
+        <VersionsHistorySpinner msg="Fetching changes&hellip;" />
+      ) : (
+        <VersionHistoryComparison
+          newInfo={newInfo!}
+          baseInfo={baseInfo!}
+          isNewLatest={isNewLatest!}
+          diffData={model.diffData}
+          onRestore={dashboard.onRestore}
+        />
+      )}
     </>
   );
 
