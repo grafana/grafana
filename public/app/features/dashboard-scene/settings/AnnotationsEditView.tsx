@@ -1,8 +1,13 @@
 import React from 'react';
 
 import { AnnotationQuery, DataTopic, PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneDataLayerProvider, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneDataLayerProvider,
+  SceneDataLayers,
+  SceneObjectBase,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -10,28 +15,22 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { AnnotationSettingsList } from './annotations';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface AnnotationsEditViewState extends DashboardEditViewState {
-  editIndex?: number | null;
+  editIndex?: number | undefined;
 }
 
 export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewState> implements DashboardEditView {
+  static Component = AnnotationsSettingsView;
+
   public getUrlKey(): string {
     return 'annotations';
   }
 
-  constructor(state: AnnotationsEditViewState) {
-    super({
-      ...state,
-      editIndex: null,
-    });
-
-    this.addActivationHandler(() => {
-      this.setState({ editIndex: this.getEditIndex() });
-    });
-  }
+  protected _urlSync = new EditListViewSceneUrlSync(this);
 
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
@@ -41,14 +40,14 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return sceneGraph.getDataLayers(this._dashboard);
   }
 
-  private getEditIndex() {
-    const searchObject = locationService.getSearchObject();
+  public getSceneDataLayers(): SceneDataLayers | undefined {
+    const data = sceneGraph.getData(this);
 
-    if (searchObject.editIndex !== undefined) {
-      return Number(searchObject.editIndex);
+    if (!(data instanceof SceneDataLayers)) {
+      return undefined;
     }
 
-    return null;
+    return data;
   }
 
   public getAnnotationsLength(): number {
@@ -59,32 +58,50 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return this._dashboard;
   }
 
-  public getAnnotations(): AnnotationQuery[] {
-    return dataLayersToAnnotations(sceneGraph.getDataLayers(this._dashboard));
-  }
-
   public onNew = () => {
-    console.log('todo');
+    console.log('todo: onNew');
   };
 
   public onEdit = (idx: number) => {
-    console.log('todo');
+    console.log('todo: onEdit');
   };
 
-  static Component = ({ model }: SceneComponentProps<AnnotationsEditView>) => {
-    const dashboard = model.getDashboard();
-    const annotations = model.getAnnotations();
-    const { editIndex } = model.useState();
-    const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-
-    const isEditing = editIndex != null && editIndex < model.getAnnotationsLength();
-    console.log(editIndex);
-
-    return (
-      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-        <NavToolbarActions dashboard={dashboard} />
-        {!isEditing && <AnnotationSettingsList annotations={annotations} onNew={model.onNew} onEdit={model.onEdit} />}
-      </Page>
-    );
+  public onMove = (idx: number, direction: number) => {
+    console.log('todo: onMove');
   };
+
+  public onDelete = (idx: number) => {
+    console.log('todo: onDelete');
+  };
+}
+
+function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditView>) {
+  const dashboard = model.getDashboard();
+  const sceneDataLayers = model.getSceneDataLayers();
+  const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
+  const { editIndex } = model.useState();
+
+  let annotations: AnnotationQuery[] = [];
+
+  if (sceneDataLayers) {
+    const { layers } = sceneDataLayers.useState();
+    annotations = dataLayersToAnnotations(layers);
+  }
+
+  const isEditing = editIndex != null && editIndex < model.getAnnotationsLength();
+
+  return (
+    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+      <NavToolbarActions dashboard={dashboard} />
+      {!isEditing && (
+        <AnnotationSettingsList
+          annotations={annotations}
+          onNew={model.onNew}
+          onEdit={model.onEdit}
+          onDelete={model.onDelete}
+          onMove={model.onMove}
+        />
+      )}
+    </Page>
+  );
 }
