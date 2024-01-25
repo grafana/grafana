@@ -21,7 +21,7 @@ weight: 1150
 
 # Grafana Pyroscope data source
 
-Formerly Phlare data source, now Grafana Pyroscope, a horizontally scalable, highly-available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
+Formerly Phlare data source, now Grafana Pyroscope, a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
 
 ## Configure the Grafana Pyroscope data source
 
@@ -59,25 +59,30 @@ The query editor gives you access to a profile type selector, a label selector, 
 
 ![Query editor](/media/docs/pyroscope/query-editor/query-editor.png 'Query editor')
 
-Select a profile type from the drop-down menu.
+To access the query editor:
 
-{{< figure src="/media/docs/pyroscope/query-editor/select-profile.png" class="docs-image--no-shadow" max-width="450px" caption="Profile selector" >}}
+1. Sign into Grafana or Grafana Cloud.
+1. Select your Pyroscope data source.
+1. From the menu, choose **Explore**.
 
-While the label selector can be left empty to query all profiles without filtering by labels, the profile type or app must be selected for the query to be valid.
-Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
+1. Select a profile type from the drop-down menu.
 
-![Labels selector](/media/docs/pyroscope/query-editor/labels-selector.png 'Labels selector')
+    {{< figure src="/media/docs/pyroscope/query-editor/select-profile.png" class="docs-image--no-shadow" max-width="450px" caption="Profile selector" >}}
 
-Use the labels selector input to filter by labels. Pyroscope uses similar syntax to Prometheus to filter labels.
+1. Use the labels selector input to filter by labels. Pyroscope uses similar syntax to Prometheus to filter labels.
 Refer to [Pyroscope documentation](https://grafana.com/docs/pyroscope/latest/) for available operators and syntax.
 
-![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
+    While the label selector can be left empty to query all profiles without filtering by labels, the profile type or app must be selected for the query to be valid.
 
-Options section contains a switch for **Query Type** and **Group by**.
+    Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
+  ![Labels selector](/media/docs/pyroscope/query-editor/labels-selector.png 'Labels selector')
 
-Select a query type to return the profile data which can be shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
+1. Expand the **Options** section to view **Query Type** and **Group by**.
+  ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
 
-Group by allows you to group metric data by a specified label. Without any Group by label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and doesn't change the profile data results.
+1. Select a query type to return the profile data which can be shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
+
+    **Group by** allows you to group metric data by a specified label. Without any **Group by** label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and doesn't change the profile data results.
 
 ### Profiles query results
 
