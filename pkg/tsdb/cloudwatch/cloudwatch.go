@@ -287,6 +287,7 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
 	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
+		// also, 'sess' is cached and reused, so the first time it might have the transport not set, the following uses it will
 		if sess.Config.HTTPClient.Transport == nil {
 			// following go standard library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
 			// then we use http.DefaultTransport
