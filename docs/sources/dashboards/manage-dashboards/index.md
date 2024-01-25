@@ -30,13 +30,13 @@ This topic includes techniques you can use to manage your Grafana dashboards, in
 - [Folder permissions](#folder-permissions)
 - [Adding generative AI features to dashboards](#set-up-generative-ai-features-for-dashboards)
 
-For more information about creating dashboards, refer to [Add and organize panels](../add-organize-panels).
+For more information about creating dashboards, refer to [Build dashboards][].
 
 ## Browse dashboards
 
 On the **Dashboards** page, you can browse and manage folders and dashboards. This includes the options to:
 
-- Create folders and dashboards
+- Create folders and dashboards.
 - Move dashboards between folders.
 - Delete multiple dashboards and folders.
 - Navigate to a folder.
@@ -54,7 +54,7 @@ Folders help you organize and group dashboards, which is useful when you have ma
 
 **To create a dashboard folder:**
 
-1. Click **Dashboards** in the main menu.
+1. Click **Dashboards** in the primary] menu.
 1. On the **Dashboards** page, click **New** and select **New folder** in the drop-down.
 1. Enter a unique name and click **Create**.
 
@@ -66,9 +66,9 @@ Alerts can't be placed in folders with slashes (\ /) in the name. If you wish to
 
 **To edit the name of a folder:**
 
-1. Click **Dashboards** in the main menu.
+1. Click **Dashboards** in the primary menu.
 1. Navigate to the folder by selecting it in the list, or searching for it.
-1. Click the pencil icon labelled **Edit title** in the header and update the name of the folder.
+1. Click the **Edit title** icon (pencil) in the header and update the name of the folder.
 
 The new folder name is automatically saved.
 
@@ -78,7 +78,7 @@ You can assign permissions to a folder. Dashboards in the folder inherit any per
 
 **To modify permissions for a folder:**
 
-1. Click **Dashboards** in the main menu.
+1. Click **Dashboards** in the primary menu.
 1. Navigate to the folder by selecting it in the list, or searching for it.
 1. On the folder's page, click **Folder actions** and select **Manage permissions** in the drop-down.
 1. Update the permissions as desired.
@@ -101,6 +101,12 @@ To access these features, enable the `dashgpt` feature toggle. Then install and 
 When enabled, the **✨ Auto generate** option displays next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
 {{% docs/reference %}}
-[Grafana LLM plugin documentation]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
-[Grafana LLM plugin documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin"
+[Dashboard permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
+[Dashboard permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
+
+[Grafana LLM plugin documentation]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
+[Grafana LLM plugin documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
+
+[Build dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[Build dashboards]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards"
 {{% /docs/reference %}}
