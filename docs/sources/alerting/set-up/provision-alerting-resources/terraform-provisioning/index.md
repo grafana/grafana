@@ -51,6 +51,10 @@ To create an API key for provisioning, complete the following steps.
 
 Alternatively, you can use basic authentication. To view all the supported authentication formats, see [here](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 
+{{% admonition type="note" %}}
+When using the API Key, do not set `org_id` under `grafana_rule_group` because `org_id` is only supported with basic auth.
+API keys are already org-scoped.
+
 ## Configure the Terraform provider
 
 Grafana Alerting support is included as part of the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
