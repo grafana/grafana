@@ -1,5 +1,13 @@
 import { AnnotationChangeEvent, AnnotationEventUIModel, CoreApp, DataFrame } from '@grafana/data';
-import { AdHocFilterSet, dataLayers, SceneDataLayers, VizPanel } from '@grafana/scenes';
+import {
+  AdHocFilterSet,
+  AdHocFiltersVariable,
+  dataLayers,
+  SceneDataLayers,
+  sceneGraph,
+  sceneUtils,
+  VizPanel,
+} from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { AdHocFilterItem, PanelContext } from '@grafana/ui';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from 'app/features/annotations/api';
@@ -150,27 +158,33 @@ function reRunBuiltInAnnotationsLayer(scene: DashboardScene) {
 }
 
 export function getAdHocFilterSetFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
-  const controls = scene.state.controls ?? [];
+  const variables = sceneGraph.getVariables(scene);
 
-  for (const control of controls) {
-    if (control instanceof AdHocFilterSet) {
-      if (control.state.datasource === ds || control.state.datasource?.uid === ds?.uid) {
-        return control;
+  for (const variable of variables.state.variables) {
+    if (sceneUtils.isAdHocVariable(variable)) {
+      const filtersDs = variable.state.set.state.datasource;
+      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+        return variable;
       }
     }
   }
 
-  const newSet = new AdHocFilterSet({ datasource: ds });
-
-  // Add it to the scene
-  scene.setState({
-    controls: [controls[0], newSet, ...controls.slice(1)],
+  const newVariable = new AdHocFiltersVariable({
+    name: 'Filters',
+    type: 'adhoc',
+    set: new AdHocFilterSet({ datasource: ds }),
   });
 
-  return newSet;
+  // Add it to the scene
+  variables.setState({
+    variables: [...variables.state.variables, newVariable],
+  });
+
+  return newVariable;
 }
 
-function updateAdHocFilterSet(filterSet: AdHocFilterSet, newFilter: AdHocFilterItem) {
+function updateAdHocFilterSet(filterSetVariable: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
+  const filterSet = filterSetVariable.state.set;
   // Check if we need to update an existing filter
   for (const filter of filterSet.state.filters) {
     if (filter.key === newFilter.key) {

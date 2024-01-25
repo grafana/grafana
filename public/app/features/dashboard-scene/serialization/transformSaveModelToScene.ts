@@ -1,4 +1,4 @@
-import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -27,6 +27,7 @@ import {
   AdHocFilterSet,
   TextBoxVariable,
   UserActionEvent,
+  AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
@@ -165,24 +166,11 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
   let layers: SceneDataLayerProvider[] = [];
-  let filtersSets: AdHocFilterSet[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
-          if (isAdhocVariable(v)) {
-            filtersSets.push(
-              new AdHocFilterSet({
-                name: v.name,
-                datasource: v.datasource,
-                filters: v.filters ?? [],
-                baseFilters: v.baseFilters ?? [],
-              })
-            );
-            return null;
-          }
-
           return createSceneVariableFromVariableModel(v);
         } catch (err) {
           console.error(err);
@@ -271,7 +259,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
         : undefined,
     controls: [
       new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
+        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timeControls: [
           new SceneTimePicker({}),
           new SceneRefreshPicker({
@@ -293,6 +281,25 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.name,
     label: variable.label,
   };
+  if (variable.type === 'adhoc') {
+    // TODO: Use AdHocFiltersVariable.create and make it accept 'applyMode' as parameter
+    return new AdHocFiltersVariable({
+      type: 'adhoc',
+      name: variable.name ?? 'filters',
+      label: variable.label,
+      description: variable.description,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      set: new AdHocFilterSet({
+        name: variable.name ?? 'filters',
+        datasource: variable.datasource,
+        filters: variable.filters ?? [],
+        baseFilters: variable.baseFilters ?? [],
+        // The AdHocFiltersVariable.create sets the applyMode to 'manual' and it is not configurable
+        applyMode: 'same-datasource',
+      }),
+    });
+  }
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
@@ -469,8 +476,6 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     body,
   });
 }
-
-const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
 
 const getLimitedDescriptionReporter = () => {
   const reportedPanels: string[] = [];

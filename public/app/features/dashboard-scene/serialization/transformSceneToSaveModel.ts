@@ -10,7 +10,6 @@ import {
   SceneQueryRunner,
   SceneDataTransformer,
   SceneVariableSet,
-  AdHocFilterSet,
   LocalValueVariable,
   SceneRefreshPicker,
 } from '@grafana/scenes';
@@ -92,16 +91,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     for (const control of timeControls) {
       if (control instanceof SceneRefreshPicker && control.state.intervals) {
         refresh_intervals = control.state.intervals;
-      }
-    }
-    const variableControls = state.controls[0].state.variableControls;
-    for (const control of variableControls) {
-      if (control instanceof AdHocFilterSet) {
-        variables.push({
-          name: control.state.name!,
-          type: 'adhoc',
-          datasource: control.state.datasource,
-        });
       }
     }
   }

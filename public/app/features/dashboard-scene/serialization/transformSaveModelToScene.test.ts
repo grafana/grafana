@@ -11,8 +11,9 @@ import {
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
 import {
-  AdHocFilterSet,
+  AdHocFiltersVariable,
   behaviors,
+  ConstantVariable,
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
@@ -119,11 +120,11 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
       expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
 
-      expect(scene.state?.$variables?.state.variables).toHaveLength(1);
+      expect(scene.state?.$variables?.state.variables).toHaveLength(2);
+      expect(scene.state?.$variables?.getByName('constant')).toBeInstanceOf(ConstantVariable);
+      expect(scene.state?.$variables?.getByName('CoolFilters')).toBeInstanceOf(AdHocFiltersVariable);
       expect(dashboardControls).toBeDefined();
       expect(dashboardControls).toBeInstanceOf(DashboardControls);
-      expect(dashboardControls.state.variableControls[1]).toBeInstanceOf(AdHocFilterSet);
-      expect((dashboardControls.state.variableControls[1] as AdHocFilterSet).state.name).toBe('CoolFilters');
       expect(dashboardControls.state.timeControls).toHaveLength(2);
       expect(dashboardControls.state.timeControls[0]).toBeInstanceOf(SceneTimePicker);
       expect(dashboardControls.state.timeControls[1]).toBeInstanceOf(SceneRefreshPicker);

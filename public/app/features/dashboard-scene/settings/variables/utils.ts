@@ -9,6 +9,7 @@ import {
   AdHocFilterSet,
   SceneVariable,
   MultiValueVariable,
+  AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
 
@@ -112,8 +113,13 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      // TODO: Initialize properly AdHocFilterSet with initialState
-      return new AdHocFilterSet({ name: initialState.name });
+      return new AdHocFiltersVariable({
+        ...initialState,
+        type: 'adhoc',
+        set: new AdHocFilterSet({
+          name: initialState.name,
+        }),
+      });
     case 'textbox':
       return new TextBoxVariable(initialState);
   }

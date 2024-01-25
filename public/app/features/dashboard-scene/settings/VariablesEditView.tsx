@@ -8,7 +8,6 @@ import {
   SceneVariableState,
   SceneVariables,
   sceneGraph,
-  AdHocFilterSet,
 } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -48,7 +47,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return variables.findIndex((variable) => variable.state.name === identifier);
   };
 
-  private replaceEditVariable = (newVariable: SceneVariable | AdHocFilterSet) => {
+  private replaceEditVariable = (newVariable: SceneVariable) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
@@ -60,18 +59,10 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       return;
     }
 
-    if (newVariable instanceof AdHocFilterSet) {
-      // TODO: Update controls in adding this fiter set to the dashboard
-    } else {
-      const updatedVariables = [
-        ...variables.slice(0, variableIndex),
-        newVariable,
-        ...variables.slice(variableIndex + 1),
-      ];
+    const updatedVariables = [...variables.slice(0, variableIndex), newVariable, ...variables.slice(variableIndex + 1)];
 
-      // Update the state or the variables array
-      this.getVariableSet().setState({ variables: updatedVariables });
-    }
+    // Update the state or the variables array
+    this.getVariableSet().setState({ variables: updatedVariables });
   };
 
   public onDelete = (identifier: string) => {
@@ -189,12 +180,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
     if (isEditableVariableType(originalVariableState.type)) {
       const newVariable = getVariableScene(originalVariableState.type, originalVariableState);
-      if (newVariable instanceof AdHocFilterSet) {
-        // TODO: Update controls in adding this fiter set to the dashboard
-      } else {
-        const updatedVariables = [...variables.slice(0, editIndex), newVariable, ...variables.slice(editIndex + 1)];
-        this.getVariableSet().setState({ variables: updatedVariables });
-      }
+      const updatedVariables = [...variables.slice(0, editIndex), newVariable, ...variables.slice(editIndex + 1)];
+      this.getVariableSet().setState({ variables: updatedVariables });
     }
 
     this.setState({ editIndex: undefined, originalVariableState: undefined });

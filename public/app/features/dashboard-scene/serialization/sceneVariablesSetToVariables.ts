@@ -107,6 +107,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         query: variable.state.value,
         hide: VariableHide.hideVariable,
       });
+    } else if (sceneUtils.isAdHocVariable(variable)) {
+      variables.push({
+        name: variable.state.set.state.name!,
+        type: 'adhoc',
+        datasource: variable.state.set.state.datasource,
+      });
     } else {
       throw new Error('Unsupported variable type');
     }
