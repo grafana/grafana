@@ -3,12 +3,11 @@ package routes
 import (
 	"context"
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"net/http"
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"

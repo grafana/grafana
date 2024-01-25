@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"math"
 	"sort"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"

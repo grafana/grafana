@@ -2,6 +2,7 @@ package features
 
 import (
 	"context"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 

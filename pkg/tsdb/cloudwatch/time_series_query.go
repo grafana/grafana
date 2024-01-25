@@ -3,13 +3,13 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"regexp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 

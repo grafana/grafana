@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"testing"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"

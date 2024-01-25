@@ -2,7 +2,6 @@ package cloudwatch
 
 import (
 	"context"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/mock"
 )

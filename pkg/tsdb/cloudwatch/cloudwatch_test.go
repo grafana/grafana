@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
