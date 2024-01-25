@@ -56,7 +56,7 @@ export function LokiQueryCodeEditor({
                       size="xs"
                       tooltip="Format query"
                     />
-                    <Tooltip content={`Use ctr/cmd + z to undo`}>
+                    <Tooltip content={`Use ctrl/cmd + z to undo`}>
                       <Icon className={styles.hint} name="keyboard" />
                     </Tooltip>
                   </HorizontalGroup>
