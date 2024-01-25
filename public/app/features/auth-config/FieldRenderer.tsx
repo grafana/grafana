@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, Controller } from 'react-hook-form';
 
-import { Checkbox, Field, Input, InputControl, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';
+import { Checkbox, Field, Input, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { fieldMap } from './fields';
 import { SSOProviderDTO, SSOSettingsField } from './types';
@@ -74,7 +74,7 @@ export const FieldRenderer = ({
     case 'secret':
       return (
         <Field {...fieldProps} htmlFor={name}>
-          <InputControl
+          <Controller
             name={name}
             control={control}
             rules={fieldData.validation}
@@ -103,7 +103,7 @@ export const FieldRenderer = ({
       }
       return (
         <Field {...fieldProps} htmlFor={name}>
-          <InputControl
+          <Controller
             rules={fieldData.validation}
             name={name}
             control={control}
