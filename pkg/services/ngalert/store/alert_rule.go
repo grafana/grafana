@@ -571,7 +571,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 					return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
 				}
 				for _, f := range folders {
-					query.ResultFoldersTitles[ngmodels.FolderKey{OrgID: f.OrgID, UID: f.UID}] = ngmodels.GetNamespaceKey(f.ParentUID, f.Title)
+					query.ResultFoldersTitles[ngmodels.FolderKey{OrgID: f.OrgID, UID: f.UID}] = f.Fullpath
 				}
 			}
 		}
