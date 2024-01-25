@@ -57,10 +57,11 @@ func (f *fakeRulesStore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]
 }
 
 func (f *fakeRulesStore) GetAlertRulesForScheduling(ctx context.Context, query *models.GetAlertRulesForSchedulingQuery) error {
-	query.ResultFoldersTitles = map[string]string{}
+	query.ResultFoldersTitles = map[models.FolderKey]string{}
 	for _, rule := range f.rules {
 		query.ResultRules = append(query.ResultRules, rule)
-		query.ResultFoldersTitles[rule.NamespaceUID] = f.getNamespaceTitle(rule.NamespaceUID)
+		key := models.FolderKey{OrgID: rule.OrgID, UID: rule.UID}
+		query.ResultFoldersTitles[key] = f.getNamespaceTitle(rule.NamespaceUID)
 	}
 	return nil
 }
