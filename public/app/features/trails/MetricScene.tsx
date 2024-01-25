@@ -36,7 +36,7 @@ import {
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
 } from './shared';
-import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
+import { getDataSource, getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -134,20 +134,20 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     });
   };
 
+  public openExploreLink = async () => {
+    this.getLinkToExplore().then((link) => {
+      // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
+      // if we precompute it we have to keep track of a lot of dependencies
+      window.open(link, '_blank');
+    });
+  };
+
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const styles = useStyles2(getStyles);
     const trail = getTrailFor(model);
     const [isBookmarked, setBookmarked] = useState(false);
     const { actionView } = metricScene.useState();
-
-    const onExplore = () => {
-      model.getLinkToExplore().then((link) => {
-        // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
-        // if we precompute it we have to keep track of a lot of dependencies
-        window.open(link, '_blank');
-      });
-    };
 
     const onBookmarkTrail = () => {
       getTrailStore().addBookmark(trail);
@@ -162,9 +162,9 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               variant={'canvas'}
               icon="compass"
               tooltip="Open in explore"
-              onClick={onExplore}
+              onClick={model.openExploreLink}
             ></ToolbarButton>
-            <ShareTrailButton trailUrl={getUrlForTrail(trail)} />
+            <ShareTrailButton trail={trail} />
             <ToolbarButton
               variant={'canvas'}
               icon={
