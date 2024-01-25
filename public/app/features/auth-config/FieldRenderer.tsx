@@ -68,12 +68,7 @@ export const FieldRenderer = ({
     case 'text':
       return (
         <Field {...fieldProps}>
-          <Input
-            {...register(name, { required: !!fieldData.validation?.required })}
-            type={fieldData.type}
-            id={name}
-            autoComplete={'off'}
-          />
+          <Input {...register(name, fieldData.validation)} type={fieldData.type} id={name} autoComplete={'off'} />
         </Field>
       );
     case 'secret':

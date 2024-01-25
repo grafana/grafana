@@ -4,7 +4,6 @@ import { TextLink } from '@grafana/ui';
 
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
-import { Field } from 'react-hook-form';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
@@ -97,7 +96,7 @@ export const sectionFields: Section = {
  * List all the fields that can be used in the form
  */
 export function fieldMap(provider: string): Record<string, FieldData> {
-  let result: Record<string, FieldData> = {
+  return {
     clientId: {
       label: 'Client Id',
       type: 'text',
@@ -111,17 +110,6 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Client Secret',
       type: 'secret',
       description: 'The client secret of your OAuth2 app.',
-    },
-    teamIds: {
-      label: 'Team Ids',
-      type: 'select',
-      description:
-        'String list of team IDs. If set, the user must be a member of one of the given teams to log in. \n' +
-        'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.',
-      multi: true,
-      allowCustomValue: true,
-      options: [],
-      placeholder: 'Enter team IDs and press Enter to add',
     },
     allowedOrganizations: {
       label: 'Allowed Organizations',
@@ -355,45 +343,41 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       validation: {
         validate: (value, formValues) => {
-          if (formValues.teamIds) {
+          if (formValues.teamIds.length) {
             return !!value;
           }
           return true;
         },
-        message: 'This field must be set if Team IDs are configured.'
-      }
+        message: 'This field must be set if Team IDs are configured.',
+      },
+    },
+    teamIds: {
+      label: 'Team Ids',
+      type: 'select',
+      description:
+        'String list of team IDs. If set, the user must be a member of one of the given teams to log in. \n' +
+        'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.',
+      multi: true,
+      allowCustomValue: true,
+      options: [],
+      placeholder: 'Enter team IDs and press Enter to add',
+      validation:
+        provider === 'generic_oauth'
+          ? undefined
+          : {
+              validate: (value) => {
+                if (typeof value === 'string') {
+                  return isNumeric(value);
+                }
+                if (isSelectableValue(value)) {
+                  return value.every((v) => v?.value && isNumeric(v.value));
+                }
+                return true;
+              },
+              message: 'Team ID must be a number.',
+            },
     },
   };
-
-  if (provider === 'github') {
-    result = {
-      ...result,
-      teamIds: {
-        label: 'Team Ids',
-        type: 'select',
-        description:
-          'String list of team IDs. If set, the user must be a member of one of the given teams to log in. \n' +
-          'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.',
-        multi: true,
-        allowCustomValue: true,
-        options: [],
-        placeholder: 'Enter team IDs and press Enter to add',
-        validation: {
-          validate: (value) => {
-            if (typeof value === 'string') {
-              return isNumeric(value);
-            }
-            if (isSelectableValue(value)) {
-              return value.every((v) => v?.value && isNumeric(v.value));
-            }
-            return true;
-          },
-          message: 'Team ID must be a number.',
-        },
-      },
-    };
-  }
-  return result;
 }
 
 // Check if a string contains only numeric values
