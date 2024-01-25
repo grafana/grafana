@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/experimental';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -72,14 +73,16 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           onRunQuery={onRunQuery}
           highlightedOp={highlightedOp}
         />
-        <QueryBuilderHints<PromVisualQuery>
-          datasource={datasource}
-          query={query}
-          onChange={onChange}
-          data={data}
-          queryModeller={promQueryModeller}
-          buildVisualQueryFromString={buildVisualQueryFromString}
-        />
+        <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
+          <QueryBuilderHints<PromVisualQuery>
+            datasource={datasource}
+            query={query}
+            onChange={onChange}
+            data={data}
+            queryModeller={promQueryModeller}
+            buildVisualQueryFromString={buildVisualQueryFromString}
+          />
+        </div>
       </OperationsEditorRow>
       {showExplain && (
         <OperationListExplained<PromVisualQuery>
