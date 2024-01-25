@@ -111,7 +111,8 @@ This capability is based on the [metrics summary API](/docs/grafana-cloud/monito
 Metrics summary only calculates summaries based on spans received within the last hour.
 For additional information, refer to [Traces to metrics: Ad-hoc RED metrics in Grafana Tempo with `Aggregate by`](https://grafana.com/blog/2023/12/07/traces-to-metrics-ad-hoc-red-metrics-in-grafana-tempo-with-aggregate-by/).
 
-{{< youtube id="g97CjKOZqT4" >}}
+<!--Impromptu RED metrics with Aggregate by -->
+{{< youtube id="xOolCpm2F8c" >}}
 
 When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
@@ -134,6 +135,10 @@ To use this capability:
 1. Optional: Select **+** to add an **Aggregate by** row.
 1. Optional: Select a **Time range** to expand or narrow the data set for an hour's range.
 1. Select **Run query**.
+
+<!-- Explanation of how to use feature -->
+{{< youtube id="g97CjKOZqT4" >}}
+
 
 ### Optional: Add queries
 
