@@ -17308,14 +17308,6 @@
       "type": "integer",
       "format": "int64"
     },
-    "PermissionsByAction": {
-      "description": "Permissions with scopes grouped by action.\n\nexample: {\"teams.read\": [\"teams:id:1\", \"teams:id:2\"]}",
-      "type": "object",
-      "title": "PermissionsByAction",
-      "additionalProperties": {
-        "$ref": "#/definitions/Scopes"
-      }
-    },
     "Playlist": {
       "description": "Playlist model",
       "type": "object",
@@ -19375,14 +19367,6 @@
         }
       }
     },
-    "Scopes": {
-      "description": "List of scopes.\n\nexample: [\"teams:id:1\", \"teams:id:2\"]",
-      "type": "array",
-      "title": "Scopes",
-      "items": {
-        "type": "string"
-      }
-    },
     "SearchDeviceQueryResult": {
       "type": "object",
       "properties": {
@@ -21382,6 +21366,7 @@
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
       "type": "object"
     },
+    "UsersPermissions": {},
     "ValidationError": {
       "type": "object",
       "properties": {
@@ -23522,10 +23507,7 @@
     "searchPermissionsResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "object",
-        "additionalProperties": {
-          "$ref": "#/definitions/PermissionsByAction"
-        }
+        "$ref": "#/definitions/UsersPermissions"
       }
     },
     "searchPlaylistsResponse": {
