@@ -1597,9 +1597,17 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, actualFolders, len(tc.expected))
 
-				for i, expected := range tc.expected {
-					actualFolder := actualFolders[i]
-					require.Equal(t, expected.UID, actualFolder.UID)
+				for _, expected := range tc.expected {
+					var actualFolder *folder.Folder
+					for _, f := range actualFolders {
+						if f.UID == expected.UID {
+							actualFolder = f
+							break
+						}
+					}
+					if actualFolder == nil {
+						t.Fatalf("expected folder with UID %s not found", expected.UID)
+					}
 					if tc.cmd.WithFullpath {
 						require.Equal(t, expected.Fullpath, actualFolder.Fullpath)
 					} else {
