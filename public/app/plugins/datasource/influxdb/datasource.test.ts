@@ -345,7 +345,12 @@ describe('InfluxDataSource Frontend Mode', () => {
     });
 
     describe('variable interpolation with chained variables with frontend mode', () => {
-      const mockTemplateService = new TemplateSrv();
+      const variablesMock = [queryBuilder().withId('var1').withName('var1').withCurrent('var1').build()];
+      const mockTemplateService = new TemplateSrv({
+        getVariables: () => variablesMock,
+        getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
+        getFilteredVariables: jest.fn(),
+      });
       mockTemplateService.getAdhocFilters = jest.fn((_: string) => []);
       let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
       const fetchMockImpl = () =>
@@ -381,14 +386,7 @@ describe('InfluxDataSource Frontend Mode', () => {
       });
 
       it('should render chained regex variables with URL', () => {
-        const variablesMock = [queryBuilder().withId('var1').withName('var1').withCurrent('var1').build()];
-        const mockTemplateService = new TemplateSrv({
-          getVariables: () => variablesMock,
-          getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
-          getFilteredVariables: jest.fn(),
-        });
-        let myDs = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
-        myDs.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^$var1$/', {
+        ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^$var1$/', {
           scopedVars: {
             var1: {
               text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
@@ -402,14 +400,7 @@ describe('InfluxDataSource Frontend Mode', () => {
       });
 
       it('should render chained regex variables with floating point number and url', () => {
-        const variablesMock = [queryBuilder().withId('var1').withName('var1').withCurrent('var1').build()];
-        const mockTemplateService = new TemplateSrv({
-          getVariables: () => variablesMock,
-          getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
-          getFilteredVariables: jest.fn(),
-        });
-        let myDs = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
-        myDs.metricFindQuery(
+        ds.metricFindQuery(
           'SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED AND agent_url =~ /^$var1$/',
           {
             scopedVars: {
