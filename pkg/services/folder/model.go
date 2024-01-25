@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,6 +14,7 @@ import (
 var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
 var ErrBadRequest = errutil.BadRequest("folder.bad-request")
 var ErrDatabaseError = errutil.Internal("folder.database-error")
+var ErrConflict = errutil.Conflict("folder.conflict")
 var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
@@ -47,7 +49,7 @@ type Folder struct {
 	CreatedBy    int64
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
-	FullpathUIDs string `xorm:"fullpath_uid"`
+	FullpathUIDs string `xorm:"fullpath_uids"`
 	ParentUIDs   []string
 }
 
@@ -62,6 +64,7 @@ var SharedWithMeFolder = Folder{
 }
 
 func (f *Folder) IsGeneral() bool {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
@@ -145,9 +148,20 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID    *int64
-	Title *string
-	OrgID int64
+	ID        *int64
+	Title     *string
+	ParentUID *string
+	OrgID     int64
+
+	SignedInUser identity.Requester `json:"-"`
+}
+
+type GetFoldersQuery struct {
+	OrgID            int64
+	UIDs             []string
+	WithFullpath     bool
+	WithFullpathUIDs bool
+	BatchSize        uint64
 
 	SignedInUser identity.Requester `json:"-"`
 }

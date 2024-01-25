@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -70,6 +71,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 			return err
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
 			ID: &lastInsertedID, // nolint:staticcheck
 		})
@@ -170,9 +172,19 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
 		// nolint:staticcheck
 		case q.ID != nil:
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
-			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", q.Title, q.OrgID).Get(foldr)
+			s := strings.Builder{}
+			s.WriteString("SELECT * FROM folder WHERE title = ? AND org_id = ?")
+			args := []any{*q.Title, q.OrgID}
+			if q.ParentUID != nil {
+				s.WriteString(" AND parent_uid = ?")
+				args = append(args, *q.ParentUID)
+			} else {
+				s.WriteString(" AND parent_uid IS NULL")
+			}
+			exists, err = sess.SQL(s.String(), args...).Get(foldr)
 		default:
 			return folder.ErrBadRequest.Errorf("one of ID, UID, or Title must be included in the command")
 		}
@@ -366,13 +378,20 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 //	└── B/C
 //
 // The full path of C is "A/B\/C".
+//
+// If FullpathUIDs is true it computes a string that contains the UIDs of all parent folders separated by slash.
+// For example, if the folder structure is:
+//
+//	A (uid: "uid1")
+//	└── B (uid: "uid2")
+//	    └── C (uid: "uid3")
+//
+// The full path UIDs of C is "uid1/uid2/uid3".
+// The full path UIDs of B is "uid1/uid2".
+// The full path UIDs of A is "uid1".
 func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error) {
 	if q.BatchSize == 0 {
 		q.BatchSize = DEFAULT_BATCH_SIZE
-	}
-
-	if len(q.ancestorUIDs) == 0 && len(q.UIDs) == 0 {
-		return nil, folder.ErrBadRequest.Errorf("one of UIDs or AncestorUIDs must be included in the query")
 	}
 
 	var folders []*folder.Folder
@@ -385,11 +404,14 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			// compute full path column if requested
 			if q.WithFullpath {
 				s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect())))
-				s.WriteString(fmt.Sprintf(`, %s AS fullpath_uid`, getParentsUIDsSQL(ss.db.GetDialect())))
+			}
+			// compute full path UIDs column if requested
+			if q.WithFullpathUIDs {
+				s.WriteString(fmt.Sprintf(`, %s AS fullpath_uids`, getFullapathUIDsSQL(ss.db.GetDialect())))
 			}
 			s.WriteString(` FROM folder f0`)
 			// join the same table multiple times to compute the full path of a folder
-			if q.WithFullpath || len(q.ancestorUIDs) > 0 {
+			if q.WithFullpath || q.WithFullpathUIDs || len(q.ancestorUIDs) > 0 {
 				s.WriteString(getFullpathJoinsSQL())
 			}
 			s.WriteString(` WHERE f0.org_id=?`)
@@ -429,8 +451,8 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 	}
 
 	for i, f := range folders {
-		// Add URLs
 		f.Fullpath = strings.TrimLeft(f.Fullpath, "/")
+		f.FullpathUIDs = strings.TrimLeft(f.FullpathUIDs, "/")
 		folders[i] = f.WithURL()
 
 		// Add parent UIDs
@@ -458,11 +480,11 @@ func getFullpathSQL(dialect migrator.Dialect) string {
 	return dialect.Concat(concatCols...)
 }
 
-func getParentsUIDsSQL(dialect migrator.Dialect) string {
+func getFullapathUIDsSQL(dialect migrator.Dialect) string {
 	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
-	concatCols = append(concatCols, "COALESCE(REPLACE(f0.uid, '/', '\\/'), '')")
+	concatCols = append(concatCols, "COALESCE(f0.uid, '')")
 	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
-		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.uid, '/', '\\/'), '')", i), "'/'"}, concatCols...)
+		concatCols = append([]string{fmt.Sprintf("COALESCE(f%d.uid, '')", i), "'/'"}, concatCols...)
 	}
 	return dialect.Concat(concatCols...)
 }

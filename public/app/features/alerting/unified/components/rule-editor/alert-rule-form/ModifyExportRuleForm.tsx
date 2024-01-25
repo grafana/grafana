@@ -97,10 +97,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
                 />
 
                 {/* Step 4 & 5 */}
-                {/* Annotations only for cloud and Grafana */}
-                <AnnotationsStep />
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={alertUid} />
+                {/* Annotations only for cloud and Grafana */}
+                <AnnotationsStep />
               </Stack>
             </CustomScrollbar>
           </div>

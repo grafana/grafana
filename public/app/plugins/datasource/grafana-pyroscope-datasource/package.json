@@ -34,7 +34,7 @@
     "jest": "29.7.0",
     "style-loader": "3.3.4",
     "ts-node": "10.9.2",
-    "typescript": "5.2.2",
+    "typescript": "5.3.3",
     "webpack": "5.90.0"
   },
   "peerDependencies": {
@@ -45,5 +45,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@4.0.2"
 }
