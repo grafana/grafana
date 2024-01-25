@@ -1,4 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { chain } from 'lodash';
+
+import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -139,4 +142,19 @@ export function getDefinition(model: SceneVariable): string {
   }
 
   return definition;
+}
+
+export function getOptionDataSourceTypes() {
+  const datasources = getDataSourceSrv().getList({ metrics: true, variables: true });
+
+  const optionTypes = chain(datasources)
+    .uniqBy('meta.id')
+    .map((ds: DataSourceInstanceSettings) => {
+      return { label: ds.meta.name, value: ds.meta.id };
+    })
+    .value();
+
+  optionTypes.unshift({ label: '', value: '' });
+
+  return optionTypes;
 }
