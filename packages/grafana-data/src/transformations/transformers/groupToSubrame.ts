@@ -78,7 +78,7 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
 
             const fieldName = getFieldDisplayName(field);
             const aggregations = options.fields[fieldName].aggregations;
-            const valuesByAggregation: Record<string, any[]> = {};
+            const valuesByAggregation: Record<string, unknown[]> = {};
 
             valuesByGroupKey.forEach((value) => {
               const fieldWithValuesForGroup = value[fieldName];
