@@ -150,7 +150,7 @@ function grafana::codegen::gen_openapi() {
             --go-header-file "${boilerplate}" \
             --output-base "${out_base}" \
             --output-package "${in_pkg_single}" \
-            --report-filename "${new_report}" \
+            --report-filename "${root}/${new_report}" \
             "${inputs[@]}"
     fi
 

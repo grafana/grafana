@@ -46,17 +46,13 @@ fi
 
 for api_pkg in $(ls ./pkg/apis); do
   for pkg_version in $(ls ./pkg/apis/${api_pkg}); do
-    ## NOTE: we name the packages after the pkg_version, so that they match the expectations on being moved
-    ## In the intermediate directory, it looks like a nested path - omitted/paths/${pkg_version}/${pkg_version}
-    ## This is a necessary albeit unintuitive path but we can live with it, since its in a temporary dir structure
     echo "Generating openapi package for ${api_pkg}, version=${pkg_version} ..."
     grafana::codegen::gen_openapi \
       --input-pkg-single github.com/grafana/grafana/pkg/apis/${api_pkg}/${pkg_version} \
       --output-base "${OUTDIR}" \
-      --report-filename "${report_filename:-"/dev/null"}" \
+      --report-filename "openapi_violation_exceptions.list" \
       ${update_report:+"${update_report}"} \
       --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
-    # mv pkg/generated/${api_pkg}/${pkg_version}/${pkg_version}/zz_generated.openapi.go  pkg/apis/${api_pkg}/${pkg_version}/
   done
 done
 
