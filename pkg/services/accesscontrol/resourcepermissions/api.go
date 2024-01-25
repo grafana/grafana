@@ -137,13 +137,14 @@ type getResourcePermissionsResponse []resourcePermissionDTO
 // Responses:
 // 200: getResourcePermissionsResponse
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get permissions", err)
 	}
 
 	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
@@ -223,6 +224,7 @@ type SetResourcePermissionsForUserParams struct {
 // 200: okResponse
 // 400: badRequestError
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":userID"], 10, 64)
@@ -238,7 +240,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 
 	_, err = a.service.SetUserPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "failed to set user permission", err)
 	}
 
 	return permissionSetResponse(cmd)
@@ -275,6 +277,7 @@ type SetResourcePermissionsForTeamParams struct {
 // 200: okResponse
 // 400: badRequestError
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamID"], 10, 64)
@@ -290,7 +293,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 
 	_, err = a.service.SetTeamPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, resourceID, cmd.Permission)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "failed to set team permission", err)
 	}
 
 	return permissionSetResponse(cmd)
@@ -327,6 +330,7 @@ type SetResourcePermissionsForBuiltInRoleParams struct {
 // 200: okResponse
 // 400: badRequestError
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Response {
 	builtInRole := web.Params(c.Req)[":builtInRole"]
@@ -339,7 +343,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 
 	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.SignedInUser.GetOrgID(), builtInRole, resourceID, cmd.Permission)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "failed to set role permission", err)
 	}
 
 	return permissionSetResponse(cmd)
@@ -372,6 +376,7 @@ type SetResourcePermissionsParams struct {
 // 200: okResponse
 // 400: badRequestError
 // 403: forbiddenError
+// 404: notFoundError
 // 500: internalServerError
 func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
@@ -383,7 +388,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 
 	_, err := a.service.SetPermissions(c.Req.Context(), c.SignedInUser.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "failed to set permissions", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "failed to set permission", err)
 	}
 
 	return response.Success("Permissions updated")

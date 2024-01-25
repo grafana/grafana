@@ -8994,6 +8994,12 @@
         "$ref": "#/definitions/RoleDTO"
       }
     },
+    "getSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SSOSettings"
+      }
+    },
     "getSharingOptionsResponse": {
       "description": "",
       "schema": {
@@ -9169,6 +9175,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/RoleDTO"
+        }
+      }
+    },
+    "listSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SSOSettings"
         }
       }
     },
