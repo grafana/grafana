@@ -133,6 +133,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                               register={register}
                               watch={watch}
                               unregister={unregister}
+                              provider={provider}
                               secretConfigured={!!config?.settings.clientSecret}
                             />
                           );
@@ -154,6 +155,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                     register={register}
                     watch={watch}
                     unregister={unregister}
+                    provider={provider}
                     secretConfigured={!!config?.settings.clientSecret}
                   />
                 );

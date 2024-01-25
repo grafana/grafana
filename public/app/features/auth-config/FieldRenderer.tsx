@@ -13,6 +13,7 @@ interface FieldRendererProps
   field: SSOSettingsField;
   errors: UseFormReturn['formState']['errors'];
   secretConfigured: boolean;
+  provider: string;
 }
 
 export const FieldRenderer = ({
@@ -24,12 +25,13 @@ export const FieldRenderer = ({
   control,
   unregister,
   secretConfigured,
+  provider,
 }: FieldRendererProps) => {
   const [isSecretConfigured, setIsSecretConfigured] = useState(secretConfigured);
   const isDependantField = typeof field !== 'string';
   const name = isDependantField ? field.name : field;
   const parentValue = isDependantField ? watch(field.dependsOn) : null;
-  const fieldData = fieldMap[name];
+  const fieldData = fieldMap(provider)[name];
   const theme = useTheme2();
   // Unregister a field that depends on a toggle to clear its data
   useEffect(() => {
