@@ -6,6 +6,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
+type getFoldersQuery struct {
+	folder.GetFoldersQuery
+	ancestorUIDs []string
+}
+
+func NewGetFoldersQuery(q folder.GetFoldersQuery) getFoldersQuery {
+	return getFoldersQuery{
+		GetFoldersQuery: q,
+		ancestorUIDs:    []string{},
+	}
+}
+
 // store is the interface which a folder store must implement.
 type store interface {
 	// Create creates a folder and returns the newly-created folder.
@@ -35,5 +47,5 @@ type store interface {
 	GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error)
 
 	// GetFolders returns folders with given uids
-	GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error)
+	GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error)
 }

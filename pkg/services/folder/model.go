@@ -41,11 +41,13 @@ type Folder struct {
 
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
-	Version   int
-	URL       string
-	UpdatedBy int64
-	CreatedBy int64
-	HasACL    bool
+	Version      int
+	URL          string
+	UpdatedBy    int64
+	CreatedBy    int64
+	HasACL       bool
+	Fullpath     string `xorm:"fullpath"`
+	FullpathUIDs string `xorm:"fullpath_uids"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -145,6 +147,16 @@ type GetFolderQuery struct {
 	ID    *int64
 	Title *string
 	OrgID int64
+
+	SignedInUser identity.Requester `json:"-"`
+}
+
+type GetFoldersQuery struct {
+	OrgID            int64
+	UIDs             []string
+	WithFullpath     bool
+	WithFullpathUIDs bool
+	BatchSize        uint64
 
 	SignedInUser identity.Requester `json:"-"`
 }
