@@ -31,17 +31,14 @@ source "$(dirname "${BASH_SOURCE[0]}")/openapi-codegen.sh"
 #                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 
-# kube::codegen::gen_helpers \
-#     --input-pkg-root github.com/grafana/grafana/pkg/apis \
-#     --output-base "${OUTDIR}" \
-#     --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
+kube::codegen::gen_helpers \
+    --input-pkg-root github.com/grafana/grafana/pkg/apis \
+    --output-base "${OUTDIR}" \
+    --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
 
 
-if [[ -n "${API_KNOWN_VIOLATIONS_DIR:-}" ]]; then
-    report_filename="${API_KNOWN_VIOLATIONS_DIR}/grafana_grafana_violation_exceptions.list"
-    if [[ "${UPDATE_API_KNOWN_VIOLATIONS:-}" == "true" ]]; then
-        update_report="--update-report"
-    fi
+if [[ "${UPDATE_API_KNOWN_VIOLATIONS:-}" == "true" ]]; then
+    update_report="--update-report"
 fi
 
 for api_pkg in $(ls ./pkg/apis); do
@@ -55,8 +52,6 @@ for api_pkg in $(ls ./pkg/apis); do
       --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
   done
 done
-
-exit 1
 
 kube::codegen::gen_client \
     --with-watch \

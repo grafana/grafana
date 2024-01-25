@@ -4,28 +4,21 @@
 # Provenance-includes-copyright: The Kubernetes Authors.
 
 ## NOTE: The following is a fork of the original gen_openapi helper in k8s.io/code-generator
-## It allows us the ability to generate separate openapi packages per api group
+## It allows us to generate separate openapi packages per api group.
 
 # Generate openapi code
 #
 # Args:
 #
+#   --input-pkg-single <string>
+#     The root directory of a single grafana API Group.
+#
 #   --output-base <string>
 #     The root directory under which to emit code.  The concatenation of
 #     <output-base> + <input-pkg-single> must be valid.
 #
-#   --openapi-name <string = "openapi">
-#     An optional override for the leaf name of the generated directory.
-#
-#   --extra-pkgs <string>
-#     An optional list of additional packages to be imported during openapi
-#     generation.  The argument must be Go package syntax, e.g.
-#     "k8s.io/foo/bar".  It may be a single value or a comma-delimited list.
-#     This flag may be repeated.
-#
 #   --report-filename <string = "/dev/null">
-#     An optional path at which to write an API violations report.  "-" means
-#     stdout.
+#     The filename of the API violations report in the input pkg directory.
 #
 #   --update-report
 #     If specified, update the report file in place, rather than diffing it.
@@ -43,10 +36,7 @@ source "${CODEGEN_PKG}/kube_codegen.sh"
 #
 function grafana::codegen::gen_openapi() {
     local in_pkg_single=""
-    local out_pkg_root=""
-    local out_base="" # gengo needs the output dir must be $out_base/$out_pkg_root
-    local openapi_subdir="openapi"
-    local extra_pkgs=()
+    local out_base=""
     local report="/dev/null"
     local update_report=""
     local boilerplate="${KUBE_CODEGEN_ROOT}/hack/boilerplate.go.txt"
@@ -60,14 +50,6 @@ function grafana::codegen::gen_openapi() {
                 ;;
             "--output-base")
                 out_base="$2"
-                shift 2
-                ;;
-            "--openapi-name")
-                openapi_subdir="$2"
-                shift 2
-                ;;
-            "--extra-pkgs")
-                extra_pkgs+=("$2")
                 shift 2
                 ;;
             "--report-filename")
@@ -89,15 +71,19 @@ function grafana::codegen::gen_openapi() {
         esac
     done
 
-    if [ -z "${out_base}" ]; then
-        echo "--output-base is required" >&2
+    if [ -z "${in_pkg_single}" ]; then
+        echo "--input-pkg-single is required" >&2
         return 1
     fi
 
-    local new_report
-    new_report="$(mktemp -t "$(basename "$0").api_violations.XXXXXX")"
-    if [ -n "${update_report}" ]; then
-        new_report="${report}"
+    if [ -z "${report}" ]; then
+        echo "--report-filename is required" >&2
+        return 1
+    fi
+
+    if [ -z "${out_base}" ]; then
+        echo "--output-base is required" >&2
+        return 1
     fi
 
     (
@@ -135,14 +121,20 @@ function grafana::codegen::gen_openapi() {
     if [ "${#input_pkgs[@]}" != 0 ]; then
         echo "Generating openapi code for ${#input_pkgs[@]} targets"
 
-        # kube::codegen::internal::git_find -z \
-        #    ":(glob)${root}"/'**/zz_generated.openapi.go' \
-        #    | xargs -0 rm -f
+        kube::codegen::internal::git_find -z \
+           ":(glob)${root}"/'**/zz_generated.openapi.go' \
+           | xargs -0 rm -f
 
         local inputs=()
         for arg in "${input_pkgs[@]}"; do
             inputs+=("--input-dirs" "$arg")
         done
+
+        local new_report
+        new_report="${root}/${report}.tmp"
+        if [ -n "${update_report}" ]; then
+            new_report="${root}/${report}"
+        fi
 
         "${gobin}/openapi-gen" \
             -v "${v}" \
@@ -150,15 +142,20 @@ function grafana::codegen::gen_openapi() {
             --go-header-file "${boilerplate}" \
             --output-base "${out_base}" \
             --output-package "${in_pkg_single}" \
-            --report-filename "${root}/${new_report}" \
+            --report-filename "${new_report}" \
             "${inputs[@]}"
     fi
 
-    touch "${report}" # in case it doesn't exist yet
-    if ! diff -u "${report}" "${new_report}"; then
+    touch "${root}/${report}" # in case it doesn't exist yet
+    if ! diff -u "${root}/${report}" "${new_report}"; then
         echo -e "ERROR:"
-        echo -e "\tAPI rule check failed for ${report}: new reported violations"
+        echo -e "\tAPI rule check failed for ${root}/${report}: new reported violations"
         echo -e "\tPlease read api/api-rules/README.md"
         return 1
+    fi
+
+    # if all goes well, remove the temporary reports
+    if [ -z "${update_report}" ]; then
+      rm -f "${new_report}"
     fi
 }
