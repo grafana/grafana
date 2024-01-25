@@ -19,6 +19,10 @@ title: 'Alerting Provisioning HTTP API '
 
 # Alerting provisioning HTTP API
 
+The Alerting provisioning API can be used to create, modify, and delete resources relevant to [Grafana Managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}). And is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+For managing resources related to [data source-managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}) including Recording Rules, you can use [Mimir tool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) and [Cortex tool](https://github.com/grafana/cortex-tools#cortextool) respectively.
+
 ## Information
 
 ### Version
@@ -41,32 +45,28 @@ title: 'Alerting Provisioning HTTP API '
 
 ### Alert rules
 
-| Method | URI                                                                | Name                                                                    | Summary                                                 |
-| ------ | ------------------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------- |
-| DELETE | /api/v1/provisioning/alert-rules/{UID}                             | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
-| GET    | /api/v1/provisioning/alert-rules/{UID}                             | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                       |
-| GET    | /api/v1/provisioning/alert-rules/{UID}/export                      | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.       |
-| GET    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                       |
-| GET    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format. |
-| GET    | /api/v1/provisioning/alert-rules                                   | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                |
-| GET    | /api/v1/provisioning/alert-rules/export                            | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.     |
-| POST   | /api/v1/provisioning/alert-rules                                   | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                |
-| PUT    | /api/v1/provisioning/alert-rules/{UID}                             | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
-| PUT    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group.                    |
+| Method | URI                                                              | Name                                                                    | Summary                                                               |
+| ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                                  |
+| GET    | /api/v1/provisioning/alert-rules/:uid                            | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                                     |
+| GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.                     |
+| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                                     |
+| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format.               |
+| GET    | /api/v1/provisioning/alert-rules                                 | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                              |
+| GET    | /api/v1/provisioning/alert-rules/export                          | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.                   |
+| POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                              |
+| PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                                        |
+| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group or modify the rules of the group. |
 
 ### Contact points
 
-**Note:**
-
-Contact point provisioning is for Grafana-managed alerts only.
-
 | Method | URI                                        | Name                                                              | Summary                                                |
 | ------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |
-| DELETE | /api/v1/provisioning/contact-points/{UID}  | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
+| DELETE | /api/v1/provisioning/contact-points/:uid   | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
 | GET    | /api/v1/provisioning/contact-points        | [route get contactpoints](#route-get-contactpoints)               | Get all the contact points.                            |
 | GET    | /api/v1/provisioning/contact-points/export | [route get contactpoints export](#route-get-contactpoints-export) | Export all contact points in provisioning file format. |
 | POST   | /api/v1/provisioning/contact-points        | [route post contactpoints](#route-post-contactpoints)             | Create a contact point.                                |
-| PUT    | /api/v1/provisioning/contact-points/{UID}  | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
+| PUT    | /api/v1/provisioning/contact-points/:uid   | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
 
 ### Notification policies
 
@@ -79,29 +79,29 @@ Contact point provisioning is for Grafana-managed alerts only.
 
 ### Mute timings
 
-| Method | URI                                      | Name                                                  | Summary                          |
-| ------ | ---------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| DELETE | /api/v1/provisioning/mute-timings/{name} | [route delete mute timing](#route-delete-mute-timing) | Delete a mute timing.            |
-| GET    | /api/v1/provisioning/mute-timings/{name} | [route get mute timing](#route-get-mute-timing)       | Get a mute timing.               |
-| GET    | /api/v1/provisioning/mute-timings        | [route get mute timings](#route-get-mute-timings)     | Get all the mute timings.        |
-| POST   | /api/v1/provisioning/mute-timings        | [route post mute timing](#route-post-mute-timing)     | Create a new mute timing.        |
-| PUT    | /api/v1/provisioning/mute-timings/{name} | [route put mute timing](#route-put-mute-timing)       | Replace an existing mute timing. |
+| Method | URI                                     | Name                                                  | Summary                          |
+| ------ | --------------------------------------- | ----------------------------------------------------- | -------------------------------- |
+| DELETE | /api/v1/provisioning/mute-timings/:name | [route delete mute timing](#route-delete-mute-timing) | Delete a mute timing.            |
+| GET    | /api/v1/provisioning/mute-timings/:name | [route get mute timing](#route-get-mute-timing)       | Get a mute timing.               |
+| GET    | /api/v1/provisioning/mute-timings       | [route get mute timings](#route-get-mute-timings)     | Get all the mute timings.        |
+| POST   | /api/v1/provisioning/mute-timings       | [route post mute timing](#route-post-mute-timing)     | Create a new mute timing.        |
+| PUT    | /api/v1/provisioning/mute-timings/:name | [route put mute timing](#route-put-mute-timing)       | Replace an existing mute timing. |
 
 ### Templates
 
-| Method | URI                                   | Name                                            | Summary                                    |
-| ------ | ------------------------------------- | ----------------------------------------------- | ------------------------------------------ |
-| DELETE | /api/v1/provisioning/templates/{name} | [route delete template](#route-delete-template) | Delete a template.                         |
-| GET    | /api/v1/provisioning/templates/{name} | [route get template](#route-get-template)       | Get a notification template.               |
-| GET    | /api/v1/provisioning/templates        | [route get templates](#route-get-templates)     | Get all notification templates.            |
-| PUT    | /api/v1/provisioning/templates/{name} | [route put template](#route-put-template)       | Updates an existing notification template. |
+| Method | URI                                  | Name                                            | Summary                                    |
+| ------ | ------------------------------------ | ----------------------------------------------- | ------------------------------------------ |
+| DELETE | /api/v1/provisioning/templates/:name | [route delete template](#route-delete-template) | Delete a template.                         |
+| GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.               |
+| GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.            |
+| PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Updates an existing notification template. |
 
 ## Paths
 
 ### <span id="route-delete-alert-rule"></span> Delete a specific alert rule by UID. (_RouteDeleteAlertRule_)
 
 ```
-DELETE /api/v1/provisioning/alert-rules/{UID}
+DELETE /api/v1/provisioning/alert-rules/:uid
 ```
 
 #### Parameters
@@ -132,7 +132,7 @@ Status: No Content
 ### <span id="route-delete-contactpoints"></span> Delete a contact point. (_RouteDeleteContactpoints_)
 
 ```
-DELETE /api/v1/provisioning/contact-points/{UID}
+DELETE /api/v1/provisioning/contact-points/:uid
 ```
 
 #### Consumes
@@ -162,7 +162,7 @@ Status: No Content
 ### <span id="route-delete-mute-timing"></span> Delete a mute timing. (_RouteDeleteMuteTiming_)
 
 ```
-DELETE /api/v1/provisioning/mute-timings/{name}
+DELETE /api/v1/provisioning/mute-timings/:name
 ```
 
 #### Parameters
@@ -188,7 +188,7 @@ Status: No Content
 ### <span id="route-delete-template"></span> Delete a template. (_RouteDeleteTemplate_)
 
 ```
-DELETE /api/v1/provisioning/templates/{name}
+DELETE /api/v1/provisioning/templates/:name
 ```
 
 #### Parameters
@@ -214,7 +214,7 @@ Status: No Content
 ### <span id="route-get-alert-rule"></span> Get a specific alert rule by UID. (_RouteGetAlertRule_)
 
 ```
-GET /api/v1/provisioning/alert-rules/{UID}
+GET /api/v1/provisioning/alert-rules/:uid
 ```
 
 #### Parameters
@@ -249,7 +249,7 @@ Status: Not Found
 ### <span id="route-get-alert-rule-export"></span> Export an alert rule in provisioning file format. (_RouteGetAlertRuleExport_)
 
 ```
-GET /api/v1/provisioning/alert-rules/{UID}/export
+GET /api/v1/provisioning/alert-rules/:uid/export
 ```
 
 #### Produces
@@ -292,7 +292,7 @@ Status: Not Found
 ### <span id="route-get-alert-rule-group"></span> Get a rule group. (_RouteGetAlertRuleGroup_)
 
 ```
-GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
+GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
 #### Parameters
@@ -328,7 +328,7 @@ Status: Not Found
 ### <span id="route-get-alert-rule-group-export"></span> Export an alert rule group in provisioning file format. (_RouteGetAlertRuleGroupExport_)
 
 ```
-GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export
+GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export
 ```
 
 #### Produces
@@ -498,7 +498,7 @@ Status: Forbidden
 ### <span id="route-get-mute-timing"></span> Get a mute timing. (_RouteGetMuteTiming_)
 
 ```
-GET /api/v1/provisioning/mute-timings/{name}
+GET /api/v1/provisioning/mute-timings/:name
 ```
 
 #### Parameters
@@ -608,7 +608,7 @@ Status: Not Found
 ### <span id="route-get-template"></span> Get a notification template. (_RouteGetTemplate_)
 
 ```
-GET /api/v1/provisioning/templates/{name}
+GET /api/v1/provisioning/templates/:name
 ```
 
 #### Parameters
@@ -810,7 +810,7 @@ Status: Bad Request
 ### <span id="route-put-alert-rule"></span> Update an existing alert rule. (_RoutePutAlertRule_)
 
 ```
-PUT /api/v1/provisioning/alert-rules/{UID}
+PUT /api/v1/provisioning/alert-rules/:uid
 ```
 
 #### Consumes
@@ -854,10 +854,10 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-put-alert-rule-group"></span> Update the interval of a rule group. (_RoutePutAlertRuleGroup_)
+### <span id="route-put-alert-rule-group"></span> Update the interval or alert rules of a rule group. (_RoutePutAlertRuleGroup_)
 
 ```
-PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
+PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
 #### Consumes
@@ -868,12 +868,12 @@ PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description                                               |
-| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
-| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
-| Group                | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
-| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         | Allows editing of provisioned resources in the Grafana UI |
-| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |                                                           |
+| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description                                                                                             |
+| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------- |
+| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |                                                                                                         |
+| Group                | `path`   | string                              | `string`                |           |    ✓     |         |                                                                                                         |
+| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         | Allows editing of provisioned resources in the Grafana UI                                               |
+| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         | This action is idempotent and rules included in this body will overwrite configured rules for the group |
 
 {{% /responsive-table %}}
 
@@ -905,7 +905,7 @@ Status: Bad Request
 ### <span id="route-put-contactpoint"></span> Update an existing contact point. (_RoutePutContactpoint_)
 
 ```
-PUT /api/v1/provisioning/contact-points/{UID}
+PUT /api/v1/provisioning/contact-points/:uid
 ```
 
 #### Consumes
@@ -952,7 +952,7 @@ Status: Bad Request
 ### <span id="route-put-mute-timing"></span> Replace an existing mute timing. (_RoutePutMuteTiming_)
 
 ```
-PUT /api/v1/provisioning/mute-timings/{name}
+PUT /api/v1/provisioning/mute-timings/:name
 ```
 
 #### Consumes
@@ -1045,7 +1045,7 @@ Status: Bad Request
 ### <span id="route-put-template"></span> Updates an existing notification template. (_RoutePutTemplate_)
 
 ```
-PUT /api/v1/provisioning/templates/{name}
+PUT /api/v1/provisioning/templates/:name
 ```
 
 #### Consumes
