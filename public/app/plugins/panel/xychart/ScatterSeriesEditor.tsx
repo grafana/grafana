@@ -30,7 +30,8 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
             id: 'x',
             name: 'x',
             settings: {
-              filter: (field) => frame?.fields.some((obj) => obj.name === field.name) ?? true,
+              filter: (field) =>
+                frame?.fields.some((obj) => obj.state?.displayName === field.state?.displayName) ?? true,
               baseNameMode,
             },
           }}
@@ -45,7 +46,8 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
             id: 'x',
             name: 'x',
             settings: {
-              filter: (field) => frame?.fields.some((obj) => obj.name === field.name) ?? true,
+              filter: (field) =>
+                frame?.fields.some((obj) => obj.state?.displayName === field.state?.displayName) ?? true,
               baseNameMode,
             },
           }}
