@@ -116,28 +116,33 @@ export const ManualEditor = ({
 
       {selected >= 0 && value[selected] && (
         <>
-          <Field label={'Data'}>
-            <Select
-              isClearable={true}
-              options={frameNames}
-              placeholder={frameNames[0].label}
-              value={
-                frameNames.find((v) => {
-                  return v.value === value[selected].frame;
-                }) ?? null
-              }
-              onChange={(v) => {
-                if (v === null) {
-                  value[selected].frame = undefined;
-                } else {
-                  console.log(v);
-                  value[selected].frame = v?.value!;
-                  value[selected].x = undefined;
-                  value[selected].y = undefined;
+          {frameNames.length > 1 && (
+            <Field label={'Data'}>
+              <Select
+                isClearable={true}
+                options={frameNames}
+                placeholder={'Change filter'}
+                value={
+                  frameNames.find((v) => {
+                    return v.value === value[selected].frame;
+                  }) ?? null
                 }
-              }}
-            />
-          </Field>
+                onChange={(v) => {
+                  onChange(
+                    value.map((obj, i) => {
+                      if (i === selected) {
+                        if (v === null) {
+                          return { ...value[i], frame: undefined };
+                        }
+                        return { ...value[i], frame: v?.value!, x: undefined, y: undefined };
+                      }
+                      return obj;
+                    })
+                  );
+                }}
+              />
+            </Field>
+          )}
           <ScatterSeriesEditor
             key={`series/${selected}`}
             baseNameMode={FieldNamePickerBaseNameMode.ExcludeBaseNames}
