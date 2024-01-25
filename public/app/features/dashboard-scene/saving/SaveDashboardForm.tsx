@@ -1,38 +1,33 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { isFetchError } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Button, Checkbox, TextArea, useStyles2, Stack, Alert, Box, ButtonVariant } from '@grafana/ui';
+import { Button, Checkbox, TextArea, Stack, Alert, Box, ButtonVariant, Field } from '@grafana/ui';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
+import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { DashboardChangeInfo } from './types';
 import { useDashboardSave } from './useSaveDashboard';
 
 export interface Props {
   dashboard: DashboardScene;
-  saveModel: Dashboard;
-  hasChanges?: boolean;
-  options: SaveDashboardOptions;
-  onOptionsChange: (opts: SaveDashboardOptions) => void;
+  drawer: SaveDashboardDrawer;
+  changeInfo: DashboardChangeInfo;
 }
 
-export function SaveDashboardForm({ dashboard, saveModel, hasChanges, options, onOptionsChange }: Props) {
-  //   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
-  //   const hasVariableChanged = useMemo(() => dashboard.hasVariablesChanged(), [dashboard]);
+export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
+  const { saveVariables = false, saveTimeRange = false } = drawer.useState();
+  const { changedSaveModel, hasChanges, hasTimeChanged, hasVariableValuesChanged } = changeInfo;
 
-  const hasTimeChanged = false;
-  const hasVariableChanged = false;
-
-  const [message, setMessage] = useState(options.message);
-  const styles = useStyles2(getStyles);
   const { state, onSaveDashboard } = useDashboardSave(false);
+  const [options, setOptions] = useState<SaveDashboardOptions>({
+    folderUid: dashboard.state.meta.folderUid,
+  });
 
   const onSave = async (overwrite: boolean) => {
-    const result = await onSaveDashboard(dashboard, saveModel, { ...options, overwrite });
+    const result = await onSaveDashboard(dashboard, changedSaveModel, { ...options, overwrite });
     if (result.status === 'success') {
       dashboard.closeModal();
     }
@@ -121,34 +116,27 @@ export function SaveDashboardForm({ dashboard, saveModel, hasChanges, options, o
   }
 
   return (
-    <Stack gap={2} direction="column">
+    <Stack gap={0} direction="column">
       {hasTimeChanged && (
-        <Checkbox
-          checked={!!options.saveTimerange}
-          onChange={() =>
-            onOptionsChange({
-              ...options,
-              saveTimerange: !options.saveTimerange,
-            })
-          }
-          label="Save current time range as dashboard default"
-          aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
-        />
+        <Field label="Save current time range" description="Will make current time range the new default">
+          <Checkbox
+            checked={saveTimeRange}
+            onChange={drawer.onToggleSaveTimeRange}
+            aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
+          />
+        </Field>
       )}
-      {hasVariableChanged && (
-        <Checkbox
-          checked={!!options.saveVariables}
-          onChange={() =>
-            onOptionsChange({
-              ...options,
-              saveVariables: !options.saveVariables,
-            })
-          }
-          label="Save current variable values as dashboard default"
-          aria-label={selectors.pages.SaveDashboardModal.saveVariables}
-        />
+      {hasVariableValuesChanged && (
+        <Field label="Save current variable values" description="Will make the current values the new default">
+          <Checkbox
+            checked={saveVariables}
+            onChange={drawer.onToggleSaveVariables}
+            label="Save current variable values as dashboard default"
+            aria-label={selectors.pages.SaveDashboardModal.saveVariables}
+          />
+        </Field>
       )}
-      <div className={styles.message}>
+      <Field label="Message">
         {/* {config.featureToggles.dashgpt && (
           <GenAIDashboardChangesButton
             dashboard={dashboard}
@@ -162,23 +150,22 @@ export function SaveDashboardForm({ dashboard, saveModel, hasChanges, options, o
             disabled={!saveModel.hasChanges}
           />
         )} */}
+
         <TextArea
           aria-label="message"
-          value={message}
+          value={options.message ?? ''}
           onChange={(e) => {
-            onOptionsChange({
+            setOptions({
               ...options,
               message: e.currentTarget.value,
             });
-            setMessage(e.currentTarget.value);
           }}
-          placeholder="Add a note to describe your changes."
+          placeholder="Add a note to describe your changes (optional)."
           autoFocus
           rows={5}
         />
-      </div>
-
-      {renderFooter(state.error)}
+      </Field>
+      <Box paddingTop={2}>{renderFooter(state.error)}</Box>
     </Stack>
   );
 }
@@ -193,15 +180,4 @@ function isNameExistsError(error?: Error) {
 
 function isPluginDashboardError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    message: css`
-      display: flex;
-      align-items: end;
-      flex-direction: column;
-      width: 100%;
-    `,
-  };
 }

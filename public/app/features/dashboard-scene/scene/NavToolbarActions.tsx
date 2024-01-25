@@ -164,7 +164,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           tooltip="Save changes"
           key="save"
           size="sm"
-          disabled={!isDirty}
+          variant={isDirty ? 'primary' : 'secondary'}
         >
           Save
         </Button>
