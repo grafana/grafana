@@ -13,51 +13,70 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// #TODO: convert to table test where we provide expected response entity and error don't read from the table if we expect non nil error
 func TestCreate(t *testing.T) {
 	s := setUpTestServer(t)
 
 	t.Run("entity with only Key and CreatedBy", func(t *testing.T) {
 		key := "/playlist.grafana.app/playlists/default/set-minimum-uid"
-
+		createdBy := "set-minimum-creator"
 		req := entity.CreateEntityRequest{
 			Entity: &entity.Entity{
 				Key:       key,
-				CreatedBy: "set-minimum-creator",
+				CreatedBy: createdBy,
 			},
 		}
-
 		resp, err := s.Create(context.Background(), &req)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, entity.CreateEntityResponse_CREATED, resp.Status)
 		require.Nil(t, resp.Error)
-		// #TODO check that everything that needs to be set is set
-		// #TODO switch expected and actual
-		// require.Equal(t, req.Entity.Name, resp.Entity.Name) // everything from guid through name, key, etag, oriigin
-		require.Equal(t, resp.Entity.Subresource, "")
-		require.Equal(t, resp.Entity.GroupVersion, "")
-		require.Equal(t, resp.Entity.Folder, "")
-		// require.Nil(t, resp.Entity.Meta)
-		// require.Equal(t, resp.Entity.Body, "")
-		// require.Equal(t, resp.Entity.Status, "")
-		require.Equal(t, resp.Entity.Title, "")
-		require.Equal(t, resp.Entity.Size, int64(0))
-		require.Equal(t, resp.Entity.CreatedAt, int64(0))
-		require.Equal(t, resp.Entity.CreatedBy, "")
-		require.Equal(t, resp.Entity.UpdatedAt, int64(0))
-		require.Equal(t, resp.Entity.UpdatedBy, "")
-		require.Equal(t, resp.Entity.Description, "")
-		require.Equal(t, resp.Entity.Slug, "")
-		require.Equal(t, resp.Entity.Message, "")
-		// require.Equal(t, resp.Entity.Labels, "")
-		// require.Equal(t, resp.Entity.Fields, "")
-		// require.Equal(t, resp.Entity.Errors, "")
+
+		exp := entity.Entity{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: "default",
+			Name:      "set-minimum-uid",
+			Key:       key,
+			CreatedBy: createdBy,
+		}
 
 		read, err := s.Read(context.Background(), &entity.ReadEntityRequest{
 			Key: key,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, read)
+
+		require.Greater(t, len(read.Guid), 0)
+		// is there a predictable way to compare the new version with the previous one?
+		// I seem to remember that they don't increment by 1.
+		require.Greater(t, read.ResourceVersion, int64(0))
+		require.Greater(t, len(read.ETag), 0)
+
+		require.Equal(t, exp.Origin, read.Origin)
+		require.Equal(t, exp.Group, read.Group)
+		require.Equal(t, exp.Resource, read.Resource)
+		require.Equal(t, exp.Namespace, read.Namespace)
+		require.Equal(t, exp.Name, read.Name)
+		require.Equal(t, exp.Subresource, read.Subresource)
+		require.Equal(t, exp.GroupVersion, read.GroupVersion)
+		require.Equal(t, exp.Key, read.Key)
+		require.Equal(t, exp.Folder, read.Folder)
+		require.Equal(t, exp.Meta, read.Meta)
+		require.Equal(t, exp.Body, read.Body)
+		require.Equal(t, exp.Status, read.Status)
+		require.Equal(t, exp.Title, read.Title)
+		require.Equal(t, exp.Size, read.Size)
+		require.Equal(t, exp.CreatedAt, read.CreatedAt)
+		require.Equal(t, exp.CreatedBy, read.CreatedBy)
+		require.Equal(t, exp.UpdatedAt, read.UpdatedAt)
+		require.Equal(t, exp.UpdatedBy, read.UpdatedBy)
+		require.Equal(t, exp.Description, read.Description)
+		require.Equal(t, exp.Slug, read.Slug)
+		require.Equal(t, exp.Message, read.Message)
+		require.Equal(t, exp.Labels, read.Labels)
+		require.Equal(t, exp.Fields, read.Fields)
+		require.Equal(t, exp.Errors, read.Errors)
 	})
 
 	t.Run("entity with no CreatedBy", func(t *testing.T) {
@@ -72,6 +91,7 @@ func TestCreate(t *testing.T) {
 		resp, err := s.Create(context.Background(), &req)
 		require.Error(t, err)
 		require.Nil(t, resp)
+		// entity.CreateEntityResponse_ERROR doesn't get set for the status in this case
 	})
 
 	t.Run("entity with no Key", func(t *testing.T) {
@@ -82,18 +102,13 @@ func TestCreate(t *testing.T) {
 		}
 
 		resp, err := s.Create(context.Background(), &req)
-		// #TODO figure out what error to check for exactly
 		require.Error(t, err)
-		// --
-		// // #TODO figure out what to check for the next three requires
-		require.NotNil(t, resp)
 		require.Equal(t, entity.CreateEntityResponse_ERROR, resp.Status)
-		require.Nil(t, resp.Error)
+		// Entity.Errors docs say "When errors exist" but it looks unused
 	})
 }
 
 func setUpTestServer(t *testing.T) entity.EntityStoreServer {
-	// #TODO: figure out if this is the store we want to use
 	sqlStore := db.InitTestDB(t)
 
 	entityDB, err := dbimpl.ProvideEntityDB(
