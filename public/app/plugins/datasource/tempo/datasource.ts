@@ -204,9 +204,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       options = await this.languageProvider.getOptionsV1(labelName);
     }
 
-    return options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value })) as Array<{
-      text: string;
-    }>;
+    // Transform and filter options.
+    // We do not use `filter` and `map`, e.g.,
+    // ```
+    // options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value }))
+    // ```
+    // because TypeScript cannot properly infer types with them and a type error would be raised.
+    const parsedOptions: Array<{ text: string }> = [];
+    options.forEach((option) => {
+      if (option.value === undefined) {
+        return;
+      }
+      parsedOptions.push({ text: option.value });
+    });
+
+    return parsedOptions;
   }
 
   init = async () => {
@@ -271,7 +283,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             // Wrap linked query into a data request based on original request
             const linkedRequest: DataQueryRequest = { ...options, targets: targets.search.map((t) => t.linkedQuery!) };
             // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
-            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as any).instanceSettings;
+            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as TempoDatasource)
+              .instanceSettings;
             const traceLinkMatcher: string[] =
               settings.jsonData.derivedFields
                 ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
@@ -285,7 +298,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                   )
               );
             } else {
-              return (linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
+              const response = linkedDatasource.query(linkedRequest);
+              if (!('pipe' in response) || typeof response.pipe !== 'function') {
+                throw Error('Linked datasource does not allow piping on query response');
+              }
+              return response.pipe(
                 map((response) =>
                   response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
                 )
@@ -453,7 +470,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           grafana_version: config.buildInfo.version,
         });
 
-        const jsonData = JSON.parse(this.uploadedJson as string);
+        let uploadedString;
+        if (this.uploadedJson !== 'string') {
+          console.error('Unexpected type for uploadedJson. Expected string, got', typeof this.uploadedJson);
+          uploadedString = this.uploadedJson.toString();
+        } else {
+          uploadedString = this.uploadedJson;
+        }
+        const jsonData = JSON.parse(uploadedString);
         const isTraceData = jsonData.batches;
         const isServiceGraphData =
           Array.isArray(jsonData) && jsonData.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
@@ -718,13 +742,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   getQueryDisplayText(query: TempoQuery) {
+    const validKeys = ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit'];
+
+    // Used to later enforce the type of the key and avoid the error:
+    // "Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'TempoQuery'."
+    const isKeyOfTempoQuery = (key: string): key is keyof TempoQuery => validKeys.includes(key);
+
     if (query.queryType === 'nativeSearch') {
-      let result = [];
-      for (const key of ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit']) {
-        if (query.hasOwnProperty(key) && query[key as keyof TempoQuery]) {
-          result.push(`${startCase(key)}: ${query[key as keyof TempoQuery]}`);
+      let result: string[] = [];
+      ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit'].forEach((key) => {
+        if (query.hasOwnProperty(key) && isKeyOfTempoQuery(key) && query[key]) {
+          result.push(`${startCase(key)}: ${query[key]}`);
         }
-      }
+      });
       return result.join(', ');
     }
     return query.query ?? '';
