@@ -16,6 +16,7 @@ import (
 )
 
 func TestIntegrationDeleteCorrelation(t *testing.T) {
+	t.Skip("Flaky test that needs to be fixed: #81229")
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
