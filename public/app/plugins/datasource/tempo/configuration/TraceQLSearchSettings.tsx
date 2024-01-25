@@ -5,7 +5,6 @@ import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOptio
 import { getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
 
-import { TempoDatasource } from '../datasource';
 import { TempoJsonData } from '../types';
 
 import { getStyles } from './QuerySettings';
@@ -17,7 +16,7 @@ export function TraceQLSearchSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
   const dataSourceSrv = getDataSourceSrv();
   const fetchDatasource = async () => {
-    return (await dataSourceSrv.get({ type: options.type, uid: options.uid })) as TempoDatasource;
+    return await dataSourceSrv.get({ type: options.type, uid: options.uid });
   };
 
   const { value: datasource } = useAsync(fetchDatasource, [dataSourceSrv, options]);

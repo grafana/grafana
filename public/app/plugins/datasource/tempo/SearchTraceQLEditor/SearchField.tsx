@@ -3,7 +3,7 @@ import { uniq } from 'lodash';
 import React, { useState, useEffect, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { SelectableValue } from '@grafana/data';
+import { DataSourceApi, SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
@@ -12,7 +12,6 @@ import { notifyApp } from '../_importedDependencies/actions/appNotification';
 import { createErrorNotification } from '../_importedDependencies/core/appNotification';
 import { dispatch } from '../_importedDependencies/store';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
 import { operators as allOperators, stringOperators, numberOperators, keywordOperators } from '../traceql/traceql';
 
 import { filterScopedTag, operatorSelectableValue } from './utils';
@@ -25,7 +24,7 @@ const getStyles = () => ({
 
 interface Props {
   filter: TraceqlFilter;
-  datasource: TempoDatasource;
+  datasource: DataSourceApi;
   updateFilter: (f: TraceqlFilter) => void;
   deleteFilter?: (f: TraceqlFilter) => void;
   setError: (error: FetchError) => void;
@@ -81,7 +80,12 @@ const SearchField = ({
   ]);
 
   // Add selected option if it doesn't exist in the current list of options
-  if (filter.value && !Array.isArray(filter.value) && options && !options.find((o) => o.value === filter.value)) {
+  if (
+    filter.value &&
+    !Array.isArray(filter.value) &&
+    options &&
+    !options.find((o: { value: string | string[] | undefined }) => o.value === filter.value)
+  ) {
     options.push({ label: filter.value.toString(), value: filter.value.toString(), type: filter.valueType });
   }
 
@@ -109,7 +113,7 @@ const SearchField = ({
     .map((t) => ({ label: t, value: t }));
 
   // If all values have type string or int/float use a focused list of operators instead of all operators
-  const optionsOfFirstType = options?.filter((o) => o.type === options[0]?.type);
+  const optionsOfFirstType = options?.filter((o: SelectableValue) => o.type === options[0]?.type);
   const uniqueOptionType = options?.length === optionsOfFirstType?.length ? options?.[0]?.type : undefined;
   let operatorList = allOperators;
   switch (uniqueOptionType) {

@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
+import { DataSourceApi } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { FetchError } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
 
 import SearchField from './SearchField';
 import { getFilteredTags } from './utils';
@@ -29,7 +29,7 @@ interface Props {
   updateFilter: (f: TraceqlFilter) => void;
   deleteFilter: (f: TraceqlFilter) => void;
   filters: TraceqlFilter[];
-  datasource: TempoDatasource;
+  datasource: DataSourceApi;
   setError: (error: FetchError) => void;
   staticTags: Array<string | undefined>;
   isTagsLoading: boolean;
