@@ -153,6 +153,7 @@ const getStyles = (
       color: color.text,
     }),
     content: css({
+      color: theme.colors.text.primary,
       paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',

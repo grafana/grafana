@@ -52,13 +52,15 @@ const RuleViewer = () => {
     handleDelete: showDeleteModal,
   });
 
-  const promRule = rule.promRule;
+  const { annotations, promRule } = rule;
   const hasError = rule.promRule?.health === 'error';
 
   const isAlertType = isAlertingRule(promRule);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+
+  const summary = annotations[Annotation.summary];
 
   return (
     <AlertingPageWrapper
@@ -71,7 +73,8 @@ const RuleViewer = () => {
       actions={actions}
       info={createMetadata(rule)}
       subTitle={
-        <>
+        <Stack direction="column">
+          {summary}
           {/* alerts and notifications and stuff */}
           {isFederatedRule && (
             <Alert
@@ -102,7 +105,7 @@ const RuleViewer = () => {
               </pre>
             </Alert>
           )}
-        </>
+        </Stack>
       }
     >
       <Stack direction="column" gap={2}>
