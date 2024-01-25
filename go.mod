@@ -485,8 +485,8 @@ require (
 require k8s.io/apiextensions-apiserver v0.29.0 // @grafana/grafana-app-platform-squad
 
 require (
-	k8s.io/code-generator v0.29.1 // indirect
-	k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01 // indirect
+	k8s.io/code-generator v0.29.1 // indirect; @grafana/grafana-app-platform-squad
+	k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01 // indirect; @grafana/grafana-app-platform-squad
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
