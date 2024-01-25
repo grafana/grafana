@@ -11,7 +11,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { defaultPageNav } from '../../../RuleViewer';
 import { Annotation } from '../../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../../utils/misc';
-import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../../utils/rules';
+import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../../utils/rules';
 import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { AlertStateDot } from '../../AlertStateDot';
@@ -97,7 +97,9 @@ const RuleViewer = () => {
           {/* error state */}
           {hasError && (
             <Alert title="Something went wrong when evaluating this alert rule" bottomSpacing={0} topSpacing={2}>
-              <code>{rule.promRule?.lastError ?? 'No error message'}</code>
+              <pre style={{ marginBottom: 0 }}>
+                <code>{rule.promRule?.lastError ?? 'No error message'}</code>
+              </pre>
             </Alert>
           )}
         </>
@@ -290,6 +292,9 @@ function usePageNav(rule: CombinedRule) {
   const namespaceName = decodeGrafanaNamespace(rule.namespace);
   const groupName = rule.group.name;
 
+  const isGrafanaAlertRule = isGrafanaRulerRule(rule.rulerRule) && isAlertType;
+  const isRecordingRuleType = isRecordingRule(rule.promRule);
+
   const pageNav: NavModelItem = {
     ...defaultPageNav,
     text: rule.name,
@@ -309,6 +314,7 @@ function usePageNav(rule: CombinedRule) {
           setActiveTab(ActiveTab.Instances);
         },
         tabCounter: numberOfInstance,
+        hideFromTabs: isRecordingRuleType,
       },
       {
         text: 'History',
@@ -316,6 +322,8 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.History);
         },
+        // alert state history is only available for Grafana managed alert rules
+        hideFromTabs: !isGrafanaAlertRule,
       },
       {
         text: 'Details',
