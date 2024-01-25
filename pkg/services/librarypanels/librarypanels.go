@@ -189,14 +189,12 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		folder, err := lps.FolderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
+		s := `SELECT COUNT(*) FROM library_element
+			WHERE org_id = ? AND folder_id = (SELECT id FROM dashboard WHERE org_id = ? AND uid = ?) AND kind = ?`
+		_, err := sess.SQL(s, orgID, orgID, folderUID, int64(model.PanelElement)).Get(&count)
 		if err != nil {
 			return err
 		}
-		// nolint:staticcheck
-		q := sess.Table("library_element").Where("org_id = ?", u.GetOrgID()).
-			Where("folder_id = ?", folder.ID).Where("kind = ?", int64(model.PanelElement))
-		count, err = q.Count()
 		return err
 	})
 }
