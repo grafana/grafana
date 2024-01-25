@@ -380,7 +380,7 @@ var wireBasicSet = wire.NewSet(
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 	ssoSettingsImpl.ProvideService,
-	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.SSOSettingsService)),
+	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.Service)),
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	cloudmigrations.ProvideService,

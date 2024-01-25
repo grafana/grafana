@@ -113,6 +113,13 @@ describe('NestedFolderPicker', () => {
     expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
   });
 
+  it('can clear a selection if clearable is specified', async () => {
+    render(<NestedFolderPicker clearable value={folderA.item.uid} onChange={mockOnChange} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Clear selection' }));
+    expect(mockOnChange).toHaveBeenCalledWith(undefined, undefined);
+  });
+
   it('can select a folder from the picker with the keyboard', async () => {
     render(<NestedFolderPicker onChange={mockOnChange} />);
     const button = await screen.findByRole('button', { name: 'Select folder' });

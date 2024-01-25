@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
-import { EditorMode, Space } from '@grafana/experimental';
+import { EditorMode } from '@grafana/experimental';
+import { Space } from '@grafana/ui';
 
 import { SqlDatasource } from '../datasource/SqlDatasource';
 import { applyQueryDefaults } from '../defaults';
