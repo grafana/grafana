@@ -176,7 +176,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 			return nil, err
 		}
 	case q.Title != nil:
-		dashFolder, err = s.getFolderByTitle(ctx, q.OrgID, *q.Title)
+		dashFolder, err = s.getFolderByTitle(ctx, q.OrgID, *q.Title, q.ParentUID)
 		if err != nil {
 			return nil, err
 		}
@@ -457,8 +457,8 @@ func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (
 	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
 }
 
-func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title)
+func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string, parentUID *string) (*folder.Folder, error) {
+	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title, parentUID)
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -854,6 +854,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			NewParentUID: &newParentUID,
 			SignedInUser: cmd.SignedInUser,
 		}); err != nil {
+			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
+			}
 			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
 		}
 
@@ -865,6 +868,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			// bypass optimistic locking used for dashboards
 			Overwrite: true,
 		}); err != nil {
+			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
+			}
 			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
 		}
 

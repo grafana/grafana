@@ -303,9 +303,9 @@ func TestIntegrationFolderService(t *testing.T) {
 			t.Run("When get folder by title should return folder", func(t *testing.T) {
 				expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
 
-				folderStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
+				folderStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title, mock.Anything).Return(expected, nil)
 
-				actual, err := service.getFolderByTitle(context.Background(), orgID, expected.Title)
+				actual, err := service.getFolderByTitle(context.Background(), orgID, expected.Title, nil)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
