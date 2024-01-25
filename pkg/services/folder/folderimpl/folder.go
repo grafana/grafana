@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
 
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -121,6 +121,37 @@ func (s *Service) DBMigration(db db.DB) {
 	s.log.Debug("syncing dashboard and folder tables finished")
 }
 
+func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	if q.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	qry := NewGetFoldersQuery(q)
+	permissions := q.SignedInUser.GetPermissions()
+	folderPermissions := permissions[dashboards.ActionFoldersRead]
+	qry.ancestorUIDs = make([]string, 0, len(folderPermissions))
+	for _, p := range folderPermissions {
+		if p == dashboards.ScopeFoldersAll {
+			// no need to query for folders with permissions
+			// the user has permission to access all folders
+			qry.ancestorUIDs = nil
+			break
+		}
+		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
+			if !slices.Contains(qry.ancestorUIDs, folderUid) {
+				qry.ancestorUIDs = append(qry.ancestorUIDs, folderUid)
+			}
+		}
+	}
+
+	dashFolders, err := s.store.GetFolders(ctx, qry)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	return dashFolders, nil
+}
+
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
@@ -196,6 +227,14 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	defer func(t time.Time) {
+		parent := q.UID
+		if q.UID != folder.SharedWithMeFolderUID {
+			parent = "folder"
+		}
+		s.metrics.foldersGetChildrenRequestsDuration.WithLabelValues(parent).Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -349,7 +388,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 		return nonRootFolders, nil
 	}
 
-	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
+	dashFolders, err := s.store.GetFolders(ctx, NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: folderUids}))
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
 	}

@@ -286,7 +286,7 @@ export const HeatmapPanel = ({
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}
-                  newRange={newAnnotationRange}
+                  newRange={enableAnnotationCreation ? newAnnotationRange : null}
                   setNewRange={setNewAnnotationRange}
                   canvasRegionRendering={false}
                 />
