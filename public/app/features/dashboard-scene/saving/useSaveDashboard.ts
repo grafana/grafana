@@ -40,7 +40,7 @@ export function useDashboardSave(isCopy = false) {
 
   const [state, onSaveDashboard] = useAsyncFn(
     async (scene: DashboardScene, saveModel: Dashboard, options: SaveDashboardOptions) => {
-      try {
+      {
         const result = await saveDashboard(saveModel, options, saveDashboardRtkQuery);
 
         scene.setState({
@@ -91,11 +91,6 @@ export function useDashboardSave(isCopy = false) {
           );
         }
         return result;
-      } catch (error) {
-        if (error instanceof Error) {
-          notifyApp.error(error.message ?? 'Error saving dashboard');
-        }
-        throw error;
       }
     },
     [dispatch, notifyApp]

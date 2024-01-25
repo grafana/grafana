@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Button, Checkbox, TextArea, useStyles2, Stack } from '@grafana/ui';
+import { Button, Checkbox, TextArea, useStyles2, Stack, Alert, Box, ButtonVariant } from '@grafana/ui';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -30,17 +31,33 @@ export function SaveDashboardForm({ dashboard, saveModel, hasChanges, options, o
   const styles = useStyles2(getStyles);
   const { state, onSaveDashboard } = useDashboardSave(false);
 
-  const onSave = () => {
-    onSaveDashboard(dashboard, saveModel, options);
-    dashboard.closeModal();
+  const onSave = async (overwrite: boolean) => {
+    const result = await onSaveDashboard(dashboard, saveModel, { ...options, overwrite });
+    if (result.status === 'success') {
+      dashboard.closeModal();
+    }
   };
 
-  const onCancel = () => {
-    dashboard.closeModal();
-  };
+  const cancelButton = (
+    <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
+      Cancel
+    </Button>
+  );
+
+  const saveButton = (text: string, variant: ButtonVariant) => (
+    <Button
+      disabled={!hasChanges || state.loading}
+      icon={state.loading ? 'spinner' : undefined}
+      aria-label={selectors.pages.SaveDashboardModal.save}
+      onClick={() => onSave(variant === 'destructive')}
+      variant={variant}
+    >
+      {state.loading ? 'Saving...' : text}
+    </Button>
+  );
 
   return (
-    <Stack gap={2} direction="column" alignItems="flex-start">
+    <Stack gap={2} direction="column">
       {hasTimeChanged && (
         <Checkbox
           checked={!!options.saveTimerange}
@@ -97,22 +114,31 @@ export function SaveDashboardForm({ dashboard, saveModel, hasChanges, options, o
         />
       </div>
 
-      <Stack alignItems="center">
-        <Button variant="secondary" onClick={onCancel} fill="outline">
-          Cancel
-        </Button>
-        <Button
-          disabled={!hasChanges || state.loading}
-          icon={state.loading ? 'spinner' : undefined}
-          aria-label={selectors.pages.SaveDashboardModal.save}
-          onClick={onSave}
-        >
-          {state.loading ? 'Saving...' : 'Save'}
-        </Button>
-        {!hasChanges && <div>No changes to save</div>}
-      </Stack>
+      {state.error && isVersionMismatchError(state.error) && (
+        <Alert title="Someone else has updated this dashboard" severity="error">
+          <p>Would you still like to save this dashboard?</p>
+          <Box paddingTop={2}>
+            <Stack alignItems="center">
+              {cancelButton}
+              {saveButton('Save and overwrite', 'destructive')}
+            </Stack>
+          </Box>
+        </Alert>
+      )}
+
+      {!state.error && (
+        <Stack alignItems="center">
+          {cancelButton}
+          {saveButton('Save', 'primary')}
+          {!hasChanges && <div>No changes to save</div>}
+        </Stack>
+      )}
     </Stack>
   );
+}
+
+function isVersionMismatchError(error: Error) {
+  return isFetchError(error) && error.data && error.data.status === 'version-mismatch';
 }
 
 function getStyles(theme: GrafanaTheme2) {
