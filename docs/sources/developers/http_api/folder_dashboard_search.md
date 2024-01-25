@@ -34,7 +34,7 @@ Query parameters:
 - **dashboardIds** – List of dashboard id's to search for
 - **dashboardUID** - List of dashboard uid's to search for, It is deprecated since Grafana v9.1, please use dashboardUIDs instead
 - **dashboardUIDs** – List of dashboard uid's to search for
-- **folderIds** – List of folder id's to search in for dashboards
+- **folderUIDs** – List of folder UIDs to search in
 - **starred** – Flag indicating if only starred Dashboards should be returned
 - **limit** – Limit the number of returned results (max is 5000; default is 1000)
 - **page** – Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+.
@@ -42,7 +42,7 @@ Query parameters:
 **Example request for retrieving folders and dashboards at the root level**:
 
 ```http
-GET /api/search?folderIds=0&query=&starred=false HTTP/1.1
+GET /api/search?query=&starred=false HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
