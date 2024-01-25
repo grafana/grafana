@@ -724,14 +724,17 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
 
     let newQuerySource: Observable<ExplorePanelData>;
 
-    const logQueries = queryResponse.logsResult?.queries || [];
-    const queries = logQueries.map((query: DataQuery) => ({
-      ...query,
-      datasource: query.datasource || datasourceInstance?.getRef(),
-      refId: `${infiniteScrollRefId}${query.refId}`,
-    }));
+    const queries = queryResponse.logsResult?.queries || [];
+    const logRefIds = queryResponse.logsFrames.map((frame) => frame.refId);
+    const logQueries = queries
+      .filter((query) => logRefIds.includes(query.refId))
+      .map((query: DataQuery) => ({
+        ...query,
+        datasource: query.datasource || datasourceInstance?.getRef(),
+        refId: `${infiniteScrollRefId}${query.refId}`,
+      }));
 
-    if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
+    if (!hasNonEmptyQuery(logQueries) || !datasourceInstance) {
       return;
     }
 
@@ -749,7 +752,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       },
       getFiscalYearStartMonth(getState().user)
     );
-    const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, false, timeZone, scopedVars);
+    const transaction = buildQueryTransaction(exploreId, logQueries, queryOptions, range, false, timeZone, scopedVars);
 
     dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
@@ -757,14 +760,15 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       mergeMap(([data, correlations]) => {
         // For query splitting, otherwise duplicates results
         if (data.state !== LoadingState.Done) {
-          return of(queryResponse);
+          // While loading, return the previous response and override state, otherwise it's set to Done
+          return of({ ...queryResponse, state: LoadingState.Loading });
         }
         return decorateData(
           combinePanelData(queryResponse, data),
           queryResponse,
           absoluteRange,
           undefined,
-          queries,
+          logQueries,
           correlations,
           showCorrelationEditorLinks,
           defaultCorrelationEditorDatasource

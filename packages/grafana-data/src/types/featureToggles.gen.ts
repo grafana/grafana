@@ -102,14 +102,11 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
-  grafanaAPIServer?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
-  traceToProfiles?: boolean;
-  tracesEmbeddedFlameGraph?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -178,4 +175,6 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
+  onPremToCloudMigrations?: boolean;
+  alertingSaveStatePeriodic?: boolean;
 }

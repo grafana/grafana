@@ -129,6 +129,7 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
 
 	err := srv.TryTokenRefresh(ctx, oauth_user_identity)
+
 	require.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
@@ -185,13 +186,13 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	}
 
 	userAuth := &login.UserAuth{
-		AuthId:            "subject",
 		AuthModule:        login.GenericOAuthModule,
+		AuthId:            "subject",
+		UserId:            1,
 		OAuthAccessToken:  token.AccessToken,
 		OAuthRefreshToken: token.RefreshToken,
 		OAuthExpiry:       token.Expiry,
 		OAuthTokenType:    token.TokenType,
-		UserId:            1,
 	}
 	signedInUser := &user.SignedInUser{
 		AuthenticatedBy: login.GenericOAuthModule,
@@ -204,7 +205,7 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 
 	err := srv.TryTokenRefresh(ctx, signedInUser)
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
 	authInfoQuery := &login.GetAuthInfoQuery{
