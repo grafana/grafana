@@ -53,6 +53,7 @@ const RuleViewer = () => {
   });
 
   const promRule = rule.promRule;
+  const hasError = rule.promRule?.health === 'error';
 
   const isAlertType = isAlertingRule(promRule);
 
@@ -69,13 +70,16 @@ const RuleViewer = () => {
       }}
       actions={actions}
       info={createMetadata(rule)}
-    >
-      <Stack direction="column" gap={2}>
-        {/* actions */}
-        <Stack direction="column" gap={2}>
+      subTitle={
+        <>
           {/* alerts and notifications and stuff */}
           {isFederatedRule && (
-            <Alert severity="info" title="This rule is part of a federated rule group.">
+            <Alert
+              severity="info"
+              title="This rule is part of a federated rule group."
+              bottomSpacing={0}
+              topSpacing={2}
+            >
               <Stack direction="column">
                 Federated rule groups are currently an experimental feature.
                 <Button fill="text" icon="book">
@@ -86,17 +90,30 @@ const RuleViewer = () => {
               </Stack>
             </Alert>
           )}
-          {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
-          {/* tabs and tab content */}
-          <TabContent>
-            {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
-            {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
-            {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
-            {activeTab === ActiveTab.Routing && <Routing />}
-            {activeTab === ActiveTab.Details && <Details rule={rule} />}
-          </TabContent>
-        </Stack>
+          {/* indicator for rules in a provisioned group */}
+          {isProvisioned && (
+            <ProvisioningAlert resource={ProvisionedResource.AlertRule} bottomSpacing={0} topSpacing={2} />
+          )}
+          {/* error state */}
+          {hasError && (
+            <Alert title="Something went wrong when evaluating this alert rule" bottomSpacing={0} topSpacing={2}>
+              <code>{rule.promRule?.lastError ?? 'No error message'}</code>
+            </Alert>
+          )}
+        </>
+      }
+    >
+      <Stack direction="column" gap={2}>
+        {/* tabs and tab content */}
+        <TabContent>
+          {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
+          {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
+          {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
+          {activeTab === ActiveTab.Routing && <Routing />}
+          {activeTab === ActiveTab.Details && <Details rule={rule} />}
+        </TabContent>
       </Stack>
+
       {deleteModal}
       {duplicateRuleIdentifier && (
         <RedirectToCloneRule
@@ -205,7 +222,7 @@ interface StateBadgeProps {
 }
 
 // TODO move to separate component
-const StateBadge = ({ state }: StateBadgeProps) => {
+const StateBadge = ({ state, health }: StateBadgeProps) => {
   let stateLabel: string;
   let textColor: 'success' | 'error' | 'warning' | 'info';
 
@@ -224,9 +241,17 @@ const StateBadge = ({ state }: StateBadgeProps) => {
       break;
   }
 
+  // if the rule is in "error" health we don't really care about it's state
+  switch (health) {
+    case 'error':
+      textColor = 'error';
+      stateLabel = 'Error';
+      break;
+  }
+
   return (
     <Stack direction="row" gap={0.5}>
-      <AlertStateDot size="md" state={state} />
+      <AlertStateDot size="md" state={state} health={health} />
       <Text variant="bodySmall" color={textColor}>
         {stateLabel}
       </Text>

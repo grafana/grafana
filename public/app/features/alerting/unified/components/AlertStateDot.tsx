@@ -3,10 +3,12 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ComponentSize, Stack, useStyles2 } from '@grafana/ui';
+import { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 interface DotStylesProps {
   state: PromAlertingRuleState;
+  health?: RuleHealth;
   includeState?: boolean;
   size?: ComponentSize; // TODO support this
 }
@@ -25,7 +27,8 @@ const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
   const size = theme.spacing(1.25);
   const outlineSize = `calc(${size} / 2.5)`;
 
-  const errorStyle = props.state === PromAlertingRuleState.Firing;
+  const isError = props.health === 'error';
+  const errorStyle = props.state === PromAlertingRuleState.Firing || isError;
   const successStyle = props.state === PromAlertingRuleState.Inactive;
   const pendingStyle = props.state === PromAlertingRuleState.Pending;
 
