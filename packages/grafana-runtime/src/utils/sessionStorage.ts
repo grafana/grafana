@@ -1,11 +1,13 @@
 export const getReturnToPrevious = () => {
-  return {
-    title: sessionStorage.getItem('returnToPreviousTitle') || '',
-    href: sessionStorage.getItem('returnToPreviousHref') || '',
-  };
+  const returnToPrevious = sessionStorage.getItem('returnToPrevious');
+  return returnToPrevious ? JSON.parse(returnToPrevious) : returnToPrevious;
 };
 
 export const setReturnToPrevious = ({ title, href }: { title: string; href: string }) => {
-  sessionStorage.setItem('returnToPreviousTitle', title);
-  sessionStorage.setItem('returnToPreviousHref', href);
+  const returnToPrevious = JSON.stringify({ title, href });
+  sessionStorage.setItem('returnToPrevious', returnToPrevious);
+};
+
+export const clearReturnToPrevious = () => {
+  sessionStorage.removeItem('returnToPrevious');
 };
