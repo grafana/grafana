@@ -7,7 +7,15 @@ import {
   getTimeZone,
 } from '@grafana/data';
 import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
-import { LocalValueVariable, SceneGridRow, VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneObject,
+  VizPanel,
+  VizPanelMenu,
+  sceneGraph,
+} from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -136,6 +144,24 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         },
       });
     }
+
+    items.push({
+      text: '',
+      type: 'divider',
+    });
+
+    items.push({
+      text: t('panel.header-menu.remove', `Remove`),
+      iconClassName: 'trash-alt',
+      shortcut: 'p r',
+      onClick: () => {
+        DashboardInteractions.panelMenuItemClicked('remove');
+        if (!panel.parent?.state.key) {
+          return;
+        }
+        removePanel(dashboard, panel.parent?.state.key);
+      },
+    });
 
     menu.setState({ items });
   };
@@ -294,4 +320,19 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     scopedVars,
     data: queryRunner?.state.data,
   };
+}
+
+function removePanel(dashboard: DashboardScene, panelKey: string) {
+  const panels: SceneObject[] = [];
+  dashboard.state.body.forEachChild((child: SceneObject) => {
+    if (child.state.key !== panelKey) {
+      panels.push(child);
+    }
+  });
+
+  dashboard.setState({
+    body: new SceneGridLayout({
+      children: panels,
+    }),
+  });
 }
