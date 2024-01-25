@@ -395,10 +395,10 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 	}
 
 	dashFolders, err := s.GetFolders(ctx, folder.GetFoldersQuery{
-		UIDs:         folderUids,
-		OrgID:        orgID,
-		SignedInUser: user,
-		WithFullpath: true,
+		UIDs:             folderUids,
+		OrgID:            orgID,
+		SignedInUser:     user,
+		WithFullpathUIDs: true,
 	})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
