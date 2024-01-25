@@ -62,6 +62,10 @@ export interface DashboardLoaderState {
   loadError?: string;
 }
 
+export interface SaveModelToSceneOptions {
+  isEmbedded?: boolean;
+}
+
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {

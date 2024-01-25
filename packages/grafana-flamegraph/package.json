@@ -56,8 +56,8 @@
     "tslib": "2.6.2"
   },
   "devDependencies": {
-    "@babel/core": "7.23.7",
-    "@babel/preset-env": "7.23.8",
+    "@babel/core": "7.23.9",
+    "@babel/preset-env": "7.23.9",
     "@babel/preset-react": "7.23.3",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-node-resolve": "15.2.3",
