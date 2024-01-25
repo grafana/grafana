@@ -57,6 +57,7 @@ export function IntervalVariableForm({
         name="Auto option"
         description="Dynamically calculates interval by dividing time range by the count specified"
         onChange={onAutoEnabledChange}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.autoEnabledCheckbox}
       />
       {autoEnabled && (
         <div className={styles.autoFields}>
@@ -67,6 +68,7 @@ export function IntervalVariableForm({
             options={STEP_OPTIONS}
             onChange={onAutoCountChanged}
             width={9}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.stepCountIntervalSelect}
           />
           <VariableTextField
             value={autoMinInterval}
@@ -75,6 +77,7 @@ export function IntervalVariableForm({
             placeholder="10s"
             onChange={onAutoMinIntervalChanged}
             width={11}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.minIntervalInput}
           />
         </div>
       )}
