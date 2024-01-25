@@ -1,5 +1,6 @@
 // +k8s:deepcopy-gen=package
 // +k8s:openapi-gen=true
+// +k8s:defaulter-gen=TypeMeta
 // +groupName=example.grafana.app
 
 // The testing api is a dependency free service that we can use to experiment with
