@@ -9,6 +9,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { jsonDiff } from '../settings/version-history/utils';
 
+import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { DashboardChangeInfo } from './types';
 
@@ -17,6 +18,8 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   showDiff?: boolean;
   saveTimeRange?: boolean;
   saveVariables?: boolean;
+  saveAsCopy?: boolean;
+  saveAsNew?: boolean;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -65,7 +68,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   }
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { showDiff } = model.useState();
+    const { showDiff, saveAsCopy, saveAsNew } = model.useState();
     const changeInfo = model.getSaveDashboardChange();
     const { changedSaveModel, initialSaveModel, diffs, diffCount } = changeInfo;
     const dashboard = model.state.dashboardRef.resolve();
@@ -84,10 +87,34 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       </TabsBar>
     );
 
+    let title = 'Save dashboard';
+    if (saveAsCopy) {
+      title = 'Save dashboard copy';
+    }
+
+    // else if (isProvisioned) {
+    //   title = 'Provisioned dashboard';
+    // }
+
+    const renderBody = () => {
+      if (showDiff) {
+        return <SaveDashboardDiff diff={diffs} oldValue={initialSaveModel} newValue={changedSaveModel} />;
+      }
+
+      if (saveAsCopy) {
+        return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+      }
+
+      if (saveAsNew) {
+        return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+      }
+
+      return <SaveDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+    };
+
     return (
-      <Drawer title="Save dashboard" subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
-        {showDiff && <SaveDashboardDiff diff={diffs} oldValue={initialSaveModel} newValue={changedSaveModel} />}
-        {!showDiff && <SaveDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />}
+      <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
+        {renderBody()}
       </Drawer>
     );
   };
@@ -98,5 +125,5 @@ function getHasTimeChanged(saveModel: Dashboard, originalSaveModel: Dashboard) {
 }
 
 function getVariableValueChanges(saveModel: Dashboard, originalSaveModel: Dashboard) {
-  return true;
+  return false;
 }

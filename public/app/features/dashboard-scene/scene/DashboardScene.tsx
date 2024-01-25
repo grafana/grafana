@@ -232,13 +232,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return true;
   };
 
-  public onSave = () => {
+  public openSaveDrawer({ saveAsCopy, saveAsNew }: { saveAsCopy?: boolean; saveAsNew?: boolean }) {
     if (!this.state.isEditing) {
       return;
     }
 
-    this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
-  };
+    this.setState({
+      overlay: new SaveDashboardDrawer({
+        dashboardRef: this.getRef(),
+        saveAsCopy,
+        saveAsNew,
+      }),
+    });
+  }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel } = this.state;

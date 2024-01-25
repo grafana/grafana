@@ -131,7 +131,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       toolbarActions.push(
         <Button
           onClick={() => {
-            dashboard.onSave();
+            dashboard.openSaveDrawer({ saveAsCopy: true });
           }}
           size="sm"
           tooltip="Save as copy"
@@ -159,7 +159,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         <Button
           onClick={() => {
             DashboardInteractions.toolbarSaveClick();
-            dashboard.onSave();
+            dashboard.openSaveDrawer({});
           }}
           tooltip="Save changes"
           key="save"
