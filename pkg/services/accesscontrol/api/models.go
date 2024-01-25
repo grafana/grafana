@@ -7,6 +7,14 @@ package api
 type SearchPermissionsParams struct {
 	// in:query
 	// required:false
+	UserId int64 `json:"userId"`
+
+	// in:query
+	// required:false
+	UserLogin string `json:"userLogin"`
+
+	// in:query
+	// required:false
 	ActionPrefix string `json:"actionPrefix"`
 
 	// in:query
@@ -28,29 +36,4 @@ type UsersPermissions map[int64]PermissionsByAction
 type SearchPermissionsResponse struct {
 	// in: body
 	Body UsersPermissions `json:"body"`
-}
-
-// swagger:parameters searchUserPermissions
-type SearchUserPermissionsParams struct {
-	// in:path
-	// required:true
-	UserID int64 `json:"user_id"`
-
-	// in:query
-	// required:false
-	ActionPrefix string `json:"actionPrefix"`
-
-	// in:query
-	// required:false
-	Action string `json:"action"`
-
-	// in:query
-	// required:false
-	Scope string `json:"scope"`
-}
-
-// swagger:response searchUserPermissionsResponse
-type SearchUserPermissionsResponse struct {
-	// in: body
-	Body PermissionsByAction `json:"body"`
 }

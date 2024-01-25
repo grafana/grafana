@@ -5561,12 +5561,6 @@
       "type": "integer",
       "format": "int64"
     },
-    "PermissionsByAction": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/Scopes"
-      }
-    },
     "Playlist": {
       "description": "Playlist model",
       "type": "object",
@@ -6583,12 +6577,6 @@
           "type": "integer",
           "format": "int64"
         }
-      }
-    },
-    "Scopes": {
-      "type": "array",
-      "items": {
-        "type": "string"
       }
     },
     "SearchDeviceQueryResult": {
@@ -9191,6 +9179,15 @@
         }
       }
     },
+    "listSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SSOSettings"
+        }
+      }
+    },
     "listSortOptionsResponse": {
       "description": "",
       "schema": {
@@ -9504,12 +9501,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/SearchTeamQueryResult"
-      }
-    },
-    "searchUserPermissionsResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/PermissionsByAction"
       }
     },
     "searchUsersResponse": {

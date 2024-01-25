@@ -508,54 +508,6 @@
         }
       }
     },
-    "/access-control/user/{user_id}/permissions/search": {
-      "get": {
-        "description": "Gets all of a user's permissions matching the provided search filters. The response contains all permissions grouped actions.\n\nYou need to have a permission with action `users.permissions:read` and scope `users:id:{user_id}`.",
-        "tags": [
-          "access_control"
-        ],
-        "summary": "Search through a user's permissions.",
-        "operationId": "searchUserPermissions",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "actionPrefix",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "action",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "scope",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/searchUserPermissionsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/access-control/users/permissions/search": {
       "get": {
         "description": "Gets all users' permissions matching the provided search filters. The response contains all permissions grouped by user IDs and actions.\n\nYou need to have a permission with action `users.permissions:read`.",
@@ -565,6 +517,17 @@
         "summary": "Search through users permissions.",
         "operationId": "searchPermissions",
         "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "userId",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "userLogin",
+            "in": "query"
+          },
           {
             "type": "string",
             "name": "actionPrefix",
@@ -17345,12 +17308,6 @@
       "type": "integer",
       "format": "int64"
     },
-    "PermissionsByAction": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/Scopes"
-      }
-    },
     "Playlist": {
       "description": "Playlist model",
       "type": "object",
@@ -19408,12 +19365,6 @@
           "type": "integer",
           "format": "int64"
         }
-      }
-    },
-    "Scopes": {
-      "type": "array",
-      "items": {
-        "type": "string"
       }
     },
     "SearchDeviceQueryResult": {
@@ -23581,12 +23532,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchTeamQueryResult"
-      }
-    },
-    "searchUserPermissionsResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/PermissionsByAction"
       }
     },
     "searchUsersResponse": {

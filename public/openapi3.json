@@ -1894,16 +1894,6 @@
         },
         "description": "(empty)"
       },
-      "searchUserPermissionsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/PermissionsByAction"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "searchUsersResponse": {
         "content": {
           "application/json": {
@@ -7789,12 +7779,6 @@
         "format": "int64",
         "type": "integer"
       },
-      "PermissionsByAction": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/Scopes"
-        },
-        "type": "object"
-      },
       "Playlist": {
         "description": "Playlist model",
         "properties": {
@@ -9853,12 +9837,6 @@
           }
         },
         "type": "object"
-      },
-      "Scopes": {
-        "items": {
-          "type": "string"
-        },
-        "type": "array"
       },
       "SearchDeviceQueryResult": {
         "properties": {
@@ -13247,15 +13225,14 @@
         ]
       }
     },
-    "/access-control/user/{user_id}/permissions/search": {
+    "/access-control/users/permissions/search": {
       "get": {
-        "description": "Gets all of a user's permissions matching the provided search filters. The response contains all permissions grouped actions.\n\nYou need to have a permission with action `users.permissions:read` and scope `users:id:{user_id}`.",
-        "operationId": "searchUserPermissions",
+        "description": "Gets all users' permissions matching the provided search filters. The response contains all permissions grouped by user IDs and actions.\n\nYou need to have a permission with action `users.permissions:read`.",
+        "operationId": "searchPermissions",
         "parameters": [
           {
-            "in": "path",
-            "name": "user_id",
-            "required": true,
+            "in": "query",
+            "name": "userId",
             "schema": {
               "format": "int64",
               "type": "integer"
@@ -13263,51 +13240,11 @@
           },
           {
             "in": "query",
-            "name": "actionPrefix",
+            "name": "userLogin",
             "schema": {
               "type": "string"
             }
           },
-          {
-            "in": "query",
-            "name": "action",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "scope",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/searchUserPermissionsResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Search through a user's permissions.",
-        "tags": [
-          "access_control"
-        ]
-      }
-    },
-    "/access-control/users/permissions/search": {
-      "get": {
-        "description": "Gets all users' permissions matching the provided search filters. The response contains all permissions grouped by user IDs and actions.\n\nYou need to have a permission with action `users.permissions:read`.",
-        "operationId": "searchPermissions",
-        "parameters": [
           {
             "in": "query",
             "name": "actionPrefix",
