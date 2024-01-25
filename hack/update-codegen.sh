@@ -24,16 +24,17 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-
 OUTDIR="${HOME}/go/src"
 
 source "${CODEGEN_PKG}/kube_codegen.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/openapi-codegen.sh"
 
 # generate the code with:
 # --output-base    because this script should also be able to run inside the vendor dir of
 #                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 
-kube::codegen::gen_helpers \
-    --input-pkg-root github.com/grafana/grafana/pkg/apis \
-    --output-base "${OUTDIR}" \
-    --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
+# kube::codegen::gen_helpers \
+#     --input-pkg-root github.com/grafana/grafana/pkg/apis \
+#     --output-base "${OUTDIR}" \
+#     --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
 
 
 if [[ -n "${API_KNOWN_VIOLATIONS_DIR:-}" ]]; then
@@ -49,15 +50,13 @@ for api_pkg in $(ls ./pkg/apis); do
     ## In the intermediate directory, it looks like a nested path - omitted/paths/${pkg_version}/${pkg_version}
     ## This is a necessary albeit unintuitive path but we can live with it, since its in a temporary dir structure
     echo "Generating openapi package for ${api_pkg}, version=${pkg_version} ..."
-    kube::codegen::gen_openapi \
-      --input-pkg-root github.com/grafana/grafana/pkg/apis/${api_pkg}/${pkg_version} \
-      --output-pkg-root github.com/grafana/grafana/pkg/generated/${api_pkg}/${pkg_version} \
-      --openapi-name ${pkg_version} \
+    grafana::codegen::gen_openapi \
+      --input-pkg-single github.com/grafana/grafana/pkg/apis/${api_pkg}/${pkg_version} \
       --output-base "${OUTDIR}" \
       --report-filename "${report_filename:-"/dev/null"}" \
       ${update_report:+"${update_report}"} \
       --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
-    mv pkg/generated/${api_pkg}/${pkg_version}/${pkg_version}/zz_generated.openapi.go  pkg/apis/${api_pkg}/${pkg_version}/
+    # mv pkg/generated/${api_pkg}/${pkg_version}/${pkg_version}/zz_generated.openapi.go  pkg/apis/${api_pkg}/${pkg_version}/
   done
 done
 
