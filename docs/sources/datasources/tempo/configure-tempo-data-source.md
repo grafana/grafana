@@ -39,7 +39,7 @@ You can also configure settings specific to the Tempo data source.
 
 This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
 
-{{<> youtube id="cqHO0oYW6Ic" >}}
+{{< youtube id="cqHO0oYW6Ic" >}}
 
 ## Trace to logs
 
