@@ -24,9 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-//--------------------------------------------------------------
+// --------------------------------------------------------------
 // TestData -- reads result from saved files
-//--------------------------------------------------------------
+// --------------------------------------------------------------
 
 // MockRunner reads local file path for testdata.
 type MockRunner struct {
@@ -220,7 +220,8 @@ func TestRealQuery(t *testing.T) {
 		json.Set("organization", "test-org")
 
 		dsInfo := &models.DatasourceInfo{
-			URL: "http://localhost:9999", // NOTE! no api/v2
+			URL:     "http://localhost:9999", // NOTE! no api/v2
+			Timeout: 30 * time.Second,
 		}
 
 		runner, err := runnerFromDataSource(dsInfo)
