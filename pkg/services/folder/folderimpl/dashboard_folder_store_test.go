@@ -37,23 +37,31 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		var folder1, folder2 *dashboards.Dashboard
 		sqlStore = db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
-		folder2 = insertTestFolder(t, dashboardStore, "TEST", orgId, "prod")
-		_ = insertTestDashboard(t, dashboardStore, title, orgId, 0, folder2.UID, "prod")
-		folder1 = insertTestFolder(t, dashboardStore, title+"2", orgId, "prod")
+		folder2 = insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
+		_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, folder2.UID, "prod")
+		folder1 = insertTestFolder(t, dashboardStore, title, orgId, "", "prod")
 
 		t.Run("GetFolderByTitle should find the folder", func(t *testing.T) {
-			result, err := folderStore.GetFolderByTitle(context.Background(), orgId, title+"2")
+			result, err := folderStore.GetFolderByTitle(context.Background(), orgId, title, nil)
 			require.NoError(t, err)
 			require.Equal(t, folder1.UID, result.UID)
+		})
+
+		t.Run("GetFolderByTitle should find the folder by folderUID", func(t *testing.T) {
+			folder3 := insertTestFolder(t, dashboardStore, title, orgId, folder2.UID, "prod")
+			result, err := folderStore.GetFolderByTitle(context.Background(), orgId, title, &folder2.UID)
+			require.NoError(t, err)
+			require.Equal(t, folder3.UID, result.UID)
 		})
 	})
 
 	t.Run("GetFolderByUID", func(t *testing.T) {
+		setup()
 		var orgId int64 = 1
 		sqlStore := db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
-		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "prod")
-		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, 0, folder.UID, "prod")
+		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
+		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
 
 		t.Run("should return folder by UID", func(t *testing.T) {
 			d, err := folderStore.GetFolderByUID(context.Background(), orgId, folder.UID)
@@ -73,11 +81,12 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	})
 
 	t.Run("GetFolderByID", func(t *testing.T) {
+		setup()
 		var orgId int64 = 1
 		sqlStore := db.InitTestDB(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
-		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "prod")
-		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, 0, folder.UID, "prod")
+		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
+		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
 
 		t.Run("should return folder by ID", func(t *testing.T) {
 			d, err := folderStore.GetFolderByID(context.Background(), orgId, folder.ID)
@@ -110,6 +119,9 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 			"tags":  tags,
 		}),
 	}
+	if folderUID != "" {
+		cmd.FolderUID = folderUID
+	}
 	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotNil(t, dash)
@@ -121,7 +133,8 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64, folderUID string, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:     orgId,
+		OrgID: orgId,
+		// FolderID: folderId, // nolint:staticcheck
 		FolderUID: folderUID,
 		IsFolder:  true,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -129,6 +142,9 @@ func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, title strin
 			"title": title,
 			"tags":  tags,
 		}),
+	}
+	if folderUID != "" {
+		cmd.FolderUID = folderUID
 	}
 	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -519,10 +520,20 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 	var totalAffected int64
 	if cfg.MaxAge > 0 {
 		cutoffDate := timeNow().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
-		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
-		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+		// Single-statement approaches, specifically ones using batched sub-queries, seem to deadlock with concurrent inserts on MySQL.
+		// We have a bounded batch size, so work around this by first loading the IDs into memory and allowing any locks to flush inside each batch.
+		// This may under-delete when concurrent inserts happen, but any such annotations will simply be cleaned on the next cycle.
+		//
+		// We execute the following batched operation repeatedly until either we run out of objects, the context is cancelled, or there is an error.
+		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
+			cond := fmt.Sprintf(`%s AND created < %v ORDER BY id DESC %s`, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+			ids, err := r.fetchIDs(ctx, "annotation", cond)
+			if err != nil {
+				return 0, err
+			}
 
-		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
+			return r.deleteByIDs(ctx, "annotation", ids)
+		})
 		totalAffected += affected
 		if err != nil {
 			return totalAffected, err
@@ -530,41 +541,105 @@ func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.A
 	}
 
 	if cfg.MaxCount > 0 {
-		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC %s) a)`
-		sql := fmt.Sprintf(deleteQuery, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
-		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
+		// Similar strategy as the above cleanup process, to avoid deadlocks.
+		affected, err := untilDoneOrCancelled(ctx, func() (int64, error) {
+			cond := fmt.Sprintf(`%s ORDER BY id DESC %s`, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
+			ids, err := r.fetchIDs(ctx, "annotation", cond)
+			if err != nil {
+				return 0, err
+			}
+
+			return r.deleteByIDs(ctx, "annotation", ids)
+		})
 		totalAffected += affected
-		return totalAffected, err
+		if err != nil {
+			return totalAffected, err
+		}
 	}
 
 	return totalAffected, nil
 }
 
 func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
-	deleteQuery := `DELETE FROM annotation_tag WHERE id IN ( SELECT id FROM (SELECT id FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s) a)`
-	sql := fmt.Sprintf(deleteQuery, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
-	return r.executeUntilDoneOrCancelled(ctx, sql)
+	return untilDoneOrCancelled(ctx, func() (int64, error) {
+		cond := fmt.Sprintf(`NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s`, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+		ids, err := r.fetchIDs(ctx, "annotation_tag", cond)
+		if err != nil {
+			return 0, err
+		}
+
+		return r.deleteByIDs(ctx, "annotation_tag", ids)
+	})
 }
 
-func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
+func (r *xormRepositoryImpl) fetchIDs(ctx context.Context, table, condition string) ([]int64, error) {
+	sql := fmt.Sprintf(`SELECT id FROM %s`, table)
+	if condition == "" {
+		return nil, fmt.Errorf("condition must be supplied; cannot fetch IDs from entire table")
+	}
+	sql += fmt.Sprintf(` WHERE %s`, condition)
+	ids := make([]int64, 0)
+	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+		return session.SQL(sql).Find(&ids)
+	})
+	return ids, err
+}
+
+func (r *xormRepositoryImpl) deleteByIDs(ctx context.Context, table string, ids []int64) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
+	sql := ""
+	args := make([]any, 0)
+
+	// SQLite has a parameter limit of 999.
+	// If the batch size is bigger than that, and we're on SQLite, we have to put the IDs directly into the statement.
+	const sqliteParameterLimit = 999
+	if r.db.GetDBType() == migrator.SQLite && r.cfg.AnnotationCleanupJobBatchSize > sqliteParameterLimit {
+		values := fmt.Sprint(ids[0])
+		for _, v := range ids[1:] {
+			values = fmt.Sprintf("%s, %d", values, v)
+		}
+		sql = fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, values)
+	} else {
+		placeholders := "?" + strings.Repeat(",?", len(ids)-1)
+		sql = fmt.Sprintf(`DELETE FROM %s WHERE id IN (%s)`, table, placeholders)
+		args = asAny(ids)
+	}
+
+	var affected int64
+	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+		res, err := session.Exec(append([]any{sql}, args...)...)
+		if err != nil {
+			return err
+		}
+		affected, err = res.RowsAffected()
+		return err
+	})
+	return affected, err
+}
+
+func asAny(vs []int64) []any {
+	r := make([]any, len(vs))
+	for i, v := range vs {
+		r[i] = v
+	}
+	return r
+}
+
+// untilDoneOrCancelled repeatedly executes batched work until that work is either done (i.e., returns zero affected objects),
+// a batch produces an error, or the provided context is cancelled.
+// The work to be done is given as a callback that returns the number of affected objects for each batch, plus that batch's errors.
+func untilDoneOrCancelled(ctx context.Context, batchWork func() (int64, error)) (int64, error) {
 	var totalAffected int64
 	for {
 		select {
 		case <-ctx.Done():
 			return totalAffected, ctx.Err()
 		default:
-			var affected int64
-			err := r.db.WithDbSession(ctx, func(session *db.Session) error {
-				res, err := session.Exec(sql)
-				if err != nil {
-					return err
-				}
-
-				affected, err = res.RowsAffected()
-				totalAffected += affected
-
-				return err
-			})
+			affected, err := batchWork()
+			totalAffected += affected
 			if err != nil {
 				return totalAffected, err
 			}

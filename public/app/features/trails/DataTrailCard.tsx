@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { useStyles2, Stack, Tooltip, Button } from '@grafana/ui';
 
@@ -40,7 +41,7 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
         {dsValue && (
           <Stack direction="column" gap={0.5}>
             <div className={styles.label}>Datasource</div>
-            <div className={styles.value}>{getDataSource(trail)}</div>
+            <div className={styles.value}>{getDataSourceName(dsValue)}</div>
           </Stack>
         )}
         {filters.map((filter, index) => (
@@ -68,6 +69,10 @@ function getMetricName(metric?: string) {
 
 function getDataSource(trail: DataTrail) {
   return sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+}
+
+function getDataSourceName(dataSourceUid: string) {
+  return getDataSourceSrv().getInstanceSettings(dataSourceUid)?.name || dataSourceUid;
 }
 
 function getStyles(theme: GrafanaTheme2) {

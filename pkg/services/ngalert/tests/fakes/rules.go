@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -67,6 +68,7 @@ mainloop:
 			}
 		}
 		if existing == nil {
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 			folders = append(folders, &folder.Folder{
 				ID:    rand.Int63(), // nolint:staticcheck
 				UID:   r.NamespaceUID,
@@ -243,16 +245,6 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ i
 		namespacesMap[folder.UID] = folder
 	}
 	return namespacesMap, nil
-}
-
-func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ identity.Requester) (*folder.Folder, error) {
-	folders := f.Folders[orgID]
-	for _, folder := range folders {
-		if folder.Title == title {
-			return folder, nil
-		}
-	}
-	return nil, fmt.Errorf("not found")
 }
 
 func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ identity.Requester) (*folder.Folder, error) {

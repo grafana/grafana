@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+const PreventSeedingOnCallAccessID = "prevent seeding OnCall access"
+
 const migSQLITERoleNameNullable = `ALTER TABLE seed_assignment ADD COLUMN tmp_role_name VARCHAR(190) DEFAULT NULL;
 UPDATE seed_assignment SET tmp_role_name = role_name;
 ALTER TABLE seed_assignment DROP COLUMN role_name;
@@ -47,6 +49,7 @@ func AddSeedAssignmentMigrations(mg *migrator.Migrator) {
 			&migrator.Column{Name: "origin", Type: migrator.DB_Varchar, Length: 190, Nullable: true}))
 
 	mg.AddMigration("add origin to plugin seed_assignment", &seedAssignmentOnCallMigrator{})
+	mg.AddMigration(PreventSeedingOnCallAccessID, &SeedAssignmentOnCallAccessMigrator{})
 }
 
 type seedAssignmentPrimaryKeyMigrator struct {
@@ -141,5 +144,61 @@ func (m *seedAssignmentOnCallMigrator) Exec(sess *xorm.Session, mig *migrator.Mi
 		"grafana-oncall-app%",
 		"plugins:id:grafana-oncall-app",
 	)
+	return err
+}
+
+type SeedAssignmentOnCallAccessMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *SeedAssignmentOnCallAccessMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *SeedAssignmentOnCallAccessMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
+	// Check if the migration is necessary
+	hasEntry := 0
+	if _, err := sess.SQL(`SELECT 1 FROM seed_assignment LIMIT 1`).Get(&hasEntry); err != nil {
+		return err
+	}
+	if hasEntry == 0 {
+		// Skip migration the seed assignment table has not been populated
+		// Hence the oncall access permission can be granted without any risk
+		return nil
+	}
+
+	// Check if the permission has not already been seeded
+	// This is the case for instances that activated the accessControlOnCall feature already.
+	type SeedAssignment struct {
+		BuiltinRole, Action, Scope, Origin string
+	}
+	assigns := []SeedAssignment{}
+	err := sess.SQL(`SELECT builtin_role, action, scope, origin FROM seed_assignment WHERE action = ? AND scope = ?`,
+		"plugins.app:access", "plugins:id:grafana-oncall-app").
+		Find(&assigns)
+	if err != nil {
+		return err
+	}
+
+	basicRoles := map[string]bool{"Viewer": true, "Editor": true, "Admin": true, "Grafana Admin": true}
+	for i := range assigns {
+		delete(basicRoles, assigns[i].BuiltinRole)
+	}
+	if len(basicRoles) == 0 {
+		return nil
+	}
+
+	// By default, basic roles have access to all app plugins; no need for extra permission.
+	// Mark OnCall Access permission as already seeded to prevent it from being added to basic roles.
+	toSeed := []SeedAssignment{}
+	for br := range basicRoles {
+		toSeed = append(toSeed, SeedAssignment{
+			BuiltinRole: br,
+			Action:      "plugins.app:access",
+			Scope:       "plugins:id:grafana-oncall-app",
+			Origin:      "grafana-oncall-app",
+		})
+	}
+	_, err = sess.Table("seed_assignment").InsertMulti(&toSeed)
 	return err
 }

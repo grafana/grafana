@@ -23,7 +23,6 @@
         "package.json",
         "tsconfig.json",
         "lerna.json",
-        ".babelrc",
         ".prettierrc.js",
         ".eslintrc",
         "**/*.mdx"
@@ -146,6 +145,12 @@
     "matches": [ "public/app/plugins/datasource/opentsdb/**/*", "pkg/tsdb/opentsdb/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/OpenTSDB"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [ "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*", "pkg/tsdb/grafana-pyroscope-datasource/**/*"],
+    "action": "updateLabel",
+    "addLabel": "datasource/grafana-pyroscope"
   },
   {
     "type": "changedfiles",

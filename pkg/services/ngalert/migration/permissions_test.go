@@ -683,8 +683,6 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					actual := make([]expectedAlertMigration, 0, len(rules))
 					for i, r := range rules {
 						// Remove generated fields.
-						require.NotEqual(t, r.Labels["rule_uid"], "")
-						delete(r.Labels, "rule_uid")
 						require.NotEqual(t, r.Annotations[ngModels.MigratedAlertIdAnnotation], "")
 						delete(r.Annotations, ngModels.MigratedAlertIdAnnotation)
 

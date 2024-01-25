@@ -11,23 +11,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type api struct {
+	cfg         *setting.Cfg
 	ac          accesscontrol.AccessControl
 	router      routing.RouteRegister
 	service     *Service
 	permissions []string
 }
 
-func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service) *api {
+func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
 	for i := len(manager.permissions) - 1; i >= 0; i-- {
 		permissions = append(permissions, manager.permissions[i])
 	}
-	return &api{ac, router, manager, permissions}
+	return &api{cfg, ac, router, manager, permissions}
 }
 
 func (a *api) registerEndpoints() {
@@ -157,7 +159,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamId != 0 {
-				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)
+				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, p.TeamEmail, p.Team)
 			}
 
 			dto = append(dto, resourcePermissionDTO{
@@ -165,7 +167,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 				RoleName:         p.RoleName,
 				UserID:           p.UserId,
 				UserLogin:        p.UserLogin,
-				UserAvatarUrl:    dtos.GetGravatarUrl(p.UserEmail),
+				UserAvatarUrl:    dtos.GetGravatarUrl(a.cfg, p.UserEmail),
 				Team:             p.Team,
 				TeamID:           p.TeamId,
 				TeamAvatarUrl:    teamAvatarUrl,

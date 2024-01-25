@@ -62,6 +62,10 @@ export interface DashboardLoaderState {
   loadError?: string;
 }
 
+export interface SaveModelToSceneOptions {
+  isEmbedded?: boolean;
+}
+
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
@@ -241,6 +245,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     description: oldModel.description,
     editable: oldModel.editable,
     meta: oldModel.meta,
+    version: oldModel.version,
     body: new SceneGridLayout({
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
