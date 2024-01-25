@@ -145,7 +145,6 @@ pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,2023-11-15
 tableSharedCrosshair,experimental,@grafana/grafana-bi-squad,2023-12-12,false,false,false,true
 regressionTransformation,preview,@grafana/grafana-bi-squad,2023-11-24,false,false,false,true
 displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,false,true
-alertStateHistoryAnnotationsFromLoki,experimental,@grafana/alerting-squad,2023-11-30,false,false,true,false
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,2023-12-22,false,false,false,true
 alertingPreviewUpgrade,preview,@grafana/alerting-squad,2024-01-03,false,false,true,false

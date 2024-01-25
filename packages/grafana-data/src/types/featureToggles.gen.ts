@@ -164,7 +164,6 @@ export interface FeatureToggles {
   tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
-  alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
   alertingPreviewUpgrade?: boolean;
