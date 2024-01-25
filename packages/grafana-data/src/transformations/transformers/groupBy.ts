@@ -208,7 +208,7 @@ export function createGroupedFields(groupByFields: Field[], valuesByGroupKey: Ma
   const fields: Field[] = [];
 
   for (const field of groupByFields) {
-    const values: any[] = [];
+    const values: unknown[] = [];
     const fieldName = getFieldDisplayName(field);
 
     valuesByGroupKey.forEach((value) => {
