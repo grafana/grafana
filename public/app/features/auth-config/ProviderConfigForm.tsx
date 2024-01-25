@@ -31,7 +31,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     setValue,
     unregister,
     formState: { errors, dirtyFields, isSubmitted },
-  } = useForm({ defaultValues: dataToDTO(config), reValidateMode: 'onSubmit' });
+  } = useForm({ defaultValues: dataToDTO(config), mode: 'onChange', reValidateMode: 'onChange' });
   const [isSaving, setIsSaving] = useState(false);
   const providerFields = fields[provider];
   const [submitError, setSubmitError] = useState(false);
