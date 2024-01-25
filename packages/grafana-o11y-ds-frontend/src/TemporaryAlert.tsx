@@ -11,7 +11,7 @@ export enum AlertSeverity {
   Warning = 'warning',
 }
 
-enum AppNotificationTimeout {
+enum AlertTimeout {
   Error = 7000,
   Info = 3000,
   Success = 3000,
@@ -27,11 +27,11 @@ const getStyle = (theme: GrafanaTheme2) => {
   });
 };
 
-export const timeoutMap = {
-  [AlertSeverity.Error]: AppNotificationTimeout.Error,
-  [AlertSeverity.Info]: AppNotificationTimeout.Info,
-  [AlertSeverity.Success]: AppNotificationTimeout.Success,
-  [AlertSeverity.Warning]: AppNotificationTimeout.Warning,
+const timeoutMap = {
+  [AlertSeverity.Error]: AlertTimeout.Error,
+  [AlertSeverity.Info]: AlertTimeout.Info,
+  [AlertSeverity.Success]: AlertTimeout.Success,
+  [AlertSeverity.Warning]: AlertTimeout.Warning,
 };
 
 export const TemporaryAlert = (props: { severity: AlertSeverity; text: string }) => {
