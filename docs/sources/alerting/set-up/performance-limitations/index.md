@@ -62,8 +62,8 @@ If you have a high number of alert instances, it can happen that the load on the
 transition of an alert instance will be saved in the database.
 
 This can be prevented by writing to the database periodically. For this the feature flag `alertingSaveStatePeriodic` needs
-to be enabled. By default it will save the states every 5 minutes to the database and on each shutdown. This can also be
-configured using the `state_periodic_save_interval` configuration flag.
+to be enabled. By default it will save the states every 5 minutes to the database and on each shutdown. The periodic interval
+can also be configured using the `state_periodic_save_interval` configuration flag.
 
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
 that is exposed by Grafana.
