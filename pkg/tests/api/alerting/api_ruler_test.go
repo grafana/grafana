@@ -403,8 +403,6 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, json.Unmarshal(getGroup3Raw, &group3))
 
-			nestedKey := ngmodels.GetNamespaceKey("folder1", "subfolder")
-
 			expected := apimodels.NamespaceConfigResponse{
 				"folder1": []apimodels.GettableRuleGroupConfig{
 					group1,
@@ -412,7 +410,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				"folder2": []apimodels.GettableRuleGroupConfig{
 					group2,
 				},
-				nestedKey: []apimodels.GettableRuleGroupConfig{
+				"folder1/subfolder": []apimodels.GettableRuleGroupConfig{
 					group3,
 				},
 			}
@@ -446,7 +444,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
 			}
 
-			for _, rule := range allRules[nestedKey][0].Rules {
+			for _, rule := range allRules["folder1/subfolder"][0].Rules {
 				assert.Equal(t, "subfolder", rule.GrafanaManagedAlert.NamespaceUID)
 			}
 		})
@@ -468,7 +466,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			rules, status, _ := apiClient.GetAllRulesGroupInFolderWithStatus(t, "subfolder")
 			require.Equal(t, http.StatusAccepted, status)
 
-			nestedKey := ngmodels.GetNamespaceKey("folder1", "subfolder")
+			nestedKey := "folder1/subfolder"
 			require.Contains(t, rules, nestedKey)
 			require.Len(t, rules[nestedKey], 1)
 			require.Equal(t, allRules[nestedKey], rules[nestedKey])
@@ -602,7 +600,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.Equal(t, http.StatusOK, status)
 			require.Contains(t, newAll, "folder1")
 			require.NotContains(t, newAll, "folder2")
-			require.Contains(t, newAll, ngmodels.GetNamespaceKey("folder1", "subfolder"))
+			require.Contains(t, newAll, "folder1/subfolder")
 		})
 
 		t.Run("Get by folder returns groups in folder", func(t *testing.T) {

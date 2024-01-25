@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -341,7 +342,8 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	rule2 := createRule(t, store, generator)
 
 	parentFolderUid := uuid.NewString()
-	createFolder(t, store, parentFolderUid, "Very Parent Folder", rule1.OrgID, "")
+	parentFolderTitle := "Very Parent Folder"
+	createFolder(t, store, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
 	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID, parentFolderUid)
 	createFolder(t, store, rule2.NamespaceUID, rule2.Title, rule2.OrgID, "")
 
@@ -371,13 +373,13 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:    "with populate folders enabled, it returns them",
 			rules:   []string{rule1.Title, rule2.Title},
-			folders: map[models.FolderKey]string{rule1.GetFolderKey(): models.GetNamespaceKey(parentFolderUid, rule1.Title), rule2.GetFolderKey(): rule2.Title},
+			folders: map[models.FolderKey]string{rule1.GetFolderKey(): path.Join(parentFolderTitle, rule1.Title), rule2.GetFolderKey(): rule2.Title},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
-			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): models.GetNamespaceKey(parentFolderUid, rule1.Title)},
+			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): path.Join(parentFolderTitle, rule1.Title)},
 		},
 	}
 

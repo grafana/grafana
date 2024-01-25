@@ -536,6 +536,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
+			query.ResultFoldersTitles = map[ngmodels.FolderKey]string{}
 			uids := map[int64]map[string]struct{}{}
 			for _, r := range rules {
 				om, ok := uids[r.OrgID]
