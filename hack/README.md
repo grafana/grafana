@@ -17,7 +17,7 @@ lrwxr-xr-x  1 ryan  staff  37 Oct  5 09:34 grafana -> /Users/ryan/workspace/graf
 The current workflow is to run the following:
 
 ```shell
-# ensure code-generator and gengo are up to date
+# ensure k8s.io/code-generator pkg is up to date
 go mod download
 
 # the happy path
