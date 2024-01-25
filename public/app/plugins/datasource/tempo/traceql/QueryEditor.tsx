@@ -82,7 +82,7 @@ export function QueryEditor(props: Props) {
 }
 
 const getStyles = () => ({
-  optionsContainer: css`
-    margin-top: 10px;
-  `,
+  optionsContainer: css({
+    marginTop: '10px',
+  }),
 });
