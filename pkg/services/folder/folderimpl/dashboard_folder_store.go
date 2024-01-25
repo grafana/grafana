@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
@@ -26,6 +27,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 
 	// there is a unique constraint on org_id, folder_uid, title
 	// there are no nested folders so the parent folder id is always 0
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, Title: title}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -50,6 +52,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 }
 
 func (d *DashboardFolderStoreImpl) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, ID: id}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -74,7 +77,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 	if uid == "" {
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
-
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, UID: uid}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {

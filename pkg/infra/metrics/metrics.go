@@ -116,6 +116,9 @@ var (
 
 	// MFolderIDsAPICount is a metric counter for folder ids count in the api package
 	MFolderIDsAPICount *prometheus.CounterVec
+
+	// MFolderIDsServicesCount is a metric counter for folder ids count in the services package
+	MFolderIDsServiceCount *prometheus.CounterVec
 )
 
 // Timers
@@ -220,6 +223,7 @@ var (
 )
 
 const (
+	// FolderID API
 	GetAlerts                 string = "GetAlerts"
 	GetDashboard              string = "GetDashboard"
 	RestoreDashboardVersion   string = "RestoreDashboardVersion"
@@ -231,12 +235,23 @@ const (
 	GetFolderACL              string = "getFolderACL"
 	Search                    string = "Search"
 	GetDashboardACL           string = "getDashboardACL"
+	// FolderID services
+	Folder           string = "folder"
+	Dashboard        string = "dashboards"
+	LibraryElements  string = "libraryelements"
+	LibraryPanels    string = "librarypanels"
+	NGAlerts         string = "ngalert"
+	Provisioning     string = "provisioning"
+	PublicDashboards string = "publicdashboards"
+	AccessControl    string = "accesscontrol"
+	Guardian         string = "guardian"
 )
 
 func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
 	apiFolderIDMethods := []string{GetAlerts, GetDashboard, RestoreDashboardVersion, GetFolderByID, GetFolderDescendantCounts, SearchFolders, GetFolderPermissionList, UpdateFolderPermissions, GetFolderACL, Search, GetDashboardACL}
+	serviceFolderIDMethods := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search}
 
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
@@ -479,6 +494,12 @@ func init() {
 		Help:      "counter for folder id usage in api package",
 		Namespace: ExporterName,
 	}, []string{"method"}, map[string][]string{"method": apiFolderIDMethods})
+
+	MFolderIDsServiceCount = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "folder_id_service_count",
+		Help:      "counter for folder id usage in service package",
+		Namespace: ExporterName,
+	}, []string{"method"}, map[string][]string{"method": serviceFolderIDMethods})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
@@ -772,5 +793,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		MPublicDashboardDatasourceQuerySuccess,
 		MStatTotalCorrelations,
 		MFolderIDsAPICount,
+		MFolderIDsServiceCount,
 	)
 }

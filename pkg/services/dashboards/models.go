@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -136,6 +137,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
@@ -326,6 +328,7 @@ type CountDashboardsInFolderRequest struct {
 }
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	return &folder.Folder{
 		ID:        dash.ID, // nolint:staticcheck
 		UID:       dash.UID,
