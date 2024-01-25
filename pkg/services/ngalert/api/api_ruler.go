@@ -541,7 +541,7 @@ func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, 
 		if rule.NotificationSettings == nil {
 			continue
 		}
-		if validator != nil {
+		if validator == nil {
 			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
 			if err != nil {
 				return err
@@ -563,7 +563,7 @@ func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, 
 		if len(d) == 0 {
 			continue
 		}
-		if validator != nil {
+		if validator == nil {
 			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
 			if err != nil {
 				return err
