@@ -76,26 +76,46 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       isHidden: Boolean(newAnnotationQuery.hide),
     });
 
-    if (this._dashboard.state.$data instanceof SceneDataLayers) {
-      this._dashboard.state.$data?.setState({
-        layers: [...this._dataLayers, newAnnotation],
-      });
-    }
+    const data = this.getSceneDataLayers();
 
-    this.setState({ editIndex: this.getAnnotationsLength() - 1 });
+    if (data) {
+      data.setState({
+        layers: [...data.state.layers, newAnnotation],
+      });
+
+      this.setState({ editIndex: this.getAnnotationsLength() - 1 });
+    }
   };
 
   public onEdit = (idx: number) => {
-    locationService.partial({ editIndex: idx });
     this.setState({ editIndex: idx });
   };
 
   public onMove = (idx: number, direction: number) => {
-    console.log('todo: onMove');
+    const data = this.getSceneDataLayers();
+
+    if (data) {
+      const layers = [...data.state.layers];
+      const [layer] = layers.splice(idx, 1);
+      layers.splice(idx + direction, 0, layer);
+
+      data.setState({
+        layers,
+      });
+    }
   };
 
   public onDelete = (idx: number) => {
-    console.log('todo: onDelete');
+    const data = this.getSceneDataLayers();
+
+    if (data) {
+      const layers = [...data.state.layers];
+      layers.splice(idx, 1);
+
+      data.setState({
+        layers,
+      });
+    }
   };
 }
 
