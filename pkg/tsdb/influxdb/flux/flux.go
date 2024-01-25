@@ -17,12 +17,12 @@ var (
 )
 
 // Query builds flux queries, executes them, and returns the results.
-func Query(ctx context.Context, dsInfo *models.DatasourceInfo, tsdbQuery backend.QueryDataRequest) (
+func Query(ctx context.Context, dsInfo *models.DatasourceInfo, tsdbQuery backend.QueryDataRequest, timeout int) (
 	*backend.QueryDataResponse, error) {
 	logger := glog.FromContext(ctx)
 	tRes := backend.NewQueryDataResponse()
 	logger.Debug("Received a query", "query", tsdbQuery)
-	r, err := runnerFromDataSource(dsInfo)
+	r, err := runnerFromDataSource(dsInfo, timeout)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -64,7 +64,7 @@ func (r *runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTabl
 }
 
 // runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
-func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
+func runnerFromDataSource(dsInfo *models.DatasourceInfo, timeout int) (*runner, error) {
 	org := dsInfo.Organization
 	if org == "" {
 		return nil, fmt.Errorf("missing organization in datasource configuration")
@@ -76,6 +76,7 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 	}
 	opts := influxdb2.DefaultOptions()
 	opts.HTTPOptions().SetHTTPClient(dsInfo.HTTPClient)
+	opts.SetHTTPRequestTimeout(uint(timeout))
 	return &runner{
 		client: influxdb2.NewClientWithOptions(url, dsInfo.Token, opts),
 		org:    org,

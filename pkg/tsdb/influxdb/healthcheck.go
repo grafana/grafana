@@ -35,7 +35,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	switch dsInfo.Version {
 	case influxVersionFlux:
-		return CheckFluxHealth(ctx, dsInfo, req)
+		return CheckFluxHealth(ctx, dsInfo, req, s.Cfg.DataProxyTimeout)
 	case influxVersionInfluxQL:
 		return CheckInfluxQLHealth(ctx, dsInfo, s.features)
 	case influxVersionSQL:
@@ -46,7 +46,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 }
 
 func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
-	req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
+	req *backend.CheckHealthRequest, timeout int) (*backend.CheckHealthResult,
 	error) {
 	logger := logger.FromContext(ctx)
 	ds, err := flux.Query(ctx, dsInfo, backend.QueryDataRequest{
@@ -63,7 +63,7 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 				},
 			},
 		},
-	})
+	}, timeout)
 
 	if err != nil {
 		return getHealthCheckMessage(logger, "error performing flux query", err)
