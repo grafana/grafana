@@ -153,7 +153,7 @@ func ProvideDashboardPermissions(
 				return nil, err
 			}
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
-
+			// nolint:staticcheck
 			if dashboard.FolderID > 0 {
 				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
 				queryResult, err := dashboardStore.GetDashboard(ctx, query)

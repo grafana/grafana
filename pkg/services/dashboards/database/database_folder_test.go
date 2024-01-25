@@ -140,6 +140,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Run("Given two dashboard folders with one dashboard each and one dashboard in the root folder", func(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
 			var folder1, folder2, dashInRoot, childDash1, childDash2 *dashboards.Dashboard
+			var rootFolderId int64 = 0
 			var currentUser *user.SignedInUser
 
 			setup2 := func() {
@@ -168,10 +169,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should return dashboards in root and expanded folder", func(t *testing.T) {
 					query := &dashboards.FindPersistedDashboardsQuery{
-						FolderUIDs: []string{
-							"",
-							folder1.UID,
-						},
+						FolderIds: []int64{
+							rootFolderId,
+							folder1.ID,
+						}, // nolint:staticcheck
 						SignedInUser: currentUser,
 						OrgId:        1,
 					}
@@ -187,7 +188,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			t.Run("and acl is set for one dashboard folder", func(t *testing.T) {
 				t.Run("and a dashboard is moved from folder without acl to the folder with an acl", func(t *testing.T) {
-					moveDashboard(t, dashboardStore, 1, childDash2.Data, folder1.UID)
+					moveDashboard(t, dashboardStore, 1, childDash2.Data, folder1.ID, folder1.UID)
 					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID), dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID)}}}
 					actest.AddUserPermissionToDB(t, sqlStore, currentUser)
 
@@ -206,7 +207,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 				t.Run("and a dashboard is moved from folder with acl to the folder without an acl", func(t *testing.T) {
 					setup2()
-					moveDashboard(t, dashboardStore, 1, childDash1.Data, childDash2.FolderUID)
+					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID, childDash2.FolderUID)
 					currentUser.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashInRoot.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2.UID)}}}
 					actest.AddUserPermissionToDB(t, sqlStore, currentUser)
 
@@ -221,8 +222,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						assert.Equal(t, len(hits), 4)
 						assert.Equal(t, hits[0].ID, folder2.ID)
 						assert.Equal(t, hits[1].ID, childDash1.ID)
-						assert.Equal(t, hits[1].ID, childDash2.ID)
-						assert.Equal(t, hits[2].ID, dashInRoot.ID)
+						assert.Equal(t, hits[2].ID, childDash2.ID)
+						assert.Equal(t, hits[3].ID, dashInRoot.ID)
 					})
 				})
 			})
@@ -419,11 +420,12 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 }
 
 func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, dashboard *simplejson.Json,
-	newFolderUID string) *dashboards.Dashboard {
+	newFolderId int64, newFolderUID string) *dashboards.Dashboard {
 	t.Helper()
 
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
+		FolderID:  newFolderId, // nolint:staticcheck
 		FolderUID: newFolderUID,
 		Dashboard: dashboard,
 		Overwrite: true,
