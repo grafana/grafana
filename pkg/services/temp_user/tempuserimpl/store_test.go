@@ -99,7 +99,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			InvitedByUserID: userID,
 		}
 		db := db.InitTestDB(t)
-		store = &xormStore{db: db, cfg: db.Cfg}
+		store = &xormStore{db: db}
 
 		for i := 0; i < verifications; i++ {
 			tempUser, err = store.CreateTempUser(context.Background(), &cmd)
@@ -139,7 +139,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			InvitedByUserID: 99,
 		}
 		db := db.InitTestDB(t)
-		store = &xormStore{db: db, cfg: db.Cfg}
+		store = &xormStore{db: db}
 
 		tempUser, err = store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)
