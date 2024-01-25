@@ -1,6 +1,8 @@
 import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
+import { SpacingTokenControl } from '../../utils/storybook/themeStorybookControls';
+
 import { Box } from './Box/Box';
 import { Space } from './Space';
 import mdx from './Space.mdx';
@@ -12,6 +14,10 @@ const meta: Meta<typeof Space> = {
     docs: {
       page: mdx,
     },
+  },
+  argTypes: {
+    v: SpacingTokenControl,
+    h: SpacingTokenControl,
   },
 };
 
