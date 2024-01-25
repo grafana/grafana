@@ -112,6 +112,7 @@ Metrics summary only calculates summaries based on spans received within the las
 For additional information, refer to [Traces to metrics: Ad-hoc RED metrics in Grafana Tempo with `Aggregate by`](https://grafana.com/blog/2023/12/07/traces-to-metrics-ad-hoc-red-metrics-in-grafana-tempo-with-aggregate-by/).
 
 <!--Impromptu RED metrics with Aggregate by -->
+
 {{< youtube id="xOolCpm2F8c" >}}
 
 When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
@@ -137,8 +138,8 @@ To use this capability:
 1. Select **Run query**.
 
 <!-- Explanation of how to use feature -->
-{{< youtube id="g97CjKOZqT4" >}}
 
+{{< youtube id="g97CjKOZqT4" >}}
 
 ### Optional: Add queries
 
