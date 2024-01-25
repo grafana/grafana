@@ -1,7 +1,7 @@
 import { FieldMatcherID, fieldMatchers, FieldType, MutableDataFrame } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
-import { preparePlotFrame } from '../../../../../public/app/core/components/GraphNG/utils';
+import { preparePlotFrame } from '..';
 
 import { getStackingGroups, preparePlotData2, timeFormatToTemplate } from './utils';
 
